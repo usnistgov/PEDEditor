@@ -127,12 +127,15 @@ public class ImageTransform {
       // but from a random location within the sub-pixel; hopefully,
       // this randomization should prevent visible artifacts.
 
+      int totalSampleCnt = 0;
+
       for (int x = 0; x < width; ++x) {
          for (int y = 0; y < height; ++y) {
             try {
                AverageColor c = new AverageColor(input, background);
                for (int xsub = 0; xsub < sampleCnt; ++xsub) {
                   for (int ysub = 0; ysub < sampleCnt; ++ysub) {
+                     ++totalSampleCnt;
                      double xd = x + (xsub + Math.random()) / sampleCnt;
                      double yd = y + (ysub + Math.random()) / sampleCnt;
                      c.add(xformi.transform(xd, yd));
@@ -145,6 +148,8 @@ public class ImageTransform {
             }
          }
       }
+
+      System.err.println("" + totalSampleCnt + " samples used.");
 
       return output;
    }
@@ -170,15 +175,17 @@ public class ImageTransform {
       double[][] coords = {{0,4}, {4,4}, {2,5}, {2, 0}}; // kite_reverse
       Point2D.Double[] points = Duh.toPoint2DDoubles(coords);
       RectToQuad.sort(points);
-      // QuadToRect xform = new QuadToRect();
-      RectToQuad xform = new RectToQuad();
+      QuadToRect xform = new QuadToRect();
+      // RectToQuad xform = new RectToQuad();
       xform.setVertices(points);
 
       System.out.println(xform);
 
       {
+         Rectangle2D.Double inb = xform.inputBounds();
          Affine af = new Affine();
-         af.setToScale(1.0/input.getWidth(), 1.0/input.getHeight());
+         af.setToScale((inb.x + inb.width)/input.getWidth(),
+                       (inb.y + inb.height)/input.getHeight());
          xform.preConcatenate(af);
       }
 
@@ -189,7 +196,8 @@ public class ImageTransform {
 
       {
          Rectangle2D.Double outb = xform.outputBounds();
-         double outScale = Math.min(outWidth/(outb.x + outb.width), outHeight/(outb.y + outb.height));
+         double outScale = Math.min(outWidth/(outb.x + outb.width),
+                                    outHeight/(outb.y + outb.height));
          Affine af = new Affine();
          af.setToScale(outScale, outScale);
          xform.concatenate(af);
