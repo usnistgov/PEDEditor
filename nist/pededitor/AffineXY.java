@@ -9,28 +9,37 @@ stand for different constants.
 */
 public class AffineXY extends AffineXYCommon implements Transform2D {
 
-   public Point2D.Double transform(double x, double y) {
-      return new Point2D.Double
-         (xk + x * (xkx + y * xkxy) + y * xky,
-          yk + x * (ykx + y * ykxy) + y * yky);
-   }
+    public Point2D.Double transform(double x, double y) {
+        return new Point2D.Double
+            (xk + x * (xkx + y * xkxy) + y * xky,
+             yk + x * (ykx + y * ykxy) + y * yky);
+    }
 
-   public Point2D.Double transform(Point2D.Double p) {
-      return transform(p.x, p.y);
-   }
+    public Point2D.Double transform(Point2D.Double p) {
+        return transform(p.x, p.y);
+    }
 
-   public AffineXYCommon createInverse() {
-      AffineXYInverse inv = new AffineXYInverse();
-      inv.copyFieldsFrom(this);
-      return inv;
-   }
+    /** Transform many points at once */
+    public void transform(double[] srcPts, int srcOff,
+                          double[] dstPts, int dstOff, int numPts) {
+        int twice = numPts * 2;
+        for (int i = 0; i < twice; i += 2) {
+            double x = srcPts[srcOff + i];
+            double y = srcPts[srcOff + i + 1];
+            dstPts[dstOff + i] = xk + x * (xkx + y * xkxy) + y * xky;
+            dstPts[dstOff + i + 1] = yk + x * (ykx + y * ykxy) + y * yky;
+        }
+    }
 
-   public void concatenate(Transform2D other) {
-      throw new UnsupportedOperationException
-         ("AffineXY.concatenate() implementation delayed pending need");
-   }
+    public AffineXYCommon createInverse() {
+        AffineXYInverse inv = new AffineXYInverse();
+        inv.copyFieldsFrom(this);
+        return inv;
+    }
 
-   public String toString() {
-      return toString("AffineXY");
-   }
+    /** Always return true: this transformation never throws an
+        UnsolvableException. */
+    public boolean transformNeverThrows() {
+        return true;
+    }
 };

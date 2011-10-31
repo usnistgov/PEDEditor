@@ -1,7 +1,5 @@
 package gov.nist.pededitor;
 
-import java.awt.geom.*;
-
 interface QuadrilateralTransform extends PolygonTransform {
    /** The transformation from a unit square centered at (0.5,0.5)
     * into the input quadrilateral. The usefulness of this lies in
@@ -10,5 +8,4 @@ interface QuadrilateralTransform extends PolygonTransform {
     * regularly spaced points in the unit square, and transform
     * them. */
    Transform2D squareToDomain();
-   void preConcatenate(Transform2D other);
 }

@@ -4,11 +4,14 @@ import java.awt.geom.*;
 
 /** Just a Transform2D-implementing wrapper around
  * awt.geom.AffineTransform. */
-public class Affine
-   extends java.awt.geom.AffineTransform
-   implements Transform2D {
+public class Affine extends AffineTransform implements Transform2D {
 
-   /** Identical to superclass constructor. */
+   /**
+	 * 
+	 */
+	private static final long serialVersionUID = -867608180933463982L;
+
+/** Identical to superclass constructor. */
    public Affine() {
       super();
    }
@@ -47,4 +50,14 @@ public class Affine
       AffineTransform at = (AffineTransform) other;
       super.concatenate(at);
    }
+
+   public void preConcatenate(Transform2D other) {
+      AffineTransform at = (AffineTransform) other;
+      super.preConcatenate(at);
+   }
+
+    /** This transformation never throws an UnsolvableException. */
+    public boolean transformNeverThrows() {
+        return true;
+    }
 }

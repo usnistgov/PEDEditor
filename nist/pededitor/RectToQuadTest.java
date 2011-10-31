@@ -3,11 +3,6 @@ package gov.nist.pededitor;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.geom.*;
-import javax.imageio.ImageIO;
-import java.awt.event.*;
-import java.awt.image.*;
-import java.net.*;
-import java.io.*;
 import java.util.*;
 
 class TestPanel extends JPanel {
@@ -163,7 +158,7 @@ public class RectToQuadTest {
       
       for (int i = 0; i < vertexSets.length; ++i) {
          Point2D.Double[] points = Duh.toPoint2DDoubles(vertexSets[i]);
-         RectToQuad.sort(points);
+         Duh.sort(points);
          
          RectToQuad xform = new RectToQuad();
          xform.setVertices(points);
