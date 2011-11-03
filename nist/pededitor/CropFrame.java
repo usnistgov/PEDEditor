@@ -22,12 +22,16 @@ import java.util.prefs.*;
 public class CropFrame extends ImageScrollFrame {
     private static final String PREF_DIR = "dir";
 
-    String filename = null;
+    static JDialog helpDialog = null;
+
+    protected String filename = null;
+    protected DiagramType diagramType = null;
+    protected DiagramDialog diagramDialog = null;
+
     protected List<CropEventListener> cropListeners = new
         ArrayList<CropEventListener>();
     protected CropFrameAction cropAction;
     protected CropFrameAction openAction;
-    JDialog helpDialog = null;
 
     public synchronized void addCropEventListener(CropEventListener listener) {
         cropListeners.add(listener);
@@ -92,6 +96,7 @@ public class CropFrame extends ImageScrollFrame {
      */
     public CropFrame() {
         // contentPane.setBorder(new EmptyBorder(5, 5, 5, 5));
+        setTitle("Select Diagram");
 		
         JMenuBar menuBar = new JMenuBar();
 		
@@ -135,7 +140,7 @@ public class CropFrame extends ImageScrollFrame {
                     cropDone();
                 }
             };
-        cropAction.setEnabled(false);
+        cropAction.setEnabled(true);
         mnEdit.add(cropAction);
 
         mnEdit.add(new CropFrameAction("Delete last vertex", KeyEvent.VK_D,
@@ -213,16 +218,25 @@ public class CropFrame extends ImageScrollFrame {
         return (CropPane) getImagePane();
     }
 
-    void verticesChanged() {
-        int cnt = getCropPane().getVertices().size();
-        cropAction.setEnabled(cnt >= 3);
+    void setSelectionReady(boolean ready) {
+        cropAction.setEnabled(ready);
     }
 
     @Override
         public void setFilename(String filename) {
         super.setFilename(filename);
         this.filename = filename;
-        setTitle("Crop " + filename);
+        setTitle("Select Diagram in " + filename);
+        if (diagramDialog == null) {
+            diagramDialog = new DiagramDialog(this, getImage());
+            diagramDialog.pack();
+        }
+        diagramType = (new DiagramDialog(this, getImage())).showModal();
+        repaint();
+    }
+
+    public DiagramType getDiagramType() {
+        return diagramType;
     }
 
     public String getFilename() {

@@ -1,7 +1,8 @@
 package gov.nist.pededitor;
 
 import java.awt.*;
-import javax.imageio.ImageIO;
+import javax.imageio.*;
+import javax.swing.*;
 import java.awt.event.*;
 import java.awt.image.*;
 import java.awt.geom.*;
@@ -14,27 +15,8 @@ public class Editor implements CropEventListener {
     protected CropFrame cropFrame = new CropFrame();
     protected EditFrame editFrame = new EditFrame();
     protected ImageZoomFrame zoomFrame = new ImageZoomFrame();
-
-    /** There are quite a few coordinate systems used here:
-
-     *) The original image coordinates
-
-     *) The output image coordinate system, independent of zoom level
-
-     *) The logical coordinates (optional; for schematics and unscaled
-     diagrams, there are no logical coordinates)
-
-     *) The actual zoomed image
-
- Transform from the original scanned image (if this diagram
-        does represent an image scan) to the unscaled coordinates used
-        for the diagram.
-
-        For ternary diagrams, 
-
- */
-    protected Transform2D originalToUnscaled = null;
-    protected Affine unscaledToOriginal = null;
+    protected PolygonTransform originalToUnscaled = null;
+    protected PolygonTransform unscaledToOriginal = null;
 
     public String getFilename() {
         return cropFrame.getFilename();
@@ -44,6 +26,16 @@ public class Editor implements CropEventListener {
      * Launch the application.
      */
     public static void main(String[] args) {
+    	try {
+    		// The system file chooser looks much nicer, but
+    		// unfortunately the Windows L&F somehow introduces a
+    		// bug in the image drawing in ImagePane (or the
+    		// Windows L&F has a bug of its own).
+    		
+    		// UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
+    	} catch (Exception e){
+    		throw new Error(e);
+    	}
         EventQueue.invokeLater(new ArgsRunnable(args) {
                 public void run() {
                     if (args.length > 1) {
@@ -63,16 +55,16 @@ public class Editor implements CropEventListener {
 
     public void cropPerformed(CropEvent e) {
         Point[] vertices = e.getVertices();
-        editPolygon(vertices);
+        editPolygon(vertices, e.getDiagramType());
     }
 
     protected void editPolygon(Point2D.Double[] vertices,
+                               DiagramType diagramType, 
                                int outWidth, int outHeight, int margin) {
         int cnt = vertices.length;
         int innerWidth = outWidth - margin*2;
         int innerHeight = outHeight - margin*2;
         PolygonTransform xform;
-        String diagramType;
 
         if (cnt == 4) {
             // Transform the input quadrilateral into a rectangle
@@ -93,7 +85,6 @@ public class Editor implements CropEventListener {
                   (double) innerHeight));
             q.check();
             xform = q;
-            diagramType = "Binary";
         } else {
             // Transform the input triangle into an equilateral triangle
             final double uth = TriangleTransform.UNIT_TRIANGLE_HEIGHT;
@@ -109,7 +100,6 @@ public class Editor implements CropEventListener {
             TriangleTransform t = new TriangleTransform(vertices, outputVertices);
             t.check();
             xform = t;
-            diagramType = "Ternary";
         }
 
         System.out.println("Transformation is " + xform);
@@ -117,7 +107,7 @@ public class Editor implements CropEventListener {
             (xform, cropFrame.getImage(), Color.WHITE,
              new Dimension(outWidth, outHeight));
         try {
-            unscaledToOriginal = xform.createInverse();
+            unscaledToOriginal = (PolygonTransform) xform.createInverse();
         } catch (NoninvertibleTransformException e) {
             System.err.println("This transform is not invertible");
             System.exit(2);
@@ -159,8 +149,8 @@ public class Editor implements CropEventListener {
         zoomFrame.setVisible(true);
     }
 
-    protected void editPolygon(Point[] verticesIn) {
-        editPolygon(Duh.toPoint2DDoubles(verticesIn),
+    protected void editPolygon(Point[] verticesIn, DiagramType diagramType) {
+        editPolygon(Duh.toPoint2DDoubles(verticesIn), diagramType,
                     800 /* width */, 800 /* height */, 100 /* margin */);
     }
 

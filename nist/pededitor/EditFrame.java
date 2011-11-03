@@ -1,5 +1,6 @@
 package gov.nist.pededitor;
 
+import java.awt.event.*;
 import javax.swing.*;
 
 public class EditFrame extends ImageScrollFrame {
@@ -68,13 +69,13 @@ public class EditFrame extends ImageScrollFrame {
       mnView.add(new EditFrameAction("Zoom In", KeyEvent.VK_I,
                                      "typed +") {
               public void actionPerformed(ActionEvent e) {
-                    setScale(getScale() * 1.25);
+                    // TODO setScale(getScale() * 1.25);
                 }
             });
       mnView.add(new EditFrameAction("Zoom Out", KeyEvent.VK_O,
                                      "typed -") {
               public void actionPerformed(ActionEvent e) {
-                    setScale(getScale() / 1.25);
+                    // TODO setScale(getScale() / 1.25);
                 }
             });
 		

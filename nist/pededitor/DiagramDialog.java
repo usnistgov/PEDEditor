@@ -5,13 +5,17 @@ import java.awt.event.*;
 import java.awt.geom.*;
 import java.awt.image.*;
 import java.util.*;
+import java.util.List;
 import javax.swing.*;
 
-/** Class for selecting a diagram type. */
+/** GUI for selecting a DiagramType. */
 public class DiagramDialog extends JDialog
     implements ActionListener  {
     DiagramType selectedDiagram = null;
     boolean pressedOK = false;
+    JButton okButton;
+    protected List<DiagramSelectionEventListener> diagramSelectedListeners
+        = new ArrayList<DiagramSelectionEventListener>();
 
     abstract class DiagramDialogAction extends AbstractAction {
         DiagramDialogAction(String name) {
@@ -19,13 +23,35 @@ public class DiagramDialog extends JDialog
         }
     }
 
-    DiagramDialog(Frame owner, int vertexCnt, DiagramType selected) {
-        super(owner, "Select Diagram Type", true);
+    DiagramType getSelectedDiagram() {
+        return selectedDiagram;
+    }
 
-        DiagramType[] diagrams = (vertexCnt == -1)
-            ? DiagramType.values() : DiagramType.values(vertexCnt);
+    public synchronized void addDiagramSelectionEventListener
+        (DiagramSelectionEventListener listener) {
+        diagramSelectedListeners.add(listener);
+    }
+    public synchronized void removeDiagramSelectionEventListener
+        (DiagramSelectionEventListener listener) {
+        diagramSelectedListeners.remove(listener);
+    }
+
+    DiagramDialog(Frame owner) {
+        this(owner, null);
+    }
+
+    DiagramDialog(Frame owner, BufferedImage image) {
+        this(owner, image, DiagramType.values()[0]);
+    }
+
+    DiagramDialog(Frame owner, BufferedImage image, DiagramType selected) {
+        super(owner, "Select Diagram Type", false);
+        selectedDiagram = selected;
+
+        DiagramType[] diagrams = DiagramType.values();
         ButtonGroup group = new ButtonGroup();
-        JPanel radioPanel = (JPanel) getContentPane();
+
+        JPanel radioPanel = new JPanel();
         radioPanel.setLayout(new GridLayout(0,1));
         
         for (DiagramType diagram : diagrams) {
@@ -38,46 +64,51 @@ public class DiagramDialog extends JDialog
             radioPanel.add(button);
             button.addActionListener(this);
         }
+
+        okButton = new JButton(new DiagramDialogAction("OK") {
+                @Override
+                    public void actionPerformed(ActionEvent e) {
+                    DiagramDialog.this.pressedOK = true;
+                    DiagramSelectionEvent se
+                        = new DiagramSelectionEvent(DiagramDialog.this);
+                    for (DiagramSelectionEventListener l : diagramSelectedListeners) {
+                        l.diagramSelected(se);
+                    }
+                    DiagramDialog.this.setVisible(false);
+                }
+            });
         
-        radioPanel.add(new JButton(new DiagramDialogAction("OK") {
+        radioPanel.add(okButton);
 
-			@Override
-			public void actionPerformed(ActionEvent e) {
-                DiagramDialog.this.pressedOK = true;
-                DiagramDialog.this.dispose();
-			}
-        }));
+        if (image == null) {
+            setContentPane(radioPanel);
+        } else {
+            JPanel pane = (JPanel) getContentPane();
+            pane.setLayout(new FlowLayout(FlowLayout.LEADING, 10, 10));
+            pane.add(radioPanel);
+
+            ScaledImagePane imagePane = new ScaledImagePane();
+            imagePane.setPreferredSize(new Dimension(350, 500));
+            imagePane.setImage(image);
+
+            pane.add(imagePane);
+        }
     }
 
-    /** Show a dialog with the given frame as owner.
-
-        @return the user's choice of diagram type, or null if no choice was selected.
-    */
-    public static DiagramType show(Frame owner) {
-        return show(owner, DiagramType.values()[0]);
+    /** Listen for OK button press events, which indicate that the
+        user has accepted a diagram type. To find out what that type
+        is, call getSelectedDiagram(). */
+    void addSelectionListener(ActionListener listener) {
+        okButton.addActionListener(listener);
     }
 
-    /** Show a dialog with the given frame as owner and the given
-        initially selected diagram type.
-
-        @return the user's choice of diagram type, or null if no choice was selected.
-    */
-    public static DiagramType show(Frame owner, DiagramType selected) {
-        return show(owner, selected, -1);
-    }
-
-    /** Show a dialog with the given frame as owner and the given
-        initially selected diagram type. Only show diagrams that are
-        consistent with the given number of selected vertices.
-
-        @return the user's choice of diagram type, or null if no choice was selected.
-    */
-    public static DiagramType show(Frame owner, DiagramType selected,
-                                   int vertexCnt) {
-        DiagramDialog dialog = new DiagramDialog(owner, vertexCnt, selected);
-        dialog.pack();
-        dialog.setVisible(true);
-        return dialog.pressedOK ? dialog.selectedDiagram : null;
+    /** Show the dialog as document-modal, and return the DiagramType
+        selected. Return null if the dialog was closed abnormally. */
+    public DiagramType showModal() {
+        pack();
+        setModalityType(Dialog.ModalityType.DOCUMENT_MODAL);
+        setVisible(true);
+        return pressedOK ? getSelectedDiagram() : null;
     }
 
     public void actionPerformed(ActionEvent e) {
@@ -90,7 +121,7 @@ public class DiagramDialog extends JDialog
     }
 
     public static void main(String[] args) {
-        DiagramType t = show(null);
+        DiagramType t = (new DiagramDialog(null)).showModal();
         System.out.println("You selected " + t);
     }
    

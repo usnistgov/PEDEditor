@@ -18,6 +18,7 @@ public class ImagePane extends JPanel {
         setPreferredSize(new Dimension(image.getWidth(null),
                                        image.getHeight(null)));
         revalidate();
+        repaint();
     }
 
     public void paint(Graphics g) {

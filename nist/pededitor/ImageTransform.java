@@ -171,7 +171,7 @@ public class ImageTransform {
 
         double[][] coords = {{0,4}, {4,4}, {2,5}, {2, 0}}; // kite_reverse
         Point2D.Double[] points = Duh.toPoint2DDoubles(coords);
-        Duh.sort(points);
+        Duh.sort(points, true);
         QuadToRect xform = new QuadToRect();
         // RectToQuad xform = new RectToQuad();
         xform.setVertices(points);

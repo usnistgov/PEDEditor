@@ -158,7 +158,7 @@ public class RectToQuadTest {
       
       for (int i = 0; i < vertexSets.length; ++i) {
          Point2D.Double[] points = Duh.toPoint2DDoubles(vertexSets[i]);
-         Duh.sort(points);
+         Duh.sort(points, true);
          
          RectToQuad xform = new RectToQuad();
          xform.setVertices(points);

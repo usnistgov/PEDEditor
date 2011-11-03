@@ -204,32 +204,31 @@ public class Duh {
                                       maxX(points) - mx, maxY(points) - my);
     }
 
-    /** Sort the given points (polygon vertices) into clockwise order
-     * (counterclockwise if your y-axis points downwards), starting
-     * with the point with least (x+y) value. For good results, the
-     * points must form a convex (points.length)-gon after sorting. */
-    static void sort(Point2D.Double[] points) {
-        if (points.length == 0) {
-            return;
-        }
+    /* @see sortIndices()
 
-        Point2D.Double center = mean(points);
-      
-        Arrays.sort(points, new ReverseAngleSort(center));
+       Sort the given vertices in place into clockwise order, starting
+       with the lower-left corner. Do not modify the input array.
 
-        // Select the point with smallest X+Y.
-        double minXPlusY = 0;
-        int minIndex = 0;
+       @return the resulting array. */
+    static Point2D.Double[] sortExternal(Point2D.Double[] points,
+                                         boolean yAxisPointsDown) {
+        int[] indices = sortIndices(points, yAxisPointsDown);
+        Point2D.Double[] output = new Point2D.Double[points.length];
         for (int i = 0; i < points.length; ++i) {
-            double xpy = points[i].x + points[i].y;
-            if (i == 0 || xpy < minXPlusY) {
-                minXPlusY = xpy;
-                minIndex = i;
-            }
+            output[i] = points[i];
         }
+        return output;
+    }
 
-        // Rotate the array left to put minIndex in position 0.
-        rotateLeftInPlace(points, minIndex);
+    /* @see sortIndices()
+
+       Sort the given vertices in place into clockwise order, starting
+       with the lower-left corner. */
+    static void sort(Point2D.Double[] points, boolean yAxisPointsDown) {
+        Point2D.Double[] output = sortExternal(points, yAxisPointsDown);
+        for (int i = 0; i < points.length; ++i) {
+            points[i] = output[i];
+        }
     }
 
     static int[] sortIndices(Point2D.Double[] points) {
@@ -292,5 +291,29 @@ public class Duh {
         }
 
         return indices;
+    }
+
+    /** Sort the points into clockwise order starting from the lower
+        left, and return a Polygon of those points. */
+    public static Polygon sortToPolygon(Point[] points,
+                                        boolean yAxisPointsDown) {
+        int cnt = points.length;
+        int[] indices = sortIndices(toPoint2DDoubles(points), yAxisPointsDown);
+        int[] xs = new int[cnt];
+        int[] ys = new int[cnt];
+        for (int i = 0; i < cnt; ++i) {
+            Point p = points[indices[i]];
+            xs[i] = p.x;
+            ys[i] = p.y;
+        }
+
+        return new Polygon(xs, ys, cnt);
+    }
+
+    /** Sort the points into clockwise order starting from the lower
+        left, and return a Polygon of those points. */
+    public static Polygon sortToPolygon(ArrayList<Point> points,
+                                        boolean yAxisPointsDown) {
+        return sortToPolygon(points.toArray(new Point[0]), yAxisPointsDown);
     }
 }
