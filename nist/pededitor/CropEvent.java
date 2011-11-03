@@ -19,12 +19,21 @@ public class CropEvent extends EventObject {
 
         Principal logical coordinates:
 
-        These are whatever seems appropriate, but it should be
-        possible to transform these coordinates into physical
-        coordinates using an affine transform.
+        These coordinates are whichever are most natural to work with
+        for the application, but an affine transform should suffice to
+        transform these coordinates into screen or printed page
+        coordinates.
 
         If logical coordinates do not exist, then anything can be used
         here.
+
+        The specific choice of logical coordinates is as follows:
+
+        Schematic diagrams are treated like binary diagrams whose axes
+        cover [0,1] and that have no axis labels.
+
+        For binaries and schematics, the logical coordinates are
+        ([0,1], [0,1]).
 
         For rectangular diagrams (schematics and binaries), either x
         or y or both should range from 0 to 1, and if either one does
@@ -36,7 +45,7 @@ public class CropEvent extends EventObject {
         For ternary diagrams, either x or y or both should range from
         0 to 1, but in this case, a y value of 1 represents the top of
         an equilateral triangle, and the height of an equilateral
-        triangle is only 0.866 times its width. The top vertex (if
+        triangle is only sqrt(3)/2 times its width. The top vertex (if
         present) is located at (x=0.5, y=1). Also, if the y dimension
         does not have range [0,1], then it may either have range [0, x
         | x in (0,1)], representing a topless partial ternary, or

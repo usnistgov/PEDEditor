@@ -28,10 +28,17 @@ public class AffineXYInverse extends AffineXYCommon
      * since the coefficients were changed.. */
     protected int preferredSolution = -1;
 
-    public AffineXYCommon createInverse() {
+    public AffineXY createInverse() {
         AffineXY inv = new AffineXY();
         inv.copyFieldsFrom(this);
         return inv;
+    }
+
+    @Override
+	public AffineXYInverse clone() {
+        AffineXYInverse output = new AffineXYInverse();
+        output.copyFieldsFrom(this);
+        return output;
     }
 
     /** If the xy coefficients are nonzero, then points in the AffineXY

@@ -9,4 +9,5 @@ interface PolygonTransform extends Transform2D {
     Point2D.Double[] outputVertices();
     Rectangle2D.Double inputBounds();
     Rectangle2D.Double outputBounds();
+    PolygonTransform clone();
 }

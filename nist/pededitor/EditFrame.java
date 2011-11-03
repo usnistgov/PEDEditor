@@ -1,9 +1,12 @@
 package gov.nist.pededitor;
 
+import java.awt.*;
 import java.awt.event.*;
 import javax.swing.*;
 
 public class EditFrame extends ImageScrollFrame {
+    protected JPanel statusBar;
+    protected JLabel coordinates;
 
     abstract class EditFrameAction extends AbstractAction {
         EditFrameAction(String name, int mnemonic, String accelerator) {
@@ -27,6 +30,11 @@ public class EditFrame extends ImageScrollFrame {
     * Create the frame.
     */
    public EditFrame() {
+       statusBar = new JPanel();
+       coordinates = new JLabel("<html><font size=\"-2\">(?,?)</font></html>");
+       statusBar.add(coordinates);
+       contentPane.add(statusBar, BorderLayout.SOUTH);
+
       JMenuBar menuBar = new JMenuBar();
       setJMenuBar(menuBar);
 		

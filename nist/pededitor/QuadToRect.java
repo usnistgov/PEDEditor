@@ -19,6 +19,11 @@ public class QuadToRect extends RectToQuadCommon
         copyFieldsFrom(other);
     }
 
+    @Override
+	public QuadToRect clone() {
+        return new QuadToRect(this);
+    }
+
     /** @return the inverse transformation as a RectToQuad. */
     public QuadrilateralTransform createInverse() {
         RectToQuad inv = new RectToQuad();

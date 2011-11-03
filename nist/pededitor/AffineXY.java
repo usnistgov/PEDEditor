@@ -42,4 +42,11 @@ public class AffineXY extends AffineXYCommon implements Transform2D {
     public boolean transformNeverThrows() {
         return true;
     }
+
+    @Override
+	public AffineXY clone() {
+        AffineXY output = new AffineXY();
+        output.copyFieldsFrom(this);
+        return output;
+    }
 };

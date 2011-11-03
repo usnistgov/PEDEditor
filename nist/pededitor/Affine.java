@@ -60,4 +60,8 @@ public class Affine extends AffineTransform implements Transform2D {
     public boolean transformNeverThrows() {
         return true;
     }
+    
+    public Affine clone() {
+    	return new Affine(this); 
+    }
 }

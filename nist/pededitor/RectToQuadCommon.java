@@ -11,6 +11,7 @@ abstract public class RectToQuadCommon
     abstract public void concatenate(Transform2D other);
     abstract public void preConcatenate(Transform2D other);
     abstract public Transform2D squareToDomain();
+    abstract public RectToQuadCommon clone();
 
     public Point2D.Double transform(double x, double y)
         throws UnsolvableException {

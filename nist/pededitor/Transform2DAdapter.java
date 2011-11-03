@@ -11,7 +11,8 @@ abstract public class Transform2DAdapter implements Transform2D {
         throws NoninvertibleTransformException;
     abstract public void concatenate(Transform2D other);
     abstract public void preConcatenate(Transform2D other);
-
+    @Override
+        abstract public Transform2D clone() throws CloneNotSupportedException;
 
     public Point2D.Double transform(Point2D.Double point)
         throws UnsolvableException {

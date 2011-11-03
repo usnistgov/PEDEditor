@@ -35,6 +35,10 @@ public class TriangleTransform
         outputVerts = Arrays.copyOf(other.outputVerts, 3);
     }
 
+    public TriangleTransform clone() {
+        return new TriangleTransform(this);
+    }
+
     /** Update the underlying affine transformation after changes to
         inputVerts or outputVerts to maintain the requirement that
         transform(inputVerts) always equals outputVerts. */

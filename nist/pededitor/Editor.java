@@ -15,8 +15,13 @@ public class Editor implements CropEventListener {
     protected CropFrame cropFrame = new CropFrame();
     protected EditFrame editFrame = new EditFrame();
     protected ImageZoomFrame zoomFrame = new ImageZoomFrame();
-    protected PolygonTransform originalToUnscaled = null;
-    protected PolygonTransform unscaledToOriginal = null;
+
+    protected PolygonTransform originalToPrincipal = null;
+    protected PolygonTransform principalToOriginal = null;
+    protected PolygonTransform principalToStandardPage = null;
+    protected PolygonTransform principalToScreen = null;
+    protected PolygonTransform screenToOriginal = null;
+    protected PolygonTransform screenToPrincipal = null;
 
     public String getFilename() {
         return cropFrame.getFilename();
@@ -107,11 +112,13 @@ public class Editor implements CropEventListener {
             (xform, cropFrame.getImage(), Color.WHITE,
              new Dimension(outWidth, outHeight));
         try {
-            unscaledToOriginal = (PolygonTransform) xform.createInverse();
+            principalToOriginal = (PolygonTransform) xform.createInverse();
         } catch (NoninvertibleTransformException e) {
             System.err.println("This transform is not invertible");
             System.exit(2);
         }
+        screenToOriginal = (PolygonTransform) principalToOriginal.clone();
+
         lighten(output);
         editFrame.setImage(output);
         editFrame.setTitle("Edit " + diagramType + " " + cropFrame.getFilename());
@@ -129,7 +136,7 @@ public class Editor implements CropEventListener {
                         double x = e.getX() + 0.5;
                         double y = e.getY() + 0.5;
                         try {
-                            Point2D.Double p = unscaledToOriginal.transform(x,y);
+                            Point2D.Double p = screenToOriginal.transform(x,y);
                             zoomFrame.setImageFocus((int) Math.floor(p.x),
                                                     (int) Math.floor(p.y));
                         } catch (UnsolvableException ex) {
@@ -176,7 +183,9 @@ public class Editor implements CropEventListener {
         String title = (filename == null) ? "PED Editor" : filename;
         editFrame.setTitle(title);
 
-        if (filename != null) {
+        if (filename == null) {
+            cropFrame.showOpenDialog();
+        } else {
             cropFrame.setFilename(filename);
         }
 

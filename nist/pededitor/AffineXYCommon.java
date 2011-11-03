@@ -9,6 +9,7 @@ abstract public class AffineXYCommon extends Transform2DAdapter
     abstract public Point2D.Double transform(double x, double y)
         throws UnsolvableException;
     abstract public AffineXYCommon createInverse();
+    abstract public AffineXYCommon clone();
 
     protected double xk = 0;
     protected double xkx = 0;

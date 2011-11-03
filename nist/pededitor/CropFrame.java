@@ -107,23 +107,7 @@ public class CropFrame extends ImageScrollFrame {
         openAction = new CropFrameAction("Open", KeyEvent.VK_O) {
                 @Override
                     public void actionPerformed(ActionEvent e) {
-                    Preferences prefs = Preferences.userNodeForPackage
-                        (CropFrame.this.getClass());
-                    String dir = prefs.get(PREF_DIR,  null);
-                    JFileChooser chooser = new JFileChooser();
-                    chooser.setDialogTitle("Open PED Image");
-                    if (dir != null) {
-                        chooser.setCurrentDirectory(new File(dir));
-                    }
-                    String[] suffixes = ImageIO.getReaderFileSuffixes();
-                    chooser.setFileFilter
-                        (new FileNameExtensionFilter("Image files", suffixes));
-                    if (chooser.showOpenDialog(CropFrame.this) ==
-                        JFileChooser.APPROVE_OPTION) {
-                        File file = chooser.getSelectedFile();
-                        prefs.put(PREF_DIR, file.getParent());
-                        setFilename(file.getAbsolutePath());
-                    }
+                    showOpenDialog();
                 }
             };
 		
@@ -185,6 +169,25 @@ public class CropFrame extends ImageScrollFrame {
         mnHelp.add(help);
 
         setJMenuBar(menuBar);
+    }
+
+    public void showOpenDialog() {
+        Preferences prefs = Preferences.userNodeForPackage(getClass());
+        String dir = prefs.get(PREF_DIR,  null);
+        JFileChooser chooser = new JFileChooser();
+        chooser.setDialogTitle("Open PED Image");
+        if (dir != null) {
+            chooser.setCurrentDirectory(new File(dir));
+        }
+        String[] suffixes = ImageIO.getReaderFileSuffixes();
+        chooser.setFileFilter
+            (new FileNameExtensionFilter("Image files", suffixes));
+        if (chooser.showOpenDialog(CropFrame.this) ==
+            JFileChooser.APPROVE_OPTION) {
+            File file = chooser.getSelectedFile();
+            prefs.put(PREF_DIR, file.getParent());
+            setFilename(file.getAbsolutePath());
+        }
     }
 
     protected void help() {

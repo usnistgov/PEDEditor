@@ -30,4 +30,6 @@ interface Transform2D {
     /** @return true if this transform never throws an
         UnsolvableException. */
     boolean transformNeverThrows();
+
+    Transform2D clone() throws CloneNotSupportedException;
 }
