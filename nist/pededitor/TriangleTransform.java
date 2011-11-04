@@ -10,12 +10,9 @@ public class TriangleTransform
     extends Affine
     implements PolygonTransform {
 
-    /**
-	 * 
-	 */
-	private static final long serialVersionUID = 1768608728396588446L;
+    private static final long serialVersionUID = 1768608728396588446L;
 
-	static final double UNIT_TRIANGLE_HEIGHT = 0.866025403784439;
+    public static final double UNIT_TRIANGLE_HEIGHT = Math.sqrt(3.0) / 2.0;
 
     /** Default: transform from an equilateral triangle with base from
         (0,0) to (1,0) into the same triangle. */
@@ -31,8 +28,8 @@ public class TriangleTransform
 
     public TriangleTransform(TriangleTransform other) {
         super(other);
-        inputVerts = Arrays.copyOf(other.inputVerts, 3);
-        outputVerts = Arrays.copyOf(other.outputVerts, 3);
+        inputVerts = Duh.deepCopy(other.inputVerts);
+        outputVerts = Duh.deepCopy(other.outputVerts);
     }
 
     public TriangleTransform clone() {
@@ -63,9 +60,8 @@ public class TriangleTransform
      * transform that transforms the three input vertices inpts[] into
      * the three output vertices outpts[] */
     public TriangleTransform(Point2D.Double[] inpts, Point2D.Double[] outpts) {
-        inputVerts = Arrays.copyOf(inpts, 3);
-        outputVerts = Arrays.copyOf(outpts, 3);
-        update();
+        setInputVertices(inpts);
+        setOutputVertices(outpts);
     }
 
     public TriangleTransform createInverse() {
@@ -73,29 +69,26 @@ public class TriangleTransform
     }
 
     public Point2D.Double[] inputVertices() {
-        return Arrays.copyOf(inputVerts, inputVerts.length);
+        return Duh.deepCopy(inputVerts);
     }
 
     public Point2D.Double[] outputVertices() {
-        return Arrays.copyOf(outputVerts, outputVerts.length);
+        return Duh.deepCopy(outputVerts);
     }
 
     public void setInputVertices(Point2D.Double[] inputVertices) {
-        int cnt = inputVertices.length;
-        if (cnt != 3) {
-            throw new IllegalArgumentException("inputVertices.length " + cnt + " != 3");
+        if (inputVertices.length != 3) {
+            throw new IllegalArgumentException("inputVertices.length " + inputVertices.length + " != 3");
         }
-        inputVerts = Arrays.copyOf(inputVertices, cnt);
+        inputVerts = Duh.deepCopy(inputVertices);
         update();
     }
 
     public void setOutputVertices(Point2D.Double[] outputVertices) {
-        int cnt = outputVertices.length;
-        if (cnt != 3) {
-            throw new IllegalArgumentException("outputVertices.length " + cnt +
-                                               " != 3");
+        if (outputVertices.length != 3) {
+            throw new IllegalArgumentException("outputVertices.length " + outputVertices.length + " != 3");
         }
-        outputVerts = Arrays.copyOf(outputVertices, cnt);
+        outputVerts = Duh.deepCopy(outputVertices);
         update();
     }
 
@@ -112,11 +105,11 @@ public class TriangleTransform
         update();
     }
 
-    public void concatenate(Transform2D other) {
+    public void preConcatenate(Transform2D other) {
         concatSub(other, outputVerts);
     }
 
-    public void preConcatenate(Transform2D other) {
+    public void concatenate(Transform2D other) {
         concatSub(other, inputVerts);
     }
 
@@ -129,7 +122,7 @@ public class TriangleTransform
     }
 
     public String toString() {
-        return PolygonTransformAdapter.toString(this);
+        return PolygonTransformAdapter.toString(this) + "(" + super.toString() + ")";
     }
 
     public void check() {

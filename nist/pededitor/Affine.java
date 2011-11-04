@@ -6,55 +6,52 @@ import java.awt.geom.*;
  * awt.geom.AffineTransform. */
 public class Affine extends AffineTransform implements Transform2D {
 
-   /**
-	 * 
-	 */
-	private static final long serialVersionUID = -867608180933463982L;
+    private static final long serialVersionUID = -867608180933463982L;
 
-/** Identical to superclass constructor. */
-   public Affine() {
-      super();
-   }
+    /** Identical to superclass constructor. */
+    public Affine() {
+        super();
+    }
 
-   /** Identical to superclass constructor. */
-   public Affine(AffineTransform Tx) {
-      super(Tx);
-   }
+    /** Identical to superclass constructor. */
+    public Affine(AffineTransform Tx) {
+        super(Tx);
+    }
 
-   /** Identical to superclass constructor. */
-   public Affine(double[] flatmatrix) {
-      super(flatmatrix);
-   }
+    /** Identical to superclass constructor. */
+    public Affine(double[] flatmatrix) {
+        super(flatmatrix);
+    }
 
-   /** Identical to superclass constructor. */
-   public Affine(double m00, double m10, double m01, double m11,
-                 double m02, double m12) {
-      super(m00,  m10, m01, m11, m02, m12);
-   }
+    /** Identical to superclass constructor. */
+    public Affine(double m00, double m10, double m01, double m11,
+                  double m02, double m12) {
+        super(m00,  m10, m01, m11, m02, m12);
+    }
 
-   public Point2D.Double transform(double x, double y) {
-      Point2D.Double point = new Point2D.Double(x,y);
-      transform(point, point);
-      return point;
-   }
+    public Point2D.Double transform(double x, double y) {
+        Point2D.Double point = new Point2D.Double(x,y);
+        transform(point, point);
+        return point;
+    }
 
-   public Point2D.Double transform(Point2D.Double p) {
-      return transform(p.x, p.y);
-   }
+    public Point2D.Double transform(Point2D.Double p) {
+        return transform(p.x, p.y);
+    }
 
-   public Affine createInverse() throws NoninvertibleTransformException {
-      return new Affine(super.createInverse());
-   }
+    public Affine createInverse() throws NoninvertibleTransformException {
+        return new Affine(super.createInverse());
+    }
 
-   public void concatenate(Transform2D other) {
-      AffineTransform at = (AffineTransform) other;
-      super.concatenate(at);
-   }
+    public void preConcatenate(Transform2D other) {
+        AffineTransform at = (AffineTransform) other;
+        super.preConcatenate(at);
+    }
 
-   public void preConcatenate(Transform2D other) {
-      AffineTransform at = (AffineTransform) other;
-      super.preConcatenate(at);
-   }
+    public void concatenate(Transform2D other) {
+        AffineTransform at = (AffineTransform) other;
+        super.concatenate(at);
+    }
 
     /** This transformation never throws an UnsolvableException. */
     public boolean transformNeverThrows() {
@@ -63,5 +60,10 @@ public class Affine extends AffineTransform implements Transform2D {
     
     public Affine clone() {
     	return new Affine(this); 
+    }
+
+    @Override
+    public String toString() {
+        return "Affine(" + super.toString() + ")";
     }
 }

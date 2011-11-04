@@ -8,8 +8,8 @@ abstract public class RectToQuadCommon
     extends PolygonTransformAdapter
     implements QuadrilateralTransform {
     abstract public Transform2D createInverse();
-    abstract public void concatenate(Transform2D other);
     abstract public void preConcatenate(Transform2D other);
+    abstract public void concatenate(Transform2D other);
     abstract public Transform2D squareToDomain();
     abstract public RectToQuadCommon clone();
 
@@ -208,20 +208,16 @@ abstract public class RectToQuadCommon
             if (oa.getShearX() == 0 && oa.getShearY() == 0) {
                 double xs = oa.getScaleX();
                 double ys = oa.getScaleY();
-                if (xs >= 0 && ys >= 0) {
-                    double tx = oa.getTranslateX();
-                    double ty = oa.getTranslateY();
-                    // double x1 = x * xs + tx;
-                    // double x2 = (x+w) * xs + tx;
-                    // double y1 = y * ys + ty;
-                    // double y2 = (y+w) * ys + ty;
-                    setRectangle(new Rectangle2D.Double(x * xs + tx, y * ys + ty,
+                double tx = oa.getTranslateX();
+                double ty = oa.getTranslateY();
+                setRectangle(new Rectangle2D.Double(x * xs + tx, y * ys + ty,
                                                         w * xs, h * ys));
-                    return;
-                }
+                return;
             }
         }
-        throw new RuntimeException("implemented only for Affine\n" +
-                                   "transforms with no shear and positive scale");
+        throw new IllegalArgumentException
+            ("implemented only for Affine transformations\n"
+             + "with no shear, not for\n"
+             + other);
     }
 }

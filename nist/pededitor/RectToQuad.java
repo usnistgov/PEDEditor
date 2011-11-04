@@ -50,11 +50,11 @@ public class RectToQuad extends RectToQuadCommon {
         check();
     }
 
-    public void concatenate(Transform2D other) {
+    public void preConcatenate(Transform2D other) {
         transformQuad(other);
     }
 
-    public void preConcatenate(Transform2D other) {
+    public void concatenate(Transform2D other) {
         try {
             transformRect(other.createInverse());
         } catch (NoninvertibleTransformException e) {

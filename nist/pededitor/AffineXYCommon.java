@@ -79,14 +79,14 @@ abstract public class AffineXYCommon extends Transform2DAdapter
             yk + plus(ykx) + " x" + plus(yky) + " y" + plus(ykxy) + " xy)";
     }
 
-    public void concatenate(Transform2D other) {
-        throw new UnsupportedOperationException
-            ("concatenate() implementation delayed pending need");
-    }
-
     public void preConcatenate(Transform2D other) {
         throw new UnsupportedOperationException
             ("preConcatenate() implementation delayed pending need");
+    }
+
+    public void concatenate(Transform2D other) {
+        throw new UnsupportedOperationException
+            ("concatenate() implementation delayed pending need");
     }
 
 };

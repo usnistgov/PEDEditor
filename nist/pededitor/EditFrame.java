@@ -2,6 +2,8 @@ package gov.nist.pededitor;
 
 import java.awt.*;
 import java.awt.event.*;
+import java.util.*;
+
 import javax.swing.*;
 
 public class EditFrame extends ImageScrollFrame {
@@ -95,6 +97,12 @@ public class EditFrame extends ImageScrollFrame {
       mnHelp.add(mnAbout);
       // getContentPane().setBorder(new EmptyBorder(5, 5, 5, 5));
    }
+
+    protected void showCoordinates(double x, double y) {
+        Formatter f = new Formatter();
+        f.format("(%.2f, %.2f)", x, y);
+        coordinates.setText("<html><font size=\"-2\">" + f.toString() + "</font></html>");
+    }
 
     protected ImagePane newImagePane() {
         return new EditPane(this);

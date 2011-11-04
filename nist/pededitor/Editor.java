@@ -7,6 +7,7 @@ import java.awt.event.*;
 import java.awt.image.*;
 import java.awt.geom.*;
 import java.net.*;
+import java.util.*;
 import java.io.*;
 
 public class Editor implements CropEventListener {
@@ -18,10 +19,10 @@ public class Editor implements CropEventListener {
 
     protected PolygonTransform originalToPrincipal = null;
     protected PolygonTransform principalToOriginal = null;
-    protected PolygonTransform principalToStandardPage = null;
-    protected PolygonTransform principalToScreen = null;
-    protected PolygonTransform screenToOriginal = null;
-    protected PolygonTransform screenToPrincipal = null;
+    protected Transform2D principalToStandardPage = null;
+    protected Transform2D principalToScreen = null;
+    protected Transform2D screenToPrincipal = null;
+    protected Rectangle2D.Double pageBounds = null;
 
     public String getFilename() {
         return cropFrame.getFilename();
@@ -32,14 +33,14 @@ public class Editor implements CropEventListener {
      */
     public static void main(String[] args) {
     	try {
-    		// The system file chooser looks much nicer, but
-    		// unfortunately the Windows L&F somehow introduces a
-    		// bug in the image drawing in ImagePane (or the
-    		// Windows L&F has a bug of its own).
+            // The system file chooser looks much nicer, but
+            // unfortunately the Windows L&F somehow introduces a
+            // bug in the image drawing in ImagePane (or the
+            // Windows L&F has a bug of its own).
     		
-    		// UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
+            // UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
     	} catch (Exception e){
-    		throw new Error(e);
+            throw new Error(e);
     	}
         EventQueue.invokeLater(new ArgsRunnable(args) {
                 public void run() {
@@ -71,53 +72,147 @@ public class Editor implements CropEventListener {
         int innerHeight = outHeight - margin*2;
         PolygonTransform xform;
 
-        if (cnt == 4) {
-            // Transform the input quadrilateral into a rectangle
-            QuadToRect q = new QuadToRect();
+        double leftMargin = 0.15;
+        double rightMargin = 0.15;
+        double topMargin = 0.15;
+        double bottomMargin = 0.15;
+        double maxPageHeight = 1.0;
+        double maxPageWidth = 1.0;
+        double aspectRatio = 1.0;
 
-            // Vertices are returned in order (LL, UL, UR, LR), but to
-            // make the first vertex correspond to position (xpos,
-            // ypos), you need to swap LL and UL and UR and LR.
+        Point2D.Double[] principalTrianglePoints =
+            { new Point2D.Double(0.0, 0.0),
+              new Point2D.Double(0.0, 100.0),
+              new Point2D.Double(100.0, 0.0) };
 
-            Point2D.Double[] swappedVertices =
-                {vertices[1], vertices[0], vertices[3], vertices[2]};
-            q.setVertices(swappedVertices);
-            q.setRectangle
-                (new Rectangle2D.Double
-                 ((double) margin,
-                  (double) margin,
-                  (double) innerWidth,
-                  (double) innerHeight));
-            q.check();
-            xform = q;
-        } else {
-            // Transform the input triangle into an equilateral triangle
-            final double uth = TriangleTransform.UNIT_TRIANGLE_HEIGHT;
-            double heightRatio = innerHeight / (uth * innerWidth);
-            double width = (heightRatio > 1) ? innerWidth : (innerHeight / uth);
-            double height = width * uth;
-            double xMargin = (outWidth - width)/2;
-            double yMargin = (outHeight - height)/2;
-            Point2D.Double[] outputVertices =
-                { new Point2D.Double(xMargin, outHeight - yMargin),
-                  new Point2D.Double(outWidth / 2.0, yMargin),
-                  new Point2D.Double(outWidth - xMargin, outHeight - yMargin) };
-            TriangleTransform t = new TriangleTransform(vertices, outputVertices);
-            t.check();
-            xform = t;
+        Rescale r;
+
+        switch (diagramType) {
+        case TERNARY_BOTTOM:
+            {
+                double height;
+
+                double defaultHeight = 1.0
+                    - (vertices[1].distance(vertices[2]) / 
+                       vertices[0].distance(vertices[3]));
+                Formatter f = new Formatter();
+                f.format("%.1f", defaultHeight * 100);
+                String initialHeight = f.toString();
+
+                while (true) {
+                    String heightS = (String) JOptionPane.showInputDialog
+                        (null,
+                         "Enter the visual height of the diagram\n" +
+                         "as a percentage of the full triangle height:",
+                         initialHeight);
+                    if (heightS == null) {
+                        height = 50.0;
+                        break;
+                    }
+                    try {
+                        height = Double.valueOf(heightS);
+                    } catch (Exception e) {
+                        JOptionPane.showMessageDialog(null, "Invalid number format.");
+                        continue;
+                    }
+                    break;
+                }
+
+                // The logical coordinates of the four legs of the
+                // trapezoid. These are not normal Cartesian
+                // coordinates, but ternary diagram concentration
+                // values. The first coordinate represents the
+                // percentage of the bottom right corner substance,
+                // and the second coordinate represents the percentage
+                // of the top corner substance. The two coordinate
+                // axes, then, are not visually perpendicular; they
+                // meet to make a 60 degree angle that is the bottom
+                // left corner of the triangle.
+
+                Point2D.Double[] outputVertices =
+                    { new Point2D.Double(0.0, 0.0),
+                      new Point2D.Double(0.0, height),
+                      new Point2D.Double(100.0 - height, height),
+                      new Point2D.Double(100.0, 0.0) };
+                originalToPrincipal = new QuadToQuad(vertices, outputVertices);
+
+                r = new Rescale(1.0, leftMargin + rightMargin, maxPageWidth,
+                                TriangleTransform.UNIT_TRIANGLE_HEIGHT * height/100,
+                                topMargin + bottomMargin, maxPageHeight);
+
+                double rx = r.width - rightMargin;
+                double bottom = r.height - bottomMargin;
+
+                Point2D.Double[] trianglePagePositions =
+                    { new Point2D.Double(leftMargin, bottom),
+                      new Point2D.Double((leftMargin + rx)/2,
+                                         bottom - TriangleTransform.UNIT_TRIANGLE_HEIGHT * r.t),
+                      new Point2D.Double(rx, bottom) };
+                principalToStandardPage = new TriangleTransform
+                    (principalTrianglePoints, trianglePagePositions);
+                break;
+            }
+        case BINARY:
+        case OTHER:
+            {
+                // Transform the input quadrilateral into a rectangle
+                QuadToRect q = new QuadToRect();
+                q.setVertices(vertices);
+                originalToPrincipal = q;
+
+                r = new Rescale(1.0, leftMargin + rightMargin, maxPageWidth,
+                                1.0, topMargin + bottomMargin, maxPageHeight);
+
+                principalToStandardPage = new Affine
+                    (r.t, 0.0,
+                     0.0, -r.t,
+                     leftMargin, 1.0 - bottomMargin);
+                break;
+            }
+        default:
+            {
+                // TODO There's more to do for the partial ternary diagrams.
+                originalToPrincipal = new TriangleTransform
+                    (vertices, principalTrianglePoints);
+
+                r = new Rescale(1.0, leftMargin + rightMargin, maxPageWidth,
+                                TriangleTransform.UNIT_TRIANGLE_HEIGHT, topMargin + bottomMargin,
+                                maxPageHeight);
+                double rx = r.width - rightMargin;
+                double bottom = r.height - bottomMargin;
+
+                Point2D.Double[] trianglePagePositions =
+                    { new Point2D.Double(leftMargin, bottom),
+                      new Point2D.Double((leftMargin + rx)/2,
+                                         bottom - TriangleTransform.UNIT_TRIANGLE_HEIGHT * r.t),
+                      new Point2D.Double(rx, bottom) };
+                principalToStandardPage = new TriangleTransform
+                    (principalTrianglePoints, trianglePagePositions);
+                break;
+            }
         }
+        pageBounds = new Rectangle2D.Double(0.0, 0.0, r.width, r.height);
+        
+        Affine standardPageToScreen = new Affine(800.0, 0.0,
+                                                 0.0, 800.0,
+                                                 0.0, 0.0);
 
-        System.out.println("Transformation is " + xform);
+        principalToScreen = principalToStandardPage.clone();
+        principalToScreen.preConcatenate(standardPageToScreen);
+        PolygonTransform originalToScreen = originalToPrincipal.clone();
+        originalToScreen.preConcatenate(principalToScreen);
+
         BufferedImage output = ImageTransform.run
-            (xform, cropFrame.getImage(), Color.WHITE,
-             new Dimension(outWidth, outHeight));
+            (originalToScreen, cropFrame.getImage(), Color.WHITE,
+             new Dimension(800, 800));
         try {
-            principalToOriginal = (PolygonTransform) xform.createInverse();
+            principalToOriginal = (PolygonTransform)
+                originalToPrincipal.createInverse();
+            screenToPrincipal = (Transform2D) principalToScreen.createInverse();
         } catch (NoninvertibleTransformException e) {
             System.err.println("This transform is not invertible");
             System.exit(2);
         }
-        screenToOriginal = (PolygonTransform) principalToOriginal.clone();
 
         lighten(output);
         editFrame.setImage(output);
@@ -126,7 +221,7 @@ public class Editor implements CropEventListener {
         initializeCrosshairs();
         zoomFrame.getImageZoomPane().crosshairs = crosshairs;
         Polygon poly = new Polygon();
-        for (Point2D.Double pt : xform.outputVertices()) {
+        for (Point2D.Double pt : originalToScreen.outputVertices()) {
             poly.addPoint((int) Math.round(pt.x), (int) Math.round(pt.y));
         }
         editFrame.getEditPane().setDiagramOutline(poly);
@@ -136,9 +231,11 @@ public class Editor implements CropEventListener {
                         double x = e.getX() + 0.5;
                         double y = e.getY() + 0.5;
                         try {
-                            Point2D.Double p = screenToOriginal.transform(x,y);
-                            zoomFrame.setImageFocus((int) Math.floor(p.x),
-                                                    (int) Math.floor(p.y));
+                            Point2D.Double prin = screenToPrincipal.transform(x,y);
+                            editFrame.showCoordinates(prin.x, prin.y);
+                            Point2D.Double orig = principalToOriginal.transform(prin);
+                            zoomFrame.setImageFocus((int) Math.floor(orig.x),
+                                                    (int) Math.floor(orig.y));
                         } catch (UnsolvableException ex) {
                             // Ignore the exception
                         }
@@ -148,8 +245,8 @@ public class Editor implements CropEventListener {
                     }
                 });
         editFrame.pack();
-        Rectangle r = editFrame.getBounds();
-        zoomFrame.setLocation(r.x + r.width, r.y);
+        Rectangle rect = editFrame.getBounds();
+        zoomFrame.setLocation(rect.x + rect.width, rect.y);
         zoomFrame.setTitle("Zoom " + cropFrame.getFilename());
         zoomFrame.pack();
         editFrame.setVisible(true);

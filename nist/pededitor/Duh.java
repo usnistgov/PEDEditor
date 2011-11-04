@@ -316,4 +316,15 @@ public class Duh {
                                         boolean yAxisPointsDown) {
         return sortToPolygon(points.toArray(new Point[0]), yAxisPointsDown);
     }
+
+    /** @return a deep copy of the given array. */
+    public static Point2D.Double[] deepCopy(Point2D.Double[] original) {
+        int length = original.length;
+        Point2D.Double[] output = new Point2D.Double[length];
+        for (int i = 0; i < length; ++i) {
+            Point2D.Double p = original[i];
+            output[i] = new Point2D.Double(p.x, p.y);
+        }
+        return output;
+    }
 }

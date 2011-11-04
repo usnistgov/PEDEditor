@@ -11,8 +11,8 @@ abstract public class PolygonTransformAdapter
         throws UnsolvableException;
     abstract public Transform2D createInverse()
         throws NoninvertibleTransformException;
-    abstract public void concatenate(Transform2D other);
     abstract public void preConcatenate(Transform2D other);
+    abstract public void concatenate(Transform2D other);
 
     public Rectangle2D.Double inputBounds() {
         return Duh.bounds(inputVertices());

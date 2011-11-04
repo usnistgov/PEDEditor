@@ -31,7 +31,7 @@ public class ImageTransform {
 
     /**  The scale of the output is 1 pixel = 1 unit. The minimum x and
          y values are 0 and 0. If those values are not suitable, then
-         concatenate xform with an affine transformation as needed. */
+         preConcatenate xform with an affine transformation as needed. */
     public static BufferedImage run(PolygonTransform xform,
                                     BufferedImage input,
                                     Color background,
@@ -183,7 +183,7 @@ public class ImageTransform {
             Affine af = new Affine();
             af.setToScale((inb.x + inb.width)/input.getWidth(),
                           (inb.y + inb.height)/input.getHeight());
-            xform.preConcatenate(af);
+            xform.concatenate(af);
         }
 
         int outWidth = 800;
@@ -197,7 +197,7 @@ public class ImageTransform {
                                        outHeight/(outb.y + outb.height));
             Affine af = new Affine();
             af.setToScale(outScale, outScale);
-            xform.concatenate(af);
+            xform.preConcatenate(af);
         }
 
         System.out.println(xform);

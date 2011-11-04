@@ -10,13 +10,13 @@ interface Transform2D {
         composition of this transformation with the other
         transformation. May not succeed, and should throw some kind of
         exception in that case. */
-    void concatenate(Transform2D other);
+    void preConcatenate(Transform2D other);
 
     /** Change this transformation into one that represents the
         composition of the other transformation with this
         transformation. May not succeed, and should throw some kind of
         exception in that case. */
-   void preConcatenate(Transform2D other);
+   void concatenate(Transform2D other);
 
     /** @return the transformation of (x,y) as a Point2D.Double */
     Point2D.Double transform(double x, double y) throws UnsolvableException;
@@ -31,5 +31,5 @@ interface Transform2D {
         UnsolvableException. */
     boolean transformNeverThrows();
 
-    Transform2D clone() throws CloneNotSupportedException;
+    Transform2D clone();
 }
