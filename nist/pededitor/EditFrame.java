@@ -98,10 +98,20 @@ public class EditFrame extends ImageScrollFrame {
       // getContentPane().setBorder(new EmptyBorder(5, 5, 5, 5));
    }
 
-    protected void showCoordinates(double x, double y) {
+    protected void showCoordinates(double... coords) {
         Formatter f = new Formatter();
-        f.format("(%.2f, %.2f)", x, y);
-        coordinates.setText("<html><font size=\"-2\">" + f.toString() + "</font></html>");
+        if (coords.length == 0) {
+            f.format("???");
+        } else {
+            for (int i = 0; i < coords.length; ++i) {
+                f.format("%.1f", coords[i]);
+                if (i < coords.length - 1) {
+                    f.format(", ");
+                }
+            }
+        }
+        coordinates.setText("<html><font size=\"-2\">(" + f.toString()
+                            + ")</font></html>");
     }
 
     protected ImagePane newImagePane() {

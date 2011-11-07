@@ -10,48 +10,55 @@ import javax.swing.*;
 
 /** IDs and icons for different types of PEDs */
 public enum DiagramType {
-    BINARY ("images/binaryicon.png", "Binary or Cartesian", 4),
-    TERNARY ("images/triangleicon.png", "Ternary", 3),
+    BINARY ("images/binaryicon.png", "Binary or Cartesian", 4, false),
+    TERNARY ("images/triangleicon.png", "Ternary", 3, true),
     TERNARY_LEFT ("images/leftangleicon.png",
-                  "Partial Ternary -- bottom left corner", 3),
+                  "Partial Ternary -- bottom left corner", 3, true),
     TERNARY_RIGHT ("images/rightangleicon.png",
-                   "Partial ternary -- bottom right corner", 3),
+                   "Partial ternary -- bottom right corner", 3, true),
     TERNARY_TOP ("images/upangleicon.png",
-                 "Partial ternary -- top corner", 3),
+                 "Partial ternary -- top corner", 3, true),
     TERNARY_BOTTOM ("images/trianglebottomicon.png",
-                    "Partial ternary -- top corner missing", 4),
-    OTHER ("images/schematicicon.png", "Schematic/Other", 4);
+                    "Partial ternary -- top corner missing", 4, true),
+        OTHER ("images/schematicicon.png", "Schematic/Other", 4, false);
 
-    private final int vertexCnt;
-    private final URL iconUrl;
-    private Icon icon = null;
-    private String description;
+    private final int mVertexCnt;
+    private final URL mIconUrl;
+    private boolean mIsTernary;
+    private Icon mIcon = null;
+    private String mDescription;
 
-    DiagramType(String imagePath, String description, int vertexCnt) {
-        this.description = description;
-        this.vertexCnt = vertexCnt;
-        iconUrl = DiagramType.class.getResource(imagePath);
-        if (iconUrl == null) {
+    DiagramType(String imagePath, String description, int vertexCnt,
+                boolean isTernary) {
+        this.mDescription = description;
+        this.mVertexCnt = vertexCnt;
+        this.mIsTernary = isTernary;
+        mIconUrl = DiagramType.class.getResource(imagePath);
+        if (mIconUrl == null) {
             throw new IllegalStateException("Could not load " + imagePath);
         }
     }
 
     public Icon getIcon() {
-        if (icon == null) {
-            icon = new ImageIcon(iconUrl);
-            if (icon == null) {
-                throw new IllegalStateException("Could not load " + iconUrl);
+        if (mIcon == null) {
+            mIcon = new ImageIcon(mIconUrl);
+            if (mIcon == null) {
+                throw new IllegalStateException("Could not load " + mIconUrl);
             }
         }
-        return icon;
+        return mIcon;
     }
 
     public String getDescription() {
-        return description;
+        return mDescription;
     }
 
     /** @return the number of vertices in the outline of this diagram. */
     public int getVertexCnt() {
-        return vertexCnt;
+        return mVertexCnt;
+    }
+
+    public boolean isTernary() {
+        return mIsTernary;
     }
 }

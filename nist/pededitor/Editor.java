@@ -23,6 +23,7 @@ public class Editor implements CropEventListener {
     protected Transform2D principalToScreen = null;
     protected Transform2D screenToPrincipal = null;
     protected Rectangle2D.Double pageBounds = null;
+    protected DiagramType diagramType = null;
 
     public String getFilename() {
         return cropFrame.getFilename();
@@ -61,11 +62,11 @@ public class Editor implements CropEventListener {
 
     public void cropPerformed(CropEvent e) {
         Point[] vertices = e.getVertices();
-        editPolygon(vertices, e.getDiagramType());
+        diagramType = e.getDiagramType();
+        editPolygon(vertices);
     }
 
     protected void editPolygon(Point2D.Double[] vertices,
-                               DiagramType diagramType, 
                                int outWidth, int outHeight, int margin) {
         int cnt = vertices.length;
         int innerWidth = outWidth - margin*2;
@@ -232,7 +233,7 @@ public class Editor implements CropEventListener {
                         double y = e.getY() + 0.5;
                         try {
                             Point2D.Double prin = screenToPrincipal.transform(x,y);
-                            editFrame.showCoordinates(prin.x, prin.y);
+                            Editor.this.showCoordinates(prin);
                             Point2D.Double orig = principalToOriginal.transform(prin);
                             zoomFrame.setImageFocus((int) Math.floor(orig.x),
                                                     (int) Math.floor(orig.y));
@@ -253,8 +254,21 @@ public class Editor implements CropEventListener {
         zoomFrame.setVisible(true);
     }
 
-    protected void editPolygon(Point[] verticesIn, DiagramType diagramType) {
-        editPolygon(Duh.toPoint2DDoubles(verticesIn), diagramType,
+    protected void showCoordinates(Point2D.Double point) {
+        if (diagramType.isTernary()) {
+            double z = 100 - point.x - point.y;
+            if (point.x >= 0 && point.y >= 0 && z >= 0) {
+                editFrame.showCoordinates(z, point.y, point.x);
+            } else {
+                editFrame.showCoordinates();
+            }
+        } else {
+            editFrame.showCoordinates(point.x, point.y);
+        }
+    }
+
+    protected void editPolygon(Point[] verticesIn) {
+        editPolygon(Duh.toPoint2DDoubles(verticesIn),
                     800 /* width */, 800 /* height */, 100 /* margin */);
     }
 
