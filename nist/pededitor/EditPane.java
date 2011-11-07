@@ -68,8 +68,8 @@ public class EditPane extends ImagePane {
         return vertices;
     }
 
-    public void paint(Graphics g) {
-        super.paint(g);
+    public void paintComponent(Graphics g) {
+        super.paintComponent(g);
         if (diagramOutline != null) {
             ((Graphics2D) g).draw(diagramOutline);
         }

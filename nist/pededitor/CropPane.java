@@ -311,8 +311,8 @@ public class CropPane extends ImagePane {
         return true;
     }
 
-    public void paint(Graphics g) {
-        super.paint(g);
+    public void paintComponent(Graphics g) {
+        super.paintComponent(g);
 
         DiagramType diagramType = parentFrame.getDiagramType();
         if (diagramType == null)

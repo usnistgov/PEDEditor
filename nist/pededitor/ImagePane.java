@@ -21,7 +21,7 @@ public class ImagePane extends JPanel {
         repaint();
     }
 
-    public void paint(Graphics g) {
+    public void paintComponent(Graphics g) {
         Rectangle drawHere = g.getClipBounds();
         g.setColor(Color.LIGHT_GRAY);
         ((Graphics2D) g).fill(drawHere);
