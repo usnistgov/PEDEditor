@@ -14,16 +14,18 @@ public class Editor implements CropEventListener {
     static protected Image crosshairs = null;
 
     protected CropFrame cropFrame = new CropFrame();
-    protected EditFrame editFrame = new EditFrame();
+    protected EditFrame editFrame = new EditFrame(this);
     protected ImageZoomFrame zoomFrame = new ImageZoomFrame();
 
     protected PolygonTransform originalToPrincipal = null;
     protected PolygonTransform principalToOriginal = null;
+    protected PolygonTransform originalToScreen = null;
     protected Transform2D principalToStandardPage = null;
     protected Transform2D principalToScreen = null;
     protected Transform2D screenToPrincipal = null;
     protected Rectangle2D.Double pageBounds = null;
     protected DiagramType diagramType = null;
+    protected double scale = 800.0;
 
     public String getFilename() {
         return cropFrame.getFilename();
@@ -33,6 +35,7 @@ public class Editor implements CropEventListener {
      * Launch the application.
      */
     public static void main(String[] args) {
+        // sun.java2d.d3d = false;
     	try {
             // The system file chooser looks much nicer, but
             // unfortunately the Windows L&F somehow introduces a
@@ -68,6 +71,7 @@ public class Editor implements CropEventListener {
 
     protected void editPolygon(Point2D.Double[] vertices,
                                int outWidth, int outHeight, int margin) {
+
         int cnt = vertices.length;
         int innerWidth = outWidth - margin*2;
         int innerHeight = outHeight - margin*2;
@@ -107,8 +111,7 @@ public class Editor implements CropEventListener {
                          "as a percentage of the full triangle height:",
                          initialHeight);
                     if (heightS == null) {
-                        height = 50.0;
-                        break;
+                        heightS = initialHeight;
                     }
                     try {
                         height = Double.valueOf(heightS);
@@ -193,39 +196,21 @@ public class Editor implements CropEventListener {
             }
         }
         pageBounds = new Rectangle2D.Double(0.0, 0.0, r.width, r.height);
-        
-        Affine standardPageToScreen = new Affine(800.0, 0.0,
-                                                 0.0, 800.0,
-                                                 0.0, 0.0);
-
-        principalToScreen = principalToStandardPage.clone();
-        principalToScreen.preConcatenate(standardPageToScreen);
-        PolygonTransform originalToScreen = originalToPrincipal.clone();
-        originalToScreen.preConcatenate(principalToScreen);
-
-        BufferedImage output = ImageTransform.run
-            (originalToScreen, cropFrame.getImage(), Color.WHITE,
-             new Dimension(800, 800));
         try {
             principalToOriginal = (PolygonTransform)
                 originalToPrincipal.createInverse();
-            screenToPrincipal = (Transform2D) principalToScreen.createInverse();
         } catch (NoninvertibleTransformException e) {
             System.err.println("This transform is not invertible");
             System.exit(2);
         }
 
-        lighten(output);
-        editFrame.setImage(output);
+        // Force the editor frame image to be initialized.
+        zoomBy(1.0);
+
         editFrame.setTitle("Edit " + diagramType + " " + cropFrame.getFilename());
         zoomFrame.setImage(cropFrame.getImage());
         initializeCrosshairs();
         zoomFrame.getImageZoomPane().crosshairs = crosshairs;
-        Polygon poly = new Polygon();
-        for (Point2D.Double pt : originalToScreen.outputVertices()) {
-            poly.addPoint((int) Math.round(pt.x), (int) Math.round(pt.y));
-        }
-        editFrame.getEditPane().setDiagramOutline(poly);
         editFrame.getImagePane().addMouseMotionListener
             (new MouseAdapter() {
                     public void mouseMoved(MouseEvent e) {
@@ -253,6 +238,48 @@ public class Editor implements CropEventListener {
         editFrame.setVisible(true);
         zoomFrame.setVisible(true);
     }
+
+    /** Equivalent to setScale(getScale() * factor). */
+    void zoomBy(double factor) {
+        setScale(getScale() * factor);
+    }
+
+    /** @return the screen scale of this image relative to a standard
+        page (in which the longer of the two axes has length 1). */
+    double getScale() { return scale; }
+
+    /** Set the screen scale of this image relative to a standard
+        page. */
+    void setScale(double value) {
+        scale = value;
+        Affine standardPageToScreen = new Affine(scale, 0.0,
+                                                 0.0, scale,
+                                                 0.0, 0.0);
+        principalToScreen = principalToStandardPage.clone();
+        principalToScreen.preConcatenate(standardPageToScreen);
+        originalToScreen = originalToPrincipal.clone();
+        originalToScreen.preConcatenate(principalToScreen);
+        BufferedImage output = ImageTransform.run
+            (originalToScreen, cropFrame.getImage(), Color.WHITE,
+             new Dimension((int) Math.ceil(pageBounds.width * scale),
+                           (int) Math.ceil(pageBounds.height * scale)));
+        lighten(output);
+        editFrame.setImage(output);
+
+        try {
+            screenToPrincipal = (Transform2D) principalToScreen.createInverse();
+        } catch (NoninvertibleTransformException e) {
+            System.err.println("This transform is not invertible");
+            System.exit(2);
+        }
+
+        Polygon poly = new Polygon();
+        for (Point2D.Double pt : originalToScreen.outputVertices()) {
+            poly.addPoint((int) Math.round(pt.x), (int) Math.round(pt.y));
+        }
+        editFrame.getEditPane().setDiagramOutline(poly);
+    }
+        
 
     protected void showCoordinates(Point2D.Double point) {
         if (diagramType.isTernary()) {

@@ -9,6 +9,9 @@ import javax.swing.*;
 public class EditFrame extends ImageScrollFrame {
     protected JPanel statusBar;
     protected JLabel coordinates;
+    protected Editor parentEditor;
+
+    public Editor getParentEditor() { return parentEditor; }
 
     abstract class EditFrameAction extends AbstractAction {
         EditFrameAction(String name, int mnemonic, String accelerator) {
@@ -31,7 +34,8 @@ public class EditFrame extends ImageScrollFrame {
    /**
     * Create the frame.
     */
-   public EditFrame() {
+   public EditFrame(Editor parentEditor) {
+       this.parentEditor = parentEditor;
        statusBar = new JPanel();
        coordinates = new JLabel("<html><font size=\"-2\">(?,?)</font></html>");
        statusBar.add(coordinates);
@@ -79,15 +83,15 @@ public class EditFrame extends ImageScrollFrame {
       mnView.add(new EditFrameAction("Zoom In", KeyEvent.VK_I,
                                      "typed +") {
               public void actionPerformed(ActionEvent e) {
-                    // TODO setScale(getScale() * 1.25);
-                }
-            });
+                  getParentEditor().zoomBy(1.5);
+              }
+          });
       mnView.add(new EditFrameAction("Zoom Out", KeyEvent.VK_O,
                                      "typed -") {
               public void actionPerformed(ActionEvent e) {
-                    // TODO setScale(getScale() / 1.25);
-                }
-            });
+                  getParentEditor().zoomBy(1 / 1.5);
+              }
+          });
 		
       JMenu mnHelp = new JMenu("Help");
       menuBar.add(mnHelp);
