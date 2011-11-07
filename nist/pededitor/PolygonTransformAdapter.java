@@ -13,6 +13,7 @@ abstract public class PolygonTransformAdapter
         throws NoninvertibleTransformException;
     abstract public void preConcatenate(Transform2D other);
     abstract public void concatenate(Transform2D other);
+    abstract public PolygonTransformAdapter clone();
 
     public Rectangle2D.Double inputBounds() {
         return Duh.bounds(inputVertices());
