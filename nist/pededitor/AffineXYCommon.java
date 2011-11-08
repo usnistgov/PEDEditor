@@ -65,7 +65,8 @@ abstract public class AffineXYCommon extends Transform2DAdapter
         return xkxy == 0 && ykxy == 0;
     }
 
-    private String plus(double x) {
+    /** Just a dumb helper function for toString(). */
+    private static String plus(double x) {
         if (x > 0) {
             return " + " + x;
         } else {
