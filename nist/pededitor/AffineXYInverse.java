@@ -79,7 +79,7 @@ public class AffineXYInverse extends AffineXYCommon
         throws UnsolvableException {
 
         if (kxy1 != 0) {
-            if (kxy2 == 0) {
+            if (Math.abs(kxy2) < Math.abs(kxy1)) {
                 // Swap *1 <=> *2.
 
                 double tmp;
@@ -87,18 +87,18 @@ public class AffineXYInverse extends AffineXYCommon
                 tmp = kx1; kx1 = kx2; kx2 = tmp;
                 tmp = ky1; ky1 = ky2; ky2 = tmp;
                 tmp = kxy1; kxy1 = kxy2; kxy2 = tmp;
-            } else {
-                // Applying the operator
-                // EQUATION1 := EQUATION1 - kxy1/kxy2 EQUATION2
-
-                // which will transform the first equation so that kxy1 becomes zero
-
-                double rat = -kxy1 / kxy2;
-                k1 += rat * k2;
-                kx1 += rat * kx2;
-                ky1 += rat * ky2;
-                kxy1 = 0;
             }
+
+            // Apply the operator
+            // EQUATION1 := EQUATION1 - kxy1/kxy2 EQUATION2
+
+            // which will transform the first equation so that kxy1 becomes zero
+
+            double rat = -kxy1 / kxy2;
+            k1 += rat * k2;
+            kx1 += rat * kx2;
+            ky1 += rat * ky2;
+            kxy1 = 0;
         }
 
         // Now kxy1 == 0.
@@ -177,6 +177,9 @@ public class AffineXYInverse extends AffineXYCommon
             }
         }
 
+        // Use the stable version of the quadratic formula listed in
+        // the Wikipedia article on "loss of significance".
+
         double discriminant = b2 * b2 - 4 * a * c;
         if (discriminant < 0) {
             return new Point2D.Double[0];
@@ -185,9 +188,10 @@ public class AffineXYInverse extends AffineXYCommon
             Point2D.Double[] points = {new Point2D.Double(x, m*x + b)};
             return transpose(points, swapxy);
         } else {
-            double sq = Math.sqrt(discriminant);
-            double x1 = (-b2 + sq) / 2 / a;
-            double x2 = (-b2 - sq) / 2 / a;
+            double dsqrt = Math.sqrt(discriminant);
+            double x1 = (b2 < 0) ? ((-b2 + dsqrt) / (2 * a))
+                : ((-b2 - dsqrt) / (2 * a));
+            double x2 = c / a / x1;
             Point2D.Double[] points =
                 {new Point2D.Double(x1, m*x1 + b),
                  new Point2D.Double(x2, m*x2 + b)};
