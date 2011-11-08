@@ -10,7 +10,7 @@ import java.net.*;
 import java.util.*;
 import java.io.*;
 
-public class Editor implements CropEventListener {
+public class Editor implements CropEventListener, MouseMotionListener {
     static protected Image crosshairs = null;
 
     protected CropFrame cropFrame = new CropFrame();
@@ -23,6 +23,7 @@ public class Editor implements CropEventListener {
     protected Transform2D principalToStandardPage = null;
     protected Transform2D principalToScreen = null;
     protected Transform2D screenToPrincipal = null;
+    protected Transform2D screenToStandardPage = null;
     protected Rectangle2D.Double pageBounds = null;
     protected DiagramType diagramType = null;
     protected double scale = 800.0;
@@ -35,17 +36,13 @@ public class Editor implements CropEventListener {
      * Launch the application.
      */
     public static void main(String[] args) {
-        // sun.java2d.d3d = false;
-    	try {
-            // The system file chooser looks much nicer, but
-            // unfortunately the Windows L&F somehow introduces a
-            // bug in the image drawing in ImagePane (or the
-            // Windows L&F has a bug of its own).
-    		
-            // UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
-    	} catch (Exception e){
+        // Use java's -Dsun.java2d.d3d=false option to prevent drawing problems.
+
+        try {
+            UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
+        } catch (Exception e) {
             throw new Error(e);
-    	}
+        }
         EventQueue.invokeLater(new ArgsRunnable(args) {
                 public void run() {
                     if (args.length > 1) {
@@ -211,25 +208,7 @@ public class Editor implements CropEventListener {
         zoomFrame.setImage(cropFrame.getImage());
         initializeCrosshairs();
         zoomFrame.getImageZoomPane().crosshairs = crosshairs;
-        editFrame.getImagePane().addMouseMotionListener
-            (new MouseAdapter() {
-                    public void mouseMoved(MouseEvent e) {
-                        double x = e.getX() + 0.5;
-                        double y = e.getY() + 0.5;
-                        try {
-                            Point2D.Double prin = screenToPrincipal.transform(x,y);
-                            Editor.this.showCoordinates(prin);
-                            Point2D.Double orig = principalToOriginal.transform(prin);
-                            zoomFrame.setImageFocus((int) Math.floor(orig.x),
-                                                    (int) Math.floor(orig.y));
-                        } catch (UnsolvableException ex) {
-                            // Ignore the exception
-                        }
-                    }
-                    public void mouseDragged(MouseEvent e) {
-                        mouseMoved(e);
-                    }
-                });
+        editFrame.getImagePane().addMouseMotionListener(this);
         editFrame.pack();
         Rectangle rect = editFrame.getBounds();
         zoomFrame.setLocation(rect.x + rect.width, rect.y);
@@ -237,6 +216,49 @@ public class Editor implements CropEventListener {
         zoomFrame.pack();
         editFrame.setVisible(true);
         zoomFrame.setVisible(true);
+    }
+
+    @Override
+        public void mouseDragged(MouseEvent e) {
+        mouseMoved(e);
+    }
+
+    /** The mouse was moved in the edit window. Update the coordinates
+        in the status bar and update the position in the zoom window. */
+    @Override
+        public void mouseMoved(MouseEvent e) {
+        double x = e.getX() + 0.5;
+        double y = e.getY() + 0.5;
+        StringBuilder status = new StringBuilder("");
+        try {
+            Point2D.Double prin = screenToPrincipal.transform(x,y);
+            if (diagramType.isTernary()) {
+                double z = 100 - prin.x - prin.y;
+                if (prin.x >= 0 && prin.y >= 0 && z >= 0) {
+                    status.append(coordinates(1, z, prin.y, prin.x));
+                } else {
+                    status.append("(???)");
+                }
+            } else if (diagramType == DiagramType.BINARY) {
+                status.append(coordinates(3, prin.x, prin.y));
+            }
+
+            // Update image zoom frame.
+            Point2D.Double orig = principalToOriginal.transform(prin);
+            zoomFrame.setImageFocus((int) Math.floor(orig.x),
+                                    (int) Math.floor(orig.y));
+        } catch (UnsolvableException ex) {
+            // Ignore the exception
+        }
+
+        try {
+            Point2D.Double page = screenToStandardPage.transform(x,y);
+            status.append(" ");
+            status.append(coordinates(3, page.x, page.y));
+        } catch (UnsolvableException ex) {
+            throw new IllegalStateException();
+        }
+        editFrame.setStatus(status.toString());
     }
 
     /** Equivalent to setScale(getScale() * factor). */
@@ -255,6 +277,11 @@ public class Editor implements CropEventListener {
         Affine standardPageToScreen = new Affine(scale, 0.0,
                                                  0.0, scale,
                                                  0.0, 0.0);
+        try {
+            screenToStandardPage = standardPageToScreen.createInverse();
+        } catch (NoninvertibleTransformException e) {
+            throw new IllegalStateException();
+        }
         principalToScreen = principalToStandardPage.clone();
         principalToScreen.preConcatenate(standardPageToScreen);
         originalToScreen = originalToPrincipal.clone();
@@ -279,19 +306,22 @@ public class Editor implements CropEventListener {
         }
         editFrame.getEditPane().setDiagramOutline(poly);
     }
-        
 
-    protected void showCoordinates(Point2D.Double point) {
-        if (diagramType.isTernary()) {
-            double z = 100 - point.x - point.y;
-            if (point.x >= 0 && point.y >= 0 && z >= 0) {
-                editFrame.showCoordinates(z, point.y, point.x);
-            } else {
-                editFrame.showCoordinates();
-            }
+    static String coordinates(int decimalPoints, double... coords) {
+        Formatter f = new Formatter();
+        if (coords.length == 0) {
+            f.format("(???)");
         } else {
-            editFrame.showCoordinates(point.x, point.y);
+            f.format("(");
+            for (int i = 0; i < coords.length; ++i) {
+                f.format("%." + decimalPoints + "f", coords[i]);
+                if (i < coords.length - 1) {
+                    f.format(", ");
+                }
+            }
+            f.format(")");
         }
+        return f.toString();
     }
 
     protected void editPolygon(Point[] verticesIn) {
