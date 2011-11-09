@@ -72,7 +72,6 @@ public class Editor implements CropEventListener, MouseMotionListener {
         int cnt = vertices.length;
         int innerWidth = outWidth - margin*2;
         int innerHeight = outHeight - margin*2;
-        PolygonTransform xform;
 
         double leftMargin = 0.15;
         double rightMargin = 0.15;
@@ -87,7 +86,7 @@ public class Editor implements CropEventListener, MouseMotionListener {
               new Point2D.Double(0.0, 100.0),
               new Point2D.Double(100.0, 0.0) };
 
-        Rescale r;
+        Rescale r = null;
 
         switch (diagramType) {
         case TERNARY_BOTTOM:
@@ -170,22 +169,137 @@ public class Editor implements CropEventListener, MouseMotionListener {
                      leftMargin, 1.0 - bottomMargin);
                 break;
             }
-        default:
+
+        case TERNARY_LEFT:
+        case TERNARY_RIGHT:
+        case TERNARY_TOP:
             {
-                // TODO There's more to do for the partial ternary diagrams.
+                final int LEFT_VERTEX = 0;
+                final int TOP_VERTEX = 1;
+                final int RIGHT_VERTEX = 2;
+
+                final int RIGHT_SIDE = 0;
+                final int BOTTOM_SIDE = 1;
+                final int LEFT_SIDE = 2;
+                String sideNames[] = { "Right", "Bottom", "Left" };
+
+                int angleVertex = diagramType.getTriangleVertexNo();
+                int ov1 = (angleVertex+1) % 3; // Other Vertex #1
+                int ov2 = (angleVertex+2) % 3; // Other Vertex #2
+                int otherVertices[] = { ov1, ov2 };
+
+                double angleSideLengths[] =
+                    { vertices[angleVertex].distance(vertices[ov2]),
+                      vertices[angleVertex].distance(vertices[ov1]) };
+                double maxSideLength = Math.max(angleSideLengths[0],
+                                                angleSideLengths[1]);
+                double pageMaxes[] = { 100.0 * angleSideLengths[0] / maxSideLength,
+                                       100.0 * angleSideLengths[1] / maxSideLength };
+
+                String pageMaxInitialValues[] = new String[pageMaxes.length];
+                for (int i = 0; i < pageMaxes.length; ++i) {
+                    Formatter f = new Formatter();
+                    f.format("%.1f", pageMaxes[i]);
+                    pageMaxInitialValues[i] = f.toString();
+                }
+                DimensionsDialog dialog = new DimensionsDialog
+                    (null, new String[] { sideNames[ov1], sideNames[ov2] });
+                dialog.setDimensions(pageMaxInitialValues);
+                dialog.setTitle("Select Screen Side Lengths");
+
+                while (true) {
+                    String[] pageMaxStrings = dialog.showModal();
+                    if (pageMaxStrings == null) {
+                        pageMaxStrings = (String[]) pageMaxInitialValues.clone();
+                    }
+                    try {
+                        for (int i = 0; i < pageMaxStrings.length; ++i) {
+                            pageMaxes[i] = Double.valueOf(pageMaxStrings[i]);
+                        }
+                    } catch (Exception e) {
+                        JOptionPane.showMessageDialog(null, "Invalid number format.");
+                        continue;
+                    }
+                    break;
+                }
+
+                double[] sideLengths = new double[3];
+                sideLengths[ov1] = pageMaxes[0];
+                sideLengths[ov2] = pageMaxes[1];
+                double leftLength = sideLengths[LEFT_SIDE];
+                double rightLength = sideLengths[RIGHT_SIDE];
+                double bottomLength = sideLengths[BOTTOM_SIDE];
+
+                Point2D.Double[] trianglePoints
+                    = Duh.deepCopy(principalTrianglePoints);
+
+                switch (diagramType) {
+                case TERNARY_LEFT:
+                    trianglePoints[TOP_VERTEX] = new Point2D.Double(0, leftLength);
+                    trianglePoints[RIGHT_VERTEX] = new Point2D.Double(bottomLength, 0);
+                    break;
+                case TERNARY_TOP:
+                    trianglePoints[LEFT_VERTEX]
+                        = new Point2D.Double(0, 100.0 - leftLength);
+                    trianglePoints[RIGHT_VERTEX]
+                        = new Point2D.Double(rightLength, 100.0 - rightLength);
+                    break;
+                case TERNARY_RIGHT:
+                    trianglePoints[LEFT_VERTEX]
+                        = new Point2D.Double(100.0 - bottomLength, 0.0);
+                    trianglePoints[TOP_VERTEX]
+                        = new Point2D.Double(100.0 - rightLength, rightLength);
+                    break;
+                }
+
+                originalToPrincipal = new TriangleTransform(vertices,
+                                                            trianglePoints);
+                System.out.println("o2p = " + originalToPrincipal);
+
+                TriangleTransform xform = new TriangleTransform
+                    (principalTrianglePoints,
+                     TriangleTransform.equilateralTriangleVertices());
+                Point2D.Double[] xformed = {
+                    xform.transform(trianglePoints[0]),
+                    xform.transform(trianglePoints[1]),
+                    xform.transform(trianglePoints[2]) };
+                System.out.println("Xformed: " + Arrays.toString(xformed));
+                double baseWidth = xformed[RIGHT_VERTEX].x
+                    - xformed[LEFT_VERTEX].x;
+                double leftHeight = xformed[TOP_VERTEX].y
+                    - xformed[LEFT_VERTEX].y;
+                double rightHeight = xformed[TOP_VERTEX].y
+                    - xformed[RIGHT_VERTEX].y;
+                double baseHeight = Math.max(leftHeight, rightHeight);
+                r = new Rescale(baseWidth, leftMargin + rightMargin, maxPageWidth,
+                                baseHeight, topMargin + bottomMargin, maxPageHeight);
+                double rx = r.width - rightMargin;
+                double bottom = r.height - bottomMargin;
+
+                Point2D.Double[] trianglePagePositions =
+                    { new Point2D.Double(leftMargin, topMargin + r.t * leftHeight),
+                      new Point2D.Double(leftMargin + r.t * (xformed[1].x - xformed[0].x),
+                                         topMargin),
+                      new Point2D.Double(maxPageWidth - rightMargin, topMargin + r.t * rightHeight) };
+                principalToStandardPage = new TriangleTransform
+                    (trianglePoints, trianglePagePositions);
+                break;
+            }
+        case TERNARY:
+            {
                 originalToPrincipal = new TriangleTransform
                     (vertices, principalTrianglePoints);
 
                 r = new Rescale(1.0, leftMargin + rightMargin, maxPageWidth,
-                                TriangleTransform.UNIT_TRIANGLE_HEIGHT, topMargin + bottomMargin,
+                                TriangleTransform.UNIT_TRIANGLE_HEIGHT,
+                                topMargin + bottomMargin,
                                 maxPageHeight);
                 double rx = r.width - rightMargin;
                 double bottom = r.height - bottomMargin;
 
                 Point2D.Double[] trianglePagePositions =
                     { new Point2D.Double(leftMargin, bottom),
-                      new Point2D.Double((leftMargin + rx)/2,
-                                         bottom - TriangleTransform.UNIT_TRIANGLE_HEIGHT * r.t),
+                      new Point2D.Double((leftMargin + rx)/2, topMargin),
                       new Point2D.Double(rx, bottom) };
                 principalToStandardPage = new TriangleTransform
                     (principalTrianglePoints, trianglePagePositions);
