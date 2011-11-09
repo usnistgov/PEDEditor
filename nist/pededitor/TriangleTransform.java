@@ -14,22 +14,30 @@ public class TriangleTransform
 
     public static final double UNIT_TRIANGLE_HEIGHT = Math.sqrt(3.0) / 2.0;
 
+    public static final Point2D.Double[] equilateralTriangleVertices() {
+        return new Point2D.Double[]
+            { new Point2D.Double(0.,0.),
+              new Point2D.Double(0.5, UNIT_TRIANGLE_HEIGHT),
+              new Point2D.Double(1.0,0.) };
+    }
+
     /** Default: transform from an equilateral triangle with base from
         (0,0) to (1,0) into the same triangle. */
-    Point2D.Double[] inputVerts =
-    { new Point2D.Double(0.,0.),
-      new Point2D.Double(0.5, UNIT_TRIANGLE_HEIGHT),
-      new Point2D.Double(1.0,0.) };
-
-    Point2D.Double[] outputVerts =
-    { new Point2D.Double(0.,0.),
-      new Point2D.Double(0.5, UNIT_TRIANGLE_HEIGHT),
-      new Point2D.Double(1.0,0.) };
+    Point2D.Double[] inputVerts = equilateralTriangleVertices();
+    Point2D.Double[] outputVerts = equilateralTriangleVertices();
 
     public TriangleTransform(TriangleTransform other) {
         super(other);
         inputVerts = Duh.deepCopy(other.inputVerts);
         outputVerts = Duh.deepCopy(other.outputVerts);
+    }
+
+    /** @return a new TriangleTransform that represents the affine
+        transform that transforms the three input vertices inpts[] into
+        the three output vertices outpts[] */
+    public TriangleTransform(Point2D.Double[] inpts, Point2D.Double[] outpts) {
+        setInputVertices(inpts);
+        setOutputVertices(outpts);
     }
 
     public TriangleTransform clone() {
@@ -54,14 +62,6 @@ public class TriangleTransform
         setTransform(m.get(0,0), m.get(0,1),
                      m.get(1,0), m.get(1,1),
                      m.get(2,0), m.get(2,1));
-    }
-
-    /** @return a new TriangleTransform that represents the affine
-     * transform that transforms the three input vertices inpts[] into
-     * the three output vertices outpts[] */
-    public TriangleTransform(Point2D.Double[] inpts, Point2D.Double[] outpts) {
-        setInputVertices(inpts);
-        setOutputVertices(outpts);
     }
 
     public TriangleTransform createInverse() {
