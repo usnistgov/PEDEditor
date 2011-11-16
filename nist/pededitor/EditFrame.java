@@ -31,6 +31,24 @@ public class EditFrame extends ImageScrollFrame {
         }
     }
 
+    /** Class for fine-grain adjustments of the last vertex added. */
+    class AdjustAction extends EditFrameAction {
+        int dx;
+        int dy;
+
+        AdjustAction(String name, int mnemonic, String accelerator,
+                     int dx, int dy) {
+            super(name, mnemonic, accelerator);
+            this.dx = dx;
+            this.dy = dy;
+        }
+
+        @Override
+            public void actionPerformed(ActionEvent e) {
+            getParentEditor().moveLastVertex(dx, dy);
+        }
+    }
+
     /**
      * Create the frame.
      */
@@ -75,7 +93,29 @@ public class EditFrame extends ImageScrollFrame {
 
         JMenu mnEdit = new JMenu("Edit");
         menuBar.add(mnEdit);
-        mnEdit.setEnabled(false);
+
+        mnEdit.add(new EditFrameAction("Delete last vertex", KeyEvent.VK_D,
+                                       "DELETE") {
+                @Override
+                    public void actionPerformed(ActionEvent e) {
+                    getParentEditor().removeCurrentVertex();
+                }
+            });
+
+        mnEdit.addSeparator();
+
+        JMenuItem mnAdjust = new JMenuItem("Adjust");
+        mnAdjust.setEnabled(false);
+        mnEdit.add(mnAdjust);
+
+        AdjustAction[] arrows =
+            { new AdjustAction("Up", KeyEvent.VK_U, "UP", 0, -1),
+              new AdjustAction("Down", KeyEvent.VK_D, "DOWN", 0, 1),
+              new AdjustAction("Left", KeyEvent.VK_L, "LEFT", -1, 0),
+              new AdjustAction("Right", KeyEvent.VK_R, "RIGHT", 1, 0) };
+        for (AdjustAction a : arrows) {
+            mnEdit.add(a);
+        }
 
         JMenu mnView = new JMenu("View");
         menuBar.add(mnView);

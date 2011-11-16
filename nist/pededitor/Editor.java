@@ -36,9 +36,34 @@ public class Editor implements CropEventListener, MouseListener,
         return paths;
     }
 
+    public Point2D.Double getCurrentVertex() {
+        return getCurrentPath().tail();
+    }
+
+    public void removeCurrentVertex() {
+        getCurrentPath().remove();
+        getEditPane().repaint();
+    }
+
+    /** Move the location of the last curve vertex added so that the
+        screen location changes by the given amount. */
+    public void moveLastVertex(int dx, int dy) {
+        Point2D.Double p = getCurrentVertex();
+        if (p != null) {
+            removeCurrentVertex();
+            principalToScreen.transform(p, p);
+            p.x += dx;
+            p.y += dy;
+            screenToPrincipal.transform(p, p);
+            add(p);
+        }
+    }
+
     public void paintEditPane(Graphics g0, Point mousePos) {
 
         Graphics2D g = (Graphics2D) g0;
+        g.setRenderingHint(RenderingHints.KEY_ANTIALIASING,
+                           RenderingHints.VALUE_ANTIALIAS_ON);
 
         g.setColor(Color.BLACK);
 
@@ -84,8 +109,8 @@ public class Editor implements CropEventListener, MouseListener,
         there is none yet, then create it. */
     public GeneralPolyline getCurrentPath() {
         if (paths.size() == 0) {
-            paths.add(new Polyline(new Point2D.Double[0],
-                                   new BasicStroke((float) 0.002,
+            paths.add(new SplinePolyline(new Point2D.Double[0],
+                                   new BasicStroke((float) 0.0012,
                                                    BasicStroke.CAP_ROUND,
                                                    BasicStroke.JOIN_ROUND)));
         }
@@ -101,19 +126,13 @@ public class Editor implements CropEventListener, MouseListener,
     /** Connect the dots in the various paths that have been added to
         this diagram. */
     public void drawPaths(Graphics2D g) {
-        AffineTransform oldTransform = g.getTransform();
-        g.transform(standardPageToScreen);
         for (GeneralPolyline path : paths) {
-            path.draw(g, path.getPath(principalToStandardPage));
+            path.draw(g, path.getPath(principalToScreen), (float) scale);
         }
-        g.setTransform(oldTransform);
     }
 
     void draw(Graphics2D g, GeneralPolyline path) {
-        AffineTransform oldTransform = g.getTransform();
-        g.transform(standardPageToScreen);
-        path.draw(g, path.getPath(principalToStandardPage));
-        g.setTransform(oldTransform);
+        path.draw(g, path.getPath(principalToScreen), (float) scale);
     }
 
     public String getFilename() {
