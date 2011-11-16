@@ -120,8 +120,10 @@ final public class CubicSpline1D {
         return poly[0] + t * (poly[1] + t * (poly[2] + t * poly[3]));
     }
 
+    /** @return the number of segments in this spline, which equals
+        the number of endpoints minus one. */
     public int segmentCnt() {
-        return coefficients.length;
+        return ys.length - 1;
     }
 
     /* Parameterize the entire curve as t in [0,1] and return the
