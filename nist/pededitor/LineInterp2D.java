@@ -7,6 +7,10 @@ import java.util.*;
 
 /** Specialization of GeneralPolyline for vanilla polylines. */
 public class Polyline extends GeneralPolyline {
+    public Polyline(Point2D.Double[] points, BasicStroke stroke) {
+        super(points, stroke);
+    }
+
     public Path2D.Double getPath() {
         int size = points.size();
         Path2D.Double output = new Path2D.Double();
@@ -20,6 +24,24 @@ public class Polyline extends GeneralPolyline {
         for (int i = 1; i < size; ++i) {
             Point2D.Double p = points.get(i);
             output.lineTo(p.x, p.y);
+        }
+        return output;
+    }
+
+    public Path2D.Double getPath(AffineTransform at) {
+        int size = points.size();
+        Path2D.Double output = new Path2D.Double();
+        if (size == 0) {
+            return output;
+        }
+
+        Point2D.Double xpt = new Point2D.Double();
+        at.transform(points.get(0), xpt);
+        output.moveTo(xpt.x, xpt.y);
+
+        for (int i = 1; i < size; ++i) {
+            at.transform(points.get(i), xpt);
+            output.lineTo(xpt.x, xpt.y);
         }
         return output;
     }

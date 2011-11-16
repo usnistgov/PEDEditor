@@ -21,10 +21,29 @@ public abstract class GeneralPolyline {
         this.stroke = stroke;
     }
 
+    /** @return this's corresponding Path2D.Double. */
     abstract public Path2D.Double getPath();
+
+    /** @return a Path2D.Double that corresponds to this polyline's
+        coordinates with the given transformation applied afterwards.
+        If you are using logical coordinates that are not merely a
+        rotation or uniform (along both axes) rescaling of the image
+        you wish to see, then in order to obtain appropriate line
+        widths, transform the path using this method in preference to
+        applying the transform() method to your Graphics2D object, and
+        define your BasicStroke line width to fit the dimensions of
+        the transformed space. */
+    abstract public Path2D.Double getPath(AffineTransform at);
+
+    /** @return either GeneralPolyline.LINEAR or
+        GeneralPolyline.CUBIC_SPLINE. */
     abstract public int getSmoothingType();
 
     public void draw(Graphics2D g) {
+        draw(g, getPath());
+    }
+
+    public void draw(Graphics2D g, Path2D path) {
         Color oldColor = g.getColor();
         Stroke oldStroke = g.getStroke();
 
@@ -35,7 +54,7 @@ public abstract class GeneralPolyline {
         if (stroke != null) {
             g.setStroke(stroke);
         }
-        g.draw(getPath());
+        g.draw(path);
         if (color != null) {
             g.setColor(oldColor);
         }

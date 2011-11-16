@@ -10,7 +10,8 @@ import java.net.*;
 import java.util.*;
 import java.io.*;
 
-public class Editor implements CropEventListener, MouseMotionListener {
+public class Editor implements CropEventListener, MouseListener,
+                               MouseMotionListener {
     static protected Image crosshairs = null;
 
     protected CropFrame cropFrame = new CropFrame();
@@ -20,13 +21,100 @@ public class Editor implements CropEventListener, MouseMotionListener {
     protected PolygonTransform originalToPrincipal = null;
     protected PolygonTransform principalToOriginal = null;
     protected PolygonTransform originalToScreen = null;
-    protected Transform2D principalToStandardPage = null;
-    protected Transform2D principalToScreen = null;
-    protected Transform2D screenToPrincipal = null;
-    protected Transform2D screenToStandardPage = null;
+    protected Affine principalToStandardPage = null;
+    protected Affine principalToScreen = null;
+    protected Affine screenToPrincipal = null;
+    protected Affine screenToStandardPage = null;
+    protected Affine standardPageToScreen = null;
     protected Rectangle2D.Double pageBounds = null;
     protected DiagramType diagramType = null;
     protected double scale = 800.0;
+    protected ArrayList<GeneralPolyline> paths
+        = new ArrayList<GeneralPolyline>();
+
+    ArrayList<GeneralPolyline> getPaths() {
+        return paths;
+    }
+
+    public void paintEditPane(Graphics g0, Point mousePos) {
+
+        Graphics2D g = (Graphics2D) g0;
+
+        g.setColor(Color.BLACK);
+
+        // TODO fix...
+        // if (diagramOutline != null) {
+        // g.draw(diagramOutline);
+        // }
+
+        int pathCnt = paths.size();
+        if (pathCnt == 0) {
+            return;
+        }
+
+        for (int i = 0; i < pathCnt - 1; ++i) {
+            draw(g, paths.get(i));
+        }
+
+        GeneralPolyline lastPath = paths.get(pathCnt-1);
+
+        if (mousePos != null) {
+            g.setColor(Color.RED);
+            Point2D.Double p2d = screenToPrincipal.transform
+                (mousePos.x + 0.5, mousePos.y + 0.5);
+            lastPath.add(p2d);
+            draw(g, lastPath);
+            lastPath.remove();
+        }
+
+        if (lastPath.getSmoothingType() == GeneralPolyline.LINEAR) {
+            g.setColor(Color.BLACK);
+        } else {
+            g.setColor(Color.GREEN);
+        }
+
+        draw(g, lastPath);
+
+        if (lastPath.getSmoothingType() != GeneralPolyline.LINEAR) {
+            g.setColor(Color.BLACK);
+        }
+    }
+
+    /** @return The GeneralPolyline that is currently being edited. If
+        there is none yet, then create it. */
+    public GeneralPolyline getCurrentPath() {
+        if (paths.size() == 0) {
+            paths.add(new Polyline(new Point2D.Double[0],
+                                   new BasicStroke((float) 0.002,
+                                                   BasicStroke.CAP_ROUND,
+                                                   BasicStroke.JOIN_ROUND)));
+        }
+        return paths.get(paths.size() - 1);
+    }
+
+    /** Add a point to getCurrentPath(). */
+    public void add(Point2D.Double point) {
+        getCurrentPath().add(point);
+        getEditPane().repaint();
+    }
+
+    /** Connect the dots in the various paths that have been added to
+        this diagram. */
+    public void drawPaths(Graphics2D g) {
+        AffineTransform oldTransform = g.getTransform();
+        g.transform(standardPageToScreen);
+        for (GeneralPolyline path : paths) {
+            path.draw(g, path.getPath(principalToStandardPage));
+        }
+        g.setTransform(oldTransform);
+    }
+
+    void draw(Graphics2D g, GeneralPolyline path) {
+        AffineTransform oldTransform = g.getTransform();
+        g.transform(standardPageToScreen);
+        path.draw(g, path.getPath(principalToStandardPage));
+        g.setTransform(oldTransform);
+    }
 
     public String getFilename() {
         return cropFrame.getFilename();
@@ -36,9 +124,9 @@ public class Editor implements CropEventListener, MouseMotionListener {
      * Launch the application.
      */
     public static void main(String[] args) {
-        // Use java's -Dsun.java2d.d3d=false option to prevent drawing problems.
-
         try {
+        	// Work-around for a bug that affects EB's PC as of 11/11.
+        	System.setProperty("sun.java2d.d3d", "false");
             UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
         } catch (Exception e) {
             throw new Error(e);
@@ -254,7 +342,6 @@ public class Editor implements CropEventListener, MouseMotionListener {
 
                 originalToPrincipal = new TriangleTransform(vertices,
                                                             trianglePoints);
-                System.out.println("o2p = " + originalToPrincipal);
 
                 TriangleTransform xform = new TriangleTransform
                     (principalTrianglePoints,
@@ -263,7 +350,6 @@ public class Editor implements CropEventListener, MouseMotionListener {
                     xform.transform(trianglePoints[0]),
                     xform.transform(trianglePoints[1]),
                     xform.transform(trianglePoints[2]) };
-                System.out.println("Xformed: " + Arrays.toString(xformed));
                 double baseWidth = xformed[RIGHT_VERTEX].x
                     - xformed[LEFT_VERTEX].x;
                 double leftHeight = xformed[TOP_VERTEX].y
@@ -322,6 +408,7 @@ public class Editor implements CropEventListener, MouseMotionListener {
         zoomFrame.setImage(cropFrame.getImage());
         initializeCrosshairs();
         zoomFrame.getImageZoomPane().crosshairs = crosshairs;
+        editFrame.getImagePane().addMouseListener(this);
         editFrame.getImagePane().addMouseMotionListener(this);
         editFrame.pack();
         Rectangle rect = editFrame.getBounds();
@@ -337,22 +424,51 @@ public class Editor implements CropEventListener, MouseMotionListener {
         mouseMoved(e);
     }
 
+    @Override
+        public void mousePressed(MouseEvent e) {
+        Point2D.Double p2d = screenToPrincipal.transform
+            (e.getX() + 0.5, e.getY() + 0.5);
+        add(p2d);
+    }
+
     /** The mouse was moved in the edit window. Update the coordinates
-        in the status bar and update the position in the zoom window. */
+        in the status bar, update the position in the zoom window, and
+        update the edit window. */
     @Override
         public void mouseMoved(MouseEvent e) {
-        double x = e.getX() + 0.5;
-        double y = e.getY() + 0.5;
+        double sx = e.getX() + 0.5;
+        double sy = e.getY() + 0.5;
         StringBuilder status = new StringBuilder("");
         try {
-            Point2D.Double prin = screenToPrincipal.transform(x,y);
+            Point2D.Double prin = screenToPrincipal.transform(sx,sy);
+            double x = prin.x;
+            double y = prin.y;
+
             if (diagramType.isTernary()) {
-                double z = 100 - prin.x - prin.y;
-                if (prin.x >= 0 && prin.y >= 0 && z >= 0) {
-                    status.append(coordinates(1, z, prin.y, prin.x));
-                } else {
-                    status.append("(???)");
+                double z = 100 - x - y;
+
+                // Coerce out-of-bounds points into the triangle.
+                if (x < 0) {
+                    double ratio = 100 / (100 - x);
+                    x = 0;
+                    y *= ratio;
+                    z *= ratio;
                 }
+
+                if (y < 0) {
+                    double ratio = 100 / (100 - y);
+                    y = 0;
+                    x *= ratio;
+                    z *= ratio;
+                }
+
+                if (z < 0) {
+                    double ratio = 100 / (100 - z);
+                    z = 0;
+                    x *= ratio;
+                    y *= ratio;
+                }
+                status.append(coordinates(1, z, y, x));
             } else if (diagramType == DiagramType.BINARY) {
                 status.append(coordinates(3, prin.x, prin.y));
             }
@@ -365,14 +481,11 @@ public class Editor implements CropEventListener, MouseMotionListener {
             // Ignore the exception
         }
 
-        try {
-            Point2D.Double page = screenToStandardPage.transform(x,y);
-            status.append(" ");
-            status.append(coordinates(3, page.x, page.y));
-        } catch (UnsolvableException ex) {
-            throw new IllegalStateException();
-        }
+        Point2D.Double page = screenToStandardPage.transform(sx,sy);
+		status.append(" ");
+		status.append(coordinates(3, page.x, page.y));
         editFrame.setStatus(status.toString());
+        getEditPane().repaint();
     }
 
     /** Equivalent to setScale(getScale() * factor). */
@@ -388,16 +501,16 @@ public class Editor implements CropEventListener, MouseMotionListener {
         page. */
     void setScale(double value) {
         scale = value;
-        Affine standardPageToScreen = new Affine(scale, 0.0,
-                                                 0.0, scale,
-                                                 0.0, 0.0);
+        standardPageToScreen = new Affine(scale, 0.0,
+                                          0.0, scale,
+                                          0.0, 0.0);
         try {
             screenToStandardPage = standardPageToScreen.createInverse();
         } catch (NoninvertibleTransformException e) {
             throw new IllegalStateException();
         }
         principalToScreen = principalToStandardPage.clone();
-        principalToScreen.preConcatenate(standardPageToScreen);
+        principalToScreen.preConcatenate((Transform2D) standardPageToScreen);
         originalToScreen = originalToPrincipal.clone();
         originalToScreen.preConcatenate(principalToScreen);
         BufferedImage output = ImageTransform.run
@@ -408,7 +521,7 @@ public class Editor implements CropEventListener, MouseMotionListener {
         editFrame.setImage(output);
 
         try {
-            screenToPrincipal = (Transform2D) principalToScreen.createInverse();
+            screenToPrincipal = principalToScreen.createInverse();
         } catch (NoninvertibleTransformException e) {
             System.err.println("This transform is not invertible");
             System.exit(2);
@@ -418,8 +531,10 @@ public class Editor implements CropEventListener, MouseMotionListener {
         for (Point2D.Double pt : originalToScreen.outputVertices()) {
             poly.addPoint((int) Math.round(pt.x), (int) Math.round(pt.y));
         }
-        editFrame.getEditPane().setDiagramOutline(poly);
+        getEditPane().setDiagramOutline(poly);
     }
+
+    EditPane getEditPane() { return editFrame.getEditPane(); }
 
     static String coordinates(int decimalPoints, double... coords) {
         Formatter f = new Formatter();
@@ -494,4 +609,28 @@ public class Editor implements CropEventListener, MouseMotionListener {
     public static void printHelp() {
         System.err.println("Usage: java Editor [<filename>]");
     }
+
+	@Override
+	public void mouseClicked(MouseEvent e) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public void mouseReleased(MouseEvent e) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public void mouseEntered(MouseEvent e) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public void mouseExited(MouseEvent e) {
+		// TODO Auto-generated method stub
+		
+	}
 }
