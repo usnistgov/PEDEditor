@@ -105,11 +105,28 @@ public class TriangleTransform
         update();
     }
 
+    private void concatSub(AffineTransform other, Point2D.Double[] points) {
+    	Point2D.Double xpt = new Point2D.Double();
+        for (Point2D.Double point : points) {
+            other.transform(point, xpt);
+            point.setLocation(xpt.x, xpt.y);
+        }
+        update();
+    }
+
     public void preConcatenate(Transform2D other) {
         concatSub(other, outputVerts);
     }
 
     public void concatenate(Transform2D other) {
+        concatSub(other, inputVerts);
+    }
+
+    public void preConcatenate(AffineTransform other) {
+        concatSub(other, outputVerts);
+    }
+
+    public void concatenate(AffineTransform other) {
         concatSub(other, inputVerts);
     }
 
