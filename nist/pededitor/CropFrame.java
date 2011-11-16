@@ -13,13 +13,12 @@ import javax.swing.filechooser.*;
 import java.util.prefs.*;
 
 /** A frame that displays a scanned image with scrollbars and permits
-    selection of a rectangular, triangular, or quadrilateral cropping
-    region. Clicking three points defines a rectangular region if the
-    three points are laid out roughly in an L-shape, or a triangular
-    region if they are laid out in a roughly equilateral-triangle
-    shape. Clicking a fourth point defines a quadrilateral cropping
-    region. */
+    selection of a cropping region. */
 public class CropFrame extends ImageScrollFrame {
+    /** Name of the preferences key value that identifies the
+        directory from which the last image was pulled, so the file
+        chooser can automatically start in that directory next
+        time. */
     private static final String PREF_DIR = "dir";
 
     static JDialog helpDialog = null;
