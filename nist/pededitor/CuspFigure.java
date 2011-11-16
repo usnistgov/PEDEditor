@@ -63,6 +63,26 @@ public abstract class GeneralPolyline {
         }
     }
 
+    public void draw(Graphics2D g, Path2D path, float scaleStrokeBy) {
+        Color oldColor = g.getColor();
+        Stroke oldStroke = g.getStroke();
+
+        Color color = getColor();
+        if (color != null) {
+            g.setColor(color);
+        }
+        if (stroke != null) {
+            g.setStroke(scaledStroke(stroke, scaleStrokeBy));
+        }
+        g.draw(path);
+        if (color != null) {
+            g.setColor(oldColor);
+        }
+        if (stroke != null) {
+            g.setStroke(oldStroke);
+        }
+    }
+
     public boolean isClosed() {
         return false;
     }
@@ -71,6 +91,24 @@ public abstract class GeneralPolyline {
         stroke. */
     public BasicStroke getStroke() {
         return stroke;
+    }
+
+    /** @return null unless this polyline has been assigned a
+        stroke. */
+    public static BasicStroke scaledStroke(BasicStroke stroke,
+                                          float scaleFactor) {
+        float[] dashes = stroke.getDashArray();
+
+        if (dashes != null) {
+            dashes = (float[]) dashes.clone();
+            for (int i = 0; i < dashes.length; ++i) {
+                dashes[i] *= scaleFactor;
+            }
+        }
+        return new BasicStroke(stroke.getLineWidth() * scaleFactor,
+                               stroke.getEndCap(), stroke.getLineJoin(),
+                               stroke.getMiterLimit(), dashes,
+                               stroke.getDashPhase() * scaleFactor);
     }
 
     /** @return null unless this polyline has been assigned a
@@ -103,7 +141,9 @@ public abstract class GeneralPolyline {
 
     /** Remove the last point added. */
     public void remove() {
-        points.remove(points.size()-1);
+        if (points.size() > 0) {
+            points.remove(points.size()-1);
+        }
     }
 
     public Point2D.Double tail() {
