@@ -12,14 +12,14 @@ final public class CubicSpline2D {
     CubicSpline1D xSpline;
     CubicSpline1D ySpline;
 
-    public CubicSpline2D (Point[] points) {
+    public <T extends Point2D> CubicSpline2D (T[] points) {
         int cnt = points.length;
         double[] xs = new double[cnt];
         double[] ys = new double[cnt];
         for (int i = 0; i < cnt; ++i) {
-            Point p = points[i];
-            xs[i] = p.x;
-            ys[i] = p.y;
+            Point2D p = points[i];
+            xs[i] = p.getX();
+            ys[i] = p.getY();
         }
 
         xSpline = new CubicSpline1D(xs);
@@ -111,13 +111,18 @@ final public class CubicSpline2D {
     }
 
     /** Convert this spline into a Path2D. */
-    Path2D path() {
+    Path2D.Double path() {
         double[] bezx = new double[4];
         double[] bezy = new double[4];
         Path2D.Double path = new Path2D.Double();
-        Point p = Duh.toPoint(getVertex(0));
+        int cnt = segmentCnt();
+        if (cnt < 0) {
+            return path;
+        }
+
+        Point2D.Double p = getVertex(0);
         path.moveTo(p.x, p.y);
-        for (int segment = 0; segment < segmentCnt(); ++segment) {
+        for (int segment = 0; segment < cnt; ++segment) {
             xSpline.bezier(segment, bezx);
             ySpline.bezier(segment, bezy);
             path.curveTo(bezx[1],bezy[1],bezx[2],bezy[2],bezx[3],bezy[3]);
