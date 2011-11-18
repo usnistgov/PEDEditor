@@ -206,7 +206,7 @@ public class CropFrame extends ImageScrollFrame {
             JScrollPane editorScrollPane = new JScrollPane(editorPane);
             editorScrollPane.setPreferredSize(new Dimension(500, 500));
             
-            helpDialog = new JDialog(this, "Crop Window Help");
+            helpDialog = new JDialog(this, "Diagram Selection Help");
             helpDialog.getContentPane().add(editorScrollPane);
             helpDialog.pack();
         }

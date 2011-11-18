@@ -14,13 +14,16 @@ public class EditFrame extends ImageScrollFrame {
     public Editor getParentEditor() { return parentEditor; }
 
     abstract class EditFrameAction extends AbstractAction {
-        EditFrameAction(String name, int mnemonic, String accelerator) {
+        EditFrameAction(String name, int mnemonic, KeyStroke accelerator) {
             super(name);
             if (mnemonic != 0) {
                 putValue(MNEMONIC_KEY, new Integer(mnemonic));
             }
-            putValue(ACCELERATOR_KEY,
-                     KeyStroke.getKeyStroke(accelerator));
+            putValue(ACCELERATOR_KEY, accelerator);
+        }
+
+        EditFrameAction(String name, int mnemonic, String accelerator) {
+            this(name, mnemonic, KeyStroke.getKeyStroke(accelerator));
         }
 
         EditFrameAction(String name, int mnemonic) {
@@ -55,7 +58,8 @@ public class EditFrame extends ImageScrollFrame {
     public EditFrame(Editor parentEditor) {
         this.parentEditor = parentEditor;
         statusBar = new JPanel();
-        statusLabel = new JLabel("<html><font size=\"-2\">(?,?)</font></html>");
+        statusLabel = new JLabel("<html><font size=\"-2\">"
+                                 + "No diagram loaded</font></html>");
         statusBar.add(statusLabel);
         contentPane.add(statusBar, BorderLayout.SOUTH);
 
@@ -65,16 +69,35 @@ public class EditFrame extends ImageScrollFrame {
         JMenu mnFile = new JMenu("File");
         menuBar.add(mnFile);
 
+        mnFile.add(new EditFrameAction("New Diagram", KeyEvent.VK_N) {
+                @Override
+                    public void actionPerformed(ActionEvent e) {
+                    getParentEditor().newDiagram();
+                }
+            });
+
         JMenu mnOpen = new JMenu("Open");
         mnFile.add(mnOpen);
+
+        /**
+        mnOpen.add(new EditFrameAction("Diagram", KeyEvent.VK_D) {
+                @Override
+                    public void actionPerformed(ActionEvent e) {
+                    getParentEditor.openDiagram();
+                }
+            });
+        */
 
         JMenuItem mnDiagram = new JMenuItem("Diagram");
         mnOpen.add(mnDiagram);
         mnDiagram.setEnabled(false);
 
-        JMenuItem mnCropImage = new JMenuItem("Crop image");
-        mnOpen.add(mnCropImage);
-        mnCropImage.setEnabled(false);
+        mnOpen.add(new EditFrameAction("Image for Digitization", KeyEvent.VK_I) {
+                @Override
+                    public void actionPerformed(ActionEvent e) {
+                    getParentEditor().openImage(null);
+                }
+            });
 
         JMenuItem mnPrint = new JMenuItem("Print");
         mnFile.add(mnPrint);
@@ -93,6 +116,40 @@ public class EditFrame extends ImageScrollFrame {
 
         JMenu mnEdit = new JMenu("Edit");
         menuBar.add(mnEdit);
+
+        mnEdit.add(new EditFrameAction("End curve", KeyEvent.VK_E, "typed .") {
+                @Override
+                    public void actionPerformed(ActionEvent e) {
+                    getParentEditor().endCurve();
+                }
+            });
+
+        mnEdit.add(new EditFrameAction
+                   ("Start a new curve connected to the old one",
+                    KeyEvent.VK_S, "typed ,") {
+                @Override
+                    public void actionPerformed(ActionEvent e) {
+                    getParentEditor().startConnectedCurve();
+                }
+            });
+
+        mnEdit.add(new EditFrameAction("Toggle smoothing",
+                                       KeyEvent.VK_T,
+                                       KeyStroke.getKeyStroke('o')) {
+                @Override
+                    public void actionPerformed(ActionEvent e) {
+                    getParentEditor().toggleSmoothing();
+                }
+            });
+
+        mnEdit.add(new EditFrameAction("Cycle active curve",
+                                       KeyEvent.VK_C,
+                                       KeyStroke.getKeyStroke('/')) {
+                @Override
+                    public void actionPerformed(ActionEvent e) {
+                    getParentEditor().cycleActiveCurve();
+                }
+            });
 
         mnEdit.add(new EditFrameAction("Delete last vertex", KeyEvent.VK_D,
                                        "DELETE") {

@@ -1,35 +1,40 @@
 <html>
 
-<p>The cropping window is used to identify the position of a binary or
-ternary phase equilibrium diagram within a scanned page. Open an image
-file using <u>F</u>ile/<u>O</u>pen, click on three or four points to
-identify the diagram boundary, and then press Enter (or select the
-menu option <u>E</u>dit/<u>C</u>rop) when finished.</p>
+<p>The diagram selection window is used to identify the position of a
+diagram within an image. Click on points within the image to identify
+the diagram boundary, and then press Enter (or select the menu option
+<u>E</u>dit/<u>C</u>rop) when finished to select the region outlined
+in <font color="green">green</font>. If no region is outlined in
+green, then you must first click on more points.</p>
 
-<p>Three points that approximate an equilateral triangle select a
-ternary diagram.</p>
-
-<p>Three points that do not approximate an equilateral triangle select
-a rectangle for a binary diagram.</p>
-
-<p>Four points select an arbitrary quadrilateral for a binary diagram.
-The fourth point may be needed for hand-drawn diagrams whose sides are
-not quite parallel.</p>
-
-<p>The <font color="green">green</font> outline (if present) shows the
-currently selected cropping region. The <font color="red">red</font>
-outline (if present) shows the cropping region that would result from
-adding the point under the mouse.</p>
+<p>The green outline (if present) shows the current selection. The
+<font color="red">red</font> outline (if present) shows the selection
+that would result from clicking on the mouse's present location.</p>
 
 <p>The arrow keys move the most recently added cropping point one
 pixel in any direction.</p>
 
 <p>The <b>delete</b> key deletes the last cropping point added.</p>
 
-<p>It is assumed that the scanned page is already oriented
-approximately correctly. If that is not the case -- if the diagram is
-transposed or the page was scanned sideways, for example -- then you
-will need to correct that using an external tool before opening the
-image in the cropping window.</p>
+<p>For binary diagrams, you may click on zero points to select the
+entire image, two points to select a rectangle, three points to select
+a rotated rectangle, or four points to select every vertex of the
+rectangle (for example, for hand-drawn diagrams whose sides are not
+quite parallel).</p>
+
+<p>For most ternary diagrams, you may click on two points to select an
+equilateral triangle or three points to select each vertex of a
+triangle.</p>
+
+<p>For partial ternary diagrams with their tops missing, you must
+select all four vertices of a trapezoidal region. If the left and
+right sides of the partial ternary are not meant to appear even, then
+extend the shorter side of your selection until the two sides are even.</p>
+
+<p>The image's orientation must already be approximately correct,
+instead of upside down or sideways. If the image's orientation is off
+by 45&deg; or more, you may need to correct that using an external
+tool (such as GIMP) before opening the image in the selection
+window.</p>
 
 </html>

@@ -7,6 +7,7 @@ import java.awt.event.*;
 import java.awt.image.*;
 import java.awt.geom.*;
 import java.net.*;
+import java.text.*;
 import java.util.*;
 import java.io.*;
 
@@ -16,32 +17,105 @@ public class Editor implements CropEventListener, MouseListener,
 
     protected CropFrame cropFrame = new CropFrame();
     protected EditFrame editFrame = new EditFrame(this);
-    protected ImageZoomFrame zoomFrame = new ImageZoomFrame();
+    protected ImageZoomFrame zoomFrame = null;
 
-    protected PolygonTransform originalToPrincipal = null;
-    protected PolygonTransform principalToOriginal = null;
-    protected PolygonTransform originalToScreen = null;
-    protected Affine principalToStandardPage = null;
-    protected Affine principalToScreen = null;
-    protected Affine screenToPrincipal = null;
-    protected Affine screenToStandardPage = null;
-    protected Affine standardPageToScreen = null;
-    protected Rectangle2D.Double pageBounds = null;
+    protected PolygonTransform originalToPrincipal;
+    protected PolygonTransform principalToOriginal;
+    protected Affine principalToStandardPage;
+    protected Affine principalToScreen;
+    protected Affine screenToPrincipal;
+    protected Affine screenToStandardPage;
+    protected Affine standardPageToScreen;
+    protected Rectangle2D.Double pageBounds;
+    protected Rectangle screenBounds;
     protected DiagramType diagramType = null;
-    protected double scale = 800.0;
-    protected ArrayList<GeneralPolyline> paths
-        = new ArrayList<GeneralPolyline>();
+    protected double scale;
+    protected ArrayList<GeneralPolyline> paths;
+    protected int activeCurveNo;
+    protected ArrayList<AxisInfo> axes;
+    protected AxisInfo xAxis = null;
+    protected AxisInfo yAxis = null;
+    protected AxisInfo zAxis = null;
+    protected AxisInfo pageXAxis = null;
+    protected AxisInfo pageYAxis = null;
+
+        public Editor() {
+        clear();
+        editFrame.getImagePane().addMouseListener(this);
+        editFrame.getImagePane().addMouseMotionListener(this);
+        cropFrame.addCropEventListener(this);
+    }
+
+    void clear() {
+        originalToPrincipal = null;
+        principalToOriginal = null;
+        principalToStandardPage = null;
+        principalToScreen = null;
+        screenToPrincipal = null;
+        screenToStandardPage = null;
+        standardPageToScreen = null;
+        pageBounds = null;
+        screenBounds = null;
+        scale = 800.0;
+        paths = new ArrayList<GeneralPolyline>();
+        activeCurveNo = -1;
+        axes = new ArrayList<AxisInfo>();
+    }
+
+    /** This variable only determines the type of new curves; existing
+        curves retain their originally assigned smoothing type. */
+    protected int smoothingType = GeneralPolyline.LINEAR;
 
     ArrayList<GeneralPolyline> getPaths() {
         return paths;
     }
 
     public Point2D.Double getCurrentVertex() {
-        return getCurrentPath().tail();
+        return getActiveCurve().tail();
     }
 
+    /** Remove the last vertex of the active curve. */
     public void removeCurrentVertex() {
-        getCurrentPath().remove();
+        if (activeCurveNo == -1) {
+            // Nothing to do.
+            return;
+        }
+
+        GeneralPolyline cur = paths.get(activeCurveNo);
+        int oldVertexCnt = cur.size();
+
+        if (oldVertexCnt > 1) {
+            // Remove the last vertex.
+            cur.remove();
+        } else {
+
+            // Remove the active curve.
+            paths.remove(activeCurveNo);
+            --activeCurveNo;
+            if (activeCurveNo == -1) {
+                activeCurveNo = paths.size() - 1;
+            }
+            
+            if (oldVertexCnt  == 0) {
+                // Keep looking for a vertex to remove.
+                removeCurrentVertex();
+            }
+        }
+
+        getEditPane().repaint();
+    }
+
+    /** Cycle the currently active curve. */
+    public void cycleActiveCurve() {
+        if (activeCurveNo == -1) {
+            // Nothing to do.
+            return;
+        }
+
+        --activeCurveNo;
+        if (activeCurveNo == -1) {
+            activeCurveNo = paths.size() - 1;
+        }
         getEditPane().repaint();
     }
 
@@ -50,18 +124,29 @@ public class Editor implements CropEventListener, MouseListener,
     public void moveLastVertex(int dx, int dy) {
         Point2D.Double p = getCurrentVertex();
         if (p != null) {
-            removeCurrentVertex();
             principalToScreen.transform(p, p);
             p.x += dx;
             p.y += dy;
             screenToPrincipal.transform(p, p);
-            add(p);
+            getCurrentVertex().setLocation(p.x, p.y);
+            getEditPane().repaint();
         }
     }
 
     public void paintEditPane(Graphics g0, Point mousePos) {
 
         Graphics2D g = (Graphics2D) g0;
+
+        if (!tracingImage() && standardPageToScreen != null) {
+            // Print the white rectangular background of the page.
+            g.setColor(Color.WHITE);
+            g.fill(screenBounds);
+        }
+
+        // Disable anti-aliasing for this phase because the
+        // anti-aliasing prevents the green line from precisely
+        // overwriting the red line.
+
         g.setRenderingHint(RenderingHints.KEY_ANTIALIASING,
                            RenderingHints.VALUE_ANTIALIAS_ON);
 
@@ -77,13 +162,23 @@ public class Editor implements CropEventListener, MouseListener,
             return;
         }
 
-        for (int i = 0; i < pathCnt - 1; ++i) {
-            draw(g, paths.get(i));
+        for (int i = 0; i < pathCnt; ++i) {
+            if (i != activeCurveNo) {
+                draw(g, paths.get(i));
+            }
         }
 
-        GeneralPolyline lastPath = paths.get(pathCnt-1);
+        GeneralPolyline lastPath = paths.get(activeCurveNo);
 
         if (mousePos != null) {
+
+            // Disable anti-aliasing for this phase because it
+            // prevents the green line from precisely overwriting the
+            // red line.
+
+            g.setRenderingHint(RenderingHints.KEY_ANTIALIASING,
+                               RenderingHints.VALUE_ANTIALIAS_OFF);
+
             g.setColor(Color.RED);
             Point2D.Double p2d = screenToPrincipal.transform
                 (mousePos.x + 0.5, mousePos.y + 0.5);
@@ -92,35 +187,67 @@ public class Editor implements CropEventListener, MouseListener,
             lastPath.remove();
         }
 
-        if (lastPath.getSmoothingType() == GeneralPolyline.LINEAR) {
-            g.setColor(Color.BLACK);
-        } else {
-            g.setColor(Color.GREEN);
-        }
-
+        g.setColor(Color.GREEN);
         draw(g, lastPath);
-
-        if (lastPath.getSmoothingType() != GeneralPolyline.LINEAR) {
-            g.setColor(Color.BLACK);
-        }
     }
 
     /** @return The GeneralPolyline that is currently being edited. If
         there is none yet, then create it. */
-    public GeneralPolyline getCurrentPath() {
+    public GeneralPolyline getActiveCurve() {
         if (paths.size() == 0) {
-            paths.add(new SplinePolyline(new Point2D.Double[0],
-                                   new BasicStroke((float) 0.0012,
-                                                   BasicStroke.CAP_ROUND,
-                                                   BasicStroke.JOIN_ROUND)));
+            endCurve();
         }
-        return paths.get(paths.size() - 1);
+        return paths.get(activeCurveNo);
     }
 
-    /** Add a point to getCurrentPath(). */
-    public void add(Point2D.Double point) {
-        getCurrentPath().add(point);
+    /** Start a new curve. */
+    void endCurve() {
+        if (paths.size() > 0) {
+            if (paths.get(paths.size() - 1).size() == 0) {
+                // Remove the old empty path.
+                paths.remove(paths.size() - 1);
+            }
+        }
+        paths.add(GeneralPolyline.create
+                  (smoothingType,
+                   new Point2D.Double[0],
+                   new BasicStroke((float) 0.0012,
+                                   BasicStroke.CAP_ROUND,
+                                   BasicStroke.JOIN_ROUND)));
+        activeCurveNo = paths.size() - 1;
         getEditPane().repaint();
+    }
+
+    /** Start a new curve where the old curve ends. */
+    public void startConnectedCurve() {
+        Point2D.Double vertex = getCurrentVertex();
+        endCurve();
+        if (vertex != null) {
+            add(vertex);
+        }
+    }
+
+    /** Add a point to getActiveCurve(). */
+    public void add(Point2D.Double point) {
+        getActiveCurve().add(point);
+        getEditPane().repaint();
+    }
+
+    public void toggleSmoothing() {
+        switch (smoothingType) {
+        case GeneralPolyline.LINEAR:
+            smoothingType = GeneralPolyline.CUBIC_SPLINE;
+            // TODO Check a check mark to indicate smoothing is on.
+            break;
+        case GeneralPolyline.CUBIC_SPLINE:
+            smoothingType = GeneralPolyline.LINEAR;
+            // TODO Uncheck check mark.
+            break;
+        default:
+            throw new IllegalArgumentException
+                ("Unknown smoothingType value " + smoothingType);
+        }
+        startConnectedCurve();
     }
 
     /** Connect the dots in the various paths that have been added to
@@ -144,8 +271,8 @@ public class Editor implements CropEventListener, MouseListener,
      */
     public static void main(String[] args) {
         try {
-        	// Work-around for a bug that affects EB's PC as of 11/11.
-        	System.setProperty("sun.java2d.d3d", "false");
+            // Work-around for a bug that affects EB's PC as of 11/11.
+            System.setProperty("sun.java2d.d3d", "false");
             UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
         } catch (Exception e) {
             throw new Error(e);
@@ -170,15 +297,23 @@ public class Editor implements CropEventListener, MouseListener,
     public void cropPerformed(CropEvent e) {
         Point[] vertices = e.getVertices();
         diagramType = e.getDiagramType();
-        editPolygon(vertices);
+        newDiagram(vertices);
     }
 
-    protected void editPolygon(Point2D.Double[] vertices,
-                               int outWidth, int outHeight, int margin) {
+    /** Start on a blank new diagram. */
+    public void newDiagram() {
+        // TODO Check about saving the old diagram...
+        diagramType = (new DiagramDialog(null)).showModal();
+        newDiagram((Point2D.Double[]) null);
+    }
 
-        int cnt = vertices.length;
-        int innerWidth = outWidth - margin*2;
-        int innerHeight = outHeight - margin*2;
+    protected void newDiagram(Point2D.Double[] vertices) {
+        boolean tracing = (vertices != null);
+        clear();
+
+        if (tracing && zoomFrame == null) {
+            zoomFrame = new ImageZoomFrame();
+        }
 
         double leftMargin = 0.15;
         double rightMargin = 0.15;
@@ -195,14 +330,33 @@ public class Editor implements CropEventListener, MouseListener,
 
         Rescale r = null;
 
+        if (diagramType.isTernary()) {
+            NumberFormat pctFormat = new DecimalFormat("##0.0'%'");
+            xAxis = new XAxisInfo(pctFormat);
+            xAxis.name = "Z";
+            yAxis = new YAxisInfo(pctFormat);
+            zAxis = new ThirdTernaryAxisInfo(pctFormat);
+            zAxis.name = "X";
+            axes.add(zAxis);
+            axes.add(yAxis);
+            axes.add(xAxis);
+        } else {
+            NumberFormat format = new DecimalFormat("##0.0");
+            xAxis = new XAxisInfo(format);
+            yAxis = new YAxisInfo(format);
+            axes.add(xAxis);
+            axes.add(yAxis);
+        }
+
         switch (diagramType) {
         case TERNARY_BOTTOM:
             {
                 double height;
 
-                double defaultHeight = 1.0
-                    - (vertices[1].distance(vertices[2]) / 
-                       vertices[0].distance(vertices[3]));
+                double defaultHeight = !tracing ? 0.45
+                    : (1.0
+                       - (vertices[1].distance(vertices[2]) / 
+                          vertices[0].distance(vertices[3])));
                 Formatter f = new Formatter();
                 f.format("%.1f", defaultHeight * 100);
                 String initialHeight = f.toString();
@@ -241,7 +395,10 @@ public class Editor implements CropEventListener, MouseListener,
                       new Point2D.Double(0.0, height),
                       new Point2D.Double(100.0 - height, height),
                       new Point2D.Double(100.0, 0.0) };
-                originalToPrincipal = new QuadToQuad(vertices, outputVertices);
+
+                if (tracing) {
+                    originalToPrincipal = new QuadToQuad(vertices, outputVertices);
+                }
 
                 r = new Rescale(1.0, leftMargin + rightMargin, maxPageWidth,
                                 TriangleTransform.UNIT_TRIANGLE_HEIGHT * height/100,
@@ -262,13 +419,18 @@ public class Editor implements CropEventListener, MouseListener,
         case BINARY:
         case OTHER:
             {
-                // Transform the input quadrilateral into a rectangle
-                QuadToRect q = new QuadToRect();
-                q.setVertices(vertices);
-                originalToPrincipal = q;
+                Rectangle2D.Double principalBounds
+                    = new Rectangle2D.Double(0.0, 0.0, 100.0, 100.0);
+                if (tracing) {
+                    // Transform the input quadrilateral into a rectangle
+                    QuadToRect q = new QuadToRect();
+                    q.setVertices(vertices);
+                    q.setRectangle(principalBounds);
+                    originalToPrincipal = q;
+                }
 
-                r = new Rescale(1.0, leftMargin + rightMargin, maxPageWidth,
-                                1.0, topMargin + bottomMargin, maxPageHeight);
+                r = new Rescale(100.0, leftMargin + rightMargin, maxPageWidth,
+                                100.0, topMargin + bottomMargin, maxPageHeight);
 
                 principalToStandardPage = new Affine
                     (r.t, 0.0,
@@ -295,13 +457,19 @@ public class Editor implements CropEventListener, MouseListener,
                 int ov2 = (angleVertex+2) % 3; // Other Vertex #2
                 int otherVertices[] = { ov1, ov2 };
 
-                double angleSideLengths[] =
-                    { vertices[angleVertex].distance(vertices[ov2]),
-                      vertices[angleVertex].distance(vertices[ov1]) };
-                double maxSideLength = Math.max(angleSideLengths[0],
-                                                angleSideLengths[1]);
-                double pageMaxes[] = { 100.0 * angleSideLengths[0] / maxSideLength,
-                                       100.0 * angleSideLengths[1] / maxSideLength };
+                double pageMaxes[];
+
+                if (!tracing) {
+                    pageMaxes = new double[] { 100.0, 100.0 };
+                } else {
+                    double angleSideLengths[] =
+                        { vertices[angleVertex].distance(vertices[ov2]),
+                          vertices[angleVertex].distance(vertices[ov1]) };
+                    double maxSideLength = Math.max(angleSideLengths[0],
+                                                    angleSideLengths[1]);
+                    pageMaxes = new double[] { 100.0 * angleSideLengths[0] / maxSideLength,
+                                               100.0 * angleSideLengths[1] / maxSideLength };
+                }
 
                 String pageMaxInitialValues[] = new String[pageMaxes.length];
                 for (int i = 0; i < pageMaxes.length; ++i) {
@@ -359,8 +527,10 @@ public class Editor implements CropEventListener, MouseListener,
                     break;
                 }
 
-                originalToPrincipal = new TriangleTransform(vertices,
-                                                            trianglePoints);
+                if (tracing) {
+                    originalToPrincipal = new TriangleTransform(vertices,
+                                                                trianglePoints);
+                }
 
                 TriangleTransform xform = new TriangleTransform
                     (principalTrianglePoints,
@@ -385,15 +555,18 @@ public class Editor implements CropEventListener, MouseListener,
                     { new Point2D.Double(leftMargin, topMargin + r.t * leftHeight),
                       new Point2D.Double(leftMargin + r.t * (xformed[1].x - xformed[0].x),
                                          topMargin),
-                      new Point2D.Double(maxPageWidth - rightMargin, topMargin + r.t * rightHeight) };
+                      new Point2D.Double(maxPageWidth - rightMargin,
+                                         topMargin + r.t * rightHeight) };
                 principalToStandardPage = new TriangleTransform
                     (trianglePoints, trianglePagePositions);
                 break;
             }
         case TERNARY:
             {
-                originalToPrincipal = new TriangleTransform
-                    (vertices, principalTrianglePoints);
+                if (tracing) {
+                    originalToPrincipal = new TriangleTransform
+                        (vertices, principalTrianglePoints);
+                }
 
                 r = new Rescale(1.0, leftMargin + rightMargin, maxPageWidth,
                                 TriangleTransform.UNIT_TRIANGLE_HEIGHT,
@@ -412,30 +585,62 @@ public class Editor implements CropEventListener, MouseListener,
             }
         }
         pageBounds = new Rectangle2D.Double(0.0, 0.0, r.width, r.height);
-        try {
-            principalToOriginal = (PolygonTransform)
-                originalToPrincipal.createInverse();
-        } catch (NoninvertibleTransformException e) {
-            System.err.println("This transform is not invertible");
-            System.exit(2);
+
+        {
+            NumberFormat format = new DecimalFormat("0.000");
+            pageXAxis = new AffineXAxisInfo(principalToStandardPage, format);
+            pageXAxis.name = "page X";
+            pageYAxis = new AffineYAxisInfo(principalToStandardPage, format);
+            pageYAxis.name = "page Y";
+            axes.add(pageXAxis);
+            axes.add(pageYAxis);
+        }
+
+        if (tracing) {
+            try {
+                principalToOriginal = (PolygonTransform)
+                    originalToPrincipal.createInverse();
+            } catch (NoninvertibleTransformException e) {
+                System.err.println("This transform is not invertible");
+                System.exit(2);
+            }
         }
 
         // Force the editor frame image to be initialized.
         zoomBy(1.0);
 
-        editFrame.setTitle("Edit " + diagramType + " " + cropFrame.getFilename());
-        zoomFrame.setImage(cropFrame.getImage());
-        initializeCrosshairs();
-        zoomFrame.getImageZoomPane().crosshairs = crosshairs;
-        editFrame.getImagePane().addMouseListener(this);
-        editFrame.getImagePane().addMouseMotionListener(this);
+        if (tracing) {
+            editFrame.setTitle("Edit " + diagramType + " "
+                               + cropFrame.getFilename());
+            zoomFrame.setImage(cropFrame.getImage());
+            initializeCrosshairs();
+            zoomFrame.getImageZoomPane().crosshairs = crosshairs;
+        } else {
+            editFrame.setTitle("Edit " + diagramType);
+        }
         editFrame.pack();
         Rectangle rect = editFrame.getBounds();
-        zoomFrame.setLocation(rect.x + rect.width, rect.y);
-        zoomFrame.setTitle("Zoom " + cropFrame.getFilename());
-        zoomFrame.pack();
         editFrame.setVisible(true);
-        zoomFrame.setVisible(true);
+        if (tracing) {
+            zoomFrame.setLocation(rect.x + rect.width, rect.y);
+            zoomFrame.setTitle("Zoom " + cropFrame.getFilename());
+            zoomFrame.pack();
+            zoomFrame.setVisible(true);
+        }
+    }
+
+    public void openImage(String filename) {
+        String title = (filename == null) ? "PED Editor" : filename;
+        editFrame.setTitle(title);
+
+        if (filename == null) {
+            cropFrame.showOpenDialog();
+        } else {
+            cropFrame.setFilename(filename);
+        }
+
+        cropFrame.pack();
+        cropFrame.setVisible(true);
     }
 
     @Override
@@ -445,66 +650,58 @@ public class Editor implements CropEventListener, MouseListener,
 
     @Override
         public void mousePressed(MouseEvent e) {
+        if (screenToPrincipal == null) {
+            return;
+        }
         Point2D.Double p2d = screenToPrincipal.transform
             (e.getX() + 0.5, e.getY() + 0.5);
         add(p2d);
     }
 
+    /** @return true if the diagram is currently being traced from
+        another image. */
+    boolean tracingImage() {
+        return originalToPrincipal != null;
+    }
+
     /** The mouse was moved in the edit window. Update the coordinates
-        in the status bar, update the position in the zoom window, and
-        update the edit window. */
+        in the edit window status bar, repaint the diagram, and update
+        the position in the zoom window,. */
     @Override
         public void mouseMoved(MouseEvent e) {
+        if (screenToPrincipal == null) {
+            return;
+        }
+
         double sx = e.getX() + 0.5;
         double sy = e.getY() + 0.5;
         StringBuilder status = new StringBuilder("");
-        try {
-            Point2D.Double prin = screenToPrincipal.transform(sx,sy);
-            double x = prin.x;
-            double y = prin.y;
 
-            if (diagramType.isTernary()) {
-                double z = 100 - x - y;
-
-                // Coerce out-of-bounds points into the triangle.
-                if (x < 0) {
-                    double ratio = 100 / (100 - x);
-                    x = 0;
-                    y *= ratio;
-                    z *= ratio;
-                }
-
-                if (y < 0) {
-                    double ratio = 100 / (100 - y);
-                    y = 0;
-                    x *= ratio;
-                    z *= ratio;
-                }
-
-                if (z < 0) {
-                    double ratio = 100 / (100 - z);
-                    z = 0;
-                    x *= ratio;
-                    y *= ratio;
-                }
-                status.append(coordinates(1, z, y, x));
-            } else if (diagramType == DiagramType.BINARY) {
-                status.append(coordinates(3, prin.x, prin.y));
+        Point2D.Double prin = screenToPrincipal.transform(sx,sy);
+        boolean first = true;
+        for (AxisInfo axis : axes) {
+            if (first) {
+                first = false;
+            } else {
+                status.append(",  ");
             }
-
-            // Update image zoom frame.
-            Point2D.Double orig = principalToOriginal.transform(prin);
-            zoomFrame.setImageFocus((int) Math.floor(orig.x),
-                                    (int) Math.floor(orig.y));
-        } catch (UnsolvableException ex) {
-            // Ignore the exception
+            status.append(axis.name.toString());
+            status.append(" = ");
+            status.append(axis.valueAsString(prin.x, prin.y));
         }
-
-        Point2D.Double page = screenToStandardPage.transform(sx,sy);
-		status.append(" ");
-		status.append(coordinates(3, page.x, page.y));
         editFrame.setStatus(status.toString());
         getEditPane().repaint();
+            
+        if (tracingImage()) {
+            try {
+                // Update image zoom frame.
+                Point2D.Double orig = principalToOriginal.transform(prin);
+                zoomFrame.setImageFocus((int) Math.floor(orig.x),
+                                        (int) Math.floor(orig.y));
+            } catch (UnsolvableException ex) {
+                // Ignore the exception
+            }
+        }
     }
 
     /** Equivalent to setScale(getScale() * factor). */
@@ -520,9 +717,30 @@ public class Editor implements CropEventListener, MouseListener,
         page. */
     void setScale(double value) {
         scale = value;
+        if (principalToStandardPage == null) {
+            return;
+        }
         standardPageToScreen = new Affine(scale, 0.0,
                                           0.0, scale,
                                           0.0, 0.0);
+
+        {
+            Point2D.Double p1
+                = standardPageToScreen.transform(pageBounds.x, pageBounds.y);
+            Point2D.Double p2 = standardPageToScreen.transform
+                (pageBounds.x + pageBounds.width,
+                 pageBounds.y + pageBounds.height);
+            int x = (int) Math.floor(p1.x);
+            int y = (int) Math.floor(p1.y);
+            screenBounds = new Rectangle(x, y,
+                                         (int) Math.ceil(p2.x) - x,
+                                         (int) Math.ceil(p2.y) - y);
+            getEditPane().setPreferredSize
+                (new Dimension(screenBounds.x + screenBounds.width,
+                               screenBounds.y + screenBounds.height));
+            getEditPane().revalidate();
+        }
+
         try {
             screenToStandardPage = standardPageToScreen.createInverse();
         } catch (NoninvertibleTransformException e) {
@@ -530,14 +748,17 @@ public class Editor implements CropEventListener, MouseListener,
         }
         principalToScreen = principalToStandardPage.clone();
         principalToScreen.preConcatenate((Transform2D) standardPageToScreen);
-        originalToScreen = originalToPrincipal.clone();
-        originalToScreen.preConcatenate(principalToScreen);
-        BufferedImage output = ImageTransform.run
-            (originalToScreen, cropFrame.getImage(), Color.WHITE,
-             new Dimension((int) Math.ceil(pageBounds.width * scale),
-                           (int) Math.ceil(pageBounds.height * scale)));
-        lighten(output);
-        editFrame.setImage(output);
+        if (originalToPrincipal != null) {
+            PolygonTransform originalToScreen = originalToPrincipal.clone();
+            originalToScreen.preConcatenate(principalToScreen);
+            BufferedImage output = ImageTransform.run
+                (originalToScreen, cropFrame.getImage(), Color.WHITE,
+                 new Dimension((int) Math.ceil(pageBounds.width * scale),
+                               (int) Math.ceil(pageBounds.height * scale)));
+            lighten(output);
+            editFrame.setImage(output);
+        }
+        editFrame.repaint();
 
         try {
             screenToPrincipal = principalToScreen.createInverse();
@@ -545,38 +766,23 @@ public class Editor implements CropEventListener, MouseListener,
             System.err.println("This transform is not invertible");
             System.exit(2);
         }
-
-        Polygon poly = new Polygon();
-        for (Point2D.Double pt : originalToScreen.outputVertices()) {
-            poly.addPoint((int) Math.round(pt.x), (int) Math.round(pt.y));
-        }
-        getEditPane().setDiagramOutline(poly);
     }
 
     EditPane getEditPane() { return editFrame.getEditPane(); }
 
-    static String coordinates(int decimalPoints, double... coords) {
+    static String format(double d, int decimalPoints) {
         Formatter f = new Formatter();
-        if (coords.length == 0) {
-            f.format("(???)");
-        } else {
-            f.format("(");
-            for (int i = 0; i < coords.length; ++i) {
-                f.format("%." + decimalPoints + "f", coords[i]);
-                if (i < coords.length - 1) {
-                    f.format(", ");
-                }
-            }
-            f.format(")");
-        }
+        f.format("%." + decimalPoints + "f", d);
         return f.toString();
     }
 
-    protected void editPolygon(Point[] verticesIn) {
-        editPolygon(Duh.toPoint2DDoubles(verticesIn),
-                    800 /* width */, 800 /* height */, 100 /* margin */);
+    protected void newDiagram(Point[] verticesIn) {
+        newDiagram((verticesIn == null) ? null
+                   : Duh.toPoint2DDoubles(verticesIn));
     }
 
+    /** Compress the brightness into the upper third of the range
+        0..255. */
     static int lighten1(int i) {
         return 255 - (255 - i)/3;
     }
@@ -596,18 +802,9 @@ public class Editor implements CropEventListener, MouseListener,
     }
 
     public void run(String filename) {
-        String title = (filename == null) ? "PED Editor" : filename;
-        editFrame.setTitle(title);
-
-        if (filename == null) {
-            cropFrame.showOpenDialog();
-        } else {
-            cropFrame.setFilename(filename);
-        }
-
-        cropFrame.addCropEventListener(this);
-        cropFrame.pack();
-        cropFrame.setVisible(true);
+        editFrame.setTitle("Phase Equilibria Diagram Editor");
+        editFrame.pack();
+        editFrame.setVisible(true);
     }
 
     public static void initializeCrosshairs() {
@@ -629,27 +826,23 @@ public class Editor implements CropEventListener, MouseListener,
         System.err.println("Usage: java Editor [<filename>]");
     }
 
-	@Override
-	public void mouseClicked(MouseEvent e) {
-		// TODO Auto-generated method stub
-		
-	}
+    @Override
+        public void mouseClicked(MouseEvent e) {
+        // TODO Auto-generated method stub
+    }
 
-	@Override
-	public void mouseReleased(MouseEvent e) {
-		// TODO Auto-generated method stub
-		
-	}
+    @Override
+        public void mouseReleased(MouseEvent e) {
+        // TODO Auto-generated method stub
+    }
 
-	@Override
-	public void mouseEntered(MouseEvent e) {
-		// TODO Auto-generated method stub
-		
-	}
+    @Override
+        public void mouseEntered(MouseEvent e) {
+        // TODO Auto-generated method stub
+    }
 
-	@Override
-	public void mouseExited(MouseEvent e) {
-		// TODO Auto-generated method stub
-		
-	}
+    @Override
+        public void mouseExited(MouseEvent e) {
+        // TODO Auto-generated method stub
+    }
 }

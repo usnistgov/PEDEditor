@@ -21,6 +21,20 @@ public abstract class GeneralPolyline {
         this.stroke = stroke;
     }
 
+    /** @return a new GeneralPolyline of the given type. */
+    static public GeneralPolyline create(int smoothingType, Point2D.Double[] points,
+                         BasicStroke stroke) {
+        switch (smoothingType) {
+        case LINEAR:
+            return new Polyline(points, stroke);
+        case CUBIC_SPLINE:
+            return new SplinePolyline(points, stroke);
+        default:
+            throw new IllegalArgumentException
+                ("Unknown smoothingType value " + smoothingType);
+        }
+    }
+
     /** @return this's corresponding Path2D.Double. */
     abstract public Path2D.Double getPath();
 
@@ -160,6 +174,6 @@ public abstract class GeneralPolyline {
         return "Not implemented";
     }
 
-    public static int LINEAR = 0;
-    public static int CUBIC_SPLINE = 1;
+    public static final int LINEAR = 0;
+    public static final int CUBIC_SPLINE = 1;
 }
