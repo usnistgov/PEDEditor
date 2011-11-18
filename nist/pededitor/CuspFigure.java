@@ -149,8 +149,18 @@ public abstract class GeneralPolyline {
         return points.toArray(new Point2D.Double[0]);
     }
 
+    public Point2D.Double get(int vertexNo) {
+        return (Point2D.Double) points.get(vertexNo).clone();
+    }
+
+    /** Add the point to the end of the polyline. */
     public void add(Point2D.Double point) {
         points.add(point);
+    }
+
+    /** Add the point to the polyline in the given position. */
+    public void add(int index, Point2D.Double point) {
+        points.add(index, point);
     }
 
     /** Remove the last point added. */
@@ -158,6 +168,16 @@ public abstract class GeneralPolyline {
         if (points.size() > 0) {
             points.remove(points.size()-1);
         }
+    }
+
+    /** Remove the given vertex. */
+    public void remove(int vertexNo) {
+        points.remove(vertexNo);
+    }
+
+    /** Replace the given vertex, which must exist. */
+    public void set(int vertexNo, Point2D.Double point) {
+        points.set(vertexNo, point);
     }
 
     public Point2D.Double tail() {

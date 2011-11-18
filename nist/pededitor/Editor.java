@@ -11,6 +11,10 @@ import java.text.*;
 import java.util.*;
 import java.io.*;
 
+// TODO Keep center of scroll pane fixed relative to the image when
+// zooming into a new diagram.
+
+/** Main driver class for Phase Equilibria Diagram digitization and creation. */
 public class Editor implements CropEventListener, MouseListener,
                                MouseMotionListener {
     static protected Image crosshairs = null;
@@ -22,6 +26,7 @@ public class Editor implements CropEventListener, MouseListener,
     protected PolygonTransform originalToPrincipal;
     protected PolygonTransform principalToOriginal;
     protected Affine principalToStandardPage;
+    protected Affine standardPageToPrincipal;
     protected Affine principalToScreen;
     protected Affine screenToPrincipal;
     protected Affine screenToStandardPage;
@@ -32,6 +37,7 @@ public class Editor implements CropEventListener, MouseListener,
     protected double scale;
     protected ArrayList<GeneralPolyline> paths;
     protected int activeCurveNo;
+    protected int activeVertexNo;
     protected ArrayList<AxisInfo> axes;
     protected AxisInfo xAxis = null;
     protected AxisInfo yAxis = null;
@@ -50,6 +56,7 @@ public class Editor implements CropEventListener, MouseListener,
         originalToPrincipal = null;
         principalToOriginal = null;
         principalToStandardPage = null;
+        standardPageToPrincipal = null;
         principalToScreen = null;
         screenToPrincipal = null;
         screenToStandardPage = null;
@@ -70,14 +77,14 @@ public class Editor implements CropEventListener, MouseListener,
         return paths;
     }
 
-    public Point2D.Double getCurrentVertex() {
-        return getActiveCurve().tail();
+    public Point2D.Double getActiveVertex() {
+        return (activeVertexNo == -1) ? null
+            : getActiveCurve().get(activeVertexNo);
     }
 
-    /** Remove the last vertex of the active curve. */
+    /** Remove the current vertex. */
     public void removeCurrentVertex() {
         if (activeCurveNo == -1) {
-            // Nothing to do.
             return;
         }
 
@@ -85,8 +92,12 @@ public class Editor implements CropEventListener, MouseListener,
         int oldVertexCnt = cur.size();
 
         if (oldVertexCnt > 1) {
-            // Remove the last vertex.
-            cur.remove();
+            if (activeVertexNo == -1) {
+                activeVertexNo = 0;
+            }
+
+            cur.remove(activeVertexNo);
+            --activeVertexNo;
         } else {
 
             // Remove the active curve.
@@ -94,6 +105,12 @@ public class Editor implements CropEventListener, MouseListener,
             --activeCurveNo;
             if (activeCurveNo == -1) {
                 activeCurveNo = paths.size() - 1;
+            }
+
+            if (activeCurveNo >= 0) {
+                activeVertexNo = paths.get(activeCurveNo).size() - 1;
+            } else {
+                activeVertexNo = -1;
             }
             
             if (oldVertexCnt  == 0) {
@@ -122,13 +139,13 @@ public class Editor implements CropEventListener, MouseListener,
     /** Move the location of the last curve vertex added so that the
         screen location changes by the given amount. */
     public void moveLastVertex(int dx, int dy) {
-        Point2D.Double p = getCurrentVertex();
+        Point2D.Double p = getActiveVertex();
         if (p != null) {
             principalToScreen.transform(p, p);
             p.x += dx;
             p.y += dy;
             screenToPrincipal.transform(p, p);
-            getCurrentVertex().setLocation(p.x, p.y);
+            getActiveCurve().set(activeVertexNo, p);
             getEditPane().repaint();
         }
     }
@@ -215,12 +232,13 @@ public class Editor implements CropEventListener, MouseListener,
                                    BasicStroke.CAP_ROUND,
                                    BasicStroke.JOIN_ROUND)));
         activeCurveNo = paths.size() - 1;
+        activeVertexNo = -1;
         getEditPane().repaint();
     }
 
     /** Start a new curve where the old curve ends. */
     public void startConnectedCurve() {
-        Point2D.Double vertex = getCurrentVertex();
+        Point2D.Double vertex = getActiveVertex();
         endCurve();
         if (vertex != null) {
             add(vertex);
@@ -229,8 +247,91 @@ public class Editor implements CropEventListener, MouseListener,
 
     /** Add a point to getActiveCurve(). */
     public void add(Point2D.Double point) {
-        getActiveCurve().add(point);
+        getActiveCurve().add(++activeVertexNo, point);
         getEditPane().repaint();
+    }
+
+    /** Like add(), but instead add the previously added point that is
+        nearest to the mouse pointer as measured by distance on the
+        standard page. */
+    public void addNearestPoint() {
+        if (screenToPrincipal == null) {
+            return;
+        }
+
+        Point mpos = getEditPane().getMousePosition();
+
+        if (mpos == null) {
+            return;
+        }
+
+        /** Location of the mouse on the standard page: */
+        Point2D.Double xpoint = screenToStandardPage.transform
+            (mpos.x + 0.5, mpos.y + 0.5);
+
+        Point2D.Double nearPoint = null;
+        Point2D.Double xpoint2 = new Point2D.Double();
+        double minDistSq = 0;
+
+        for (GeneralPolyline path : paths) {
+            for (Point2D.Double point : path.getPoints()) {
+                principalToStandardPage.transform(point, xpoint2);
+                double distSq = xpoint.distanceSq(xpoint2);
+                if (nearPoint == null || distSq < minDistSq) {
+                    nearPoint = point;
+                    minDistSq = distSq;
+                }
+            }
+        }
+
+        add(nearPoint);
+    }
+
+    /** Like add(), but instead add the point on a previously added
+        segment that is nearest to the mouse pointer as measured by
+        distance on the standard page. */
+    public void addNearestSegment() {
+        if (screenToPrincipal == null) {
+            return;
+        }
+
+        Point mpos = getEditPane().getMousePosition();
+
+        if (mpos == null) {
+            return;
+        }
+
+        /** Location of the mouse on the standard page: */
+        Point2D.Double xpoint = screenToStandardPage.transform
+            (mpos.x + 0.5, mpos.y + 0.5);
+
+        Point2D.Double nearPoint = null;
+        Point2D.Double xpoint2 = new Point2D.Double();
+        Point2D.Double xpoint3 = new Point2D.Double();
+        double minDistSq = 0;
+
+        for (GeneralPolyline path : paths) {
+            if (path.getSmoothingType() != GeneralPolyline.LINEAR) {
+                continue;
+            }
+
+            Point2D.Double[] points = path.getPoints();
+
+            for (int i = 0; i < points.length - 1; ++i) {
+                principalToStandardPage.transform(points[i], xpoint2);
+                principalToStandardPage.transform(points[i+1], xpoint3);
+                Point2D.Double point = Duh.nearestPointOnSegment
+                    (xpoint, xpoint2, xpoint3);
+                double distSq = xpoint.distanceSq(point);
+                if (nearPoint == null || distSq < minDistSq) {
+                    standardPageToPrincipal.transform(point, point);
+                    nearPoint = point;
+                    minDistSq = distSq;
+                }
+            }
+        }
+
+        add(nearPoint);
     }
 
     public void toggleSmoothing() {
@@ -585,6 +686,12 @@ public class Editor implements CropEventListener, MouseListener,
             }
         }
         pageBounds = new Rectangle2D.Double(0.0, 0.0, r.width, r.height);
+        try {
+            standardPageToPrincipal = principalToStandardPage.createInverse();
+        } catch (NoninvertibleTransformException e) {
+            System.err.println("This transform is not invertible");
+            System.exit(2);
+        }
 
         {
             NumberFormat format = new DecimalFormat("0.000");

@@ -125,11 +125,31 @@ public class EditFrame extends ImageScrollFrame {
             });
 
         mnEdit.add(new EditFrameAction
-                   ("Start a new curve connected to the old one",
+                   ("Start a new curve connected to active point",
                     KeyEvent.VK_S, "typed ,") {
                 @Override
                     public void actionPerformed(ActionEvent e) {
                     getParentEditor().startConnectedCurve();
+                }
+            });
+
+        mnEdit.add(new EditFrameAction
+                   ("Reinsert closest previously added point",
+                    KeyEvent.VK_R,
+                    KeyStroke.getKeyStroke('=')) {
+                @Override
+                    public void actionPerformed(ActionEvent e) {
+                    getParentEditor().addNearestPoint();
+                }
+            });
+
+        mnEdit.add(new EditFrameAction
+                   ("Add nearest point on a line segment",
+                    KeyEvent.VK_L,
+                    KeyStroke.getKeyStroke('_')) {
+                @Override
+                    public void actionPerformed(ActionEvent e) {
+                    getParentEditor().addNearestSegment();
                 }
             });
 

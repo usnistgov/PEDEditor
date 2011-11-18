@@ -327,4 +327,30 @@ public class Duh {
         }
         return output;
     }
+
+    /** @return the point on segment p1p2 that is nearest to p0. */
+    public static Point2D.Double nearestPointOnSegment
+        (Point2D p0, Point2D p1, Point2D p2) {
+        double dx = p2.getX() - p1.getX();
+        double dy = p2.getY() - p1.getY();
+        double dx2 = p0.getX() - p1.getX();
+        double dy2 = p0.getY() - p1.getY();
+        double dot = dx * dx2 + dy * dy2;
+        if (dot < 0) {
+            return (Point2D.Double) p1.clone();
+        }
+
+        double p1p2LengthSq = dx * dx + dy * dy;
+        dot /= p1p2LengthSq;
+
+        // Now dot equals the ratio of the distance between p1 and the
+        // projection of p0 onto p1p2 to the distance between p1 and
+        // p2.
+
+        if (dot < 1.0) {
+            return new Point2D.Double(p1.getX() + dx * dot, p1.getY() + dy * dot);
+        } else {
+            return (Point2D.Double) p2.clone();
+        }
+    }
 }
