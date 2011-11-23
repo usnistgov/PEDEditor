@@ -15,7 +15,7 @@ public class SplinePolyline extends GeneralPolyline {
         return (new CubicSpline2D(points.toArray(new Point2D.Double[0]))).path();
     }
 
-    public Path2D.Double getPath(AffineTransform at) {
+    public CubicSpline2D getSpline(AffineTransform at) {
         Point2D.Double[] xpoints = Duh.deepCopy
             (points.toArray(new Point2D.Double[0]));
         Point2D.Double xpt = new Point2D.Double();
@@ -23,7 +23,11 @@ public class SplinePolyline extends GeneralPolyline {
             at.transform(point, xpt);
             point.setLocation(xpt.x, xpt.y);
         }
-        return (new CubicSpline2D(xpoints)).path();
+        return new CubicSpline2D(xpoints);
+    }
+
+    public Path2D.Double getPath(AffineTransform at) {
+        return getSpline(at).path();
     }
 
     public int getSmoothingType() {

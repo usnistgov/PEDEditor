@@ -204,6 +204,32 @@ public class Duh {
                                       maxX(points) - mx, maxY(points) - my);
     }
 
+    /** @return the distance between p and the nearest point on rect.
+        The return value will be 0 if p is in rect. */
+    public static double distanceSq(Point2D p, Rectangle2D rect) {
+        double min;
+        double max;
+        double x0 = p.getX();
+        double x1 = (x0 > rect.getMaxX()) ? rect.getMaxX()
+            : (x0 < rect.getMinX()) ? rect.getMinX()
+            : x0;
+        double y0 = p.getY();
+        double y1 = (y0 > rect.getMaxY()) ? rect.getMaxY()
+            : (y0 < rect.getMinY()) ? rect.getMinY()
+            : y0;
+
+        double dx = x1 - x0;
+        double dy = y1 - y0;
+
+        return dx * dx + dy * dy;
+    }
+
+    /** @return the distance between p and the nearest point on rect.
+        The return value will be 0 if p is in rect. */
+    public static double distance(Point2D p, Rectangle2D rect) {
+        return Math.sqrt(distanceSq(p, rect));
+    }
+
     /* @see sortIndices()
 
        Sort the given vertices in place into clockwise order, starting
@@ -328,6 +354,148 @@ public class Duh {
         return output;
     }
 
+    /** @return the cross product of p1p2 and p1p3. The returned value
+        will be positive if p1p3 is between 0 and 180 degrees
+        counterclockwise from p1p2). */
+    static double crossProduct(Point2D p1, Point2D p2, Point2D p3) {
+        return (p2.getX() - p1.getX()) * (p3.getY() - p1.getY())
+            - (p2.getY() - p1.getY()) * (p3.getX() - p1.getX());
+    }
+
+    /** @return the convex hull of inputs[], starting with the point
+        with lowest y value and proceeding clockwise or
+        counterclockwise depending on whether the Y axis points down
+        or upwards.
+
+        The algorithm used is adapted (and corrected, I hope) from the
+        Wikipedia article "Graham Scan", which in turn is adapted from
+        Segdewick and Wayne's <i>Algorithms, 4th edition</i>. */
+    static public Point2D.Double[] convexHull(Point2D.Double[] inputs) {
+        int cnt = inputs.length;
+        if (cnt == 0) {
+            return new Point2D.Double[0];
+        }
+
+        Point2D.Double lowestPoint = null;
+
+        // Find the point with lowest y value, with lower x value as
+        // tiebreaker.
+        int indexOfLowest = -1;
+        int index = 0;
+        for (Point2D.Double point: inputs) {
+            if (lowestPoint == null
+                || point.y < lowestPoint.y
+                || (point.y == lowestPoint.y && point.x < lowestPoint.x)) {
+                lowestPoint = point;
+                indexOfLowest = index;
+            }
+            ++index;
+        }
+
+
+        // Make an array of point indices into the inputs[] array.
+        Integer[] pointIndices = new Integer[cnt];
+        for (int i = 0; i < cnt; ++i) {
+            pointIndices[i] = i;
+        }
+
+        // Swap the indexOfLowest point into position 0.
+        pointIndices[indexOfLowest] = 0;
+        pointIndices[0] = indexOfLowest;
+
+        // Remove any duplicates of that lowest point to avoid
+        // division by zero during the angle computation phase.
+        int j = 1;
+        for (int i = 1;  i < cnt; ++i) {
+            Point2D.Double point = inputs[pointIndices[i]];
+            if (!lowestPoint.equals(point)) {
+                pointIndices[j++] = i;
+            }
+        }
+
+        cnt = j;
+        if (cnt == 1) {
+            return new Point2D.Double[] {
+                new Point2D.Double(lowestPoint.x, lowestPoint.y) };
+        }
+
+        // Sort the other points by a hopefully faster-to-compute
+        // stand-in for the polar angle (that is also strictly
+        // decreasing for angles between 0 and pi radians) through
+        // lowestPoint. (This computation is also faster and more
+        // sensitive to small changes in y value than the cosine.)
+        double[] pseudoAngles = new double[cnt];
+        for (int i = 1;  i < cnt; ++i) {
+            Point2D.Double point = inputs[pointIndices[i]];
+            double dx = point.x - lowestPoint.x;
+            double dy = point.y - lowestPoint.y;
+            double dx2 = dx * dx;
+            pseudoAngles[i] = dx / (dy + Math.abs(dx));
+        }
+        Arrays.sort(pointIndices, 1, pointIndices.length,
+                    new IndexSort(pseudoAngles));
+
+        // When the minimum polar angle is shared among several
+        // points, we can't allow the point among them that has the
+        // greatest distance from lowestPoint to be discarded. One way
+        // to avoid this is to keep only the farthest one and discard
+        // all others right away.
+
+        double minPseudoAngle = pseudoAngles[pointIndices[1]];
+        int farthestIndex = -1;
+        double maxDistance = 0;
+
+        for (j = 1; j < cnt; ++j) {
+            int jIndex = pointIndices[j];
+            if (pseudoAngles[jIndex] != minPseudoAngle) {
+                break;
+            }
+            Point2D.Double point = inputs[jIndex];
+            double distance = (point.y - lowestPoint.y)
+                + Math.abs(point.x - lowestPoint.x);
+
+            if (distance > maxDistance) {
+                farthestIndex = jIndex;
+                maxDistance = distance;
+            }
+        }
+        // If j < cnt, then j now equals the index into pointsIndex of
+        // the index of the point whose pseudoAngle value is least
+        // while still exceeding minPseudoAngle
+
+        ArrayList<Point2D.Double> outputs
+            = new ArrayList<Point2D.Double>();
+
+        // Add lowestPoint and inputs[farthestIndex], which are
+        // definitely part of the convex hull.
+        outputs.add(lowestPoint);
+        outputs.add(inputs[farthestIndex]);
+
+        for (; j < cnt; ++j) {
+            Point2D.Double point = inputs[pointIndices[j]];
+            Point2D.Double last;
+            Point2D.Double nextToLast;
+
+            while (true) {
+                last = outputs.get(outputs.size() - 1);
+                nextToLast = outputs.get(outputs.size() - 2);
+                if (crossProduct(nextToLast, last, point) <= 0) {
+                    // From nextToLast to last to point is a straight
+                    // or right turn, so "last" is no longer a
+                    // candidate member of the convex hull.
+                    outputs.remove(outputs.size() - 1);
+                } else {
+                    break;
+                }
+            }
+
+            outputs.add(point);
+        }
+
+        return outputs.toArray(new Point2D.Double[0]);
+    }
+    
+
     /** @return the point on segment p1p2 that is nearest to p0. */
     public static Point2D.Double nearestPointOnSegment
         (Point2D p0, Point2D p1, Point2D p2) {
@@ -351,6 +519,28 @@ public class Duh {
             return new Point2D.Double(p1.getX() + dx * dot, p1.getY() + dy * dot);
         } else {
             return (Point2D.Double) p2.clone();
+        }
+    }
+    
+
+    /** @return the distance from p0 to the nearest point on segment
+        p1p2. */
+    public double segmentDistance
+        (Point2D p0, Point2D p1, Point2D p2) {
+        Point2D.Double nearest = nearestPointOnSegment(p0, p1, p2);
+        return nearest.distance(p0);
+    }
+
+    public static void main(String[] args) {
+        ArrayList<Point2D.Double> vertices
+            = new ArrayList<Point2D.Double>();
+        for (int i = 0; i < args.length; i+=2) {
+            vertices.add(new Point2D.Double(Double.parseDouble(args[i]),
+                                            Double.parseDouble(args[i+1])));
+        }
+        Point2D.Double[] hull = convexHull(vertices.toArray(new Point2D.Double[0]));
+        for (Point2D p: hull) {
+            System.out.println(p);
         }
     }
 }

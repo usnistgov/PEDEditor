@@ -10,6 +10,20 @@ import java.util.*;
  */
 final public class CubicSpline1D {
 
+    static class SegmentAndT {
+        SegmentAndT(int segment, double t) {
+            this.segment = segment;
+            this.t = t;
+        }
+
+        public String toString() {
+            return "SegmentAndT[" + segment + ", " + t + "]";
+        }
+
+        int segment;
+        double t;
+    }
+
     /** coefficients[n][d] represents the d-th degree coefficient of
         the cubic polynomial over the segment of the spline that
         connects ys[n] to ys[n+1]. */
@@ -131,7 +145,7 @@ final public class CubicSpline1D {
     public double value(double t) {
         int cnt = coefficients.length;
 
-        if (cnt == 0) {
+        if (t < 0 || cnt == 0) {
             return ys[0];
         }
 
@@ -140,9 +154,28 @@ final public class CubicSpline1D {
         }
 
         t *= cnt;
-        double segment = (int) Math.floor(t);
+        double segment = Math.floor(t);
 
         return value((int) segment, t - segment);
+    }
+
+    /* Parameterize the entire curve as t in [0,1] and return the
+       function of the curve at the given t value */
+    SegmentAndT getSegment(double t) {
+        int cnt = coefficients.length;
+
+        if (cnt == 0) {
+            throw new IllegalArgumentException("No spline segments exist");
+        }
+
+        if (t >= 1) {
+            return new SegmentAndT(cnt-1, 1.0);
+        }
+
+        t *= cnt;
+        double segment = Math.floor(t);
+
+        return new SegmentAndT((int) segment, t - segment);
     }
 
     /* @return the gross change in y over the given segment. If y
@@ -196,34 +229,6 @@ final public class CubicSpline1D {
         return length;
     }
 
-    /** @return an array of all real solutions in ascending
-        order */
-    public static double[] quadraticFormula(double a, double b, double c) {
-        if (a == 0) {
-            double[] output = { -c/b };
-            return output;
-        }
-
-        b = b/a;
-        c = c/a;
-
-        double disc = b * b - 4 * c;
-        if (disc < 0) {
-            return new double[0];
-        }
-
-        if (disc == 0) {
-            double[] output = { -b/2};
-            return output;
-        }
-
-        {
-            disc = Math.sqrt(disc);
-            double[] output = { (-b - disc) / 2, (-b + disc) / 2};
-            return output;
-        }
-    }
-
 
     /** Return the set of 4 cubic Bezier control points that map y(t)
         for the given segment. */
@@ -249,6 +254,20 @@ final public class CubicSpline1D {
         controlPoints[2] = k + (2.0/3) * kt + kt2 / 3;
         controlPoints[3] = k + kt + kt2 + kt3;
     }
+
+
+    /** Convert the position of the parameterized cubic Bezier curve
+        at the given t value. */
+    public static double bezier(double t, double[] controlPoints) {
+        double u = 1 - t;
+        double uSq = u * u;
+        double tSq = t * t;
+
+        return u * uSq * controlPoints[0]
+            + 3 * uSq * t * controlPoints[1]
+            + 3 * u * tSq * controlPoints[2]
+            + t * tSq * controlPoints[3];
+    }
     
     public String toString() {
         StringBuilder out = new StringBuilder(super.toString() + "\n");
@@ -260,6 +279,165 @@ final public class CubicSpline1D {
         }
         return out.toString();
     }
+
+    /** @return an array of all real solutions to a x^2 + b x + c = 0
+        in ascending order */
+    public static double[] quadraticFormula(double a, double b, double c) {
+        if (a == 0) {
+            if (b == 0) {
+                return new double[0];
+            } else {
+                return new double[] { -c/b };
+            }
+        }
+
+        double discriminant = b * b - 4 * a * c;
+        if (discriminant < 0) {
+            return new double[0];
+        } else if (discriminant == 0) {
+            return new double[] { -b / 2 / a };
+        } else {
+            double dsqrt = Math.sqrt(discriminant);
+
+            // Use the stable formula listed in the Wikipedia article
+            // on "loss of significance" (the standard (-b +/-
+            // sqrt(disc)) formulation is unstable)
+
+            double x1 = (b < 0) ? ((-b + dsqrt) / (2 * a))
+                : ((-b - dsqrt) / (2 * a));
+            double x2 = c / a / x1;
+            return ((x1 < x2)
+                    ? new double[] { x1, x2 }
+                    : new double[] { x2, x1 });
+        }
+    }
+
+
+    /* @return a 2-element array holding the minimum and maximum
+       values of spline(t) for t in [t0, t1] within the given
+       segment. */
+    public double[] range(int segment, double t0, double t1) {
+        double[] poly = coefficients[segment];
+        double[] extrema = quadraticFormula
+            (poly[3] * 3, poly[2] * 2, poly[1]);
+
+        double max = Math.max(value(segment, t0), value(segment, t1));
+        double min = Math.min(value(segment, t0), value(segment, t1));
+        for (double t : extrema) {
+            if (t <= t0 || t >= t1) {
+                continue;
+            }
+            max = Math.max(max, value(segment, t));
+            min = Math.min(min, value(segment, t));
+        }
+
+        return new double[] { min, max };
+    }
+
+    /** Dumb helper function to return p(x) where coefficients[i] is
+     * the coefficient of the ith power of x. */
+    public double computePoly(double x, double[] coefficients) {
+        double result = 0;
+        for (int i = coefficients.length - 1; i >= 0; --i) {
+            result = result * x + coefficients[i];
+        }
+        return result;
+    }
+
+
+    /** @return a 2-element array {minimum, maximum} holding the range
+        of values covered by the entire spline curve for t values in [t0, t1]. */
+    public double[] range(double t0, double t1) {
+        SegmentAndT s0 = getSegment(t0);
+        SegmentAndT s1 = getSegment(t1);
+
+        if (s0.segment == s1.segment) {
+            return range(s0.segment, s0.t, s1.t);
+        } else {
+            double[] r = range(s0.segment, s0.t, 1.0);
+            double[] r2;
+            int s;
+
+            for (s = s0.segment + 1; s < s1.segment; ++s) {
+                r2 = range(s, 0.0, 1.0);
+                r[0] = Math.min(r[0], r2[0]);
+                r[1] = Math.max(r[1], r2[1]);
+            }
+
+            r2 = range(s1.segment, 0.0, s1.t);
+            r[0] = Math.min(r[0], r2[0]);
+            r[1] = Math.max(r[1], r2[1]);
+
+            return r;
+        }
+    }
+
+    
+    /** @return a 2-element array {minimum, maximum} holding the range
+        of values covered by the entire spline curve. */
+    public double[] range() {
+        return range(0.0, 1.0);
+    }
+
+
+    /* @return a 2-element array holding the minimum and maximum
+       values of dspline(t)/dt for t in [t0, t1] within the given
+       segment. */
+    public double[] derivativeRange(int segment, double t0, double t1) {
+        double[] poly = coefficients[segment];
+
+        double[] deriv = new double[] { poly[1], poly[2] * 2, poly[3] * 3 };
+
+        double derv1 = computePoly(t0, deriv);
+        double derv2 = computePoly(t1, deriv);
+
+        double min = Math.min(derv1, derv2);
+        double max = Math.max(derv1, derv2);
+
+        if (poly[3] != 0) {
+            // extremum of derivative:
+
+            // d^2 poly / dt^2 = poly[3] * 6 * t + poly[2] * 2
+            double t = -poly[2] / poly[3] / 3;
+            if (t > t0 && t < t1) {
+                double derv = computePoly(t, deriv);
+
+                min = Math.min(min, derv);
+                max = Math.max(max, derv);
+            }
+        }
+
+        return new double[] { min, max };
+    }
+
+
+    /** @return a 2-element array {minimum, maximum} holding the range
+        of values covered by the entire spline curve for t values in [t0, t1]. */
+    public double[] derivativeRange(double t0, double t1) {
+        SegmentAndT s0 = getSegment(t0);
+        SegmentAndT s1 = getSegment(t1);
+
+        if (s0.segment == s1.segment) {
+            return derivativeRange(s0.segment, s0.t, s1.t);
+        } else {
+            double[] r = derivativeRange(s0.segment, s0.t, 1.0);
+            double[] r2;
+            int s;
+
+            for (s = s0.segment + 1; s < s1.segment; ++s) {
+                r2 = derivativeRange(s, 0.0, 1.0);
+                r[0] = Math.min(r[0], r2[0]);
+                r[1] = Math.max(r[1], r2[1]);
+            }
+
+            r2 = derivativeRange(s1.segment, 0.0, s1.t);
+            r[0] = Math.min(r[0], r2[0]);
+            r[1] = Math.max(r[1], r2[1]);
+
+            return r;
+        }
+    }
+
 
     /** Just a test harness */
     public static void main(String[] args) {

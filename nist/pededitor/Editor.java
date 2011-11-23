@@ -14,6 +14,10 @@ import java.io.*;
 // TODO Keep center of scroll pane fixed relative to the image when
 // zooming into a new diagram.
 
+// TODO Allow the equals key to be attracted to the intersection of
+// curves, even when those intersections were not explicitly added to
+// the diagram.
+
 /** Main driver class for Phase Equilibria Diagram digitization and creation. */
 public class Editor implements CropEventListener, MouseListener,
                                MouseMotionListener {
@@ -66,6 +70,7 @@ public class Editor implements CropEventListener, MouseListener,
         scale = 800.0;
         paths = new ArrayList<GeneralPolyline>();
         activeCurveNo = -1;
+        activeVertexNo = -1;
         axes = new ArrayList<AxisInfo>();
     }
 
@@ -219,6 +224,9 @@ public class Editor implements CropEventListener, MouseListener,
 
     /** Start a new curve. */
     void endCurve() {
+        if (screenToPrincipal == null) {
+            return;
+        }
         if (paths.size() > 0) {
             if (paths.get(paths.size() - 1).size() == 0) {
                 // Remove the old empty path.
@@ -308,30 +316,45 @@ public class Editor implements CropEventListener, MouseListener,
         Point2D.Double nearPoint = null;
         Point2D.Double xpoint2 = new Point2D.Double();
         Point2D.Double xpoint3 = new Point2D.Double();
-        double minDistSq = 0;
+        double minDist = 0;
 
         for (GeneralPolyline path : paths) {
-            if (path.getSmoothingType() != GeneralPolyline.LINEAR) {
-                continue;
-            }
+            Point2D.Double point;
 
-            Point2D.Double[] points = path.getPoints();
+            if (path.getSmoothingType() == GeneralPolyline.CUBIC_SPLINE) {
+                // Locate a point on the cubic spline that is nearly
+                // closest to this one.
 
-            for (int i = 0; i < points.length - 1; ++i) {
-                principalToStandardPage.transform(points[i], xpoint2);
-                principalToStandardPage.transform(points[i+1], xpoint3);
-                Point2D.Double point = Duh.nearestPointOnSegment
-                    (xpoint, xpoint2, xpoint3);
-                double distSq = xpoint.distanceSq(point);
-                if (nearPoint == null || distSq < minDistSq) {
-                    standardPageToPrincipal.transform(point, point);
-                    nearPoint = point;
-                    minDistSq = distSq;
+                CubicSpline2D.DistanceInfo di
+                    = ((SplinePolyline) path).getSpline(principalToStandardPage)
+                    .closePoint(xpoint, 1e-9, 200);
+
+                if (nearPoint == null || di.distance < minDist) {
+                    standardPageToPrincipal.transform(di.point, di.point);
+                    nearPoint = di.point;
+                    minDist = di.distance;
+                }
+            } else {
+                // Straight connect-the-dots polyline.
+                Point2D.Double[] points = path.getPoints();
+
+                for (int i = 0; i < points.length - 1; ++i) {
+                    principalToStandardPage.transform(points[i], xpoint2);
+                    principalToStandardPage.transform(points[i+1], xpoint3);
+                    point = Duh.nearestPointOnSegment
+                        (xpoint, xpoint2, xpoint3);
+                    double dist = xpoint.distance(point);
+                    if (nearPoint == null || dist < minDist) {
+                        standardPageToPrincipal.transform(point, point);
+                        nearPoint = point;
+                        minDist = dist;
+                    }
                 }
             }
-        }
 
+        }
         add(nearPoint);
+
     }
 
     public void toggleSmoothing() {
