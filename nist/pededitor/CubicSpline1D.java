@@ -346,8 +346,17 @@ final public class CubicSpline1D {
 
 
     /** @return a 2-element array {minimum, maximum} holding the range
-        of values covered by the entire spline curve for t values in [t0, t1]. */
+        of y values covered by the entire spline curve for t values in
+        [t0, t1], or null if no spline points were defined.. */
     public double[] range(double t0, double t1) {
+        int cnt = segmentCnt();
+
+        if (cnt == -1) {
+            return null;
+        } else if (cnt == 0) {
+            return new double[] { ys[0], ys[0] };
+        }
+
         SegmentAndT s0 = getSegment(t0);
         SegmentAndT s1 = getSegment(t1);
 
@@ -414,6 +423,14 @@ final public class CubicSpline1D {
     /** @return a 2-element array {minimum, maximum} holding the range
         of values covered by the entire spline curve for t values in [t0, t1]. */
     public double[] derivativeRange(double t0, double t1) {
+        int cnt = segmentCnt();
+
+        if (cnt == -1) {
+            return null;
+        } else if (cnt == 0) {
+            return new double[] { 0, 0 };
+        }
+
         SegmentAndT s0 = getSegment(t0);
         SegmentAndT s1 = getSegment(t1);
 

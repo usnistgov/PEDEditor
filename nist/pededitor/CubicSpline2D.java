@@ -11,9 +11,9 @@ import java.util.*;
 final public class CubicSpline2D {
     /** Information about where the curve comes closest to a given point. */
     static public class DistanceInfo {
-        public DistanceInfo(double t, Point2D.Double point, double distance) {
+        public DistanceInfo(double t, Point2D point, double distance) {
             this.t = t;
-            this.point = new Point2D.Double(point.x, point.y);
+            this.point = new Point2D.Double(point.getX(), point.getY());
             this.distance = distance;
         }
 
@@ -332,7 +332,13 @@ final public class CubicSpline2D {
     */
     public DistanceInfo closePoint(Point2D p, double maxError,
                                    int maxIterations) {
-        System.out.println("closePoint(" + p + ", " + maxError + ")");
+        int cnt = segmentCnt();
+        if (cnt == -1) {
+            return null;
+        } else if (cnt == 0) {
+            Point2D p2 = value(0);
+            return new DistanceInfo(0.0, p2, p.distance(p2));
+        }
 
         // Initialize bestCandidate with an arbitrary point.
         // bestCandidate.distance represents the lowest proven upper
