@@ -43,6 +43,10 @@ public class ImageScrollFrame extends JFrame {
         return imagePane;
     }
 
+    public JScrollPane getScrollPane() {
+        return scrollPane;
+    }
+
     void setFilename(String filename) {
         try {
             BufferedImage im = ImageIO.read(new File(filename));
