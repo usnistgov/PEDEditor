@@ -1,6 +1,7 @@
 package gov.nist.pededitor;
 
 import java.awt.*;
+
 import javax.imageio.*;
 import javax.swing.*;
 import java.awt.event.*;
@@ -49,7 +50,20 @@ public class Editor implements CropEventListener, MouseListener,
     protected AxisInfo pageXAxis = null;
     protected AxisInfo pageYAxis = null;
 
-        public Editor() {
+    /** Ignore the next mouseMoved() event. Useful when robot() is
+        used to move the mouse to a preferred location, to avoid the
+        precisely chosen coordinates being overwritten by the mouse
+        pointer's crude approximation to the nearest pixel. */
+    protected boolean leaveMprinAlone = false;
+
+    /** Current mouse position expressed in principal coordinates.
+     It's not always sufficient to simply read the mouse position in
+     the window, because after the user jumps to a preselected point,
+     the integer mouse position is not precise enough to express that
+     location. */
+    protected Point2D.Double mprin = null;
+
+    public Editor() {
         clear();
         editFrame.getImagePane().addMouseListener(this);
         editFrame.getImagePane().addMouseMotionListener(this);
@@ -72,6 +86,7 @@ public class Editor implements CropEventListener, MouseListener,
         activeCurveNo = -1;
         activeVertexNo = -1;
         axes = new ArrayList<AxisInfo>();
+        mprin = null;
     }
 
     /** This variable only determines the type of new curves; existing
@@ -104,21 +119,9 @@ public class Editor implements CropEventListener, MouseListener,
             cur.remove(activeVertexNo);
             --activeVertexNo;
         } else {
-
-            // Remove the active curve.
-            paths.remove(activeCurveNo);
-            --activeCurveNo;
-            if (activeCurveNo == -1) {
-                activeCurveNo = paths.size() - 1;
-            }
-
-            if (activeCurveNo >= 0) {
-                activeVertexNo = paths.get(activeCurveNo).size() - 1;
-            } else {
-                activeVertexNo = -1;
-            }
+            removeActiveCurve();
             
-            if (oldVertexCnt  == 0) {
+            if (oldVertexCnt == 0) {
                 // Keep looking for a vertex to remove.
                 removeCurrentVertex();
             }
@@ -138,6 +141,12 @@ public class Editor implements CropEventListener, MouseListener,
         if (activeCurveNo == -1) {
             activeCurveNo = paths.size() - 1;
         }
+        if (activeCurveNo >= 0) {
+            activeVertexNo = paths.get(activeCurveNo).size() - 1;
+        } else {
+            activeVertexNo = -1;
+        }
+            
         getEditPane().repaint();
     }
 
@@ -155,7 +164,7 @@ public class Editor implements CropEventListener, MouseListener,
         }
     }
 
-    public void paintEditPane(Graphics g0, Point mousePos) {
+    public void paintEditPane(Graphics g0) {
 
         Graphics2D g = (Graphics2D) g0;
 
@@ -186,13 +195,18 @@ public class Editor implements CropEventListener, MouseListener,
 
         for (int i = 0; i < pathCnt; ++i) {
             if (i != activeCurveNo) {
-                draw(g, paths.get(i));
+                GeneralPolyline path = paths.get(i);
+                if (path.size() == 1) {
+                    circleVertices(g, path);
+                } else {
+                    draw(g, path);
+                }
             }
         }
 
         GeneralPolyline lastPath = paths.get(activeCurveNo);
 
-        if (mousePos != null) {
+        if (mprin != null && activeVertexNo != -1) {
 
             // Disable anti-aliasing for this phase because it
             // prevents the green line from precisely overwriting the
@@ -202,15 +216,21 @@ public class Editor implements CropEventListener, MouseListener,
                                RenderingHints.VALUE_ANTIALIAS_OFF);
 
             g.setColor(Color.RED);
-            Point2D.Double p2d = screenToPrincipal.transform
-                (mousePos.x + 0.5, mousePos.y + 0.5);
-            lastPath.add(p2d);
+            lastPath.add(activeVertexNo + 1, mprin);
             draw(g, lastPath);
-            lastPath.remove();
+            lastPath.remove(activeVertexNo + 1);
         }
 
         g.setColor(Color.GREEN);
         draw(g, lastPath);
+        circleVertices(g, lastPath);
+
+        // TODO Undo (testing only)...
+        for (Point2D.Double point: keyPoints()) {
+            Point p = Duh.toPoint(principalToScreen.transform(point, null));
+            g.drawOval(p.x - 8, p.y - 8, 16, 16);
+        }
+
     }
 
     /** @return The GeneralPolyline that is currently being edited. If
@@ -256,62 +276,156 @@ public class Editor implements CropEventListener, MouseListener,
     /** Add a point to getActiveCurve(). */
     public void add(Point2D.Double point) {
         getActiveCurve().add(++activeVertexNo, point);
-        getEditPane().repaint();
     }
 
     /** Like add(), but instead add the previously added point that is
         nearest to the mouse pointer as measured by distance on the
         standard page. */
     public void addNearestPoint() {
-        if (screenToPrincipal == null) {
+        Point2D.Double nearPoint = nearestPoint();
+        if (nearPoint == null) {
+            return;
+        }
+        add(nearPoint);
+        moveMouse(nearPoint);
+    }
+
+    /** Select the previously added point that is
+        nearest to the mouse pointer as measured by distance on the
+        standard page. */
+    public void selectNearestPoint() {
+        Point2D.Double nearPoint = nearestPoint();
+        if (nearPoint == null) {
             return;
         }
 
-        Point mpos = getEditPane().getMousePosition();
+        // Since a single point may belong to multiple curves, point
+        // visitation order matters. Start with the currently active
+        // curve and work backwards.
 
-        if (mpos == null) {
-            return;
-        }
+        int pathCnt = paths.size();
 
-        /** Location of the mouse on the standard page: */
-        Point2D.Double xpoint = screenToStandardPage.transform
-            (mpos.x + 0.5, mpos.y + 0.5);
-
-        Point2D.Double nearPoint = null;
-        Point2D.Double xpoint2 = new Point2D.Double();
-        double minDistSq = 0;
-
-        for (GeneralPolyline path : paths) {
-            for (Point2D.Double point : path.getPoints()) {
-                principalToStandardPage.transform(point, xpoint2);
-                double distSq = xpoint.distanceSq(xpoint2);
-                if (nearPoint == null || distSq < minDistSq) {
-                    nearPoint = point;
-                    minDistSq = distSq;
+        for (int i = 0; i < pathCnt; ++i) {
+            int pathNo = (activeCurveNo - i + pathCnt) % pathCnt;
+            GeneralPolyline path = paths.get(pathNo);
+            int vertexCnt = path.size();
+            int startVertex = (i == 0) ? activeVertexNo : vertexCnt - 1;
+            for (int j = 0; j < vertexCnt; ++j) {
+                int vertexNo = (startVertex - j + vertexCnt) % vertexCnt;
+                Point2D.Double vertex = path.get(vertexNo);
+                if (vertex.x == nearPoint.x && vertex.y == nearPoint.y) {
+                    activeCurveNo = pathNo;
+                    activeVertexNo = vertexNo;
+                    moveMouse(vertex);
+                    return;
                 }
             }
         }
 
+        // This point wasn't in the list; it must be an intersection. Add it.
         add(nearPoint);
+        moveMouse(nearPoint);
+    }
+
+    /** Move the mouse pointer so its position corresponds to the
+        given location in principal coordinates. */
+    void moveMouse(Point2D.Double point) {
+        mprin = point;
+        if (principalToScreen == null) {
+            return;
+        }
+        Point spos = Duh.toPoint(principalToScreen.transform(mprin));
+        JScrollPane spane = editFrame.getScrollPane();
+        Rectangle view = spane.getViewport().getViewRect();
+        Point topCorner = spane.getLocationOnScreen();
+        spos.x += topCorner.x - view.x;
+        spos.y += topCorner.y - view.y;
+
+        // TODO fix jumping out of bounds...
+
+        try {
+            Robot robot = new Robot();
+            robot.mouseMove(spos.x, spos.y);
+        } catch (AWTException e) {
+            throw new RuntimeException(e);
+        }
+
+        leaveMprinAlone = true;
+        updateStatusBar();
+    }
+
+    /** @return the location in principal coordinates of the key
+        point closest (by page distance) to mprin. */
+    Point2D.Double nearestPoint() {
+        if (mprin == null) {
+            return null;
+        }
+        Point2D.Double nearPoint = null;
+        Point2D.Double xpoint = new Point2D.Double();
+        principalToStandardPage.transform(mprin, xpoint);
+        Point2D.Double xpoint2 = new Point2D.Double();
+
+        // Square of the minimum distance of all key points examined
+        // so far from mprin, as measured in standard page
+        // coordinates.
+        double minDistSq = 0;
+
+        for (Point2D.Double point: keyPoints()) {
+            principalToStandardPage.transform(point, xpoint2);
+            double distSq = xpoint.distanceSq(xpoint2);
+            if (nearPoint == null || distSq < minDistSq) {
+                nearPoint = point;
+                minDistSq = distSq;
+            }
+        }
+
+        return nearPoint;
+    }
+
+    /** @return a list of all segment intersections and user-defined
+        points in the diagram. */
+    public ArrayList<Point2D.Double> keyPoints() {
+        ArrayList<Point2D.Double> output
+            = new ArrayList<Point2D.Double>();
+
+        // Check all explicitly selected points in this diagram.
+
+        for (GeneralPolyline path : paths) {
+            for (Point2D.Double point : path.getPoints()) {
+                output.add(point);
+            }
+        }
+
+        // Check all intersections of straight line segments.
+        // Intersections of two curves, or one curve and one segment,
+        // are not detected at this time.
+
+        LineSegment[] segments = getAllLineSegments();
+        for (int i = 0; i < segments.length; ++i) {
+            LineSegment s1 = segments[i];
+            for (int j = i + 1; j < segments.length; ++j) {
+                LineSegment s2 = segments[j];
+                Point2D.Double p = Duh.segmentIntersection
+                    (s1.p1, s1.p2, s2.p1, s2.p2);
+                if (p != null) {
+                    output.add(p);
+                }
+            }
+        }
+
+        return output;
     }
 
     /** Like add(), but instead add the point on a previously added
         segment that is nearest to the mouse pointer as measured by
         distance on the standard page. */
     public void addNearestSegment() {
-        if (screenToPrincipal == null) {
-            return;
-        }
-
-        Point mpos = getEditPane().getMousePosition();
-
-        if (mpos == null) {
+        if (mprin == null) {
             return;
         }
 
         /** Location of the mouse on the standard page: */
-        Point2D.Double xpoint = screenToStandardPage.transform
-            (mpos.x + 0.5, mpos.y + 0.5);
+        Point2D.Double xpoint = principalToStandardPage.transform(mprin);
 
         Point2D.Double nearPoint = null;
         Point2D.Double xpoint2 = new Point2D.Double();
@@ -353,8 +467,9 @@ public class Editor implements CropEventListener, MouseListener,
             }
 
         }
-        add(nearPoint);
 
+        add(nearPoint);
+        moveMouse(nearPoint);
     }
 
     public void toggleSmoothing() {
@@ -371,7 +486,28 @@ public class Editor implements CropEventListener, MouseListener,
             throw new IllegalArgumentException
                 ("Unknown smoothingType value " + smoothingType);
         }
-        startConnectedCurve();
+
+        if (activeCurveNo >= 0) {
+            Point2D.Double vertex = getActiveVertex();
+            if (paths.get(activeCurveNo).size() == 1) {
+
+                // If we end the old curve after just one vertex, a
+                // dot will print. It feels arbitrary to print a dot
+                // when you toggle the smoothing status, so delete the
+                // old curve before starting the new one.
+
+                // TODO Maybe there is a better way to indicate which
+                // points should be circled (use the space bar,
+                // maybe?)
+
+                removeActiveCurve();
+            }
+            endCurve();
+
+            if (vertex != null) {
+                add(vertex);
+            }
+        }
     }
 
     /** Connect the dots in the various paths that have been added to
@@ -379,6 +515,23 @@ public class Editor implements CropEventListener, MouseListener,
     public void drawPaths(Graphics2D g) {
         for (GeneralPolyline path : paths) {
             path.draw(g, path.getPath(principalToScreen), (float) scale);
+        }
+    }
+
+    void removeActiveCurve() {
+        if (activeCurveNo == -1)
+            return;
+
+        paths.remove(activeCurveNo);
+        --activeCurveNo;
+        if (activeCurveNo == -1) {
+            activeCurveNo = paths.size() - 1;
+        }
+
+        if (activeCurveNo >= 0) {
+            activeVertexNo = paths.get(activeCurveNo).size() - 1;
+        } else {
+            activeVertexNo = -1;
         }
     }
 
@@ -783,9 +936,7 @@ public class Editor implements CropEventListener, MouseListener,
         if (screenToPrincipal == null) {
             return;
         }
-        Point2D.Double p2d = screenToPrincipal.transform
-            (e.getX() + 0.5, e.getY() + 0.5);
-        add(p2d);
+        add(mprin);
     }
 
     /** @return true if the diagram is currently being traced from
@@ -803,11 +954,21 @@ public class Editor implements CropEventListener, MouseListener,
             return;
         }
 
+        if (leaveMprinAlone) {
+            leaveMprinAlone = false;
+            return;
+        }
+
         double sx = e.getX() + 0.5;
         double sy = e.getY() + 0.5;
+        mprin = screenToPrincipal.transform(sx,sy);
+
+        updateStatusBar();
+    }
+
+    public void updateStatusBar() {
         StringBuilder status = new StringBuilder("");
 
-        Point2D.Double prin = screenToPrincipal.transform(sx,sy);
         boolean first = true;
         for (AxisInfo axis : axes) {
             if (first) {
@@ -817,7 +978,7 @@ public class Editor implements CropEventListener, MouseListener,
             }
             status.append(axis.name.toString());
             status.append(" = ");
-            status.append(axis.valueAsString(prin.x, prin.y));
+            status.append(axis.valueAsString(mprin.x, mprin.y));
         }
         editFrame.setStatus(status.toString());
         getEditPane().repaint();
@@ -825,7 +986,7 @@ public class Editor implements CropEventListener, MouseListener,
         if (tracingImage()) {
             try {
                 // Update image zoom frame.
-                Point2D.Double orig = principalToOriginal.transform(prin);
+                Point2D.Double orig = principalToOriginal.transform(mprin);
                 zoomFrame.setImageFocus((int) Math.floor(orig.x),
                                         (int) Math.floor(orig.y));
             } catch (UnsolvableException ex) {
@@ -971,8 +1132,52 @@ public class Editor implements CropEventListener, MouseListener,
         // TODO Auto-generated method stub
     }
 
+    /** @return an array of all straight line segments defined for
+        this diagram. */
+    public LineSegment[] getAllLineSegments() {
+        ArrayList<LineSegment> output
+            = new ArrayList<LineSegment>();
+         
+        for (GeneralPolyline path : paths) {
+            if (path.getSmoothingType() != GeneralPolyline.LINEAR) {
+                // TODO handle the general smoothing case.
+
+                // Easy case -- this path is smoothed between exactly
+                // 2 points, which means it is equivalent to a
+                // segment.
+
+                if (path.size() == 2) {
+                    output.add(new LineSegment(path.get(0), path.get(1)));
+                }
+
+            } else {
+                Point2D.Double[] points = path.getPoints();
+                for (int i = 1; i < points.length; ++i) {
+                    output.add(new LineSegment(points[i-1], points[i]));
+                }
+            }
+        }
+
+        return output.toArray(new LineSegment[0]);
+    }
+
+    /** Draw a circle around each point in path. */
+    void circleVertices(Graphics2D g, GeneralPolyline path) {
+        BasicStroke s = path.getStroke();
+        if (s == null) {
+            s = (BasicStroke) g.getStroke();
+        }
+        double r = s.getLineWidth() * 2 * scale;
+        Point2D.Double xpoint = new Point2D.Double();
+        for (Point2D.Double point: path.getPoints()) {
+            principalToScreen.transform(point, xpoint);
+            g.fill(new Ellipse2D.Double(xpoint.x - r, xpoint.y - r, r * 2, r * 2));
+        }
+    }
+
     @Override
         public void mouseExited(MouseEvent e) {
-        // TODO Auto-generated method stub
+        mprin = null;
+        getEditPane().repaint();
     }
 }

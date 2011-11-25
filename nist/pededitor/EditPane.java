@@ -53,13 +53,6 @@ public class EditPane extends ImagePane {
 
     public void paintComponent(Graphics g) {
         super.paintComponent(g);
-
-        Point mpos = null;
-        try {
-            mpos = getMousePosition();
-        } catch (HeadlessException e) {
-            mpos = null;
-        }
-        getParentFrame().getParentEditor().paintEditPane(g, mpos);
+        getParentFrame().getParentEditor().paintEditPane(g);
     }
 }
