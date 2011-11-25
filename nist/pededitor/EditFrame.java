@@ -134,8 +134,8 @@ public class EditFrame extends ImageScrollFrame {
             });
 
         mnEdit.add(new EditFrameAction
-                   ("Reinsert closest previously added point",
-                    KeyEvent.VK_R,
+                   ("Duplicate nearest vertex",
+                    KeyEvent.VK_U,
                     KeyStroke.getKeyStroke('=')) {
                 @Override
                     public void actionPerformed(ActionEvent e) {
@@ -144,7 +144,17 @@ public class EditFrame extends ImageScrollFrame {
             });
 
         mnEdit.add(new EditFrameAction
-                   ("Add nearest point on a line segment",
+                   ("Select nearest vertex",
+                    KeyEvent.VK_C,
+                    KeyStroke.getKeyStroke('<')) {
+                @Override
+                    public void actionPerformed(ActionEvent e) {
+                    getParentEditor().selectNearestPoint();
+                }
+            });
+
+        mnEdit.add(new EditFrameAction
+                   ("Add nearest point on curve",
                     KeyEvent.VK_L,
                     KeyStroke.getKeyStroke('_')) {
                 @Override
@@ -171,7 +181,8 @@ public class EditFrame extends ImageScrollFrame {
                 }
             });
 
-        mnEdit.add(new EditFrameAction("Delete last vertex", KeyEvent.VK_D,
+        mnEdit.add(new EditFrameAction("Delete this vertex",
+                                       KeyEvent.VK_D,
                                        "DELETE") {
                 @Override
                     public void actionPerformed(ActionEvent e) {
