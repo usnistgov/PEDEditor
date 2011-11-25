@@ -37,12 +37,21 @@ public class Duh {
        }
    }
 
+    public static Point toPoint(Point2D point) {
+        return new Point((int) Math.round(point.getX()),
+                         (int) Math.round(point.getY()));
+    }
+
     public static Point toPoint(Point2D.Double point) {
         return new Point((int) Math.round(point.x), (int) Math.round(point.y));
     }
 
     public static Point toPoint(double x, double y) {
         return new Point((int) Math.round(x), (int) Math.round(y));
+    }
+
+    public static Point2D.Double toPoint2DDouble(Point2D p) {
+        return new Point2D.Double(p.getX(), p.getY());
     }
 
     public static Point2D.Double[] toPoint2DDoubles(int[] arr) {
@@ -354,9 +363,25 @@ public class Duh {
         return output;
     }
 
-    /** @return the cross product of p1p2 and p1p3. The returned value
-        will be positive if p1p3 is between 0 and 180 degrees
-        counterclockwise from p1p2). */
+    /** @return the cross product v1 x v2. The returned value will be
+        positive if v2 is between 0 and 180 degrees counterclockwise
+        from v1. */
+    static double crossProduct(Point2D v1, Point2D v2) {
+        return v1.getX() * v2.getY() - v1.getY() - v2.getX();
+    }
+
+    /** @return the cross product a1a2 x b1b2. The returned value will be
+        positive if b1b2 is between 0 and 180 degrees counterclockwise
+        from a1a2. */
+    static double crossProduct(Point2D a1, Point2D a2,
+                               Point2D b1, Point2D b2) {
+        return (a2.getX() - a1.getX()) * (b2.getY() - b1.getY())
+            - (a2.getY() - a1.getY()) * (b2.getX() - b1.getX());
+    }
+
+    /** @return the cross product p1p2 x p1p3. The returned value will be
+        positive if p1p3 is between 0 and 180 degrees counterclockwise
+        from p1p2. */
     static double crossProduct(Point2D p1, Point2D p2, Point2D p3) {
         return (p2.getX() - p1.getX()) * (p3.getY() - p1.getY())
             - (p2.getY() - p1.getY()) * (p3.getX() - p1.getX());
@@ -504,11 +529,11 @@ public class Duh {
         double dx2 = p0.getX() - p1.getX();
         double dy2 = p0.getY() - p1.getY();
         double dot = dx * dx2 + dy * dy2;
-        if (dot < 0) {
-            return (Point2D.Double) p1.clone();
+        double p1p2LengthSq = dx * dx + dy * dy;
+        if (dot < 0 || p1p2LengthSq == 0) {
+            return new Point2D.Double(p1.getX(), p1.getY());
         }
 
-        double p1p2LengthSq = dx * dx + dy * dy;
         dot /= p1p2LengthSq;
 
         // Now dot equals the ratio of the distance between p1 and the
@@ -518,29 +543,170 @@ public class Duh {
         if (dot < 1.0) {
             return new Point2D.Double(p1.getX() + dx * dot, p1.getY() + dy * dot);
         } else {
-            return (Point2D.Double) p2.clone();
+            return new Point2D.Double(p2.getX(), p2.getY());
+        }
+    }
+    
+
+    /** @return a point where segments a1a2 and b1b2 intersect, or
+        null if no such point exists.
+
+        The return value is undefined if tiny changes to the locations
+        of one or more input points could yield major changes in the
+        correct result, such as if the intersection lies at the
+        endpoint of one or more segment or if the segments are
+        parallel. Still, some minimal attempt is made to handle such
+        cases correctly.
+    */
+    public static Point2D.Double segmentIntersection
+        (Point2D a1, Point2D a2, Point2D b1, Point2D b2) {
+
+        // Don't worry too much about the intractible instability
+        // problems, but the problem of one or both of a1a2 and b1b2
+        // being parallel or nearly parallel to the x or y axis is
+        // important and sometimes tractible.
+
+        if (crossProduct
+            (new Point2D.Double(Math.abs(a2.getX() - a1.getX()),
+                                Math.abs(a2.getY() - a1.getY())),
+             new Point2D.Double(Math.abs(b2.getX() - b1.getX()),
+                                Math.abs(b2.getY() - b1.getY()))) < 0) {
+            // a1a2 has steeper slope than b1b2, which could cause
+            // numerical instability problems later. Swap the two
+            // pairs.
+
+            Point2D tmpp;
+
+            tmpp = a1;
+            a1 = b1;
+            b1 = tmpp;
+
+            tmpp = a2;
+            a2 = b2;
+            b2 = tmpp;
+        }
+
+        if (crossProduct(a1, a2, b1, b2) == 0) {
+            // Either the two segments are parallel, or at least one
+            // of the segments has length 0. In that case, the
+            // segments only intersect if they intersect at the
+            // endpoint of one of the two segments.
+
+            if (segmentDistance(a1, b1, b2) == 0) {
+                return toPoint2DDouble(a1);
+            }
+            if (segmentDistance(a2, b1, b2) == 0) {
+                return toPoint2DDouble(a2);
+            }
+
+            if (segmentDistance(b1, a1, a2) == 0) {
+                return toPoint2DDouble(b1);
+            }
+            if (segmentDistance(b2, a1, a2) == 0) {
+                return toPoint2DDouble(b2);
+            }
+
+            // Parallel segments for which neither segment's endpoints
+            // lie on the other segment do not intersect.
+
+            return null;
+        }
+
+        // a1a2 and b1b2 are non-parallel segments with positive
+        // length, and b1b2 is steeper than a1a2. So a1a2 is not
+        // vertical, and b1b2 is not horizontal.
+
+        double m = (a2.getY() - a1.getY()) / (a2.getX() - a1.getX());
+        double b = a2.getY() - m * a2.getX();
+
+        // a1a2 lies on the line y = m x + b
+
+        double q = (b2.getX() - b1.getX()) / (b2.getY() - b1.getY());
+        double r = b2.getX() - q * b2.getY();
+
+        // b1b2 lies on the line x = qy + r
+
+        // Substitute (x = qy + r) into the first equation:
+
+        // y = m (qy + r) + b
+
+        // y(1 - mq) = mr + b
+
+        double denom = 1 - m * q;
+
+        if (denom == 0) {
+            // It looks like the two lines are parallel after all --
+            // limits of numerical precision must be at fault. In that
+            // numerically unstable case, the answer is undefined and
+            // we can just as well return "no intersection".
+
+            return null;
+        }
+
+        double y = (m * r + b) / denom;
+        double x = q * y + r;
+
+        // (x,y) is on both segments if its x value is in [ax1, ax2]
+        // and its y values is in [by1, by2] -- a formulation that
+        // takes into account that a1a2 is not vertical and b1b2 is
+        // not horizontal.
+
+        if (((x >= a1.getX() && x <= a2.getX())
+             || (x <= a1.getX() && x >= a2.getX()))
+            && ((y >= b1.getY() && y <= b2.getY())
+                || (y <= b1.getY() && y >= b2.getY()))) {
+            return new Point2D.Double(x,y);
+        } else {
+            return null;
         }
     }
     
 
     /** @return the distance from p0 to the nearest point on segment
         p1p2. */
-    public double segmentDistance
+    public static double segmentDistance
         (Point2D p0, Point2D p1, Point2D p2) {
         Point2D.Double nearest = nearestPointOnSegment(p0, p1, p2);
         return nearest.distance(p0);
     }
 
-    public static void main(String[] args) {
+    public static java.awt.geom.Point2D.Double[] argsToPoints(String[] args) {
         ArrayList<Point2D.Double> vertices
             = new ArrayList<Point2D.Double>();
         for (int i = 0; i < args.length; i+=2) {
             vertices.add(new Point2D.Double(Double.parseDouble(args[i]),
                                             Double.parseDouble(args[i+1])));
         }
-        Point2D.Double[] hull = convexHull(vertices.toArray(new Point2D.Double[0]));
+        return vertices.toArray(new Point2D.Double[0]);
+    }
+
+    public static void hullTest(String[] args) {
+        Point2D.Double[] hull = convexHull(argsToPoints(args));
         for (Point2D p: hull) {
             System.out.println(p);
         }
+    }
+
+    public static void segmentTest(String[] args) {
+        Point2D.Double[] points = argsToPoints(args);
+        int segCnt = points.length / 2;
+
+        for (int i = 0; i < segCnt; ++i) {
+            Point2D.Double a1 = points[i*2];
+            Point2D.Double a2 = points[i*2 + 1];
+            for (int j = i + 1; j < segCnt; ++j) {
+                Point2D.Double b1 = points[j*2];
+                Point2D.Double b2 = points[j*2 + 1];
+                Point2D.Double p = Duh.segmentIntersection(a1,a2,b1,b2);
+                if (p != null) {
+                    System.out.println(a1 + " - " + a2 + " intersects "
+                                       + b1 + " - " + b2 + " at " + p);
+                }
+            }
+        }
+    }
+
+    public static void main(String[] args) {
+        segmentTest(args);
     }
 }
