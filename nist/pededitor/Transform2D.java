@@ -21,6 +21,7 @@ interface Transform2D {
     /** @return the transformation of (x,y) as a Point2D.Double */
     Point2D.Double transform(double x, double y) throws UnsolvableException;
     Point2D.Double transform(Point2D.Double point) throws UnsolvableException;
+    Point2D.Double transform(Point2D point) throws UnsolvableException;
 
     /** Transform many points at once */
     void transform(double[] srcPts, int srcOff,

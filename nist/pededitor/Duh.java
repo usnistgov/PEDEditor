@@ -42,6 +42,12 @@ public class Duh {
                          (int) Math.round(point.getY()));
     }
 
+    /** Convert point into a Point by taking the floor of x and y. */
+    public static Point floorPoint(Point2D point) {
+        return new Point((int) Math.floor(point.getX()),
+                         (int) Math.floor(point.getY()));
+    }
+
     public static Point toPoint(Point2D.Double point) {
         return new Point((int) Math.round(point.x), (int) Math.round(point.y));
     }

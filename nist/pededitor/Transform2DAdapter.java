@@ -19,6 +19,11 @@ abstract public class Transform2DAdapter implements Transform2D {
         return transform(point.x, point.y);
     }
 
+    public Point2D.Double transform(Point2D point)
+        throws UnsolvableException {
+        return transform(point.getX(), point.getY());
+    }
+
 
     /** Transform many points at once */
     public void transform(double[] srcPts, int srcOff,

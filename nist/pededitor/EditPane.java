@@ -53,6 +53,7 @@ public class EditPane extends ImagePane {
 
     public void paintComponent(Graphics g) {
         super.paintComponent(g);
+        // System.out.println("Paint Edit Pane");
         getParentFrame().getParentEditor().paintEditPane(g);
     }
 }

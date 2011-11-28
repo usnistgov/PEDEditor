@@ -39,6 +39,10 @@ public class Affine extends AffineTransform implements Transform2D {
         return transform(p.x, p.y);
     }
 
+    public Point2D.Double transform(Point2D p) {
+        return transform(p.getX(), p.getY());
+    }
+
     public Affine createInverse() throws NoninvertibleTransformException {
         return new Affine(super.createInverse());
     }

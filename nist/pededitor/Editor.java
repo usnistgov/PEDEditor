@@ -12,12 +12,11 @@ import java.text.*;
 import java.util.*;
 import java.io.*;
 
-// TODO Keep center of scroll pane fixed relative to the image when
-// zooming into a new diagram.
-
 // TODO Allow the equals key to be attracted to the intersection of
-// curves, even when those intersections were not explicitly added to
-// the diagram.
+// all kinds of curves, and not just line segments.
+
+// TODO Fix the bug (in Java itself?) where scrolling the scroll pane
+// doesn't cause the image to be redrawn.
 
 /** Main driver class for Phase Equilibria Diagram digitization and creation. */
 public class Editor implements CropEventListener, MouseListener,
@@ -49,12 +48,7 @@ public class Editor implements CropEventListener, MouseListener,
     protected AxisInfo zAxis = null;
     protected AxisInfo pageXAxis = null;
     protected AxisInfo pageYAxis = null;
-
-    /** Ignore the next mouseMoved() event. Useful when robot() is
-        used to move the mouse to a preferred location, to avoid the
-        precisely chosen coordinates being overwritten by the mouse
-        pointer's crude approximation to the nearest pixel. */
-    protected boolean leaveMprinAlone = false;
+    protected boolean preserveMprin = false;
 
     /** Current mouse position expressed in principal coordinates.
      It's not always sufficient to simply read the mouse position in
@@ -127,7 +121,7 @@ public class Editor implements CropEventListener, MouseListener,
             }
         }
 
-        getEditPane().repaint();
+        repaintEditFrame();
     }
 
     /** Cycle the currently active curve. */
@@ -147,7 +141,7 @@ public class Editor implements CropEventListener, MouseListener,
             activeVertexNo = -1;
         }
             
-        getEditPane().repaint();
+        repaintEditFrame();
     }
 
     /** Move the location of the last curve vertex added so that the
@@ -160,11 +154,24 @@ public class Editor implements CropEventListener, MouseListener,
             p.y += dy;
             screenToPrincipal.transform(p, p);
             getActiveCurve().set(activeVertexNo, p);
-            getEditPane().repaint();
+            repaintEditFrame();
         }
     }
 
+
+    /** Make sure the mouse position and status bar are up to date and
+        call repaint() on the edit frame. */
+    public void repaintEditFrame() {
+        editFrame.repaint();
+    }
+
+
+    /** Most of the information required to paint the EditPane is part
+        of this object, so it's simpler to do the painting from
+        here. */
     public void paintEditPane(Graphics g0) {
+        // System.out.println("Painting...");
+        updateMousePosition();
 
         Graphics2D g = (Graphics2D) g0;
 
@@ -174,19 +181,9 @@ public class Editor implements CropEventListener, MouseListener,
             g.fill(screenBounds);
         }
 
-        // Disable anti-aliasing for this phase because the
-        // anti-aliasing prevents the green line from precisely
-        // overwriting the red line.
-
         g.setRenderingHint(RenderingHints.KEY_ANTIALIASING,
                            RenderingHints.VALUE_ANTIALIAS_ON);
-
         g.setColor(Color.BLACK);
-
-        // TODO fix...
-        // if (diagramOutline != null) {
-        // g.draw(diagramOutline);
-        // }
 
         int pathCnt = paths.size();
         if (pathCnt == 0) {
@@ -206,16 +203,17 @@ public class Editor implements CropEventListener, MouseListener,
 
         GeneralPolyline lastPath = paths.get(activeCurveNo);
 
+        // Disable anti-aliasing for this phase because it
+        // prevents the green line from precisely overwriting the
+        // red line.
+
+        g.setRenderingHint(RenderingHints.KEY_ANTIALIASING,
+                           RenderingHints.VALUE_ANTIALIAS_OFF);
+
         if (mprin != null && activeVertexNo != -1) {
 
-            // Disable anti-aliasing for this phase because it
-            // prevents the green line from precisely overwriting the
-            // red line.
-
-            g.setRenderingHint(RenderingHints.KEY_ANTIALIASING,
-                               RenderingHints.VALUE_ANTIALIAS_OFF);
-
             g.setColor(Color.RED);
+            // System.out.println("Added " + mprin);
             lastPath.add(activeVertexNo + 1, mprin);
             draw(g, lastPath);
             lastPath.remove(activeVertexNo + 1);
@@ -261,7 +259,7 @@ public class Editor implements CropEventListener, MouseListener,
                                    BasicStroke.JOIN_ROUND)));
         activeCurveNo = paths.size() - 1;
         activeVertexNo = -1;
-        getEditPane().repaint();
+        repaintEditFrame();
     }
 
     /** Start a new curve where the old curve ends. */
@@ -276,6 +274,7 @@ public class Editor implements CropEventListener, MouseListener,
     /** Add a point to getActiveCurve(). */
     public void add(Point2D.Double point) {
         getActiveCurve().add(++activeVertexNo, point);
+        repaintEditFrame();
     }
 
     /** Like add(), but instead add the previously added point that is
@@ -334,24 +333,30 @@ public class Editor implements CropEventListener, MouseListener,
         if (principalToScreen == null) {
             return;
         }
-        Point spos = Duh.toPoint(principalToScreen.transform(mprin));
+        Point mpos = Duh.floorPoint(principalToScreen.transform(mprin));
+        
         JScrollPane spane = editFrame.getScrollPane();
         Rectangle view = spane.getViewport().getViewRect();
         Point topCorner = spane.getLocationOnScreen();
-        spos.x += topCorner.x - view.x;
-        spos.y += topCorner.y - view.y;
+
+        // TODO For whatever reason, I need to add 1 to the x and y
+        // coordinates if I want the output to satisfy
+
+        // getEditPane().getMousePosition() == original mpos value.
+
+        mpos.x += topCorner.x - view.x + 1;
+        mpos.y += topCorner.y - view.y + 1;
 
         // TODO fix jumping out of bounds...
 
         try {
             Robot robot = new Robot();
-            robot.mouseMove(spos.x, spos.y);
+            robot.mouseMove(mpos.x, mpos.y);
         } catch (AWTException e) {
             throw new RuntimeException(e);
         }
 
-        leaveMprinAlone = true;
-        updateStatusBar();
+        repaintEditFrame();
     }
 
     /** @return the location in principal coordinates of the key
@@ -443,7 +448,11 @@ public class Editor implements CropEventListener, MouseListener,
                     = ((SplinePolyline) path).getSpline(principalToStandardPage)
                     .closePoint(xpoint, 1e-9, 200);
 
-                if (nearPoint == null || di.distance < minDist) {
+                if (nearPoint == null || (di != null && di.distance < minDist)) {
+                    if (di.distance < 0) {
+                        throw new IllegalStateException
+                            (xpoint + " => " + path + " dist = " + di.distance + " < 0");
+                    }
                     standardPageToPrincipal.transform(di.point, di.point);
                     nearPoint = di.point;
                     minDist = di.distance;
@@ -585,6 +594,9 @@ public class Editor implements CropEventListener, MouseListener,
     }
 
     protected void newDiagram(Point2D.Double[] vertices) {
+        ArrayList<Point2D.Double> diagramPolyline = 
+            new ArrayList<Point2D.Double>();
+
         boolean tracing = (vertices != null);
         clear();
 
@@ -691,6 +703,13 @@ public class Editor implements CropEventListener, MouseListener,
                       new Point2D.Double(rx, bottom) };
                 principalToStandardPage = new TriangleTransform
                     (principalTrianglePoints, trianglePagePositions);
+
+                // Add the endpoints of the diagram.
+                diagramPolyline.add(outputVertices[1]);
+                diagramPolyline.add(outputVertices[0]);
+                diagramPolyline.add(outputVertices[3]);
+                diagramPolyline.add(outputVertices[2]);
+
                 break;
             }
         case BINARY:
@@ -713,7 +732,21 @@ public class Editor implements CropEventListener, MouseListener,
                     (r.t, 0.0,
                      0.0, -r.t,
                      leftMargin, 1.0 - bottomMargin);
+                if (diagramType == DiagramType.BINARY) {
+                    // Add the endpoints of the diagram.
+                    for (Point2D.Double point:
+                             new Point2D.Double[] {
+                                 new Point2D.Double(0.0, 0.0),
+                                 new Point2D.Double(0.0, 100.0),
+                                 new Point2D.Double(100.0, 100.0),
+                                 new Point2D.Double(100.0, 0.0),
+                                 new Point2D.Double(0.0, 0.0)}) {
+                        diagramPolyline.add(point);
+                    }
+                }
+
                 break;
+
             }
 
         case TERNARY_LEFT:
@@ -744,8 +777,9 @@ public class Editor implements CropEventListener, MouseListener,
                           vertices[angleVertex].distance(vertices[ov1]) };
                     double maxSideLength = Math.max(angleSideLengths[0],
                                                     angleSideLengths[1]);
-                    pageMaxes = new double[] { 100.0 * angleSideLengths[0] / maxSideLength,
-                                               100.0 * angleSideLengths[1] / maxSideLength };
+                    pageMaxes = new double[]
+                        { 100.0 * angleSideLengths[0] / maxSideLength,
+                          100.0 * angleSideLengths[1] / maxSideLength };
                 }
 
                 String pageMaxInitialValues[] = new String[pageMaxes.length];
@@ -781,6 +815,7 @@ public class Editor implements CropEventListener, MouseListener,
                 double leftLength = sideLengths[LEFT_SIDE];
                 double rightLength = sideLengths[RIGHT_SIDE];
                 double bottomLength = sideLengths[BOTTOM_SIDE];
+                System.out.println("bl = " + sideLengths[BOTTOM_SIDE]);
 
                 Point2D.Double[] trianglePoints
                     = Duh.deepCopy(principalTrianglePoints);
@@ -803,6 +838,11 @@ public class Editor implements CropEventListener, MouseListener,
                         = new Point2D.Double(100.0 - rightLength, rightLength);
                     break;
                 }
+
+                // Add the endpoints of the diagram.
+                diagramPolyline.add(trianglePoints[ov1]);
+                diagramPolyline.add(trianglePoints[angleVertex]);
+                diagramPolyline.add(trianglePoints[ov2]);
 
                 if (tracing) {
                     originalToPrincipal = new TriangleTransform(vertices,
@@ -836,6 +876,7 @@ public class Editor implements CropEventListener, MouseListener,
                                          topMargin + r.t * rightHeight) };
                 principalToStandardPage = new TriangleTransform
                     (trianglePoints, trianglePagePositions);
+
                 break;
             }
         case TERNARY:
@@ -858,6 +899,13 @@ public class Editor implements CropEventListener, MouseListener,
                       new Point2D.Double(rx, bottom) };
                 principalToStandardPage = new TriangleTransform
                     (principalTrianglePoints, trianglePagePositions);
+
+                // Add the endpoints of the diagram.
+                for (Point2D.Double point: principalTrianglePoints) {
+                    diagramPolyline.add(point);
+                }
+                diagramPolyline.add(principalTrianglePoints[0]);
+
                 break;
             }
         }
@@ -892,6 +940,11 @@ public class Editor implements CropEventListener, MouseListener,
         // Force the editor frame image to be initialized.
         zoomBy(1.0);
 
+        for (Point2D.Double point: diagramPolyline) {
+            add(point);
+        }
+        endCurve();
+
         if (tracing) {
             editFrame.setTitle("Edit " + diagramType + " "
                                + cropFrame.getFilename());
@@ -903,13 +956,13 @@ public class Editor implements CropEventListener, MouseListener,
         }
         editFrame.pack();
         Rectangle rect = editFrame.getBounds();
-        editFrame.setVisible(true);
         if (tracing) {
             zoomFrame.setLocation(rect.x + rect.width, rect.y);
             zoomFrame.setTitle("Zoom " + cropFrame.getFilename());
             zoomFrame.pack();
             zoomFrame.setVisible(true);
         }
+        editFrame.setVisible(true);
     }
 
     public void openImage(String filename) {
@@ -950,23 +1003,47 @@ public class Editor implements CropEventListener, MouseListener,
         the position in the zoom window,. */
     @Override
         public void mouseMoved(MouseEvent e) {
+        repaintEditFrame();
+    }
+
+    public void updateMousePosition() {
         if (screenToPrincipal == null) {
             return;
         }
 
-        if (leaveMprinAlone) {
-            leaveMprinAlone = false;
-            return;
-        }
+        Point mpos = getEditPane().getMousePosition();
+        if (mpos != null && !preserveMprin) {
 
-        double sx = e.getX() + 0.5;
-        double sy = e.getY() + 0.5;
-        mprin = screenToPrincipal.transform(sx,sy);
+            double sx = mpos.getX() + 0.5;
+            double sy = mpos.getY() + 0.5;
+
+            boolean updateMprin = (mprin == null);
+
+            if (!updateMprin) {
+                // Leave mprin alone if it is already accurate to the
+                // nearest pixel. This allows "jump to point"
+                // operations' accuracy to exceed the screen
+                // resolution, which matters when zooming the screen
+                // or viewing the coordinates in the status bar.
+
+                Point mprinScreen = Duh.floorPoint
+                    (principalToScreen.transform(mprin));
+                updateMprin = !mprinScreen.equals(mpos);
+            }
+
+            if (updateMprin) {
+                mprin = screenToPrincipal.transform(sx,sy);
+            }
+        }
 
         updateStatusBar();
     }
 
-    public void updateStatusBar() {
+    void updateStatusBar() {
+        if (mprin == null) {
+            return;
+        }
+
         StringBuilder status = new StringBuilder("");
 
         boolean first = true;
@@ -981,7 +1058,6 @@ public class Editor implements CropEventListener, MouseListener,
             status.append(axis.valueAsString(mprin.x, mprin.y));
         }
         editFrame.setStatus(status.toString());
-        getEditPane().repaint();
             
         if (tracingImage()) {
             try {
@@ -1011,11 +1087,51 @@ public class Editor implements CropEventListener, MouseListener,
         if (principalToStandardPage == null) {
             return;
         }
+        double oldScale = scale;
+
+        // Keep the center of the viewport where it was if the center
+        // was a part of the image.
+
+        JScrollPane spane = editFrame.getScrollPane();
+        Rectangle view = spane.getViewport().getViewRect();
+        System.out.println("Viewport is " + view);
+
+        // Adjust the viewport to allow pagePoint in standard page
+        // coordinates to remain located at offset viewportPoint from
+        // the upper left corner of the viewport, to prevent the part
+        // of the diagram that is visible from changing too
+        // drastically when you zoom in and out. The viewport's
+        // preferred size also sets constraints on the visible region,
+        // so the diagram may not actually stay in the same place.
+
+        Point2D.Double pagePoint = null;
+        Point viewportPoint = null;
+
+        if (standardPageToScreen != null) {
+            if (mprin != null) {
+                // Preserve the mouse position: transform mprin into
+                // somewhere in the pixel viewportPoint.
+                pagePoint = principalToStandardPage.transform(mprin);
+                viewportPoint = Duh.floorPoint
+                    (standardPageToScreen.transform(pagePoint));
+                viewportPoint.x -= view.x;
+                viewportPoint.y -= view.y;
+            } else {
+                // Preserve the center of the viewport.
+                viewportPoint = new Point(view.width / 2, view.height / 2);
+                pagePoint = screenToStandardPage.transform
+                    (viewportPoint.x + view.x + 0.5,
+                     viewportPoint.y + view.y + 0.5);
+            }
+        }
+
         standardPageToScreen = new Affine(scale, 0.0,
                                           0.0, scale,
                                           0.0, 0.0);
 
         {
+            // Set screenBounds, which determines the preferred size
+            // of the scroll pane.
             Point2D.Double p1
                 = standardPageToScreen.transform(pageBounds.x, pageBounds.y);
             Point2D.Double p2 = standardPageToScreen.transform
@@ -1029,7 +1145,6 @@ public class Editor implements CropEventListener, MouseListener,
             getEditPane().setPreferredSize
                 (new Dimension(screenBounds.x + screenBounds.width,
                                screenBounds.y + screenBounds.height));
-            getEditPane().revalidate();
         }
 
         try {
@@ -1049,7 +1164,28 @@ public class Editor implements CropEventListener, MouseListener,
             lighten(output);
             editFrame.setImage(output);
         }
-        editFrame.repaint();
+
+        if (pagePoint != null) {
+            // Adjust viewport to preserve pagePoint => viewportPoint
+            // relationship.
+
+            Point screenPoint = Duh.floorPoint
+                (standardPageToScreen.transform(pagePoint));
+
+            Point viewPosition
+                = new Point(Math.max(0, screenPoint.x - viewportPoint.x),
+                            Math.max(0, screenPoint.y - viewportPoint.y));
+
+            // Java 1.6_29 needs to be told twice which viewport to
+            // use. It seems to get the Y scrollbar right the first
+            // time, and the X scrollbar right the second time.
+            preserveMprin = true;
+            spane.getViewport().setViewPosition(viewPosition);
+            spane.getViewport().setViewPosition(viewPosition);
+            preserveMprin = false;
+        }
+        getEditPane().revalidate();
+        repaintEditFrame();
 
         try {
             screenToPrincipal = principalToScreen.createInverse();
@@ -1068,6 +1204,9 @@ public class Editor implements CropEventListener, MouseListener,
     }
 
     protected void newDiagram(Point[] verticesIn) {
+        if (zoomFrame != null) {
+            zoomFrame.setVisible(false);
+        }
         newDiagram((verticesIn == null) ? null
                    : Duh.toPoint2DDoubles(verticesIn));
     }
@@ -1178,6 +1317,6 @@ public class Editor implements CropEventListener, MouseListener,
     @Override
         public void mouseExited(MouseEvent e) {
         mprin = null;
-        getEditPane().repaint();
+        repaintEditFrame();
     }
 }
