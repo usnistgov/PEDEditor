@@ -219,6 +219,26 @@ public class Duh {
                                       maxX(points) - mx, maxY(points) - my);
     }
 
+    public static Rectangle bounds(Point[] points) {
+        if (points == null || points.length == 0) {
+            return null;
+        }
+        int minx, maxx;
+        minx = maxx = points[0].x;
+        int miny, maxy;
+        miny = maxy = points[0].y;
+        for (int i = 1; i < points.length; ++i) {
+            int x = points[i].x;
+            int y = points[i].y;
+            if (x < minx) minx = x;
+            if (x > maxx) maxx = x;
+            if (y < miny) miny = y;
+            if (y > maxy) maxy = y;
+        }
+
+        return new Rectangle(minx, miny, maxx - minx + 1, maxy - miny + 1);
+    }
+
     /** @return the distance between p and the nearest point on rect.
         The return value will be 0 if p is in rect. */
     public static double distanceSq(Point2D p, Rectangle2D rect) {
