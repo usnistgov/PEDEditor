@@ -99,13 +99,33 @@ public class EditFrame extends ImageScrollFrame {
                 }
             });
 
-        JMenuItem mnPrint = new JMenuItem("Print");
-        mnFile.add(mnPrint);
-        mnPrint.setEnabled(false);
-
         JMenuItem mnSave = new JMenuItem("Save");
         mnFile.add(mnSave);
         mnSave.setEnabled(false);
+
+        JMenu mnSaveAs = new JMenu("Save As");
+        mnFile.add(mnSaveAs);
+
+        mnSaveAs.add(new EditFrameAction("PDF", KeyEvent.VK_P) {
+                @Override
+                    public void actionPerformed(ActionEvent e) {
+                    getParentEditor().saveAsPDF();
+                }
+            });
+
+        mnSaveAs.add(new EditFrameAction("SVG", KeyEvent.VK_P) {
+                @Override
+                    public void actionPerformed(ActionEvent e) {
+                    getParentEditor().saveAsSVG();
+                }
+            });
+
+        mnFile.add(new EditFrameAction("Print", KeyEvent.VK_P) {
+                @Override
+                    public void actionPerformed(ActionEvent e) {
+                    getParentEditor().print();
+                }
+            });
 
         JSeparator separator = new JSeparator();
         mnFile.add(separator);
@@ -114,48 +134,43 @@ public class EditFrame extends ImageScrollFrame {
         mnFile.add(mnExit);
         mnExit.setEnabled(false);
 
-        JMenu mnEdit = new JMenu("Edit");
-        menuBar.add(mnEdit);
 
-        mnEdit.add(new EditFrameAction("End curve", KeyEvent.VK_E, "typed .") {
-                @Override
-                    public void actionPerformed(ActionEvent e) {
-                    getParentEditor().endCurve();
-                }
-            });
+        JMenu mnVertex = new JMenu("Vertex");
+        menuBar.add(mnVertex);
 
-        mnEdit.add(new EditFrameAction
-                   ("Start a new curve connected to active point",
-                    KeyEvent.VK_S, "typed ,") {
-                @Override
-                    public void actionPerformed(ActionEvent e) {
-                    getParentEditor().startConnectedCurve();
-                }
-            });
-
-        mnEdit.add(new EditFrameAction
-                   ("Duplicate nearest vertex",
-                    KeyEvent.VK_U,
+        mnVertex.add(new EditFrameAction
+                   ("Enter location",
+                    KeyEvent.VK_L,
                     KeyStroke.getKeyStroke('=')) {
+                @Override
+                    public void actionPerformed(ActionEvent e) {
+                    getParentEditor().addVertexLocation();
+                }
+            });
+
+        mnVertex.add(new EditFrameAction
+                   ("Duplicate nearest",
+                    KeyEvent.VK_D,
+                    KeyStroke.getKeyStroke('\"')) {
                 @Override
                     public void actionPerformed(ActionEvent e) {
                     getParentEditor().addNearestPoint();
                 }
             });
 
-        mnEdit.add(new EditFrameAction
-                   ("Select nearest vertex",
-                    KeyEvent.VK_C,
-                    KeyStroke.getKeyStroke('<')) {
+        mnVertex.add(new EditFrameAction
+                   ("Select nearest",
+                    KeyEvent.VK_S,
+                    KeyStroke.getKeyStroke('?')) {
                 @Override
                     public void actionPerformed(ActionEvent e) {
                     getParentEditor().selectNearestPoint();
                 }
             });
 
-        mnEdit.add(new EditFrameAction
-                   ("Add nearest point on curve",
-                    KeyEvent.VK_L,
+        mnVertex.add(new EditFrameAction
+                   ("Add on curve",
+                    KeyEvent.VK_C,
                     KeyStroke.getKeyStroke('_')) {
                 @Override
                     public void actionPerformed(ActionEvent e) {
@@ -163,25 +178,7 @@ public class EditFrame extends ImageScrollFrame {
                 }
             });
 
-        mnEdit.add(new EditFrameAction("Toggle smoothing",
-                                       KeyEvent.VK_T,
-                                       KeyStroke.getKeyStroke('o')) {
-                @Override
-                    public void actionPerformed(ActionEvent e) {
-                    getParentEditor().toggleSmoothing();
-                }
-            });
-
-        mnEdit.add(new EditFrameAction("Cycle active curve",
-                                       KeyEvent.VK_C,
-                                       KeyStroke.getKeyStroke('/')) {
-                @Override
-                    public void actionPerformed(ActionEvent e) {
-                    getParentEditor().cycleActiveCurve();
-                }
-            });
-
-        mnEdit.add(new EditFrameAction("Delete this vertex",
+        mnVertex.add(new EditFrameAction("Delete",
                                        KeyEvent.VK_D,
                                        "DELETE") {
                 @Override
@@ -190,11 +187,11 @@ public class EditFrame extends ImageScrollFrame {
                 }
             });
 
-        mnEdit.addSeparator();
+        mnVertex.addSeparator();
 
         JMenuItem mnAdjust = new JMenuItem("Adjust");
         mnAdjust.setEnabled(false);
-        mnEdit.add(mnAdjust);
+        mnVertex.add(mnAdjust);
 
         AdjustAction[] arrows =
             { new AdjustAction("Up", KeyEvent.VK_U, "UP", 0, -1),
@@ -202,8 +199,129 @@ public class EditFrame extends ImageScrollFrame {
               new AdjustAction("Left", KeyEvent.VK_L, "LEFT", -1, 0),
               new AdjustAction("Right", KeyEvent.VK_R, "RIGHT", 1, 0) };
         for (AdjustAction a : arrows) {
-            mnEdit.add(a);
+            mnVertex.add(a);
         }
+
+
+        JMenu mnCurve = new JMenu("Curve");
+        menuBar.add(mnCurve);
+
+        mnCurve.add(new EditFrameAction("New",
+                                        KeyEvent.VK_N, "typed .") {
+                @Override
+                    public void actionPerformed(ActionEvent e) {
+                    getParentEditor().endCurve();
+                }
+            });
+
+        mnCurve.add(new EditFrameAction
+                   ("Add cusp", KeyEvent.VK_C, "typed ,") {
+                @Override
+                    public void actionPerformed(ActionEvent e) {
+                    getParentEditor().startConnectedCurve();
+                }
+            });
+
+
+        mnCurve.add(new EditFrameAction("Select last",
+                                       KeyEvent.VK_L,
+                                       KeyStroke.getKeyStroke('<')) {
+                @Override
+                    public void actionPerformed(ActionEvent e) {
+                    getParentEditor().cycleActiveCurve();
+                }
+            });
+
+        mnCurve.add(new EditFrameAction("Toggle smoothing",
+                                        KeyEvent.VK_T,
+                                        KeyStroke.getKeyStroke('o')) {
+                @Override
+                    public void actionPerformed(ActionEvent e) {
+                    getParentEditor().toggleSmoothing();
+                }
+            });
+
+        mnCurve.add(new EditFrameAction
+                   ("Line style", KeyEvent.VK_S) {
+                @Override
+                    public void actionPerformed(ActionEvent e) {
+                    getParentEditor().setLineStyle();
+                }
+            });
+
+        mnCurve.add(new EditFrameAction
+                    ("Line width", KeyEvent.VK_W) {
+                @Override
+                    public void actionPerformed(ActionEvent e) {
+                    getParentEditor().setLineWidth();
+                }
+            });
+
+        mnCurve.add(new EditFrameAction
+                   ("Reverse vertex order", KeyEvent.VK_R) {
+                @Override
+                    public void actionPerformed(ActionEvent e) {
+                    getParentEditor().reverseInsertionOrder();
+                }
+            });
+
+        JMenuItem mnCopyCurve = new JMenuItem("Copy");
+        mnCopyCurve.setEnabled(false);
+        mnCurve.add(mnCopyCurve);
+
+        JMenuItem mnGradient = new JMenuItem("Apply gradient");
+        mnGradient.setEnabled(false);
+        mnCurve.add(mnGradient);
+
+        JMenu mnLabel = new JMenu("Label");
+        menuBar.add(mnLabel);
+        mnLabel.add(new EditFrameAction
+                   ("Text",
+                    KeyEvent.VK_T,
+                    KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0)) {
+                @Override
+                    public void actionPerformed(ActionEvent e) {
+                    getParentEditor().setLabelText();
+                }
+            });
+
+        mnLabel.add(new EditFrameAction
+                   ("Anchor", KeyEvent.VK_A) {
+                @Override
+                    public void actionPerformed(ActionEvent e) {
+                    getParentEditor().setLabelAnchor();
+                }
+            });
+
+        mnLabel.add(new EditFrameAction
+                   ("Angle", KeyEvent.VK_N) {
+                @Override
+                    public void actionPerformed(ActionEvent e) {
+                    getParentEditor().setLabelAngle();
+                }
+            });
+
+        mnLabel.add(new EditFrameAction
+                   ("Font", KeyEvent.VK_N) {
+                @Override
+                    public void actionPerformed(ActionEvent e) {
+                    getParentEditor().setLabelFont();
+                }
+            });
+
+        mnLabel.add(new EditFrameAction
+                   ("Compute Chemical Label Coordinates", KeyEvent.VK_C) {
+                @Override
+                    public void actionPerformed(ActionEvent e) {
+                    // TODO not defined yet...
+                    // getParentEditor().computeLabelCoordinates();
+                }
+            });
+        
+
+        // TODO Haven't figured out what goes here yet...
+        // JMenu mnAxis = new JMenu("Axis");
+        // menuBar.add(mnAxis);
 
         JMenu mnView = new JMenu("View");
         menuBar.add(mnView);
