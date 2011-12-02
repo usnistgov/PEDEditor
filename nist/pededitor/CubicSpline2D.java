@@ -406,10 +406,22 @@ final public class CubicSpline2D {
                 if (iterations >= maxIterations) {
                     System.err.println("Reached maximum iterations count.");
                 }
-                System.out.println
-                    ("Found a solution " + bestCandidate
-                     + " within " + (bestCandidate.distance - lowerBound)
-                     + " of ideal after trying  " + iterations + " ranges.");
+
+                if (false) {
+                    // It's possible that something funny is going on
+                    // here, but it's hard to tell after numerical
+                    // error is factored in, and I haven't seen visual
+                    // evidence of any mistakes.
+
+                    System.out.println
+                        (this + ".closePoint(" + p + ", " + maxError
+                         + "): solution " + bestCandidate 
+                         + " within " + (bestCandidate.distance - lowerBound)
+                         + " of ideal after trying  " + iterations + " ranges.");
+                    if (bestCandidate.distance < lowerBound) {
+                        throw new IllegalStateException("Better than perfect?!");
+                    }
+                }
                 return bestCandidate;
             }
 

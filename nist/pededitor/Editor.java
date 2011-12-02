@@ -3,6 +3,8 @@ package gov.nist.pededitor;
 import java.awt.*;
 
 import javax.imageio.*;
+import javax.print.attribute.*;
+import javax.print.attribute.standard.*;
 import javax.swing.*;
 import java.awt.event.*;
 import java.awt.image.*;
@@ -11,16 +13,23 @@ import java.net.*;
 import java.text.*;
 import java.util.*;
 import java.io.*;
+import java.awt.print.*;
 
-// TODO Allow the equals key to be attracted to the intersection of
-// all kinds of curves, and not just line segments.
+// TODO Allow the vertex duplication operation to detect all curve
+// intersections, not just line segment intersections. (Line segment +
+// 2D cubic spline intersections only require solving a cubic
+// equation, which CubicCurve2D can help with; cubic spline + cubic
+// spline intersections probably must be solved numerically.)
 
 // TODO Fix the bug (in Java itself?) where scrolling the scroll pane
 // doesn't cause the image to be redrawn.
 
+// TODO Checkbox in the menu to indicate whether curve smoothing is
+// enabled.
+
 /** Main driver class for Phase Equilibria Diagram digitization and creation. */
 public class Editor implements CropEventListener, MouseListener,
-                               MouseMotionListener {
+                               MouseMotionListener, Printable {
     static protected Image crosshairs = null;
 
     protected CropFrame cropFrame = new CropFrame();
@@ -31,12 +40,7 @@ public class Editor implements CropEventListener, MouseListener,
     protected PolygonTransform principalToOriginal;
     protected Affine principalToStandardPage;
     protected Affine standardPageToPrincipal;
-    protected Affine principalToScreen;
-    protected Affine screenToPrincipal;
-    protected Affine screenToStandardPage;
-    protected Affine standardPageToScreen;
     protected Rectangle2D.Double pageBounds;
-    protected Rectangle screenBounds;
     protected DiagramType diagramType = null;
     protected double scale;
     protected ArrayList<GeneralPolyline> paths;
@@ -69,12 +73,7 @@ public class Editor implements CropEventListener, MouseListener,
         principalToOriginal = null;
         principalToStandardPage = null;
         standardPageToPrincipal = null;
-        principalToScreen = null;
-        screenToPrincipal = null;
-        screenToStandardPage = null;
-        standardPageToScreen = null;
         pageBounds = null;
-        screenBounds = null;
         scale = 800.0;
         paths = new ArrayList<GeneralPolyline>();
         activeCurveNo = -1;
@@ -144,15 +143,33 @@ public class Editor implements CropEventListener, MouseListener,
         repaintEditFrame();
     }
 
+    /** @param scale A multiple of standardPage coordinates
+
+        @return a transform from standard page coordinates to device
+        coordinates. */
+    Affine standardPageToDevice(double scale) {
+        return Affine.getScaleInstance(scale, scale);
+    }
+
+    /** @param scale A multiple of standardPage coordinates
+
+        @return a transform from principal coordinates to device
+        coordinates. */
+    Affine principalToScaledPage(double scale) {
+        Affine output = standardPageToDevice(scale);
+        output.concatenate(principalToStandardPage);
+        return output;
+    }
+
     /** Move the location of the last curve vertex added so that the
         screen location changes by the given amount. */
     public void moveLastVertex(int dx, int dy) {
         Point2D.Double p = getActiveVertex();
         if (p != null) {
-            principalToScreen.transform(p, p);
-            p.x += dx;
-            p.y += dy;
-            screenToPrincipal.transform(p, p);
+            principalToStandardPage.transform(p, p);
+            p.x += dx / scale;
+            p.y += dy / scale;
+            standardPageToPrincipal.transform(p, p);
             getActiveCurve().set(activeVertexNo, p);
             repaintEditFrame();
         }
@@ -165,6 +182,12 @@ public class Editor implements CropEventListener, MouseListener,
         editFrame.repaint();
     }
 
+    Rectangle scaledPageBounds(double scale) {
+        return new Rectangle((int) 0, 0,
+                             (int) Math.ceil(pageBounds.width * scale),
+                             (int) Math.ceil(pageBounds.height * scale));
+    }
+
 
     /** Most of the information required to paint the EditPane is part
         of this object, so it's simpler to do the painting from
@@ -172,13 +195,59 @@ public class Editor implements CropEventListener, MouseListener,
     public void paintEditPane(Graphics g0) {
         // System.out.println("Painting...");
         updateMousePosition();
-
         Graphics2D g = (Graphics2D) g0;
+        paintDiagram(g, scale, true);
+    }
 
-        if (!tracingImage() && standardPageToScreen != null) {
-            // Print the white rectangular background of the page.
-            g.setColor(Color.WHITE);
-            g.fill(screenBounds);
+
+    /** Compute the scaling factor to apply to pageBounds (and
+        standardPage coordinates) in order for xform.transform(scale *
+        pageBounds) to fill deviceBounds as much as possible without
+        going over. */
+    double deviceScale(AffineTransform xform, Rectangle2D deviceBounds) {
+        AffineTransform itrans;
+        try {
+            itrans = xform.createInverse();
+        } catch (NoninvertibleTransformException e) {
+            throw new IllegalStateException("Transform " + xform
+                                            + " is not invertible");
+        }
+
+        Point2D.Double delta = new Point2D.Double();
+        itrans.deltaTransform
+            (new Point2D.Double(pageBounds.width, pageBounds.height), delta);
+
+        Rescale r = new Rescale(Math.abs(delta.x), 0.0, deviceBounds.getWidth(),
+                                Math.abs(delta.y), 0.0, deviceBounds.getHeight());
+        return r.t;
+    }
+
+    double deviceScale(Graphics2D g, Rectangle2D deviceBounds) {
+        return deviceScale(g.getTransform(), deviceBounds);
+    }
+
+
+    /** Paint the diagram to the given graphics context.
+
+        @param standardPageToDevice Transformation from standard page
+        coordinates to device coordinates
+
+        @param editing If true, then paint editing hints (highlight
+        the currently active curve in green, show the consequences of
+        adding the current mouse position in red, etc.). If false,
+        show the final form of the diagram. This parameter should be
+        false except while painting the editFrame. */
+    public void paintDiagram(Graphics2D g, double scale, boolean editing) {
+        if (principalToStandardPage == null) {
+            return;
+        }
+        if (!tracingImage()) {
+            // xxx might need more work, but not a priority now
+
+            if (editing) {
+                g.setColor(Color.WHITE);
+                g.fill(scaledPageBounds(scale));
+            }
         }
 
         g.setRenderingHint(RenderingHints.KEY_ANTIALIASING,
@@ -191,44 +260,49 @@ public class Editor implements CropEventListener, MouseListener,
         }
 
         for (int i = 0; i < pathCnt; ++i) {
-            if (i != activeCurveNo) {
+            if (!editing || i != activeCurveNo) {
                 GeneralPolyline path = paths.get(i);
                 if (path.size() == 1) {
-                    circleVertices(g, path);
+                    circleVertices(g, path, scale);
                 } else {
-                    draw(g, path);
+                    draw(g, path, scale);
                 }
             }
         }
 
-        GeneralPolyline lastPath = paths.get(activeCurveNo);
+        if (editing) {
+            GeneralPolyline lastPath = paths.get(activeCurveNo);
 
-        // Disable anti-aliasing for this phase because it
-        // prevents the green line from precisely overwriting the
-        // red line.
+            // Disable anti-aliasing for this phase because it
+            // prevents the green line from precisely overwriting the
+            // red line.
 
-        g.setRenderingHint(RenderingHints.KEY_ANTIALIASING,
-                           RenderingHints.VALUE_ANTIALIAS_OFF);
+            g.setRenderingHint(RenderingHints.KEY_ANTIALIASING,
+                               RenderingHints.VALUE_ANTIALIAS_OFF);
 
-        if (mprin != null && activeVertexNo != -1) {
+            if (mprin != null && activeVertexNo != -1) {
 
-            g.setColor(Color.RED);
-            // System.out.println("Added " + mprin);
-            lastPath.add(activeVertexNo + 1, mprin);
-            draw(g, lastPath);
-            lastPath.remove(activeVertexNo + 1);
+                g.setColor(Color.RED);
+                // System.out.println("Added " + mprin);
+                lastPath.add(activeVertexNo + 1, mprin);
+                draw(g, lastPath, scale);
+                lastPath.remove(activeVertexNo + 1);
+            }
+
+            g.setColor(Color.GREEN);
+            draw(g, lastPath, scale);
+            circleVertices(g, lastPath, scale);
+
+            double r = 8.0; // Radius ~= r/72nds of an inch.
+
+            // TODO Undo (testing only)...
+            for (Point2D.Double point: keyPoints()) {
+                Point2D.Double pagept = new Point2D.Double();
+                principalToStandardPage.transform(point, pagept);
+                g.draw(new Ellipse2D.Double
+                       (scale * pagept.x - r, scale * pagept.y - r, r*2, r*2));
+            }
         }
-
-        g.setColor(Color.GREEN);
-        draw(g, lastPath);
-        circleVertices(g, lastPath);
-
-        // TODO Undo (testing only)...
-        for (Point2D.Double point: keyPoints()) {
-            Point p = Duh.toPoint(principalToScreen.transform(point, null));
-            g.drawOval(p.x - 8, p.y - 8, 16, 16);
-        }
-
     }
 
     /** @return The GeneralPolyline that is currently being edited. If
@@ -242,7 +316,7 @@ public class Editor implements CropEventListener, MouseListener,
 
     /** Start a new curve. */
     void endCurve() {
-        if (screenToPrincipal == null) {
+        if (principalToStandardPage == null) {
             return;
         }
         if (paths.size() > 0) {
@@ -326,14 +400,70 @@ public class Editor implements CropEventListener, MouseListener,
         moveMouse(nearPoint);
     }
 
+    /** In order to insert vertices "backwards", just reverse the
+        existing set of vertices and insert the points in the normal
+        forwards order. */
+    public void reverseInsertionOrder() {
+        if (activeVertexNo < 0) {
+            return;
+        }
+
+        GeneralPolyline oldCurve = paths.get(activeCurveNo);
+
+        ArrayList<Point2D.Double> points
+            = new ArrayList<Point2D.Double>();
+        for (int i = oldCurve.size() - 1; i >= 0; --i) {
+            points.add(oldCurve.get(i));
+        }
+
+        GeneralPolyline curve = GeneralPolyline.create
+            (oldCurve.getSmoothingType(),
+             points.toArray(new Point2D.Double[0]),
+             oldCurve.getStroke());
+        paths.set(activeCurveNo, curve);
+        activeVertexNo = curve.size() - 1 - activeVertexNo;
+        repaintEditFrame();
+    }
+
+    /** Invoked from the EditFrame menu */
+    public void setLabelText() {
+        // TODO Just a stub.
+    }
+
+    /** Invoked from the EditFrame menu */
+    public void setLabelAnchor() {
+        // TODO Just a stub.
+    }
+
+    /** Invoked from the EditFrame menu */
+    public void setLabelAngle() {
+        // TODO Just a stub.
+    }
+
+    /** Invoked from the EditFrame menu */
+    public void setLabelFont() {
+        // TODO Just a stub.
+    }
+
+    /** Invoked from the EditFrame menu */
+    public void setLineStyle() {
+        // TODO Just a stub.
+    }
+
+    /** Invoked from the EditFrame menu */
+    public void setLineWidth() {
+        // TODO Just a stub.
+    }
+
     /** Move the mouse pointer so its position corresponds to the
         given location in principal coordinates. */
     void moveMouse(Point2D.Double point) {
         mprin = point;
-        if (principalToScreen == null) {
+        if (principalToStandardPage == null) {
             return;
         }
-        Point mpos = Duh.floorPoint(principalToScreen.transform(mprin));
+        Point mpos = Duh.floorPoint
+            (principalToScaledPage(scale).transform(mprin));
         
         JScrollPane spane = editFrame.getScrollPane();
         Rectangle view = spane.getViewport().getViewRect();
@@ -519,14 +649,6 @@ public class Editor implements CropEventListener, MouseListener,
         }
     }
 
-    /** Connect the dots in the various paths that have been added to
-        this diagram. */
-    public void drawPaths(Graphics2D g) {
-        for (GeneralPolyline path : paths) {
-            path.draw(g, path.getPath(principalToScreen), (float) scale);
-        }
-    }
-
     void removeActiveCurve() {
         if (activeCurveNo == -1)
             return;
@@ -544,8 +666,8 @@ public class Editor implements CropEventListener, MouseListener,
         }
     }
 
-    void draw(Graphics2D g, GeneralPolyline path) {
-        path.draw(g, path.getPath(principalToScreen), (float) scale);
+    void draw(Graphics2D g, GeneralPolyline path, double scale) {
+        path.draw(g, principalToStandardPage, scale);
     }
 
     public String getFilename() {
@@ -965,6 +1087,7 @@ public class Editor implements CropEventListener, MouseListener,
         editFrame.setVisible(true);
     }
 
+    /** Invoked from the EditFrame menu */
     public void openImage(String filename) {
         String title = (filename == null) ? "PED Editor" : filename;
         editFrame.setTitle(title);
@@ -979,6 +1102,67 @@ public class Editor implements CropEventListener, MouseListener,
         cropFrame.setVisible(true);
     }
 
+    /** Invoked from the EditFrame menu */
+    public void saveAsPDF() {
+        // TODO just a stub
+    }
+
+    /** Invoked from the EditFrame menu */
+    public void saveAsSVG() {
+        // TODO just a stub
+    }
+
+    /** Invoked from the EditFrame menu */
+    public void print() {
+        PrinterJob job = PrinterJob.getPrinterJob();
+        job.setPrintable(this);
+        if (job.printDialog()) {
+            try {
+                PrintRequestAttributeSet aset
+                    = new HashPrintRequestAttributeSet();
+                aset.add
+                    ((pageBounds.width > pageBounds.height)
+                     ? OrientationRequested.LANDSCAPE
+                     : OrientationRequested.PORTRAIT);
+                job.print(aset);
+            } catch (PrinterException e) {
+                System.err.println(e);
+            }
+        } else {
+            System.out.println("Print job canceled.");
+        }
+    }
+
+    public int print(Graphics g0, PageFormat pf, int pageIndex)
+         throws PrinterException {
+        if (pageIndex != 0 || principalToStandardPage == null) {
+            return Printable.NO_SUCH_PAGE;
+        }
+        Graphics2D g = (Graphics2D) g0;
+
+        AffineTransform oldTransform = g.getTransform();
+
+        Rectangle2D.Double bounds
+            = new Rectangle2D.Double
+            (pf.getImageableX(), pf.getImageableY(),
+             pf.getImageableWidth(), pf.getImageableHeight());
+
+        System.out.println("PageFormat bounds = " + bounds);
+        g.translate(bounds.getX(), bounds.getY());
+        double scale = Math.min(bounds.height / pageBounds.height,
+                                bounds.width / pageBounds.width);
+        System.out.println("Scale = " + scale);
+        paintDiagram(g, scale, false);
+        g.setTransform(oldTransform);
+
+        return Printable.PAGE_EXISTS;
+    }
+
+    /** Invoked from the EditFrame menu */
+    public void addVertexLocation() {
+        // TODO just a stub
+    }
+
     @Override
         public void mouseDragged(MouseEvent e) {
         mouseMoved(e);
@@ -986,7 +1170,7 @@ public class Editor implements CropEventListener, MouseListener,
 
     @Override
         public void mousePressed(MouseEvent e) {
-        if (screenToPrincipal == null) {
+        if (principalToStandardPage == null) {
             return;
         }
         add(mprin);
@@ -1007,7 +1191,7 @@ public class Editor implements CropEventListener, MouseListener,
     }
 
     public void updateMousePosition() {
-        if (screenToPrincipal == null) {
+        if (principalToStandardPage == null) {
             return;
         }
 
@@ -1027,12 +1211,12 @@ public class Editor implements CropEventListener, MouseListener,
                 // or viewing the coordinates in the status bar.
 
                 Point mprinScreen = Duh.floorPoint
-                    (principalToScreen.transform(mprin));
+                    (principalToScaledPage(scale).transform(mprin));
                 updateMprin = !mprinScreen.equals(mpos);
             }
 
             if (updateMprin) {
-                mprin = screenToPrincipal.transform(sx,sy);
+                mprin = standardPageToPrincipal.transform(sx/scale, sy/scale);
             }
         }
 
@@ -1080,21 +1264,21 @@ public class Editor implements CropEventListener, MouseListener,
         page (in which the longer of the two axes has length 1). */
     double getScale() { return scale; }
 
-    /** Set the screen scale of this image relative to a standard
-        page. */
+    /** Set the screen display scale; max(width, height) of the
+        displayed image will be "value" pixels, assuming that the
+        default transform for the screen uses 1 unit = 1 pixel. */
     void setScale(double value) {
+        double oldScale = scale;
         scale = value;
         if (principalToStandardPage == null) {
             return;
         }
-        double oldScale = scale;
 
         // Keep the center of the viewport where it was if the center
         // was a part of the image.
 
         JScrollPane spane = editFrame.getScrollPane();
         Rectangle view = spane.getViewport().getViewRect();
-        System.out.println("Viewport is " + view);
 
         // Adjust the viewport to allow pagePoint in standard page
         // coordinates to remain located at offset viewportPoint from
@@ -1107,61 +1291,37 @@ public class Editor implements CropEventListener, MouseListener,
         Point2D.Double pagePoint = null;
         Point viewportPoint = null;
 
-        if (standardPageToScreen != null) {
-            if (mprin != null) {
-                // Preserve the mouse position: transform mprin into
-                // somewhere in the pixel viewportPoint.
-                pagePoint = principalToStandardPage.transform(mprin);
-                viewportPoint = Duh.floorPoint
-                    (standardPageToScreen.transform(pagePoint));
-                viewportPoint.x -= view.x;
-                viewportPoint.y -= view.y;
-            } else {
-                // Preserve the center of the viewport.
-                viewportPoint = new Point(view.width / 2, view.height / 2);
-                pagePoint = screenToStandardPage.transform
-                    (viewportPoint.x + view.x + 0.5,
-                     viewportPoint.y + view.y + 0.5);
-            }
+        if (mprin != null) {
+            // Preserve the mouse position: transform mprin into
+            // somewhere in the pixel viewportPoint.
+            pagePoint = principalToStandardPage.transform(mprin);
+            viewportPoint =
+                new Point((int) Math.floor(pagePoint.x * oldScale) - view.x,
+                          (int) Math.floor(pagePoint.y * oldScale) - view.y);
+        } else {
+            // Preserve the center of the viewport.
+            viewportPoint = new Point(view.width / 2, view.height / 2);
+            pagePoint =
+                new Point2D.Double
+                ((viewportPoint.x + view.x + 0.5) / oldScale,
+                 (viewportPoint.y + view.y + 0.5) / oldScale);
         }
 
-        standardPageToScreen = new Affine(scale, 0.0,
-                                          0.0, scale,
-                                          0.0, 0.0);
+        System.out.println("Fix " + pagePoint + " => "+ viewportPoint);
 
-        {
-            // Set screenBounds, which determines the preferred size
-            // of the scroll pane.
-            Point2D.Double p1
-                = standardPageToScreen.transform(pageBounds.x, pageBounds.y);
-            Point2D.Double p2 = standardPageToScreen.transform
-                (pageBounds.x + pageBounds.width,
-                 pageBounds.y + pageBounds.height);
-            int x = (int) Math.floor(p1.x);
-            int y = (int) Math.floor(p1.y);
-            screenBounds = new Rectangle(x, y,
-                                         (int) Math.ceil(p2.x) - x,
-                                         (int) Math.ceil(p2.y) - y);
-            getEditPane().setPreferredSize
-                (new Dimension(screenBounds.x + screenBounds.width,
-                               screenBounds.y + screenBounds.height));
-        }
+        getEditPane().setPreferredSize
+            (new Dimension((int) Math.ceil(pageBounds.width * scale),
+                           (int) Math.ceil(pageBounds.height * scale)));
 
-        try {
-            screenToStandardPage = standardPageToScreen.createInverse();
-        } catch (NoninvertibleTransformException e) {
-            throw new IllegalStateException();
-        }
-        principalToScreen = principalToStandardPage.clone();
-        principalToScreen.preConcatenate((Transform2D) standardPageToScreen);
         if (originalToPrincipal != null) {
+            // Initialize the faded and transformed image of the original
+            // diagram.
             PolygonTransform originalToScreen = originalToPrincipal.clone();
-            originalToScreen.preConcatenate(principalToScreen);
+            originalToScreen.preConcatenate(principalToScaledPage(scale));
             BufferedImage output = ImageTransform.run
                 (originalToScreen, cropFrame.getImage(), Color.WHITE,
-                 new Dimension((int) Math.ceil(pageBounds.width * scale),
-                               (int) Math.ceil(pageBounds.height * scale)));
-            lighten(output);
+                 getEditPane().getPreferredSize());
+            fade(output);
             editFrame.setImage(output);
         }
 
@@ -1169,8 +1329,9 @@ public class Editor implements CropEventListener, MouseListener,
             // Adjust viewport to preserve pagePoint => viewportPoint
             // relationship.
 
-            Point screenPoint = Duh.floorPoint
-                (standardPageToScreen.transform(pagePoint));
+            Point screenPoint =
+                new Point((int) Math.floor(pagePoint.x * scale),
+                          (int) Math.floor(pagePoint.y * scale));
 
             Point viewPosition
                 = new Point(Math.max(0, screenPoint.x - viewportPoint.x),
@@ -1186,13 +1347,6 @@ public class Editor implements CropEventListener, MouseListener,
         }
         getEditPane().revalidate();
         repaintEditFrame();
-
-        try {
-            screenToPrincipal = principalToScreen.createInverse();
-        } catch (NoninvertibleTransformException e) {
-            System.err.println("This transform is not invertible");
-            System.exit(2);
-        }
     }
 
     EditPane getEditPane() { return editFrame.getEditPane(); }
@@ -1213,19 +1367,19 @@ public class Editor implements CropEventListener, MouseListener,
 
     /** Compress the brightness into the upper third of the range
         0..255. */
-    static int lighten1(int i) {
+    static int fade1(int i) {
         return 255 - (255 - i)/3;
     }
 
-    static void lighten(BufferedImage image) { 
+    static void fade(BufferedImage image) { 
         int width = image.getWidth();
         int height = image.getHeight();
         for (int x = 0; x < width; ++x) {
             for (int y = 0; y < height; ++y) {
                 Color c = new Color(image.getRGB(x,y));
-                c = new Color(lighten1(c.getRed()),
-                              lighten1(c.getGreen()),
-                              lighten1(c.getBlue()));
+                c = new Color(fade1(c.getRed()),
+                              fade1(c.getGreen()),
+                              fade1(c.getBlue()));
                 image.setRGB(x,y,c.getRGB());
             }
         }
@@ -1301,15 +1455,18 @@ public class Editor implements CropEventListener, MouseListener,
     }
 
     /** Draw a circle around each point in path. */
-    void circleVertices(Graphics2D g, GeneralPolyline path) {
+    void circleVertices(Graphics2D g, GeneralPolyline path, double scale) {
+        Point2D.Double xpoint = new Point2D.Double();
+        Affine p2d = principalToScaledPage(scale);
+
         BasicStroke s = path.getStroke();
         if (s == null) {
             s = (BasicStroke) g.getStroke();
         }
         double r = s.getLineWidth() * 2 * scale;
-        Point2D.Double xpoint = new Point2D.Double();
+
         for (Point2D.Double point: path.getPoints()) {
-            principalToScreen.transform(point, xpoint);
+            p2d.transform(point, xpoint);
             g.fill(new Ellipse2D.Double(xpoint.x - r, xpoint.y - r, r * 2, r * 2));
         }
     }

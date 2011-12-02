@@ -77,24 +77,19 @@ public abstract class GeneralPolyline {
         }
     }
 
-    public void draw(Graphics2D g, Path2D path, float scaleStrokeBy) {
-        Color oldColor = g.getColor();
-        Stroke oldStroke = g.getStroke();
 
-        Color color = getColor();
-        if (color != null) {
-            g.setColor(color);
-        }
-        if (stroke != null) {
-            g.setStroke(scaledStroke(stroke, scaleStrokeBy));
-        }
-        g.draw(path);
-        if (color != null) {
-            g.setColor(oldColor);
-        }
-        if (stroke != null) {
-            g.setStroke(oldStroke);
-        }
+    /** draw the path of this GeneralPolyline. The coordinates for
+        this path should be defined in the "Original" coordinate
+        system, but line widths are defined with respect to the
+        "SquarePixel" coordinate system. Also, the output is scaled by
+        "scale" before being drawn.
+    */
+    public void draw(Graphics2D g,
+                     AffineTransform originalToSquarePixel,
+                     double scale) {
+        AffineTransform xform = AffineTransform.getScaleInstance(scale, scale);
+        xform.concatenate(originalToSquarePixel);
+        draw(g, getPath(xform), scale);
     }
 
     public boolean isClosed() {
@@ -107,22 +102,57 @@ public abstract class GeneralPolyline {
         return stroke;
     }
 
-    /** @return null unless this polyline has been assigned a
-        stroke. */
-    public static BasicStroke scaledStroke(BasicStroke stroke,
-                                          float scaleFactor) {
+    /** @return a copy of "stroke" with its line width and dash
+        pattern lengths scaled by a factor of "scaled". */
+    public static BasicStroke scaledStroke(BasicStroke stroke, double scaled) {
+        float scale = (float) scaled;
         float[] dashes = stroke.getDashArray();
 
         if (dashes != null) {
             dashes = (float[]) dashes.clone();
             for (int i = 0; i < dashes.length; ++i) {
-                dashes[i] *= scaleFactor;
+                dashes[i] *= scale;
             }
         }
-        return new BasicStroke(stroke.getLineWidth() * scaleFactor,
+        return new BasicStroke(stroke.getLineWidth() * scale,
                                stroke.getEndCap(), stroke.getLineJoin(),
                                stroke.getMiterLimit(), dashes,
-                               stroke.getDashPhase() * scaleFactor);
+                               stroke.getDashPhase() * scale);
+    }
+
+
+    /** curveTo() seems to determine its linearization granularity
+        without regard to the transform defined for the Graphics2D, or
+        at least without regard to deviations from the default
+        transform. This results in unacceptable image quality if the
+        path is decribed in standardPage coordinates (which are in
+        [0,1]) and then transformed into a much larger range such as
+        [0,800].
+
+        A possible work-around would be to blow up standardPage by the
+        maximum of the 4 scaling and shear coefficients (to insure
+        that curveTo's polyline approximation has sufficient
+        resolution) and then correspondingly shrink the final
+        transformation.
+     */
+    void draw(Graphics2D g, Path2D path, double strokeScale) {
+        Color oldColor = g.getColor();
+        BasicStroke oldStroke = (BasicStroke) g.getStroke();
+
+        Color color = getColor();
+        if (color != null) {
+            g.setColor(color);
+        }
+        if (stroke != null) {
+            g.setStroke(scaledStroke(stroke, strokeScale));
+        } else {
+            g.setStroke(scaledStroke(oldStroke, strokeScale));
+        }
+        g.draw(path);
+        if (color != null) {
+            g.setColor(oldColor);
+        }
+        g.setStroke(oldStroke);
     }
 
     /** @return null unless this polyline has been assigned a

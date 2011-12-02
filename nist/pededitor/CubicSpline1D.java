@@ -270,14 +270,23 @@ final public class CubicSpline1D {
     }
     
     public String toString() {
-        StringBuilder out = new StringBuilder(super.toString() + "\n");
+        StringBuilder out = new StringBuilder(super.toString() + "\n"); 
         for (int segment = 0; segment < segmentCnt(); ++segment) {
             double[] coefs = coefficients[segment];
             out.append(segment + ": " + coefs[3] + " t^3 + " +
                        coefs[2] + " t^2 + " +
                        coefs[1] + " t + " + coefs[0] + "\n");
         }
-        return out.toString();
+        for (int i = 0; i < ys.length; ++i) {
+            if (i > 0) {
+                out.append(" - ");
+            }
+            out.append(ys[i]);
+        }
+        if (ys.length > 0) {
+            out.append("\n");
+        }
+       return out.toString();
     }
 
     /** @return an array of all real solutions to a x^2 + b x + c = 0

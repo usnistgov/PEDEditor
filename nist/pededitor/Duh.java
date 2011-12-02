@@ -239,6 +239,23 @@ public class Duh {
         return new Rectangle(minx, miny, maxx - minx + 1, maxy - miny + 1);
     }
 
+    public static Point2D.Double[] toPoint2DDoubles(Rectangle2D rect) {
+        return new Point2D.Double[]
+            { new Point2D.Double(rect.getX(), rect.getY()),
+              new Point2D.Double(rect.getX() + rect.getWidth(), rect.getY()),
+              new Point2D.Double(rect.getX(), rect.getY() + rect.getHeight()),
+              new Point2D.Double(rect.getX() + rect.getWidth(),
+                                 rect.getY() + rect.getHeight()) };
+    }
+
+    public static Point[] toPoints(Rectangle rect) {
+        return new Point[]
+            { new Point(rect.x, rect.y),
+              new Point(rect.x + rect.width, rect.y),
+              new Point(rect.x, rect.y + rect.height),
+              new Point(rect.x + rect.width, rect.y + rect.height) };
+    }
+
     /** @return the distance between p and the nearest point on rect.
         The return value will be 0 if p is in rect. */
     public static double distanceSq(Point2D p, Rectangle2D rect) {

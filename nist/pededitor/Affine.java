@@ -52,9 +52,23 @@ public class Affine extends AffineTransform implements Transform2D {
         super.preConcatenate(at);
     }
 
+    /** Method defined just to avoid "method is ambiguous" error. */
+    public void preConcatenate(Affine other) {
+        super.preConcatenate((AffineTransform) other);
+    }
+
+    /** Method defined just to avoid "method is ambiguous" error. */
     public void concatenate(Transform2D other) {
         AffineTransform at = (AffineTransform) other;
         super.concatenate(at);
+    }
+
+    public void concatenate(Affine other) {
+        super.concatenate((AffineTransform) other);
+    }
+
+    public static Affine getScaleInstance(double sx, double sy) {
+        return new Affine(AffineTransform.getScaleInstance(sx, sy));
     }
 
     /** This transformation never throws an UnsolvableException. */
