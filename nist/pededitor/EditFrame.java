@@ -2,6 +2,7 @@ package gov.nist.pededitor;
 
 import java.awt.*;
 import java.awt.event.*;
+import java.net.URL;
 import java.util.*;
 
 import javax.swing.*;
@@ -10,8 +11,13 @@ public class EditFrame extends ImageScrollFrame {
     protected JPanel statusBar;
     protected JLabel statusLabel;
     protected Editor parentEditor;
+    protected JCheckBoxMenuItem smoothingMenuItem;
 
     public Editor getParentEditor() { return parentEditor; }
+
+    public JCheckBoxMenuItem getSmoothingMenuItem() {
+        return smoothingMenuItem;
+    }
 
     abstract class EditFrameAction extends AbstractAction {
         EditFrameAction(String name, int mnemonic, KeyStroke accelerator) {
@@ -31,6 +37,32 @@ public class EditFrame extends ImageScrollFrame {
             if (mnemonic != 0) {
                 putValue(MNEMONIC_KEY, new Integer(mnemonic));
             }
+        }
+    }
+
+    static Icon loadIcon(String imagePath) {
+        URL url = EditFrame.class.getResource(imagePath);
+        if (url == null) {
+            throw new IllegalStateException("Could not load " + imagePath);
+        }
+        Icon icon = new ImageIcon(url);
+        if (icon == null) {
+            throw new IllegalStateException("Could not load image " + imagePath);
+        }
+        return icon;
+    }
+
+    class LineWidthAction extends AbstractAction {
+        double lineWidth;
+
+        LineWidthAction(String imagePath, double lineWidth) {
+            super(null, loadIcon(imagePath));
+            this.lineWidth = lineWidth;
+        }
+
+        @Override
+            public void actionPerformed(ActionEvent e) {
+            getParentEditor().setLineWidth(lineWidth);
         }
     }
 
@@ -232,14 +264,16 @@ public class EditFrame extends ImageScrollFrame {
                 }
             });
 
-        mnCurve.add(new EditFrameAction("Toggle smoothing",
-                                        KeyEvent.VK_T,
-                                        KeyStroke.getKeyStroke('o')) {
-                @Override
-                    public void actionPerformed(ActionEvent e) {
-                    getParentEditor().toggleSmoothing();
-                }
-            });
+        smoothingMenuItem = new JCheckBoxMenuItem
+            (new EditFrameAction("Toggle smoothing",
+                                 KeyEvent.VK_T,
+                                 KeyStroke.getKeyStroke('o')) {
+                    @Override
+                        public void actionPerformed(ActionEvent e) {
+                        getParentEditor().toggleSmoothing();
+                    }
+                });
+        mnCurve.add(smoothingMenuItem);
 
         mnCurve.add(new EditFrameAction
                    ("Line style", KeyEvent.VK_S) {
@@ -248,6 +282,12 @@ public class EditFrame extends ImageScrollFrame {
                     getParentEditor().setLineStyle();
                 }
             });
+
+        JMenu mnLineWidth = new JMenu("Line width");
+        mnLineWidth.add(new LineWidthAction("images/line1.png", 0.0006));
+        mnLineWidth.add(new LineWidthAction("images/line2.png", 0.0012));
+        mnLineWidth.add(new LineWidthAction("images/line4.png", 0.0024));
+        mnCurve.add(mnLineWidth);
 
         mnCurve.add(new EditFrameAction
                     ("Line width", KeyEvent.VK_W) {

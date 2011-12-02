@@ -53,6 +53,7 @@ public class Editor implements CropEventListener, MouseListener,
     protected AxisInfo pageXAxis = null;
     protected AxisInfo pageYAxis = null;
     protected boolean preserveMprin = false;
+    protected double lineWidth = 0.0012;
 
     /** Current mouse position expressed in principal coordinates.
      It's not always sufficient to simply read the mouse position in
@@ -328,7 +329,7 @@ public class Editor implements CropEventListener, MouseListener,
         paths.add(GeneralPolyline.create
                   (smoothingType,
                    new Point2D.Double[0],
-                   new BasicStroke((float) 0.0012,
+                   new BasicStroke((float) lineWidth,
                                    BasicStroke.CAP_ROUND,
                                    BasicStroke.JOIN_ROUND)));
         activeCurveNo = paths.size() - 1;
@@ -373,18 +374,22 @@ public class Editor implements CropEventListener, MouseListener,
         }
 
         // Since a single point may belong to multiple curves, point
-        // visitation order matters. Start with the currently active
-        // curve and work backwards.
+        // visitation order matters. Start with the point immediately
+        // preceding the current point and work backwards. That means
+        // visiting the current curve twice -- first visiting the
+        // portion of the curve that precedes the current vertex, and
+        // then, as the last step, visiting the rest (which means
+        // re-visiting a few previously visited points, but that's
+        // harmless).
 
         int pathCnt = paths.size();
 
-        for (int i = 0; i < pathCnt; ++i) {
+        for (int i = 0; i <= pathCnt; ++i) {
             int pathNo = (activeCurveNo - i + pathCnt) % pathCnt;
             GeneralPolyline path = paths.get(pathNo);
             int vertexCnt = path.size();
-            int startVertex = (i == 0) ? activeVertexNo : vertexCnt - 1;
-            for (int j = 0; j < vertexCnt; ++j) {
-                int vertexNo = (startVertex - j + vertexCnt) % vertexCnt;
+            int startVertex = (i == 0) ? (activeVertexNo-1) : (vertexCnt-1);
+            for (int vertexNo = startVertex; vertexNo >= 0; --vertexNo) {
                 Point2D.Double vertex = path.get(vertexNo);
                 if (vertex.x == nearPoint.x && vertex.y == nearPoint.y) {
                     activeCurveNo = pathNo;
@@ -612,20 +617,17 @@ public class Editor implements CropEventListener, MouseListener,
     }
 
     public void toggleSmoothing() {
-        switch (smoothingType) {
-        case GeneralPolyline.LINEAR:
+        JCheckBoxMenuItem check = editFrame.getSmoothingMenuItem();
+        if (check.getState()) {
             smoothingType = GeneralPolyline.CUBIC_SPLINE;
-            // TODO Check a check mark to indicate smoothing is on.
-            break;
-        case GeneralPolyline.CUBIC_SPLINE:
+        } else {
             smoothingType = GeneralPolyline.LINEAR;
-            // TODO Uncheck check mark.
-            break;
-        default:
-            throw new IllegalArgumentException
-                ("Unknown smoothingType value " + smoothingType);
         }
+        processCurveDiscontinuity();
+    }
 
+    /** If we have a selected polyline, then end it and start a new one. */
+    void processCurveDiscontinuity() {
         if (activeCurveNo >= 0) {
             Point2D.Double vertex = getActiveVertex();
             if (paths.get(activeCurveNo).size() == 1) {
@@ -1062,9 +1064,14 @@ public class Editor implements CropEventListener, MouseListener,
         // Force the editor frame image to be initialized.
         zoomBy(1.0);
 
+        // Add the polyline outline of the diagram to the diagram.
+        System.out.println("Smoothing type " + smoothingType);
+        int oldSmoothingType = smoothingType;
+        smoothingType = GeneralPolyline.LINEAR;
         for (Point2D.Double point: diagramPolyline) {
             add(point);
         }
+        smoothingType = oldSmoothingType;
         endCurve();
 
         if (tracing) {
@@ -1255,6 +1262,21 @@ public class Editor implements CropEventListener, MouseListener,
         }
     }
 
+    /** Set the default line width for lines added in the future.
+        Values are relative to standard page units, which typically
+        means 0.001 represents one-thousandth of the longer of the two
+        page dimensions. */
+    void setLineWidth(double lineWidth) {
+        this.lineWidth = lineWidth;
+        GeneralPolyline path = getActiveCurve();
+        if (path != null) {
+            path.setStroke
+                (GeneralPolyline.scaledStroke(path.getStroke(),
+                              lineWidth / path.getStroke().getLineWidth()));
+            repaintEditFrame();
+        }
+    }
+
     /** Equivalent to setScale(getScale() * factor). */
     void zoomBy(double factor) {
         setScale(getScale() * factor);
@@ -1306,8 +1328,6 @@ public class Editor implements CropEventListener, MouseListener,
                 ((viewportPoint.x + view.x + 0.5) / oldScale,
                  (viewportPoint.y + view.y + 0.5) / oldScale);
         }
-
-        System.out.println("Fix " + pagePoint + " => "+ viewportPoint);
 
         getEditPane().setPreferredSize
             (new Dimension((int) Math.ceil(pageBounds.width * scale),
