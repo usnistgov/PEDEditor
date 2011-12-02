@@ -455,11 +455,6 @@ public class Editor implements CropEventListener, MouseListener,
         // TODO Just a stub.
     }
 
-    /** Invoked from the EditFrame menu */
-    public void setLineWidth() {
-        // TODO Just a stub.
-    }
-
     /** Move the mouse pointer so its position corresponds to the
         given location in principal coordinates. */
     void moveMouse(Point2D.Double point) {

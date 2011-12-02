@@ -290,14 +290,6 @@ public class EditFrame extends ImageScrollFrame {
         mnCurve.add(mnLineWidth);
 
         mnCurve.add(new EditFrameAction
-                    ("Line width", KeyEvent.VK_W) {
-                @Override
-                    public void actionPerformed(ActionEvent e) {
-                    getParentEditor().setLineWidth();
-                }
-            });
-
-        mnCurve.add(new EditFrameAction
                    ("Reverse vertex order", KeyEvent.VK_R) {
                 @Override
                     public void actionPerformed(ActionEvent e) {
