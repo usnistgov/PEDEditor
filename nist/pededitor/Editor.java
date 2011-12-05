@@ -54,6 +54,7 @@ public class Editor implements CropEventListener, MouseListener,
     protected AxisInfo pageYAxis = null;
     protected boolean preserveMprin = false;
     protected double lineWidth = 0.0012;
+    protected CompositeStroke lineStyle = CompositeStroke.getSolidLine();
 
     /** Current mouse position expressed in principal coordinates.
      It's not always sufficient to simply read the mouse position in
@@ -326,12 +327,9 @@ public class Editor implements CropEventListener, MouseListener,
                 paths.remove(paths.size() - 1);
             }
         }
+
         paths.add(GeneralPolyline.create
-                  (smoothingType,
-                   new Point2D.Double[0],
-                   new BasicStroke((float) lineWidth,
-                                   BasicStroke.CAP_ROUND,
-                                   BasicStroke.JOIN_ROUND)));
+                  (smoothingType, new Point2D.Double[0], lineStyle, lineWidth));
         activeCurveNo = paths.size() - 1;
         activeVertexNo = -1;
         repaintEditFrame();
@@ -424,7 +422,8 @@ public class Editor implements CropEventListener, MouseListener,
         GeneralPolyline curve = GeneralPolyline.create
             (oldCurve.getSmoothingType(),
              points.toArray(new Point2D.Double[0]),
-             oldCurve.getStroke());
+             oldCurve.getStroke(),
+             oldCurve.getLineWidth());
         paths.set(activeCurveNo, curve);
         activeVertexNo = curve.size() - 1 - activeVertexNo;
         repaintEditFrame();
@@ -451,8 +450,16 @@ public class Editor implements CropEventListener, MouseListener,
     }
 
     /** Invoked from the EditFrame menu */
-    public void setLineStyle() {
-        // TODO Just a stub.
+    public void setLineStyle(CompositeStroke lineStyle) {
+        this.lineStyle = lineStyle;
+
+        GeneralPolyline path = getActiveCurve();
+
+        if (path != null) {
+            path.setStroke(lineStyle);
+            repaintEditFrame();
+        }
+
     }
 
     /** Move the mouse pointer so its position corresponds to the
@@ -1060,13 +1067,15 @@ public class Editor implements CropEventListener, MouseListener,
         zoomBy(1.0);
 
         // Add the polyline outline of the diagram to the diagram.
-        System.out.println("Smoothing type " + smoothingType);
         int oldSmoothingType = smoothingType;
         smoothingType = GeneralPolyline.LINEAR;
+        CompositeStroke oldLineStyle = lineStyle;
+        lineStyle = CompositeStroke.getSolidLine();
         for (Point2D.Double point: diagramPolyline) {
             add(point);
         }
         smoothingType = oldSmoothingType;
+        lineStyle = oldLineStyle;
         endCurve();
 
         if (tracing) {
@@ -1265,9 +1274,7 @@ public class Editor implements CropEventListener, MouseListener,
         this.lineWidth = lineWidth;
         GeneralPolyline path = getActiveCurve();
         if (path != null) {
-            path.setStroke
-                (GeneralPolyline.scaledStroke(path.getStroke(),
-                              lineWidth / path.getStroke().getLineWidth()));
+            path.setLineWidth(lineWidth);
             repaintEditFrame();
         }
     }
@@ -1473,12 +1480,7 @@ public class Editor implements CropEventListener, MouseListener,
     void circleVertices(Graphics2D g, GeneralPolyline path, double scale) {
         Point2D.Double xpoint = new Point2D.Double();
         Affine p2d = principalToScaledPage(scale);
-
-        BasicStroke s = path.getStroke();
-        if (s == null) {
-            s = (BasicStroke) g.getStroke();
-        }
-        double r = s.getLineWidth() * 2 * scale;
+        double r = path.getLineWidth() * 2 * scale;
 
         for (Point2D.Double point: path.getPoints()) {
             p2d.transform(point, xpoint);

@@ -7,8 +7,10 @@ import java.util.*;
 
 /** Specialization of GeneralPolyline for vanilla polylines. */
 public class Polyline extends GeneralPolyline {
-    public Polyline(Point2D.Double[] points, BasicStroke stroke) {
-        super(points, stroke);
+    public Polyline(Point2D.Double[] points,
+                    CompositeStroke stroke,
+                    double lineWidth) {
+        super(points, stroke, lineWidth);
     }
 
     public Path2D.Double getPath() {

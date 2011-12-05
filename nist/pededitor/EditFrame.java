@@ -66,6 +66,20 @@ public class EditFrame extends ImageScrollFrame {
         }
     }
 
+    class LineStyleAction extends AbstractAction {
+        CompositeStroke lineStyle;
+
+        LineStyleAction(String imagePath, CompositeStroke lineStyle) {
+            super(null, loadIcon(imagePath));
+            this.lineStyle = lineStyle;
+        }
+
+        @Override
+            public void actionPerformed(ActionEvent e) {
+            getParentEditor().setLineStyle(lineStyle);
+        }
+    }
+
     /** Class for fine-grain adjustments of the last vertex added. */
     class AdjustAction extends EditFrameAction {
         int dx;
@@ -275,13 +289,23 @@ public class EditFrame extends ImageScrollFrame {
                 });
         mnCurve.add(smoothingMenuItem);
 
-        mnCurve.add(new EditFrameAction
-                   ("Line style", KeyEvent.VK_S) {
-                @Override
-                    public void actionPerformed(ActionEvent e) {
-                    getParentEditor().setLineStyle();
-                }
-            });
+        JMenu mnLineStyle = new JMenu("Line style");
+        mnLineStyle.add
+            (new LineStyleAction("images/line.png",
+                                 CompositeStroke.getSolidLine()));
+        mnLineStyle.add
+            (new LineStyleAction("images/dashedline.png",
+                                 CompositeStroke.getDashedLine()));
+        mnLineStyle.add
+            (new LineStyleAction("images/dottedline.png",
+                                 CompositeStroke.getDottedLine()));
+        mnLineStyle.add
+            (new LineStyleAction("images/dashdotline.png",
+                                 CompositeStroke.getDotDashLine()));
+        mnLineStyle.add
+            (new LineStyleAction("images/railroadline.png",
+                                 CompositeStroke.getRailroadLine()));
+        mnCurve.add(mnLineStyle);
 
         JMenu mnLineWidth = new JMenu("Line width");
         mnLineWidth.add(new LineWidthAction("images/line1.png", 0.0006));

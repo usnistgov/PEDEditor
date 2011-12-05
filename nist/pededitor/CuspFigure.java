@@ -9,26 +9,43 @@ import java.util.*;
     associated BasicStroke. */
 public abstract class GeneralPolyline {
     protected ArrayList<Point2D.Double> points;
-    protected BasicStroke stroke = null;
+    protected CompositeStroke stroke = null;
     protected Color color = null;
+    protected double lineWidth = 1.0;
+
+    /** Set the line width for this polyline. The CompositeStroke may
+        further modify the chosen line width further for some or all
+        of the BasicStroke elements (for example, railroad ties tend
+        to be much wider than the basic line width). */
+    public void setLineWidth(double lineWidth) {
+        this.lineWidth = lineWidth;
+    }
+
+    public double getLineWidth() {
+        return lineWidth;
+    }
 
     public GeneralPolyline() {
         points = new ArrayList<Point2D.Double>();
     }
 
-    public GeneralPolyline(Point2D.Double[] points, BasicStroke stroke) {
+    public GeneralPolyline(Point2D.Double[] points,
+                           CompositeStroke stroke,
+                           double lineWidth) {
         this.points = new ArrayList(Arrays.asList(points));
         this.stroke = stroke;
+        this.lineWidth = lineWidth;
     }
 
     /** @return a new GeneralPolyline of the given type. */
-    static public GeneralPolyline create(int smoothingType, Point2D.Double[] points,
-                         BasicStroke stroke) {
+    static public GeneralPolyline create
+        (int smoothingType, Point2D.Double[] points,
+         CompositeStroke stroke, double lineWidth) {
         switch (smoothingType) {
         case LINEAR:
-            return new Polyline(points, stroke);
+            return new Polyline(points, stroke, lineWidth);
         case CUBIC_SPLINE:
-            return new SplinePolyline(points, stroke);
+            return new SplinePolyline(points, stroke, lineWidth);
         default:
             throw new IllegalArgumentException
                 ("Unknown smoothingType value " + smoothingType);
@@ -45,7 +62,7 @@ public abstract class GeneralPolyline {
         you wish to see, then in order to obtain appropriate line
         widths, transform the path using this method in preference to
         applying the transform() method to your Graphics2D object, and
-        define your BasicStroke line width to fit the dimensions of
+        define your CompositeStroke line width to fit the dimensions of
         the transformed space. */
     abstract public Path2D.Double getPath(AffineTransform at);
 
@@ -59,21 +76,15 @@ public abstract class GeneralPolyline {
 
     public void draw(Graphics2D g, Path2D path) {
         Color oldColor = g.getColor();
-        Stroke oldStroke = g.getStroke();
-
         Color color = getColor();
         if (color != null) {
             g.setColor(color);
         }
-        if (stroke != null) {
-            g.setStroke(stroke);
-        }
-        g.draw(path);
+
+        stroke.draw(g, path, lineWidth);
+
         if (color != null) {
             g.setColor(oldColor);
-        }
-        if (stroke != null) {
-            g.setStroke(oldStroke);
         }
     }
 
@@ -89,7 +100,7 @@ public abstract class GeneralPolyline {
                      double scale) {
         AffineTransform xform = AffineTransform.getScaleInstance(scale, scale);
         xform.concatenate(originalToSquarePixel);
-        draw(g, getPath(xform), scale);
+        stroke.draw(g, getPath(xform), scale * lineWidth);
     }
 
     public boolean isClosed() {
@@ -98,7 +109,7 @@ public abstract class GeneralPolyline {
 
     /** @return null unless this polyline has been assigned a
         stroke. */
-    public BasicStroke getStroke() {
+    public CompositeStroke getStroke() {
         return stroke;
     }
 
@@ -137,22 +148,16 @@ public abstract class GeneralPolyline {
      */
     void draw(Graphics2D g, Path2D path, double strokeScale) {
         Color oldColor = g.getColor();
-        BasicStroke oldStroke = (BasicStroke) g.getStroke();
-
         Color color = getColor();
         if (color != null) {
             g.setColor(color);
         }
-        if (stroke != null) {
-            g.setStroke(scaledStroke(stroke, strokeScale));
-        } else {
-            g.setStroke(scaledStroke(oldStroke, strokeScale));
-        }
-        g.draw(path);
+
+        stroke.draw(g, path, lineWidth * strokeScale);
+
         if (color != null) {
             g.setColor(oldColor);
         }
-        g.setStroke(oldStroke);
     }
 
     /** @return null unless this polyline has been assigned a
@@ -171,7 +176,7 @@ public abstract class GeneralPolyline {
     /** Set the stroke. Use null to indicate that the stroke should be
         the same as whatever was last chosen for the graphics
         context. */
-    public void setStroke(BasicStroke stroke) {
+    public void setStroke(CompositeStroke stroke) {
         this.stroke = stroke;
     }
 
