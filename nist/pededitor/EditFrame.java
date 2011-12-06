@@ -274,7 +274,16 @@ public class EditFrame extends ImageScrollFrame {
                                        KeyStroke.getKeyStroke('<')) {
                 @Override
                     public void actionPerformed(ActionEvent e) {
-                    getParentEditor().cycleActiveCurve();
+                    getParentEditor().cycleActiveCurve(-1);
+                }
+            });
+
+        mnCurve.add(new EditFrameAction("Select next",
+                                       KeyEvent.VK_L,
+                                       KeyStroke.getKeyStroke('>')) {
+                @Override
+                    public void actionPerformed(ActionEvent e) {
+                    getParentEditor().cycleActiveCurve(+1);
                 }
             });
 
@@ -311,6 +320,7 @@ public class EditFrame extends ImageScrollFrame {
         mnLineWidth.add(new LineWidthAction("images/line1.png", 0.0006));
         mnLineWidth.add(new LineWidthAction("images/line2.png", 0.0012));
         mnLineWidth.add(new LineWidthAction("images/line4.png", 0.0024));
+        mnLineWidth.add(new LineWidthAction("images/line8.png", 0.0048));
         mnCurve.add(mnLineWidth);
 
         mnCurve.add(new EditFrameAction
