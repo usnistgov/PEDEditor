@@ -6,14 +6,21 @@ import javax.imageio.*;
 import javax.print.attribute.*;
 import javax.print.attribute.standard.*;
 import javax.swing.*;
+import javax.swing.filechooser.FileNameExtensionFilter;
+
 import java.awt.event.*;
 import java.awt.image.*;
 import java.awt.geom.*;
 import java.net.*;
 import java.text.*;
 import java.util.*;
+import java.util.prefs.Preferences;
 import java.io.*;
 import java.awt.print.*;
+
+import com.itextpdf.text.Document;
+import com.itextpdf.text.PageSize;
+import com.itextpdf.text.pdf.*;
 
 // TODO Allow the vertex duplication operation to detect all curve
 // intersections, not just line segment intersections. (Line segment +
@@ -24,12 +31,40 @@ import java.awt.print.*;
 // TODO Fix the bug (in Java itself?) where scrolling the scroll pane
 // doesn't cause the image to be redrawn.
 
-// TODO Checkbox in the menu to indicate whether curve smoothing is
-// enabled.
+// TODO Allow copy and paste of curves.
+
+// TODO Part 1) Store copies of image scales 2) Figure out what to do
+// when the user zooms in very close to a scanned image.
+
+// TODO All the label code
+
+// TODO Load and save native format
+
+// TODO (might not be part of this program at all; might be a separate
+// converter) Read and write GRUMP data.
+
+// TODO If a resize causes the mouse point to move, then move the
+// mouse to where it used to be.
+
+// TODO Add a "center" operation
+
+// TODO Zoom by mouse dragging would be nice too (there would have to
+// be a minimum drag distance; maybe also require that there be no
+// currently selected curve)
+
+// TODO Be attracted to a curve first and THEN a specific vertex on
+// that curve?
+
+// TODO Sometimes the zoom window still takes the focus...
+
+// Fat lines tend to look a bit ugly since they are not mitered with
+// thinner lines, but instead stick out, but it would be hard to fix
+// that.
 
 /** Main driver class for Phase Equilibria Diagram digitization and creation. */
 public class Editor implements CropEventListener, MouseListener,
                                MouseMotionListener, Printable {
+    private static final String PREF_DIR = "dir";
     static protected Image crosshairs = null;
 
     protected CropFrame cropFrame = new CropFrame();
@@ -125,23 +160,22 @@ public class Editor implements CropEventListener, MouseListener,
         repaintEditFrame();
     }
 
-    /** Cycle the currently active curve. */
-    public void cycleActiveCurve() {
+    /** Cycle the currently active curve.
+
+        @param delta if 1, then cycle forwards; if 0, then cycle backwards. */
+    public void cycleActiveCurve(int delta) {
         if (activeCurveNo == -1) {
             // Nothing to do.
             return;
         }
 
-        --activeCurveNo;
-        if (activeCurveNo == -1) {
-            activeCurveNo = paths.size() - 1;
+        if (activeVertexNo == -1) {
+            // Delete empty curves.
+            removeActiveCurve();
         }
-        if (activeCurveNo >= 0) {
-            activeVertexNo = paths.get(activeCurveNo).size() - 1;
-        } else {
-            activeVertexNo = -1;
-        }
-            
+
+        activeCurveNo = (activeCurveNo + delta + paths.size()) % paths.size();
+        activeVertexNo = paths.get(activeCurveNo).size() - 1;
         repaintEditFrame();
     }
 
@@ -205,7 +239,11 @@ public class Editor implements CropEventListener, MouseListener,
     /** Compute the scaling factor to apply to pageBounds (and
         standardPage coordinates) in order for xform.transform(scale *
         pageBounds) to fill deviceBounds as much as possible without
-        going over. */
+        going over.
+
+        xxx This might be worthless because of the failure to take
+        margins into account.
+    */
     double deviceScale(AffineTransform xform, Rectangle2D deviceBounds) {
         AffineTransform itrans;
         try {
@@ -296,20 +334,15 @@ public class Editor implements CropEventListener, MouseListener,
             circleVertices(g, lastPath, scale);
 
             double r = 8.0; // Radius ~= r/72nds of an inch.
-
-            // TODO Undo (testing only)...
-            for (Point2D.Double point: keyPoints()) {
-                Point2D.Double pagept = new Point2D.Double();
-                principalToStandardPage.transform(point, pagept);
-                g.draw(new Ellipse2D.Double
-                       (scale * pagept.x - r, scale * pagept.y - r, r*2, r*2));
-            }
         }
     }
 
     /** @return The GeneralPolyline that is currently being edited. If
         there is none yet, then create it. */
     public GeneralPolyline getActiveCurve() {
+        if (principalToStandardPage == null) {
+            return null;
+        }
         if (paths.size() == 0) {
             endCurve();
         }
@@ -1113,9 +1146,63 @@ public class Editor implements CropEventListener, MouseListener,
         cropFrame.setVisible(true);
     }
 
+    /** @return a File if the user selected one, or null otherwise.
+
+        @param ext the extension to use with this file ("pdf" for
+        example). */
+    public File showSaveDialog(String ext) {
+        Preferences prefs = Preferences.userNodeForPackage(getClass());
+        String dir = prefs.get(PREF_DIR,  null);
+        JFileChooser chooser = new JFileChooser();
+        chooser.setDialogTitle("Save as " + ext.toUpperCase());
+        if (dir != null) {
+            chooser.setCurrentDirectory(new File(dir));
+        }
+        chooser.setFileFilter
+            (new FileNameExtensionFilter(ext.toUpperCase(), ext));
+        if (chooser.showSaveDialog(editFrame) == 
+            JFileChooser.APPROVE_OPTION) {
+            File file = chooser.getSelectedFile();
+            prefs.put(PREF_DIR, file.getParent());
+            return file;
+        } else {
+            return null;
+        }
+    }
+
     /** Invoked from the EditFrame menu */
     public void saveAsPDF() {
-        // TODO just a stub
+        File file = showSaveDialog("pdf");
+        if (file == null) {
+            return;
+        }
+
+        Document doc = new Document(PageSize.LETTER);
+        PdfWriter writer = null;
+        try {
+            writer = PdfWriter.getInstance
+                (doc, new FileOutputStream(file));
+        } catch (Exception e) {
+            System.err.println(e);
+            return;
+        }
+
+        doc.open();
+
+        // com.itextpdf.text.Rectangle ps = document.getPageSize();
+        Rectangle2D.Double bounds = new Rectangle2D.Double
+            (doc.left(), doc.bottom(), doc.right() - doc.left(), doc.top() - doc.bottom());
+        System.out.println("Bounds = " + bounds);
+
+        PdfContentByte cb = writer.getDirectContent();
+        PdfTemplate tp = cb.createTemplate((float) bounds.width, (float) bounds.height);
+        Graphics2D g2 = tp.createGraphics((float) bounds.width, (float) bounds.height,
+                                          new DefaultFontMapper());
+        System.out.println("Scale = " + deviceScale(g2, bounds));
+        paintDiagram(g2, deviceScale(g2, bounds), false);
+        g2.dispose();
+        cb.addTemplate(tp, 0 /* x offset? */, 0 /* y offset? */);
+        doc.close();
     }
 
     /** Invoked from the EditFrame menu */
