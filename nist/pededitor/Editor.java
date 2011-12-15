@@ -7,6 +7,8 @@ import javax.print.attribute.*;
 import javax.print.attribute.standard.*;
 import javax.swing.*;
 import javax.swing.filechooser.FileNameExtensionFilter;
+import javax.swing.text.*;
+import javax.swing.plaf.basic.BasicHTML;
 
 import java.awt.event.*;
 import java.awt.image.*;
@@ -22,6 +24,24 @@ import com.itextpdf.text.Document;
 import com.itextpdf.text.PageSize;
 import com.itextpdf.text.pdf.*;
 
+// Mandatory improvements:
+
+// TODO Add arrows
+
+// TODO All the label code
+
+// TODO Fix mis-alignment of angled text
+
+// TODO Load and save as YAML
+
+// TODO Principal components; identify compounds
+
+// TODO Part 1) Store copies of image scales, so rescaling scanned
+// images is faster 2) Figure out what to do when the user zooms in
+// so close to a scanned image that rescaling becomes impractical
+
+// Wish list section:
+
 // TODO Allow the vertex duplication operation to detect all curve
 // intersections, not just line segment intersections. (Line segment +
 // 2D cubic spline intersections only require solving a cubic
@@ -32,13 +52,6 @@ import com.itextpdf.text.pdf.*;
 // doesn't cause the image to be redrawn.
 
 // TODO Allow copy and paste of curves.
-
-// TODO Part 1) Store copies of image scales 2) Figure out what to do
-// when the user zooms in very close to a scanned image.
-
-// TODO All the label code
-
-// TODO Load and save native format
 
 // TODO (might not be part of this program at all; might be a separate
 // converter) Read and write GRUMP data.
@@ -79,6 +92,9 @@ public class Editor implements CropEventListener, MouseListener,
     protected DiagramType diagramType = null;
     protected double scale;
     protected ArrayList<GeneralPolyline> paths;
+    protected ArrayList<AnchoredLabel> labels;
+    protected ArrayList<View> labelViews;
+    protected ArrayList<Double> labelAngles;
     protected int activeCurveNo;
     protected int activeVertexNo;
     protected ArrayList<AxisInfo> axes;
@@ -113,6 +129,9 @@ public class Editor implements CropEventListener, MouseListener,
         pageBounds = null;
         scale = 800.0;
         paths = new ArrayList<GeneralPolyline>();
+        labels = new ArrayList<AnchoredLabel>();
+        labelViews = new ArrayList<View>();
+        labelAngles = new ArrayList<Double>();
         activeCurveNo = -1;
         activeVertexNo = -1;
         axes = new ArrayList<AxisInfo>();
@@ -229,7 +248,6 @@ public class Editor implements CropEventListener, MouseListener,
         of this object, so it's simpler to do the painting from
         here. */
     public void paintEditPane(Graphics g0) {
-        // System.out.println("Painting...");
         updateMousePosition();
         Graphics2D g = (Graphics2D) g0;
         paintDiagram(g, scale, true);
@@ -282,7 +300,12 @@ public class Editor implements CropEventListener, MouseListener,
             return;
         }
         if (!tracingImage()) {
-            // xxx might need more work, but not a priority now
+            // TODO might need more work, but not a priority now
+
+            // TODO Prohibit drawing outside the page, or expand the
+            // page to accommodate such drawings?
+
+            // TODO Shrink the diagram to the used space?
 
             if (editing) {
                 g.setColor(Color.WHITE);
@@ -292,6 +315,8 @@ public class Editor implements CropEventListener, MouseListener,
 
         g.setRenderingHint(RenderingHints.KEY_ANTIALIASING,
                            RenderingHints.VALUE_ANTIALIAS_ON);
+        g.setRenderingHint(RenderingHints.KEY_RENDERING,
+                            RenderingHints.VALUE_RENDER_QUALITY);
         g.setColor(Color.BLACK);
 
         int pathCnt = paths.size();
@@ -310,6 +335,17 @@ public class Editor implements CropEventListener, MouseListener,
             }
         }
 
+        {
+            int i = 0;
+            for (AnchoredLabel label: labels) {
+                drawHTML(g, labelViews.get(i), scale, labelAngles.get(i),
+                         label.getX() * scale, label.getY() * scale,
+                         label.getXWeight(), label.getYWeight());
+
+                ++i;
+            }
+        }
+
         if (editing) {
             GeneralPolyline lastPath = paths.get(activeCurveNo);
 
@@ -323,7 +359,6 @@ public class Editor implements CropEventListener, MouseListener,
             if (mprin != null && activeVertexNo != -1) {
 
                 g.setColor(Color.RED);
-                // System.out.println("Added " + mprin);
                 lastPath.add(activeVertexNo + 1, mprin);
                 draw(g, lastPath, scale);
                 lastPath.remove(activeVertexNo + 1);
@@ -463,8 +498,29 @@ public class Editor implements CropEventListener, MouseListener,
     }
 
     /** Invoked from the EditFrame menu */
-    public void setLabelText() {
-        // TODO Just a stub.
+    public void addLabel() {
+        if (mprin == null) {
+            // TODO What if mprin is not defined?
+            return;
+        }
+
+        AnchoredLabel t = (new LabelDialog(editFrame)).showModal();
+        if (t == null) {
+            return;
+        }
+
+        Point2D.Double xpoint = principalToStandardPage.transform(mprin);
+        t.setX(xpoint.x);
+        t.setY(xpoint.y);
+        labels.add(t);
+        labelAngles.add(labelAngles.size() * Math.PI / 12);
+
+        String str = "<html>" + t.getString() + "</html>";
+        JLabel bogus = new JLabel(str);
+        bogus.setFont(getEditPane().getFont());
+        labelViews.add((View) bogus.getClientProperty("html"));
+
+        repaintEditFrame();
     }
 
     /** Invoked from the EditFrame menu */
@@ -974,7 +1030,6 @@ public class Editor implements CropEventListener, MouseListener,
                 double leftLength = sideLengths[LEFT_SIDE];
                 double rightLength = sideLengths[RIGHT_SIDE];
                 double bottomLength = sideLengths[BOTTOM_SIDE];
-                System.out.println("bl = " + sideLengths[BOTTOM_SIDE]);
 
                 Point2D.Double[] trianglePoints
                     = Duh.deepCopy(principalTrianglePoints);
@@ -1160,14 +1215,29 @@ public class Editor implements CropEventListener, MouseListener,
         }
         chooser.setFileFilter
             (new FileNameExtensionFilter(ext.toUpperCase(), ext));
-        if (chooser.showSaveDialog(editFrame) == 
-            JFileChooser.APPROVE_OPTION) {
-            File file = chooser.getSelectedFile();
-            prefs.put(PREF_DIR, file.getParent());
-            return file;
-        } else {
+        if (chooser.showSaveDialog(editFrame) != JFileChooser.APPROVE_OPTION) {
             return null;
         }
+
+        File file = chooser.getSelectedFile();
+        if (getExtension(file) == null) {
+            // Add the default extension
+            file = new File(file.getAbsolutePath() + "." + ext);
+        }
+
+        prefs.put(PREF_DIR, file.getParent());
+        return file;
+    }
+
+    public static String getExtension(File f) {
+        String ext = null;
+        String s = f.getName();
+        int i = s.lastIndexOf('.');
+
+        if (i > 0 &&  i < s.length() - 1) {
+            ext = s.substring(i+1).toLowerCase();
+        }
+        return ext;
     }
 
     /** Invoked from the EditFrame menu */
@@ -1180,8 +1250,7 @@ public class Editor implements CropEventListener, MouseListener,
         Document doc = new Document(PageSize.LETTER);
         PdfWriter writer = null;
         try {
-            writer = PdfWriter.getInstance
-                (doc, new FileOutputStream(file));
+            writer = PdfWriter.getInstance(doc, new FileOutputStream(file));
         } catch (Exception e) {
             System.err.println(e);
             return;
@@ -1189,19 +1258,16 @@ public class Editor implements CropEventListener, MouseListener,
 
         doc.open();
 
-        // com.itextpdf.text.Rectangle ps = document.getPageSize();
         Rectangle2D.Double bounds = new Rectangle2D.Double
             (doc.left(), doc.bottom(), doc.right() - doc.left(), doc.top() - doc.bottom());
-        System.out.println("Bounds = " + bounds);
 
         PdfContentByte cb = writer.getDirectContent();
         PdfTemplate tp = cb.createTemplate((float) bounds.width, (float) bounds.height);
         Graphics2D g2 = tp.createGraphics((float) bounds.width, (float) bounds.height,
                                           new DefaultFontMapper());
-        System.out.println("Scale = " + deviceScale(g2, bounds));
         paintDiagram(g2, deviceScale(g2, bounds), false);
         g2.dispose();
-        cb.addTemplate(tp, 0 /* x offset? */, 0 /* y offset? */);
+        cb.addTemplate(tp, doc.left(), doc.bottom());
         doc.close();
     }
 
@@ -1223,11 +1289,13 @@ public class Editor implements CropEventListener, MouseListener,
                      ? OrientationRequested.LANDSCAPE
                      : OrientationRequested.PORTRAIT);
                 job.print(aset);
+                JOptionPane.showMessageDialog
+                    (editFrame, "Print job submitted.");
             } catch (PrinterException e) {
                 System.err.println(e);
             }
         } else {
-            System.out.println("Print job canceled.");
+            JOptionPane.showMessageDialog(editFrame, "Print job canceled.");
         }
     }
 
@@ -1245,11 +1313,9 @@ public class Editor implements CropEventListener, MouseListener,
             (pf.getImageableX(), pf.getImageableY(),
              pf.getImageableWidth(), pf.getImageableHeight());
 
-        System.out.println("PageFormat bounds = " + bounds);
         g.translate(bounds.getX(), bounds.getY());
         double scale = Math.min(bounds.height / pageBounds.height,
                                 bounds.width / pageBounds.width);
-        System.out.println("Scale = " + scale);
         paintDiagram(g, scale, false);
         g.setTransform(oldTransform);
 
@@ -1579,5 +1645,48 @@ public class Editor implements CropEventListener, MouseListener,
         public void mouseExited(MouseEvent e) {
         mprin = null;
         repaintEditFrame();
+    }
+
+    /** @param xRatio 0.0 = anchor on left ... 1.0 = anchor on right
+
+        @param yRatio 0.0 = anchor on bottom ... 1.0 = anchor on top
+    */
+    public static void drawString(Graphics g, String str,
+                                  double x, double y,
+                                  double anchorX, double anchorY) {
+        Graphics2D g2d = (Graphics2D) g;
+        FontMetrics fm = g.getFontMetrics();
+        Rectangle2D bounds = fm.getStringBounds(str, g);
+
+        x += -bounds.getX() - bounds.getWidth() * anchorX;
+        y += -bounds.getY() - bounds.getHeight() * (1.0 - anchorY);
+        g2d.drawString(str, (float) x, (float) y);
+    }
+
+    /** @param xRatio 0.0 = anchor on left ... 1.0 = anchor on right
+
+        @param yRatio 0.0 = anchor on bottom ... 1.0 = anchor on top
+    */
+    void drawHTML(Graphics g, View view, double scale, double angle,
+                  double cx, double cy,
+                  double weightX, double weightY) {
+        double width = view.getPreferredSpan(View.X_AXIS);
+        double height = view.getPreferredSpan(View.Y_AXIS);
+
+        System.out.println("For '" + "??"
+                           + "', x span = " + width
+                           + ", y span = " + height);
+        Graphics2D g2d = (Graphics2D) g;
+
+        cx -= width * weightX;
+        cy -= height * (1.0 - weightY);
+
+        AffineTransform oldxform = g2d.getTransform();
+        g2d.translate(cx, cy);
+        g2d.rotate(angle, 0, 0);
+        g2d.scale(scale / 800.0, scale/800.0);
+        view.paint(g, new Rectangle(0, 0,
+                                    (int) Math.ceil(width), (int) Math.ceil(height)));
+        g2d.setTransform(oldxform);
     }
 }

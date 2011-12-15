@@ -347,7 +347,7 @@ public class EditFrame extends ImageScrollFrame {
                     KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0)) {
                 @Override
                     public void actionPerformed(ActionEvent e) {
-                    getParentEditor().setLabelText();
+                    getParentEditor().addLabel();
                 }
             });
 
