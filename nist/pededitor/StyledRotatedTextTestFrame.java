@@ -12,11 +12,11 @@ import com.itextpdf.text.PageSize;
 import com.itextpdf.text.pdf.*;
 
 /** A test of displaying styled rotated text on the screen. */
-public class RotatedHTMLTestFrame extends JFrame {
+public class StyledRotatedTextTestFrame extends JFrame {
 
-    public RotatedHTMLTestFrame() {
+    public StyledRotatedTextTestFrame() {
         // JPanel contentPane = new JPanel(new BorderLayout());
-        setContentPane(new RotatedHTMLTestPane());
+        setContentPane(new StyledRotatedTextTestPane());
         getContentPane().setPreferredSize(new Dimension(600, 400));
     }
 
@@ -25,8 +25,8 @@ public class RotatedHTMLTestFrame extends JFrame {
         EventQueue.invokeLater(new ArgsRunnable(args) {
                 public void run() {
                     try {
-                        RotatedHTMLTestFrame frame
-                            = new RotatedHTMLTestFrame();
+                        StyledRotatedTextTestFrame frame
+                            = new StyledRotatedTextTestFrame();
                         frame.pack();
                         frame.setVisible(true);
                     } catch (Exception e) {
