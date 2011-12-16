@@ -24,55 +24,262 @@ import com.itextpdf.text.Document;
 import com.itextpdf.text.PageSize;
 import com.itextpdf.text.pdf.*;
 
-// Mandatory improvements:
+// TODO (feature/usability improvement) Dot placement (the black
+// circles around interesting points) is unintuitive. Currently a dot
+// is printed at any curve or polyline that has only 1 vertex, but all
+// label anchor points should be included in the vertex set, too, and
+// label anchor points should not, in general, be dotted.
 
-// TODO Add arrows
+// TODO (feature/usability improvement) Entering curves and lines
+// broken by labels is currently too difficult. (The easiest way to
+// simplify these is to allow labels to have white backgrounds,
+// erasing the lines drawn behind them, but we'll have to see whether
+// the printer or "save as PDF" formats are smart enough to do that
+// correctly.)
 
-// TODO All the label code
+// TODO (feature -- preexisting functionality, but is it mandatory?)
+// Peter Schenk's PED Editor adjusts the segment length for dashed
+// lines to insure that dashed lines always have dashes in them, even
+// if the curve is very short.
 
-// TODO Fix mis-alignment of angled text
+// TODO (mandatory bug fix) Save as PDF: currently, all special
+// characters get lost during "save as PDF", probably because of a
+// lack of support for these characters in the PDF font. Fix that.
 
-// TODO Load and save as YAML
+// TODO (feature/usability improvement) Highlighting the previous
+// curve when an existing curve is deleted is also unintuitive. It's
+// probably better just to leave nothing highlighted.
 
-// TODO Principal components; identify compounds
+// TODO (feature -- may need to think about this more in relation to
+// margin adjustments) When the edit window is maximized but the image
+// scale is smaller than the screen size, the window is not used
+// effectively.
 
-// TODO Part 1) Store copies of image scales, so rescaling scanned
-// images is faster 2) Figure out what to do when the user zooms in
-// so close to a scanned image that rescaling becomes impractical
+// TODO (feature -- important) Margin handling is currently
+// inadequate; the diagram fills a predetermined portion of the page,
+// and if the user doesn't need as much space on the sides and top and
+// bottom as they get, or if they need more, then that's tough luck
+// for them. Allow the user to expand, shrink, and ideally recompute
+// (that is, define margins in terms of the amount of screen space
+// that is actually being used, instead of relative to the size of the
+// core diagram)
 
-// Wish list section:
+// TODO (major mandatory feature) Axes and user-defined variables.
+// Some of the groundwork has been done, but there is a lot left.
 
-// TODO Allow the vertex duplication operation to detect all curve
-// intersections, not just line segment intersections. (Line segment +
-// 2D cubic spline intersections only require solving a cubic
-// equation, which CubicCurve2D can help with; cubic spline + cubic
-// spline intersections probably must be solved numerically.)
+// TODO (feature; as pre-existing functionality, this may be mandatory
+// in the viewer but not in the editor) Integration with periodic
+// table and automatic conversion of diagrams from mole percent to
+// weight percent
 
-// TODO Fix the bug (in Java itself?) where scrolling the scroll pane
-// doesn't cause the image to be redrawn.
+// TODO (mandatory feature) Add label angle settings
 
-// TODO Allow copy and paste of curves.
+// TODO (mandatory feature) Allow editing of existing labels
 
-// TODO (might not be part of this program at all; might be a separate
-// converter) Read and write GRUMP data.
+// TODO (mandatory bug fix, low difficulty) Anchors for angled text
+// don't work right.
 
-// TODO If a resize causes the mouse point to move, then move the
-// mouse to where it used to be.
+// TODO (major mandatory feature) Load and save as YAML
 
-// TODO Add a "center" operation
+// TODO (major mandatory feature) (might be a separate program) Read
+// GRUMP data.
 
-// TODO Zoom by mouse dragging would be nice too (there would have to
-// be a minimum drag distance; maybe also require that there be no
-// currently selected curve)
+// TODO (mandatory feature) Mark principal components, chemical
+// formulas, eutectic and peritectic points (maybe general
+// user-defined tags, too)
 
-// TODO Be attracted to a curve first and THEN a specific vertex on
-// that curve?
+// TODO (mandatory feature) Allow some kind of typing short-cuts
+// (relative to entering the whole thing by hand as HTML) when
+// entering chemical formulas. Possibilities include 1) use of LaTeX
+// syntax (or even just a severely limited subset of LaTex); 2) HTML
+// input with special macros (press a button to turn subscripting on
+// and another to turn it off; a set of buttons for more commonly-used
+// special symbols); and 3) automatic subscripting for the majority of
+// relatively simple formulas. Not all of those are mandatory, but it
+// sounds like implementing at least ONE of the IS mandatory.
 
-// TODO Sometimes the zoom window still takes the focus...
+// TODO (mandatory feature) Attach tags to polylines and curves,
+// including liquidus, solidus, and presumably user-defined tags too.
 
-// Fat lines tend to look a bit ugly since they are not mitered with
-// thinner lines, but instead stick out, but it would be hard to fix
-// that.
+// TODO (feature) Permit automatic inference of diagram positioning of
+// chemicals if the locations can be solved stochiometrically or even
+// almost stochiometrically (by discarding ubiquitous elements like O,
+// H, N, or C if they do not appear alone as principal components). I
+// think this feature would recieve heavy use.
+
+// TODO (mandatory feature -- preexisting functionality) apply a
+// gradient to all the control points on a curve. Specifically, apply
+// the following transformation to all points on the currently
+// selected curve for which $variable is between v1 and v2: "$variable
+// = $variable + k * ($variable - v1) / (v2 - v1)"
+
+// TODO (feature) Extensions to the above. More general warping --
+// identify a polygon (or circle?) and a point in the interior of that
+// polygon that is to be warped to some other point inside the
+// polygon. The boundary should remain the same, and the warping
+// should apply to the scanned input image as well. For polygonal
+// regions, the transform used could be that the interior point is
+// used to decompose the polygon into ( # of sides ) triangular
+// regions, and each of those regions is subjected to the affine
+// transformation that preserves its external edge while transforming
+// the interior point to its new location. (The result of such a
+// transformation might not be pretty; any line passing through the
+// warped region could end up with sharp bends in it.)
+
+// TODO (mandatory compatibility feature) Smoothing: Replicate the existing
+// program's smoothing algorithm exactly, because existing diagrams
+// have to continue looking like they always did.
+
+// TODO (strongly recommended feature, not too difficult) Better
+// smoothing. Numerical Recipes recommends modifications to the cubic
+// spline algorithm I currently use, and I expect those modifications
+// would yield something that behaves reasonably in just about every
+// case.
+
+// TODO (feature, probably not appropriate for the first version)
+// Better curve fitting. As I believe Don mentioned, following the
+// control points too slavishly can yield over-fitting in which you
+// end up mapping noise (experimental error, scanner noise, twitches
+// in the hand of the digitizer or the person who drew the image in
+// the first place, or whatever). Peter's program already does
+// fitting, but forcing arbitrary curves only a cubic Bezier is too
+// restrictive. (Consider Kriging?)
+
+// Heuristics may be used to identify good cutoffs for fit quality. At
+// the over-fitting end of the spectrum, if you find the sum of the
+// squares of the fit error terms dropping only in roughly proportion
+// to the difference of the number of data points and the number of
+// degrees of freedom in the fit, then that indicates that your fit
+// method cannot detect any kind of pattern in the data at that degree
+// of precision, so short of doing a perfect fit (smoothing), there is
+// little point in trying to fit the data any more accurately than
+// that. There may also be points further back in the curve where the
+// slope of the sum of squares of the fit error terms as a function of
+// the number of degrees of freedom in the fit definition becomes more
+// shallow, and just before any such turn would be a good candidate
+// for a fit. (For example, to fit a bumpy oval shape, one might find
+// that a perfect ellipse (5 degrees of freedom in 2D) provides a much
+// better fit than 4 degrees of freedom does and not much worse than 7
+// degrees of freedom does, so the perfect ellipse is a good choice.)
+
+// TODO (feature) Allow loop smoothing and fitting. For many smoothing
+// algorithms including those we have discussed, the formula for
+// smoothing a continuous loop is slightly different from the one used
+// to smooth an open curve, because for the continuous loop, you want
+// the derivatives at the starting point to match up with the
+// derivatives at the ending point.
+
+// TODO (major feature, somewhat easier part) Semi-automated
+// digitizing: identify the point nearest to the mouse that is on a
+// feature of the scanned image. The mouse can already be attracted to
+// the nearest feature in the final version of the diagram.
+// (Complicating factors include noise and specs in the scanned image,
+// the need to infer the width of lines, and that the simplest
+// smoothing algorithms for edge detection (such as Gaussian
+// smoothing) tend to yield results that are biased towards centers of
+// curvature. You can't just mindlessly apply basic edge-finding
+// algorithms and have the answer pop right out. If the return value
+// is off by even half of a line width, then the feature is almost
+// worthless..)
+
+// TODO (major feature, somewhat harder part) Semi-automated
+// digitizing: identify entire curves in the scanned image. Problems
+// are much the same as for the previous section, with the additional
+// issue that processing speed would be more of a problem. (A lot of
+// vision problems could be stated in terms of optimization a function
+// of the form function(photo(vector of features)) -- multidimensional
+// optimization of the feature vector space where evaluating the
+// function even once requires transforming thousands or millions of
+// pixels of the scanned image. Multidimensional optimization of an
+// ordinary function can be kind of expensive, but in this case
+// computing the function just once, for a single feature vector,
+// requires transforming thousands or millions of pixels. Duh,
+// computer vision can be expensive, and how much of our own brains
+// are dedicated to vision-related tasks?)
+
+// TODO (feature) Add right-click popup menus. The program works just
+// fine with using keyboard shortcuts instead of right-click menus,
+// and I'd probably just go on using the keyboard shortcuts even if an
+// alternative were provided, but forcing the users to remember
+// shortcuts isn't very friendly, and you can't use the mouse to click
+// on an ordinary menu if you're already using the mouse to identify
+// the location the operation should apply to. A two-step process
+// (select action, then selection location) is possible but would be
+// slow at best and awkward to implement as well.
+
+// TODO (basic almost mandatory speed improvement) Even with some
+// optimizations already applied, zooming is still too slow when
+// tracing an image at high zoom. Level 1 fix is to cache all
+// previously generated zoom levels, so it's only slow when zooming to
+// a higher magnification than ever previously seen.
+
+// TODO (more advanced and less critical performance improvement) At
+// very high zoom levels, blow up only a subset of the image instead
+// of the whole thing. (If this isn't done, then blowing up traced
+// images to, say, 20,000x20,000 -- even if you're actually just
+// looking at a small fraction of the whole -- becomes impractical.)
+
+// TODO (feature -- debatable whether it should be implemented or not)
+// Write GRUMP data. Not all diagrams could be fully expressed as
+// GRUMP. Grump only allows specific combinations of line widths and
+// line styles; the program already allows 4 different line widths,
+// and it would be easy to allow arbitrary widths. Also, some HTML
+// data could not be translated.
+
+// TODO (feature, low priority -- don't do?) Allow users to define bounding
+// rectangles for labels, instead of just identifying a corner or the
+// center of the text. Bounding rectangles for text entry are useful
+// if you're doing a lot of text that involves word wrap, but they are
+// probably not needed for this application.
+
+// TODO (feature, fairly low difficulty assuming the Java library
+// cubic equation solver, CubicCurve2D, is properly implemented to be
+// numerically stable and handle degenerate cases) Allow detection of
+// the intersections of line segments with splines.
+
+// TODO (feature, harder) Allow detection of the intersections of two
+// splines. (What makes this feature more desirable than it would be
+// otherwise is that it would create consistency. I guarantee that as
+// long as some kinds of intersections are detectable, people will
+// forget that other kinds are not detectable. They will try to detect
+// them and then get confused when they see an intersection on the
+// screen that they can't jump to.)
+
+// TODO (low severity bug) Fix or work around the bug (which I think
+// is a Java bug, not an application bug) where scrolling the scroll
+// pane doesn't cause the image to be redrawn.
+
+// TODO (feature) Allow copy and paste of curves.
+
+// TODO (feature, probably too easy to implement to be worth debating
+// priority levels) In those situations where zooming the mouse causes
+// you to lose your position in the diagram, have Robot move the mouse
+// to the new location. (For perspective, the program already keeps
+// its location during zooming better than Adobe Reader does.)
+
+// TODO (feature, lower priority, low difficulty) Add a "bring mouse
+// and diagram under mouse to center" operation
+
+// TODO (feature, lower priority) Zoom by mouse dragging would be nice
+// too (there would have to be a minimum drag distance; maybe also
+// require that there be no currently selected curve)
+
+// TODO (feature, low difficulty) When choosing the nearest point, use
+// a two-step process: first identify the nearest curve, then identify
+// the nearest point on that curve.
+
+// TODO (bug, medium severity) Sometimes the zoom window steals the
+// focus, which is disorienting because you can't do anything until
+// the focus is returned to the edit or crop window
+
+// TODO (actually don't do -- impractical to fix) Line joins may be
+// less than gorgeous. Fat lines may look a bit ugly since they are
+// not mitered with thinner lines. For example, if you have a fat line
+// on one edge of a rectangle, and a thin line alone the other edge,
+// the fat edge sticks out in a bit of a bulb. However, that would be
+// hard to fix automatically, and it would also be hard to ask the
+// user how to do it. Almost anything is liable to be wrong in some
+// situation or other.
 
 /** Main driver class for Phase Equilibria Diagram digitization and creation. */
 public class Editor implements CropEventListener, MouseListener,
@@ -525,17 +732,19 @@ public class Editor implements CropEventListener, MouseListener,
 
     /** Invoked from the EditFrame menu */
     public void setLabelAnchor() {
-        // TODO Just a stub.
+        // TODO setLabelAnchor (currently anchors can only be set when
+        // the label is first created, which isn't too bad but is a
+        // bit annoying)
     }
 
     /** Invoked from the EditFrame menu */
     public void setLabelAngle() {
-        // TODO Just a stub.
+        // TODO setLabelAngle
     }
 
     /** Invoked from the EditFrame menu */
     public void setLabelFont() {
-        // TODO Just a stub.
+        // TODO setLabelFont
     }
 
     /** Invoked from the EditFrame menu */
@@ -565,8 +774,8 @@ public class Editor implements CropEventListener, MouseListener,
         Rectangle view = spane.getViewport().getViewRect();
         Point topCorner = spane.getLocationOnScreen();
 
-        // TODO For whatever reason, I need to add 1 to the x and y
-        // coordinates if I want the output to satisfy
+        // For whatever reason (Java bug?), I need to add 1 to the x
+        // and y coordinates if I want the output to satisfy
 
         // getEditPane().getMousePosition() == original mpos value.
 
@@ -803,7 +1012,7 @@ public class Editor implements CropEventListener, MouseListener,
 
     /** Start on a blank new diagram. */
     public void newDiagram() {
-        // TODO Check about saving the old diagram...
+        // TODO Check before scratching an existing diagram.
         diagramType = (new DiagramDialog(null)).showModal();
         newDiagram((Point2D.Double[]) null);
     }
@@ -1273,7 +1482,7 @@ public class Editor implements CropEventListener, MouseListener,
 
     /** Invoked from the EditFrame menu */
     public void saveAsSVG() {
-        // TODO just a stub
+        // TODO saveAsSVG (optional feature)
     }
 
     /** Invoked from the EditFrame menu */
@@ -1324,7 +1533,7 @@ public class Editor implements CropEventListener, MouseListener,
 
     /** Invoked from the EditFrame menu */
     public void addVertexLocation() {
-        // TODO just a stub
+        // TODO addVertexLocation (mandatory feature)
     }
 
     @Override
@@ -1587,17 +1796,17 @@ public class Editor implements CropEventListener, MouseListener,
 
     @Override
         public void mouseClicked(MouseEvent e) {
-        // TODO Auto-generated method stub
+        // Auto-generated method stub
     }
 
     @Override
         public void mouseReleased(MouseEvent e) {
-        // TODO Auto-generated method stub
+        // Auto-generated method stub
     }
 
     @Override
         public void mouseEntered(MouseEvent e) {
-        // TODO Auto-generated method stub
+        // Auto-generated method stub
     }
 
     /** @return an array of all straight line segments defined for
@@ -1608,8 +1817,6 @@ public class Editor implements CropEventListener, MouseListener,
          
         for (GeneralPolyline path : paths) {
             if (path.getSmoothingType() != GeneralPolyline.LINEAR) {
-                // TODO handle the general smoothing case.
-
                 // Easy case -- this path is smoothed between exactly
                 // 2 points, which means it is equivalent to a
                 // segment.
@@ -1647,46 +1854,66 @@ public class Editor implements CropEventListener, MouseListener,
         repaintEditFrame();
     }
 
-    /** @param xRatio 0.0 = anchor on left ... 1.0 = anchor on right
+    /**
 
-        @param yRatio 0.0 = anchor on bottom ... 1.0 = anchor on top
-    */
-    public static void drawString(Graphics g, String str,
-                                  double x, double y,
-                                  double anchorX, double anchorY) {
-        Graphics2D g2d = (Graphics2D) g;
-        FontMetrics fm = g.getFontMetrics();
-        Rectangle2D bounds = fm.getStringBounds(str, g);
+       @param view The view.paint() method is used to perform the
+       drawing (the decorated text to be encoded is implicitly
+       included in this parameter)
 
-        x += -bounds.getX() - bounds.getWidth() * anchorX;
-        y += -bounds.getY() - bounds.getHeight() * (1.0 - anchorY);
-        g2d.drawString(str, (float) x, (float) y);
-    }
+       @param scale The text is magnified by this factor before being
+       painted.
 
-    /** @param xRatio 0.0 = anchor on left ... 1.0 = anchor on right
+       @param angle The printing angle. 0 = running left-to-right (for
+       English); rotated 90 degrees clockwise (running downwards)
 
-        @param yRatio 0.0 = anchor on bottom ... 1.0 = anchor on top
+       @param ax The X position of the anchor point
+
+       @param ay The Y position of the anchor point
+
+       @param weightX 0.0 = The anchor point lies along the left edge
+       of the text block in baseline coordinates (if the text is
+       rotated, then this edge may not be on the left in physical
+       coordinates; for example, if the text is rotated by an angle of
+       PI/2, then this will be the top edge in physical coordinates);
+       0.5 = the anchor point lies along the vertical line (in
+       baseline coordinates) that bisects the text block; 1.0 = the
+       anchor point lies along the right edge (in baseline
+       coordinates) of the text block
+
+       @param weightY 0.0 = The anchor point lies along the top edge
+       of the text block in baseline coordinates (if the text is
+       rotated, then this edge may not be on top in physical
+       coordinates; for example, if the text is rotated by an angle of
+       PI/2, then this will be the right edge in physical
+       coordinates); 0.5 = the anchor point lies along the horizontal
+       line (in baseline coordinates) that bisects the text block; 1.0
+       = the anchor point lies along the bottom edge (in baseline
+       coordinates) of the text block
     */
     void drawHTML(Graphics g, View view, double scale, double angle,
-                  double cx, double cy,
+                  double ax, double ay,
                   double weightX, double weightY) {
         double width = view.getPreferredSpan(View.X_AXIS);
         double height = view.getPreferredSpan(View.Y_AXIS);
 
-        System.out.println("For '" + "??"
-                           + "', x span = " + width
-                           + ", y span = " + height);
         Graphics2D g2d = (Graphics2D) g;
+        scale /= 800.0;
 
-        cx -= width * weightX;
-        cy -= height * (1.0 - weightY);
+        AffineTransform xform = AffineTransform.getRotateInstance(angle);
+        xform.scale(scale, scale);
+        Point2D.Double xpoint = new Point2D.Double();
+        xform.transform
+            (new Point2D.Double(width * weightX, height * weightY), xpoint);
+
+        ax -= xpoint.x;
+        ay -= xpoint.y;
 
         AffineTransform oldxform = g2d.getTransform();
-        g2d.translate(cx, cy);
-        g2d.rotate(angle, 0, 0);
-        g2d.scale(scale / 800.0, scale/800.0);
+        g2d.translate(ax, ay);
+        g2d.transform(xform);
         view.paint(g, new Rectangle(0, 0,
                                     (int) Math.ceil(width), (int) Math.ceil(height)));
         g2d.setTransform(oldxform);
     }
+
 }

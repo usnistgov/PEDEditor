@@ -34,8 +34,8 @@ public class LabelDialog extends JDialog {
         }
     }
 
-    double getAnchorX() { return xWeight; }
-    double getAnchorY() { return yWeight; }
+    double getXWeight() { return xWeight; }
+    double getYWeight() { return yWeight; }
 
     LabelDialog(Frame owner) {
         super(owner, "Select Label", false);
@@ -54,7 +54,7 @@ public class LabelDialog extends JDialog {
         box.add(new JLabel("Label position relative to anchor:"));
         JPanel anchorPane = new JPanel();
         anchorPane.setLayout(new GridLayout(3, 3));
-        for (int y = 0; y < 3; ++y) {
+        for (int y = 2; y >= 0; --y) {
             for (int x = 2; x >= 0; --x) {
                 int width = 100;
                 int height = 50;
@@ -68,18 +68,34 @@ public class LabelDialog extends JDialog {
                 g.setRenderingHint(RenderingHints.KEY_ANTIALIASING,
                                    RenderingHints.VALUE_ANTIALIAS_ON);
                 double cx = margin + (width - 2 * margin) * x / 2.0;
-                double cy = margin + (height - 2 * margin) * (2-y) / 2.0;
+                double cy = margin + (height - 2 * margin) * y / 2.0;
                 double r = 3;
                 g.setColor(new Color(0, 200, 0));
                 g.fill(new Ellipse2D.Double(cx - r, cy - r, r*2, r*2));
                 g.setColor(Color.BLACK);
-                Editor.drawString(g, "Label", cx, cy, x / 2.0, y / 2.0);
+                drawString(g, "Label", cx, cy, x / 2.0, y / 2.0);
                 anchorPane.add(new JButton(new AnchorAction(image, x, y)));
             }
         }
 
         box.add(anchorPane);
         contentPane.add(box);
+    }
+
+    /** @param weightX 0.0 = anchor on left ... 1.0 = anchor on right
+
+        @param weightY 0.0 = anchor on top ... 1.0 = anchor on bottom
+    */
+    public static void drawString(Graphics g, String str,
+                                  double x, double y,
+                                  double weightX, double weightY) {
+        Graphics2D g2d = (Graphics2D) g;
+        FontMetrics fm = g.getFontMetrics();
+        Rectangle2D bounds = fm.getStringBounds(str, g);
+
+        x += -bounds.getX() - bounds.getWidth() * weightX;
+        y += -bounds.getY() - bounds.getHeight() * weightY;
+        g2d.drawString(str, (float) x, (float) y);
     }
 
     /** Show the dialog as document-modal, and return the
