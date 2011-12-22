@@ -3,10 +3,30 @@ package gov.nist.pededitor;
 import java.awt.*;
 import java.awt.event.*;
 import java.awt.geom.*;
+import java.io.File;
+import java.io.IOException;
 import java.util.*;
 
-/** A class for pairing a possibly smoothed polyline with its
-    associated BasicStroke. */
+import org.codehaus.jackson.*;
+import org.codehaus.jackson.annotate.*;
+import org.codehaus.jackson.annotate.JsonSubTypes.Type;
+import org.codehaus.jackson.map.*;
+import org.codehaus.jackson.map.annotate.*;
+
+// The annotations below for deserializing this GeneralPolyline into
+// its appropriate subtype were recommended on Programmer Bruce's
+// blog, "Deserialize JSON with Jackson into Polymorphic Types". -- EB
+
+/** A class for pairing the anchor points of a possibly smoothed
+    polyline with its associated color, CompositeStroke, and the line
+    width multiplier to use with the CompositeStroke. */
+@JsonTypeInfo(
+              use = JsonTypeInfo.Id.NAME,
+              include = JsonTypeInfo.As.PROPERTY,
+              property = "shape")
+@JsonSubTypes({
+        @Type(value=Polyline.class, name = "polyline"),
+            @Type(value=SplinePolyline.class, name = "cubic spline") })
 public abstract class GeneralPolyline {
     protected ArrayList<Point2D.Double> points;
     protected CompositeStroke stroke = null;
@@ -38,7 +58,7 @@ public abstract class GeneralPolyline {
     }
 
     /** @return a new GeneralPolyline of the given type. */
-    static public GeneralPolyline create
+    public static GeneralPolyline create
         (int smoothingType, Point2D.Double[] points,
          CompositeStroke stroke, double lineWidth) {
         switch (smoothingType) {
@@ -53,6 +73,7 @@ public abstract class GeneralPolyline {
     }
 
     /** @return this's corresponding Path2D.Double. */
+    @JsonIgnore
     abstract public Path2D.Double getPath();
 
     /** @return a Path2D.Double that corresponds to this polyline's
@@ -68,6 +89,7 @@ public abstract class GeneralPolyline {
 
     /** @return either GeneralPolyline.LINEAR or
         GeneralPolyline.CUBIC_SPLINE. */
+    @JsonIgnore
     abstract public int getSmoothingType();
 
     public void draw(Graphics2D g) {
@@ -106,6 +128,8 @@ public abstract class GeneralPolyline {
     public boolean isClosed() {
         return false;
     }
+
+    abstract public void setClosed(boolean closed);
 
     /** @return null unless this polyline has been assigned a
         stroke. */
@@ -184,6 +208,10 @@ public abstract class GeneralPolyline {
         return points.toArray(new Point2D.Double[0]);
     }
 
+    public void setPoints(Collection<Point2D.Double> points) {
+        this.points = new ArrayList<Point2D.Double>(points);
+    }
+
     public Point2D.Double get(int vertexNo) {
         return (Point2D.Double) points.get(vertexNo).clone();
     }
@@ -225,10 +253,44 @@ public abstract class GeneralPolyline {
         return points.size();
     }
 
-    public String toString(AffineTransform at) {
-        return "Not implemented";
+    @Override
+    public String toString() {
+        try {
+            return getClass().getCanonicalName()
+                + (new ObjectMapper()).writeValueAsString(this);
+        } catch (Exception e) {
+            System.err.println(e);
+            return getClass().getCanonicalName() + "[ERROR]";
+        }
     }
 
     public static final int LINEAR = 0;
     public static final int CUBIC_SPLINE = 1;
+
+    /** For testing purposes only; could be safely deleted. */
+    public static void main(String[] args) {
+        String filename = "/eb/polyline-test.json";
+
+        GeneralPolyline o = new Polyline(new Point2D.Double[] { new Point2D.Double(3.1, 5.7), new Point2D.Double(0.0, 0.1) },
+        		null, 1.3);
+
+        try {
+            ObjectMapper mapper = new ObjectMapper();
+            mapper.configure(SerializationConfig.Feature.INDENT_OUTPUT, true);
+            mapper.writeValue(new File(filename), o);
+            GeneralPolyline o2 = mapper.readValue(new File(filename),
+                                               GeneralPolyline.class);
+            System.out.println(o2);
+        } catch (JsonGenerationException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        } catch (JsonMappingException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        } catch (IOException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        }
+    }
+
 }

@@ -1,15 +1,14 @@
 package gov.nist.pededitor;
 
-import java.awt.*;
-
 import javax.imageio.*;
 import javax.print.attribute.*;
 import javax.print.attribute.standard.*;
 import javax.swing.*;
-import javax.swing.filechooser.FileNameExtensionFilter;
+import javax.swing.filechooser.*;
 import javax.swing.text.*;
 import javax.swing.plaf.basic.BasicHTML;
 
+import java.awt.*;
 import java.awt.event.*;
 import java.awt.image.*;
 import java.awt.geom.*;
@@ -24,6 +23,12 @@ import com.itextpdf.text.Document;
 import com.itextpdf.text.PageSize;
 import com.itextpdf.text.pdf.*;
 
+import org.codehaus.jackson.*;
+import org.codehaus.jackson.annotate.*;
+import org.codehaus.jackson.annotate.JsonSubTypes.Type;
+import org.codehaus.jackson.map.*;
+import org.codehaus.jackson.map.annotate.*;
+
 // TODO (feature/usability improvement) Dot placement (the black
 // circles around interesting points) is unintuitive. Currently a dot
 // is printed at any curve or polyline that has only 1 vertex, but all
@@ -31,16 +36,42 @@ import com.itextpdf.text.pdf.*;
 // label anchor points should not, in general, be dotted.
 
 // TODO (feature/usability improvement) Entering curves and lines
-// broken by labels is currently too difficult. (The easiest way to
-// simplify these is to allow labels to have white backgrounds,
-// erasing the lines drawn behind them, but we'll have to see whether
-// the printer or "save as PDF" formats are smart enough to do that
-// correctly.)
+// broken by labels is currently too difficult. (The current approach
+// is to allow "pen up" operations at certain points, and that should
+// still work. Another alternative is to allow the users to put opaque
+// white backgrounds for some labels, but testing would be required to
+// determine whether the print and save-as-graphics drawing libraries
+// fully support that. The alternative may be a bit more flexible and
+// faster to use -- if it works!)
+
+// TODO (feature) Tiling fill patterns. These are important for
+// general diagram drawing, but they seem to be less important for
+// PEDs, which may instead feature non-tiling fill patterns such as
+// evenly spaced but non-parallel stripes connecting opposite sides of
+// a quadrilateral.
+
+// TODO "Symbol" type lines are not implemented.
+
+// TODO (easy minor feature) Boxes around labels
+
+// TODO (strongly recommended feature) Allow users to save
+// incompletely digitized diagrams
 
 // TODO (feature -- preexisting functionality, but is it mandatory?)
 // Peter Schenk's PED Editor adjusts the segment length for dashed
-// lines to insure that dashed lines always have dashes in them, even
-// if the curve is very short.
+// lines to insure that the dashes in dashed curves are always enough
+// shorter than the curves themselves that at least two dashes are
+// visible. It's a nice feature, but is it worth it to reproduce? The
+// lengths of the dashes in dashed lines is proportional to their
+// thickness, so you can especially short dashes by using especially
+// thin lines already. (Using the sum of the chord lengths as a lower
+// bound on the length of the whole would achieve the goal of insuring
+// at least two dashes are visible, but would not guarantee that the
+// dashes end neatly at both endpoints. (Java2D already has its own
+// estimate of the path length -- and it would actually be better to
+// use its estimate than to do a better but different estimate of
+// one's own -- but I don't know how practical it would be to access
+// that information.)
 
 // TODO (mandatory bug fix) Save as PDF: currently, all special
 // characters get lost during "save as PDF", probably because of a
@@ -73,6 +104,9 @@ import com.itextpdf.text.pdf.*;
 // weight percent
 
 // TODO (mandatory feature) Add label angle settings
+
+// TODO (feature, probably mandatory) Offset labels from corner anchors
+// (variable distance or just uniform?)
 
 // TODO (mandatory feature) Allow editing of existing labels
 
@@ -284,16 +318,24 @@ import com.itextpdf.text.pdf.*;
 /** Main driver class for Phase Equilibria Diagram digitization and creation. */
 public class Editor implements CropEventListener, MouseListener,
                                MouseMotionListener, Printable {
+    static ObjectMapper objectMapper = null;
+
     private static final String PREF_DIR = "dir";
     static protected Image crosshairs = null;
 
     protected CropFrame cropFrame = new CropFrame();
     protected EditFrame editFrame = new EditFrame(this);
-    protected ImageZoomFrame zoomFrame = null;
+    protected ImageZoomFrame zoomFrame = new ImageZoomFrame();
 
-    protected PolygonTransform originalToPrincipal;
+    // TODO Allow inclusion of attribution data? (Debatable -- in the
+    // larger digitization context, the attribution data would be
+    // stored elsewhere, but if diagram files are flying around, some
+    // people might like to insure that the attribution information is
+    // attached to those files.)
+
+    @JsonProperty protected PolygonTransform originalToPrincipal;
     protected PolygonTransform principalToOriginal;
-    protected Affine principalToStandardPage;
+    @JsonProperty protected Affine principalToStandardPage;
     protected Affine standardPageToPrincipal;
     protected Rectangle2D.Double pageBounds;
     protected DiagramType diagramType = null;
@@ -301,9 +343,13 @@ public class Editor implements CropEventListener, MouseListener,
     protected ArrayList<GeneralPolyline> paths;
     protected ArrayList<AnchoredLabel> labels;
     protected ArrayList<View> labelViews;
-    protected ArrayList<Double> labelAngles;
+    @JsonProperty protected ArrayList<Double> labelAngles;
     protected int activeCurveNo;
     protected int activeVertexNo;
+    protected BufferedImage originalImage;
+    protected String originalFilename;
+
+    // TODO Turn back on! @JsonProperty
     protected ArrayList<AxisInfo> axes;
     protected AxisInfo xAxis = null;
     protected AxisInfo yAxis = null;
@@ -311,8 +357,12 @@ public class Editor implements CropEventListener, MouseListener,
     protected AxisInfo pageXAxis = null;
     protected AxisInfo pageYAxis = null;
     protected boolean preserveMprin = false;
-    protected double lineWidth = 0.0012;
-    protected CompositeStroke lineStyle = CompositeStroke.getSolidLine();
+    @JsonProperty protected double lineWidth = 0.0012;
+    @JsonProperty protected CompositeStroke lineStyle = CompositeStroke.getSolidLine();
+    @JsonProperty protected String filename;
+
+    // TODO This doesn't do anything yet...
+    boolean saveNeeded = false;
 
     /** Current mouse position expressed in principal coordinates.
      It's not always sufficient to simply read the mouse position in
@@ -321,6 +371,11 @@ public class Editor implements CropEventListener, MouseListener,
      location. */
     protected Point2D.Double mprin = null;
 
+    /** This variable only determines the initial type of new curves;
+        existing curves retain their originally assigned smoothing
+        type. */
+    protected int smoothingType = GeneralPolyline.LINEAR;
+
     public Editor() {
         clear();
         editFrame.getImagePane().addMouseListener(this);
@@ -328,8 +383,17 @@ public class Editor implements CropEventListener, MouseListener,
         cropFrame.addCropEventListener(this);
     }
 
+    /** @return the filename that has been assigned to the PED format
+     * diagram output. */
+    @JsonIgnore
+    public String getFilename() {
+        return filename;
+    }
+
     void clear() {
         originalToPrincipal = null;
+        originalImage = null;
+        originalFilename = null;
         principalToOriginal = null;
         principalToStandardPage = null;
         standardPageToPrincipal = null;
@@ -343,16 +407,29 @@ public class Editor implements CropEventListener, MouseListener,
         activeVertexNo = -1;
         axes = new ArrayList<AxisInfo>();
         mprin = null;
+        filename = null;
+        saveNeeded = false;
     }
 
-    /** This variable only determines the type of new curves; existing
-        curves retain their originally assigned smoothing type. */
-    protected int smoothingType = GeneralPolyline.LINEAR;
-
+    @JsonProperty
     ArrayList<GeneralPolyline> getPaths() {
-        return paths;
+        ArrayList<GeneralPolyline> output = new ArrayList<GeneralPolyline>();
+        for (GeneralPolyline path: paths) {
+            if (path != null && path.size() > 0) {
+                output.add(path);
+            }
+        }
+        return output;
     }
 
+    @JsonProperty
+    void setPaths(Collection<GeneralPolyline> paths) {
+        activeCurveNo = -1;
+        activeVertexNo = -1;
+        this.paths = new ArrayList<GeneralPolyline>(paths);
+    }
+
+    @JsonIgnore
     public Point2D.Double getActiveVertex() {
         return (activeVertexNo == -1) ? null
             : getActiveCurve().get(activeVertexNo);
@@ -535,7 +612,7 @@ public class Editor implements CropEventListener, MouseListener,
             if (!editing || i != activeCurveNo) {
                 GeneralPolyline path = paths.get(i);
                 if (path.size() == 1) {
-                    circleVertices(g, path, scale);
+                    circleVertices(g, path, scale, true);
                 } else {
                     draw(g, path, scale);
                 }
@@ -573,7 +650,7 @@ public class Editor implements CropEventListener, MouseListener,
 
             g.setColor(Color.GREEN);
             draw(g, lastPath, scale);
-            circleVertices(g, lastPath, scale);
+            circleVertices(g, lastPath, scale, false);
 
             double r = 8.0; // Radius ~= r/72nds of an inch.
         }
@@ -581,12 +658,16 @@ public class Editor implements CropEventListener, MouseListener,
 
     /** @return The GeneralPolyline that is currently being edited. If
         there is none yet, then create it. */
+    @JsonIgnore
     public GeneralPolyline getActiveCurve() {
         if (principalToStandardPage == null) {
             return null;
         }
         if (paths.size() == 0) {
             endCurve();
+        } else if (activeCurveNo == -1) {
+            activeCurveNo = 0;
+            activeVertexNo = paths.get(activeCurveNo).size() - 1;
         }
         return paths.get(activeCurveNo);
     }
@@ -721,13 +802,39 @@ public class Editor implements CropEventListener, MouseListener,
         t.setY(xpoint.y);
         labels.add(t);
         labelAngles.add(labelAngles.size() * Math.PI / 12);
+        labelViews.add(toView(t.getString()));
+        repaintEditFrame();
+    }
 
-        String str = "<html>" + t.getString() + "</html>";
+    View toView(String str) {
+        str = "<html>" + str + "</html>";
         JLabel bogus = new JLabel(str);
         bogus.setFont(getEditPane().getFont());
-        labelViews.add((View) bogus.getClientProperty("html"));
+        return (View) bogus.getClientProperty("html");
+    }
 
-        repaintEditFrame();
+    /** Regenerate the labelViews field from the labels field. */
+    void initializeLabelViews() {
+        labelViews = new ArrayList<View>();
+        for (AnchoredLabel label: labels) {
+            labelViews.add(toView(label.getString()));
+        }
+    }
+
+    @JsonProperty ArrayList<AnchoredLabel> getLabels() {
+        return labels;
+    }
+
+    @JsonProperty void setLabels(Collection<AnchoredLabel> labels) {
+        this.labels = new ArrayList<AnchoredLabel>(labels);
+    }
+
+    public DiagramType getDiagramType() {
+        return diagramType;
+    }
+
+    public void setDiagramType(DiagramType t) {
+        this.diagramType = t;
     }
 
     /** Invoked from the EditFrame menu */
@@ -972,8 +1079,51 @@ public class Editor implements CropEventListener, MouseListener,
         path.draw(g, principalToStandardPage, scale);
     }
 
-    public String getFilename() {
-        return cropFrame.getFilename();
+    /** @return the name of the image file that this diagram was
+        digitized from, or null if this diagram is not known to be
+        digitized from a file. */
+    public String getOriginalFilename() {
+        return originalFilename;
+    }
+
+    void dontTrace() {
+        originalImage = null;
+        zoomFrame.setVisible(false);
+        editFrame.setTitle("Edit " + diagramType);
+    }
+
+    public void setOriginalFilename(String filename) {
+        originalFilename = filename;
+
+        if (filename == null) {
+            dontTrace();
+            return;
+        }
+
+        // TODO I'd like to use Files here, but it was introduced in
+        // Java 7 and I'm running Java 6.
+
+        // if (Files.notExists(filename)) {
+        if (false) {
+            System.out.println("Warning: file '" + filename + "' not found");
+            dontTrace();
+            return;
+        }
+
+        try {
+            BufferedImage im = ImageIO.read(new File(filename));
+            if (im == null) {
+                throw new IOException(filename + ": unknown image format");
+            }
+            originalImage = im;
+            editFrame.setTitle("Edit " + diagramType + " " + filename);
+            zoomFrame.setImage(getOriginalImage());
+            initializeCrosshairs();
+            zoomFrame.getImageZoomPane().crosshairs = crosshairs;
+        } catch (IOException e) {
+            JOptionPane.showMessageDialog(editFrame, e.toString());
+            dontTrace();
+        }
     }
 
     /**
@@ -1005,28 +1155,35 @@ public class Editor implements CropEventListener, MouseListener,
     }
 
     public void cropPerformed(CropEvent e) {
-        Point[] vertices = e.getVertices();
         diagramType = e.getDiagramType();
-        newDiagram(vertices);
+        newDiagram(e.filename, Duh.toPoint2DDoubles(e.getVertices()));
     }
 
     /** Start on a blank new diagram. */
     public void newDiagram() {
-        // TODO Check before scratching an existing diagram.
+        if (!verifyNewDiagram()) {
+            return;
+        }
+
         diagramType = (new DiagramDialog(null)).showModal();
-        newDiagram((Point2D.Double[]) null);
+        newDiagram(null, null);
     }
 
-    protected void newDiagram(Point2D.Double[] vertices) {
-        ArrayList<Point2D.Double> diagramPolyline = 
-            new ArrayList<Point2D.Double>();
+    /** Start on a blank new diagram.
+
+        @param originalFilename If not null, the filename of the original image the diagram is to be scanned from.
+
+        @param vertices If not null, the endpoints of the polygonal region that the user selected as the diagram boundary within the originalFilename image .
+
+    */
+    protected void newDiagram(String originalFilename,
+                              Point2D.Double[] vertices) {
+        ArrayList<Point2D.Double> diagramPolyline
+            = new ArrayList<Point2D.Double>();
 
         boolean tracing = (vertices != null);
         clear();
-
-        if (tracing && zoomFrame == null) {
-            zoomFrame = new ImageZoomFrame();
-        }
+        setOriginalFilename(originalFilename);
 
         double leftMargin = 0.15;
         double rightMargin = 0.15;
@@ -1042,24 +1199,6 @@ public class Editor implements CropEventListener, MouseListener,
               new Point2D.Double(100.0, 0.0) };
 
         Rescale r = null;
-
-        if (diagramType.isTernary()) {
-            NumberFormat pctFormat = new DecimalFormat("##0.0'%'");
-            xAxis = new XAxisInfo(pctFormat);
-            xAxis.name = "Z";
-            yAxis = new YAxisInfo(pctFormat);
-            zAxis = new ThirdTernaryAxisInfo(pctFormat);
-            zAxis.name = "X";
-            axes.add(zAxis);
-            axes.add(yAxis);
-            axes.add(xAxis);
-        } else {
-            NumberFormat format = new DecimalFormat("##0.0");
-            xAxis = new XAxisInfo(format);
-            yAxis = new YAxisInfo(format);
-            axes.add(xAxis);
-            axes.add(yAxis);
-        }
 
         switch (diagramType) {
         case TERNARY_BOTTOM:
@@ -1333,6 +1472,41 @@ public class Editor implements CropEventListener, MouseListener,
             }
         }
         pageBounds = new Rectangle2D.Double(0.0, 0.0, r.width, r.height);
+
+        // Add the polyline outline of the diagram to the diagram.
+        int oldSmoothingType = smoothingType;
+        smoothingType = GeneralPolyline.LINEAR;
+        CompositeStroke oldLineStyle = lineStyle;
+        lineStyle = CompositeStroke.getSolidLine();
+        for (Point2D.Double point: diagramPolyline) {
+            add(point);
+        }
+        smoothingType = oldSmoothingType;
+        lineStyle = oldLineStyle;
+        endCurve();
+
+        initializeDiagram();
+    }
+
+    protected void initializeDiagram() {
+        if (diagramType.isTernary()) {
+            NumberFormat pctFormat = new DecimalFormat("##0.0'%'");
+            xAxis = new XAxisInfo(pctFormat);
+            xAxis.name = "Z";
+            yAxis = new YAxisInfo(pctFormat);
+            zAxis = new ThirdTernaryAxisInfo(pctFormat);
+            zAxis.name = "X";
+            axes.add(zAxis);
+            axes.add(yAxis);
+            axes.add(xAxis);
+        } else {
+            NumberFormat format = new DecimalFormat("##0.0");
+            xAxis = new XAxisInfo(format);
+            yAxis = new YAxisInfo(format);
+            axes.add(xAxis);
+            axes.add(yAxis);
+        }
+
         try {
             standardPageToPrincipal = principalToStandardPage.createInverse();
         } catch (NoninvertibleTransformException e) {
@@ -1350,7 +1524,7 @@ public class Editor implements CropEventListener, MouseListener,
             axes.add(pageYAxis);
         }
 
-        if (tracing) {
+        if (getOriginalFilename() != null) {
             try {
                 principalToOriginal = (PolygonTransform)
                     originalToPrincipal.createInverse();
@@ -1360,39 +1534,85 @@ public class Editor implements CropEventListener, MouseListener,
             }
         }
 
+        setOriginalFilename(getOriginalFilename());
+
         // Force the editor frame image to be initialized.
         zoomBy(1.0);
 
-        // Add the polyline outline of the diagram to the diagram.
-        int oldSmoothingType = smoothingType;
-        smoothingType = GeneralPolyline.LINEAR;
-        CompositeStroke oldLineStyle = lineStyle;
-        lineStyle = CompositeStroke.getSolidLine();
-        for (Point2D.Double point: diagramPolyline) {
-            add(point);
-        }
-        smoothingType = oldSmoothingType;
-        lineStyle = oldLineStyle;
-        endCurve();
-
-        if (tracing) {
-            editFrame.setTitle("Edit " + diagramType + " "
-                               + cropFrame.getFilename());
-            zoomFrame.setImage(cropFrame.getImage());
-            initializeCrosshairs();
-            zoomFrame.getImageZoomPane().crosshairs = crosshairs;
-        } else {
-            editFrame.setTitle("Edit " + diagramType);
-        }
         editFrame.pack();
         Rectangle rect = editFrame.getBounds();
-        if (tracing) {
+        if (tracingImage()) {
             zoomFrame.setLocation(rect.x + rect.width, rect.y);
-            zoomFrame.setTitle("Zoom " + cropFrame.getFilename());
+            zoomFrame.setTitle("Zoom " + getOriginalFilename());
             zoomFrame.pack();
             zoomFrame.setVisible(true);
         }
         editFrame.setVisible(true);
+    }
+
+    /** Before starting a new diagram, give the user an opportunity to
+        save the old diagram or to change their mind.
+
+        @return false if the user changes their mind and a new diagram
+        should not be started. */
+    boolean verifyNewDiagram() {
+        // TODO Just a stub.
+        return true;
+    }
+
+    /** Invoked from the EditFrame menu */
+    public void openDiagram() {
+        if (!verifyNewDiagram()) {
+            return;
+        }
+
+        File file = showOpenDialog("ped");
+        if (file == null) {
+            return;
+        }
+        filename = file.getAbsolutePath();
+
+        try {
+            ObjectMapper mapper = getObjectMapper();
+            cannibalize((Editor) mapper.readValue(file, getClass()));
+        } catch (Exception e) {
+            // TODO More?
+            JOptionPane.showMessageDialog
+                (editFrame, "Error: " + e);
+
+            // TODO only for testing...
+            throw new Error(e);
+        }
+    }
+
+    public Rectangle2D.Double getPageBounds() {
+        return (Rectangle2D.Double) pageBounds.clone();
+    }
+
+    public void setPageBounds(Rectangle2D.Double rect) {
+        pageBounds = (Rectangle2D.Double) rect.clone();
+    }
+
+    /** Copy data fields from other, on the assumption that it will
+        never be used again. */
+    void cannibalize(Editor other) {
+        diagramType = other.diagramType;
+        originalToPrincipal = other.originalToPrincipal;
+        principalToStandardPage = other.principalToStandardPage;
+        pageBounds = other.pageBounds;
+        originalFilename = other.originalFilename;
+        initializeDiagram();
+        paths = other.paths;
+        labels = other.labels;
+        labelAngles = other.labelAngles;
+        initializeLabelViews();
+        activeCurveNo = paths.size() - 1;
+        activeVertexNo = (activeCurveNo == -1) ? -1
+            : (paths.get(activeCurveNo).size() - 1);
+    }
+
+    @JsonIgnore public BufferedImage getOriginalImage() {
+        return originalImage;
     }
 
     /** Invoked from the EditFrame menu */
@@ -1425,6 +1645,34 @@ public class Editor implements CropEventListener, MouseListener,
         chooser.setFileFilter
             (new FileNameExtensionFilter(ext.toUpperCase(), ext));
         if (chooser.showSaveDialog(editFrame) != JFileChooser.APPROVE_OPTION) {
+            return null;
+        }
+
+        File file = chooser.getSelectedFile();
+        if (getExtension(file) == null) {
+            // Add the default extension
+            file = new File(file.getAbsolutePath() + "." + ext);
+        }
+
+        prefs.put(PREF_DIR, file.getParent());
+        return file;
+    }
+
+    /** @return a File if the user selected one, or null otherwise.
+
+        @param ext the extension to use with this file ("pdf" for
+        example). */
+    public File showOpenDialog(String ext) {
+        Preferences prefs = Preferences.userNodeForPackage(getClass());
+        String dir = prefs.get(PREF_DIR,  null);
+        JFileChooser chooser = new JFileChooser();
+        chooser.setDialogTitle("Save as " + ext.toUpperCase());
+        if (dir != null) {
+            chooser.setCurrentDirectory(new File(dir));
+        }
+        chooser.setFileFilter
+            (new FileNameExtensionFilter(ext.toUpperCase(), ext));
+        if (chooser.showOpenDialog(editFrame) != JFileChooser.APPROVE_OPTION) {
             return null;
         }
 
@@ -1483,6 +1731,37 @@ public class Editor implements CropEventListener, MouseListener,
     /** Invoked from the EditFrame menu */
     public void saveAsSVG() {
         // TODO saveAsSVG (optional feature)
+    }
+
+    /** Invoked from the EditFrame menu */
+    public void saveAsPED(String fn) {
+        File file;
+        if (fn == null) {
+            file = showSaveDialog("ped");
+            if (file == null) {
+                return;
+            }
+            filename = file.getAbsolutePath();
+        } else {
+            file = new File(fn);
+        }
+
+        try {
+            getObjectMapper().writeValue(file, this);
+            JOptionPane.showMessageDialog(editFrame, "File saved.");
+        } catch (Exception e) {
+            // TODO More?
+            JOptionPane.showMessageDialog
+                (editFrame, "Error: " + e);
+
+            // TODO only for testing...
+            throw new Error(e);
+        }
+    }
+
+    /** Invoked from the EditFrame menu */
+    public void save() {
+        saveAsPED(getFilename());
     }
 
     /** Invoked from the EditFrame menu */
@@ -1552,7 +1831,7 @@ public class Editor implements CropEventListener, MouseListener,
     /** @return true if the diagram is currently being traced from
         another image. */
     boolean tracingImage() {
-        return originalToPrincipal != null;
+        return originalImage != null;
     }
 
     /** The mouse was moved in the edit window. Update the coordinates
@@ -1616,9 +1895,10 @@ public class Editor implements CropEventListener, MouseListener,
         }
         editFrame.setStatus(status.toString());
             
-        if (tracingImage()) {
+        if (tracingImage() && mprin != null) {
             try {
                 // Update image zoom frame.
+
                 Point2D.Double orig = principalToOriginal.transform(mprin);
                 zoomFrame.setImageFocus((int) Math.floor(orig.x),
                                         (int) Math.floor(orig.y));
@@ -1703,7 +1983,7 @@ public class Editor implements CropEventListener, MouseListener,
             PolygonTransform originalToScreen = originalToPrincipal.clone();
             originalToScreen.preConcatenate(principalToScaledPage(scale));
             BufferedImage output = ImageTransform.run
-                (originalToScreen, cropFrame.getImage(), Color.WHITE,
+                (originalToScreen, getOriginalImage(), Color.WHITE,
                  getEditPane().getPreferredSize());
             fade(output);
             editFrame.setImage(output);
@@ -1739,14 +2019,6 @@ public class Editor implements CropEventListener, MouseListener,
         Formatter f = new Formatter();
         f.format("%." + decimalPoints + "f", d);
         return f.toString();
-    }
-
-    protected void newDiagram(Point[] verticesIn) {
-        if (zoomFrame != null) {
-            zoomFrame.setVisible(false);
-        }
-        newDiagram((verticesIn == null) ? null
-                   : Duh.toPoint2DDoubles(verticesIn));
     }
 
     /** Compress the brightness into the upper third of the range
@@ -1811,6 +2083,7 @@ public class Editor implements CropEventListener, MouseListener,
 
     /** @return an array of all straight line segments defined for
         this diagram. */
+    @JsonIgnore
     public LineSegment[] getAllLineSegments() {
         ArrayList<LineSegment> output
             = new ArrayList<LineSegment>();
@@ -1837,14 +2110,30 @@ public class Editor implements CropEventListener, MouseListener,
     }
 
     /** Draw a circle around each point in path. */
-    void circleVertices(Graphics2D g, GeneralPolyline path, double scale) {
+    void circleVertices(Graphics2D g, GeneralPolyline path, double scale,
+                        boolean fill) {
         Point2D.Double xpoint = new Point2D.Double();
         Affine p2d = principalToScaledPage(scale);
-        double r = path.getLineWidth() * 2 * scale;
+        double r = fill ? (path.getLineWidth() * 2 * scale) : 3.0;
+
+        Stroke oldStroke = g.getStroke();
+        if (!fill) {
+            g.setStroke(new BasicStroke((float) (r / 4)));
+        }
 
         for (Point2D.Double point: path.getPoints()) {
             p2d.transform(point, xpoint);
-            g.fill(new Ellipse2D.Double(xpoint.x - r, xpoint.y - r, r * 2, r * 2));
+            Shape shape = new Ellipse2D.Double
+                (xpoint.x - r, xpoint.y - r, r * 2, r * 2);
+            if (fill) {
+                g.fill(shape);
+            } else {
+                g.draw(shape);
+            }
+        }
+
+        if (!fill) {
+            g.setStroke(oldStroke);
         }
     }
 
@@ -1916,4 +2205,68 @@ public class Editor implements CropEventListener, MouseListener,
         g2d.setTransform(oldxform);
     }
 
+    static ObjectMapper getObjectMapper() {
+        if (objectMapper == null) {
+            objectMapper = new ObjectMapper();
+            objectMapper.configure(SerializationConfig.Feature.INDENT_OUTPUT,
+                                   true);
+            SerializationConfig ser = objectMapper.getSerializationConfig();
+            DeserializationConfig des = objectMapper.getDeserializationConfig();
+
+            ser.addMixInAnnotations(Point2D.class, Point2DAnnotations.class);
+            des.addMixInAnnotations(Point2D.class, Point2DAnnotations.class);
+
+            ser.addMixInAnnotations(Rectangle2D.class,
+                                    Rectangle2DAnnotations.class);
+            des.addMixInAnnotations(Rectangle2D.class,
+                                    Rectangle2DAnnotations.class);
+
+            ser.addMixInAnnotations(Rectangle2D.Double.class,
+                                    Rectangle2DDoubleAnnotations.class);
+            des.addMixInAnnotations(Rectangle2D.Double.class,
+                                    Rectangle2DDoubleAnnotations.class);
+
+            ser.addMixInAnnotations(BasicStroke.class,
+                                    BasicStrokeAnnotations.class);
+            des.addMixInAnnotations(BasicStroke.class,
+                                    BasicStrokeAnnotations.class);
+        }
+
+        return objectMapper;
+    }
+}
+
+// Annotations that are serialization hints for the Jackson JSON
+// encoder
+
+@JsonDeserialize(as=Point2D.Double.class)
+abstract class Point2DAnnotations {
+}
+
+@JsonDeserialize(as=Rectangle2D.Double.class)
+abstract class Rectangle2DAnnotations {
+}
+
+abstract class Rectangle2DDoubleAnnotations
+    extends Rectangle2D.Double {
+    @Override @JsonIgnore abstract public Rectangle getBounds();
+    @Override @JsonIgnore abstract public Rectangle2D getBounds2D();
+    @Override @JsonIgnore abstract public boolean isEmpty();
+    @Override @JsonIgnore abstract public double getMinX();
+    @Override @JsonIgnore abstract public double getMaxX();
+    @Override @JsonIgnore abstract public double getMinY();
+    @Override @JsonIgnore abstract public double getMaxY();
+    @Override @JsonIgnore abstract public Rectangle2D getFrame();
+    @Override @JsonIgnore abstract public double getCenterX();
+    @Override @JsonIgnore abstract public double getCenterY();
+}
+
+class BasicStrokeAnnotations {
+    BasicStrokeAnnotations
+        (@JsonProperty("lineWidth") float lineWidth,
+         @JsonProperty("endCap") int endCap,
+         @JsonProperty("lineJoin") int lineJoin,
+         @JsonProperty("miterLimit") float miterLimit,
+         @JsonProperty("dashArray") float[] dashArray,
+         @JsonProperty("dashPhase") float dashPhase) {}
 }

@@ -112,6 +112,8 @@ public class EditFrame extends ImageScrollFrame {
         JMenuBar menuBar = new JMenuBar();
         setJMenuBar(menuBar);
 
+
+        // "File" top-level menu
         JMenu mnFile = new JMenu("File");
         menuBar.add(mnFile);
 
@@ -122,21 +124,16 @@ public class EditFrame extends ImageScrollFrame {
                 }
             });
 
+        // "Open" submenu
         JMenu mnOpen = new JMenu("Open");
         mnFile.add(mnOpen);
 
-        /**
         mnOpen.add(new EditFrameAction("Diagram", KeyEvent.VK_D) {
                 @Override
                     public void actionPerformed(ActionEvent e) {
-                    getParentEditor.openDiagram();
+                    getParentEditor().openDiagram();
                 }
             });
-        */
-
-        JMenuItem mnDiagram = new JMenuItem("Diagram");
-        mnOpen.add(mnDiagram);
-        mnDiagram.setEnabled(false);
 
         mnOpen.add(new EditFrameAction("Image for Digitization", KeyEvent.VK_I) {
                 @Override
@@ -145,11 +142,24 @@ public class EditFrame extends ImageScrollFrame {
                 }
             });
 
-        JMenuItem mnSave = new JMenuItem("Save");
-        mnFile.add(mnSave);
-        mnSave.setEnabled(false);
+        // "Save" menu item
+        mnFile.add(new EditFrameAction("Save", KeyEvent.VK_S) {
+                @Override
+                    public void actionPerformed(ActionEvent e) {
+                    getParentEditor().save();
+                }
+            });
 
+        // "Save As" submenu
         JMenu mnSaveAs = new JMenu("Save As");
+        mnFile.add(mnSaveAs);
+
+        mnSaveAs.add(new EditFrameAction("PED", KeyEvent.VK_P) {
+                @Override
+                    public void actionPerformed(ActionEvent e) {
+                    getParentEditor().saveAsPED(null);
+                }
+            });
         mnFile.add(mnSaveAs);
 
         mnSaveAs.add(new EditFrameAction("PDF", KeyEvent.VK_P) {
@@ -166,6 +176,7 @@ public class EditFrame extends ImageScrollFrame {
                 }
             });
 
+        // "Print" menu item
         mnFile.add(new EditFrameAction("Print", KeyEvent.VK_P) {
                 @Override
                     public void actionPerformed(ActionEvent e) {
@@ -181,6 +192,7 @@ public class EditFrame extends ImageScrollFrame {
         mnExit.setEnabled(false);
 
 
+        // "Vertex" top-level menu
         JMenu mnVertex = new JMenu("Vertex");
         menuBar.add(mnVertex);
 
@@ -249,6 +261,7 @@ public class EditFrame extends ImageScrollFrame {
         }
 
 
+        // "Curve" top-level menu
         JMenu mnCurve = new JMenu("Curve");
         menuBar.add(mnCurve);
 
@@ -339,6 +352,8 @@ public class EditFrame extends ImageScrollFrame {
         mnGradient.setEnabled(false);
         mnCurve.add(mnGradient);
 
+
+        // "Label" top-level menu
         JMenu mnLabel = new JMenu("Label");
         menuBar.add(mnLabel);
         mnLabel.add(new EditFrameAction
@@ -389,6 +404,8 @@ public class EditFrame extends ImageScrollFrame {
         // JMenu mnAxis = new JMenu("Axis");
         // menuBar.add(mnAxis);
 
+
+        // "View" top-level menu
         JMenu mnView = new JMenu("View");
         menuBar.add(mnView);
 
