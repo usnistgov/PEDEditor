@@ -11,7 +11,6 @@ public class CropPane extends ImagePane {
     static final boolean DOWNWARDS_Y = true;
 
     protected ArrayList<Point> vertices = new ArrayList<Point>();
-    protected String filename = null;
     protected CropFrame parentFrame;
 
     private static final long serialVersionUID = -7787299467082484939L;
