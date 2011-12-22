@@ -7,10 +7,23 @@ import java.util.*;
 
 /** Specialization of GeneralPolyline for open cubic splines. */
 public class SplinePolyline extends GeneralPolyline {
+    private boolean closed = false;
+
+    public SplinePolyline() {
+    }
+
     public SplinePolyline(Point2D.Double[] points,
                           CompositeStroke stroke,
                           double lineWidth) {
         super(points, stroke, lineWidth);
+    }
+
+    @Override public void setClosed(boolean value) {
+        if (value) {
+            // TODO Support this!
+            throw new UnsupportedOperationException();
+        }
+        this.closed = value;
     }
 
     public Path2D.Double getPath() {
