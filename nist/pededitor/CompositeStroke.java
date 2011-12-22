@@ -22,6 +22,14 @@ public class CompositeStroke {
         strokes.add(s);
     }
 
+    public BasicStroke[] getStrokes() {
+        return strokes.toArray(new BasicStroke[0]);
+    }
+
+    public void setStrokes(Collection<BasicStroke> strokes) {
+        this.strokes = new ArrayList<BasicStroke>(strokes);
+    }
+
     /** Draw the given path with this stroke while multiplying the
         line width and dash length by "scale". */
     public void draw(Graphics2D g, Path2D path, double scale) {
