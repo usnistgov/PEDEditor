@@ -7,10 +7,19 @@ import java.util.*;
 
 /** Specialization of GeneralPolyline for vanilla polylines. */
 public class Polyline extends GeneralPolyline {
+    private boolean closed = false;
+
+    public Polyline() {
+    }
+
     public Polyline(Point2D.Double[] points,
                     CompositeStroke stroke,
                     double lineWidth) {
         super(points, stroke, lineWidth);
+    }
+
+    @Override public void setClosed(boolean value) {
+        this.closed = value;
     }
 
     public Path2D.Double getPath() {
@@ -26,6 +35,12 @@ public class Polyline extends GeneralPolyline {
         for (int i = 1; i < size; ++i) {
             Point2D.Double p = points.get(i);
             output.lineTo(p.x, p.y);
+        }
+
+        if (isClosed()) {
+            // TODO If we do pen-up pen-down in the middle of a path,
+            // then this won't work correctly.
+            output.closePath();
         }
         return output;
     }
@@ -50,22 +65,6 @@ public class Polyline extends GeneralPolyline {
 
     public int getSmoothingType() {
         return GeneralPolyline.LINEAR;
-    }
-
-    public String toString() {
-        int size = points.size();
-        if (size == 0) {
-            return super.toString();
-        }
-        StringBuilder buf = new StringBuilder(super.toString() + "[");
-        for (int i = 0; i < size; ++i) {
-            if (i > 0) {
-                buf.append(" - ");
-            }
-            buf.append(points.get(i).toString());
-        }
-        buf.append("]");
-        return buf.toString();
     }
 
     public String toString(AffineTransform at) {
