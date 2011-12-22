@@ -2,8 +2,24 @@ package gov.nist.pededitor;
 
 import java.awt.geom.*;
 
+import org.codehaus.jackson.annotate.JsonIgnoreProperties;
+import org.codehaus.jackson.annotate.JsonProperty;
+import org.codehaus.jackson.annotate.JsonSubTypes;
+import org.codehaus.jackson.annotate.JsonSubTypes.Type;
+import org.codehaus.jackson.annotate.JsonTypeInfo;
+
 /** Just a Transform2D-implementing wrapper around
  * awt.geom.AffineTransform. */
+@JsonTypeInfo(
+              use = JsonTypeInfo.Id.NAME,
+              include = JsonTypeInfo.As.PROPERTY,
+              property = "transform")
+@JsonSubTypes({
+        @Type(value=TriangleTransform.class, name = "TriangleTransform"),
+        @Type(value=Affine.class, name = "Affine") })
+@JsonIgnoreProperties
+    ({"scaleX", "scaleY", "shearX", "shearY", "translateX", "translateY",
+      "identity", "determinant", "type" })
 public class Affine extends AffineTransform implements Transform2D {
 
     private static final long serialVersionUID = -867608180933463982L;
@@ -19,7 +35,7 @@ public class Affine extends AffineTransform implements Transform2D {
     }
 
     /** Identical to superclass constructor. */
-    public Affine(double[] flatmatrix) {
+    public Affine(@JsonProperty("flatMatrix") double[] flatmatrix) {
         super(flatmatrix);
     }
 
@@ -50,6 +66,12 @@ public class Affine extends AffineTransform implements Transform2D {
     public void preConcatenate(Transform2D other) {
         AffineTransform at = (AffineTransform) other;
         super.preConcatenate(at);
+    }
+
+    @JsonProperty("flatMatrix") double[] getFlatMatrix() {
+        return new double[] { getScaleX(), getShearY(),
+                              getShearX(), getScaleY(),
+                              getTranslateX(), getTranslateY() };
     }
 
     /** Method defined just to avoid "method is ambiguous" error. */

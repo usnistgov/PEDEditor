@@ -1,16 +1,21 @@
 package gov.nist.pededitor;
 
+import org.codehaus.jackson.annotate.JsonProperty;
+
 public class AnchoredLabel {
     double x;
     double y;
-    double anchorX;
-    double anchorY;
+    double xWeight;
+    double yWeight;
     String text;
 
-    public AnchoredLabel(String text, double anchorX, double anchorY) {
+    public AnchoredLabel
+        (@JsonProperty("string") String text,
+         @JsonProperty("xWeight") double xWeight,
+         @JsonProperty("yWeight") double yWeight) {
         this.text = text;
-        this.anchorX = anchorX;
-        this.anchorY = anchorY;
+        this.xWeight = xWeight;
+        this.yWeight = yWeight;
     }
 
     public void setX(double x) { this.x = x; }
@@ -19,11 +24,11 @@ public class AnchoredLabel {
     public double getX() { return x; }
     public double getY() { return y; }
     public String getString() { return text; }
-    public double getXWeight() { return anchorX; }
-    public double getYWeight() { return anchorY; }
+    @JsonProperty("xWeight") public double getXWeight() { return xWeight; }
+    @JsonProperty("yWeight") public double getYWeight() { return yWeight; }
 
     public String toString() {
-        return "'" + text + "' x: " + x  + " y: " + y + " wx: " + anchorX
-            + " wy: " + anchorY;
+        return "'" + text + "' x: " + x  + " y: " + y + " wx: " + xWeight
+            + " wy: " + yWeight;
     }
 }
