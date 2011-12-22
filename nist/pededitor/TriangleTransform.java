@@ -4,8 +4,15 @@ import java.awt.geom.*;
 import java.util.*;
 import Jama.*;
 
+import org.codehaus.jackson.annotate.JsonIgnoreProperties;
+import org.codehaus.jackson.annotate.JsonProperty;
+import org.codehaus.jackson.annotate.JsonTypeInfo;
+
 /** Transform a triangle into any other triangle. All that is needed
     is an affine transformation. */
+@JsonIgnoreProperties
+    ({"scaleX", "scaleY", "shearX", "shearY", "translateX", "translateY",
+      "identity", "determinant", "type", "flatMatrix" })
 public class TriangleTransform
     extends Affine
     implements PolygonTransform {
@@ -35,7 +42,8 @@ public class TriangleTransform
     /** @return a new TriangleTransform that represents the affine
         transform that transforms the three input vertices inpts[] into
         the three output vertices outpts[] */
-    public TriangleTransform(Point2D.Double[] inpts, Point2D.Double[] outpts) {
+    public TriangleTransform(@JsonProperty("input") Point2D.Double[] inpts,
+                             @JsonProperty("output") Point2D.Double[] outpts) {
         setInputVertices(inpts);
         setOutputVertices(outpts);
     }
@@ -68,11 +76,11 @@ public class TriangleTransform
         return new TriangleTransform(outputVerts, inputVerts);
     }
 
-    public Point2D.Double[] inputVertices() {
+    public Point2D.Double[] getInputVertices() {
         return Duh.deepCopy(inputVerts);
     }
 
-    public Point2D.Double[] outputVertices() {
+    public Point2D.Double[] getOutputVertices() {
         return Duh.deepCopy(outputVerts);
     }
 

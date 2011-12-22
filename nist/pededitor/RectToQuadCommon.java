@@ -76,12 +76,17 @@ abstract public class RectToQuadCommon
     public void setY(double v) { y = v; update(); }
 
 
-    public void setRectangle(Rectangle2D.Double rect) {
-        x = rect.x;
-        y = rect.y;
-        w = rect.width;
-        h = rect.height;
+    public void setRectangle(Rectangle2D rect) {
+        x = rect.getX();
+        y = rect.getY();
+        w = rect.getWidth();
+        h = rect.getHeight();
         update();
+    }
+
+
+    Rectangle2D.Double getRectangle() {
+        return new Rectangle2D.Double(x, y, w, h);
     }
 
 

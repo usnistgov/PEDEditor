@@ -2,6 +2,8 @@ package gov.nist.pededitor;
 
 import java.awt.geom.*;
 
+import org.codehaus.jackson.annotate.JsonProperty;
+
 /** Class that transforms the boundary of an arbitrary convex
     quadrilateral into the boundary of another arbitrary convex
     quadrilateral. The transformation can be a bit slow and may not be
@@ -33,21 +35,22 @@ public class QuadToQuad
     public QuadToQuad() {
     }
 
-    public QuadToQuad(Point2D.Double[] ins, Point2D.Double[] outs) {
+    public QuadToQuad(@JsonProperty("input") Point2D.Double[] ins,
+                      @JsonProperty("output") Point2D.Double[] outs) {
         q2r.setVertices(ins); 
         r2q.setVertices(outs); 
     }
 
     public Transform2D createInverse() {
-        return new QuadToQuad(outputVertices(), inputVertices());
+        return new QuadToQuad(getOutputVertices(), getInputVertices());
     }
 
-    public Point2D.Double[] inputVertices() {
-        return q2r.inputVertices();
+    public Point2D.Double[] getInputVertices() {
+        return q2r.getInputVertices();
     }
 
-    public Point2D.Double[] outputVertices() {
-        return r2q.outputVertices();
+    public Point2D.Double[] getOutputVertices() {
+        return r2q.getOutputVertices();
     }
 
     public void preConcatenate(Transform2D other) {
@@ -65,7 +68,7 @@ public class QuadToQuad
     }
 
     public QuadToQuad clone() {
-        return new QuadToQuad(inputVertices(), outputVertices());
+        return new QuadToQuad(getInputVertices(), getOutputVertices());
     }
 
     public Point2D.Double transform(double x, double y)

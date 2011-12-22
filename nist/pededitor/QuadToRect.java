@@ -2,6 +2,9 @@ package gov.nist.pededitor;
 
 import java.awt.geom.*;
 
+import org.codehaus.jackson.annotate.JsonIgnore;
+import org.codehaus.jackson.annotate.JsonProperty;
+
 /** Transform a rectangles with sides parallel to the coordinate axes
 to an arbitrary quadrilaterals. These transformations have to be
 non-affine in general: three point translations define an affine
@@ -19,8 +22,14 @@ public class QuadToRect extends RectToQuadCommon
         copyFieldsFrom(other);
     }
 
-    @Override
-	public QuadToRect clone() {
+    public QuadToRect(@JsonProperty("input") Point2D.Double[] inpts,
+                      @JsonProperty("output") Rectangle2D rect) {
+        this();
+        setVertices(inpts);
+        setRectangle(rect);
+    }
+
+    @Override public QuadToRect clone() {
         return new QuadToRect(this);
     }
 
@@ -32,19 +41,24 @@ public class QuadToRect extends RectToQuadCommon
         return inv;
     }
 
-    public Point2D.Double[] outputVertices() {
+    @JsonIgnore public Point2D.Double[] getOutputVertices() {
         return rectVertices();
     }
 
-    public Point2D.Double[] inputVertices() {
+    @JsonProperty("input") public Point2D.Double[] getInputVertices() {
         return quadVertices();
+    }
+
+    @JsonProperty("output") public Rectangle2D.Double
+        getOutputRectangle() {
+        return getRectangle();
     }
 
     /** @return a transformation from the unit square to the input
      * quadrilateral */
     public RectToQuad squareToDomain() {
         RectToQuad output = new RectToQuad();
-        output.setVertices(inputVertices());
+        output.setVertices(getInputVertices());
         return output;
     }
 

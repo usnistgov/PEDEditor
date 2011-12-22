@@ -30,11 +30,11 @@ public class RectToQuad extends RectToQuadCommon {
         return inv;
     }
 
-    public Point2D.Double[] inputVertices() {
+    public Point2D.Double[] getInputVertices() {
         return rectVertices();
     }
 
-    public Point2D.Double[] outputVertices() {
+    public Point2D.Double[] getOutputVertices() {
         return quadVertices();
     }
 

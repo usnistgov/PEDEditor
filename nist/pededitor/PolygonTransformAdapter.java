@@ -16,10 +16,10 @@ abstract public class PolygonTransformAdapter
     abstract public PolygonTransformAdapter clone();
 
     public Rectangle2D.Double inputBounds() {
-        return Duh.bounds(inputVertices());
+        return Duh.bounds(getInputVertices());
     }
     public Rectangle2D.Double outputBounds() {
-        return Duh.bounds(outputVertices());
+        return Duh.bounds(getOutputVertices());
     }
 
     /** Verify the consistency of this transform's internal state;
@@ -32,8 +32,8 @@ abstract public class PolygonTransformAdapter
         IllegalStateException on failure. */
     static public void check(PolygonTransform xform) {
         try {
-            Point2D.Double[] ivs = xform.inputVertices();
-            Point2D.Double[] ovs = xform.outputVertices();
+            Point2D.Double[] ivs = xform.getInputVertices();
+            Point2D.Double[] ovs = xform.getOutputVertices();
 
             int cnt = ivs.length;
             if (cnt != ovs.length) {
@@ -71,8 +71,8 @@ abstract public class PolygonTransformAdapter
     }
 
     public static String toString(PolygonTransform xform) {
-        Point2D.Double[] ivs = xform.inputVertices();
-        Point2D.Double[] ovs = xform.outputVertices();
+        Point2D.Double[] ivs = xform.getInputVertices();
+        Point2D.Double[] ovs = xform.getOutputVertices();
         StringBuilder out = new StringBuilder(xform.getClass().getCanonicalName());
         for (int i = 0; i < ivs.length; ++i) {
             out.append(Duh.toString(ivs[i]) + ":" + Duh.toString(ovs[i]));
