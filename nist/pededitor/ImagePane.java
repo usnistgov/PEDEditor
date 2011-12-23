@@ -15,9 +15,11 @@ public class ImagePane extends JPanel {
 
     public void setImage(BufferedImage image) {
         this.image = image;
-        setPreferredSize(new Dimension(image.getWidth(null),
-                                       image.getHeight(null)));
-        revalidate();
+        if (image != null) {
+            setPreferredSize(new Dimension(image.getWidth(null),
+                                           image.getHeight(null)));
+            revalidate();
+        }
         repaint();
     }
 

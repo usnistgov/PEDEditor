@@ -61,14 +61,19 @@ public class ImageScrollFrame extends JFrame {
     }
 
     public void setImage(BufferedImage im) {
-        int w = im.getWidth();
-        int h = im.getHeight();
-
-        if (w < preferredWidth && h < preferredHeight) {
-            scrollPane.setPreferredSize(null);
-        } else {
+        if (im == null) {
             scrollPane.setPreferredSize
                 (new Dimension(preferredWidth, preferredHeight));
+        } else {
+            int w = im.getWidth();
+            int h = im.getHeight();
+
+            if (w < preferredWidth && h < preferredHeight) {
+                scrollPane.setPreferredSize(null);
+            } else {
+                scrollPane.setPreferredSize
+                    (new Dimension(preferredWidth, preferredHeight));
+            }
         }
         imagePane.setImage(im);
     }
