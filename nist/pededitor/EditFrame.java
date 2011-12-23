@@ -265,11 +265,12 @@ public class EditFrame extends ImageScrollFrame {
         JMenu mnCurve = new JMenu("Curve");
         menuBar.add(mnCurve);
 
-        mnCurve.add(new EditFrameAction("New",
-                                        KeyEvent.VK_N, "typed .") {
+        mnCurve.add(new EditFrameAction("Deselect",
+                                        KeyEvent.VK_D,
+                                        KeyStroke.getKeyStroke('.')) {
                 @Override
                     public void actionPerformed(ActionEvent e) {
-                    getParentEditor().endCurve();
+                    getParentEditor().deselectCurve();
                 }
             });
 
@@ -357,8 +358,8 @@ public class EditFrame extends ImageScrollFrame {
         JMenu mnLabel = new JMenu("Label");
         menuBar.add(mnLabel);
         mnLabel.add(new EditFrameAction
-                   ("Text",
-                    KeyEvent.VK_T,
+                   ("New",
+                    KeyEvent.VK_N,
                     KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0)) {
                 @Override
                     public void actionPerformed(ActionEvent e) {
@@ -367,15 +368,17 @@ public class EditFrame extends ImageScrollFrame {
             });
 
         mnLabel.add(new EditFrameAction
-                   ("Anchor", KeyEvent.VK_A) {
+                   ("Edit",
+                    KeyEvent.VK_E,
+                    KeyStroke.getKeyStroke('e')) {
                 @Override
                     public void actionPerformed(ActionEvent e) {
-                    getParentEditor().setLabelAnchor();
+                    getParentEditor().editLabel();
                 }
             });
 
         mnLabel.add(new EditFrameAction
-                   ("Angle", KeyEvent.VK_N) {
+                   ("Angle", KeyEvent.VK_G) {
                 @Override
                     public void actionPerformed(ActionEvent e) {
                     getParentEditor().setLabelAngle();
@@ -419,6 +422,13 @@ public class EditFrame extends ImageScrollFrame {
                                        "typed -") {
                 public void actionPerformed(ActionEvent e) {
                     getParentEditor().zoomBy(1 / 1.5);
+                }
+            });
+        mnView.add(new EditFrameAction("Best Fit", KeyEvent.VK_F,
+                                       KeyStroke.getKeyStroke('b',
+                                                              InputEvent.CTRL_MASK)) {
+                public void actionPerformed(ActionEvent e) {
+                    getParentEditor().bestFit();
                 }
             });
 
