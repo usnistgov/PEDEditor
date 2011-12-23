@@ -868,17 +868,20 @@ public class Editor implements CropEventListener, MouseListener,
         dialog.setXWeight(label.getXWeight());
         dialog.setYWeight(label.getYWeight());
         dialog.setFontSize(label.getFontSize());
+        dialog.setAngle(label.getAngle());
 
         AnchoredLabel newLabel = dialog.showModal();
         if (newLabel == null) {
             return;
         }
 
+        // TODO Pretty lame just to copy all the fields over...
         label.setText(newLabel.getText());
         labelViews.set(nl, toView(newLabel.getText()));
         label.setXWeight(newLabel.getXWeight());
         label.setYWeight(newLabel.getYWeight());
         label.setFontSize(newLabel.getFontSize());
+        label.setAngle(newLabel.getAngle());
         repaintEditFrame();
     }
 
@@ -912,11 +915,6 @@ public class Editor implements CropEventListener, MouseListener,
 
     public void setDiagramType(DiagramType t) {
         this.diagramType = t;
-    }
-
-    /** Invoked from the EditFrame menu */
-    public void setLabelAngle() {
-        // TODO setLabelAngle
     }
 
     /** Invoked from the EditFrame menu */

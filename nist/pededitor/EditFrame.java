@@ -378,14 +378,6 @@ public class EditFrame extends ImageScrollFrame {
             });
 
         mnLabel.add(new EditFrameAction
-                   ("Angle", KeyEvent.VK_G) {
-                @Override
-                    public void actionPerformed(ActionEvent e) {
-                    getParentEditor().setLabelAngle();
-                }
-            });
-
-        mnLabel.add(new EditFrameAction
                    ("Font", KeyEvent.VK_N) {
                 @Override
                     public void actionPerformed(ActionEvent e) {

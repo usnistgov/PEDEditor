@@ -8,6 +8,8 @@ import java.util.*;
 import java.util.List;
 import javax.swing.*;
 
+import org.codehaus.jackson.annotate.JsonIgnore;
+
 /** GUI for selecting a label string and an anchoring position for
     that label. */
 public class LabelDialog extends JDialog {
@@ -16,7 +18,9 @@ public class LabelDialog extends JDialog {
     JTextField textField;
     JTextField sizeNumerator;
     JTextField sizeDenominator;
+    JTextField angleField;
     boolean pressedOK = false;
+    ImagePane compassPane;
 
     JButton[][] anchorButtons = new JButton[3][3];
 
@@ -84,7 +88,7 @@ public class LabelDialog extends JDialog {
                 throw new NumberFormatException("Zero denominator");
             }
             return n/d;
-        } catch (Exception e) {
+        } catch (NumberFormatException e) {
             return 0;
         }
     }
@@ -113,6 +117,24 @@ public class LabelDialog extends JDialog {
         sizeBox.add(sizeDenominator);
         sizeBox.add(new JLabel(") \u00D7 normal size"));
         box.add(sizeBox);
+
+        Box orientationBox = new Box(BoxLayout.LINE_AXIS);
+        angleField = new JTextField("0");
+        compassPane = new ImagePane();
+        compassPane.setImage(createCompassImage());
+        orientationBox.add(compassPane);
+        Box ob2 = new Box(BoxLayout.PAGE_AXIS);
+        angleField.setPreferredSize(new Dimension(90, 30));
+        angleField.setMaximumSize(new Dimension(90, 30));
+        ob2.add(new JLabel("Orientation:"));
+        Box ob3 = new Box(BoxLayout.LINE_AXIS);
+        ob3.add(angleField);
+        ob3.add(new JLabel("degrees"));
+        ob2.add(ob3);
+        orientationBox.add(ob2);
+
+
+        box.add(orientationBox);
         
         box.add(new JLabel("Label position relative to anchor:"));
         JPanel anchorPane = new JPanel();
@@ -127,6 +149,31 @@ public class LabelDialog extends JDialog {
 
         box.add(anchorPane);
         contentPane.add(box);
+    }
+
+    BufferedImage createCompassImage() {
+        int cr = 60;
+        int cmargin = 30;
+        Compass c = new Compass(cr + cmargin, cr + cmargin, cr);
+        int width = cr * 2 + cmargin * 2;
+        int height = width;
+
+        BufferedImage cim = new BufferedImage
+            (width, height, BufferedImage.TYPE_INT_RGB);
+        Graphics2D g = (Graphics2D) cim.getGraphics();
+        g.setColor(Color.WHITE);
+        g.fillRect(0, 0, width, height);
+        g.setColor(Color.BLACK);
+        g.setRenderingHint(RenderingHints.KEY_ANTIALIASING,
+                           RenderingHints.VALUE_ANTIALIAS_ON);
+        g.setFont(new Font(null, Font.BOLD, 12));
+        c.drawTickedCircle(g);
+        g.setColor(Color.GREEN);
+        c.drawHand(g, getAngleDegrees());
+
+        // TODO Change as you change the value...
+
+        return cim;
     }
 
     public AnchorAction createAnchorAction(double xWeight,
@@ -184,13 +231,33 @@ public class LabelDialog extends JDialog {
         AnchoredLabel al =
             new AnchoredLabel(textField.getText(), xWeight, yWeight);
         al.setFontSize(getFontSize());
-        // TODO later? al.setAngle(getAngle());
+        al.setAngle(getAngle());
         return al;
+    }
+
+    @JsonIgnore
+    public double getAngleDegrees() {
+        try {
+            return Double.valueOf(angleField.getText());
+        } catch (NumberFormatException e) {
+            return 0;
+        }
+    }
+
+    public double getAngle() {
+        return Compass.degreesToTheta(getAngleDegrees());
+    }
+
+    public void setAngle(double theta) {
+        double deg = Compass.thetaToDegrees(theta);
+        angleField.setText(String.format("%.1f", deg));
+        compassPane.setImage(createCompassImage());
     }
 
     public static void main(String[] args) {
         LabelDialog dialog = new LabelDialog(null);
         dialog.setFontSize(1.333333333333);
+        dialog.setAngle(Math.PI / 2);
         AnchoredLabel t = dialog.showModal();
         System.out.println("You selected " + t);
     }
