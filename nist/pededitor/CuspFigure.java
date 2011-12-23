@@ -205,11 +205,13 @@ public abstract class GeneralPolyline {
     }
 
     public Point2D.Double[] getPoints() {
-        return points.toArray(new Point2D.Double[0]);
+        return Duh.deepCopy(points.toArray(new Point2D.Double[0]));
     }
 
     public void setPoints(Collection<Point2D.Double> points) {
-        this.points = new ArrayList<Point2D.Double>(points);
+        this.points = new ArrayList<Point2D.Double>
+            (Arrays.asList(Duh.deepCopy(points.toArray
+                                        (new Point2D.Double[0]))));
     }
 
     public Point2D.Double get(int vertexNo) {
@@ -282,13 +284,10 @@ public abstract class GeneralPolyline {
                                                GeneralPolyline.class);
             System.out.println(o2);
         } catch (JsonGenerationException e) {
-            // TODO Auto-generated catch block
             e.printStackTrace();
         } catch (JsonMappingException e) {
-            // TODO Auto-generated catch block
             e.printStackTrace();
         } catch (IOException e) {
-            // TODO Auto-generated catch block
             e.printStackTrace();
         }
     }
