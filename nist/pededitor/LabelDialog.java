@@ -11,15 +11,19 @@ import javax.swing.*;
 /** GUI for selecting a label string and an anchoring position for
     that label. */
 public class LabelDialog extends JDialog {
-    int xWeight = 0;
-    int yWeight = 0;
+    double xWeight = 0;
+    double yWeight = 0;
     JTextField textField;
+    JTextField sizeNumerator;
+    JTextField sizeDenominator;
     boolean pressedOK = false;
 
+    JButton[][] anchorButtons = new JButton[3][3];
+
     class AnchorAction extends AbstractAction {
-        final int xWeight;
-        final int yWeight;
-        AnchorAction(Image image, int xWeight, int yWeight) {
+        final double xWeight;
+        final double yWeight;
+        AnchorAction(Image image, double xWeight, double yWeight) {
             super(null, new ImageIcon(image));
             this.xWeight = xWeight;
             this.yWeight = yWeight;
@@ -37,6 +41,54 @@ public class LabelDialog extends JDialog {
     double getXWeight() { return xWeight; }
     double getYWeight() { return yWeight; }
 
+    public void setXWeight(double xWeight) {
+        setWeightIsHighlighted(false);
+        this.xWeight = xWeight;
+        setWeightIsHighlighted(true);
+    }
+
+    public void setYWeight(double yWeight) {
+        setWeightIsHighlighted(false);
+        this.yWeight = yWeight;
+        setWeightIsHighlighted(true);
+    }
+
+    protected void setWeightIsHighlighted(boolean b) {
+        int x = (int) Math.round(xWeight * 2.0);
+        int y = (int) Math.round(yWeight * 2.0);
+        anchorButtons[y][x].setAction
+            (createAnchorAction(xWeight, yWeight, b));
+    }
+
+    public void setText(String s) {
+        textField.setText(s);
+    }
+
+    public void setFontSize(double scale) {
+        ContinuedFraction f = ContinuedFraction.create(scale, 0.00001, 9.0);
+        if (f == null || f.looksLikeDecimal()) {
+            sizeNumerator.setText(String.format("%6f", scale));
+            sizeDenominator.setText("1");
+        } else {
+            sizeNumerator.setText(Long.toString(f.numerator));
+            sizeDenominator.setText(Long.toString(f.denominator));
+        }
+    }
+
+    public double getFontSize() {
+        double n, d;
+        try {
+            n = Double.valueOf(sizeNumerator.getText());
+            d = Double.valueOf(sizeDenominator.getText());
+            if (d == 0) {
+                throw new NumberFormatException("Zero denominator");
+            }
+            return n/d;
+        } catch (Exception e) {
+            return 0;
+        }
+    }
+
     LabelDialog(Frame owner) {
         super(owner, "Select Label", false);
 
@@ -51,35 +103,55 @@ public class LabelDialog extends JDialog {
 
         box.add(new JLabel("Label:"));
         box.add(textField);
+        box.add(new JLabel("Font size:"));
+        Box sizeBox = new Box(BoxLayout.LINE_AXIS);
+        sizeBox.add(new JLabel("("));
+        sizeNumerator = new JTextField("1");
+        sizeBox.add(sizeNumerator);
+        sizeBox.add(new JLabel("\u00F7"));
+        sizeDenominator = new JTextField("1");
+        sizeBox.add(sizeDenominator);
+        sizeBox.add(new JLabel(") \u00D7 normal size"));
+        box.add(sizeBox);
+        
         box.add(new JLabel("Label position relative to anchor:"));
         JPanel anchorPane = new JPanel();
         anchorPane.setLayout(new GridLayout(3, 3));
         for (int y = 2; y >= 0; --y) {
             for (int x = 2; x >= 0; --x) {
-                int width = 100;
-                int height = 50;
-                int margin = 10;
-                BufferedImage image = new BufferedImage
-                    (width, height, BufferedImage.TYPE_INT_RGB);
-                Graphics2D g = (Graphics2D) image.getGraphics();
-                g.setColor(Color.WHITE);
-                g.fillRect(0, 0, width, height);
-                g.setColor(Color.BLACK);
-                g.setRenderingHint(RenderingHints.KEY_ANTIALIASING,
-                                   RenderingHints.VALUE_ANTIALIAS_ON);
-                double cx = margin + (width - 2 * margin) * x / 2.0;
-                double cy = margin + (height - 2 * margin) * y / 2.0;
-                double r = 3;
-                g.setColor(new Color(0, 200, 0));
-                g.fill(new Ellipse2D.Double(cx - r, cy - r, r*2, r*2));
-                g.setColor(Color.BLACK);
-                drawString(g, "Label", cx, cy, x / 2.0, y / 2.0);
-                anchorPane.add(new JButton(new AnchorAction(image, x, y)));
+                AnchorAction action = createAnchorAction(x/2.0, y/2.0, false);
+                JButton button = anchorButtons[y][x] = new JButton(action);
+                anchorPane.add(button);
             }
         }
 
         box.add(anchorPane);
         contentPane.add(box);
+    }
+
+    public AnchorAction createAnchorAction(double xWeight,
+                                           double yWeight,
+                                           boolean highlight) {
+        int width = 100;
+        int height = 50;
+        int margin = 10;
+        BufferedImage image = new BufferedImage
+            (width, height, BufferedImage.TYPE_INT_RGB);
+        Graphics2D g = (Graphics2D) image.getGraphics();
+        g.setColor(Color.WHITE);
+        g.fillRect(0, 0, width, height);
+        g.setColor(Color.BLACK);
+        g.setRenderingHint(RenderingHints.KEY_ANTIALIASING,
+                           RenderingHints.VALUE_ANTIALIAS_ON);
+        double cx = margin + (width - 2 * margin) * xWeight;
+        double cy = margin + (height - 2 * margin) * yWeight;
+        double r = 3;
+        g.setColor(new Color(0, 200, 0));
+        g.fill(new Ellipse2D.Double(cx - r, cy - r, r*2, r*2));
+        g.setColor(Color.BLACK);
+        String str = highlight ? "(Label)" : "Label";
+        drawString(g, str, cx, cy, xWeight, yWeight);
+        return new AnchorAction(image, xWeight, yWeight);
     }
 
     /** @param weightX 0.0 = anchor on left ... 1.0 = anchor on right
@@ -105,13 +177,21 @@ public class LabelDialog extends JDialog {
         pack();
         setModalityType(Dialog.ModalityType.DOCUMENT_MODAL);
         setVisible(true);
-        return pressedOK
-            ? new AnchoredLabel(textField.getText(), xWeight / 2.0, yWeight / 2.0)
-            : null;
+        if (!pressedOK) {
+            return null;
+        }
+
+        AnchoredLabel al =
+            new AnchoredLabel(textField.getText(), xWeight, yWeight);
+        al.setFontSize(getFontSize());
+        // TODO later? al.setAngle(getAngle());
+        return al;
     }
 
     public static void main(String[] args) {
-        AnchoredLabel t = (new LabelDialog(null)).showModal();
+        LabelDialog dialog = new LabelDialog(null);
+        dialog.setFontSize(1.333333333333);
+        AnchoredLabel t = dialog.showModal();
         System.out.println("You selected " + t);
     }
    
