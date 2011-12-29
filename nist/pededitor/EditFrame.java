@@ -12,6 +12,8 @@ public class EditFrame extends ImageScrollFrame {
     protected JLabel statusLabel;
     protected Editor parentEditor;
     protected JCheckBoxMenuItem smoothingMenuItem;
+    protected ButtonGroup lineStyleGroup = new ButtonGroup();
+    protected ButtonGroup lineWidthGroup = new ButtonGroup();
 
     public Editor getParentEditor() { return parentEditor; }
 
@@ -66,6 +68,13 @@ public class EditFrame extends ImageScrollFrame {
         }
     }
 
+    class LineWidthRadioMenuItem extends JRadioButtonMenuItem {
+        LineWidthRadioMenuItem(String imagePath, double lineWidth) {
+            super(new LineWidthAction(imagePath, lineWidth));
+            lineWidthGroup.add(this);
+        }
+    }
+
     class LineStyleAction extends AbstractAction {
         CompositeStroke lineStyle;
 
@@ -77,6 +86,13 @@ public class EditFrame extends ImageScrollFrame {
         @Override
             public void actionPerformed(ActionEvent e) {
             getParentEditor().setLineStyle(lineStyle);
+        }
+    }
+
+    class LineStyleRadioMenuItem extends JRadioButtonMenuItem {
+        LineStyleRadioMenuItem(String imagePath, CompositeStroke lineStyle) {
+            super(new LineStyleAction(imagePath, lineStyle));
+            lineStyleGroup.add(this);
         }
     }
 
@@ -283,18 +299,14 @@ public class EditFrame extends ImageScrollFrame {
             });
 
 
-        mnCurve.add(new EditFrameAction("Select last",
-                                       KeyEvent.VK_L,
-                                       KeyStroke.getKeyStroke('<')) {
+        mnCurve.add(new EditFrameAction("Select last", KeyEvent.VK_L) {
                 @Override
                     public void actionPerformed(ActionEvent e) {
                     getParentEditor().cycleActiveCurve(-1);
                 }
             });
 
-        mnCurve.add(new EditFrameAction("Select next",
-                                       KeyEvent.VK_L,
-                                       KeyStroke.getKeyStroke('>')) {
+        mnCurve.add(new EditFrameAction("Select next", KeyEvent.VK_L) {
                 @Override
                     public void actionPerformed(ActionEvent e) {
                     getParentEditor().cycleActiveCurve(+1);
@@ -313,28 +325,41 @@ public class EditFrame extends ImageScrollFrame {
         mnCurve.add(smoothingMenuItem);
 
         JMenu mnLineStyle = new JMenu("Line style");
+        
+        LineStyleRadioMenuItem solidLineItem = 
+            new LineStyleRadioMenuItem("images/line.png",
+                                       CompositeStroke.getSolidLine());
+        solidLineItem.setSelected(true);
+        mnLineStyle.add(solidLineItem);
         mnLineStyle.add
-            (new LineStyleAction("images/line.png",
-                                 CompositeStroke.getSolidLine()));
-        mnLineStyle.add
-            (new LineStyleAction("images/dashedline.png",
+            (new LineStyleRadioMenuItem("images/dashedline.png",
                                  CompositeStroke.getDashedLine()));
         mnLineStyle.add
-            (new LineStyleAction("images/dottedline.png",
+            (new LineStyleRadioMenuItem("images/dottedline.png",
                                  CompositeStroke.getDottedLine()));
         mnLineStyle.add
-            (new LineStyleAction("images/dashdotline.png",
+            (new LineStyleRadioMenuItem("images/dashdotline.png",
                                  CompositeStroke.getDotDashLine()));
         mnLineStyle.add
-            (new LineStyleAction("images/railroadline.png",
+            (new LineStyleRadioMenuItem("images/railroadline.png",
                                  CompositeStroke.getRailroadLine()));
         mnCurve.add(mnLineStyle);
 
         JMenu mnLineWidth = new JMenu("Line width");
-        mnLineWidth.add(new LineWidthAction("images/line1.png", 0.0006));
-        mnLineWidth.add(new LineWidthAction("images/line2.png", 0.0012));
-        mnLineWidth.add(new LineWidthAction("images/line4.png", 0.0024));
-        mnLineWidth.add(new LineWidthAction("images/line8.png", 0.0048));
+        mnLineWidth.add(new LineWidthRadioMenuItem("images/line1.png", 0.0006));
+        LineWidthRadioMenuItem normalWidthItem = 
+            new LineWidthRadioMenuItem("images/line2.png", 0.0012);
+        normalWidthItem.setSelected(true);
+        mnLineWidth.add(normalWidthItem);
+        mnLineWidth.add(new LineWidthRadioMenuItem("images/line4.png", 0.0024));
+        mnLineWidth.add(new LineWidthRadioMenuItem("images/line8.png", 0.0048));
+        mnLineWidth.add(new JRadioButtonMenuItem
+                        (new AbstractAction("Custom...") {
+                                @Override
+                                    public void actionPerformed(ActionEvent e) {
+                                    getParentEditor().customLineWidth();
+                                }
+                            }));
         mnCurve.add(mnLineWidth);
 
         mnCurve.add(new EditFrameAction
@@ -355,10 +380,10 @@ public class EditFrame extends ImageScrollFrame {
 
 
         // "Label" top-level menu
-        JMenu mnLabel = new JMenu("Label");
+        JMenu mnLabel = new JMenu("Decorations");
         menuBar.add(mnLabel);
         mnLabel.add(new EditFrameAction
-                   ("New",
+                   ("New label",
                     KeyEvent.VK_N,
                     KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0)) {
                 @Override
@@ -368,7 +393,7 @@ public class EditFrame extends ImageScrollFrame {
             });
 
         mnLabel.add(new EditFrameAction
-                   ("Edit",
+                   ("Edit label",
                     KeyEvent.VK_E,
                     KeyStroke.getKeyStroke('e')) {
                 @Override
@@ -378,10 +403,28 @@ public class EditFrame extends ImageScrollFrame {
             });
 
         mnLabel.add(new EditFrameAction
-                   ("Font", KeyEvent.VK_N) {
+                   ("Change label font", KeyEvent.VK_N) {
                 @Override
                     public void actionPerformed(ActionEvent e) {
                     getParentEditor().setLabelFont();
+                }
+            });
+
+        mnLabel.add(new EditFrameAction("Add left arrow",
+                                         KeyEvent.VK_L,
+                                         KeyStroke.getKeyStroke('<')) {
+                @Override
+                    public void actionPerformed(ActionEvent e) {
+                    getParentEditor().addArrow(false);
+                }
+            });
+
+        mnLabel.add(new EditFrameAction("Add right arrow",
+                                         KeyEvent.VK_L,
+                                         KeyStroke.getKeyStroke('>')) {
+                @Override
+                    public void actionPerformed(ActionEvent e) {
+                    getParentEditor().addArrow(true);
                 }
             });
 
