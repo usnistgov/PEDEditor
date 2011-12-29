@@ -94,7 +94,7 @@ public class LabelDialog extends JDialog {
     }
 
     LabelDialog(Frame owner) {
-        super(owner, "Select Label", false);
+        super(owner, "Select Label", true);
 
         ButtonGroup group = new ButtonGroup();
 
