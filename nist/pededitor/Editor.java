@@ -34,112 +34,43 @@ import org.codehaus.jackson.map.annotate.*;
 
 // TODO (major, mandatory) Read GRUMP data.
 
-// TODO (important) More intuitive dot placement process (the black
-// circles around interesting points). Currently a dot is printed at
-// any curve or polyline that has only 1 vertex, but all label anchor
-// points should be included in the vertex set, too, and label anchor
-// points should not, in general, be dotted.
-
-// TODO Use <div align="center"> for xWeight = 0.5 and <div
-// align="right"> for xWeight = 1.0.
-
-// TODO (important) Break curves for labels more easily. (The current
-// approach is to allow "pen up" operations at certain points, and
-// that should still work. Another alternative is to allow the users
-// to put opaque white backgrounds for some labels, but testing would
-// be required to determine whether the print and save-as-graphics
-// drawing libraries fully support that. The alternative may be a bit
-// more flexible and faster to use -- if it works!)
-
-// TODO (enhancement) Tiling fill patterns. These are important for
-// general diagram drawing, but they seem to be less important for
-// PEDs
-
-// TODO (mandatory) "Symbol" type lines are not implemented.
-
-// TODO (easy but unnecessary) Allow boxes around labels
-
-// DONE (improvement) You can save a diagram in the middle of the
-// digitization process.
-
-// DONE (improvement) Reuse an existing vertex or place a new vertex
-// exactly on the location on an existing curve that is closest to the
-// mouse.
-
-// DONE (improvement) Exactly transform an input quadrilateral into an
-// output rectangle.
-
-// TODO (mandatory) Support triangular and quadrilateral tie lines.
-
-// TODO (easy enhancement) Support non-solid tie lines.
-
-// TODO (optional) Standard line style shorthand in PED-format file.
-
-// TODO (optional) User-defined line and point widths.
+// TODO (mandatory bug fix) Non-ASCII characters get lost during "save as PDF".
 
 // TODO (optional) Show a check mark next to the currently selected
 // line style and width.
 
-// TODO (preexisting but not mandatory?) Smart line dash lengths.
-// Peter Schenk's PED Editor adjusts the segment length for dashed
-// lines to insure that the dashes in dashed curves are always enough
-// shorter than the curves themselves that at least two dashes are
-// visible. It's a nice feature, but is it worth it to reproduce? The
-// lengths of the dashes in dashed lines is proportional to their
-// thickness, so you can especially short dashes by using especially
-// thin lines already. (Using the sum of the chord lengths as a lower
-// bound on the length of the whole would achieve the goal of insuring
-// at least two dashes are visible, but would not guarantee that the
-// dashes end neatly at both endpoints. (Java2D already has its own
-// estimate of the path length -- and it would actually be better to
-// use its estimate than to do a better but different estimate of
-// one's own -- but I don't know how practical it would be to access
-// that information.)
+// TODO Use <div align="center"> for xWeight = 0.5 and <div
+// align="right"> for xWeight = 1.0. (Problem: it seems to make the
+// box size estimates even more screwed up than they already are.)
 
-// TODO (mandatory bug fix) Non-ASCII characters get lost during "save as PDF".
-
-// TODO Friendlier curve highlighting. Highlighting the previous curve
-// when an existing curve is deleted is unintuitive. It's probably
-// better just to leave nothing highlighted.
-
-// TODO Friendlier edit window maximization. (May need to think about
-// this more in relation to margin adjustments.) When the edit window
-// is maximized but the image scale is smaller than the screen size,
-// the window is not used effectively.
-
-// TODO (important) Smarter diagram margin settings. Currently, the
-// diagram fills a hard-coded portion of the page, regardless of
-// whether the user needs more or less room than that. Allow the user
-// to expand, shrink, and ideally recompute (that is, define margins
-// in terms of the amount of screen space that is actually being used,
-// instead of relative to the size of the core diagram)
-
-// TODO (preexisting in viewer) Periodic table integration and
-// automatic conversion of diagrams from mole percent to weight
-// percent
-
-// TODO (mandatory, easy) Add label angle settings
-
-// TODO (optional) Allow user to select spacing between label and anchor
-
-// TODO (mandatory bug fix) Allow editing of existing labels
-
-// TODO (optional) Curve tags, including liquidus, solidus, and
-// presumably user-defined tags too.
-
-// TODO Curve section decorations (e.g. pen-up/pen-down)?
+// TODO (important) Break curves for labels more easily. A check-box
+// to draw an opaque white rectangle in the background would work if
+// the space usage calculations were actually correct. (The current
+// approach is to allow "pen up" operations at certain points, and
+// that should still work.)
 
 // TODO (mandatory) Label tags: diagram components, chemical formulas,
-// temperatures. Optional: eutectic and peritectic points,
-// user-defined.
+// temperatures. The only mandatory element so far is that these three
+// elememts are associated with the diagram as a whole, not
+// necessarily with specific locations or labels. Optional: eutectic
+// and peritectic points (which *would* have to be associated with
+// specific points), user-defined.
 
-// TODO "Undo" option. Any good drawing program has that feature, but
-// making everything undoable would take some time.
+// TODO (important, not hard) Better cubic spline smoothing (Numerical
+// Recipes).
 
-// TODO Move a label.
+// TODO (mandatory?, backwards compatibility) Duplicate existing
+// program's smoothing algorithm when displaying GRUMP files.
 
-// TODO Allow an option to move all coincident vertices instead of
-// just one.
+// TODO Java gets a lot of things xxx Test what happens when aliasing is turned on and off. Text sizing problems Miscellaneous text rendering issues. These are likely to be
+// especially problematic because they are in code that I do not
+// control.
+
+// TODO (mandatory?) Curve section decorations (e.g. pen-up/pen-down).
+// Not important for new diagrams as far as I can see, but may be
+// required for backwards compatibility.
+
+// TODO (mandatory) Support triangular and quadrilateral tie lines.
 
 // TODO (mandatory) Chemical formula typing short-cuts (relative to
 // entering the whole thing by hand as HTML) of some kind.
@@ -151,34 +82,58 @@ import org.codehaus.jackson.map.annotate.*;
 // formulas. Not all of those are mandatory, but it sounds like
 // implementing at least one of them is.
 
-// TODO (major time-saver) Semi-automatically infer diagram location
-// from composition where equation balancing is possible. Discarding
-// ubiquitous elements like O, H, N, or C may be required.
+// TODO (helpful, not too hard) Allow labels to be moved.
 
-// TODO (mandatory, preexisting) Apply a gradient to all control
+// TODO (mandatory?, preexisting) Apply a gradient to all control
 // points on a curve. Specifically, apply the following transformation
 // to all points on the currently selected curve for which $variable
 // is between v1 and v2: "$variable = $variable + k * ($variable - v1)
 // / (v2 - v1)"
 
-// TODO (optional) More general gradients, e.g. identify a polygon (or
-// circle?) and a point in the interior of that polygon that is to be
-// warped to some other point inside the polygon. The boundary should
-// remain the same, and the warping should apply to the scanned input
-// image as well. For polygonal regions, the transform used could be
-// that the interior point is used to decompose the polygon into ( #
-// of sides ) triangular regions, and each of those regions is
-// subjected to the affine transformation that preserves its external
-// edge while transforming the interior point to its new location.
-// (The result of such a transformation might not be pretty; any line
-// passing through the warped region could end up with sharp bends in
-// it.)
+// TODO (important) Right-click popup menus. The program works just
+// fine with using keyboard shortcuts instead of right-click menus,
+// and I'd probably just go on using the keyboard shortcuts even if an
+// alternative were provided, but forcing the users to remember
+// shortcuts isn't very friendly, and you can't use the mouse to click
+// on an ordinary menu if you're already using the mouse to identify
+// the location the operation should apply to. A two-step process
+// (select action, then selection location) is possible but would be
+// slow at best and awkward to implement as well.
 
-// TODO (backwards compatibility) Duplicate smoothing algorithm in
-// existing program so they still look the same.
+// TODO (recommended) Detect intersections of splines with segments.
+// Fairly low difficulty assuming the Java library cubic equation
+// solver, CubicCurve2D, is properly implemented to be numerically
+// stable and handle degenerate cases.
 
-// TODO (important, not hard) Better cubic spline smoothing (Numerical
-// Recipes).
+// TODO (important) More intuitive dot placement process (the black
+// circles around interesting points). Currently a dot is printed at
+// any curve or polyline that has only 1 vertex, but all label anchor
+// points should be included in the vertex set, too, and label anchor
+// points should not, in general, be dotted.
+
+// TODO (important) Smarter diagram margin settings. Currently, the
+// diagram fills a hard-coded portion of the page, regardless of
+// whether the user needs more or less room than that. Allow the user
+// to expand, shrink, and ideally recompute (that is, define margins
+// in terms of the amount of screen space that is actually being used,
+// instead of relative to the size of the core diagram)
+
+// TODO (optional) Curve tags, including liquidus, solidus, and
+// presumably user-defined tags too.
+
+// TODO (major time-saver) Semi-automatically infer diagram location
+// from composition where equation balancing is possible. Discarding
+// ubiquitous elements like O, H, N, or C may be required.
+
+// TODO Closed loop smoothing and fitting.
+
+// TODO (feature, harder) Allow detection of the intersections of two
+// splines. (What makes this feature more desirable than it would be
+// otherwise is that it would create consistency. As long as some
+// kinds of intersections are detectable, people will sometimes forget
+// that other kinds are not detectable and be confused when that does
+// not work. (I did that myself at least once, even though I wrote the
+// program.)
 
 // TODO (optional) Better curve fitting. As I believe Don mentioned,
 // following the control points too slavishly can yield over-fitting
@@ -205,7 +160,68 @@ import org.codehaus.jackson.map.annotate.*;
 // better fit than 4 degrees of freedom does and not much worse than 7
 // degrees of freedom does, so the perfect ellipse is a good choice.)
 
-// TODO Closed loop smoothing and fitting.
+// TODO "Undo" option. Any good drawing program has that feature, but
+// making everything undoable would take work.
+
+// TODO (easy enhancement) Support non-solid tie lines.
+
+// TODO (requires a checkmark and fix of incorrect dimensions)
+// Allow boxes around labels
+
+// TODO (enhancement) Tiling fill patterns. These are important for
+// general diagram drawing, but they seem to be less important for
+// PEDs
+
+// TODO (mandatory) "Symbol" type lines are not implemented.
+
+// TODO (optional) User-defined line and point widths.
+
+// TODO (important) Cache scaled versions of scanned images for speed.
+
+// TODO At high magnification, rescale only part of the scanned image
+// for speed. If this isn't done, then blowing up traced images to,
+// say, 20,000x20,000 -- even if you're actually just looking at a
+// small fraction of the whole -- becomes impractical.
+
+// TODO (preexisting in viewer) Periodic table integration and
+// automatic conversion of diagrams from mole percent to weight
+// percent
+
+// TODO (optional) Standard line style shorthand in PED-format file.
+
+// TODO (preexisting but not mandatory) Smart line dash lengths.
+// Peter Schenk's PED Editor adjusts the segment length for dashed
+// lines to insure that the dashes in dashed curves are always enough
+// shorter than the curves themselves that at least two dashes are
+// visible. It's a nice feature, but is it worth it to reproduce? The
+// lengths of the dashes in dashed lines is proportional to their
+// thickness, so you can especially short dashes by using especially
+// thin lines already. (Using the sum of the chord lengths as a lower
+// bound on the length of the whole would achieve the goal of insuring
+// at least two dashes are visible, but would not guarantee that the
+// dashes end neatly at both endpoints. (Java2D already has its own
+// estimate of the path length -- and it would actually be better to
+// use its estimate than to do a better but different estimate of
+// one's own -- but I don't know how practical it would be to access
+// that information.)
+
+// TODO Allow copy and paste of curves.
+
+// TODO (optional) When multiple curves share a vertex, allow the
+// vertex to be moved in all curves instead of just one of them.
+
+// TODO (optional) More general gradients, e.g. identify a polygon (or
+// circle?) and a point in the interior of that polygon that is to be
+// warped to some other point inside the polygon. The boundary should
+// remain the same, and the warping should apply to the scanned input
+// image as well. For polygonal regions, the transform used could be
+// that the interior point is used to decompose the polygon into ( #
+// of sides ) triangular regions, and each of those regions is
+// subjected to the affine transformation that preserves its external
+// edge while transforming the interior point to its new location.
+// (The result of such a transformation might not be pretty; any line
+// passing through the warped region could end up with sharp bends in
+// it.)
 
 // TODO (major) Visual location of nearest point on scanned diagram. (The
 // mouse can already be attracted to the nearest feature in the final
@@ -232,23 +248,6 @@ import org.codehaus.jackson.map.annotate.*;
 // computer vision can be expensive, and how much of our own brains
 // are dedicated to vision-related tasks?)
 
-// TODO (important) Right-click popup menus. The program works just
-// fine with using keyboard shortcuts instead of right-click menus,
-// and I'd probably just go on using the keyboard shortcuts even if an
-// alternative were provided, but forcing the users to remember
-// shortcuts isn't very friendly, and you can't use the mouse to click
-// on an ordinary menu if you're already using the mouse to identify
-// the location the operation should apply to. A two-step process
-// (select action, then selection location) is possible but would be
-// slow at best and awkward to implement as well.
-
-// TODO (important) Cache scaled versions of scanned images for speed.
-
-// TODO At high magnification, rescale only part of the scanned image
-// for speed. If this isn't done, then blowing up traced images to,
-// say, 20,000x20,000 -- even if you're actually just looking at a
-// small fraction of the whole -- becomes impractical.
-
 // TODO (optional) Write GRUMP data. May not be practical because of
 // format limitations.
 
@@ -258,30 +257,14 @@ import org.codehaus.jackson.map.annotate.*;
 // that involves word wrap, but they are probably not needed for this
 // application.
 
-// TODO (recommended) Detect intersections of splines with segments.
-// Fairly low difficulty assuming the Java library cubic equation
-// solver, CubicCurve2D, is properly implemented to be numerically
-// stable and handle degenerate cases.
-
-// TODO (feature, harder) Allow detection of the intersections of two
-// splines. (What makes this feature more desirable than it would be
-// otherwise is that it would create consistency. I guarantee that as
-// long as some kinds of intersections are detectable, people will
-// forget that other kinds are not detectable. They will try to detect
-// them and then get confused when they see an intersection on the
-// screen that they can't jump to.)
-
 // TODO (minor bug (in Java itself?)) Fix or work around the bug (which I think
 // is a Java bug, not an application bug) where scrolling the scroll
 // pane doesn't cause the image to be redrawn.
 
-// TODO Allow copy and paste of curves.
-
-// TODO (feature, probably too easy to implement to be worth debating
-// priority levels) In those situations where zooming the mouse causes
-// you to lose your position in the diagram, have Robot move the mouse
-// to the new location. (For perspective, the program already keeps
-// its location during zooming better than Adobe Reader does.)
+// TODO (feature, easy) Use Robot to make sure that when the mouse is
+// inside the diagram, zooming the image never causes you to lose your
+// place. (For perspective, the program already keeps its location
+// during zooming better than Adobe Reader does.)
 
 // TODO (feature, lower priority, low difficulty) Add a "bring mouse
 // and diagram under mouse to center" operation
@@ -329,6 +312,7 @@ public class Editor implements CropEventListener, MouseListener,
     protected CropFrame cropFrame = new CropFrame();
     protected EditFrame editFrame = new EditFrame(this);
     protected ImageZoomFrame zoomFrame = new ImageZoomFrame();
+    protected VertexInfoDialog vertexInfo = new VertexInfoDialog(editFrame);
 
     // TODO Allow inclusion of attribution data? (Debatable -- in the
     // larger digitization context, the attribution data would be
@@ -349,6 +333,7 @@ public class Editor implements CropEventListener, MouseListener,
     protected ArrayList<View> labelViews;
     protected int activeCurveNo;
     protected int activeVertexNo;
+    @JsonProperty protected ArrayList<Arrow> arrows;
     protected BufferedImage originalImage;
     protected String originalFilename;
 
@@ -365,15 +350,12 @@ public class Editor implements CropEventListener, MouseListener,
     protected double labelYMargin = 0;
 
     static final double STANDARD_LINE_WIDTH = 0.0012;
-    @JsonProperty protected double lineWidth = STANDARD_LINE_WIDTH;
-    @JsonProperty protected CompositeStroke lineStyle
-        = CompositeStroke.getSolidLine();
+    protected double lineWidth = STANDARD_LINE_WIDTH;
+    protected CompositeStroke lineStyle = CompositeStroke.getSolidLine();
     @JsonProperty protected String filename;
 
     // TODO Set saveNeeded
     boolean saveNeeded = false;
-    // TODO Set showAngle
-    boolean showAngle = false;
 
     /** Current mouse position expressed in principal coordinates.
      It's not always sufficient to simply read the mouse position in
@@ -411,6 +393,7 @@ public class Editor implements CropEventListener, MouseListener,
         pageBounds = null;
         scale = 800.0;
         paths = new ArrayList<GeneralPolyline>();
+        arrows = new ArrayList<Arrow>();
         labels = new ArrayList<AnchoredLabel>();
         labelViews = new ArrayList<View>();
         labelCenters = new ArrayList<Point2D.Double>();
@@ -421,7 +404,9 @@ public class Editor implements CropEventListener, MouseListener,
         filename = null;
         saveNeeded = false;
         scaledOriginalImages = new ArrayList<BufferedImage>();
-        showAngle = false;
+        vertexInfo.setAngle(0);
+        vertexInfo.setSlope(0);
+        vertexInfo.setLineWidth(lineWidth);
     }
 
     @JsonProperty("curves")
@@ -628,6 +613,14 @@ public class Editor implements CropEventListener, MouseListener,
         {
             int i = 0;
             for (AnchoredLabel label: labels) {
+                if (false) {
+                    // TODO Delete or optionally re-enable.
+                    boxHTML(g, labelViews.get(i), scale * label.getFontSize(),
+                            label.getAngle(),
+                            label.getX() * scale, label.getY() * scale,
+                            label.getXWeight(), label.getYWeight());
+                }
+
                 drawHTML(g, labelViews.get(i), scale * label.getFontSize(),
                          label.getAngle(),
                          label.getX() * scale, label.getY() * scale,
@@ -636,6 +629,10 @@ public class Editor implements CropEventListener, MouseListener,
 
                 ++i;
             }
+        }
+
+        for (Arrow arrow: arrows) {
+            drawArrow(g, scale, arrow);
         }
 
         if (editing) {
@@ -725,6 +722,18 @@ public class Editor implements CropEventListener, MouseListener,
     public void add(Point2D.Double point) {
         getCurveForAppend().add(++activeVertexNo, point);
         repaintEditFrame();
+    }
+
+    /** Print an arrow at the currently selected location that is
+        tangent to the curve at that location and that points
+        rightward (or downward if the curve is vertical). */
+    public void addArrow(boolean rightward) {
+        double theta = vertexInfo.getAngle();
+        if (!rightward) {
+            theta += Math.PI;
+        }
+
+        arrows.add(new Arrow(mprin.x, mprin.y, lineWidth, theta));
     }
 
     int nearestLabelNo() {
@@ -845,7 +854,7 @@ public class Editor implements CropEventListener, MouseListener,
         t.setX(xpoint.x);
         t.setY(xpoint.y);
         labels.add(t);
-        labelViews.add(toView(t.getText()));
+        labelViews.add(toView(t.getText(), t.getXWeight()));
         labelCenters.add(new Point2D.Double());
         repaintEditFrame();
     }
@@ -877,7 +886,7 @@ public class Editor implements CropEventListener, MouseListener,
 
         // TODO Pretty lame just to copy all the fields over...
         label.setText(newLabel.getText());
-        labelViews.set(nl, toView(newLabel.getText()));
+        labelViews.set(nl, toView(newLabel.getText(), newLabel.getXWeight()));
         label.setXWeight(newLabel.getXWeight());
         label.setYWeight(newLabel.getYWeight());
         label.setFontSize(newLabel.getFontSize());
@@ -885,8 +894,18 @@ public class Editor implements CropEventListener, MouseListener,
         repaintEditFrame();
     }
 
-    View toView(String str) {
-        str = "<html>" + str + "</html>";
+    /** @param xWeight Used to determine how to justify rows of text. */
+    View toView(String str, double xWeight) {
+        xWeight = 0.0;
+        if (xWeight >= 0.75) {
+            str = "<html><div align=\"right\">" + str + "</div></html>";
+        } else if (xWeight >= 0.25) {
+            str = "<html><div align=\"center\">" + str + "</div></html>";
+        } else {
+            str = "<html>" + str + "</html>";
+            // str = "<html><div align=\"left\">" + str + "</div></html>";
+        }
+
         JLabel bogus = new JLabel(str);
         bogus.setFont(getEditPane().getFont());
         return (View) bogus.getClientProperty("html");
@@ -896,7 +915,7 @@ public class Editor implements CropEventListener, MouseListener,
     void initializeLabelViews() {
         labelViews = new ArrayList<View>();
         for (AnchoredLabel label: labels) {
-            labelViews.add(toView(label.getText()));
+            labelViews.add(toView(label.getText(), label.getXWeight()));
             labelCenters.add(new Point2D.Double());
         }
     }
@@ -1046,17 +1065,22 @@ public class Editor implements CropEventListener, MouseListener,
         Point2D.Double xpoint2 = new Point2D.Double();
         Point2D.Double xpoint3 = new Point2D.Double();
         double minDist = 0;
+        int pathNo = -1;
+        int nearPathNo = -1;
+        Point2D.Double gradient = null;
 
         for (GeneralPolyline path : paths) {
+            ++pathNo;
             Point2D.Double point;
 
             if (path.getSmoothingType() == GeneralPolyline.CUBIC_SPLINE) {
                 // Locate a point on the cubic spline that is nearly
                 // closest to this one.
 
+                CubicSpline2D spline = ((SplinePolyline) path)
+                    .getSpline(principalToStandardPage);
                 CubicSpline2D.DistanceInfo di
-                    = ((SplinePolyline) path).getSpline(principalToStandardPage)
-                    .closePoint(xpoint, 1e-9, 200);
+                    = spline.closePoint(xpoint, 1e-9, 200);
 
                 if (nearPoint == null || (di != null && di.distance < minDist)) {
                     if (di.distance < 0) {
@@ -1065,6 +1089,8 @@ public class Editor implements CropEventListener, MouseListener,
                     }
                     standardPageToPrincipal.transform(di.point, di.point);
                     nearPoint = di.point;
+                    nearPathNo = pathNo;
+                    gradient = spline.gradient(di.t);
                     minDist = di.distance;
                 }
             } else {
@@ -1080,15 +1106,19 @@ public class Editor implements CropEventListener, MouseListener,
                     if (nearPoint == null || dist < minDist) {
                         standardPageToPrincipal.transform(point, point);
                         nearPoint = point;
+                        nearPathNo = pathNo;
+                        gradient = new Point2D.Double
+                            (xpoint3.x - xpoint2.x, xpoint3.y - xpoint2.y);
                         minDist = dist;
                     }
                 }
             }
-
         }
 
         add(nearPoint);
         moveMouse(nearPoint);
+        vertexInfo.setGradient(gradient);
+        vertexInfo.setLineWidth(paths.get(nearPathNo).getLineWidth());
     }
 
     public void toggleSmoothing() {
@@ -1591,11 +1621,17 @@ public class Editor implements CropEventListener, MouseListener,
             zoomFrame.setTitle("Zoom " + getOriginalFilename());
             zoomFrame.pack();
             zoomFrame.setVisible(true);
+            Rectangle zrect = zoomFrame.getBounds();
+            Rectangle vrect = vertexInfo.getBounds();
+            vertexInfo.setLocation(zrect.x, zrect.y + zrect.height - vrect.height);
+        } else {
+            vertexInfo.setLocation(rect.x + rect.width, rect.y);
         }
-        View em = toView("m");
+        View em = toView("m", 0);
         labelXMargin = em.getPreferredSpan(View.X_AXIS) / 2.0;
         labelYMargin = em.getPreferredSpan(View.Y_AXIS) / 5.0;
         
+        vertexInfo.setVisible(true);
         editFrame.setVisible(true);
     }
 
@@ -1642,14 +1678,17 @@ public class Editor implements CropEventListener, MouseListener,
         pageBounds = (Rectangle2D.Double) rect.clone();
     }
 
-    /** Copy data fields from other, on the assumption that it will
-        never be used again. */
+    /** Copy data fields from other. Afterwards, it is unsafe to
+        modify other, because the modifications may affect this as
+        well. In other words, this is a shallow copy. */
     void cannibalize(Editor other) {
         diagramType = other.diagramType;
         originalToPrincipal = other.originalToPrincipal;
         principalToStandardPage = other.principalToStandardPage;
         pageBounds = other.pageBounds;
         originalFilename = other.originalFilename;
+        scale = other.scale;
+        arrows = other.arrows;
         initializeDiagram();
         paths = other.paths;
         labels = other.labels;
@@ -2076,6 +2115,10 @@ public class Editor implements CropEventListener, MouseListener,
         repaintEditFrame();
     }
 
+    void customLineWidth() {
+        // TODO Just a stub.
+    }
+
     EditPane getEditPane() { return editFrame.getEditPane(); }
 
     static String format(double d, int decimalPoints) {
@@ -2241,9 +2284,9 @@ public class Editor implements CropEventListener, MouseListener,
        = the anchor point lies along the bottom edge (in baseline
        coordinates) of the text block
 
-       @param labelCenter If not null, this point's coordinates will
-       be assigned to the standard page coordinates of the center of
-       the label.
+       @param labelCenter (output parameter) If this parameter is not
+       null, then it will be reset to the standard page coordinates of
+       the center of the label.
     */
     void drawHTML(Graphics g, View view, double scale, double angle,
                   double ax, double ay,
@@ -2290,6 +2333,47 @@ public class Editor implements CropEventListener, MouseListener,
         g2d.setTransform(oldxform);
     }
 
+    void boxHTML(Graphics g, View view, double scale, double angle,
+                  double ax, double ay,
+                  double weightX, double weightY) {
+        double width = view.getPreferredSpan(View.X_AXIS) + labelXMargin * 2;
+        double height = view.getPreferredSpan(View.Y_AXIS) + labelYMargin * 2;
+
+        Graphics2D g2d = (Graphics2D) g;
+        double textScale = scale / 800.0;
+
+        AffineTransform xform = AffineTransform.getRotateInstance(angle);
+        xform.scale(textScale, textScale);
+        Point2D.Double xpoint = new Point2D.Double();
+        xform.transform
+            (new Point2D.Double(width * weightX, height * weightY), xpoint);
+
+        ax -= xpoint.x;
+        ay -= xpoint.y;
+
+        // Now (ax, ay) represents the (in baseline coordinates) upper
+        // left corner of the text block expanded by the x- and
+        // y-margins.
+
+        Path2D.Double path = new Path2D.Double();
+        path.moveTo(ax, ay);
+        xform.transform(new Point2D.Double(width, 0), xpoint);
+        path.lineTo(ax + xpoint.x, ay + xpoint.y);
+        xform.transform(new Point2D.Double(width, height), xpoint);
+        path.lineTo(ax + xpoint.x, ay + xpoint.y);
+        xform.transform(new Point2D.Double(0, height), xpoint);
+        path.lineTo(ax + xpoint.x, ay + xpoint.y);
+        path.closePath();
+
+        if (false) {
+            g.setColor(Color.WHITE);
+            g2d.fill(path);
+            g.setColor(Color.BLACK);
+        } else {
+            g2d.draw(path);
+        }
+    }
+
     static ObjectMapper getObjectMapper() {
         if (objectMapper == null) {
             objectMapper = new ObjectMapper();
@@ -2318,6 +2402,13 @@ public class Editor implements CropEventListener, MouseListener,
         }
 
         return objectMapper;
+    }
+
+    void drawArrow(Graphics2D g, double scale, Arrow ai) {
+        Affine xform = principalToScaledPage(scale);
+        Point2D.Double xpoint = xform.transform(ai.x, ai.y);
+        Arrow arr = new Arrow(xpoint.x, xpoint.y, scale * ai.size, ai.theta);
+        g.fill(arr);
     }
 }
 
