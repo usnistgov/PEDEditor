@@ -116,7 +116,8 @@ public class CropFrame extends ImageScrollFrame {
         mnEdit.setMnemonic('E');
         menuBar.add(mnEdit);
 
-        cropAction = new CropFrameAction("Crop", KeyEvent.VK_C, "ENTER") {
+        cropAction = new CropFrameAction("Selection Complete",
+                                         KeyEvent.VK_S, "ENTER") {
                 @Override
                     public void actionPerformed(ActionEvent e) {
                     CropEvent ce = new CropEvent(CropFrame.this);
