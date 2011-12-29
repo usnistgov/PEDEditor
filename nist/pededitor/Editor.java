@@ -36,41 +36,45 @@ import org.codehaus.jackson.map.annotate.*;
 
 // TODO (mandatory bug fix) Non-ASCII characters get lost during "save as PDF".
 
-// TODO (optional) Show a check mark next to the currently selected
-// line style and width.
+// TODO (mandatory, easy) Update tangency settings whenever a vertex
+// is selected, not just when selecting the nearest point on a curve.
 
-// TODO Use <div align="center"> for xWeight = 0.5 and <div
-// align="right"> for xWeight = 1.0. (Problem: it seems to make the
-// box size estimates even more screwed up than they already are.)
-
-// TODO (important) Break curves for labels more easily. A check-box
-// to draw an opaque white rectangle in the background would work if
-// the space usage calculations were actually correct. (The current
-// approach is to allow "pen up" operations at certain points, and
-// that should still work.)
-
-// TODO (mandatory) Label tags: diagram components, chemical formulas,
-// temperatures. The only mandatory element so far is that these three
-// elememts are associated with the diagram as a whole, not
-// necessarily with specific locations or labels. Optional: eutectic
-// and peritectic points (which *would* have to be associated with
-// specific points), user-defined.
+// TODO Text rendering issues: inaccurate text bounding boxes and
+// incorrect spacing of space characters during diagram printing.
+// These are likely to be especially problematic because they are in
+// code that I do not control. The inaccurate text bounding boxes
+// causes problems for the following items: multi-line label
+// justification (minor) and curve breaking for text (major), and it
+// also degrades image quality.
 
 // TODO (important, not hard) Better cubic spline smoothing (Numerical
 // Recipes).
 
+// TODO (mandatory) Label tags: diagram components, chemical formulas,
+// temperatures. The only mandatory element so far is that these three
+// elememts are associated with the diagram as a whole, not
+// necessarily with specific locations or labels. A minimal
+// implementation would involve manually adding diagram tags (which
+// should be allowable anyhow). Optional: eutectic and peritectic
+// points (which *would* have to be associated with specific points),
+// user-defined.
+
 // TODO (mandatory?, backwards compatibility) Duplicate existing
 // program's smoothing algorithm when displaying GRUMP files.
-
-// TODO Java gets a lot of things xxx Test what happens when aliasing is turned on and off. Text sizing problems Miscellaneous text rendering issues. These are likely to be
-// especially problematic because they are in code that I do not
-// control.
 
 // TODO (mandatory?) Curve section decorations (e.g. pen-up/pen-down).
 // Not important for new diagrams as far as I can see, but may be
 // required for backwards compatibility.
 
 // TODO (mandatory) Support triangular and quadrilateral tie lines.
+// Per discussion with Chris, tie lines are defined by three or four
+// endpoints, and all tie lines intersect at a single point, so
+// quadrilateral tie lines are created by regularly sectioning the
+// angle through that point and selectiong the region between the two
+// boundary curves.
+
+// TODO (mandatory) Paired squiggles that indicate elided portions of
+// an axis
 
 // TODO (mandatory) Chemical formula typing short-cuts (relative to
 // entering the whole thing by hand as HTML) of some kind.
@@ -292,14 +296,13 @@ import org.codehaus.jackson.map.annotate.*;
 
 // TODO Convert from wt% to mol%
 
-
-// TODO (mandatory) Paired Squiggles that indicate elided portions of
-// an axis
-
-// TODO tags on portions of a label ()compound1 + compound2)
-
-// TODO Label wrap (YPO<sub>4</sub> + Y2P4O13\n+ Liq. where "+ Liq."
-// is centered)
+// TODO Standard page coordinates become invalid if you stretch a
+// diagram or modify margins (which should be easy to do). Perhaps it
+// would be better to define everything, even page decorations, in
+// principal coordinates, or to redefine standard page coordinates so
+// the smallest rectangle circumscribing the diagram is identified
+// with the unit square. The real problem here is only with ternary
+// diagrams -- rectangles' principal coordinates are fine.
 
 /** Main driver class for Phase Equilibria Diagram digitization and creation. */
 public class Editor implements CropEventListener, MouseListener,
@@ -307,6 +310,7 @@ public class Editor implements CropEventListener, MouseListener,
     static ObjectMapper objectMapper = null;
 
     private static final String PREF_DIR = "dir";
+    static protected double MOUSE_UNSTICK_DISTANCE = 30; /* pixels */
     static protected Image crosshairs = null;
 
     protected CropFrame cropFrame = new CropFrame();
@@ -345,6 +349,12 @@ public class Editor implements CropEventListener, MouseListener,
     protected AxisInfo pageXAxis = null;
     protected AxisInfo pageYAxis = null;
     protected boolean preserveMprin = false;
+
+    /** mouseIsStuck is true if the user recently performed a
+        point-selection operatiorn such as "nearest vertex" or
+        "nearest point on curve" and the mouse has not yet been moved
+        far enough to un-stick the mouse from that location. */
+    protected boolean mouseIsStuck;
     protected ArrayList<BufferedImage> scaledOriginalImages;
     protected double labelXMargin = 0;
     protected double labelYMargin = 0;
@@ -407,6 +417,7 @@ public class Editor implements CropEventListener, MouseListener,
         vertexInfo.setAngle(0);
         vertexInfo.setSlope(0);
         vertexInfo.setLineWidth(lineWidth);
+        mouseIsStuck = false;
     }
 
     @JsonProperty("curves")
@@ -470,6 +481,11 @@ public class Editor implements CropEventListener, MouseListener,
         activeCurveNo = (activeCurveNo + delta + paths.size()) % paths.size();
         activeVertexNo = paths.get(activeCurveNo).size() - 1;
         repaintEditFrame();
+    }
+
+    public void editMargins() {
+        System.out.println("TODO this");
+        // TODO
     }
 
     /** @param scale A multiple of standardPage coordinates
@@ -757,26 +773,25 @@ public class Editor implements CropEventListener, MouseListener,
         return output;
     }
 
-    /** Like add(), but instead add the previously added point that is
-        nearest to the mouse pointer as measured by distance on the
-        standard page. */
-    public void addNearestPoint() {
+    /** Move the mouse to the nearest vertex or intersection of
+        curves. */
+    public void seekNearestPoint() {
         Point2D.Double nearPoint = nearestPoint();
         if (nearPoint == null) {
             return;
         }
-        add(nearPoint);
         moveMouse(nearPoint);
+        mouseIsStuck = true;
     }
 
-    /** Select the previously added point that is
-        nearest to the mouse pointer as measured by distance on the
-        standard page. */
+    /** Like seekNearestPoint(), but also select that point (if
+        possible). */
     public void selectNearestPoint() {
         Point2D.Double nearPoint = nearestPoint();
         if (nearPoint == null) {
             return;
         }
+        mouseIsStuck = true;
 
         // Since a single point may belong to multiple curves, point
         // visitation order matters. Start with the point immediately
@@ -802,14 +817,15 @@ public class Editor implements CropEventListener, MouseListener,
                     activeCurveNo = pathNo;
                     activeVertexNo = vertexNo;
                     moveMouse(vertex);
+                    mouseIsStuck = true;
                     return;
                 }
             }
         }
 
         // This point wasn't in the list; it must be an intersection. Add it.
-        add(nearPoint);
         moveMouse(nearPoint);
+        mouseIsStuck = true;
     }
 
     /** In order to insert vertices "backwards", just reverse the
@@ -1050,10 +1066,10 @@ public class Editor implements CropEventListener, MouseListener,
         return output;
     }
 
-    /** Like add(), but instead add the point on a previously added
-        segment that is nearest to the mouse pointer as measured by
-        distance on the standard page. */
-    public void addNearestSegment() {
+    /** Like seekNearestPoint(), but instead select the point on a
+        previously added segment that is nearest to the mouse pointer
+        as measured by distance on the standard page. */
+    public void seekNearestSegment() {
         if (mprin == null) {
             return;
         }
@@ -1115,8 +1131,8 @@ public class Editor implements CropEventListener, MouseListener,
             }
         }
 
-        add(nearPoint);
         moveMouse(nearPoint);
+        mouseIsStuck = true;
         vertexInfo.setGradient(gradient);
         vertexInfo.setLineWidth(paths.get(nearPathNo).getLineWidth());
     }
@@ -1912,6 +1928,14 @@ public class Editor implements CropEventListener, MouseListener,
             return;
         }
         add(mprin);
+        mouseIsStuck = false;
+    }
+
+    /** @return true if diagram editing is enabled, or false if the
+        diagram is read-only. */
+    @JsonIgnore
+    public boolean isEditable() {
+        return true;
     }
 
     /** @return true if the diagram is currently being traced from
@@ -1934,12 +1958,12 @@ public class Editor implements CropEventListener, MouseListener,
         }
 
         Point mpos = getEditPane().getMousePosition();
-        if (mpos != null && !preserveMprin) {
+       if (mpos != null && !preserveMprin) {
 
             double sx = mpos.getX() + 0.5;
             double sy = mpos.getY() + 0.5;
 
-            boolean updateMprin = (mprin == null);
+            boolean updateMprin = (mprin == null) || !mouseIsStuck;
 
             if (!updateMprin) {
                 // Leave mprin alone if it is already accurate to the
@@ -1950,7 +1974,10 @@ public class Editor implements CropEventListener, MouseListener,
 
                 Point mprinScreen = Duh.floorPoint
                     (principalToScaledPage(scale).transform(mprin));
-                updateMprin = !mprinScreen.equals(mpos);
+                if (mprinScreen.distance(mpos) >= MOUSE_UNSTICK_DISTANCE) {
+                    mouseIsStuck = false;
+                    updateMprin = true;
+                }
             }
 
             if (updateMprin) {

@@ -119,6 +119,7 @@ public class EditFrame extends ImageScrollFrame {
      */
     public EditFrame(Editor parentEditor) {
         this.parentEditor = parentEditor;
+        boolean editable = parentEditor.isEditable();
         statusBar = new JPanel();
         statusLabel = new JLabel("<html><font size=\"-2\">"
                                  + "No diagram loaded</font></html>");
@@ -151,32 +152,35 @@ public class EditFrame extends ImageScrollFrame {
                 }
             });
 
-        mnOpen.add(new EditFrameAction("Image for Digitization", KeyEvent.VK_I) {
-                @Override
-                    public void actionPerformed(ActionEvent e) {
-                    getParentEditor().openImage(null);
-                }
-            });
+        if (editable) {
+            mnOpen.add(new EditFrameAction("Image for Digitization", KeyEvent.VK_I) {
+                    @Override
+                        public void actionPerformed(ActionEvent e) {
+                        getParentEditor().openImage(null);
+                    }
+                });
 
-        // "Save" menu item
-        mnFile.add(new EditFrameAction("Save", KeyEvent.VK_S) {
-                @Override
-                    public void actionPerformed(ActionEvent e) {
-                    getParentEditor().save();
-                }
-            });
+            // "Save" menu item
+            mnFile.add(new EditFrameAction("Save", KeyEvent.VK_S) {
+                    @Override
+                        public void actionPerformed(ActionEvent e) {
+                        getParentEditor().save();
+                    }
+                });
+        }
 
         // "Save As" submenu
         JMenu mnSaveAs = new JMenu("Save As");
         mnFile.add(mnSaveAs);
 
-        mnSaveAs.add(new EditFrameAction("PED", KeyEvent.VK_P) {
-                @Override
-                    public void actionPerformed(ActionEvent e) {
-                    getParentEditor().saveAsPED(null);
-                }
-            });
-        mnFile.add(mnSaveAs);
+        if (editable) {
+            mnSaveAs.add(new EditFrameAction("PED", KeyEvent.VK_P) {
+                    @Override
+                        public void actionPerformed(ActionEvent e) {
+                        getParentEditor().saveAsPED(null);
+                    }
+                });
+        }
 
         mnSaveAs.add(new EditFrameAction("PDF", KeyEvent.VK_P) {
                 @Override
@@ -191,6 +195,8 @@ public class EditFrame extends ImageScrollFrame {
                     getParentEditor().saveAsSVG();
                 }
             });
+
+        mnFile.add(mnSaveAs);
 
         // "Print" menu item
         mnFile.add(new EditFrameAction("Print", KeyEvent.VK_P) {
@@ -212,92 +218,98 @@ public class EditFrame extends ImageScrollFrame {
         JMenu mnVertex = new JMenu("Vertex");
         menuBar.add(mnVertex);
 
+        if (editable) {
+            mnVertex.add(new EditFrameAction
+                         ("Enter location",
+                          KeyEvent.VK_L,
+                          KeyStroke.getKeyStroke('=')) {
+                    @Override
+                        public void actionPerformed(ActionEvent e) {
+                        getParentEditor().addVertexLocation();
+                    }
+                });
+        }
+
         mnVertex.add(new EditFrameAction
-                   ("Enter location",
-                    KeyEvent.VK_L,
-                    KeyStroke.getKeyStroke('=')) {
+                   ("Nearest",
+                    KeyEvent.VK_N,
+                    KeyStroke.getKeyStroke('.')) {
                 @Override
                     public void actionPerformed(ActionEvent e) {
-                    getParentEditor().addVertexLocation();
+                    getParentEditor().seekNearestPoint();
                 }
             });
 
-        mnVertex.add(new EditFrameAction
-                   ("Duplicate nearest",
-                    KeyEvent.VK_D,
-                    KeyStroke.getKeyStroke('\"')) {
-                @Override
-                    public void actionPerformed(ActionEvent e) {
-                    getParentEditor().addNearestPoint();
-                }
-            });
+        if (editable) {
+            mnVertex.add(new EditFrameAction
+                         ("Select nearest",
+                          KeyEvent.VK_S,
+                          KeyStroke.getKeyStroke('?')) {
+                    @Override
+                        public void actionPerformed(ActionEvent e) {
+                        getParentEditor().selectNearestPoint();
+                    }
+                });
+        }
 
         mnVertex.add(new EditFrameAction
-                   ("Select nearest",
-                    KeyEvent.VK_S,
-                    KeyStroke.getKeyStroke('?')) {
-                @Override
-                    public void actionPerformed(ActionEvent e) {
-                    getParentEditor().selectNearestPoint();
-                }
-            });
-
-        mnVertex.add(new EditFrameAction
-                   ("Add on curve",
+                   ("Nearest on curve",
                     KeyEvent.VK_C,
                     KeyStroke.getKeyStroke('_')) {
                 @Override
                     public void actionPerformed(ActionEvent e) {
-                    getParentEditor().addNearestSegment();
+                    getParentEditor().seekNearestSegment();
                 }
             });
 
-        mnVertex.add(new EditFrameAction("Delete",
-                                       KeyEvent.VK_D,
-                                       "DELETE") {
-                @Override
-                    public void actionPerformed(ActionEvent e) {
-                    getParentEditor().removeCurrentVertex();
-                }
-            });
+        if (editable) {
 
-        mnVertex.addSeparator();
+            mnVertex.add(new EditFrameAction("Delete",
+                                             KeyEvent.VK_D,
+                                             "DELETE") {
+                    @Override
+                        public void actionPerformed(ActionEvent e) {
+                        getParentEditor().removeCurrentVertex();
+                    }
+                });
 
-        JMenuItem mnAdjust = new JMenuItem("Adjust");
-        mnAdjust.setEnabled(false);
-        mnVertex.add(mnAdjust);
+            mnVertex.addSeparator();
 
-        AdjustAction[] arrows =
-            { new AdjustAction("Up", KeyEvent.VK_U, "UP", 0, -1),
-              new AdjustAction("Down", KeyEvent.VK_D, "DOWN", 0, 1),
-              new AdjustAction("Left", KeyEvent.VK_L, "LEFT", -1, 0),
-              new AdjustAction("Right", KeyEvent.VK_R, "RIGHT", 1, 0) };
-        for (AdjustAction a : arrows) {
-            mnVertex.add(a);
+            JMenuItem mnAdjust = new JMenuItem("Adjust");
+            mnAdjust.setEnabled(false);
+            mnVertex.add(mnAdjust);
+
+            AdjustAction[] arrows =
+                { new AdjustAction("Up", KeyEvent.VK_U, "UP", 0, -1),
+                  new AdjustAction("Down", KeyEvent.VK_D, "DOWN", 0, 1),
+                  new AdjustAction("Left", KeyEvent.VK_L, "LEFT", -1, 0),
+                  new AdjustAction("Right", KeyEvent.VK_R, "RIGHT", 1, 0) };
+            for (AdjustAction a : arrows) {
+                mnVertex.add(a);
+            }
         }
 
 
         // "Curve" top-level menu
         JMenu mnCurve = new JMenu("Curve");
-        menuBar.add(mnCurve);
 
         mnCurve.add(new EditFrameAction("Deselect",
-                                        KeyEvent.VK_D,
-                                        KeyStroke.getKeyStroke('.')) {
+                                        KeyEvent.VK_D, "pressed END") {
                 @Override
                     public void actionPerformed(ActionEvent e) {
                     getParentEditor().deselectCurve();
                 }
             });
 
-        mnCurve.add(new EditFrameAction
-                   ("Add cusp", KeyEvent.VK_C, "typed ,") {
-                @Override
-                    public void actionPerformed(ActionEvent e) {
-                    getParentEditor().startConnectedCurve();
-                }
-            });
-
+        if (editable) {
+            mnCurve.add(new EditFrameAction
+                        ("Add cusp", KeyEvent.VK_C, "typed ,") {
+                    @Override
+                        public void actionPerformed(ActionEvent e) {
+                        getParentEditor().startConnectedCurve();
+                    }
+                });
+        }
 
         mnCurve.add(new EditFrameAction("Select last", KeyEvent.VK_L) {
                 @Override
@@ -313,129 +325,157 @@ public class EditFrame extends ImageScrollFrame {
                 }
             });
 
-        smoothingMenuItem = new JCheckBoxMenuItem
-            (new EditFrameAction("Toggle smoothing",
-                                 KeyEvent.VK_T,
-                                 KeyStroke.getKeyStroke('o')) {
+        if (editable) {
+            smoothingMenuItem = new JCheckBoxMenuItem
+                (new EditFrameAction("Toggle smoothing",
+                                     KeyEvent.VK_T,
+                                     KeyStroke.getKeyStroke('o')) {
+                        @Override
+                            public void actionPerformed(ActionEvent e) {
+                            getParentEditor().toggleSmoothing();
+                        }
+                    });
+            mnCurve.add(smoothingMenuItem);
+
+            JMenu mnLineStyle = new JMenu("Line style");
+        
+            LineStyleRadioMenuItem solidLineItem = 
+                new LineStyleRadioMenuItem("images/line.png",
+                                           CompositeStroke.getSolidLine());
+            solidLineItem.setSelected(true);
+            mnLineStyle.add(solidLineItem);
+            mnLineStyle.add
+                (new LineStyleRadioMenuItem("images/dashedline.png",
+                                            CompositeStroke.getDashedLine()));
+            mnLineStyle.add
+                (new LineStyleRadioMenuItem("images/dottedline.png",
+                                            CompositeStroke.getDottedLine()));
+            mnLineStyle.add
+                (new LineStyleRadioMenuItem("images/dashdotline.png",
+                                            CompositeStroke.getDotDashLine()));
+            mnLineStyle.add
+                (new LineStyleRadioMenuItem("images/railroadline.png",
+                                            CompositeStroke.getRailroadLine()));
+            mnCurve.add(mnLineStyle);
+
+            JMenu mnLineWidth = new JMenu("Line width");
+            mnLineWidth.add(new LineWidthRadioMenuItem("images/line1.png", 0.0006));
+            LineWidthRadioMenuItem normalWidthItem = 
+                new LineWidthRadioMenuItem("images/line2.png", 0.0012);
+            normalWidthItem.setSelected(true);
+            mnLineWidth.add(normalWidthItem);
+            mnLineWidth.add(new LineWidthRadioMenuItem("images/line4.png", 0.0024));
+            mnLineWidth.add(new LineWidthRadioMenuItem("images/line8.png", 0.0048));
+            mnLineWidth.add(new JRadioButtonMenuItem
+                            (new AbstractAction("Custom...") {
+                                    @Override
+                                        public void actionPerformed(ActionEvent e) {
+                                        getParentEditor().customLineWidth();
+                                    }
+                                }));
+            mnCurve.add(mnLineWidth);
+
+            mnCurve.add(new EditFrameAction
+                        ("Reverse vertex order", KeyEvent.VK_R) {
                     @Override
                         public void actionPerformed(ActionEvent e) {
-                        getParentEditor().toggleSmoothing();
+                        getParentEditor().reverseInsertionOrder();
                     }
                 });
-        mnCurve.add(smoothingMenuItem);
-
-        JMenu mnLineStyle = new JMenu("Line style");
-        
-        LineStyleRadioMenuItem solidLineItem = 
-            new LineStyleRadioMenuItem("images/line.png",
-                                       CompositeStroke.getSolidLine());
-        solidLineItem.setSelected(true);
-        mnLineStyle.add(solidLineItem);
-        mnLineStyle.add
-            (new LineStyleRadioMenuItem("images/dashedline.png",
-                                 CompositeStroke.getDashedLine()));
-        mnLineStyle.add
-            (new LineStyleRadioMenuItem("images/dottedline.png",
-                                 CompositeStroke.getDottedLine()));
-        mnLineStyle.add
-            (new LineStyleRadioMenuItem("images/dashdotline.png",
-                                 CompositeStroke.getDotDashLine()));
-        mnLineStyle.add
-            (new LineStyleRadioMenuItem("images/railroadline.png",
-                                 CompositeStroke.getRailroadLine()));
-        mnCurve.add(mnLineStyle);
-
-        JMenu mnLineWidth = new JMenu("Line width");
-        mnLineWidth.add(new LineWidthRadioMenuItem("images/line1.png", 0.0006));
-        LineWidthRadioMenuItem normalWidthItem = 
-            new LineWidthRadioMenuItem("images/line2.png", 0.0012);
-        normalWidthItem.setSelected(true);
-        mnLineWidth.add(normalWidthItem);
-        mnLineWidth.add(new LineWidthRadioMenuItem("images/line4.png", 0.0024));
-        mnLineWidth.add(new LineWidthRadioMenuItem("images/line8.png", 0.0048));
-        mnLineWidth.add(new JRadioButtonMenuItem
-                        (new AbstractAction("Custom...") {
-                                @Override
-                                    public void actionPerformed(ActionEvent e) {
-                                    getParentEditor().customLineWidth();
-                                }
-                            }));
-        mnCurve.add(mnLineWidth);
-
-        mnCurve.add(new EditFrameAction
-                   ("Reverse vertex order", KeyEvent.VK_R) {
-                @Override
-                    public void actionPerformed(ActionEvent e) {
-                    getParentEditor().reverseInsertionOrder();
-                }
-            });
+        }
 
         JMenuItem mnCopyCurve = new JMenuItem("Copy");
         mnCopyCurve.setEnabled(false);
         mnCurve.add(mnCopyCurve);
 
-        JMenuItem mnGradient = new JMenuItem("Apply gradient");
-        mnGradient.setEnabled(false);
-        mnCurve.add(mnGradient);
+        if (editable) {
+            JMenuItem mnGradient = new JMenuItem("Apply gradient");
+            mnGradient.setEnabled(false);
+            mnCurve.add(mnGradient);
+        }
+        menuBar.add(mnCurve);
 
 
         // "Label" top-level menu
         JMenu mnLabel = new JMenu("Decorations");
-        menuBar.add(mnLabel);
-        mnLabel.add(new EditFrameAction
-                   ("New label",
-                    KeyEvent.VK_N,
-                    KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0)) {
-                @Override
-                    public void actionPerformed(ActionEvent e) {
-                    getParentEditor().addLabel();
-                }
-            });
 
-        mnLabel.add(new EditFrameAction
-                   ("Edit label",
-                    KeyEvent.VK_E,
-                    KeyStroke.getKeyStroke('e')) {
-                @Override
-                    public void actionPerformed(ActionEvent e) {
-                    getParentEditor().editLabel();
-                }
-            });
+        if (editable) {
+            mnLabel.add(new EditFrameAction
+                        ("New label",
+                         KeyEvent.VK_N,
+                         KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0)) {
+                    @Override
+                        public void actionPerformed(ActionEvent e) {
+                        getParentEditor().addLabel();
+                    }
+                });
 
-        mnLabel.add(new EditFrameAction
-                   ("Change label font", KeyEvent.VK_N) {
-                @Override
-                    public void actionPerformed(ActionEvent e) {
-                    getParentEditor().setLabelFont();
-                }
-            });
+            mnLabel.add(new EditFrameAction
+                        ("Edit label",
+                         KeyEvent.VK_E,
+                         KeyStroke.getKeyStroke('e')) {
+                    @Override
+                        public void actionPerformed(ActionEvent e) {
+                        getParentEditor().editLabel();
+                    }
+                });
 
-        mnLabel.add(new EditFrameAction("Add left arrow",
-                                         KeyEvent.VK_L,
-                                         KeyStroke.getKeyStroke('<')) {
-                @Override
-                    public void actionPerformed(ActionEvent e) {
-                    getParentEditor().addArrow(false);
-                }
-            });
+            mnLabel.add(new EditFrameAction
+                        ("Change label font", KeyEvent.VK_N) {
+                    @Override
+                        public void actionPerformed(ActionEvent e) {
+                        getParentEditor().setLabelFont();
+                    }
+                });
 
-        mnLabel.add(new EditFrameAction("Add right arrow",
-                                         KeyEvent.VK_L,
-                                         KeyStroke.getKeyStroke('>')) {
-                @Override
-                    public void actionPerformed(ActionEvent e) {
-                    getParentEditor().addArrow(true);
-                }
-            });
+            mnLabel.add(new EditFrameAction("Add left arrow",
+                                            KeyEvent.VK_L,
+                                            KeyStroke.getKeyStroke('<')) {
+                    @Override
+                        public void actionPerformed(ActionEvent e) {
+                        getParentEditor().addArrow(false);
+                    }
+                });
 
-        mnLabel.add(new EditFrameAction
-                   ("Compute Chemical Label Coordinates", KeyEvent.VK_C) {
-                @Override
-                    public void actionPerformed(ActionEvent e) {
-                    // TODO not defined yet...
-                    // getParentEditor().computeLabelCoordinates();
-                }
-            });
+            mnLabel.add(new EditFrameAction("Add right arrow",
+                                            KeyEvent.VK_L,
+                                            KeyStroke.getKeyStroke('>')) {
+                    @Override
+                        public void actionPerformed(ActionEvent e) {
+                        getParentEditor().addArrow(true);
+                    }
+                });
+
+            mnLabel.add(new EditFrameAction
+                        ("Compute Chemical Label Coordinates", KeyEvent.VK_C) {
+                    @Override
+                        public void actionPerformed(ActionEvent e) {
+                        // TODO not defined yet...
+                        // getParentEditor().computeLabelCoordinates();
+                    }
+                });
+        }
+
+        if (mnLabel.getItemCount() > 0) {
+            menuBar.add(mnLabel);
+        }
+
+        // "Diagram" top-level menu
+        JMenu mnDiagram = new JMenu("Diagram");
+        if (editable) {
+            mnDiagram.add(new EditFrameAction
+                          ("Margins...", KeyEvent.VK_M) {
+                    @Override
+                        public void actionPerformed(ActionEvent e) {
+                        getParentEditor().editMargins();
+                    }
+                });
+        }
+
+        if (mnDiagram.getItemCount() > 0) {
+            menuBar.add(mnDiagram);
+        }
+
         
 
         // TODO Haven't figured out what goes here yet...
@@ -473,7 +513,6 @@ public class EditFrame extends ImageScrollFrame {
         JMenuItem mnAbout = new JMenuItem("About");
         mnAbout.setEnabled(false);
         mnHelp.add(mnAbout);
-        // getContentPane().setBorder(new EmptyBorder(5, 5, 5, 5));
     }
 
     protected void setStatus(String s) {
