@@ -141,7 +141,7 @@ final public class CubicSpline1D {
     }
 
     /* Parameterize the entire curve as t in [0,1] and return the
-       function of the curve at the given t value */
+       slope of the curve at the given t value */
     public double value(double t) {
         int cnt = coefficients.length;
 
@@ -157,6 +157,36 @@ final public class CubicSpline1D {
         double segment = Math.floor(t);
 
         return value((int) segment, t - segment);
+    }
+
+    /* Parameterize the entire curve as t in [0,1] and return the
+       slope of x(t) at the given t value */
+    public double slope(double t) {
+        int cnt = coefficients.length;
+
+        if (cnt == 0) {
+            return Double.NaN;
+        }
+
+        if (t < 0) {
+            return slope(0);
+        }
+
+        t *= cnt;
+        double segment = Math.floor(t);
+
+        if (t >= cnt) {
+            // Return the slope at the last point in the curve.
+            double[] last = coefficients[cnt - 1];
+            return last[3] * 3 + last[2] * 2 + last[1];
+        }
+
+        return slope((int) segment, t - segment);
+    }
+
+    public double slope(int segment, double t) {
+        double[] poly = coefficients[segment];
+        return poly[1] + t * (2 * poly[2] + t * 3 * poly[3]);
     }
 
     /* Parameterize the entire curve as t in [0,1] and return the

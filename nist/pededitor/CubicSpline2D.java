@@ -55,6 +55,10 @@ final public class CubicSpline2D {
         return new Point2D.Double(xSpline.value(t), ySpline.value(t));
     }
 
+    public Point2D.Double gradient(double t) {
+        return new Point2D.Double(xSpline.slope(t), ySpline.slope(t));
+    }
+
     public Point2D.Double value(int segment, double t) {
         return new Point2D.Double(xSpline.value(segment, t),
                                   ySpline.value(segment, t));
