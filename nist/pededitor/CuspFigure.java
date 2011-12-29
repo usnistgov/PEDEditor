@@ -133,7 +133,7 @@ public abstract class GeneralPolyline {
 
     /** @return null unless this polyline has been assigned a
         stroke. */
-    public CompositeStroke getStroke() {
+    @JsonProperty("lineStyle") public CompositeStroke getStroke() {
         return stroke;
     }
 
@@ -200,7 +200,7 @@ public abstract class GeneralPolyline {
     /** Set the stroke. Use null to indicate that the stroke should be
         the same as whatever was last chosen for the graphics
         context. */
-    public void setStroke(CompositeStroke stroke) {
+    @JsonProperty("lineStyle") public void setStroke(CompositeStroke stroke) {
         this.stroke = stroke;
     }
 
