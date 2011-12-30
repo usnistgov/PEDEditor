@@ -13,10 +13,10 @@ import org.codehaus.jackson.annotate.JsonProperty;
 @JsonIgnoreProperties
     ({"bounds2D", "bounds", "windingRule", "currentPoint"})
 public class Arrow extends Path2D.Double {
-    @JsonProperty double x;
-    @JsonProperty double y;
-    @JsonProperty double size;
-    @JsonProperty double theta;
+    @JsonProperty public double x;
+    @JsonProperty public double y;
+    @JsonProperty public double size;
+    @JsonProperty public double theta;
 
     /** @param size The "size" of the arrow is a bit arbitrary, but
         it should be roughly equal to the line width of any line that

@@ -1,0 +1,81 @@
+<html>
+
+<h1>Header</h1>
+
+<h2>Creating or adding points to curves</h2>
+
+<p>If a curve is currently selected, then that curve appears in <font
+color="green">green</font>, and the currently selected vertex is
+marked with a solid green circle. Other vertices of the currently
+selected curve are marked with empty green circles.</p>
+
+<p>To edit an existing curve that is not already selected, move the
+mouse pointer over one of the vertices of that curve and press '?'. If
+multiple curves pass through that vertex, then the first curve
+selected might not be the one you want; continue pressing '?' until
+the curve highlighted in green is the correct one.</p>
+
+<p>Any new vertices will be added immediately after the currently
+selected vertex. To add the point immediately before the currently
+selected vertex instead, select the menu item
+<code><u>C</u>urve/<u>R</u>everse vertex order</code>. To start a new
+curve instead, press the <code>End</code> key, or equivalently choose
+main menu item <code><u>C</u>urve/<u>D</u>eselect</code>).</p>
+
+<p>If no curve is currently selected, then adding a new vertex will
+start a new curve. As a special case, a curve that has only one vertex
+is displayed as a small black dot whose size is a fixed multiple of
+the current line width.</p>
+
+<p>To add a vertex, press the left mouse button. If a curve is
+currently selected, the <font color="red">red</font> outline displays
+the curve that will be result if you do this.</p>
+
+<p>Previously inserted vertices, corners of the diagram, and
+intersections of curves that have been added to the diagram are key
+points. Press the period ('.') key to move the mouse to the closest
+key point, then press the left mouse button to add this point to the
+curve.</p>
+
+<p>Pressing the period key causes the mouse to be temporarily treated
+by some operations as if it were stuck at the key point. This protects
+you from losing your place become of a slight twitch of the mouse. If
+necessary, you may move the mouse an inch or so to unstick it.</p>
+
+<p>Type an underscore ('_') to make the mouse move to and become stuck
+at the nearest point (key or not) on any curve or edge of the diagram.
+Press the left mouse button to add this point to the curve.</p>
+
+<p>Press ',' to create a cusp (a first-derivative discontinuity). This
+is exactly the same as adding the current mouse position, deselecting
+the curve, and then starting a new curve also at the current mouse
+position.</p>
+
+<p>To turn curve smoothing on or off, press 's'. This change affects
+the currently selected curve (if any) and any new curves you create
+(until you press 's' again).</p>
+
+</p>
+
+<h3>Dots</h3>
+
+<p>A dot is just a curve with only one vertex, so the rules for
+creating dots are covered by the rules for creating curves. You may
+use the 'd' key as a short-cut to create a dot at the current mouse
+position. To change the dot size, adjust the line width: the dot
+radius equals twice the line width.</p>
+
+<h3>Arrowheads</h3>
+
+<p>To draw an arrowhead that points at the angle indicated in the
+"Tangent" window at the current location (as selected using the '.',
+'_', or '?' keys, or at the current mouse position otherwise), press
+'&gt;'. To draw an arrowhead that points in the opposite direction,
+press '&lt;'. The size of the arrowhead is a fixed multiple of the
+line width indicated in the "Tangent" window.</p>
+
+<p>To delete an arrowhead, right-click next to it and select the
+<code><u>D</u>ecorations/<u>D</u>elete nearest symbol</code> menu
+item.</p>
+
+</html>

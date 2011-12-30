@@ -2,12 +2,15 @@ package gov.nist.pededitor;
 
 import java.awt.*;
 import java.awt.event.*;
+import java.io.IOException;
 import java.net.URL;
 import java.util.*;
 
 import javax.swing.*;
 
 public class EditFrame extends ImageScrollFrame {
+    static JDialog helpDialog = null;
+
     protected JPanel statusBar;
     protected JLabel statusLabel;
     protected Editor parentEditor;
@@ -306,7 +309,7 @@ public class EditFrame extends ImageScrollFrame {
                         ("Add cusp", KeyEvent.VK_C, "typed ,") {
                     @Override
                         public void actionPerformed(ActionEvent e) {
-                        getParentEditor().startConnectedCurve();
+                        getParentEditor().addCusp();
                     }
                 });
         }
@@ -329,7 +332,7 @@ public class EditFrame extends ImageScrollFrame {
             smoothingMenuItem = new JCheckBoxMenuItem
                 (new EditFrameAction("Toggle smoothing",
                                      KeyEvent.VK_T,
-                                     KeyStroke.getKeyStroke('o')) {
+                                     KeyStroke.getKeyStroke('s')) {
                         @Override
                             public void actionPerformed(ActionEvent e) {
                             getParentEditor().toggleSmoothing();
@@ -428,7 +431,15 @@ public class EditFrame extends ImageScrollFrame {
                     }
                 });
 
-            mnLabel.add(new EditFrameAction("Add left arrow",
+            mnLabel.add(new EditFrameAction
+                        ("Add dot", KeyEvent.VK_D, "typed d") {
+                    @Override
+                        public void actionPerformed(ActionEvent e) {
+                        getParentEditor().addDot();
+                    }
+                });
+
+            mnLabel.add(new EditFrameAction("Add left arrowhead",
                                             KeyEvent.VK_L,
                                             KeyStroke.getKeyStroke('<')) {
                     @Override
@@ -437,12 +448,21 @@ public class EditFrame extends ImageScrollFrame {
                     }
                 });
 
-            mnLabel.add(new EditFrameAction("Add right arrow",
+            mnLabel.add(new EditFrameAction("Add right arrowhead",
                                             KeyEvent.VK_L,
                                             KeyStroke.getKeyStroke('>')) {
                     @Override
                         public void actionPerformed(ActionEvent e) {
                         getParentEditor().addArrow(true);
+                    }
+                });
+
+            mnLabel.add(new EditFrameAction("Delete nearest symbol",
+                                            KeyEvent.VK_D,
+                                            KeyStroke.getKeyStroke('z')) {
+                    @Override
+                        public void actionPerformed(ActionEvent e) {
+                        getParentEditor().deleteSymbol();
                     }
                 });
 
@@ -509,10 +529,43 @@ public class EditFrame extends ImageScrollFrame {
 
         JMenu mnHelp = new JMenu("Help");
         menuBar.add(mnHelp);
+        mnHelp.add(new EditFrameAction("Help", KeyEvent.VK_H, "F1") {
+                @Override
+                    public void actionPerformed(ActionEvent e) {
+                    help();
+                }
+            });
 
         JMenuItem mnAbout = new JMenuItem("About");
         mnAbout.setEnabled(false);
         mnHelp.add(mnAbout);
+    }
+
+    protected void help() {
+        if (helpDialog == null) {
+            String filename = "edithelp.html";
+            URL helpURL = CropFrame.class.getResource(filename);
+            if (helpURL == null) {
+                throw new Error("File " + filename + " not found");
+            }
+            JEditorPane editorPane = new JEditorPane();
+            editorPane.setEditable(false);
+            try {
+                editorPane.setPage(helpURL);
+            } catch (IOException e) {
+                throw new Error(e);
+            }
+            JScrollPane editorScrollPane = new JScrollPane(editorPane);
+            editorScrollPane.setPreferredSize(new Dimension(500, 500));
+            
+            helpDialog = new JDialog(this, "Edit Window Help");
+            helpDialog.getContentPane().add(editorScrollPane);
+            helpDialog.pack();
+        }
+        Rectangle r = getBounds();
+        helpDialog.setLocation(r.x + r.width, r.y);
+        helpDialog.setVisible(true);
+        helpDialog.toFront();
     }
 
     protected void setStatus(String s) {

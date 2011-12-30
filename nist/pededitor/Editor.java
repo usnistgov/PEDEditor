@@ -715,13 +715,64 @@ public class Editor implements CropEventListener, MouseListener,
     }
 
     /** Start a new curve where the old curve ends. */
-    public void startConnectedCurve() {
-        Point2D.Double vertex = getActiveVertex();
-        deselectCurve();
-        if (vertex != null) {
-            getCurveForAppend();
-            add(vertex);
+    public void addCusp() {
+        if (mprin == null) {
+            return;
         }
+
+        add(mprin);
+        deselectCurve();
+        add(mprin);
+    }
+
+    public void deleteSymbol() {
+        // TODO Symbol handling is an ugly hack that will have to be
+        // consolidated later, probably with Arrow becoming a subclass
+        // of something else.
+
+        if (mprin == null) {
+            return;
+        }
+
+        Point2D.Double nearPoint = null;
+        Point2D.Double mousePage = new Point2D.Double();
+        principalToStandardPage.transform(mprin, mousePage);
+
+        // Square of the minimum distance of all key points examined
+        // so far from mprin, as measured in standard page
+        // coordinates.
+        double minDistSq = 0;
+        int indexOfMin = -1;
+
+        int num = -1;
+
+        for (Arrow arrow: arrows) {
+            ++num;
+            Point2D.Double symbolPage
+                = principalToStandardPage.transform(arrow.x, arrow.y);
+            double distSq = mousePage.distanceSq(symbolPage);
+            if (indexOfMin == -1 || distSq < minDistSq) {
+                indexOfMin = num;
+                minDistSq = distSq;
+            }
+        }
+
+        if (indexOfMin == -1) {
+            return;
+        }
+
+        arrows.remove(indexOfMin);
+        repaintEditFrame();
+    }
+
+    /** Add a dot. */
+    public void addDot() {
+        if (mprin == null) {
+            return;
+        }
+
+        deselectCurve();
+        add(mprin);
     }
 
     /** Update the tangency information to display the slope at the
@@ -773,6 +824,7 @@ public class Editor implements CropEventListener, MouseListener,
         }
 
         arrows.add(new Arrow(mprin.x, mprin.y, lineWidth, theta));
+        repaintEditFrame();
     }
 
     int nearestLabelNo() {
@@ -922,13 +974,10 @@ public class Editor implements CropEventListener, MouseListener,
             return;
         }
 
-        // TODO Pretty lame just to copy all the fields over...
-        label.setText(newLabel.getText());
+        newLabel.setX(label.getX());
+        newLabel.setY(label.getY());
+        labels.set(nl, newLabel);
         labelViews.set(nl, toView(newLabel.getText(), newLabel.getXWeight()));
-        label.setXWeight(newLabel.getXWeight());
-        label.setYWeight(newLabel.getYWeight());
-        label.setFontSize(newLabel.getFontSize());
-        label.setAngle(newLabel.getAngle());
         repaintEditFrame();
     }
 
@@ -1184,6 +1233,8 @@ public class Editor implements CropEventListener, MouseListener,
             path.setClosed(oldPath.isClosed());
             paths.set(activeCurveNo, path);
         }
+
+        repaintEditFrame();
     }
 
     void removeActiveCurve() {
