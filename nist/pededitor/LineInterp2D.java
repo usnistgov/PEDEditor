@@ -22,6 +22,7 @@ public class Polyline extends GeneralPolyline {
         this.closed = value;
     }
 
+    @Override
     public Path2D.Double getPath() {
         int size = points.size();
         Path2D.Double output = new Path2D.Double();
@@ -45,6 +46,7 @@ public class Polyline extends GeneralPolyline {
         return output;
     }
 
+    @Override
     public Path2D.Double getPath(AffineTransform at) {
         int size = points.size();
         Path2D.Double output = new Path2D.Double();
@@ -63,8 +65,20 @@ public class Polyline extends GeneralPolyline {
         return output;
     }
 
+    @Override
     public int getSmoothingType() {
         return GeneralPolyline.LINEAR;
+    }
+
+    @Override
+    public Point2D.Double getGradient(int segmentNo, double t) {
+        if (points.size() == 0) {
+            return null;
+        }
+
+        Point2D.Double p1 = points.get(segmentNo);
+        Point2D.Double p2 = points.get(segmentNo + 1);
+        return new Point2D.Double(p2.x - p1.x, p2.y - p1.y);
     }
 
     public String toString(AffineTransform at) {

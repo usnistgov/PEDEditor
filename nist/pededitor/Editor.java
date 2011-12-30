@@ -32,12 +32,11 @@ import org.codehaus.jackson.map.annotate.*;
 // TODO (major, mandatory) Axes and user-defined variables.
 // Some of the groundwork has been done, but there is a lot left.
 
+// TODO (mandatory) Allow arrow deletion.
+
 // TODO (major, mandatory) Read GRUMP data.
 
 // TODO (mandatory bug fix) Non-ASCII characters get lost during "save as PDF".
-
-// TODO (mandatory, easy) Update tangency settings whenever a vertex
-// is selected, not just when selecting the nearest point on a curve.
 
 // TODO Text rendering issues: inaccurate text bounding boxes and
 // incorrect spacing of space characters during diagram printing.
@@ -284,15 +283,6 @@ import org.codehaus.jackson.map.annotate.*;
 // TODO (bug, medium severity) Sometimes the zoom window steals the
 // focus, which is disorienting because you can't do anything until
 // the focus is returned to the edit or crop window
-
-// TODO (actually don't do -- impractical to fix) Line joins may be
-// less than gorgeous. Fat lines may look a bit ugly since they are
-// not mitered with thinner lines. For example, if you have a fat line
-// on one edge of a rectangle, and a thin line alone the other edge,
-// the fat edge sticks out in a bit of a bulb. However, that would be
-// hard to fix automatically, and it would also be hard to ask the
-// user how to do it. Almost anything is liable to be wrong in some
-// situation or other.
 
 // TODO Convert from wt% to mol%
 
@@ -734,9 +724,42 @@ public class Editor implements CropEventListener, MouseListener,
         }
     }
 
+    /** Update the tangency information to display the slope at the
+        given vertex. For polylines, the slope will generally be
+        undefined (having different values when coming from the left
+        than when coming from the right) at interior vertices, but
+        arbitarily choose the slope of the segment following the
+        vertex if possible. */
+    public void showTangent(int pathNo, int vertexNo) {
+        if (vertexNo < 0) {
+            return;
+        }
+
+        GeneralPolyline path = paths.get(pathNo);
+        int vertexCnt = path.size();
+        if (vertexCnt == 1) {
+            return;
+        }
+
+        Point2D.Double g = null;
+
+        if (vertexCnt >= 1) {
+            g = (vertexNo + 1 == vertexCnt)
+                ? path.getGradient(vertexNo - 1, 1.0)
+                : path.getGradient(vertexNo, 0.0);
+            if (g != null) {
+                principalToStandardPage.deltaTransform(g, g);
+            }
+        }
+
+        vertexInfo.setGradient(g);
+        vertexInfo.setLineWidth(path.getLineWidth());
+    }
+
     /** Add a point to getActiveCurve(). */
     public void add(Point2D.Double point) {
         getCurveForAppend().add(++activeVertexNo, point);
+        showTangent(activeCurveNo, activeVertexNo);
         repaintEditFrame();
     }
 
@@ -773,25 +796,19 @@ public class Editor implements CropEventListener, MouseListener,
         return output;
     }
 
-    /** Move the mouse to the nearest vertex or intersection of
-        curves. */
-    public void seekNearestPoint() {
-        Point2D.Double nearPoint = nearestPoint();
-        if (nearPoint == null) {
-            return;
-        }
-        moveMouse(nearPoint);
-        mouseIsStuck = true;
-    }
+    /** Move the mouse to the nearest vertex or intersection of curves.
 
-    /** Like seekNearestPoint(), but also select that point (if
-        possible). */
-    public void selectNearestPoint() {
+        @param select If true, select that vertex (if possible). */
+    public void seekNearestPoint(boolean select) {
+        if (mouseIsStuck) {
+            mouseIsStuck = false;
+            updateMousePosition();
+        }
+
         Point2D.Double nearPoint = nearestPoint();
         if (nearPoint == null) {
             return;
         }
-        mouseIsStuck = true;
 
         // Since a single point may belong to multiple curves, point
         // visitation order matters. Start with the point immediately
@@ -814,16 +831,21 @@ public class Editor implements CropEventListener, MouseListener,
             for (int vertexNo = startVertex; vertexNo >= 0; --vertexNo) {
                 Point2D.Double vertex = path.get(vertexNo);
                 if (vertex.x == nearPoint.x && vertex.y == nearPoint.y) {
-                    activeCurveNo = pathNo;
-                    activeVertexNo = vertexNo;
                     moveMouse(vertex);
                     mouseIsStuck = true;
+                    showTangent(pathNo, vertexNo);
+                    if (select) {
+                        activeCurveNo = pathNo;
+                        activeVertexNo = vertexNo;
+                    }
                     return;
                 }
             }
         }
 
-        // This point wasn't in the list; it must be an intersection. Add it.
+        // This point wasn't in the list; it must be an intersection.
+        // (It would be kinda nice to see slope information at
+        // intersections, but it's not worth it.)
         moveMouse(nearPoint);
         mouseIsStuck = true;
     }
@@ -1070,6 +1092,11 @@ public class Editor implements CropEventListener, MouseListener,
         previously added segment that is nearest to the mouse pointer
         as measured by distance on the standard page. */
     public void seekNearestSegment() {
+        if (mouseIsStuck) {
+            mouseIsStuck = false;
+            updateMousePosition();
+        }
+
         if (mprin == null) {
             return;
         }
@@ -1952,6 +1979,12 @@ public class Editor implements CropEventListener, MouseListener,
         repaintEditFrame();
     }
 
+    /** Update mprin to reflect the mouse's current position unless
+        mouseIsStuck is true and mprin is less than
+        MOUSE_UNSTICK_DISTANCE away from the mouse position. That
+        restriction insures that a slight hand twitch will not cause
+        the user to lose their place after an operation such as
+        seekNearestPoint(). */
     public void updateMousePosition() {
         if (principalToStandardPage == null) {
             return;

@@ -104,7 +104,7 @@ public class VertexInfoDialog extends JDialog {
     }
 
     public void setSlope(double m) {
-        slope.setText(String.format("%.4f", m));
+        slope.setText(String.format("%.4f", -m));
         repaint();
     }
 
@@ -117,7 +117,7 @@ public class VertexInfoDialog extends JDialog {
     // the displayed approximation.
     public double getSlope() {
         try {
-            return Double.valueOf(slope.getText());
+            return -Double.valueOf(slope.getText());
         } catch (NumberFormatException e) {
             return 0;
         }

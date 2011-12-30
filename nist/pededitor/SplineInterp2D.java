@@ -26,6 +26,7 @@ public class SplinePolyline extends GeneralPolyline {
         this.closed = value;
     }
 
+    @Override
     public Path2D.Double getPath() {
         return (new CubicSpline2D(points.toArray(new Point2D.Double[0]))).path();
     }
@@ -41,11 +42,22 @@ public class SplinePolyline extends GeneralPolyline {
         return new CubicSpline2D(xpoints);
     }
 
+    @Override
     public Path2D.Double getPath(AffineTransform at) {
         return getSpline(at).path();
     }
 
+    @Override
     public int getSmoothingType() {
         return GeneralPolyline.CUBIC_SPLINE;
+    }
+
+    @Override
+    public Point2D.Double getGradient(int segmentNo, double t) {
+        if (points.size() == 0) {
+            return null;
+        }
+
+        return getSpline(new AffineTransform()).gradient(segmentNo, t);
     }
 }

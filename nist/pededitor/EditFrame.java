@@ -236,7 +236,7 @@ public class EditFrame extends ImageScrollFrame {
                     KeyStroke.getKeyStroke('.')) {
                 @Override
                     public void actionPerformed(ActionEvent e) {
-                    getParentEditor().seekNearestPoint();
+                    getParentEditor().seekNearestPoint(false);
                 }
             });
 
@@ -247,7 +247,7 @@ public class EditFrame extends ImageScrollFrame {
                           KeyStroke.getKeyStroke('?')) {
                     @Override
                         public void actionPerformed(ActionEvent e) {
-                        getParentEditor().selectNearestPoint();
+                        getParentEditor().seekNearestPoint(true);
                     }
                 });
         }

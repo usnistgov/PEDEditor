@@ -266,6 +266,11 @@ public abstract class GeneralPolyline {
         }
     }
 
+    /** @return the gradient of this curve at parameterized point t of
+        segment segmentNo (where segment 0 connects vertices 0 and 1,
+        segment 1 connects vertices 1 and 2, and so forth) */
+    abstract public Point2D.Double getGradient(int segmentNo, double t);
+
     public static final int LINEAR = 0;
     public static final int CUBIC_SPLINE = 1;
 
