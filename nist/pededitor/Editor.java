@@ -32,10 +32,6 @@ import org.codehaus.jackson.map.annotate.*;
 // TODO (major, mandatory) Axes and user-defined variables.
 // Some of the groundwork has been done, but there is a lot left.
 
-// TODO (mandatory) Allow arrow deletion.
-
-// TODO (major, mandatory) Read GRUMP data.
-
 // TODO (mandatory bug fix) Non-ASCII characters get lost during "save as PDF".
 
 // TODO Text rendering issues: inaccurate text bounding boxes and
@@ -58,12 +54,10 @@ import org.codehaus.jackson.map.annotate.*;
 // points (which *would* have to be associated with specific points),
 // user-defined.
 
+// TODO (major, mandatory) Read GRUMP data.
+
 // TODO (mandatory?, backwards compatibility) Duplicate existing
 // program's smoothing algorithm when displaying GRUMP files.
-
-// TODO (mandatory?) Curve section decorations (e.g. pen-up/pen-down).
-// Not important for new diagrams as far as I can see, but may be
-// required for backwards compatibility.
 
 // TODO (mandatory) Support triangular and quadrilateral tie lines.
 // Per discussion with Chris, tie lines are defined by three or four
@@ -79,11 +73,20 @@ import org.codehaus.jackson.map.annotate.*;
 // entering the whole thing by hand as HTML) of some kind.
 // Possibilities include 1) use of LaTeX syntax (or even just a
 // severely limited subset of LaTex); 2) HTML input with special
-// macros (press a button to turn subscripting on and another to turn
-// it off; a set of buttons for more commonly-used special symbols);
-// and 3) automatic subscripting for the majority of relatively simple
-// formulas. Not all of those are mandatory, but it sounds like
-// implementing at least one of them is.
+// macros (character palette; press a button to turn subscripting on
+// and another to turn it off; a set of buttons for more commonly-used
+// special symbols); and 3) automatic subscripting for the majority of
+// relatively simple formulas. Not all of those are mandatory, but it
+// sounds like implementing at least one of them is.
+
+// TODO (recommended) Detect intersections of splines with segments.
+// Fairly low difficulty assuming the Java library cubic equation
+// solver, CubicCurve2D, is properly implemented to be numerically
+// stable and handle degenerate cases.
+
+// TODO (mandatory?) Curve section decorations (e.g. pen-up/pen-down).
+// Not important for new diagrams as far as I can see, but may be
+// required for backwards compatibility.
 
 // TODO (helpful, not too hard) Allow labels to be moved.
 
@@ -102,11 +105,6 @@ import org.codehaus.jackson.map.annotate.*;
 // the location the operation should apply to. A two-step process
 // (select action, then selection location) is possible but would be
 // slow at best and awkward to implement as well.
-
-// TODO (recommended) Detect intersections of splines with segments.
-// Fairly low difficulty assuming the Java library cubic equation
-// solver, CubicCurve2D, is properly implemented to be numerically
-// stable and handle degenerate cases.
 
 // TODO (important) More intuitive dot placement process (the black
 // circles around interesting points). Currently a dot is printed at
@@ -1660,18 +1658,18 @@ public class Editor implements CropEventListener, MouseListener,
     protected void initializeDiagram() {
         if (diagramType.isTernary()) {
             NumberFormat pctFormat = new DecimalFormat("##0.0'%'");
-            xAxis = new XAxisInfo(pctFormat);
+            xAxis = LinearAxisInfo.getXAxis(pctFormat);
             xAxis.name = "Z";
-            yAxis = new YAxisInfo(pctFormat);
-            zAxis = new ThirdTernaryAxisInfo(pctFormat);
+            yAxis = LinearAxisInfo.getYAxis(pctFormat);
+            zAxis = new LinearAxisInfo(pctFormat, -1.0, -1.0, 100.0);
             zAxis.name = "X";
             axes.add(zAxis);
             axes.add(yAxis);
             axes.add(xAxis);
         } else {
             NumberFormat format = new DecimalFormat("##0.0");
-            xAxis = new XAxisInfo(format);
-            yAxis = new YAxisInfo(format);
+            xAxis = LinearAxisInfo.getXAxis(format);
+            yAxis = LinearAxisInfo.getYAxis(format);
             axes.add(xAxis);
             axes.add(yAxis);
         }
