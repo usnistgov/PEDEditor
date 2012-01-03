@@ -651,8 +651,7 @@ public class Editor implements CropEventListener, MouseListener,
                 g.setRenderingHint(RenderingHints.KEY_ANTIALIASING,
                                    RenderingHints.VALUE_ANTIALIAS_OFF);
 
-                if (mprin != null && activeVertexNo != -1) {
-
+                if (mprin != null && !isDuplicate(mprin)) {
                     g.setColor(Color.RED);
                     path.add(activeVertexNo + 1, mprin);
                     draw(g, path, scale);
@@ -805,9 +804,26 @@ public class Editor implements CropEventListener, MouseListener,
         vertexInfo.setLineWidth(path.getLineWidth());
     }
 
+    boolean isDuplicate(Point2D p) {
+        if (activeVertexNo == -1) {
+            return false;
+        }
+
+        GeneralPolyline path = paths.get(activeCurveNo);
+
+        return (activeVertexNo >= 0 && p.equals(path.get(activeVertexNo)))
+            || (activeVertexNo < path.size() - 1 && p.equals(path.get(activeVertexNo + 1)));
+    }
+
     /** Add a point to getActiveCurve(). */
     public void add(Point2D.Double point) {
-        getCurveForAppend().add(++activeVertexNo, point);
+        GeneralPolyline p = getCurveForAppend();
+        int s = p.size();
+        if (isDuplicate(point)) {
+            return; // Adding the same point twice causes problems.
+        }
+
+        p.add(++activeVertexNo, point);
         showTangent(activeCurveNo, activeVertexNo);
         repaintEditFrame();
     }
@@ -1241,6 +1257,17 @@ public class Editor implements CropEventListener, MouseListener,
 
         paths.remove(activeCurveNo);
         activeCurveNo = -1;
+    }
+
+    /** Toggle the closed/open status of the currently selected
+        curve. */
+    public void toggleCurveClosure() {
+        GeneralPolyline path = getActiveCurve();
+        if (path == null) {
+            return;
+        }
+        path.setClosed(!path.isClosed());
+        repaintEditFrame();
     }
 
     void draw(Graphics2D g, GeneralPolyline path, double scale) {

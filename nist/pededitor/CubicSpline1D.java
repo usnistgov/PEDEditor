@@ -33,10 +33,31 @@ final public class CubicSpline1D {
     double[] ys;
     double[] xs;
 
+    /** @return a new CubicSpline1D object containing only the portion
+        that includes cnt vertexes starting with vertex #start. The
+        existing polynomials over that subset are kept, meaning that
+        the resulting object will generally not be a natural spline
+        (that is, it will generally not have zero second derivative at
+        its endpoints). */
+    public CubicSpline1D copyOfRange(int start, int cnt) {
+        CubicSpline1D output = new CubicSpline1D();
+        output.coefficients = new double[cnt - 1][4];
+        for (int i = 0; i < cnt - 1; ++i) {
+            for (int j = 0; j < 4; ++j) {
+                output.coefficients[i][j] = coefficients[start+i][j];
+            }
+        }
+
+        output.xs = Arrays.copyOfRange(xs, start, start + cnt);
+        output.ys = Arrays.copyOfRange(ys, start, start + cnt);
+        return output;
+    }
+
     /** Return an array of the second derivative values d2y/dx2 at
-        each of the data points (named "sety2" in Numerical
-        Recipes). */
-    double[] getd2s(final double[] xs, final double[] ys) {
+        each of the data points. This function is called "sety2" in
+        Numerical Recipes.
+ */
+    double[] computeSecondDerivatives(final double[] xs, final double[] ys) {
         // Second derivatives (d2y/dx2) at (y[i], x[i]).
         double[] d2s = new double[xs.length];
         double[] us = new double[xs.length];
@@ -72,6 +93,10 @@ final public class CubicSpline1D {
         return d2s;
     }
 
+    CubicSpline1D () {}
+
+    /** The xs and ys arrays are parallel. The xs array should be
+        increasing. */
     public CubicSpline1D (final double[] xs, final double[] ys) {
         if (xs.length != ys.length) {
             throw new IllegalArgumentException
@@ -86,7 +111,7 @@ final public class CubicSpline1D {
             return;
         }
 
-        double[] d2s = getd2s(xs, ys);
+        double[] d2s = computeSecondDerivatives(xs, ys);
         coefficients = new double[cnt-1][4];
         for (int i = 0; i < cnt - 1; ++i) {
             double deltax = xs[i+1] - xs[i];

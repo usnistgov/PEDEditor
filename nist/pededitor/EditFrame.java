@@ -340,6 +340,15 @@ public class EditFrame extends ImageScrollFrame {
                     });
             mnCurve.add(smoothingMenuItem);
 
+            mnCurve.add(new EditFrameAction("Toggle curve closure",
+                                            KeyEvent.VK_C,
+                                            KeyStroke.getKeyStroke('c')) {
+                    @Override
+                        public void actionPerformed(ActionEvent e) {
+                        getParentEditor().toggleCurveClosure();
+                    }
+                });
+
             JMenu mnLineStyle = new JMenu("Line style");
         
             LineStyleRadioMenuItem solidLineItem = 

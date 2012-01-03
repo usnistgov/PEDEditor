@@ -19,16 +19,18 @@ public class SplinePolyline extends GeneralPolyline {
     }
 
     @Override public void setClosed(boolean value) {
-        if (value) {
-            // TODO Support this!
-            throw new UnsupportedOperationException();
-        }
-        this.closed = value;
+        closed = value;
+    }
+
+    @Override public boolean isClosed() {
+        return closed;
     }
 
     @Override
     public Path2D.Double getPath() {
-        return (new CubicSpline2D(points.toArray(new Point2D.Double[0]))).path();
+        return (new CubicSpline2D(points.toArray(new Point2D.Double[0]),
+                                  isClosed()))
+                .path();
     }
 
     public CubicSpline2D getSpline(AffineTransform at) {
@@ -39,7 +41,7 @@ public class SplinePolyline extends GeneralPolyline {
             at.transform(point, xpt);
             point.setLocation(xpt.x, xpt.y);
         }
-        return new CubicSpline2D(xpoints);
+        return new CubicSpline2D(xpoints, isClosed());
     }
 
     @Override

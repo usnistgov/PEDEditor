@@ -34,17 +34,48 @@ final public class CubicSpline2D {
     CubicSpline1D ySpline;
 
     public <T extends Point2D> CubicSpline2D (T[] points) {
+        this(points, false);
+    }
+
+    public <T extends Point2D> CubicSpline2D (T[] points, boolean closed) {
+        if (closed) {
+            int cnt = points.length;
+            int padding = 5;
+            // Pad the vertex set with an extra "padding" points on
+            // each end. The result won't be perfect, but it should be
+            // close.
+
+            ArrayList<Point2D> paddedPoints = new ArrayList<Point2D>();
+            for (int i = 0; i < padding * 2 + points.length; ++i) {
+                int j = (((i - padding) % cnt) + cnt) % cnt;
+                paddedPoints.add(points[j]);
+            }
+
+            CubicSpline2D paddedSpline = new CubicSpline2D
+                (paddedPoints.toArray(new Point2D[0]), false);
+            xSpline = paddedSpline.xSpline.copyOfRange(padding, cnt + 1);
+            ySpline = paddedSpline.ySpline.copyOfRange(padding, cnt + 1);
+            return;
+        }
+
         int cnt = points.length;
         double[] xs = new double[cnt];
         double[] ys = new double[cnt];
+        double[] ts = new double[cnt];
         for (int i = 0; i < cnt; ++i) {
             Point2D p = points[i];
+            if (i > 0) {
+                double d = p.distance(points[i-1]);
+                t += d;
+            }
+
+            ts[i] = t;
             xs[i] = p.getX();
             ys[i] = p.getY();
         }
 
-        xSpline = new CubicSpline1D(xs);
-        ySpline = new CubicSpline1D(ys);
+        xSpline = new CubicSpline1D(ts, xs);
+        ySpline = new CubicSpline1D(ts, ys);
     }
 
     public int segmentCnt() {

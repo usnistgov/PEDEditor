@@ -19,7 +19,11 @@ public class Polyline extends GeneralPolyline {
     }
 
     @Override public void setClosed(boolean value) {
-        this.closed = value;
+        closed = value;
+    }
+
+    @Override public boolean isClosed() {
+        return closed;
     }
 
     @Override
@@ -38,10 +42,8 @@ public class Polyline extends GeneralPolyline {
             output.lineTo(p.x, p.y);
         }
 
-        if (isClosed()) {
-            // TODO If we do pen-up pen-down in the middle of a path,
-            // then this won't work correctly.
-            output.closePath();
+        if (isClosed() && size > 1) {
+            output.lineTo(p0.x, p0.y);
         }
         return output;
     }
@@ -54,13 +56,18 @@ public class Polyline extends GeneralPolyline {
             return output;
         }
 
+        Point2D.Double p0 = new Point2D.Double();
         Point2D.Double xpt = new Point2D.Double();
-        at.transform(points.get(0), xpt);
-        output.moveTo(xpt.x, xpt.y);
+        at.transform(points.get(0), p0);
+        output.moveTo(p0.x, p0.y);
 
         for (int i = 1; i < size; ++i) {
             at.transform(points.get(i), xpt);
             output.lineTo(xpt.x, xpt.y);
+        }
+
+        if (isClosed() && size > 1) {
+            output.lineTo(p0.x, p0.y);
         }
         return output;
     }
