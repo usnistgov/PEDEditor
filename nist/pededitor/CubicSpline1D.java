@@ -3,8 +3,9 @@ package gov.nist.pededitor;
 import java.util.*;
 
 /** Class to handle 1D cubic spline interpolations for open curves
-    ("polylines" in Java terms). For higher dimensions, just combine
-    multiple 1D cubic splines.
+    ("polylines" in Java terms) parameterized at arbitary t intervals.
+    This is adapted from the procedure suggested in Chapter 3.7.5 of
+    the 3rd edition of _Numerical Recipes_.
 
     Declared final for speed.
  */
@@ -30,98 +31,99 @@ final public class CubicSpline1D {
 
     double[][] coefficients = new double[0][4];
     double[] ys;
+    double[] xs;
 
-    public CubicSpline1D (double[] ys) {
-        int cnt = ys.length;
+    /** Return an array of the second derivative values d2y/dx2 at
+        each of the data points (named "sety2" in Numerical
+        Recipes). */
+    double[] getd2s(final double[] xs, final double[] ys) {
+        // Second derivatives (d2y/dx2) at (y[i], x[i]).
+        double[] d2s = new double[xs.length];
+        double[] us = new double[xs.length];
+
+        int n = xs.length;
+        if (xs.length != ys.length) {
+            throw new IllegalArgumentException
+                ("length(ys) (" + ys.length + ") != length(xs) ("
+                 + xs.length + ")");
+        }
+
+        // Use the natural spline: second
+        // derivative is 0 at the endpoints.
+        d2s[0] = us[0] = 0;
+
+        for (int i = 1; i < n - 1; ++i) {
+            double sig = (xs[i] - xs[i-1])/(xs[i+1] - xs[i-1]);
+            double p = sig * d2s[i-1] + 2.0;
+            d2s[i] = (sig - 1.0) / p;
+            double tmpu = (ys[i+1] - ys[i]) / (xs[i+1] - xs[i]) -
+                (ys[i] - ys[i-1]) / (xs[i] - xs[i-1]);
+            us[i] = (6.0 * tmpu/(xs[i+1] - xs[i-1]) - sig * us[i-1]) / p;
+        }
+
+        // Use the natural spline: second
+        // derivative is 0 at the endpoints.
+        d2s[n-1] = 0.0;
+
+        for (int i = n - 2; i >= 0; --i) {
+            d2s[i] = d2s[i] * d2s[i+1] + us[i];
+        }
+
+        return d2s;
+    }
+
+    public CubicSpline1D (final double[] xs, final double[] ys) {
+        if (xs.length != ys.length) {
+            throw new IllegalArgumentException
+                ("length(xs) (" + xs.length + ") != length(ys) ("
+                 + ys.length + ")");
+        }
+        int cnt = xs.length;
+        this.xs = Arrays.copyOf(xs, cnt);
         this.ys = Arrays.copyOf(ys, cnt);
 
         if (cnt < 2) {
             return;
         }
 
-        // diag is the main diagonal: diag[i] = m[i][i]
-        double[] diag = new double[cnt];
-        diag[0] = diag[cnt-1] = 2;
-        for (int i = 1; i < cnt - 1; ++i) {
-            diag[i] = 4;
-        }
-
-        // The technique used here is taken from MathWorld's "Cubic
-        // Spline" discussion. Non-closed cubic splines are solvable
-        // as a tridiagonal matrix that looks like
-
-        // [ 2 1 0 0 0 ] D0 = 3 (y1-y0)
-        // [ 1 4 1 0 0 ] D1 = 3 (y2-y0)
-        // [ 0 1 4 1 0 ] D2 = 3 (y3-y1)
-        // [ 0 0 1 4 1 ] D3 = 3 (y4-y2)
-        // [ 0 0 0 1 2 ] D4 = 3 (y4-y3)
-
-        // where D_i = the first derivative at each point
-
-        // Solving this matrix takes linear time.
-
-        // below is the row below the main diagonal: below[i] =
-        // m[i][i-1]
-        double[] below = new double[cnt];
-        for (int i = 1; i < cnt; ++i) {
-            below[i] = 1;
-        }
-
-        // above is the row above the main diagonal: above[i] =
-        // m[i][i+1]. However, we can abstract it out, because the
-        // initial values are all ones, and the final values are all
-        // zeroes.
-
-        // double[] above = new double[cnt];
-        // for (int i = 0; i < cnt-1; ++i) {
-        //     above[i] = 1;
-        // }
-
-        // constant is the constant column: constant[i] = m[i][cnt]
-        double[] constant = new double[cnt];
-        for (int i = 1; i < cnt - 1; ++i) {
-            constant[i] = -3 * (ys[i+1] - ys[i-1]);
-        }
-        constant[0] = -3 * (ys[1] - ys[0]);
-        constant[cnt-1] = -3 * (ys[cnt-1] - ys[cnt-2]);
-
-        // Solve from the bottom up, turning the upper diagonal into
-        // zeroes. Once we get up to the zeroth row, we will have a
-        // linear equation we can solve for D0 -- no lower diagonal,
-        // zero upper diagonal -- and we can start going forwards to
-        // solve D1 ... Dn.
-
-        for (int r = cnt-2; r >= 0; --r) {
-            // Row(r) = Row(r) - (above[r]/diag[r+1]) * Row(r+1)
-
-            // This sets above[r] to zero. However, we know above[r]
-            // already equals 1.
-
-            double rat = - 1.0 / diag[r+1];
-            constant[r] += rat * constant[r+1];
-            diag[r] += rat * below[r+1];
-        }
-
-        double[] ds = new double[cnt];
-        ds[0] = -constant[0] / diag[0];
-        for (int i = 1; i < cnt; ++i) {
-            ds[i] = (-constant[i] - below[i] * ds[i-1]) / diag[i];
-        }
-
+        double[] d2s = getd2s(xs, ys);
         coefficients = new double[cnt-1][4];
+        for (int i = 0; i < cnt - 1; ++i) {
+            double deltax = xs[i+1] - xs[i];
+            double deltay = ys[i+1] - ys[i];
 
-        for (int i = 0; i < cnt-1; ++i) {
+            double[] coefs = coefficients[i];
 
-            // Look at the Math World write-up to understand what's
-            // done here.
+            coefs[0] = ys[i];
 
-            double[] poly = new double[4];
-            poly[0] = ys[i];
-            poly[1] = ds[i];
-            poly[2] = 3 * (ys[i+1] - ys[i]) - 2 * ds[i] - ds[i+1];
-            poly[3] = 2 * (ys[i] - ys[i+1]) + ds[i] + ds[i+1];
+            // Evaluating Numerical Recipes' equation 3.3.5 at x =
+            // x[i] yields
 
-            coefficients[i] = poly;
+            // A = 1, B = 0,
+
+            // dy/dx = deltay / deltax + (1/3) deltax d2s[i] - (1/6) deltax d2s[i+1]
+
+            // dx/dt = deltax
+
+
+            // d^ky/dt^k = (d^ky/dx^k) deltax^k
+            // (Chain rule for f(x(t)) where x(t) = xs[i] + deltax t)
+
+            // dydx = deltay/deltax + deltax * (d2s[i] / 3.0 - d2s[i+1] / 6.0)
+            // dydt = dydx * deltax
+            double dydt = deltay - deltax * deltax * (d2s[i] / 3.0 + d2s[i+1] / 6.0);
+            // dydt(0) = coefs[1]
+            coefs[1] = dydt;
+
+            double dy2dx2 = d2s[i];
+            double dy2dt2 = dy2dx2 * deltax * deltax;
+            // dy2dt2(0) = 2 coefs[2]
+            coefs[2] = dy2dt2 / 2;
+
+            // dy3dx3 = (d2s[i+1] - d2s[i]) / deltax;
+            // dy3dt3 = dy3dx3 * deltax * deltax * deltax
+            double dy3dt3 = (d2s[i+1] - d2s[i]) * deltax * deltax;
+            coefs[3] = dy3dt3 / 6.0;
         }
     }
 
@@ -302,16 +304,15 @@ final public class CubicSpline1D {
     public String toString() {
         StringBuilder out = new StringBuilder(super.toString() + "\n"); 
         for (int segment = 0; segment < segmentCnt(); ++segment) {
-            double[] coefs = coefficients[segment];
-            out.append(segment + ": " + coefs[3] + " t^3 + " +
-                       coefs[2] + " t^2 + " +
-                       coefs[1] + " t + " + coefs[0] + "\n");
+            out.append(segment + ": ");
+            out.append(Polynomial.toString(coefficients[segment]));
+            out.append("\n");
         }
         for (int i = 0; i < ys.length; ++i) {
             if (i > 0) {
                 out.append(" - ");
             }
-            out.append(ys[i]);
+            out.append("(" + xs[i] + ", " + ys[i] + ")");
         }
         if (ys.length > 0) {
             out.append("\n");
@@ -497,14 +498,17 @@ final public class CubicSpline1D {
 
     /** Just a test harness */
     public static void main(String[] args) {
+        double[] xs = { 0, 0.5, 1.0, 1.5 };
         double[] ys = { 3.1, 5.5, 5.5, 7.9 };
-        // double[] ys = { 3.1, 5.5, 3.1 };
-        CubicSpline1D c = new CubicSpline1D(ys);
+        // double[] xs = { 0, 2.4, 2.5, 4.8 };
+        // double[] ys = { 3.1, 5.5, 5.6, 7.9 };
+        CubicSpline1D c = new CubicSpline1D(xs, ys);
         System.out.println(c);
 
         for (int i = 0; i < c.segmentCnt(); ++i) {
             for (double j = 0; j < 1.01; j += 0.25) {
-                System.out.println("value(" + i + ", " + j + ") = " + c.value(i,j));
+                System.out.println("value(" + i + ", " + j + ") = "
+                                   + Arrays.toString(Polynomial.taylor(j, c.coefficients[i])));
             }
         }
 
