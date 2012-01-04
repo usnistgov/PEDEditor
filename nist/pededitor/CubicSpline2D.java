@@ -38,11 +38,14 @@ final public class CubicSpline2D {
     }
 
     public <T extends Point2D> CubicSpline2D (T[] points, boolean closed) {
+        int cnt = points.length;
         if (closed) {
-            int cnt = points.length;
             int padding = 5;
-            // Pad the vertex set with an extra "padding" points on
-            // each end. The result won't be perfect, but it should be
+            // Pad the vertex set with extra points at each end from
+            // the other end of the curve, to give the algorithm a
+            // hint about how to wrap around at the endpoints. The
+            // result won't be perfect (that is, the slope and second
+            // derivatives won't match precisely), but it should be
             // close.
 
             ArrayList<Point2D> paddedPoints = new ArrayList<Point2D>();
@@ -53,15 +56,26 @@ final public class CubicSpline2D {
 
             CubicSpline2D paddedSpline = new CubicSpline2D
                 (paddedPoints.toArray(new Point2D[0]), false);
+
+            // Now remove all of the padding, but keep the extra
+            // segment that connects the two endpoints.
             xSpline = paddedSpline.xSpline.copyOfRange(padding, cnt + 1);
             ySpline = paddedSpline.ySpline.copyOfRange(padding, cnt + 1);
             return;
         }
 
-        int cnt = points.length;
         double[] xs = new double[cnt];
         double[] ys = new double[cnt];
         double[] ts = new double[cnt];
+        double t = 0.0;
+
+        // Per Numerical Recipes' suggestion, let the delta-t between
+        // successive points equal the distance between them. (Letting
+        // delta-t always equal 1 produces weird behavior such as
+        // needlessly overshooting some points even when they lie
+        // along a straight line if a long distance is followed by a
+        // distance that is very short or zero.)
+
         for (int i = 0; i < cnt; ++i) {
             Point2D p = points[i];
             if (i > 0) {

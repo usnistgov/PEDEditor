@@ -499,6 +499,13 @@ public class EditFrame extends ImageScrollFrame {
                         getParentEditor().editMargins();
                     }
                 });
+            mnDiagram.add(new EditFrameAction
+                          ("Components...", KeyEvent.VK_M) {
+                    @Override
+                        public void actionPerformed(ActionEvent e) {
+                        getParentEditor().editDiagramComponents();
+                    }
+                });
         }
 
         if (mnDiagram.getItemCount() > 0) {
@@ -529,8 +536,7 @@ public class EditFrame extends ImageScrollFrame {
                 }
             });
         mnView.add(new EditFrameAction("Best Fit", KeyEvent.VK_F,
-                                       KeyStroke.getKeyStroke('b',
-                                                              InputEvent.CTRL_MASK)) {
+                                       KeyStroke.getKeyStroke("control B")) {
                 public void actionPerformed(ActionEvent e) {
                     getParentEditor().bestFit();
                 }

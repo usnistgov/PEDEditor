@@ -42,9 +42,6 @@ import org.codehaus.jackson.map.annotate.*;
 // justification (minor) and curve breaking for text (major), and it
 // also degrades image quality.
 
-// TODO (important, not hard) Better cubic spline smoothing (Numerical
-// Recipes).
-
 // TODO (mandatory) Label tags: diagram components, chemical formulas,
 // temperatures. The only mandatory element so far is that these three
 // elememts are associated with the diagram as a whole, not
@@ -59,12 +56,11 @@ import org.codehaus.jackson.map.annotate.*;
 // TODO (mandatory?, backwards compatibility) Duplicate existing
 // program's smoothing algorithm when displaying GRUMP files.
 
-// TODO (mandatory) Support triangular and quadrilateral tie lines.
-// Per discussion with Chris, tie lines are defined by three or four
-// endpoints, and all tie lines intersect at a single point, so
-// quadrilateral tie lines are created by regularly sectioning the
-// angle through that point and selectiong the region between the two
-// boundary curves.
+// TODO (mandatory) Support tie lines. Per discussion with Chris, tie
+// lines are defined by three or four endpoints, and all tie lines
+// intersect at a single vanishing point, so quadrilateral tie lines
+// are created by regularly sectioning the angle through that point
+// and selectiong the region between the two boundary curves.
 
 // TODO (mandatory) Paired squiggles that indicate elided portions of
 // an axis
@@ -125,8 +121,6 @@ import org.codehaus.jackson.map.annotate.*;
 // TODO (major time-saver) Semi-automatically infer diagram location
 // from composition where equation balancing is possible. Discarding
 // ubiquitous elements like O, H, N, or C may be required.
-
-// TODO Closed loop smoothing and fitting.
 
 // TODO (feature, harder) Allow detection of the intersections of two
 // splines. (What makes this feature more desirable than it would be
@@ -473,7 +467,12 @@ public class Editor implements CropEventListener, MouseListener,
 
     public void editMargins() {
         System.out.println("TODO this");
-        // TODO
+        // TODO editMargins
+    }
+
+    public void editDiagramComponents() {
+        System.out.println("TODO this");
+        // TODO editDiagramComponents
     }
 
     /** @param scale A multiple of standardPage coordinates
@@ -949,7 +948,8 @@ public class Editor implements CropEventListener, MouseListener,
             return;
         }
 
-        AnchoredLabel t = (new LabelDialog(editFrame)).showModal();
+        AnchoredLabel t = (new LabelDialog(editFrame, "Add Label"))
+            .showModal();
         if (t == null) {
             return;
         }
@@ -976,7 +976,7 @@ public class Editor implements CropEventListener, MouseListener,
         }
 
         AnchoredLabel label = labels.get(nl);
-        LabelDialog dialog = new LabelDialog(editFrame);
+        LabelDialog dialog = new LabelDialog(editFrame, "Edit Label");
         dialog.setText(label.getText());
         dialog.setXWeight(label.getXWeight());
         dialog.setYWeight(label.getYWeight());

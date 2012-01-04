@@ -93,8 +93,8 @@ public class LabelDialog extends JDialog {
         }
     }
 
-    LabelDialog(Frame owner) {
-        super(owner, "Select Label", true);
+    LabelDialog(Frame owner, String title) {
+        super(owner, "Edit Label", true);
 
         ButtonGroup group = new ButtonGroup();
 
@@ -106,6 +106,7 @@ public class LabelDialog extends JDialog {
         textField = new JTextField();
 
         box.add(new JLabel("Label:"));
+
         box.add(textField);
         box.add(new JLabel("Font size:"));
         Box sizeBox = new Box(BoxLayout.LINE_AXIS);
@@ -126,7 +127,7 @@ public class LabelDialog extends JDialog {
         Box ob2 = new Box(BoxLayout.PAGE_AXIS);
         angleField.setPreferredSize(new Dimension(90, 30));
         angleField.setMaximumSize(new Dimension(90, 30));
-        ob2.add(new JLabel("Orientation:"));
+        ob2.add(new JLabel("Text angle:"));
         Box ob3 = new Box(BoxLayout.LINE_AXIS);
         ob3.add(angleField);
         ob3.add(new JLabel("degrees"));
@@ -255,7 +256,7 @@ public class LabelDialog extends JDialog {
     }
 
     public static void main(String[] args) {
-        LabelDialog dialog = new LabelDialog(null);
+        LabelDialog dialog = new LabelDialog(null, "Labels test");
         dialog.setFontSize(1.333333333333);
         dialog.setAngle(Math.PI / 2);
         AnchoredLabel t = dialog.showModal();

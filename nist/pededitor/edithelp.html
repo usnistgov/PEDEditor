@@ -1,63 +1,176 @@
 <html>
 
-<h1>Header</h1>
+<h2>Curve and line drawing</h2>
 
-<h2>Creating or adding points to curves</h2>
+<p>The currently selected curve, if any, appears in <font
+color="green">green</font>. Most vertices (control points) of the
+currently selected curve are indicated by empty green circles, while
+the currently selected point is indicated by a solid green circle.</p>
 
-<p>If a curve is currently selected, then that curve appears in <font
-color="green">green</font>, and the currently selected vertex is
-marked with a solid green circle. Other vertices of the currently
-selected curve are marked with empty green circles.</p>
+<h3>Starting a new curve</h3>
 
-<p>To edit an existing curve that is not already selected, move the
-mouse pointer over one of the vertices of that curve and press '?'. If
-multiple curves pass through that vertex, then the first curve
-selected might not be the one you want; continue pressing '?' until
-the curve highlighted in green is the correct one.</p>
+<p>To start a new curve, first deselect the current curve, if any (it
+would be highlighted in green). Do this by pressing the
+<code>End</code> key, or equivalently choose main menu item
+<code><u>C</u>urve/<u>D</u>eselect</code>). Then press the left mouse
+button at the appropriate location to insert the first endpoint of the
+new curve.</p>
 
-<p>Any new vertices will be added immediately after the currently
-selected vertex. To add the point immediately before the currently
-selected vertex instead, select the menu item
-<code><u>C</u>urve/<u>R</u>everse vertex order</code>. To start a new
-curve instead, press the <code>End</code> key, or equivalently choose
-main menu item <code><u>C</u>urve/<u>D</u>eselect</code>).</p>
+<h3>Selecting an existing curve</h3>
 
-<p>If no curve is currently selected, then adding a new vertex will
-start a new curve. As a special case, a curve that has only one vertex
-is displayed as a small black dot whose size is a fixed multiple of
-the current line width.</p>
+<p>Move the mouse pointer over one of the vertices of that curve and
+press '?'. If multiple curves pass through that vertex, then the first
+curve selected might not be the one you want; continue pressing '?'
+until the correct curve is highlighted in green.</p>
 
-<p>To add a vertex, press the left mouse button. If a curve is
-currently selected, the <font color="red">red</font> outline displays
-the curve that will be result if you do this.</p>
+<h3>Deleting a vertex</h3>
 
-<p>Previously inserted vertices, corners of the diagram, and
-intersections of curves that have been added to the diagram are key
-points. Press the period ('.') key to move the mouse to the closest
-key point, then press the left mouse button to add this point to the
+<p>Select the vertex and then press the <code>Delete</code> key.</p>
+
+<h3>Moving a vertex</h3>
+
+<p>You can move the selected vertex one pixel in any directions with
+the arrow keys. Otherwise, there is no specific 'move a vertex'
+operation, but it is straightfoward to delete the selected vertex and
+insert a new vertex in its place.</p>
+
+<p>There is no specific 'move a vertex' operation, but once a vertex
+is selected, it is straightfoward to delete it and then insert a new
+vertex in its place.</p>
+
+<h3>Adding to an existing curve</h3>
+
+<p>To add a vertex to a curve, press the left mouse button. The new
+vertex will be inserted after the previously selected vertex (so if
+you want to add to the end of the curve, you will first have to select
+the last vertex of that curve). The <font color="red">red</font>
+outline, if any, displays the curve that will be result if you do
+this.</p>
+
+<p>To add a new vertex before (instead of after) the currently
+selected point, select the menu item <code><u>C</u>urve/<u>R</u>everse
+vertex order</code> and then add the vertex normally. This step is
+necessary if you wish to add a point before the first vertex of the
 curve.</p>
 
-<p>Pressing the period key causes the mouse to be temporarily treated
-by some operations as if it were stuck at the key point. This protects
-you from losing your place become of a slight twitch of the mouse. If
-necessary, you may move the mouse an inch or so to unstick it.</p>
+<h3>Curve smoothing</h3>
 
-<p>Type an underscore ('_') to make the mouse move to and become stuck
-at the nearest point (key or not) on any curve or edge of the diagram.
-Press the left mouse button to add this point to the curve.</p>
-
-<p>Press ',' to create a cusp (a first-derivative discontinuity). This
-is exactly the same as adding the current mouse position, deselecting
-the curve, and then starting a new curve also at the current mouse
-position.</p>
-
-<p>To turn curve smoothing on or off, press 's'. This change affects
+<p>Press 's' to turn curve smoothing on or off. This change affects
 the currently selected curve (if any) and any new curves you create
 (until you press 's' again).</p>
 
-</p>
+<p>Press 'c' to close a curve or unclose a previously closed curve.
+This will cause the curve to jump (or loop, depending on whether
+smoothing is turned on) back from its endpoint to its starting point.
+With smoothing on, the result usually looks smoother than just reusing
+the starting point as the endpoint would.</p>
 
-<h3>Dots</h3>
+<h3>Line styles</h3>
+
+<p>Use the <code><u>C</u>urve/Line style</code> menu item and select
+your preferred line style to change the style of the currently
+selected curve (if any) and the initial style of any subsequently
+added curves. The spacing of dots and dashes and so forth is
+proportional to the line width: if you reduce the width of a dashed
+line by half, then the length of the dashes is also reduced by
+half.</p>
+
+<h3>Line widths</h3>
+
+<p>Use the <code><u>C</u>urve/Line width</code> menu item to change
+the width of the currently selected curve (if any) and the initial
+line width of any subsequently created curves.</p>
+
+<h3>Adding a cusp</h3>
+
+<p>Press ',' to create a cusp (a location where a path is connected
+but not smooth). This is just shorthand for adding a vertex at the
+current mouse position and then starting a separate curve from the
+same vertex.</p>
+
+<h2>Diagram positioning</h2>
+
+<p>Sometimes there are better alternatives to using the mouse pointer
+alone when drawing diagrams. Even if you could position the mouse
+pointer on the exact pixel desired, one-pixel accuracy is not always
+sufficient.</p>
+
+<ul>
+
+<li><p><b>Selecting key points:</b> Previously inserted vertices,
+corners of the diagram, and intersections of curves are called key
+points. Press the period ('.') key to move the mouse to the closest
+key point. (The '.' and '?' keys both move the mouse pointer to the
+closest key point, but the '?' key changes the curve and vertex
+selection, while the '.' key does not. That makes '.' the correct
+choice to position the mouse over a key point in order to add that
+point to the currently selected curve.)</p>
+
+<p>In the coordinates in the status bar, and for operations such as
+inserting a vertex, label, or arrowhead, the mouse will behave as if
+stuck at the key point. This behavior is to protect you from losing
+your place if the mouse slips by just a pixel or two. The mouse will
+become unstuck if an operation is selected. You may also unstick the
+mouse by moving it a couple dozen pixels away.</p>
+</li>
+
+<li><p><b>Selecting the nearest point on a curve:</b> Type an
+underscore ('_') to make the mouse move to and become stuck at the
+nearest point (key or not) on any curve or edge of the
+diagram.</p></li>
+
+<li><p><b>Keyboard entry:</b> Press the equals sign ('=') to enter
+numeric coordinates from the keyboard. You may enter the coordinates
+using any two variables that together can uniquely identify a diagram
+location.</p></li>
+
+</ul>
+
+<h2>Labels</h2>
+
+<p>Press <code>Enter</code> to create a new label anchored at the
+current mouse location. The "Add Label" dialog will open, permitting
+you to choose the text, font size, angle, and anchor orientation for
+the label.</p>
+
+<p>Some HTML tags and Unicode notations are allowed. To avoid
+confusion with HTML tags, less than signs ('&lt;') should be entered
+as <code>&amp;lt;</code> (or press the '&lt;' key in the character
+palette), and greater than signs ('&gt;') should be entered as
+<code>&amp;gt;</code> (or press the '&gt;' key in the character
+palette).</p>
+
+<p>The standard font size has characters whose height equals about
+1.5% of the length of the longer axis (height or width) of the
+diagram. You may enter multiples of this base font size as a fraction
+such as 1\u00F74, or as a decimal -- enter the decimal in the
+numerator portion of the font size and use 1 as the denominator.</p>
+
+<p>Press one of the nine anchor buttons when you are finished entering
+the other fields (text and font size) for this label. The anchor
+buttons determine whether the label will be centered at the anchor or
+will have a corner or center of one side located there. The anchors
+are relative to the text's frame of reference. If you specify that the
+label should be anchored to the northwest (bottom right button), then
+a label whose text reads "Label" will always have the top of the "L"
+located near the anchor, even if the text is rotated 180 degrees
+backwards causing the anchor to end up southeast of its label.</p>
+
+<p>The circle with the green arrow is just a picture for use with the
+"Text angle" text box. Edit the number in the text box to change the
+text angle.</p>
+
+<p>Press <code>e</code> to edit or delete an existing label. To delete
+the label, simply erase all of its text.</p>
+
+<p>Relocating a label is not currently supported. Just delete the
+existing label and create a new one.</p>
+
+<h2>Decorations</h2>
+
+<h3>Symbols</h3>
+
+<h4>Dots</h4>
 
 <p>A dot is just a curve with only one vertex, so the rules for
 creating dots are covered by the rules for creating curves. You may
@@ -65,17 +178,38 @@ use the 'd' key as a short-cut to create a dot at the current mouse
 position. To change the dot size, adjust the line width: the dot
 radius equals twice the line width.</p>
 
-<h3>Arrowheads</h3>
+<h4>Arrowheads</h4>
 
-<p>To draw an arrowhead that points at the angle indicated in the
-"Tangent" window at the current location (as selected using the '.',
-'_', or '?' keys, or at the current mouse position otherwise), press
-'&gt;'. To draw an arrowhead that points in the opposite direction,
-press '&lt;'. The size of the arrowhead is a fixed multiple of the
-line width indicated in the "Tangent" window.</p>
+<p>To draw an arrowhead at the current location (as selected using the
+'.', '_', or '?' keys, or at the current mouse position otherwise) and
+pointing at the angle indicated in the "Tangent" window, press '&gt;'.
+To draw an arrowhead that points in the opposite direction, press
+'&lt;'. The size of the arrowhead is a fixed multiple of the line
+width indicated in the "Tangent" window.</p>
 
-<p>To delete an arrowhead, right-click next to it and select the
+<h4>Deletion</h4>
+
+<p>Press 'z' to delete the nearest symbol. (TODO: right now, 'z'
+deletes arrowheads only.)</p>
+
+<p>(TODO This isn't true, but it probably should be.) To delete a
+symbol, right-click on it and select the
 <code><u>D</u>ecorations/<u>D</u>elete nearest symbol</code> menu
 item.</p>
+
+<h4>Editing</h4>
+
+<p>Arrowheads are permanently fixed in position, orientation, and
+appearance at the time they are created. If you have to make changes,
+perhaps because the curve the arrowhead is attached to was modified,
+you will have to delete the existing arrowhead and add another one.</p>
+
+<p>TODO? It would be logical if one could select not just curves and
+dots, but also labels and symbols, so these things can be moved just
+as easily as vertices can be. Maybe more importantly, allowing label
+and symbol selection allows consistent access to editing commands: the
+Delete key can be used with anything, and Paste/Copy could be linked
+to the selection as well (imaging pasting a label). Symbol selection
+is unimportant, but being able to move labels would be nice.</p>
 
 </html>
