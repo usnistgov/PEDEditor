@@ -356,11 +356,6 @@ public class Editor implements CropEventListener, MouseListener,
      location. */
     protected Point2D.Double mprin = null;
 
-    /** This variable only determines the initial type of new curves;
-        existing curves retain their originally assigned smoothing
-        type. */
-    protected int smoothingType = GeneralPolyline.LINEAR;
-
     public Editor() {
         clear();
         editFrame.getImagePane().addMouseListener(this);
@@ -694,8 +689,8 @@ public class Editor implements CropEventListener, MouseListener,
 
         if (activeCurveNo == -1) {
             paths.add(GeneralPolyline.create
-                      (smoothingType, new Point2D.Double[0], lineStyle,
-                       lineWidth));
+                      (GeneralPolyline.LINEAR,
+                       new Point2D.Double[0], lineStyle, lineWidth));
             activeCurveNo = paths.size() - 1;
             activeVertexNo = -1;
         }
@@ -705,6 +700,7 @@ public class Editor implements CropEventListener, MouseListener,
 
     public void deselectCurve() {
         if (activeCurveNo >= 0) {
+            activeVertexNo = -1;
             activeCurveNo = -1;
             repaintEditFrame();
         }
@@ -936,6 +932,7 @@ public class Editor implements CropEventListener, MouseListener,
              points.toArray(new Point2D.Double[0]),
              oldCurve.getStroke(),
              oldCurve.getLineWidth());
+        curve.setClosed(oldCurve.isClosed());
         paths.set(activeCurveNo, curve);
         activeVertexNo = curve.size() - 1 - activeVertexNo;
         repaintEditFrame();
@@ -1228,26 +1225,15 @@ public class Editor implements CropEventListener, MouseListener,
     }
 
     public void toggleSmoothing() {
-        JCheckBoxMenuItem check = editFrame.getSmoothingMenuItem();
-        if (check.getState()) {
-            smoothingType = GeneralPolyline.CUBIC_SPLINE;
-        } else {
-            smoothingType = GeneralPolyline.LINEAR;
-        }
-
         GeneralPolyline oldPath = getActiveCurve();
         if (oldPath == null) {
             return;
         }
 
-        if (oldPath.getSmoothingType() != smoothingType) {
-            GeneralPolyline path = GeneralPolyline.create
-                (smoothingType, oldPath.getPoints(),
-                 oldPath.getStroke(), oldPath.getLineWidth());
-            path.setClosed(oldPath.isClosed());
-            paths.set(activeCurveNo, path);
-        }
-
+        GeneralPolyline path = oldPath.nearClone
+            (oldPath.getSmoothingType() == GeneralPolyline.LINEAR
+             ? GeneralPolyline.CUBIC_SPLINE : GeneralPolyline.LINEAR);
+        paths.set(activeCurveNo, path);
         repaintEditFrame();
     }
 
@@ -1256,6 +1242,7 @@ public class Editor implements CropEventListener, MouseListener,
             return;
 
         paths.remove(activeCurveNo);
+        activeVertexNo = -1;
         activeCurveNo = -1;
     }
 
@@ -2331,20 +2318,16 @@ public class Editor implements CropEventListener, MouseListener,
             = new ArrayList<LineSegment>();
          
         for (GeneralPolyline path : paths) {
-            if (path.getSmoothingType() != GeneralPolyline.LINEAR) {
-                // Easy case -- this path is smoothed between exactly
-                // 2 points, which means it is equivalent to a
-                // segment.
-
-                if (path.size() == 2) {
-                    output.add(new LineSegment(path.get(0), path.get(1)));
-                }
-
-            } else {
+            if (path.getSmoothingType() == GeneralPolyline.LINEAR) {
                 Point2D.Double[] points = path.getPoints();
                 for (int i = 1; i < points.length; ++i) {
                     output.add(new LineSegment(points[i-1], points[i]));
                 }
+            } else if (path.size() == 2) {
+                // Easy case -- this path is smoothed between exactly
+                // 2 points, which means it is equivalent to a
+                // segment.
+                output.add(new LineSegment(path.get(0), path.get(1)));
             }
         }
 

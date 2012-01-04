@@ -55,15 +55,18 @@ curve.</p>
 
 <h3>Curve smoothing</h3>
 
-<p>Press 's' to turn curve smoothing on or off. This change affects
-the currently selected curve (if any) and any new curves you create
-(until you press 's' again).</p>
+<p>Press 's' to turn curve smoothing on, or turn it off if it was on
+before. This change affects the currently selected curve (if any) and
+the initial curve smoothing state for any new curves you create until
+you press 's' again. (Wait, I think there's a bug there. Pressing 's'
+to turn on smoothing for a curve with smoothing off, when smoothing is
+already on by default, should have no effect.)</p>
 
-<p>Press 'c' to close a curve or unclose a previously closed curve.
-This will cause the curve to jump (or loop, depending on whether
-smoothing is turned on) back from its endpoint to its starting point.
-With smoothing on, the result usually looks smoother than just reusing
-the starting point as the endpoint would.</p>
+<p>Press 'c' to turn an open curve (the default) into a closed one, or
+vice versa. A closed curve has an extra segment that connects its
+endpoint back to its starting point. If smoothing is enabled, the
+result will look better than does an open curve whose endpoints are
+identical.</p>
 
 <h3>Line styles</h3>
 

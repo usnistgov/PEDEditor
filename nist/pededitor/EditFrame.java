@@ -14,15 +14,10 @@ public class EditFrame extends ImageScrollFrame {
     protected JPanel statusBar;
     protected JLabel statusLabel;
     protected Editor parentEditor;
-    protected JCheckBoxMenuItem smoothingMenuItem;
     protected ButtonGroup lineStyleGroup = new ButtonGroup();
     protected ButtonGroup lineWidthGroup = new ButtonGroup();
 
     public Editor getParentEditor() { return parentEditor; }
-
-    public JCheckBoxMenuItem getSmoothingMenuItem() {
-        return smoothingMenuItem;
-    }
 
     abstract class EditFrameAction extends AbstractAction {
         EditFrameAction(String name, int mnemonic, KeyStroke accelerator) {
@@ -329,16 +324,14 @@ public class EditFrame extends ImageScrollFrame {
             });
 
         if (editable) {
-            smoothingMenuItem = new JCheckBoxMenuItem
-                (new EditFrameAction("Toggle smoothing",
-                                     KeyEvent.VK_T,
-                                     KeyStroke.getKeyStroke('s')) {
-                        @Override
-                            public void actionPerformed(ActionEvent e) {
-                            getParentEditor().toggleSmoothing();
-                        }
-                    });
-            mnCurve.add(smoothingMenuItem);
+            mnCurve.add(new EditFrameAction("Toggle smoothing",
+                                            KeyEvent.VK_T,
+                                            KeyStroke.getKeyStroke('s')) {
+                    @Override
+                        public void actionPerformed(ActionEvent e) {
+                        getParentEditor().toggleSmoothing();
+                    }
+                });
 
             mnCurve.add(new EditFrameAction("Toggle curve closure",
                                             KeyEvent.VK_C,

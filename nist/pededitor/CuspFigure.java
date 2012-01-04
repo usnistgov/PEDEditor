@@ -72,6 +72,16 @@ public abstract class GeneralPolyline {
         }
     }
 
+    /** @return a new GeneralPolyline that is almost a clone of this,
+        but whose smoothingType is as given. */
+    public GeneralPolyline nearClone(int smoothingType) {
+        GeneralPolyline output
+            = create(smoothingType, getPoints(),
+                     getStroke(), getLineWidth());
+        output.setClosed(isClosed());
+        return output;
+    }
+
     /** @return this's corresponding Path2D.Double. */
     @JsonIgnore
     abstract public Path2D.Double getPath();
