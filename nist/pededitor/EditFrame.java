@@ -566,7 +566,7 @@ public class EditFrame extends ImageScrollFrame {
             JScrollPane editorScrollPane = new JScrollPane(editorPane);
             editorScrollPane.setPreferredSize(new Dimension(500, 500));
             
-            helpDialog = new JDialog(this, "Edit Window Help");
+            helpDialog = new JDialog(this, "PED Edit Window Help");
             helpDialog.getContentPane().add(editorScrollPane);
             helpDialog.pack();
         }

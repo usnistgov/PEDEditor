@@ -1,20 +1,74 @@
 <html>
+<head>
+<title>PED Edit Window Help</title>
+</head>
+<body>
 
-<h2>Curve and line drawing</h2>
+<h2>File operations</h2>
 
-<p>The currently selected curve, if any, appears in <font
+<h3>New Diagram</h3>
+
+<p>Begin creating a new PED diagram from scratch. If you wish to
+digitize a scanned image of an existing diagram, use the <a
+href="#openimage"><code><u>F</u>ile/<u>O</u>pen/<u>I</u>mage for
+Digitization</code></a> option instead.</p>
+
+<h3>Open diagram</h3>
+
+<p>Open a diagram that was previously saved in the PED Editor's native
+<code>PED</code> format.</p>
+
+<a name="openimage"><h3>Open Image for Digitization</h3></a>
+
+<p>Open an image file saved in GIF, JPEG, or PNG format in the Diagram
+Selection Window. You will be given the opportunity to select the
+boundary of a diagram within that file and then create a new diagram
+traced from the old one. For more details, consult the Diagram
+Selection Window's help menu option.</p>
+
+<h3>Save / Save As PED</h3>
+
+<p>Save a diagram in the PED Editor's native PED format. If the
+diagram was not previously assigned a filename or the "Save As" option
+is selected, you will be asked what name the file should be given.</p>
+
+<h3>Save as PDF</h3>
+
+<p>Save the diagram as an Adobe PDF format file. PDF files can be
+understood by many programs and can provide high quality images, but
+the PED Editor cannot read PDF files, even if those PDF files
+were created using the editor.</p>
+
+<p>TODO Currently, strange characters get lost during save as PDF.</p>
+
+<h3>Save as SVG</h3>
+
+<p>TODO This doesn't work. Maybe one could get it to work, but that is
+not a priority. (Maybe it should be, though, if difficulties with
+strange characters and PDF prove difficult to surmount.)</p>
+
+<h3>Print</h3>
+
+<p>Print the diagram to fit on a single sheet of paper (so a larger
+piece of paper will yield a larger diagram).</p>
+
+<p>TODO Word spacing is broken in printed diagrams. I don't know how
+to fix that, because the problem occurs in Java library code.</p>
+
+<h2>Curves and Vertices</h2>
+
+<p>The currently selected curve, if any, appears highlighted in <font
 color="green">green</font>. Most vertices (control points) of the
 currently selected curve are indicated by empty green circles, while
 the currently selected point is indicated by a solid green circle.</p>
 
 <h3>Starting a new curve</h3>
 
-<p>To start a new curve, first deselect the current curve, if any (it
-would be highlighted in green). Do this by pressing the
-<code>End</code> key, or equivalently choose main menu item
-<code><u>C</u>urve/<u>D</u>eselect</code>). Then press the left mouse
-button at the appropriate location to insert the first endpoint of the
-new curve.</p>
+<p>To start a new curve, first deselect the current curve if one is
+highlighted. Press the <code>End</code> key or choose main menu item
+<code><u>C</u>urve/<u>D</u>eselect</code>) to do this. Then press the
+left mouse button at the appropriate location to insert the first
+endpoint of the new curve.</p>
 
 <h3>Selecting an existing curve</h3>
 
@@ -53,20 +107,16 @@ vertex order</code> and then add the vertex normally. This step is
 necessary if you wish to add a point before the first vertex of the
 curve.</p>
 
-<h3>Curve smoothing</h3>
+<h3>Curve smoothing and closure</h3>
 
-<p>Press 's' to turn curve smoothing on, or turn it off if it was on
-before. This change affects the currently selected curve (if any) and
-the initial curve smoothing state for any new curves you create until
-you press 's' again. (Wait, I think there's a bug there. Pressing 's'
-to turn on smoothing for a curve with smoothing off, when smoothing is
-already on by default, should have no effect.)</p>
+<p>Press 's' to turn curve smoothing on or off for the currently selected
+curve.</p>
 
-<p>Press 'c' to turn an open curve (the default) into a closed one, or
-vice versa. A closed curve has an extra segment that connects its
-endpoint back to its starting point. If smoothing is enabled, the
-result will look better than does an open curve whose endpoints are
-identical.</p>
+<p>Press 'c' to close or open the currently selected curve. Closed
+curves loop back to their starting points (there is no need to
+explicitly repeat the starting vertex). Explicitly closing a smoothed
+curve usually gives better results than just repeating the starting
+vertex does.</p>
 
 <h3>Line styles</h3>
 
@@ -215,4 +265,10 @@ Delete key can be used with anything, and Paste/Copy could be linked
 to the selection as well (imaging pasting a label). Symbol selection
 is unimportant, but being able to move labels would be nice.</p>
 
+<h2>View Menu</h2>
+
+<p>Press '-' to zoom out, '+' to zoom in, and Control-B to obtain the
+best fit of the diagram to the edit window's current size.</p>
+
+</body>
 </html>
