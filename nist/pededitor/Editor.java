@@ -603,6 +603,20 @@ public class Editor implements CropEventListener, MouseListener,
             }
         }
 
+        if (false) {
+            // TODO Delete dead code -- but sometimes it's helpful to
+            // mark key points...
+
+            Point2D.Double xpoint = new Point2D.Double();
+            Affine p2d = principalToScaledPage(scale);
+            for (Point2D.Double point: keyPoints()) {
+                p2d.transform(point, xpoint);
+                double r = 4.0;
+                g.fill(new Ellipse2D.Double
+                       (xpoint.x - r, xpoint.y - r, r * 2, r * 2));
+            }
+        }
+
         {
             int i = 0;
             for (AnchoredLabel label: labels) {
@@ -1141,6 +1155,14 @@ public class Editor implements CropEventListener, MouseListener,
         }
 
         // Check cubic+straight line segment intersections.
+
+        LineSegment[] pageSegments = new LineSegment[segments.length];
+        for (int i = 0; i < segments.length; ++i) {
+            pageSegments[i] = new LineSegment
+                    (principalToStandardPage.transform(segments[i].p1),
+                     principalToStandardPage.transform(segments[i].p2));
+        }
+
         for (GeneralPolyline path: paths) {
             if (path.size() <= 2
                 || path.getSmoothingType() !=  GeneralPolyline.CUBIC_SPLINE) {
@@ -1149,10 +1171,11 @@ public class Editor implements CropEventListener, MouseListener,
             }
 
             CubicSpline2D spline
-                = ((SplinePolyline) path).getSpline(new AffineTransform());
+                = ((SplinePolyline) path).getSpline(principalToStandardPage);
 
-            for (LineSegment segment: segments) {
+            for (LineSegment segment: pageSegments) {
                 for (Point2D.Double point: spline.intersections(segment)) {
+                    standardPageToPrincipal.transform(point, point);
                     output.add(point);
                 }
             }
@@ -2337,6 +2360,9 @@ public class Editor implements CropEventListener, MouseListener,
                 Point2D.Double[] points = path.getPoints();
                 for (int i = 1; i < points.length; ++i) {
                     output.add(new LineSegment(points[i-1], points[i]));
+                }
+                if (points.length >= 3 && path.isClosed()) {
+                    output.add(new LineSegment(points[points.length-1], points[0]));
                 }
             } else if (path.size() == 2) {
                 // Easy case -- this path is smoothed between exactly
