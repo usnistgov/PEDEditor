@@ -8,34 +8,34 @@ import java.util.Arrays;
 /** Utility functions for working with points and polygons. */
 public class Duh {
 
-   static class ReverseAngleSort implements Comparator<Point2D.Double> {
-      Point2D.Double center;
+    static class ReverseAngleSort implements Comparator<Point2D.Double> {
+        Point2D.Double center;
 
-      protected ReverseAngleSort(Point2D.Double center) {
-         this.center = center;
-      }
+        protected ReverseAngleSort(Point2D.Double center) {
+            this.center = center;
+        }
 
-      public int compare(Point2D.Double o1, Point2D.Double o2) {
-         double diff = Duh.toAngle(Duh.aMinusB(o2, center)) -
-            Duh.toAngle(Duh.aMinusB(o1, center));
-         return (diff > 0) ? 1 : (diff == 0) ? 0 : -1;
-      }
-   }
+        public int compare(Point2D.Double o1, Point2D.Double o2) {
+            double diff = Duh.toAngle(Duh.aMinusB(o2, center)) -
+                Duh.toAngle(Duh.aMinusB(o1, center));
+            return (diff > 0) ? 1 : (diff == 0) ? 0 : -1;
+        }
+    }
 
     /** Sort a list of indices into an array of doubles into
         increasing order (by the double value they point to) */
-   static class IndexSort implements Comparator<Integer> {
-       double[] values;
+    static class IndexSort implements Comparator<Integer> {
+        double[] values;
 
-       protected IndexSort(double[] values) {
-           this.values = values;
-       }
+        protected IndexSort(double[] values) {
+            this.values = values;
+        }
 
-       public int compare(Integer i1, Integer i2) {
-           double diff = values[i2] - values[i1];
-           return (diff > 0) ? 1 : (diff == 0) ? 0 : -1;
-       }
-   }
+        public int compare(Integer i1, Integer i2) {
+            double diff = values[i2] - values[i1];
+            return (diff > 0) ? 1 : (diff == 0) ? 0 : -1;
+        }
+    }
 
     public static Point toPoint(Point2D point) {
         return new Point((int) Math.round(point.getX()),
