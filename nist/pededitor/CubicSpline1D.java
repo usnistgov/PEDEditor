@@ -377,10 +377,15 @@ final public class CubicSpline1D {
         }
     }
 
+    /** Return the polynomial x(t) that covers the given segment. */
+    public double[] getPoly(int segment) {
+        return (double[]) coefficients[segment].clone();
+    }
 
-    /* @return a 2-element array holding the minimum and maximum
-       values of spline(t) for t in [t0, t1] within the given
-       segment. */
+
+    /** @return a 2-element array holding the minimum and maximum
+        values of spline(t) for t in [t0, t1] within the given
+        segment. */
     public double[] range(int segment, double t0, double t1) {
         double[] poly = coefficients[segment];
         double[] extrema = quadraticFormula
