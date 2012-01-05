@@ -12,6 +12,14 @@ public class LineSegment {
         this.p2 = p2;
     }
 
+    /** @return a new LineSegment with the x and y coordinates
+        switched. */
+    public LineSegment transpose() {
+        return new LineSegment
+            (new Point2D.Double(p1.getY(), p1.getX()),
+             new Point2D.Double(p2.getY(), p2.getX()));
+    }
+
     public String toString() {
         return "LineSegment[" + p1 + " - " + p2 + "]";
     }
