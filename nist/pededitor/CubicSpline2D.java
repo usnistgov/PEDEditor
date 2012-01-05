@@ -39,8 +39,8 @@ final public class CubicSpline2D {
 
     public <T extends Point2D> CubicSpline2D (T[] points, boolean closed) {
         int cnt = points.length;
-        if (closed) {
-            int padding = 5;
+
+        if (closed && cnt >= 2) {
             // Pad the vertex set with extra points at each end from
             // the other end of the curve, to give the algorithm a
             // hint about how to wrap around at the endpoints. The
@@ -48,20 +48,30 @@ final public class CubicSpline2D {
             // derivatives won't match precisely), but it should be
             // close.
 
-            ArrayList<Point2D> paddedPoints = new ArrayList<Point2D>();
-            for (int i = 0; i < padding * 2 + points.length; ++i) {
-                int j = (((i - padding) % cnt) + cnt) % cnt;
-                paddedPoints.add(points[j]);
+            if (points[0].equals(points[cnt-1])) {
+                // If the last vertex repeats the first one, ignore
+                // it.
+                --cnt;
             }
 
-            CubicSpline2D paddedSpline = new CubicSpline2D
-                (paddedPoints.toArray(new Point2D[0]), false);
+            if (cnt > 1) {
+                int padding = 5;
 
-            // Now remove all of the padding, but keep the extra
-            // segment that connects the two endpoints.
-            xSpline = paddedSpline.xSpline.copyOfRange(padding, cnt + 1);
-            ySpline = paddedSpline.ySpline.copyOfRange(padding, cnt + 1);
-            return;
+                ArrayList<Point2D> paddedPoints = new ArrayList<Point2D>();
+                for (int i = 0; i < padding * 2 + cnt; ++i) {
+                    int j = (((i - padding) % cnt) + cnt) % cnt;
+                    paddedPoints.add(points[j]);
+                }
+
+                CubicSpline2D paddedSpline = new CubicSpline2D
+                    (paddedPoints.toArray(new Point2D[0]), false);
+
+                // Now remove all of the padding, but keep the extra
+                // segment that connects the two endpoints.
+                xSpline = paddedSpline.xSpline.copyOfRange(padding, cnt + 1);
+                ySpline = paddedSpline.ySpline.copyOfRange(padding, cnt + 1);
+                return;
+            }
         }
 
         double[] xs = new double[cnt];
@@ -481,6 +491,128 @@ final public class CubicSpline2D {
 
             candidateRanges = newCandidateRanges;
         }
+    }
+
+    public Point2D.Double[] intersections(LineSegment segment) {
+        double sdx = segment.p2.getX() - segment.p1.getX();
+        double sdy = segment.p2.getY() - segment.p1.getY();
+        if (sdx == 0 && sdy == 0) {
+            // The segment is a point, so the claim that segment
+            // doesn't intersect the spline is either true or within
+            // an infinitesimal distance of being true, and we don't
+            // guarantee infinite precision, so just return nothing.
+            return new Point2D.Double[0];
+        }
+        boolean swapxy = Math.abs(sdx) < Math.abs(sdy);
+        if (swapxy) {
+            segment = segment.transpose();
+            double tmp = sdx;
+            sdx = sdy;
+            sdy = tmp;
+        }
+
+        // Now the segment (with x and y swapped if necessary) has
+        // slope with absolute value less than 1. That reduces the
+        // number of corner cases and helps avoid numerical
+        // instability.
+
+        double m = sdy/sdx; // |m| <= 1
+        double b = segment.p1.getY() - m * segment.p1.getX();
+
+        // y = mx + b
+
+        double minx = Math.min(segment.p1.getX(), segment.p2.getX());
+        double maxx = Math.max(segment.p1.getX(), segment.p2.getX());
+
+        ArrayList<Point2D.Double> output = new ArrayList<Point2D.Double>();
+
+        for (int segNo = 0; segNo < segmentCnt(); ++segNo) {
+            double[] xCubic = xSpline.getPoly(segNo);
+            double[] yCubic = ySpline.getPoly(segNo);
+
+            if (swapxy) {
+                double[] temp = xCubic;
+                xCubic = yCubic;
+                yCubic = temp;
+            }
+
+            // Let nuCubic = yCubic, equate nuCubic(t) = mx + b, and
+            // solve for x(t).
+
+            // Equate yCubic(t) = mx + b  and solve for x(t).
+
+            double nuCubic[] = (double[]) yCubic.clone();
+
+            nuCubic[0] -= b;
+
+            // Divide nuCubic by m.
+            for (int i = 0; i < nuCubic.length; ++i) {
+                nuCubic[i] /= m;
+            }
+
+            // Now we have
+
+            // xCubic(t) = x
+            // nuCubic(t) = x
+
+            // therefore
+
+            // (nuCubic - xCubic) = 0
+
+            // and with that we can solve for t.
+
+            for (int i = 0; i < 4; ++i) {
+                nuCubic[i] -= xCubic[i];
+            }
+
+            double[] res = new double[3];
+            int rootCnt = CubicCurve2D.solveCubic(nuCubic, res);
+
+            if (rootCnt == -1) {
+                continue;
+            }
+
+            for (int i = 0; i < rootCnt; ++i) {
+                double t = res[i];
+
+                // Handling the joints of the spline can get messy if
+                // you want to mathematically eliminate the
+                // possibilites of counting a single intersection as
+                // zero or two intersections due to precision
+                // limitations, but let's keep it simple. It's not too
+                // bad if we register two intersections at (or nearly
+                // at) the same place where we really should get just
+                // one, while it's (hopefully) very unlikely that lack
+                // of precision plus bad luck should yield zero
+                // intersections where there should be one.
+
+                if (t < 0 || t > 1) {
+                    // Bounds error: the poly domain is t in [0,1].
+                    continue;
+                }
+
+                double x = Polynomial.evaluate(t, xCubic);
+
+                if (x < minx || x > maxx) {
+                    // Bounds error: the segment domain is x in [minx,
+                    // maxx].
+                    continue;
+                }
+
+                double y = Polynomial.evaluate(t, yCubic);
+                Point2D.Double p = new Point2D.Double();
+                if (swapxy) {
+                    p.x = y;
+                    p.y = x;
+                } else {
+                    p.x = x;
+                    p.y = y;
+                }
+                output.add(p);
+            }
+        }
+
+        return output.toArray(new Point2D.Double[0]);
     }
 
     /** Just a test harness */
