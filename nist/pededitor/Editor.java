@@ -75,11 +75,6 @@ import org.codehaus.jackson.map.annotate.*;
 // relatively simple formulas. Not all of those are mandatory, but it
 // sounds like implementing at least one of them is.
 
-// TODO (recommended) Detect intersections of splines with segments.
-// Fairly low difficulty assuming the Java library cubic equation
-// solver, CubicCurve2D, is properly implemented to be numerically
-// stable and handle degenerate cases.
-
 // TODO (mandatory?) Curve section decorations (e.g. pen-up/pen-down).
 // Not important for new diagrams as far as I can see, but may be
 // required for backwards compatibility.
@@ -1128,11 +1123,11 @@ public class Editor implements CropEventListener, MouseListener,
             }
         }
 
+        LineSegment[] segments = getAllLineSegments();
+
         // Check all intersections of straight line segments.
         // Intersections of two curves, or one curve and one segment,
         // are not detected at this time.
-
-        LineSegment[] segments = getAllLineSegments();
         for (int i = 0; i < segments.length; ++i) {
             LineSegment s1 = segments[i];
             for (int j = i + 1; j < segments.length; ++j) {
@@ -1145,8 +1140,28 @@ public class Editor implements CropEventListener, MouseListener,
             }
         }
 
+        // Check cubic+straight line segment intersections.
+        for (GeneralPolyline path: paths) {
+            if (path.size() <= 2
+                || path.getSmoothingType() !=  GeneralPolyline.CUBIC_SPLINE) {
+                // Curve is not actually curved.
+                continue;
+            }
+
+            CubicSpline2D spline
+                = ((SplinePolyline) path).getSpline(new AffineTransform());
+
+            for (LineSegment segment: segments) {
+                for (Point2D.Double point: spline.intersections(segment)) {
+                    output.add(point);
+                }
+            }
+
+        }
+
         return output;
     }
+
 
     /** Like seekNearestPoint(), but instead select the point on a
         previously added segment that is nearest to the mouse pointer
