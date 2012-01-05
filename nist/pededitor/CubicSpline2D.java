@@ -536,37 +536,37 @@ final public class CubicSpline2D {
                 yCubic = temp;
             }
 
-            // Let nuCubic = yCubic, equate nuCubic(t) = mx + b, and
+            // Let cubic = yCubic, equate cubic(t) = mx + b, and
             // solve for x(t).
 
             // Equate yCubic(t) = mx + b  and solve for x(t).
 
-            double nuCubic[] = (double[]) yCubic.clone();
+            double cubic[] = (double[]) yCubic.clone();
 
-            nuCubic[0] -= b;
+            cubic[0] -= b;
 
-            // Divide nuCubic by m.
-            for (int i = 0; i < nuCubic.length; ++i) {
-                nuCubic[i] /= m;
+            // Divide cubic by m.
+            for (int i = 0; i < cubic.length; ++i) {
+                cubic[i] /= m;
             }
 
             // Now we have
 
             // xCubic(t) = x
-            // nuCubic(t) = x
+            // cubic(t) = x
 
             // therefore
 
-            // (nuCubic - xCubic) = 0
+            // (cubic - xCubic) = 0
 
             // and with that we can solve for t.
 
             for (int i = 0; i < 4; ++i) {
-                nuCubic[i] -= xCubic[i];
+                cubic[i] -= xCubic[i];
             }
 
             double[] res = new double[3];
-            int rootCnt = CubicCurve2D.solveCubic(nuCubic, res);
+            int rootCnt = CubicCurve2D.solveCubic(cubic, res);
 
             if (rootCnt == -1) {
                 continue;
