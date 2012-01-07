@@ -5,11 +5,12 @@ import java.awt.event.*;
 import java.awt.geom.*;
 import java.util.*;
 
-public class EditPane extends ImagePane {
+import javax.swing.JPanel;
+
+public class EditPane extends JPanel {
 
     protected String filename = null;
     protected EditFrame parentFrame;
-    protected Path2D spline;
     protected Shape diagramOutline = null;
 
     EditPane(EditFrame parentFrame) {
@@ -18,15 +19,6 @@ public class EditPane extends ImagePane {
         addMouseListener(adapt);
         addMouseMotionListener(adapt);
         setCursor(new Cursor(Cursor.CROSSHAIR_CURSOR));
-    }
-
-    public void setDiagramOutline(Shape diagramOutline) {
-        this.diagramOutline = diagramOutline;
-        repaint();
-    }
-
-    public Shape getDiagramOutline() {
-        return diagramOutline;
     }
 
     public EditFrame getParentFrame() {
@@ -53,7 +45,6 @@ public class EditPane extends ImagePane {
 
     public void paintComponent(Graphics g) {
         super.paintComponent(g);
-        // System.out.println("Paint Edit Pane");
         getParentFrame().getParentEditor().paintEditPane(g);
     }
 }
