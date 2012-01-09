@@ -8,8 +8,14 @@ import java.util.*;
 
 import javax.swing.*;
 
-public class EditFrame extends ImageScrollFrame {
+public class EditFrame extends JFrame {
     static JDialog helpDialog = null;
+
+    protected JPanel contentPane;
+    protected JScrollPane scrollPane;
+    protected EditPane imagePane;
+    protected int preferredWidth = 800;
+    protected int preferredHeight = 600;
 
     protected JPanel statusBar;
     protected JLabel statusLabel;
@@ -117,6 +123,16 @@ public class EditFrame extends ImageScrollFrame {
      */
     public EditFrame(Editor parentEditor) {
         this.parentEditor = parentEditor;
+        setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        setLocation(0, 0);
+        contentPane = new JPanel(new BorderLayout());
+        setContentPane(contentPane);
+        imagePane = new EditPane(this);
+        scrollPane = new JScrollPane(imagePane);
+        scrollPane.setPreferredSize
+            (new Dimension(preferredWidth, preferredHeight));
+        contentPane.add(scrollPane, BorderLayout.CENTER);
+
         boolean editable = parentEditor.isEditable();
         statusBar = new JPanel();
         statusLabel = new JLabel("<html><font size=\"-2\">"
@@ -127,9 +143,9 @@ public class EditFrame extends ImageScrollFrame {
         JMenuBar menuBar = new JMenuBar();
         setJMenuBar(menuBar);
 
-
         // "File" top-level menu
         JMenu mnFile = new JMenu("File");
+        mnFile.setMnemonic(KeyEvent.VK_F);
         menuBar.add(mnFile);
 
         mnFile.add(new EditFrameAction("New Diagram", KeyEvent.VK_N) {
@@ -141,6 +157,7 @@ public class EditFrame extends ImageScrollFrame {
 
         // "Open" submenu
         JMenu mnOpen = new JMenu("Open");
+        mnOpen.setMnemonic(KeyEvent.VK_O);
         mnFile.add(mnOpen);
 
         mnOpen.add(new EditFrameAction("Diagram", KeyEvent.VK_D) {
@@ -169,6 +186,7 @@ public class EditFrame extends ImageScrollFrame {
 
         // "Save As" submenu
         JMenu mnSaveAs = new JMenu("Save As");
+        mnSaveAs.setMnemonic(KeyEvent.VK_A);
         mnFile.add(mnSaveAs);
 
         if (editable) {
@@ -180,14 +198,14 @@ public class EditFrame extends ImageScrollFrame {
                 });
         }
 
-        mnSaveAs.add(new EditFrameAction("PDF", KeyEvent.VK_P) {
+        mnSaveAs.add(new EditFrameAction("PDF", KeyEvent.VK_F) {
                 @Override
                     public void actionPerformed(ActionEvent e) {
                     getParentEditor().saveAsPDF();
                 }
             });
 
-        mnSaveAs.add(new EditFrameAction("SVG", KeyEvent.VK_P) {
+        mnSaveAs.add(new EditFrameAction("SVG", KeyEvent.VK_S) {
                 @Override
                     public void actionPerformed(ActionEvent e) {
                     getParentEditor().saveAsSVG();
@@ -214,6 +232,7 @@ public class EditFrame extends ImageScrollFrame {
 
         // "Vertex" top-level menu
         JMenu mnVertex = new JMenu("Vertex");
+        mnVertex.setMnemonic(KeyEvent.VK_V);
         menuBar.add(mnVertex);
 
         if (editable) {
@@ -290,6 +309,7 @@ public class EditFrame extends ImageScrollFrame {
 
         // "Curve" top-level menu
         JMenu mnCurve = new JMenu("Curve");
+        mnCurve.setMnemonic(KeyEvent.VK_C);
 
         mnCurve.add(new EditFrameAction("Deselect",
                                         KeyEvent.VK_D, "pressed END") {
@@ -316,7 +336,7 @@ public class EditFrame extends ImageScrollFrame {
                 }
             });
 
-        mnCurve.add(new EditFrameAction("Select next", KeyEvent.VK_L) {
+        mnCurve.add(new EditFrameAction("Select next", KeyEvent.VK_N) {
                 @Override
                     public void actionPerformed(ActionEvent e) {
                     getParentEditor().cycleActiveCurve(+1);
@@ -325,7 +345,7 @@ public class EditFrame extends ImageScrollFrame {
 
         if (editable) {
             mnCurve.add(new EditFrameAction("Toggle smoothing",
-                                            KeyEvent.VK_T,
+                                            KeyEvent.VK_S,
                                             KeyStroke.getKeyStroke('s')) {
                     @Override
                         public void actionPerformed(ActionEvent e) {
@@ -343,6 +363,7 @@ public class EditFrame extends ImageScrollFrame {
                 });
 
             JMenu mnLineStyle = new JMenu("Line style");
+            mnLineStyle.setMnemonic(KeyEvent.VK_T);
         
             LineStyleRadioMenuItem solidLineItem = 
                 new LineStyleRadioMenuItem("images/line.png",
@@ -364,6 +385,7 @@ public class EditFrame extends ImageScrollFrame {
             mnCurve.add(mnLineStyle);
 
             JMenu mnLineWidth = new JMenu("Line width");
+            mnLineWidth.setMnemonic(KeyEvent.VK_W);
             mnLineWidth.add(new LineWidthRadioMenuItem("images/line1.png", 0.0006));
             LineWidthRadioMenuItem normalWidthItem = 
                 new LineWidthRadioMenuItem("images/line2.png", 0.0012);
@@ -426,7 +448,7 @@ public class EditFrame extends ImageScrollFrame {
                 });
 
             mnLabel.add(new EditFrameAction
-                        ("Change label font", KeyEvent.VK_N) {
+                        ("Change label font", KeyEvent.VK_F) {
                     @Override
                         public void actionPerformed(ActionEvent e) {
                         getParentEditor().setLabelFont();
@@ -451,7 +473,7 @@ public class EditFrame extends ImageScrollFrame {
                 });
 
             mnLabel.add(new EditFrameAction("Add right arrowhead",
-                                            KeyEvent.VK_L,
+                                            KeyEvent.VK_R,
                                             KeyStroke.getKeyStroke('>')) {
                     @Override
                         public void actionPerformed(ActionEvent e) {
@@ -493,7 +515,7 @@ public class EditFrame extends ImageScrollFrame {
                     }
                 });
             mnDiagram.add(new EditFrameAction
-                          ("Components...", KeyEvent.VK_M) {
+                          ("Components...", KeyEvent.VK_C) {
                     @Override
                         public void actionPerformed(ActionEvent e) {
                         getParentEditor().editDiagramComponents();
@@ -514,6 +536,7 @@ public class EditFrame extends ImageScrollFrame {
 
         // "View" top-level menu
         JMenu mnView = new JMenu("View");
+        mnView.setMnemonic(KeyEvent.VK_V);
         menuBar.add(mnView);
 
         mnView.add(new EditFrameAction("Zoom In", KeyEvent.VK_I,
@@ -528,7 +551,7 @@ public class EditFrame extends ImageScrollFrame {
                     getParentEditor().zoomBy(1 / 1.5);
                 }
             });
-        mnView.add(new EditFrameAction("Best Fit", KeyEvent.VK_F,
+        mnView.add(new EditFrameAction("Best Fit", KeyEvent.VK_B,
                                        KeyStroke.getKeyStroke("control B")) {
                 public void actionPerformed(ActionEvent e) {
                     getParentEditor().bestFit();
@@ -536,6 +559,7 @@ public class EditFrame extends ImageScrollFrame {
             });
 
         JMenu mnHelp = new JMenu("Help");
+        mnHelp.setMnemonic(KeyEvent.VK_H);
         menuBar.add(mnHelp);
         mnHelp.add(new EditFrameAction("Help", KeyEvent.VK_H, "F1") {
                 @Override
@@ -581,11 +605,11 @@ public class EditFrame extends ImageScrollFrame {
                             + "</font></html>");
     }
 
-    protected ImagePane newImagePane() {
-        return new EditPane(this);
+    protected EditPane getEditPane() {
+        return (EditPane) imagePane;
     }
 
-    protected EditPane getEditPane() {
-        return (EditPane) getImagePane();
+    public JScrollPane getScrollPane() {
+        return scrollPane;
     }
 }
