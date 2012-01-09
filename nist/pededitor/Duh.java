@@ -8,6 +8,18 @@ import java.util.Arrays;
 /** Utility functions for working with points and polygons. */
 public class Duh {
 
+    static double length(Point2D point) {
+        double x = point.getX();
+        double y = point.getY();
+        return Math.sqrt(x*x + y * y);
+    }
+
+    static double lengthSq(Point2D point) {
+        double x = point.getX();
+        double y = point.getY();
+        return x*x + y * y;
+    }
+
     static class ReverseAngleSort implements Comparator<Point2D.Double> {
         Point2D.Double center;
 
