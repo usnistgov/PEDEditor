@@ -2,15 +2,48 @@ package gov.nist.pededitor;
 
 import org.codehaus.jackson.annotate.JsonProperty;
 
+/** Class to hold definitions of a text or HTML string anchored to a
+    location in space and possibly drawn at an angle. */
 public class AnchoredLabel {
+
+    /** x position of the anchor point */
     double x;
+    /** y position of the anchor point */
     double y;
+
+    /** Text positioning relative to the anchor point. 0.0 = The
+        anchor point lies along the left edge of the text block in
+        baseline coordinates (if the text is rotated, then this edge
+        may not be on the left in physical coordinates; for example,
+        if the text is rotated by an angle of PI/2, then this will be
+        the top edge in physical coordinates); 0.5 = the anchor point
+        lies along the vertical line (in baseline coordinates) that
+        bisects the text block; 1.0 = the anchor point lies along the
+        right edge (in baseline coordinates) of the text block */
     double xWeight;
+
+    /** Text positioning relative to the anchor point. 0.0 = The
+        anchor point lies along the top edge of the text block in
+        baseline coordinates (if the text is rotated, then this edge
+        may not be on top in physical coordinates; for example, if the
+        text is rotated by an angle of PI/2, then this will be the
+        right edge in physical coordinates); 0.5 = the anchor point
+        lies along the horizontal line (in baseline coordinates) that
+        bisects the text block; 1.0 = the anchor point lies along the
+        bottom edge (in baseline coordinates) of the text block */
     double yWeight;
+
+    /** The actual string to display. (This may be HTML or something
+        else as opposed to plain text.) */
     String text;
+
+    /** Printing angle in clockwise radians. 0 represents
+        left-to-right text; Math.PI/2 represents text where lines
+        extend downwards. */
     double angle = 0.0;
 
-    /** A multiple of a standard font size (so 1.0 = normal). */
+    /** A multiple of a standard font size (1.0 = normal), where the
+        standard font size is defined by the application. */
     double fontSize;
 
     public AnchoredLabel
