@@ -35,24 +35,35 @@ public class LinearAxisInfo extends AxisInfo {
         return new DecimalFormat("##0.0");
     }
 
-    static public LinearAxisInfo getXAxis(NumberFormat format) {
+    static public LinearAxisInfo createXAxis(NumberFormat format) {
         LinearAxisInfo output = new LinearAxisInfo(format, 1.0, 0.0, 0.0);
         output.name = "X";
         return output;
     }
 
-    static public LinearAxisInfo getXAxis() {
-        return getXAxis(getDefaultFormat());
+    static public LinearAxisInfo createXAxis() {
+        return createXAxis(getDefaultFormat());
     }
 
-    static public LinearAxisInfo getYAxis(NumberFormat format) {
+    static public LinearAxisInfo createFromAffine
+        (NumberFormat format, AffineTransform xform, boolean isY) {
+        if (isY) {
+            return new LinearAxisInfo(format, xform.getShearY(),
+                                      xform.getScaleY(), xform.getTranslateY());
+        } else {
+            return new LinearAxisInfo(format, xform.getScaleX(),
+                                      xform.getShearX(), xform.getTranslateX());
+        }
+    }
+
+    static public LinearAxisInfo createYAxis(NumberFormat format) {
         LinearAxisInfo output = new LinearAxisInfo(format, 0.0, 1.0, 0.0);
         output.name = "Y";
         return output;
     }
 
-    static public LinearAxisInfo getYAxis() {
-        return getYAxis(getDefaultFormat());
+    static public LinearAxisInfo createYAxis() {
+        return createYAxis(getDefaultFormat());
     }
 
 }

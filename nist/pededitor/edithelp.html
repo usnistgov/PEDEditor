@@ -15,8 +15,10 @@ Digitization</code></a> option instead.</p>
 
 <h3>Open diagram</h3>
 
-<p>Open a diagram that was previously saved in the PED Editor's native
-<code>PED</code> format.</p>
+<p>Open a diagram that was previously saved in this program's native
+<code>PED</code> format. If the diagram was created using the "Open
+Image for Digitization" option and the original image is still
+available, then the image will also be loaded.</p>
 
 <a name="openimage"><h3>Open Image for Digitization</h3></a>
 
@@ -28,24 +30,21 @@ Selection Window's help menu option.</p>
 
 <h3>Save / Save As PED</h3>
 
-<p>Save a diagram in the PED Editor's native PED format. If the
-diagram was not previously assigned a filename or the "Save As" option
-is selected, you will be asked what name the file should be given.</p>
+<p>Save a diagram in this program's native PED format.</p>
 
 <h3>Save as PDF</h3>
 
-<p>Save the diagram as an Adobe PDF format file. PDF files can be
-understood by many programs and can provide high quality images, but
-the PED Editor cannot read PDF files, even if those PDF files
-were created using the editor.</p>
+<p>Save the diagram as an Adobe PDF document. This is an export-only
+format; this program cannot read PDF files, even ones that it
+created.</p>
 
 <p>TODO Currently, strange characters get lost during save as PDF.</p>
 
 <h3>Save as SVG</h3>
 
 <p>TODO This doesn't work. Maybe one could get it to work, but that is
-not a priority. (Maybe it should be, though, if difficulties with
-strange characters and PDF prove difficult to surmount.)</p>
+not a priority. (Maybe it should be, though, if the "save as PDF"
+problems cannot be resolved.)</p>
 
 <h3>Print</h3>
 
@@ -53,7 +52,8 @@ strange characters and PDF prove difficult to surmount.)</p>
 piece of paper will yield a larger diagram).</p>
 
 <p>TODO Word spacing is broken in printed diagrams. I don't know how
-to fix that, because the problem occurs in Java library code.</p>
+to fix that, because the problem occurs in a Java library, not in my
+own code.</p>
 
 <h2>Curves and Vertices</h2>
 
@@ -269,6 +269,9 @@ is unimportant, but being able to move labels would be nice.</p>
 
 <p>Press '-' to zoom out, '+' to zoom in, and Control-B to obtain the
 best fit of the diagram to the edit window's current size.</p>
+
+<p>Zooming in to a digitized image at high magnification may take a
+number of seconds, so be patient.</p>
 
 </body>
 </html>

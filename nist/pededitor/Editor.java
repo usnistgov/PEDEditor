@@ -60,7 +60,7 @@ import org.codehaus.jackson.map.annotate.*;
 // lines are defined by three or four endpoints, and all tie lines
 // intersect at a single vanishing point, so quadrilateral tie lines
 // are created by regularly sectioning the angle through that point
-// and selectiong the region between the two boundary curves.
+// and selectioning the region between the two boundary curves.
 
 // TODO (mandatory) Paired squiggles that indicate elided portions of
 // an axis
@@ -165,13 +165,6 @@ import org.codehaus.jackson.map.annotate.*;
 // TODO (mandatory) "Symbol" type lines are not implemented.
 
 // TODO (optional) User-defined line and point widths.
-
-// TODO (important) Cache scaled versions of scanned images for speed.
-
-// TODO At high magnification, rescale only part of the scanned image
-// for speed. If this isn't done, then blowing up traced images to,
-// say, 20,000x20,000 -- even if you're actually just looking at a
-// small fraction of the whole -- becomes impractical.
 
 // TODO (preexisting in viewer) Periodic table integration and
 // automatic conversion of diagrams from mole percent to weight
@@ -319,20 +312,21 @@ public class Editor implements CropEventListener, MouseListener,
     protected String originalFilename;
 
     // TODO Save axes in PED! @JsonProperty
-    protected ArrayList<AxisInfo> axes;
-    protected AxisInfo xAxis = null;
-    protected AxisInfo yAxis = null;
-    protected AxisInfo zAxis = null;
-    protected AxisInfo pageXAxis = null;
-    protected AxisInfo pageYAxis = null;
+    protected ArrayList<LinearAxisInfo> axes;
+    protected LinearAxisInfo xAxis = null;
+    protected LinearAxisInfo yAxis = null;
+    protected LinearAxisInfo zAxis = null;
+    protected LinearAxisInfo pageXAxis = null;
+    protected LinearAxisInfo pageYAxis = null;
     protected boolean preserveMprin = false;
+    protected int paintSuppressionRequestCnt;
 
     /** mouseIsStuck is true if the user recently performed a
         point-selection operatiorn such as "nearest vertex" or
         "nearest point on curve" and the mouse has not yet been moved
         far enough to un-stick the mouse from that location. */
     protected boolean mouseIsStuck;
-    protected ArrayList<BufferedImage> scaledOriginalImages;
+    protected ArrayList<ScaledCroppedImage> scaledOriginalImages;
     protected double labelXMargin = 0;
     protected double labelYMargin = 0;
 
@@ -353,8 +347,8 @@ public class Editor implements CropEventListener, MouseListener,
 
     public Editor() {
         clear();
-        editFrame.getImagePane().addMouseListener(this);
-        editFrame.getImagePane().addMouseMotionListener(this);
+        getEditPane().addMouseListener(this);
+        getEditPane().addMouseMotionListener(this);
         cropFrame.addCropEventListener(this);
     }
 
@@ -381,15 +375,16 @@ public class Editor implements CropEventListener, MouseListener,
         labelCenters = new ArrayList<Point2D.Double>();
         activeCurveNo = -1;
         activeVertexNo = -1;
-        axes = new ArrayList<AxisInfo>();
+        axes = new ArrayList<LinearAxisInfo>();
         mprin = null;
         filename = null;
         saveNeeded = false;
-        scaledOriginalImages = new ArrayList<BufferedImage>();
+        scaledOriginalImages = new ArrayList<ScaledCroppedImage>();
         vertexInfo.setAngle(0);
         vertexInfo.setSlope(0);
         vertexInfo.setLineWidth(lineWidth);
         mouseIsStuck = false;
+        paintSuppressionRequestCnt = 0;
     }
 
     @JsonProperty("curves")
@@ -563,10 +558,16 @@ public class Editor implements CropEventListener, MouseListener,
         show the final form of the diagram. This parameter should be
         false except while painting the editFrame. */
     public void paintDiagram(Graphics2D g, double scale, boolean editing) {
-        if (principalToStandardPage == null) {
+        if (principalToStandardPage == null
+            || paintSuppressionRequestCnt > 0) {
             return;
         }
-        if (!tracingImage()) {
+
+        if (tracingImage()) {
+            ScaledCroppedImage im = getScaledOriginalImage();
+            g.drawImage(im.croppedImage, im.cropBounds.x, im.cropBounds.y,
+                        null);
+        } else {
             // TODO might need more work, but not a priority now
 
             // TODO Prohibit drawing outside the page, or expand the
@@ -663,7 +664,8 @@ public class Editor implements CropEventListener, MouseListener,
 
                 g.setColor(Color.GREEN);
                 draw(g, path, scale);
-                circleVertices(g, path, scale, false, 4.0);
+                double r = Math.max(path.getLineWidth() * scale * 1.5, 4.0);
+                circleVertices(g, path, scale, false, r);
 
                 // Mark the active vertex specifically.
                 Point2D.Double point = getActiveVertex();
@@ -671,7 +673,6 @@ public class Editor implements CropEventListener, MouseListener,
                     Point2D.Double xpoint = new Point2D.Double();
                     Affine p2d = principalToScaledPage(scale);
                     p2d.transform(point, xpoint);
-                    double r = 4.0;
                     g.fill(new Ellipse2D.Double
                            (xpoint.x - r, xpoint.y - r, r * 2, r * 2));
                 }
@@ -889,9 +890,14 @@ public class Editor implements CropEventListener, MouseListener,
         // re-visiting a few previously visited points, but that's
         // harmless).
 
+        Point2D.Double nearPagePoint
+            = principalToStandardPage.transform(nearPoint);
+
         int pathCnt = paths.size();
 
         int acn = (activeCurveNo > 0) ? activeCurveNo : 0;
+
+        double tinyDistSq = 1e-12;
 
         for (int i = 0; i <= pathCnt; ++i) {
             int pathNo = (acn - i + pathCnt) % pathCnt;
@@ -900,7 +906,11 @@ public class Editor implements CropEventListener, MouseListener,
             int startVertex = (i == 0) ? (activeVertexNo-1) : (vertexCnt-1);
             for (int vertexNo = startVertex; vertexNo >= 0; --vertexNo) {
                 Point2D.Double vertex = path.get(vertexNo);
-                if (vertex.x == nearPoint.x && vertex.y == nearPoint.y) {
+                Point2D.Double pagePoint
+                    = principalToStandardPage.transform(vertex);
+                double dist2 = pagePoint.distanceSq(nearPagePoint);
+
+                if (dist2 < tinyDistSq) {
                     moveMouse(vertex);
                     mouseIsStuck = true;
                     showTangent(pathNo, vertexNo);
@@ -1068,6 +1078,8 @@ public class Editor implements CropEventListener, MouseListener,
         if (principalToStandardPage == null) {
             return;
         }
+
+        ++paintSuppressionRequestCnt;
         Point mpos = Duh.floorPoint
             (principalToScaledPage(scale).transform(mprin));
         
@@ -1090,6 +1102,8 @@ public class Editor implements CropEventListener, MouseListener,
             robot.mouseMove(mpos.x, mpos.y);
         } catch (AWTException e) {
             throw new RuntimeException(e);
+        } finally {
+            --paintSuppressionRequestCnt;
         }
 
         repaintEditFrame();
@@ -1307,10 +1321,11 @@ public class Editor implements CropEventListener, MouseListener,
     }
 
     void dontTrace() {
+        originalFilename = null;
+        originalToPrincipal = null;
         originalImage = null;
         zoomFrame.setVisible(false);
         editFrame.setTitle("Edit " + diagramType);
-        editFrame.setImage(null);
     }
 
     public void setOriginalFilename(String filename) {
@@ -1342,7 +1357,9 @@ public class Editor implements CropEventListener, MouseListener,
             initializeCrosshairs();
             zoomFrame.getImageZoomPane().crosshairs = crosshairs;
         } catch (IOException e) {
-            JOptionPane.showMessageDialog(editFrame, e.toString());
+            JOptionPane.showMessageDialog
+                (editFrame,
+                 "Original image unavailable: '" + filename + "': " +  e.toString());
             dontTrace();
         }
     }
@@ -1354,7 +1371,9 @@ public class Editor implements CropEventListener, MouseListener,
         try {
             // Work-around for a bug that affects EB's PC as of 11/11.
             System.setProperty("sun.java2d.d3d", "false");
-            UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
+            // TODO UNDO
+            // UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
+
         } catch (Exception e) {
             throw new Error(e);
         }
@@ -1710,9 +1729,9 @@ public class Editor implements CropEventListener, MouseListener,
     protected void initializeDiagram() {
         if (diagramType.isTernary()) {
             NumberFormat pctFormat = new DecimalFormat("##0.0'%'");
-            xAxis = LinearAxisInfo.getXAxis(pctFormat);
+            xAxis = LinearAxisInfo.createXAxis(pctFormat);
             xAxis.name = "Z";
-            yAxis = LinearAxisInfo.getYAxis(pctFormat);
+            yAxis = LinearAxisInfo.createYAxis(pctFormat);
             zAxis = new LinearAxisInfo(pctFormat, -1.0, -1.0, 100.0);
             zAxis.name = "X";
             axes.add(zAxis);
@@ -1720,8 +1739,8 @@ public class Editor implements CropEventListener, MouseListener,
             axes.add(xAxis);
         } else {
             NumberFormat format = new DecimalFormat("##0.0");
-            xAxis = LinearAxisInfo.getXAxis(format);
-            yAxis = LinearAxisInfo.getYAxis(format);
+            xAxis = LinearAxisInfo.createXAxis(format);
+            yAxis = LinearAxisInfo.createYAxis(format);
             axes.add(xAxis);
             axes.add(yAxis);
         }
@@ -1735,9 +1754,11 @@ public class Editor implements CropEventListener, MouseListener,
 
         {
             NumberFormat format = new DecimalFormat("0.000");
-            pageXAxis = new AffineXAxisInfo(principalToStandardPage, format);
+            pageXAxis = LinearAxisInfo.createFromAffine
+                (format, principalToStandardPage, false);
             pageXAxis.name = "page X";
-            pageYAxis = new AffineYAxisInfo(principalToStandardPage, format);
+            pageYAxis = LinearAxisInfo.createFromAffine
+                (format, principalToStandardPage, true);
             pageYAxis.name = "page Y";
             axes.add(pageXAxis);
             axes.add(pageYAxis);
@@ -2203,6 +2224,8 @@ public class Editor implements CropEventListener, MouseListener,
             return;
         }
 
+        ++paintSuppressionRequestCnt;
+
         // Keep the center of the viewport where it was if the center
         // was a part of the image.
 
@@ -2236,21 +2259,7 @@ public class Editor implements CropEventListener, MouseListener,
                  (viewportPoint.y + view.y + 0.5) / oldScale);
         }
 
-        getEditPane().setPreferredSize
-            (new Dimension((int) Math.ceil(pageBounds.width * scale),
-                           (int) Math.ceil(pageBounds.height * scale)));
-
-        if (originalToPrincipal != null) {
-            // Initialize the faded and transformed image of the original
-            // diagram.
-            PolygonTransform originalToScreen = originalToPrincipal.clone();
-            originalToScreen.preConcatenate(principalToScaledPage(scale));
-            BufferedImage output = ImageTransform.run
-                (originalToScreen, getOriginalImage(), Color.WHITE,
-                 getEditPane().getPreferredSize());
-            fade(output);
-            editFrame.setImage(output);
-        }
+        getEditPane().setPreferredSize(scaledPageBounds(scale).getSize());
 
         if (pagePoint != null) {
             // Adjust viewport to preserve pagePoint => viewportPoint
@@ -2273,6 +2282,7 @@ public class Editor implements CropEventListener, MouseListener,
             preserveMprin = false;
         }
         getEditPane().revalidate();
+        --paintSuppressionRequestCnt;
         repaintEditFrame();
     }
 
@@ -2409,7 +2419,6 @@ public class Editor implements CropEventListener, MouseListener,
     }
 
     /**
-
        @param view The view.paint() method is used to perform the
        drawing (the decorated text to be encoded is implicitly
        included in this parameter)
@@ -2424,7 +2433,7 @@ public class Editor implements CropEventListener, MouseListener,
 
        @param ay The Y position of the anchor point
 
-       @param weightX 0.0 = The anchor point lies along the left edge
+       @param xWeight 0.0 = The anchor point lies along the left edge
        of the text block in baseline coordinates (if the text is
        rotated, then this edge may not be on the left in physical
        coordinates; for example, if the text is rotated by an angle of
@@ -2434,7 +2443,7 @@ public class Editor implements CropEventListener, MouseListener,
        anchor point lies along the right edge (in baseline
        coordinates) of the text block
 
-       @param weightY 0.0 = The anchor point lies along the top edge
+       @param yWeight 0.0 = The anchor point lies along the top edge
        of the text block in baseline coordinates (if the text is
        rotated, then this edge may not be on top in physical
        coordinates; for example, if the text is rotated by an angle of
@@ -2450,7 +2459,7 @@ public class Editor implements CropEventListener, MouseListener,
     */
     void drawHTML(Graphics g, View view, double scale, double angle,
                   double ax, double ay,
-                  double weightX, double weightY,
+                  double xWeight, double yWeight,
                   Point2D.Double labelCenter) {
         double width = view.getPreferredSpan(View.X_AXIS) + labelXMargin * 2;
         double height = view.getPreferredSpan(View.Y_AXIS) + labelYMargin * 2;
@@ -2462,7 +2471,7 @@ public class Editor implements CropEventListener, MouseListener,
         xform.scale(textScale, textScale);
         Point2D.Double xpoint = new Point2D.Double();
         xform.transform
-            (new Point2D.Double(width * weightX, height * weightY), xpoint);
+            (new Point2D.Double(width * xWeight, height * yWeight), xpoint);
 
         ax -= xpoint.x;
         ay -= xpoint.y;
@@ -2495,7 +2504,7 @@ public class Editor implements CropEventListener, MouseListener,
 
     void boxHTML(Graphics g, View view, double scale, double angle,
                   double ax, double ay,
-                  double weightX, double weightY) {
+                  double xWeight, double yWeight) {
         double width = view.getPreferredSpan(View.X_AXIS) + labelXMargin * 2;
         double height = view.getPreferredSpan(View.Y_AXIS) + labelYMargin * 2;
 
@@ -2506,7 +2515,7 @@ public class Editor implements CropEventListener, MouseListener,
         xform.scale(textScale, textScale);
         Point2D.Double xpoint = new Point2D.Double();
         xform.transform
-            (new Point2D.Double(width * weightX, height * weightY), xpoint);
+            (new Point2D.Double(width * xWeight, height * yWeight), xpoint);
 
         ax -= xpoint.x;
         ay -= xpoint.y;
@@ -2570,6 +2579,198 @@ public class Editor implements CropEventListener, MouseListener,
         Arrow arr = new Arrow(xpoint.x, xpoint.y, scale * ai.size, ai.theta);
         g.fill(arr);
     }
+
+    ScaledCroppedImage getScaledOriginalImage() {
+        JScrollPane spane = editFrame.getScrollPane();
+        Rectangle viewBounds = spane.getViewport().getViewRect();
+        Rectangle imageBounds = scaledPageBounds(scale);
+        Rectangle imageViewBounds = viewBounds.intersection(imageBounds);
+
+        // Attempt to work around a bug where Rectangle#intersection
+        // returns negative widths or heights.
+        if (imageViewBounds.width <= 0 || imageViewBounds.height <= 0) {
+            imageViewBounds = null;
+        }
+
+        int totalMemoryUsage = 0;
+        int maxScoreIndex = -1;
+        int maxScore = 0;
+
+        int cnt = scaledOriginalImages.size();
+
+        for (int i = cnt - 1; i>=0; --i) {
+            ScaledCroppedImage im = scaledOriginalImages.get(i);
+            if (Math.abs(1.0 - scale / im.scale) < 1e-6
+                && (imageViewBounds == null
+                    || im.cropBounds.contains(imageViewBounds))) {
+                // Found a match.
+
+                // Promote this image to the front of the LRU queue (last
+                // position in the ArrayList).
+                scaledOriginalImages.remove(i);
+                scaledOriginalImages.add(im);
+                if (i < cnt - 1) {
+                    System.out.println("Matched #" + (cnt - i));
+                }
+                return im;
+            }
+
+            // Lower scores are better. Penalties are given for memory
+            // usage and distance back in the queue (implying the
+            // image has not been used recently).
+
+            int mu = im.getMemoryUsage();
+            totalMemoryUsage += mu;
+
+            int thisScore = mu * (cnt - i);
+            if (thisScore > maxScore) {
+                maxScore = thisScore;
+                maxScoreIndex = i;
+            }
+        }
+
+        System.out.println("==================");
+        System.out.println("No match found.");
+        System.out.println("Image bounds = " + imageBounds);
+        System.out.println("Image view bounds = " + imageViewBounds);
+
+        // Save memory if we're at the limit.
+
+        int totalMemoryLimit = 20000000; // Limit is 20 megapixels total.
+        int totalImageCntLimit = 50;
+        if (totalMemoryUsage > totalMemoryLimit) {
+            System.out.println("Booting #" + (cnt - maxScoreIndex) + " ("
+                               + scaledOriginalImages.get(maxScoreIndex) + ") "
+                               +" for score " + maxScore);
+            scaledOriginalImages.remove(maxScoreIndex);
+        } else if (cnt >= totalImageCntLimit) {
+            // Remove the oldest image.
+            System.out.println("Booting #" + cnt + " ("
+                               + scaledOriginalImages.get(maxScoreIndex) + ") "
+                               +" for age.");
+            scaledOriginalImages.remove(0);
+        }
+
+        // Create a new ScaledCroppedImage that is big enough to hold
+        // all of a medium-sized scaled image and that is also at
+        // least several times the viewport size if the scaled image
+        // is big enough to need to be cropped.
+
+        // Creating a cropped image that is double the viewport size
+        // in both dimensions is near optimal in the sense that for a
+        // double-sized cropped image, if the user drags the mouse in
+        // a fixed direction, the frequency with which the scaled
+        // image has to be updated times the approximate cost of each
+        // update is minimized.
+
+        Dimension maxCropSize = new Dimension
+            (Math.max(2000, viewBounds.width * 2),
+             Math.max(1500, viewBounds.height * 2));
+
+        Rectangle cropBounds = new Rectangle();
+
+        if (imageBounds.width * 3 <= maxCropSize.width * 4) {
+            // If allowing a little extra space beyond the normal
+            // maximum can make cropping unnecessary, then do it.
+            cropBounds.x = 0;
+            cropBounds.width = imageBounds.width;
+        } else {
+            int margin1 = (maxCropSize.width - imageViewBounds.width) / 2;
+            int margin2 = margin1;
+
+            int ivmin = imageViewBounds.x;
+            int ivmax = ivmin + imageViewBounds.width;
+            int immax = imageBounds.x + imageBounds.width;
+
+            int extra = margin1 - ivmin;
+            if (extra > 0) {
+                // We don't need so much of a margin on this side, so
+                // we can have extra on the other side.
+                margin2 += extra;
+                margin1 -= extra;
+            }
+
+            extra = margin2 - (immax - ivmax);
+            if (extra > 0) {
+                // We don't need so much of a margin on this side, so
+                // we can have extra on the other side.
+                margin2 -= extra;
+                margin1 += extra;
+            }
+
+            cropBounds.x = imageViewBounds.x - margin1;
+            cropBounds.width = imageViewBounds.width + margin1 + margin2;
+        }
+
+        if (imageBounds.height * 3 <= maxCropSize.height  * 4) {
+            // If allowing a little extra space beyond the normal
+            // maximum can make cropping unnecessary, then do it.
+            cropBounds.y = 0;
+            cropBounds.height = imageBounds.height;
+        } else {
+            int margin1 = (maxCropSize.height - imageViewBounds.height) / 2;
+            int margin2 = margin1;
+
+            int ivmin = imageViewBounds.y;
+            int ivmax = ivmin + imageViewBounds.height;
+            int immax = imageBounds.y + imageBounds.height;
+
+            System.out.println("Margins were " + margin1 + ", " + margin2);
+
+            int extra = margin1 - ivmin;
+            if (extra > 0) {
+                // We don't need so much of a margin on this side, so
+                // we can have extra on the other side.
+                margin2 += extra;
+                margin1 -= extra;
+            }
+
+            extra = margin2- (immax - ivmax);
+            if (extra > 0) {
+                // We don't need so much of a margin on this side, so
+                // we can have extra on the other side.
+                margin2 -= extra;
+                margin1 += extra;
+            }
+
+            System.out.println("Margins are " + margin1 + ", " + margin2);
+            cropBounds.y = imageViewBounds.y - margin1;
+            cropBounds.height = imageViewBounds.height + margin1 + margin2;
+        }
+
+        System.out.println("Crop bounds = " + cropBounds);
+
+        // Create the transformed, cropped, and faded image of the
+        // original diagram.
+        PolygonTransform originalToCrop = originalToPrincipal.clone();
+        originalToCrop.preConcatenate(principalToScaledPage(scale));
+
+        // Shift the transform so that location (cropBounds.x,
+        // cropBounds.y) is mapped to location (0,0).
+
+        originalToCrop.preConcatenate
+            (new Affine(AffineTransform.getTranslateInstance
+                        ((double) -cropBounds.x, (double) -cropBounds.y)));
+
+        ScaledCroppedImage im = new ScaledCroppedImage();
+        im.scale = scale;
+        im.imageBounds = imageBounds;
+        im.cropBounds = cropBounds;
+        Cursor oldCursor = editFrame.getCursor();
+        ++paintSuppressionRequestCnt;
+        editFrame.setCursor(new Cursor(Cursor.WAIT_CURSOR));
+        System.out.println("Resizing original image; please wait...");
+        im.croppedImage = ImageTransform.run
+            (originalToCrop, getOriginalImage(), Color.WHITE,
+             new Dimension(cropBounds.width, cropBounds.height));
+        fade(im.croppedImage);
+        System.out.println("Finished.");
+        scaledOriginalImages.add(im);
+        --paintSuppressionRequestCnt;
+        System.out.println("New = " + im);
+        editFrame.setCursor(oldCursor);
+        return im;
+    }
 }
 
 // Annotations that are serialization hints for the Jackson JSON
@@ -2605,4 +2806,30 @@ class BasicStrokeAnnotations {
          @JsonProperty("miterLimit") float miterLimit,
          @JsonProperty("dashArray") float[] dashArray,
          @JsonProperty("dashPhase") float dashPhase) {}
+}
+
+class ScaledCroppedImage {
+    double scale;
+
+    int getMemoryUsage() {
+        return cropBounds.width * cropBounds.height;
+    }
+
+    /** The bounds of the entire image at this scale. */
+    Rectangle imageBounds;
+    /** The image of coveredRegion at this scale. */
+    BufferedImage croppedImage;
+    /** The bounds of the portion of the scaled image that is stored
+        in croppedImage. */
+    Rectangle cropBounds;
+
+    boolean isCropped() {
+        return cropBounds.width < imageBounds.width
+            || cropBounds.height < imageBounds.height;
+    }
+
+    public String toString() {
+        return "Scale: " + scale + " image: " + imageBounds
+            + " crop: " + cropBounds;
+    }
 }

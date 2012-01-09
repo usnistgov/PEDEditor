@@ -13,11 +13,16 @@ import org.codehaus.jackson.annotate.JsonIgnore;
 /** GUI for selecting a label string and an anchoring position for
     that label. */
 public class LabelDialog extends JDialog {
+    /** See AnchoredLabel.xWeight for the definition of this field. */
     double xWeight = 0;
+    /** See AnchoredLabel.yWeight for the definition of this field. */
     double yWeight = 0;
     JTextField textField;
     JTextField sizeNumerator;
     JTextField sizeDenominator;
+
+    /** Text angle in degrees, where 0 = left-to-right and 90 =
+        bottom-to-top. */
     JTextField angleField;
     boolean pressedOK = false;
     ImagePane compassPane;
@@ -202,19 +207,19 @@ public class LabelDialog extends JDialog {
         return new AnchorAction(image, xWeight, yWeight);
     }
 
-    /** @param weightX 0.0 = anchor on left ... 1.0 = anchor on right
+    /** @param xWeight 0.0 = anchor on left ... 1.0 = anchor on right
 
-        @param weightY 0.0 = anchor on top ... 1.0 = anchor on bottom
+        @param yWeight 0.0 = anchor on top ... 1.0 = anchor on bottom
     */
     public static void drawString(Graphics g, String str,
                                   double x, double y,
-                                  double weightX, double weightY) {
+                                  double xWeight, double yWeight) {
         Graphics2D g2d = (Graphics2D) g;
         FontMetrics fm = g.getFontMetrics();
         Rectangle2D bounds = fm.getStringBounds(str, g);
 
-        x += -bounds.getX() - bounds.getWidth() * weightX;
-        y += -bounds.getY() - bounds.getHeight() * weightY;
+        x += -bounds.getX() - bounds.getWidth() * xWeight;
+        y += -bounds.getY() - bounds.getHeight() * yWeight;
         g2d.drawString(str, (float) x, (float) y);
     }
 

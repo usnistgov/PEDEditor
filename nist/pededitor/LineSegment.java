@@ -2,7 +2,8 @@ package gov.nist.pededitor;
 
 import java.awt.geom.*;
 
-/** Trivial class representing a line segment. */
+/** Trivial class representing a line segment. TODO Replacing
+    LineSegment with Line2D everywhere is probably a good idea. */
 public class LineSegment {
     public Point2D p1;
     public Point2D p2;
