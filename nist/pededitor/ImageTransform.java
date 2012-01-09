@@ -59,7 +59,7 @@ public class ImageTransform {
         Rectangle2D.Double ib = xform.inputBounds();
         double ipixels = (ib.width+1) * (ib.height+1);
         int sampleCnt = (int) Math.round
-            (Math.max(3, Math.min(11, 3 * Math.sqrt(ipixels / (width * height)))));
+            (Math.max(2, Math.min(11, 2 * Math.sqrt(ipixels / (width * height)))));
         int samplesPerPixel = sampleCnt * sampleCnt;
         double inWidth = input.getWidth();
         double inHeight = input.getHeight();

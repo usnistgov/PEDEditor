@@ -43,4 +43,9 @@ abstract public class Transform2DAdapter implements Transform2D {
     public boolean transformNeverThrows() {
         return false;
     }
+
+    /** If not overridden, assume the transform is not affine. */
+    public boolean isAffine() {
+        return false;
+    }
 }

@@ -97,6 +97,12 @@ public class Affine extends AffineTransform implements Transform2D {
     public boolean transformNeverThrows() {
         return true;
     }
+
+    /** This transformation never throws an UnsolvableException. */
+    @Override
+    public boolean isAffine() {
+        return true;
+    }
     
     public Affine clone() {
     	return new Affine(this); 

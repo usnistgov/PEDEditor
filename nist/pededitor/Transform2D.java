@@ -32,5 +32,9 @@ interface Transform2D {
         UnsolvableException. */
     boolean transformNeverThrows();
 
+    /** @return true if this is an affine transformation of some
+        kind. */
+    boolean isAffine();
+
     Transform2D clone();
 }

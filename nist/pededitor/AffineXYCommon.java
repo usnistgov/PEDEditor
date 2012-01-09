@@ -61,6 +61,7 @@ abstract public class AffineXYCommon extends Transform2DAdapter
     }
 
     /** @ Return true if this is an affine transformation. */
+    @Override
     public boolean isAffine() {
         return xkxy == 0 && ykxy == 0;
     }
