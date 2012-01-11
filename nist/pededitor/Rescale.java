@@ -3,16 +3,18 @@ package gov.nist.pededitor;
 import java.awt.geom.*;
 import java.util.*;
 
+/** This class' purpose is described in its constructor docs. */
 public class Rescale {
     public double width;
     public double height;
     public double t;
 
     /** If there exists a quantity t such that the width of the scaled
-     object equals xMargin + t * xSlope and the height equals yMargin
-     + t * ySlope, and the width and height cannot exceed the given
-     maxima, then determine the maximum value of t that satisfies
-     those requirements, as well as the resulting width and height. */
+        object equals xMargin + t * xSlope and the height equals
+        yMargin + t * ySlope, and the width and height cannot exceed
+        the given maxima, then determine the maximum value of t that
+        satisfies those requirements, as well as the resulting width
+        and height. */
     Rescale(double xSlope, double xMargin, double maxWidth,
             double ySlope, double yMargin, double maxHeight) {
         double x = (maxWidth - xMargin) / xSlope;
@@ -20,5 +22,24 @@ public class Rescale {
         t = Math.min(x,y);
         width = xMargin + t * xSlope;
         height = yMargin + t * ySlope;
+    }
+
+    public String toString() {
+        return "t = " + t + ", w = " + width + ", h = " + height;
+    }
+
+    /** Verbose substitute for (new Rescale()) that may be useful when
+        debugging. */
+    public static Rescale createRescale
+        (double xSlope, double xMargin, double maxWidth,
+         double ySlope, double yMargin, double maxHeight) {
+        System.out.println
+            ("x = " + xMargin + " + " + xSlope + " t <= " + maxWidth + ", "
+             + "y = " + yMargin + " + " + ySlope + " t <= " + maxHeight);
+        Rescale output = new Rescale
+            (xSlope, xMargin, maxWidth,
+             ySlope, yMargin, maxHeight);
+        System.out.println(output);
+        return output;
     }
 }
