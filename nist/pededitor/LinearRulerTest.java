@@ -16,11 +16,14 @@ class TestPanelZ extends JPanel {
        r.yWeight = 0.5;
        r.fontSize = 12.0;
        r.textAngle = Math.PI/2;
-       r.tickRight = false;
-       r.tickLeft = true;
+       r.tickRight = true;
        r.lineWidth = 1.5;
-       r.labelAnchor = LinearRuler.LabelAnchor.LABEL_LEFT;
+       r.labelAnchor = LinearRuler.LabelAnchor.LEFT;
+       r.tickType = LinearRuler.TickType.V;
+       r.axis = new LinearAxisInfo(-0.001, 0.0, 17);
        setPreferredSize(new Dimension(700, 600));
+       r.startArrow = true;
+       r.endArrow = true;
    }
 
    public void paintComponent(Graphics g) {
