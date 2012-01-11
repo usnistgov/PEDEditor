@@ -186,6 +186,14 @@ public class Duh {
         return new Point2D.Double(a.x - b.x, a.y - b.y);
     }
 
+    public static Point2D.Double sum(Point2D a, Point2D b) {
+        return new Point2D.Double(a.getX() + b .getX(), a.getY() + b.getY());
+    }
+
+    public static Point2D.Double product(Point2D p, double m) {
+        return new Point2D.Double(p.getX() * m, p.getY() * m);
+    }
+
     @SuppressWarnings("unchecked")
         public static <T> T[] rotateRight(T[] arr, int amount) {
         T[] output = (T[]) new Object[arr.length];
