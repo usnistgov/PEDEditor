@@ -41,9 +41,9 @@ public class Arrow extends Path2D.Double {
         xform.scale(size, size);
         double[] points =
             { 0.0, 0.0,
-              -3.2, -4.0,
-              8.0, 0.0,
-              -3.2, 4.0 };
+              -2.56, -3.2,
+              6.4, 0.0,
+              -2.56, 3.2 };
         xform.transform(points, 0, points, 0, points.length / 2);
         output.moveTo(points[0], points[1]);
         for (int i = 1; 2*i < points.length; ++i) {
