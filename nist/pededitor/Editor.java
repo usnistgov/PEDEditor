@@ -279,6 +279,21 @@ public class Editor implements CropEventListener, MouseListener,
                                MouseMotionListener, Printable {
     static ObjectMapper objectMapper = null;
 
+    /** These values are not universally useful, but they apply to the
+        house style for our PED guides. */
+    class DefaultLinearRuler extends LinearRuler {
+        DefaultLinearRuler() {
+            fontSize = normalFontSize();
+            lineWidth = STANDARD_LINE_WIDTH;
+            tickPadding = 3.0;
+            // maxBigTicks = 9;
+            keepStartClear = true;
+            keepEndClear = true;
+            drawSpine = false;
+            // tickDelta = 0; // No small ticks;
+        }
+    }
+
     private static final String PREF_DIR = "dir";
     static protected double MOUSE_UNSTICK_DISTANCE = 30; /* pixels */
     static protected Image crosshairs = null;
@@ -313,6 +328,7 @@ public class Editor implements CropEventListener, MouseListener,
 
     // TODO Save axes in PED! @JsonProperty
     protected ArrayList<LinearAxisInfo> axes;
+    protected ArrayList<LinearRuler> rulers;
     protected LinearAxisInfo xAxis = null;
     protected LinearAxisInfo yAxis = null;
     protected LinearAxisInfo zAxis = null;
@@ -376,6 +392,7 @@ public class Editor implements CropEventListener, MouseListener,
         activeCurveNo = -1;
         activeVertexNo = -1;
         axes = new ArrayList<LinearAxisInfo>();
+        rulers = new ArrayList<LinearRuler>();
         mprin = null;
         filename = null;
         saveNeeded = false;
@@ -641,6 +658,10 @@ public class Editor implements CropEventListener, MouseListener,
 
         for (Arrow arrow: arrows) {
             drawArrow(g, scale, arrow);
+        }
+
+        for (LinearRuler ruler: rulers) {
+            ruler.draw(g, principalToStandardPage, scale);
         }
 
         if (editing) {
@@ -1515,9 +1536,19 @@ public class Editor implements CropEventListener, MouseListener,
                 diagramPolyline.add(outputVertices[3]);
                 diagramPolyline.add(outputVertices[2]);
 
+                addTernaryBottomRuler(0.0, 100.0);
+                addTernaryLeftRuler(0.0, height);
+                addTernaryRightRuler(0.0, height);
                 break;
             }
         case BINARY:
+            {
+                addBinaryBottomRuler();
+                addBinaryTopRuler();
+                addBinaryLeftRuler();
+                addBinaryRightRuler();
+                // Fall through...
+            }
         case OTHER:
             {
                 Rectangle2D.Double principalBounds
@@ -1617,29 +1648,56 @@ public class Editor implements CropEventListener, MouseListener,
                 double[] sideLengths = new double[3];
                 sideLengths[ov1] = pageMaxes[0];
                 sideLengths[ov2] = pageMaxes[1];
+
+                // One of the following 3 values will be invalid and
+                // equal to 0, but we only use the ones that are
+                // valid.
                 double leftLength = sideLengths[LEFT_SIDE];
                 double rightLength = sideLengths[RIGHT_SIDE];
                 double bottomLength = sideLengths[BOTTOM_SIDE];
 
+                // trianglePoints is to be set to a set of coordinates
+                // of the 3 vertices of the ternary diagram expressed
+                // in principal coordinates. The first principal
+                // coordinate represents the proportion of the
+                // lower-right principal component, and the second
+                // principal coordinate represents the proportion of
+                // the top principal component.
+
+                // At this point, principal component lengths should
+                // be proportional to page distances.
+
+                // trianglePoints[] contains the key points of the
+                // actual diagram (though only one of those key points
+                // will be a diagram component).
                 Point2D.Double[] trianglePoints
                     = Duh.deepCopy(principalTrianglePoints);
 
                 switch (diagramType) {
                 case TERNARY_LEFT:
                     trianglePoints[TOP_VERTEX] = new Point2D.Double(0, leftLength);
-                    trianglePoints[RIGHT_VERTEX] = new Point2D.Double(bottomLength, 0);
+                    trianglePoints[RIGHT_VERTEX]
+                        = new Point2D.Double(bottomLength, 0);
+                    addTernaryBottomRuler(0.0, bottomLength);
+                    addTernaryLeftRuler(0.0, leftLength);
                     break;
+
                 case TERNARY_TOP:
                     trianglePoints[LEFT_VERTEX]
                         = new Point2D.Double(0, 100.0 - leftLength);
                     trianglePoints[RIGHT_VERTEX]
                         = new Point2D.Double(rightLength, 100.0 - rightLength);
+                    addTernaryLeftRuler(100 - leftLength, 100.0);
+                    addTernaryRightRuler(100 - rightLength, 100.0);
                     break;
+
                 case TERNARY_RIGHT:
                     trianglePoints[LEFT_VERTEX]
                         = new Point2D.Double(100.0 - bottomLength, 0.0);
                     trianglePoints[TOP_VERTEX]
                         = new Point2D.Double(100.0 - rightLength, rightLength);
+                    addTernaryBottomRuler(100.0 - bottomLength, 100.0);
+                    addTernaryRightRuler(0.0, rightLength);
                     break;
                 }
 
@@ -1653,6 +1711,15 @@ public class Editor implements CropEventListener, MouseListener,
                                                                 trianglePoints);
                 }
 
+                // xform is fixed -- three vertices of an equilateral
+                // triangle in principal coordinates transformed to an
+                // equilateral triangle in Euclidean coordinates, with
+                // the y-axis facing up -- -- and ignores the
+                // particulars of this diagram. However, applying
+                // xform to trianglePoints yields the correct
+                // proportions (though not the scale) for the limit
+                // points of the actual diagram.
+
                 TriangleTransform xform = new TriangleTransform
                     (principalTrianglePoints,
                      TriangleTransform.equilateralTriangleVertices());
@@ -1660,26 +1727,49 @@ public class Editor implements CropEventListener, MouseListener,
                     xform.transform(trianglePoints[0]),
                     xform.transform(trianglePoints[1]),
                     xform.transform(trianglePoints[2]) };
-                double baseWidth = xformed[RIGHT_VERTEX].x
-                    - xformed[LEFT_VERTEX].x;
-                double leftHeight = xformed[TOP_VERTEX].y
-                    - xformed[LEFT_VERTEX].y;
-                double rightHeight = xformed[TOP_VERTEX].y
-                    - xformed[RIGHT_VERTEX].y;
-                double baseHeight = Math.max(leftHeight, rightHeight);
-                r = new Rescale(baseWidth, leftMargin + rightMargin, maxPageWidth,
-                                baseHeight, topMargin + bottomMargin, maxPageHeight);
-                double rx = r.width - rightMargin;
-                double bottom = r.height - bottomMargin;
 
-                Point2D.Double[] trianglePagePositions =
-                    { new Point2D.Double(leftMargin, topMargin + r.t * leftHeight),
-                      new Point2D.Double(leftMargin + r.t * (xformed[1].x - xformed[0].x),
-                                         topMargin),
-                      new Point2D.Double(maxPageWidth - rightMargin,
-                                         topMargin + r.t * rightHeight) };
+                // Rescale the principalToStandardPage transform
+
+                // Reverse the direction of the y-axis to point
+                // downwards, and rescale to fill the available
+                // space as much as possible.
+
+                Rectangle2D.Double bounds = Duh.bounds(xformed);
+                r = new Rescale
+                    (bounds.width, leftMargin + rightMargin, maxPageWidth,
+                     bounds.height, topMargin + bottomMargin,
+                     maxPageHeight);
+                xform.preConcatenate
+                    (AffineTransform.getScaleInstance(r.t, -r.t));
+
+                // Translate so the top vertex has y value = topMargin
+                // and the leftmost vertex (either the left or,
+                // possibly but unlikely, the top) has x value =
+                // leftMargin.
+                Point2D.Double top
+                    = xform.transform(trianglePoints[TOP_VERTEX]);
+                double minX = Math.min
+                    (top.x, xform.transform(trianglePoints[LEFT_VERTEX]).x);
+                double minY = top.y;
+                xform.preConcatenate
+                    (AffineTransform.getTranslateInstance
+                     (leftMargin - minX, topMargin - minY));
+
+                // Change the input vertices to be the actual
+                // corners of the triangle in principal
+                // coordinates and the output vertices to be the
+                // translations of those points. This won't affect
+                // the transform in most ways, but it will cause
+                // getInputVertices(), getOutputVertices(),
+                // inputBounds(), and outputBounds() to return
+                // meaningful values.
+
+                for (int i = 0; i < 3; ++i) {
+                    xformed[i] = xform.transform(trianglePoints[i]);
+                }
+
                 principalToStandardPage = new TriangleTransform
-                    (trianglePoints, trianglePagePositions);
+                    (trianglePoints, xformed);
 
                 break;
             }
@@ -1710,6 +1800,9 @@ public class Editor implements CropEventListener, MouseListener,
                 }
                 diagramPolyline.add(principalTrianglePoints[0]);
 
+                addTernaryBottomRuler(0.0, 100.0);
+                addTernaryLeftRuler(0.0, 100.0);
+                addTernaryRightRuler(0.0, 100.0);
                 break;
             }
         }
@@ -1724,16 +1817,65 @@ public class Editor implements CropEventListener, MouseListener,
                    STANDARD_LINE_WIDTH));
 
         initializeDiagram();
+
+        // xAxis etc. don't exist until initializeDiagram() is called,
+        // so we can't assign them until now.
+        switch (diagramType) {
+        case TERNARY:
+        case TERNARY_BOTTOM:
+            {
+                rulers.get(0).axis = xAxis;
+                rulers.get(1).axis = yAxis;
+                rulers.get(2).axis = yAxis;
+                break;
+            }
+        case BINARY:
+            {
+                rulers.get(0).axis = xAxis;
+                rulers.get(1).axis = xAxis;
+                rulers.get(2).axis = yAxis;
+                rulers.get(3).axis = yAxis;
+                break;
+            }
+        case TERNARY_LEFT:
+            {
+                rulers.get(0).axis = xAxis;
+                rulers.get(1).axis = yAxis;
+                break;
+            }
+        case TERNARY_RIGHT:
+            {
+                rulers.get(0).axis = xAxis;
+                rulers.get(1).axis = yAxis;
+                break;
+            }
+        case TERNARY_TOP:
+            {
+                rulers.get(0).axis = yAxis;
+                rulers.get(1).axis = yAxis;
+                break;
+            }
+        }
+    }
+
+    protected double normalFontSize() {
+        return 12.0 / 800;
     }
 
     protected void initializeDiagram() {
+
         if (diagramType.isTernary()) {
             NumberFormat pctFormat = new DecimalFormat("##0.0'%'");
             xAxis = LinearAxisInfo.createXAxis(pctFormat);
+            // Confusingly, the axis that goes from 0 at the bottom
+            // left to 100 at the bottom right like a normal x-axis
+            // and that is called "xAxis" actually ends at component
+            // 'Z'.
             xAxis.name = "Z";
             yAxis = LinearAxisInfo.createYAxis(pctFormat);
             zAxis = new LinearAxisInfo(pctFormat, -1.0, -1.0, 100.0);
             zAxis.name = "X";
+
             axes.add(zAxis);
             axes.add(yAxis);
             axes.add(xAxis);
@@ -2770,6 +2912,109 @@ public class Editor implements CropEventListener, MouseListener,
         System.out.println("New = " + im);
         editFrame.setCursor(oldCursor);
         return im;
+    }
+
+    void addTernaryBottomRuler(double start /* Z */, double end /* Z */) {
+        LinearRuler r = new DefaultLinearRuler() {{ // Component-Z axis
+            tickType = LinearRuler.TickType.V;
+            xWeight = 0.5;
+            yWeight = 0.0;
+            textAngle = 0;
+            tickLeft = true;
+            labelAnchor = LinearRuler.LabelAnchor.RIGHT;
+        }};
+
+        r.startPoint = new Point2D.Double(start, 0.0);
+        r.endPoint = new Point2D.Double(end, 0);
+        r.startArrow = Math.abs(start) > 1e-8;
+        r.endArrow = (Math.abs(end - 100) > 1e-4);
+        rulers.add(r);
+    }
+
+    void addTernaryLeftRuler(double start /* Y */, double end /* Y */) {
+        LinearRuler r = new DefaultLinearRuler() {{ // Left Y-axis
+            tickType = LinearRuler.TickType.V;
+            xWeight = 1.0;
+            yWeight = 0.5;
+            textAngle = Math.PI / 3;
+            tickRight = true;
+            labelAnchor = LinearRuler.LabelAnchor.LEFT;
+        }};
+
+        r.startPoint = new Point2D.Double(0.0, start);
+        r.endPoint = new Point2D.Double(0.0, end);
+        r.startArrow = Math.abs(start) > 1e-8;
+        r.endArrow = (Math.abs(end - 100) > 1e-4);
+        rulers.add(r);
+    }
+
+    void addTernaryRightRuler(double start /* Y */, double end /* Y */) {
+        LinearRuler r = new DefaultLinearRuler() {{ // Right Y-axis
+            tickType = LinearRuler.TickType.V;
+            xWeight = 0.0;
+            yWeight = 0.5;
+            textAngle = Math.PI * 2 / 3;
+            tickLeft = true;
+            labelAnchor = LinearRuler.LabelAnchor.RIGHT;
+        }};
+
+        r.startPoint = new Point2D.Double(100 - start, start);
+        r.endPoint = new Point2D.Double(100 - end, end);
+        r.startArrow = Math.abs(start) > 1e-8;
+        r.endArrow = (Math.abs(end - 100) > 1e-4);
+        rulers.add(r);
+    }
+
+    void addBinaryBottomRuler() {
+        rulers.add(new DefaultLinearRuler() {{ // X-axis
+            xWeight = 0.5;
+            yWeight = 0.0;
+            textAngle = 0;
+            tickLeft = true;
+            labelAnchor = LinearRuler.LabelAnchor.RIGHT;
+
+            startPoint = new Point2D.Double(0.0, 0.0);
+            endPoint = new Point2D.Double(100.0, 0.0);
+        }});
+    }
+
+    void addBinaryTopRuler() {
+        rulers.add(new DefaultLinearRuler() {{ // X-axis
+            xWeight = 0.5;
+            yWeight = 1.0;
+            textAngle = 0;
+            tickRight = true;
+            labelAnchor = LinearRuler.LabelAnchor.NONE;
+
+            startPoint = new Point2D.Double(0.0, 100.0);
+            endPoint = new Point2D.Double(100.0, 100.0);
+        }});
+    }
+
+    void addBinaryLeftRuler() {
+        rulers.add(new DefaultLinearRuler() {{ // Left Y-axis
+            xWeight = 1.0;
+            yWeight = 0.5;
+            textAngle = Math.PI / 2;
+            tickRight = true;
+            labelAnchor = LinearRuler.LabelAnchor.LEFT;
+
+            startPoint = new Point2D.Double(0.0, 0.0);
+            endPoint = new Point2D.Double(0.0, 100.0);
+        }});
+    }
+
+    void addBinaryRightRuler() {
+        rulers.add(new DefaultLinearRuler() {{ // Right Y-axis
+            xWeight = 0.0;
+            yWeight = 0.5;
+            textAngle = Math.PI / 2;
+            tickLeft = true;
+            labelAnchor = LinearRuler.LabelAnchor.NONE;
+
+            startPoint = new Point2D.Double(100.0, 0.0);
+            endPoint = new Point2D.Double(100.0, 100.0);
+        }});
     }
 }
 
