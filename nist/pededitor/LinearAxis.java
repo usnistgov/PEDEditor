@@ -4,6 +4,8 @@ import java.awt.geom.*;
 import java.util.*;
 import java.text.*;
 
+import org.codehaus.jackson.annotate.JsonProperty;
+
 /** Class to hold information about an axis whose value equals
 
     (ax + by + c). */
@@ -12,24 +14,33 @@ public class LinearAxisInfo extends AxisInfo {
     public double b;
     public double c;
 
-    public LinearAxisInfo(NumberFormat format, double... coefs) {
+    /** Create a LinearAxisInfo for the formula a*x + b*y + c. */
+    public LinearAxisInfo(@JsonProperty("format") NumberFormat format,
+                          @JsonProperty("a") double a,
+                          @JsonProperty("b") double b,
+                          @JsonProperty("c") double c) {
         super(format);
-        this.a = coefs[0];
-        this.b = coefs[1];
-        this.c = (coefs.length >= 3) ? coefs[2] : 0.0;
+        this.a = a;
+        this.b = b;
+        this.c = c;
     }
 
-    public LinearAxisInfo(double... coefs) {
-        this(getDefaultFormat(), coefs);
+    /** Create a LinearAxisInfo for the formula a*x + b*y + c. */
+    public LinearAxisInfo(double a, double b, double c) {
+        this(getDefaultFormat(), a, b, c);
     }
 
     public LinearAxisInfo() {
-        this (0.0, 0.0, 0.0);
+        this(0.0, 0.0, 0.0);
     }
 
     public double value(double px, double py) {
         return a * px + b * py + c;
     }
+
+    public double getA() { return a; }
+    public double getB() { return b; }
+    public double getC() { return c; }
 
     static NumberFormat getDefaultFormat() {
         return new DecimalFormat("##0.0");
