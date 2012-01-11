@@ -11,11 +11,25 @@ import javax.swing.*;
 
 /** Class describing a ruler decorating a linear axis. */
 class LinearRuler {
-    public static enum LabelAnchor
-    { LABEL_NONE, LABEL_LEFT, LABEL_RIGHT, LABEL_MIDDLE };
+    public static enum LabelAnchor { NONE, LEFT, RIGHT };
+
+    /** Most applications use straight tick marks, but ternary
+        diagrams use V-shaped tick marks (probably because internal
+        tick marks that are simple line segments would often be masked
+        by diagram line segments that pass through the same
+        points). */
+    public static enum TickType { NORMAL, V };
     
+    /** Physical location of the axis start point. */
     Point2D.Double startPoint;
+    /** Physical location of the axis end point. */
     Point2D.Double endPoint;
+
+    /** I recommend that fontSize be approximately 10 times the
+        lineWidth -- 9X and 12X are fine, but 30X or 3X will look
+        strange. */
+    double fontSize;
+    double lineWidth;
 
     /** Tick marks act as anchor points for their corresponding
         labels. As in AnchoredLabel, xWeight determines the positioning of
@@ -25,40 +39,107 @@ class LinearRuler {
         labels. As in AnchoredLabel, yWeight determines the positioning of
         the label relative to its anchor. */
     double yWeight;
-    double fontSize;
+
+
+    /** Indicate where labels are to be anchored: NONE: No labels;
+        LEFT: at the tip of the left-side tick; RIGHT: at the tip of
+        the right-side tick. */
+    LabelAnchor labelAnchor;
+
+    LinearAxisInfo axis;
 
     /** To simplify axis rotations, textAngle indicates the angle of
         the text relative to the ray from startPoint to endPoint. So
         for a vertical upwards-pointing axis, textAngle = 0 would mean
         that lines of text flow upwards. */
-    double textAngle;
+    double textAngle = 0.0;
 
-    double lineWidth;
+    /** True if ticks should extend from the right side of the ruler
+        (the side that is on your right as you face from startPoint to
+        endPoint). */
+    boolean tickRight = false;
+    /** True if ticks should extend from the left side of the ruler.
+        If tickRight and tickLeft are both true, then you have normal
+        two-sided tick marks. */
+    boolean tickLeft = false;
 
-    /** True if ticks should extend from the right side of the ruler.
-        The right side is the side that would involve making a
-        90-degree right hand turn if you started out oriented from
-        startPoint to endPoint. */
-    boolean tickRight;
-    /** True if ticks should extend from the left side of the ruler. */
-    boolean tickLeft;
+    /** If nonnegative, an upper limit on the number of big ticks to
+        display, even if there is room for more. Big ticks are also
+        text ticks, so this also represents a limit on text ticks.
+        Also, small ticks only appear between big ticks, so this is a
+        limit on small ticks as well. */
+    int maxBigTicks = -1;
 
-    /** Indicate where labels are to be anchored: LABEL_NONE: No
-        labels; LABEL_LEFT: at the tip of the left-side tick;
-        LABEL_RIGHT: at the tip of the right-side tick. */
-    LabelAnchor labelAnchor;
+    /** extra spacing to use for determining automatic tick spacing,
+        expressed as a multiple of the height of a line of text. 0.0 =
+        ticks packed about as tightly as legibility permits; 1.0 =
+        ticks separated by an additional amount equal to the height of
+        a line of text. */
+    double tickPadding = 0.0;
 
-    // UNDO LinearAxisInfo axis;
+    /** If positive, the fixed delta for big ticks. If zero, there are
+        no big ticks. If negative, compute the number of big ticks
+        automatically. */
+    double bigTickDelta = -1.0;
+
+    /** If positive, the fixed delta for small ticks. If zero, there are
+        no small ticks. If negative, compute the number of small ticks
+        automatically. */
+    double tickDelta = -1.0;
+
+    /** If true, put an arrow at the end of the ruler. */
+    boolean startArrow = false;
+    /** If true, put an arrow at the end of the ruler. */
+    boolean endArrow = false;
+
+    /** If true, don't put ticks too close to the starting point.
+        Reasons to omit ticks close to the start include that interior
+        ticks and text might cross each other. Ticks are never
+        included too close to the starting point if startArrow is
+        true. */
+    boolean keepStartClear = false;
+
+    /** If true, don't put ticks too close to the ending point. (This
+        is always treated as true if endArrow is true.) */
+    boolean keepEndClear = false;
+
+    TickType tickType = TickType.NORMAL;
+
+    /** Normally, you'd want to paint the spine of this axis, but if
+        you don't, set drawSpine to false. (One possible reason to set
+        it to false: when anti-aliasing is enabled, drawing the same
+        line twice can yield an inferior rendering.) */
+    boolean drawSpine = true;
+
+    /** clone() does not clone the axis, because the axis is
+        considered a relation of the ruler instead of an owned field of
+        it. */
+    public LinearRuler clone() {
+        LinearRuler o = new LinearRuler();
+        o.startPoint = (Point2D.Double) startPoint.clone();
+        o.endPoint = (Point2D.Double) endPoint.clone();
+        o.xWeight = xWeight;
+        o.yWeight = yWeight;
+        o.fontSize = fontSize;
+        o.textAngle = textAngle;
+        o.lineWidth = lineWidth;
+        o.tickRight = tickRight;
+        o.tickLeft = tickLeft;
+        o.startArrow = startArrow;
+        o.endArrow = endArrow;
+        o.labelAnchor = labelAnchor;
+        o.tickType = tickType;
+        o.axis = axis;
+        return o;
+    }
 
     /** Start of range of logical values covered by this axis. */
     double getStart() {
-        // UNDO return axis.value(startPoint);
-        return 17.07;
+        return axis.value(startPoint);
     }
     /** End of range of logical values covered by this axis. */
     double getEnd() {
-        // UNDO return axis.value(endPoint);
-        return 18.3179;
+        return axis.value(endPoint);
     }
 
     /** Linear function mapping logical values to points in 2D. */
@@ -81,19 +162,28 @@ class LinearRuler {
     public void draw(Graphics2D g,
                      AffineTransform originalToSquarePixel,
                      double scale) {
+        Point2D.Double pageStartPoint = new Point2D.Double();
+        Point2D.Double pageEndPoint = new Point2D.Double();
+        double start = getStart();
+        double end = getEnd();
+        if (start == end) {
+            return; // Weird corner case.
+        }
+
+        double astart = Math.min(start, end);
+        double aend = Math.max(start, end);
+
         AffineTransform xform = AffineTransform.getScaleInstance(scale, scale);
         xform.concatenate(originalToSquarePixel);
+        xform.transform(startPoint, pageStartPoint);
+        xform.transform(endPoint, pageEndPoint);
 
         Font oldFont = g.getFont();
         g.setFont(new Font(null, 0, (int) Math.ceil(fontSize * scale)));
         FontMetrics fm = g.getFontMetrics();
 
         Rectangle2D digitBounds = fm.getStringBounds("8", g);
-        Point2D.Double pageStartPoint = new Point2D.Double();
-        Point2D.Double pageEndPoint = new Point2D.Double();
 
-        xform.transform(startPoint, pageStartPoint);
-        xform.transform(endPoint, pageEndPoint);
         double distance = pageStartPoint.distance(pageEndPoint);
         Point2D.Double pageDelta
             = new Point2D.Double(pageEndPoint.x - pageStartPoint.x,
@@ -101,11 +191,10 @@ class LinearRuler {
         double theta = Math.atan2(pageDelta.y, pageDelta.x);
 
         // m = page distance divided by logical distance.
-        double start = getStart();
-        double end = getEnd();
-        double m = distance / (end - start);
+
+        double m = distance / (aend - astart);
         double maxLabels = Math.floor(distance / digitBounds.getWidth());
-        double minTextDelta = digitBounds.getHeight() / m;
+        double minBigTickDelta = digitBounds.getHeight() / m;
 
         // Construct an approximation of the largest string that is
         // likely to appear as a label in order to ascertain its size.
@@ -115,7 +204,7 @@ class LinearRuler {
         // space between ticks.
 
         int[] limits = RulerTick.digitSpaceNeeded
-            (start, end, RulerTick.roundCeil(minTextDelta));
+            (start, end, RulerTick.roundCeil(minBigTickDelta));
         int units = limits[0];
         int decimals = limits[1];
         StringBuilder longestLabel = new StringBuilder("  ");
@@ -130,100 +219,202 @@ class LinearRuler {
         }
         Rectangle2D labelBounds
             = fm.getStringBounds(longestLabel.toString(), g);
+        double padding = labelBounds.getHeight() * tickPadding;
+        Rectangle2D.Double lb = new Rectangle2D.Double
+            (labelBounds.getX(), labelBounds.getY(),
+             labelBounds.getWidth() + padding,
+             labelBounds.getHeight() + padding);
         Point2D.Double offset
             = new Point2D.Double(Math.cos(textAngle), Math.sin(textAngle));
 
-        // Now we can compute minTextDelta more accurately. separate()
-        // returns the distance in the final coordinate system we need
-        // to have between label ticks, and then we convert back to
-        // the corresponding distance in logical coordinates.
-        minTextDelta = separate(labelBounds, offset) / m;
-        double textDelta = RulerTick.roundCeil(minTextDelta);
-        double tickDelta = RulerTick.nextSmallerRound(textDelta);
+        // Now we can compute minBigTickDelta more accurately. separate()
+        // returns the necessary distance in physical coordinates
+        // between label ticks; divide by m to convert to the
+        // corresponding difference in logical coordinates.
+        minBigTickDelta = separate(lb, offset) / m;
+
+        if (maxBigTicks > 0) {
+            minBigTickDelta = Math.max(minBigTickDelta,
+                                    (aend - astart) / maxBigTicks);
+        } else if (maxBigTicks == 0) {
+            minBigTickDelta = (aend - astart) * 100; // Close enough to infinity
+        }
+
+        double bigTickD = (bigTickDelta > 0) ? bigTickDelta
+            :  RulerTick.roundCeil(minBigTickDelta);
+
+        // tickD = change in logical coordinates between
+        // neighboring ticks.
+        double tickD = (tickDelta > 0) ? tickDelta
+            : RulerTick.nextSmallerRound(bigTickD);
 
         Stroke oldStroke = g.getStroke();
         g.setStroke(new BasicStroke((float) (scale * lineWidth)));
         
-        // Draw the spine.
-        g.draw(new Line2D.Double(pageStartPoint, pageEndPoint));
-
-        // Draw the minor ticks. CAP_SQUARE would work fine for this,
-        // but with aliasing, you can see the back end of the ticks
-        // sticking out the other side of the spine, so use CAP_BUTT
-        // instead.
+        if (drawSpine) {
+            g.draw(new Line2D.Double(pageStartPoint, pageEndPoint));
+        }
 
         g.setStroke(new BasicStroke((float) (scale * lineWidth),
-                                    BasicStroke.CAP_BUTT, BasicStroke.JOIN_MITER));
+                                    BasicStroke.CAP_BUTT, BasicStroke.JOIN_BEVEL));
 
-        double tickLength = tickDelta * m * 0.2;
+        double tickLength = scale * lineWidth * 4;
         Point2D.Double tickOffset
             = new Point2D.Double(-pageDelta.y * tickLength / distance,
                                  pageDelta.x * tickLength / distance);
+        Point2D.Double tickVOffset = new Point2D.Double
+            (pageDelta.x * tickLength / distance / Math.sqrt(3),
+             pageDelta.y * tickLength / distance / Math.sqrt(3));
 
-        {
-            long starti = (long) Math.ceil((start - 1e-6 * (end - start)) / tickDelta);
-            long endi = (long) Math.floor((end + 1e-6 * (end - start)) / tickDelta);
+        double minTickPageDelta = (tickType == TickType.V)
+            ? (Duh.length(tickVOffset) * 4)
+            : (3 * scale * lineWidth);
+        double minTickDelta = minTickPageDelta / m;
+
+        double clearDistance = Math.abs(scale * lineWidth * 8 / m);
+        double tickStart = astart;
+        if (keepStartClear || startArrow) {
+            tickStart += clearDistance;
+        }
+        double tickEnd = aend;
+        if (keepEndClear || endArrow) {
+            tickEnd -= clearDistance;
+        }
+
+        if (tickD >= minTickDelta && tickDelta != 0) {
+            long starti = (long) Math.ceil
+                ((tickStart - 1e-6 * (aend - astart)) / tickD);
+            long endi = (long) Math.floor
+                ((tickEnd + 1e-6 * (aend - astart)) / tickD);
             Point2D.Double tmpPoint = new Point2D.Double();
             for (long i = starti; i <= endi; ++i) {
-                double logical = i * tickDelta;
+                double logical = i * tickD;
                 Point2D.Double location
                     = toPhysical(logical, pageStartPoint, pageEndPoint);
                 if (tickRight) {
-                    tmpPoint.x = location.x + tickOffset.x;
-                    tmpPoint.y = location.y + tickOffset.y;
-                    g.draw(new Line2D.Double(location, tmpPoint));
+                    if (tickType == TickType.V) {
+                        tmpPoint.x = location.x + tickOffset.x + tickVOffset.x;
+                        tmpPoint.y = location.y + tickOffset.y + tickVOffset.y;
+                        g.draw(new Line2D.Double(location, tmpPoint));
+                        tmpPoint.x = location.x + tickOffset.x - tickVOffset.x;
+                        tmpPoint.y = location.y + tickOffset.y - tickVOffset.y;
+                        g.draw(new Line2D.Double(location, tmpPoint));
+                    } else {
+                        tmpPoint.x = location.x + tickOffset.x;
+                        tmpPoint.y = location.y + tickOffset.y;
+                        g.draw(new Line2D.Double(location, tmpPoint));
+                    }
                 }                
                 if (tickLeft) {
-                    tmpPoint.x = location.x - tickOffset.x;
-                    tmpPoint.y = location.y - tickOffset.y;
-                    g.draw(new Line2D.Double(location, tmpPoint));
+                    if (tickType == TickType.V) {
+                        tmpPoint.x = location.x - tickOffset.x - tickVOffset.x;
+                        tmpPoint.y = location.y - tickOffset.y - tickVOffset.y;
+                        g.draw(new Line2D.Double(location, tmpPoint));
+                        tmpPoint.x = location.x - tickOffset.x + tickVOffset.x;
+                        tmpPoint.y = location.y - tickOffset.y + tickVOffset.y;
+                        g.draw(new Line2D.Double(location, tmpPoint));
+                    } else {
+                        tmpPoint.x = location.x - tickOffset.x;
+                        tmpPoint.y = location.y - tickOffset.y;
+                        g.draw(new Line2D.Double(location, tmpPoint));
+                    }
                 }                
             }
         }
 
+        // Double the tick length for the text ticks.
         tickOffset.x *= 2;
         tickOffset.y *= 2;
+        tickVOffset.x *= 2;
+        tickVOffset.y *= 2;
 
-        String formatString = " "
-            + RulerTick.formatString(start, end, textDelta) + " ";
+        String formatString = RulerTick.formatString(start, end, bigTickD);
 
-        {
-            long starti = (long) Math.ceil((start - 1e-6 * (end - start)) / textDelta);
-            long endi = (long) Math.floor((end + 1e-6 * (end - start)) / textDelta);
+        if (bigTickDelta != 0) {
+            long starti = (long) Math.ceil
+                ((tickStart - 1e-6 * (aend - astart)) / bigTickD);
+            long endi = (long) Math.floor
+                ((tickEnd + 1e-6 * (aend - astart)) / bigTickD);
             Point2D.Double tmpPoint = new Point2D.Double();
             AffineTransform oldTransform = g.getTransform();
 
             for (long i = starti; i <= endi; ++i) {
-                double logical = i * textDelta;
+                double logical = i * bigTickD;
                 Point2D.Double location
                     = toPhysical(logical, pageStartPoint, pageEndPoint);
-                Point2D.Double anchor = null;
+
                 if (tickRight) {
-                    tmpPoint.x = location.x + tickOffset.x;
-                    tmpPoint.y = location.y + tickOffset.y;
-                    g.draw(new Line2D.Double(location, tmpPoint));
-                    if (labelAnchor == LabelAnchor.LABEL_RIGHT) {
-                        anchor = (Point2D.Double) tmpPoint.clone();
+                    if (tickType == TickType.V) {
+                        tmpPoint.x = location.x + tickOffset.x + tickVOffset.x;
+                        tmpPoint.y = location.y + tickOffset.y + tickVOffset.y;
+                        g.draw(new Line2D.Double(location, tmpPoint));
+                        tmpPoint.x = location.x + tickOffset.x - tickVOffset.x;
+                        tmpPoint.y = location.y + tickOffset.y - tickVOffset.y;
+                        g.draw(new Line2D.Double(location, tmpPoint));
+                    } else {
+                        tmpPoint.x = location.x + tickOffset.x;
+                        tmpPoint.y = location.y + tickOffset.y;
+                        g.draw(new Line2D.Double(location, tmpPoint));
                     }
                 }                
                 if (tickLeft) {
-                    tmpPoint.x = location.x - tickOffset.x;
-                    tmpPoint.y = location.y - tickOffset.y;
-                    g.draw(new Line2D.Double(location, tmpPoint));
-                    if (labelAnchor == LabelAnchor.LABEL_LEFT) {
-                        anchor = (Point2D.Double) tmpPoint.clone();
+                    if (tickType == TickType.V) {
+                        tmpPoint.x = location.x - tickOffset.x - tickVOffset.x;
+                        tmpPoint.y = location.y - tickOffset.y - tickVOffset.y;
+                        g.draw(new Line2D.Double(location, tmpPoint));
+                        tmpPoint.x = location.x - tickOffset.x + tickVOffset.x;
+                        tmpPoint.y = location.y - tickOffset.y + tickVOffset.y;
+                        g.draw(new Line2D.Double(location, tmpPoint));
+                    } else {
+                        tmpPoint.x = location.x - tickOffset.x;
+                        tmpPoint.y = location.y - tickOffset.y;
+                        g.draw(new Line2D.Double(location, tmpPoint));
                     }
-                }
+                }                
 
-                if (anchor == null) {
-                    anchor = (Point2D.Double) location.clone();
-                }
+                if (labelAnchor != LabelAnchor.NONE) {
+                    // If there is a tick on the same side as the
+                    // label, then use the tip of the tick (or the
+                    // midpoint of the two tips of a V-type tick) as
+                    // the label anchor. But if there is no tick on
+                    // the same side as the label, displace the anchor
+                    // a small distance away from the middle of the
+                    // ruler spine. (There are two reasons for this:
+                    // first, the middle of the ruler spine is half a
+                    // line-width away from the ruler spine edge,
+                    // while the tick-mark tip is the real edge of the
+                    // tick-mark; second, it looks busier to have a
+                    // number very close to a line segment than to
+                    // have a number very close to just the tip of a
+                    // line segment.)
 
-                g.rotate(theta + textAngle, anchor.x, anchor.y);
-                LabelDialog.drawString(g, String.format(formatString, logical),
-                                       anchor.x, anchor.y, xWeight, yWeight);
-                g.setTransform(oldTransform);
+                    double mul
+                        = ((labelAnchor == LabelAnchor.LEFT)
+                           ? (tickLeft ? -1.0 : -1.0/3)
+                           : (tickRight ? 1.0 : 1.0/3));
+                    Point2D.Double anchor = new Point2D.Double
+                        (location.x + mul * tickOffset.x,
+                         location.y + mul * tickOffset.y);
+
+                    g.rotate(theta + textAngle, anchor.x, anchor.y);
+                    LabelDialog.drawString
+                        (g, " " + String.format(formatString, logical).trim() + " ",
+                                           anchor.x, anchor.y, xWeight, yWeight);
+                    g.setTransform(oldTransform);
+                }
             }
+        }
+
+        if (startArrow) {
+            g.fill(new Arrow
+                   (pageStartPoint.x, pageStartPoint.y,
+                    scale * lineWidth, theta + Math.PI));
+        }
+
+        if (endArrow) {
+            g.fill(new Arrow
+                   (pageEndPoint.x, pageEndPoint.y,
+                    scale * lineWidth, theta));
         }
 
         g.setStroke(oldStroke);
