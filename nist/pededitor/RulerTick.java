@@ -92,38 +92,39 @@ public class RulerTick {
     }
 
     /** Return a fixed-point Formatter format string with sufficient
-        precision and capacity to display all values to at least one
-        significant digit. For example, formatString(-37, 5, 0.1)
-        equals "%5.1f" since that format can represent all three
-        values: "-37.0", " 5.0", and " 0.1".
-
-        You can call this method with the three values (rulerMin,
-        rulerMax, rulerStep) in order to determine a suitable format
-        string for all multiples of rulerStep in range [rulerMin,
-        rulerMax].
+        precision and capacity to display all values in range [min,
+        max] with the given absolute precision. For example,
+        formatString(-37.001, 5, 0.1) equals "%5.1f" since that format can
+        represent all the values {-37.0, -36.9, ..., 5.0}.
     */
-    public static String formatString(double... values) {
-        int[] limits = digitSpaceNeeded(values);
-        int units = limits[0];
-        int decimals = limits[1];
+    public static String formatString(double min, double max, double precision) {
+        int[] limits = digitSpaceNeeded(min, max, precision);
+        int before = limits[0];
+        int after = limits[1];
 
-        int width = units + decimals;
-        if (decimals > 0) {
+        int width = before + after;
+        if (after > 0) {
             ++width;
         }
-        return "%" + width + '.' + decimals + 'f';
+        return "%" + width + '.' + after + 'f';
     }
 
-    public static int[] digitSpaceNeeded(double... values) {
-        int decimals = 0;
-        int units = 0;
+    /** Return a 2-element array { before, after } representing the
+        number of characters before and after the decimal point that
+        are needed to display all values in range [min, max] to the
+        given absolute precision. */
+    public static int[] digitSpaceNeeded(double min, double max,
+                                         double precision) {
+        int[] limits = digitSpaceNeeded(precision);
+        int after = limits[1];
 
-        for (double value: values) {
-            int[] limits = digitSpaceNeeded(value);
-            units = Math.max(units, limits[0]);
-            decimals = Math.max(decimals, limits[1]);
-        }
+        limits = digitSpaceNeeded(min);
+        int before = limits[0];
 
-        return new int[] { units, decimals };
+        limits = digitSpaceNeeded(max);
+        limits[0] = Math.max(before, limits[0]);
+        limits[1] = after;
+
+        return limits;
     }
 }
