@@ -12,6 +12,7 @@ import org.codehaus.jackson.annotate.JsonTypeInfo;
               include = JsonTypeInfo.As.PROPERTY,
               property = "transform")
 @JsonSubTypes({
+        @Type(value=RectangleTransform.class, name = "RectangleTransform"),
         @Type(value=TriangleTransform.class, name = "TriangleTransform"),
         @Type(value=QuadToRect.class, name = "QuadToRect"),
         @Type(value=QuadToQuad.class, name = "QuadToQuad") })
