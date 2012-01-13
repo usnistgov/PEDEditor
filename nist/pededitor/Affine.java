@@ -63,30 +63,29 @@ public class Affine extends AffineTransform implements Transform2D {
         return new Affine(super.createInverse());
     }
 
-    public void preConcatenate(Transform2D other) {
-        AffineTransform at = (AffineTransform) other;
-        super.preConcatenate(at);
-    }
-
     @JsonProperty("flatMatrix") double[] getFlatMatrix() {
         return new double[] { getScaleX(), getShearY(),
                               getShearX(), getScaleY(),
                               getTranslateX(), getTranslateY() };
     }
 
+    public void preConcatenate(Transform2D other) {
+        AffineTransform at = (AffineTransform) other;
+        super.preConcatenate(at);
+    }
+
+    public void concatenate(Transform2D other) {
+        super.concatenate((AffineTransform) other);
+    }
+
     /** Method defined just to avoid "method is ambiguous" error. */
     public void preConcatenate(Affine other) {
-        super.preConcatenate((AffineTransform) other);
+        preConcatenate((AffineTransform) other);
     }
 
     /** Method defined just to avoid "method is ambiguous" error. */
-    public void concatenate(Transform2D other) {
-        AffineTransform at = (AffineTransform) other;
-        super.concatenate(at);
-    }
-
     public void concatenate(Affine other) {
-        super.concatenate((AffineTransform) other);
+        concatenate((AffineTransform) other);
     }
 
     public static Affine getScaleInstance(double sx, double sy) {
