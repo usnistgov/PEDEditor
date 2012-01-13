@@ -46,7 +46,6 @@ public class DimensionsDialog extends JDialog {
         contentPane.add(editorPane, BorderLayout.PAGE_START);
 
         for (int i = 0; i < labels.length; ++i) {
-            Box column = new Box(BoxLayout.LINE_AXIS);
             JLabel label = new JLabel(labels[i]);
             JTextField text = new JTextField("100.0");
             textFields[i] = text;
