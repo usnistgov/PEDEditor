@@ -46,6 +46,9 @@ public class AnchoredLabel {
         standard font size is defined by the application. */
     double fontSize;
 
+    boolean boxed = false;
+    boolean opaque = false;
+
     public AnchoredLabel
         (@JsonProperty("string") String text,
          @JsonProperty("xWeight") double xWeight,
@@ -62,6 +65,10 @@ public class AnchoredLabel {
     public void setAngle(double angle) { this.angle = angle; }
     public void setFontSize(double fontSize) { this.fontSize = fontSize; }
     public void setText(String text) { this.text = text; }
+    /** If true, draw a box around the label. */
+    public void setBoxed(boolean boxed) { this.boxed = boxed; }
+    /** If true, erase the label's background before drawing. */
+    public void setOpaque(boolean opaque) { this.opaque = opaque; }
 
     public double getX() { return x; }
     public double getY() { return y; }
@@ -70,9 +77,14 @@ public class AnchoredLabel {
     public double getFontSize() { return fontSize; }
     @JsonProperty("xWeight") public double getXWeight() { return xWeight; }
     @JsonProperty("yWeight") public double getYWeight() { return yWeight; }
+    /** If true, draw a box around the label. */
+    public boolean isBoxed() { return boxed; }
+    /** If true, erase the label's background before drawing. */
+    public boolean isOpaque() { return opaque; }
 
     public String toString() {
         return "'" + text + "' x: " + x  + " y: " + y + " wx: " + xWeight
-            + " wy: " + yWeight + " angle: " + angle + " fontSize: " + fontSize;
+            + " wy: " + yWeight + " angle: " + angle + " fontSize: " + fontSize
+            + " boxed: " + boxed + " opaque: " + opaque;
     }
 }
