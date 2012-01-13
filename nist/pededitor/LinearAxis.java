@@ -11,7 +11,7 @@ import org.codehaus.jackson.annotate.JsonProperty;
 /** Class to hold information about an axis whose value equals
 
     (ax + by + c). */
-public class LinearAxisInfo extends AxisInfo {
+public class LinearAxis extends Axis {
 
     double a;
     double b;
@@ -20,7 +20,7 @@ public class LinearAxisInfo extends AxisInfo {
         = new ArrayList<LinearRuler>();
 
     /** Create a LinearAxisInfo for the formula a*x + b*y + c. */
-    public LinearAxisInfo(@JsonProperty("format") NumberFormat format,
+    public LinearAxis(@JsonProperty("format") NumberFormat format,
                           @JsonProperty("a") double a,
                           @JsonProperty("b") double b,
                           @JsonProperty("c") double c) {
@@ -31,11 +31,11 @@ public class LinearAxisInfo extends AxisInfo {
     }
 
     /** Create a LinearAxisInfo for the formula a*x + b*y + c. */
-    public LinearAxisInfo(double a, double b, double c) {
+    public LinearAxis(double a, double b, double c) {
         this(getDefaultFormat(), a, b, c);
     }
 
-    public LinearAxisInfo() {
+    public LinearAxis() {
         this(0.0, 0.0, 0.0);
     }
 
@@ -80,34 +80,34 @@ public class LinearAxisInfo extends AxisInfo {
         return new DecimalFormat("##0.0");
     }
 
-    static public LinearAxisInfo createXAxis(NumberFormat format) {
-        LinearAxisInfo output = new LinearAxisInfo(format, 1.0, 0.0, 0.0);
+    static public LinearAxis createXAxis(NumberFormat format) {
+        LinearAxis output = new LinearAxis(format, 1.0, 0.0, 0.0);
         output.name = "X";
         return output;
     }
 
-    static public LinearAxisInfo createXAxis() {
+    static public LinearAxis createXAxis() {
         return createXAxis(getDefaultFormat());
     }
 
-    static public LinearAxisInfo createFromAffine
+    static public LinearAxis createFromAffine
         (NumberFormat format, AffineTransform xform, boolean isY) {
         if (isY) {
-            return new LinearAxisInfo(format, xform.getShearY(),
+            return new LinearAxis(format, xform.getShearY(),
                                       xform.getScaleY(), xform.getTranslateY());
         } else {
-            return new LinearAxisInfo(format, xform.getScaleX(),
+            return new LinearAxis(format, xform.getScaleX(),
                                       xform.getShearX(), xform.getTranslateX());
         }
     }
 
-    static public LinearAxisInfo createYAxis(NumberFormat format) {
-        LinearAxisInfo output = new LinearAxisInfo(format, 0.0, 1.0, 0.0);
+    static public LinearAxis createYAxis(NumberFormat format) {
+        LinearAxis output = new LinearAxis(format, 0.0, 1.0, 0.0);
         output.name = "Y";
         return output;
     }
 
-    static public LinearAxisInfo createYAxis() {
+    static public LinearAxis createYAxis() {
         return createYAxis(getDefaultFormat());
     }
 }

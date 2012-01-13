@@ -5,13 +5,13 @@ import java.util.*;
 import java.text.*;
 
 /** Simple class to hold information about an axis/variable. */
-abstract public class AxisInfo {
+abstract public class Axis {
 
-    public AxisInfo() {
+    public Axis() {
         format = NumberFormat.getInstance();
     }
 
-    public AxisInfo(NumberFormat format) {
+    public Axis(NumberFormat format) {
         this.format = format;
     }
 

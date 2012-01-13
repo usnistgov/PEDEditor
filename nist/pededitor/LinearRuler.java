@@ -50,7 +50,7 @@ class LinearRuler {
         the right-side tick. */
     @JsonProperty LabelAnchor labelAnchor;
 
-    @JsonBackReference LinearAxisInfo axis;
+    @JsonBackReference LinearAxis axis;
 
     /** To simplify axis rotations, textAngle indicates the angle of
         the text relative to the ray from startPoint to endPoint. So

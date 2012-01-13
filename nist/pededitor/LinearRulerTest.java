@@ -20,7 +20,7 @@ class TestPanelZ extends JPanel {
        r.lineWidth = 1.5;
        r.labelAnchor = LinearRuler.LabelAnchor.LEFT;
        r.tickType = LinearRuler.TickType.V;
-       r.axis = new LinearAxisInfo(-0.001, 0.0, 17);
+       r.axis = new LinearAxis(-0.001, 0.0, 17);
        setPreferredSize(new Dimension(700, 600));
        r.startArrow = true;
        r.endArrow = true;

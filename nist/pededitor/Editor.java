@@ -343,15 +343,15 @@ public class Editor implements CropEventListener, MouseListener,
     protected BufferedImage originalImage;
     protected String originalFilename;
 
-    protected ArrayList<LinearAxisInfo> axes;
+    protected ArrayList<LinearAxis> axes;
     /** principal coordinates are used to define rulers' startPoints
         and endPoints. */
     protected ArrayList<LinearRuler> rulers;
-    protected LinearAxisInfo xAxis = null;
-    protected LinearAxisInfo yAxis = null;
-    protected LinearAxisInfo zAxis = null;
-    protected LinearAxisInfo pageXAxis = null;
-    protected LinearAxisInfo pageYAxis = null;
+    protected LinearAxis xAxis = null;
+    protected LinearAxis yAxis = null;
+    protected LinearAxis zAxis = null;
+    protected LinearAxis pageXAxis = null;
+    protected LinearAxis pageYAxis = null;
     protected boolean preserveMprin = false;
     protected int paintSuppressionRequestCnt;
 
@@ -410,7 +410,7 @@ public class Editor implements CropEventListener, MouseListener,
         labelCenters = new ArrayList<Point2D.Double>();
         activeCurveNo = -1;
         activeVertexNo = -1;
-        axes = new ArrayList<LinearAxisInfo>();
+        axes = new ArrayList<LinearAxis>();
         rulers = new ArrayList<LinearRuler>();
         mprin = null;
         filename = null;
@@ -1042,7 +1042,7 @@ public class Editor implements CropEventListener, MouseListener,
         changeUnits(getYAxis());
     }
 
-    public void changeUnits(LinearAxisInfo axis) {
+    public void changeUnits(LinearAxis axis) {
         if (axis == null) {
             return;
         }
@@ -1112,8 +1112,8 @@ public class Editor implements CropEventListener, MouseListener,
         // TODO Do...
     }
 
-    @JsonIgnore public LinearAxisInfo getXAxis() {
-        for (LinearAxisInfo axis: axes) {
+    @JsonIgnore public LinearAxis getXAxis() {
+        for (LinearAxis axis: axes) {
             if (axis.isXAxis()) {
                 return axis;
             }
@@ -1121,8 +1121,8 @@ public class Editor implements CropEventListener, MouseListener,
         return null;
     }
 
-    @JsonIgnore public LinearAxisInfo getYAxis() {
-        for (LinearAxisInfo axis: axes) {
+    @JsonIgnore public LinearAxis getYAxis() {
+        for (LinearAxis axis: axes) {
             if (axis.isYAxis()) {
                 return axis;
             }
@@ -2021,14 +2021,14 @@ public class Editor implements CropEventListener, MouseListener,
 
         if (diagramType.isTernary()) {
             NumberFormat pctFormat = new DecimalFormat("##0.0'%'");
-            xAxis = LinearAxisInfo.createXAxis(pctFormat);
+            xAxis = LinearAxis.createXAxis(pctFormat);
             // Confusingly, the axis that goes from 0 at the bottom
             // left to 100 at the bottom right like a normal x-axis
             // and that is called "xAxis" actually ends at component
             // 'Z'.
             xAxis.name = "Z";
-            yAxis = LinearAxisInfo.createYAxis(pctFormat);
-            zAxis = new LinearAxisInfo(pctFormat, -1.0, -1.0, 100.0);
+            yAxis = LinearAxis.createYAxis(pctFormat);
+            zAxis = new LinearAxis(pctFormat, -1.0, -1.0, 100.0);
             zAxis.name = "X";
 
             axes.add(zAxis);
@@ -2036,8 +2036,8 @@ public class Editor implements CropEventListener, MouseListener,
             axes.add(xAxis);
         } else {
             NumberFormat format = new DecimalFormat("##0.0");
-            xAxis = LinearAxisInfo.createXAxis(format);
-            yAxis = LinearAxisInfo.createYAxis(format);
+            xAxis = LinearAxis.createXAxis(format);
+            yAxis = LinearAxis.createYAxis(format);
             axes.add(xAxis);
             axes.add(yAxis);
         }
@@ -2051,10 +2051,10 @@ public class Editor implements CropEventListener, MouseListener,
 
         {
             NumberFormat format = new DecimalFormat("0.000");
-            pageXAxis = LinearAxisInfo.createFromAffine
+            pageXAxis = LinearAxis.createFromAffine
                 (format, principalToStandardPage, false);
             pageXAxis.name = "page X";
-            pageYAxis = LinearAxisInfo.createFromAffine
+            pageYAxis = LinearAxis.createFromAffine
                 (format, principalToStandardPage, true);
             pageYAxis.name = "page Y";
             axes.add(pageXAxis);
@@ -2169,9 +2169,9 @@ public class Editor implements CropEventListener, MouseListener,
 
     /** Populate the "rulers" fields of the axes, and then return the
         axes. */
-    @JsonProperty("axes") ArrayList<LinearAxisInfo>
+    @JsonProperty("axes") ArrayList<LinearAxis>
     getSerializationReadyAxes() {
-        for (LinearAxisInfo axis: axes) {
+        for (LinearAxis axis: axes) {
             axis.rulers = new ArrayList<LinearRuler>();
         }
 
@@ -2187,11 +2187,11 @@ public class Editor implements CropEventListener, MouseListener,
         individual axes' "rulers" fields, and set the individual axes'
         "rulers" fields to null. */
     @JsonProperty("axes") void
-    setAxesFromSerialization(ArrayList<LinearAxisInfo> axes) {
+    setAxesFromSerialization(ArrayList<LinearAxis> axes) {
         this.axes = axes;
         rulers = new ArrayList<LinearRuler>();
 
-        for (LinearAxisInfo axis: axes) {
+        for (LinearAxis axis: axes) {
             rulers.addAll(axis.rulers);
             axis.rulers = null;
         }
@@ -2467,7 +2467,7 @@ public class Editor implements CropEventListener, MouseListener,
         principalToStandardPage.concatenate(itrans);
         standardPageToPrincipal.preConcatenate(atrans);
 
-        for (LinearAxisInfo axis: axes) {
+        for (LinearAxis axis: axes) {
             if (axis.isXAxis() || axis.isYAxis()) {
                 continue;
             }
@@ -2567,7 +2567,7 @@ public class Editor implements CropEventListener, MouseListener,
         StringBuilder status = new StringBuilder("");
 
         boolean first = true;
-        for (AxisInfo axis : axes) {
+        for (Axis axis : axes) {
             if (first) {
                 first = false;
             } else {
