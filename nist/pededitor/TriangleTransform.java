@@ -10,12 +10,7 @@ import org.codehaus.jackson.annotate.JsonTypeInfo;
 
 /** Transform a triangle into any other triangle. All that is needed
     is an affine transformation. */
-@JsonIgnoreProperties
-    ({"scaleX", "scaleY", "shearX", "shearY", "translateX", "translateY",
-      "identity", "determinant", "type", "flatMatrix" })
-public class TriangleTransform
-    extends Affine
-    implements PolygonTransform {
+public class TriangleTransform extends AffinePolygonTransform {
 
     private static final long serialVersionUID = 1768608728396588446L;
 
@@ -34,9 +29,9 @@ public class TriangleTransform
     Point2D.Double[] outputVerts = equilateralTriangleVertices();
 
     public TriangleTransform(TriangleTransform other) {
-        super(other);
         inputVerts = Duh.deepCopy(other.inputVerts);
         outputVerts = Duh.deepCopy(other.outputVerts);
+        update();
     }
 
     /** @return a new TriangleTransform that represents the affine
@@ -127,7 +122,11 @@ public class TriangleTransform
     }
 
     public void concatenate(Transform2D other) {
-        concatSub(other, inputVerts);
+        try {
+            concatSub(other.createInverse(), inputVerts);
+        } catch (NoninvertibleTransformException e) {
+            throw new IllegalArgumentException(e);
+        }
     }
 
     public void preConcatenate(AffineTransform other) {
@@ -135,7 +134,11 @@ public class TriangleTransform
     }
 
     public void concatenate(AffineTransform other) {
-        concatSub(other, inputVerts);
+        try {
+            concatSub(other.createInverse(), inputVerts);
+        } catch (NoninvertibleTransformException e) {
+            throw new IllegalArgumentException(e);
+        }
     }
 
     public Rectangle2D.Double inputBounds() {
