@@ -278,19 +278,33 @@ import org.codehaus.jackson.map.annotate.*;
 public class Editor implements CropEventListener, MouseListener,
                                MouseMotionListener, Printable {
     static ObjectMapper objectMapper = null;
-
-    /** These values are not universally useful, but they apply to the
-        house style for our PED guides. */
-    class DefaultLinearRuler extends LinearRuler {
-        DefaultLinearRuler() {
+    
+    /** Apply the NIST MML PED standard binary diagram axis style. */
+    class DefaultBinaryRuler extends LinearRuler {
+        DefaultBinaryRuler() {
             fontSize = normalFontSize();
             lineWidth = STANDARD_LINE_WIDTH;
             tickPadding = 3.0;
-            // maxBigTicks = 9;
+
+            drawSpine = false; // The ruler spine is already a curve
+                               // in the diagram. Don't draw it twice.
+        }
+    }
+
+    /** Apply the NIST MML PED standard ternary diagram axis style. */
+    class DefaultTernaryRuler extends LinearRuler {
+        DefaultTernaryRuler() {
+            fontSize = normalFontSize();
+            lineWidth = STANDARD_LINE_WIDTH;
+            tickPadding = 3.0;
+            drawSpine = false;
+
+            tickType = LinearRuler.TickType.V;
             keepStartClear = true;
             keepEndClear = true;
-            drawSpine = false;
-            // tickDelta = 0; // No small ticks;
+
+            drawSpine = false; // The ruler spine is already a curve
+                               // in the diagram. Don't draw it twice.
         }
     }
 
@@ -311,9 +325,12 @@ public class Editor implements CropEventListener, MouseListener,
 
     @JsonProperty protected PolygonTransform originalToPrincipal;
     protected PolygonTransform principalToOriginal;
-    @JsonProperty protected Affine principalToStandardPage;
+    @JsonProperty protected AffinePolygonTransform principalToStandardPage;
     protected Affine standardPageToPrincipal;
+    /** Bounds of the entire page in standardPage space. */
     protected Rectangle2D.Double pageBounds;
+    /** Bounds of the core diagram (the central triangle or rectangle
+        only) in the principal coordinate space. */
     protected DiagramType diagramType = null;
     protected double scale;
     protected ArrayList<GeneralPolyline> paths;
@@ -326,8 +343,9 @@ public class Editor implements CropEventListener, MouseListener,
     protected BufferedImage originalImage;
     protected String originalFilename;
 
-    // TODO Save axes in PED! @JsonProperty
     protected ArrayList<LinearAxisInfo> axes;
+    /** principal coordinates are used to define rulers' startPoints
+        and endPoints. */
     protected ArrayList<LinearRuler> rulers;
     protected LinearAxisInfo xAxis = null;
     protected LinearAxisInfo yAxis = null;
@@ -375,6 +393,7 @@ public class Editor implements CropEventListener, MouseListener,
         return filename;
     }
 
+    /** Initialize/clear almost every field except diagramType. */
     void clear() {
         originalToPrincipal = null;
         originalImage = null;
@@ -426,6 +445,58 @@ public class Editor implements CropEventListener, MouseListener,
     public Point2D.Double getActiveVertex() {
         return (activeVertexNo == -1) ? null
             : getActiveCurve().get(activeVertexNo);
+    }
+
+    /** Reset the location of all vertices and labels located at
+        getActiveVertex() to mprin. */
+    public void moveVertex() {
+        Point2D.Double p = getActiveVertex();
+
+        if (p == null) {
+            JOptionPane.showMessageDialog
+                (editFrame,
+                 "You must select a vertex (perhaps using the '?' shortcut " +
+                 "key) before you can move it.");
+            return;
+        }
+
+        if (mprin == null) {
+            JOptionPane.showMessageDialog
+                (editFrame,
+                 "You must move the mouse to the target destination " +
+                 "before you can move vertices.");
+            return;
+        }
+
+        Point2D.Double pagePoint = principalToStandardPage.transform(p);
+        double tinyDistSq = 1e-12;
+
+        for (GeneralPolyline path: paths) {
+            for (int vertexNo = 0; vertexNo < path.size(); ++vertexNo) {
+                Point2D.Double vertex = path.get(vertexNo);
+                Point2D.Double thisPagePoint
+                    = principalToStandardPage.transform(vertex);
+
+                double dist2 = pagePoint.distanceSq(thisPagePoint);
+
+                if (dist2 < tinyDistSq) {
+                    path.set(vertexNo, mprin);
+                }
+            }
+        }
+
+        for (AnchoredLabel label: labels) {
+            Point2D.Double thisPagePoint = principalToStandardPage
+                .transform(label.getX(), label.getY());
+            double dist2 = pagePoint.distanceSq(thisPagePoint);
+
+            if (dist2 < tinyDistSq) {
+                label.setX(mprin.x);
+                label.setY(mprin.y);
+            }
+        }
+
+        repaintEditFrame();
     }
 
     /** Remove the current vertex. */
@@ -635,25 +706,8 @@ public class Editor implements CropEventListener, MouseListener,
             }
         }
 
-        {
-            int i = 0;
-            for (AnchoredLabel label: labels) {
-                if (false) {
-                    // TODO Delete or optionally re-enable.
-                    boxHTML(g, labelViews.get(i), scale * label.getFontSize(),
-                            label.getAngle(),
-                            label.getX() * scale, label.getY() * scale,
-                            label.getXWeight(), label.getYWeight());
-                }
-
-                drawHTML(g, labelViews.get(i), scale * label.getFontSize(),
-                         label.getAngle(),
-                         label.getX() * scale, label.getY() * scale,
-                         label.getXWeight(), label.getYWeight(),
-                         labelCenters.get(i));
-
-                ++i;
-            }
+        for (int i = 0; i < labels.size(); ++i) {
+            drawLabel(g, i, scale);
         }
 
         for (Arrow arrow: arrows) {
@@ -867,13 +921,15 @@ public class Editor implements CropEventListener, MouseListener,
         repaintEditFrame();
     }
 
+    /** @return the index of the label that is closest to mprin, as
+        measured by distance from the center of the label to mprin on
+        the standard page. */
     int nearestLabelNo() {
         if (mprin == null) {
             return -1;
         }
 
-        Point2D.Double mousePage = new Point2D.Double();
-        principalToStandardPage.transform(mprin, mousePage);
+        Point2D.Double mousePage = principalToStandardPage.transform(mprin);
 
         int output = -1;
         double minDistance = 0.0;
@@ -978,6 +1034,102 @@ public class Editor implements CropEventListener, MouseListener,
         repaintEditFrame();
     }
 
+    public void changeXUnits() {
+        changeUnits(getXAxis());
+    }
+
+    public void changeYUnits() {
+        changeUnits(getYAxis());
+    }
+
+    public void changeUnits(LinearAxisInfo axis) {
+        if (axis == null) {
+            return;
+        }
+
+        String[] columnNames =
+            {"Old " + axis.name + " value", "New " + axis.name + " value"};
+
+        Object[][] data;
+
+        boolean isX = axis.isXAxis();
+
+        Rectangle2D.Double principalBounds = getPrincipalBounds();
+
+        if (isX) {
+            data = new Object[][]
+                {{principalBounds.x, principalBounds.x},
+                 {principalBounds.x+principalBounds.width,
+                  principalBounds.x+principalBounds.width}};
+        } else if (axis.isYAxis()) {
+            data = new Object[][]
+                {{principalBounds.y, principalBounds.y},
+                 {principalBounds.y+principalBounds.height,
+                  principalBounds.y+principalBounds.height}};
+        } else {
+            throw new IllegalStateException("Only x and y units are adjustable");
+        }
+
+        TableDialog dog = new TableDialog(editFrame, data, columnNames);
+        dog.setTitle("Change " + axis.name + " units");
+        Object[][] output = dog.showModal();
+        if (output == null) {
+            return;
+        }
+
+        // Compute {m,b} such that y = mx + b. Note that here, y is
+        // the new axis value and x is the old one -- this has nothing
+        // to do with x-axis versus y-axis.
+
+        double x1 = (Double) output[0][0];
+        double x2 = (Double) output[1][0];
+        double y1 = (Double) output[0][1];
+        double y2 = (Double) output[1][1];
+
+        System.out.println(x1 + ", " + x2 + ", " + y1 + ", " + y2);
+
+        if (x1 == x2 || y1 == y2) {
+            JOptionPane.showMessageDialog
+                (editFrame,
+                 "Please choose two different old values\n"
+                 + "and two different new values.");
+            return;
+        }
+
+        double m = (y2 - y1)/(x2 - x1);
+        double b = y1 - m * x1;
+        System.out.println("y = " + m + " x + " + b);
+
+        AffineTransform xform = isX
+            ? new AffineTransform(m, 0.0, 0.0, 1.0, b, 0.0)
+            : new AffineTransform(1.0, 0.0, 0.0, m, 0.0, b);
+
+        invisiblyTransformPrincipalCoordinates(xform);
+        repaintEditFrame();
+    }
+
+    public void setComponent(int componentNum) {
+        // TODO Do...
+    }
+
+    @JsonIgnore public LinearAxisInfo getXAxis() {
+        for (LinearAxisInfo axis: axes) {
+            if (axis.isXAxis()) {
+                return axis;
+            }
+        }
+        return null;
+    }
+
+    @JsonIgnore public LinearAxisInfo getYAxis() {
+        for (LinearAxisInfo axis: axes) {
+            if (axis.isYAxis()) {
+                return axis;
+            }
+        }
+        return null;
+    }
+
     /** Invoked from the EditFrame menu */
     public void addLabel() {
         if (mprin == null) {
@@ -991,9 +1143,8 @@ public class Editor implements CropEventListener, MouseListener,
             return;
         }
 
-        Point2D.Double xpoint = principalToStandardPage.transform(mprin);
-        t.setX(xpoint.x);
-        t.setY(xpoint.y);
+        t.setX(mprin.x);
+        t.setY(mprin.y);
         labels.add(t);
         labelViews.add(toView(t.getText(), t.getXWeight()));
         labelCenters.add(new Point2D.Double());
@@ -1078,6 +1229,8 @@ public class Editor implements CropEventListener, MouseListener,
     public void setLabelFont() {
         // TODO setLabelFont
     }
+
+
 
     /** Invoked from the EditFrame menu */
     public void setLineStyle(CompositeStroke lineStyle) {
@@ -1273,9 +1426,16 @@ public class Editor implements CropEventListener, MouseListener,
                 // Straight connect-the-dots polyline.
                 Point2D.Double[] points = path.getPoints();
 
-                for (int i = 0; i < points.length - 1; ++i) {
+                // For closed polylines, don't forget the segment
+                // connecting the last vertex to the first one.
+
+                int segCnt = (points.length >= 3 && path.isClosed())
+                    ? points.length : (points.length-1);
+
+                for (int i = 0; i < segCnt; ++i) {
                     principalToStandardPage.transform(points[i], xpoint2);
-                    principalToStandardPage.transform(points[i+1], xpoint3);
+                    principalToStandardPage.transform
+                        (points[(i+1) % points.length], xpoint3);
                     point = Duh.nearestPointOnSegment
                         (xpoint, xpoint2, xpoint3);
                     double dist = xpoint.distance(point);
@@ -1441,8 +1601,9 @@ public class Editor implements CropEventListener, MouseListener,
     */
     protected void newDiagram(String originalFilename,
                               Point2D.Double[] vertices) {
-        ArrayList<Point2D.Double> diagramPolyline
+        ArrayList<Point2D.Double> diagramOutline
             = new ArrayList<Point2D.Double>();
+        boolean closeDiagramOutline = true;
 
         boolean tracing = (vertices != null);
         clear();
@@ -1466,6 +1627,7 @@ public class Editor implements CropEventListener, MouseListener,
         switch (diagramType) {
         case TERNARY_BOTTOM:
             {
+                closeDiagramOutline = false;
                 double height;
 
                 double defaultHeight = !tracing ? 0.45
@@ -1531,10 +1693,10 @@ public class Editor implements CropEventListener, MouseListener,
                     (principalTrianglePoints, trianglePagePositions);
 
                 // Add the endpoints of the diagram.
-                diagramPolyline.add(outputVertices[1]);
-                diagramPolyline.add(outputVertices[0]);
-                diagramPolyline.add(outputVertices[3]);
-                diagramPolyline.add(outputVertices[2]);
+                diagramOutline.add(outputVertices[1]);
+                diagramOutline.add(outputVertices[0]);
+                diagramOutline.add(outputVertices[3]);
+                diagramOutline.add(outputVertices[2]);
 
                 addTernaryBottomRuler(0.0, 100.0);
                 addTernaryLeftRuler(0.0, height);
@@ -1564,21 +1726,13 @@ public class Editor implements CropEventListener, MouseListener,
                 r = new Rescale(100.0, leftMargin + rightMargin, maxPageWidth,
                                 100.0, topMargin + bottomMargin, maxPageHeight);
 
-                principalToStandardPage = new Affine
-                    (r.t, 0.0,
-                     0.0, -r.t,
-                     leftMargin, 1.0 - bottomMargin);
+                principalToStandardPage = new RectangleTransform
+                    (new Rectangle2D.Double(0.0, 0.0, 100.0, 100.0),
+                     new Rectangle2D.Double(leftMargin, 1.0 - bottomMargin,
+                                            100.0 * r.t, -100.0 * r.t));
                 if (diagramType == DiagramType.BINARY) {
-                    // Add the endpoints of the diagram.
-                    for (Point2D.Double point:
-                             new Point2D.Double[] {
-                                 new Point2D.Double(0.0, 0.0),
-                                 new Point2D.Double(0.0, 100.0),
-                                 new Point2D.Double(100.0, 100.0),
-                                 new Point2D.Double(100.0, 0.0),
-                                 new Point2D.Double(0.0, 0.0)}) {
-                        diagramPolyline.add(point);
-                    }
+                    diagramOutline.addAll
+                        (Arrays.asList(principalToStandardPage.getInputVertices()));
                 }
 
                 break;
@@ -1589,6 +1743,7 @@ public class Editor implements CropEventListener, MouseListener,
         case TERNARY_RIGHT:
         case TERNARY_TOP:
             {
+                closeDiagramOutline = false;
                 final int LEFT_VERTEX = 0;
                 final int TOP_VERTEX = 1;
                 final int RIGHT_VERTEX = 2;
@@ -1702,9 +1857,9 @@ public class Editor implements CropEventListener, MouseListener,
                 }
 
                 // Add the endpoints of the diagram.
-                diagramPolyline.add(trianglePoints[ov1]);
-                diagramPolyline.add(trianglePoints[angleVertex]);
-                diagramPolyline.add(trianglePoints[ov2]);
+                diagramOutline.add(trianglePoints[ov1]);
+                diagramOutline.add(trianglePoints[angleVertex]);
+                diagramOutline.add(trianglePoints[ov2]);
 
                 if (tracing) {
                     originalToPrincipal = new TriangleTransform(vertices,
@@ -1793,12 +1948,8 @@ public class Editor implements CropEventListener, MouseListener,
                       new Point2D.Double(rx, bottom) };
                 principalToStandardPage = new TriangleTransform
                     (principalTrianglePoints, trianglePagePositions);
-
-                // Add the endpoints of the diagram.
-                for (Point2D.Double point: principalTrianglePoints) {
-                    diagramPolyline.add(point);
-                }
-                diagramPolyline.add(principalTrianglePoints[0]);
+                diagramOutline.addAll
+                    (Arrays.asList(principalToStandardPage.getInputVertices()));
 
                 addTernaryBottomRuler(0.0, 100.0);
                 addTernaryLeftRuler(0.0, 100.0);
@@ -1808,13 +1959,17 @@ public class Editor implements CropEventListener, MouseListener,
         }
         pageBounds = new Rectangle2D.Double(0.0, 0.0, r.width, r.height);
 
-        // Insert the polyline outline of the diagram into the set of
-        // paths.
-        paths.add(GeneralPolyline.create
-                  (GeneralPolyline.LINEAR,
-                   diagramPolyline.toArray(new Point2D.Double[0]),
-                   CompositeStroke.getSolidLine(),
-                   STANDARD_LINE_WIDTH));
+        if (diagramOutline.size() > 0) {
+            // Insert the polyline outline of the diagram into the set
+            // of paths.
+            GeneralPolyline outline = GeneralPolyline.create
+                (GeneralPolyline.LINEAR,
+                 diagramOutline.toArray(new Point2D.Double[0]),
+                 CompositeStroke.getSolidLine(),
+                 STANDARD_LINE_WIDTH);
+            outline.setClosed(closeDiagramOutline);
+            paths.add(outline);
+        }
 
         initializeDiagram();
 
@@ -1987,7 +2142,8 @@ public class Editor implements CropEventListener, MouseListener,
 
     /** Copy data fields from other. Afterwards, it is unsafe to
         modify other, because the modifications may affect this as
-        well. In other words, this is a shallow copy. */
+        well. In other words, this is a shallow copy that destroys
+        other. */
     void cannibalize(Editor other) {
         diagramType = other.diagramType;
         originalToPrincipal = other.originalToPrincipal;
@@ -1998,10 +2154,47 @@ public class Editor implements CropEventListener, MouseListener,
         arrows = other.arrows;
         initializeDiagram();
         paths = other.paths;
+
+        // TODO initializeDiagram wants to initialize the axes, but I
+        // already have the axes I want... It seems wasteful to create
+        // the axes and then ditch them, and it means xAxis and so on
+        // are bogus.
+        axes = other.axes;
+        rulers = other.rulers;
         labels = other.labels;
         initializeLabelViews();
         activeCurveNo = -1;
         activeVertexNo = -1;
+    }
+
+    /** Populate the "rulers" fields of the axes, and then return the
+        axes. */
+    @JsonProperty("axes") ArrayList<LinearAxisInfo>
+    getSerializationReadyAxes() {
+        for (LinearAxisInfo axis: axes) {
+            axis.rulers = new ArrayList<LinearRuler>();
+        }
+
+        // Make each ruler a child of its respective axis.
+        for (LinearRuler r: rulers) {
+            r.axis.rulers.add(r);
+        }
+
+        return axes;
+    }
+
+    /** Populate the Editor object's "rulers" field from the
+        individual axes' "rulers" fields, and set the individual axes'
+        "rulers" fields to null. */
+    @JsonProperty("axes") void
+    setAxesFromSerialization(ArrayList<LinearAxisInfo> axes) {
+        this.axes = axes;
+        rulers = new ArrayList<LinearRuler>();
+
+        for (LinearAxisInfo axis: axes) {
+            rulers.addAll(axis.rulers);
+            axis.rulers = null;
+        }
     }
 
     @JsonIgnore public BufferedImage getOriginalImage() {
@@ -2206,6 +2399,87 @@ public class Editor implements CropEventListener, MouseListener,
     /** Invoked from the EditFrame menu */
     public void addVertexLocation() {
         // TODO (mandatory) Explicitly select label or vertex location.
+    }
+
+
+    /** Apply the given transform to all curve vertices, all label
+        locations, all arrow locations, all ruler start and endpoints,
+        and all axis definitions *except* for the x- and y-axis
+        definitions. */
+    public void transformPrincipalCoordinates(AffineTransform trans) {
+        for (GeneralPolyline path: paths) {
+            Point2D.Double[] points = path.getPoints();
+            trans.transform(points, 0, points, 0, points.length);
+            path.setPoints(Arrays.asList(points));
+        }
+
+        Point2D.Double tmp = new Point2D.Double();
+
+        for (AnchoredLabel label: labels) {
+            tmp.x = label.x;
+            tmp.y = label.y;
+            trans.transform(tmp, tmp);
+            label.x = tmp.x;
+            label.y = tmp.y;
+        }
+
+        for (Arrow arrow: arrows) {
+            tmp.x = arrow.x;
+            tmp.y = arrow.y;
+            trans.transform(tmp, tmp);
+            arrow.x = tmp.x;
+            arrow.y = tmp.y;
+        }
+
+        for (LinearRuler ruler: rulers) {
+            trans.transform(ruler.startPoint, ruler.startPoint);
+            trans.transform(ruler.endPoint, ruler.endPoint);
+        }
+    }
+
+    /** Apply the given transform to all coordinates defined in
+        principal coordinates, but apply corresponding and inverse
+        transformations to all transforms to and from principal
+        coordinates, with one exception: leave the x- and y-axes
+        alone. So the diagram looks the same as before except for (1)
+        principal component axis ticks and (2) principal coordinate
+        values as indicated in the status bar. For example, one might
+        use this method to convert a binary diagram's y-axis from one
+        temperature scale to another, or from the default range 0-100
+        to the range you really want. */
+    public void invisiblyTransformPrincipalCoordinates(AffineTransform trans) {
+        transformPrincipalCoordinates(trans);
+
+        Affine atrans = new Affine(trans);
+        Affine itrans;
+        try {
+            itrans = atrans.createInverse();
+        } catch (NoninvertibleTransformException e) {
+            throw new IllegalStateException("Transform " + trans
+                                            + " is not invertible");
+        }
+
+        if (originalToPrincipal != null) {
+            originalToPrincipal.preConcatenate(atrans);
+            principalToOriginal.concatenate(itrans);
+        }
+
+        principalToStandardPage.concatenate(itrans);
+        standardPageToPrincipal.preConcatenate(atrans);
+
+        for (LinearAxisInfo axis: axes) {
+            if (axis.isXAxis() || axis.isYAxis()) {
+                continue;
+            }
+            axis.concatenate(itrans);
+        }
+    }
+
+    public void cToF() {
+        AffineTransform ct = new
+            AffineTransform(1.0, 0.0, 0.0, 1.8, 0.0, 32);
+        invisiblyTransformPrincipalCoordinates(ct);
+        repaintEditFrame();
     }
 
     @Override
@@ -2560,6 +2834,40 @@ public class Editor implements CropEventListener, MouseListener,
         repaintEditFrame();
     }
 
+
+    /* Draw the label defined by the given label and view combination
+       to the given graphics context while mulitplying the font size
+       and position by scale. */
+    public void drawLabel(Graphics g, int labelNo, double scale) {
+        AnchoredLabel label = labels.get(labelNo);
+        View view = labelViews.get(labelNo);
+        Point2D.Double point =
+            principalToStandardPage.transform(label.getX(), label.getY());
+
+        if (label.isOpaque()) {
+            g.setColor(Color.WHITE);
+            boxHTML(g, view, scale * label.getFontSize(),
+                    label.getAngle(),
+                    point.x * scale, point.y * scale,
+                    label.getXWeight(), label.getYWeight(), true);
+            g.setColor(Color.BLACK);
+        }
+
+        if (label.isBoxed()) {
+            boxHTML(g, view, scale * label.getFontSize(),
+                    label.getAngle(),
+                    point.x * scale, point.y * scale,
+                    label.getXWeight(), label.getYWeight(), false);
+        }
+
+        drawHTML(g, view, scale * label.getFontSize(),
+                 label.getAngle(),
+                 point.x * scale, point.y * scale,
+                 label.getXWeight(), label.getYWeight(),
+                 labelCenters.get(labelNo));
+    }
+
+
     /**
        @param view The view.paint() method is used to perform the
        drawing (the decorated text to be encoded is implicitly
@@ -2644,9 +2952,13 @@ public class Editor implements CropEventListener, MouseListener,
         g2d.setTransform(oldxform);
     }
 
+
+    /** Create a box in the space that the given view would enclose.
+
+        @param fill If true, make a solid box. If false, draw a box outline. */
     void boxHTML(Graphics g, View view, double scale, double angle,
                   double ax, double ay,
-                  double xWeight, double yWeight) {
+                 double xWeight, double yWeight, boolean fill) {
         double width = view.getPreferredSpan(View.X_AXIS) + labelXMargin * 2;
         double height = view.getPreferredSpan(View.Y_AXIS) + labelYMargin * 2;
 
@@ -2676,10 +2988,8 @@ public class Editor implements CropEventListener, MouseListener,
         path.lineTo(ax + xpoint.x, ay + xpoint.y);
         path.closePath();
 
-        if (false) {
-            g.setColor(Color.WHITE);
+        if (fill) {
             g2d.fill(path);
-            g.setColor(Color.BLACK);
         } else {
             g2d.draw(path);
         }
@@ -2710,6 +3020,16 @@ public class Editor implements CropEventListener, MouseListener,
                                     BasicStrokeAnnotations.class);
             des.addMixInAnnotations(BasicStroke.class,
                                     BasicStrokeAnnotations.class);
+
+            ser.addMixInAnnotations(DecimalFormat.class,
+                                    DecimalFormatAnnotations.class);
+            des.addMixInAnnotations(DecimalFormat.class,
+                                    DecimalFormatAnnotations.class);
+
+            ser.addMixInAnnotations(NumberFormat.class,
+                                    NumberFormatAnnotations.class);
+            des.addMixInAnnotations(NumberFormat.class,
+                                    NumberFormatAnnotations.class);
         }
 
         return objectMapper;
@@ -2915,8 +3235,7 @@ public class Editor implements CropEventListener, MouseListener,
     }
 
     void addTernaryBottomRuler(double start /* Z */, double end /* Z */) {
-        LinearRuler r = new DefaultLinearRuler() {{ // Component-Z axis
-            tickType = LinearRuler.TickType.V;
+        LinearRuler r = new DefaultTernaryRuler() {{ // Component-Z axis
             xWeight = 0.5;
             yWeight = 0.0;
             textAngle = 0;
@@ -2932,8 +3251,7 @@ public class Editor implements CropEventListener, MouseListener,
     }
 
     void addTernaryLeftRuler(double start /* Y */, double end /* Y */) {
-        LinearRuler r = new DefaultLinearRuler() {{ // Left Y-axis
-            tickType = LinearRuler.TickType.V;
+        LinearRuler r = new DefaultTernaryRuler() {{ // Left Y-axis
             xWeight = 1.0;
             yWeight = 0.5;
             textAngle = Math.PI / 3;
@@ -2949,8 +3267,7 @@ public class Editor implements CropEventListener, MouseListener,
     }
 
     void addTernaryRightRuler(double start /* Y */, double end /* Y */) {
-        LinearRuler r = new DefaultLinearRuler() {{ // Right Y-axis
-            tickType = LinearRuler.TickType.V;
+        LinearRuler r = new DefaultTernaryRuler() {{ // Right Y-axis
             xWeight = 0.0;
             yWeight = 0.5;
             textAngle = Math.PI * 2 / 3;
@@ -2966,7 +3283,7 @@ public class Editor implements CropEventListener, MouseListener,
     }
 
     void addBinaryBottomRuler() {
-        rulers.add(new DefaultLinearRuler() {{ // X-axis
+        rulers.add(new DefaultBinaryRuler() {{ // X-axis
             xWeight = 0.5;
             yWeight = 0.0;
             textAngle = 0;
@@ -2979,7 +3296,7 @@ public class Editor implements CropEventListener, MouseListener,
     }
 
     void addBinaryTopRuler() {
-        rulers.add(new DefaultLinearRuler() {{ // X-axis
+        rulers.add(new DefaultBinaryRuler() {{ // X-axis
             xWeight = 0.5;
             yWeight = 1.0;
             textAngle = 0;
@@ -2992,7 +3309,7 @@ public class Editor implements CropEventListener, MouseListener,
     }
 
     void addBinaryLeftRuler() {
-        rulers.add(new DefaultLinearRuler() {{ // Left Y-axis
+        rulers.add(new DefaultBinaryRuler() {{ // Left Y-axis
             xWeight = 1.0;
             yWeight = 0.5;
             textAngle = Math.PI / 2;
@@ -3005,7 +3322,7 @@ public class Editor implements CropEventListener, MouseListener,
     }
 
     void addBinaryRightRuler() {
-        rulers.add(new DefaultLinearRuler() {{ // Right Y-axis
+        rulers.add(new DefaultBinaryRuler() {{ // Right Y-axis
             xWeight = 0.0;
             yWeight = 0.5;
             textAngle = Math.PI / 2;
@@ -3015,6 +3332,10 @@ public class Editor implements CropEventListener, MouseListener,
             startPoint = new Point2D.Double(100.0, 0.0);
             endPoint = new Point2D.Double(100.0, 100.0);
         }});
+    }
+
+    @JsonIgnore public Rectangle2D.Double getPrincipalBounds() {
+        return principalToStandardPage.inputBounds();
     }
 }
 
@@ -3051,6 +3372,40 @@ class BasicStrokeAnnotations {
          @JsonProperty("miterLimit") float miterLimit,
          @JsonProperty("dashArray") float[] dashArray,
          @JsonProperty("dashPhase") float dashPhase) {}
+}
+
+class DecimalFormatAnnotations extends DecimalFormat {
+    @Override @JsonProperty("pattern")
+	public String toPattern() {
+		return null;
+	}
+    DecimalFormatAnnotations(@JsonProperty("pattern") String pattern) {}
+}
+
+@JsonTypeInfo(
+              use = JsonTypeInfo.Id.NAME,
+              include = JsonTypeInfo.As.PROPERTY,
+              property = "type")
+@JsonSubTypes({
+        @Type(value=DecimalFormat.class, name = "DecimalFormat") })
+@JsonIgnoreProperties
+    ({"groupingUsed", "parseIntegerOnly",
+      "maximumIntegerDigits",
+      "minimumIntegerDigits",
+      "maximumFractionDigits",
+      "minimumFractionDigits",
+      "positivePrefix",
+      "positiveSuffix",
+      "negativePrefix",
+      "negativeSuffix",
+      "multiplier",
+      "groupingSize",
+      "decimalSeparatorAlwaysShown",
+      "parseBigDecimal",
+      "roundingMode",
+      "decimalFormatSymbols",
+      "currency"})
+abstract class NumberFormatAnnotations extends NumberFormat {
 }
 
 class ScaledCroppedImage {
