@@ -17,10 +17,6 @@ abstract public class AxisInfo {
 
     /** Format to use for values of this kind. */
     public NumberFormat format;
-    /** Location to print axis start. */
-    public Point2D.Double start;
-    /** Location to print axis end. */
-    public Point2D.Double end;
 
     /** Name of this axis/variable -- normally a string, but not
         always. */
