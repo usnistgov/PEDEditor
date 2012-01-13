@@ -2,6 +2,8 @@ package gov.nist.pededitor;
 
 import java.awt.geom.*;
 
+import org.codehaus.jackson.annotate.JsonIgnore;
+
 interface Transform2D {
     /** @return the inverse transform. */
     Transform2D createInverse() throws NoninvertibleTransformException;
@@ -34,7 +36,7 @@ interface Transform2D {
 
     /** @return true if this is an affine transformation of some
         kind. */
-    boolean isAffine();
+    @JsonIgnore boolean isAffine();
 
     Transform2D clone();
 }
