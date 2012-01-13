@@ -6,8 +6,12 @@ import java.awt.geom.Ellipse2D;
 import java.awt.geom.Line2D;
 import java.awt.geom.Point2D;
 import java.awt.geom.Rectangle2D;
+import java.util.ArrayList;
 
 import javax.swing.*;
+
+import org.codehaus.jackson.annotate.JsonBackReference;
+import org.codehaus.jackson.annotate.JsonProperty;
 
 /** Class describing a ruler decorating a linear axis. */
 class LinearRuler {
@@ -20,96 +24,96 @@ class LinearRuler {
         points). */
     public static enum TickType { NORMAL, V };
     
-    /** Physical location of the axis start point. */
-    Point2D.Double startPoint;
-    /** Physical location of the axis end point. */
-    Point2D.Double endPoint;
+    /** Location of the axis start point in original coordinates. */
+    @JsonProperty Point2D.Double startPoint;
+    /** Location of the axis end point in original coordinates. */
+    @JsonProperty Point2D.Double endPoint;
 
     /** I recommend that fontSize be approximately 10 times the
         lineWidth -- 9X and 12X are fine, but 30X or 3X will look
         strange. */
-    double fontSize;
-    double lineWidth;
+    @JsonProperty double fontSize;
+    @JsonProperty double lineWidth;
 
     /** Tick marks act as anchor points for their corresponding
         labels. As in AnchoredLabel, xWeight determines the positioning of
         the label relative to its anchor. */
-    double xWeight;
+    @JsonProperty double xWeight;
     /** Tick marks act as anchor points for their corresponding
         labels. As in AnchoredLabel, yWeight determines the positioning of
         the label relative to its anchor. */
-    double yWeight;
+    @JsonProperty double yWeight;
 
 
     /** Indicate where labels are to be anchored: NONE: No labels;
         LEFT: at the tip of the left-side tick; RIGHT: at the tip of
         the right-side tick. */
-    LabelAnchor labelAnchor;
+    @JsonProperty LabelAnchor labelAnchor;
 
-    LinearAxisInfo axis;
+    @JsonBackReference LinearAxisInfo axis;
 
     /** To simplify axis rotations, textAngle indicates the angle of
         the text relative to the ray from startPoint to endPoint. So
         for a vertical upwards-pointing axis, textAngle = 0 would mean
         that lines of text flow upwards. */
-    double textAngle = 0.0;
+    @JsonProperty double textAngle = 0.0;
 
     /** True if ticks should extend from the right side of the ruler
         (the side that is on your right as you face from startPoint to
         endPoint). */
-    boolean tickRight = false;
+    @JsonProperty boolean tickRight = false;
     /** True if ticks should extend from the left side of the ruler.
         If tickRight and tickLeft are both true, then you have normal
         two-sided tick marks. */
-    boolean tickLeft = false;
+    @JsonProperty boolean tickLeft = false;
 
     /** If nonnegative, an upper limit on the number of big ticks to
         display, even if there is room for more. Big ticks are also
         text ticks, so this also represents a limit on text ticks.
         Also, small ticks only appear between big ticks, so this is a
         limit on small ticks as well. */
-    int maxBigTicks = -1;
+    @JsonProperty int maxBigTicks = -1;
 
     /** extra spacing to use for determining automatic tick spacing,
         expressed as a multiple of the height of a line of text. 0.0 =
         ticks packed about as tightly as legibility permits; 1.0 =
         ticks separated by an additional amount equal to the height of
         a line of text. */
-    double tickPadding = 0.0;
+    @JsonProperty double tickPadding = 0.0;
 
     /** If positive, the fixed delta for big ticks. If zero, there are
         no big ticks. If negative, compute the number of big ticks
         automatically. */
-    double bigTickDelta = -1.0;
+    @JsonProperty double bigTickDelta = -1.0;
 
     /** If positive, the fixed delta for small ticks. If zero, there are
         no small ticks. If negative, compute the number of small ticks
         automatically. */
-    double tickDelta = -1.0;
+    @JsonProperty double tickDelta = -1.0;
 
     /** If true, put an arrow at the end of the ruler. */
-    boolean startArrow = false;
+    @JsonProperty boolean startArrow = false;
     /** If true, put an arrow at the end of the ruler. */
-    boolean endArrow = false;
+    @JsonProperty boolean endArrow = false;
 
     /** If true, don't put ticks too close to the starting point.
         Reasons to omit ticks close to the start include that interior
         ticks and text might cross each other. Ticks are never
         included too close to the starting point if startArrow is
         true. */
-    boolean keepStartClear = false;
+    @JsonProperty boolean keepStartClear = false;
 
     /** If true, don't put ticks too close to the ending point. (This
         is always treated as true if endArrow is true.) */
-    boolean keepEndClear = false;
+    @JsonProperty boolean keepEndClear = false;
 
-    TickType tickType = TickType.NORMAL;
+    @JsonProperty TickType tickType = TickType.NORMAL;
 
     /** Normally, you'd want to paint the spine of this axis, but if
         you don't, set drawSpine to false. (One possible reason to set
         it to false: when anti-aliasing is enabled, drawing the same
         line twice can yield an inferior rendering.) */
-    boolean drawSpine = true;
+    @JsonProperty boolean drawSpine = true;
 
     /** clone() does not clone the axis, because the axis is
         considered a relation of the ruler instead of an owned field of
