@@ -4,6 +4,7 @@ import java.awt.geom.*;
 import java.util.*;
 import java.text.*;
 
+import org.codehaus.jackson.annotate.JsonIgnore;
 import org.codehaus.jackson.annotate.JsonManagedReference;
 import org.codehaus.jackson.annotate.JsonProperty;
 
@@ -51,12 +52,12 @@ public class LinearAxisInfo extends AxisInfo {
     public void setC(double v) { c = v; }
 
     /** @return true if f(x,y) == x. */
-    public boolean isXAxis() {
+    @JsonIgnore public boolean isXAxis() {
         return (a == 1 && b == 0 && c == 0);
     }
 
     /** @return true if f(x,y) == y. */
-    public boolean isYAxis() {
+    @JsonIgnore public boolean isYAxis() {
         return (a == 0 && b == 1 && c == 0);
     }
 
