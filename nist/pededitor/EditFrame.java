@@ -23,6 +23,46 @@ public class EditFrame extends JFrame {
     protected ButtonGroup lineStyleGroup = new ButtonGroup();
     protected ButtonGroup lineWidthGroup = new ButtonGroup();
 
+    protected EditFrameAction setLeftComponent = new EditFrameAction
+        ("Set left component", KeyEvent.VK_L) {
+                @Override
+                    public void actionPerformed(ActionEvent e) {
+                    getParentEditor().setComponent(0);
+                }
+            };
+
+    protected EditFrameAction setRightComponent = new EditFrameAction
+        ("Set right component", KeyEvent.VK_R) {
+                @Override
+                    public void actionPerformed(ActionEvent e) {
+                    getParentEditor().setComponent(1);
+                }
+            };
+
+    protected EditFrameAction setTopComponent = new EditFrameAction
+        ("Set top component", KeyEvent.VK_T) {
+                @Override
+                    public void actionPerformed(ActionEvent e) {
+                    getParentEditor().setComponent(2);
+                }
+            };
+
+    protected EditFrameAction changeXUnits = new EditFrameAction
+        ("Change X Units", KeyEvent.VK_X) {
+                @Override
+                    public void actionPerformed(ActionEvent e) {
+                    getParentEditor().changeXUnits();
+                }
+            };
+
+    protected EditFrameAction changeYUnits = new EditFrameAction
+        ("Change Y Units", KeyEvent.VK_Y) {
+                @Override
+                    public void actionPerformed(ActionEvent e) {
+                    getParentEditor().changeYUnits();
+                }
+            };
+
     public Editor getParentEditor() { return parentEditor; }
 
     abstract class EditFrameAction extends AbstractAction {
@@ -281,6 +321,15 @@ public class EditFrame extends JFrame {
 
         if (editable) {
 
+            mnVertex.add(new EditFrameAction("Move",
+                                             KeyEvent.VK_M,
+                                             KeyStroke.getKeyStroke('m')) {
+                    @Override
+                        public void actionPerformed(ActionEvent e) {
+                        getParentEditor().moveVertex();
+                    }
+                });
+
             mnVertex.add(new EditFrameAction("Delete",
                                              KeyEvent.VK_D,
                                              "DELETE") {
@@ -514,11 +563,18 @@ public class EditFrame extends JFrame {
                         getParentEditor().editMargins();
                     }
                 });
+
+            JMenu mnComponents = new JMenu("Components");
+            mnComponents.add(setLeftComponent);
+            mnComponents.add(setRightComponent);
+            mnComponents.add(setTopComponent);
+            mnDiagram.add(mnComponents);
+
             mnDiagram.add(new EditFrameAction
-                          ("Components...", KeyEvent.VK_C) {
+                          ("C-to-F...", KeyEvent.VK_T) {
                     @Override
                         public void actionPerformed(ActionEvent e) {
-                        getParentEditor().editDiagramComponents();
+                        getParentEditor().cToF();
                     }
                 });
         }
@@ -527,11 +583,12 @@ public class EditFrame extends JFrame {
             menuBar.add(mnDiagram);
         }
 
-        
-
-        // TODO Haven't figured out what goes here yet...
-        // JMenu mnAxis = new JMenu("Axis");
-        // menuBar.add(mnAxis);
+        if (editable) {
+            JMenu mnAxes = new JMenu("Axes");
+            menuBar.add(mnAxes);
+            mnAxes.add(changeXUnits);
+            mnAxes.add(changeYUnits);
+        }
 
 
         // "View" top-level menu
@@ -571,6 +628,27 @@ public class EditFrame extends JFrame {
         JMenuItem mnAbout = new JMenuItem("About");
         mnAbout.setEnabled(false);
         mnHelp.add(mnAbout);
+    }
+
+    /** Set the maximum number of components in the diagram. A
+        schematic/"other" has 0; a binary diagram may have 2 (this
+        program has no specific understanding of binary diagrams with
+        4 components, so such diagrams should be treated as
+        0-component diagrams); and a ternary diagram has 3.
+
+        TODO Maybe users should be allowed to make schematics with as
+        many diagram components as they want?
+    */
+    void setComponentCount(int n) {
+        setLeftComponent.setEnabled(n >= 2);
+        setRightComponent.setEnabled(n >= 2);
+        setTopComponent.setEnabled(n >= 3);
+    }
+
+    /** Set the number of meaningful axes that the diagram has. */
+    void setAxisCount(int n) {
+        changeXUnits.setEnabled(n >= 1);
+        changeYUnits.setEnabled(n >= 2);
     }
 
     protected void help() {
