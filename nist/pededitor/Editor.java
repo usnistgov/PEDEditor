@@ -651,7 +651,7 @@ public class Editor implements CropEventListener, MouseListener,
             return;
         }
 
-        if (tracingImage()) {
+        if (tracingImage() && editing) {
             ScaledCroppedImage im = getScaledOriginalImage();
             g.drawImage(im.croppedImage, im.cropBounds.x, im.cropBounds.y,
                         null);
@@ -3091,11 +3091,6 @@ public class Editor implements CropEventListener, MouseListener,
             }
         }
 
-        System.out.println("==================");
-        System.out.println("No match found.");
-        System.out.println("Image bounds = " + imageBounds);
-        System.out.println("Image view bounds = " + imageViewBounds);
-
         // Save memory if we're at the limit.
 
         int totalMemoryLimit = 20000000; // Limit is 20 megapixels total.
@@ -3199,8 +3194,6 @@ public class Editor implements CropEventListener, MouseListener,
             cropBounds.y = imageViewBounds.y - margin1;
             cropBounds.height = imageViewBounds.height + margin1 + margin2;
         }
-
-        System.out.println("Crop bounds = " + cropBounds);
 
         // Create the transformed, cropped, and faded image of the
         // original diagram.
