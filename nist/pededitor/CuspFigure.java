@@ -82,6 +82,14 @@ public abstract class GeneralPolyline {
         return output;
     }
 
+    public GeneralPolyline clone() {
+        GeneralPolyline output
+            = create(getSmoothingType(), getPoints(),
+                     getStroke(), getLineWidth());
+        output.setClosed(isClosed());
+        return output;
+    }
+
     /** @return this's corresponding Path2D.Double. */
     @JsonIgnore
     abstract public Path2D.Double getPath();
@@ -251,8 +259,8 @@ public abstract class GeneralPolyline {
     }
 
     /** Replace the given vertex, which must exist. */
-    public void set(int vertexNo, Point2D.Double point) {
-        points.set(vertexNo, point);
+    public void set(int vertexNo, Point2D point) {
+        points.set(vertexNo, new Point2D.Double(point.getX(), point.getY()));
     }
 
     public Point2D.Double tail() {
