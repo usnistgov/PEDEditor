@@ -75,12 +75,10 @@ public class RectangleTransform extends AffinePolygonTransform {
         if (other.getShearX() != 0 || other.getShearY() != 0) {
             throw new RuntimeException("Could not apply shear");
         }
-        System.out.print("Old rect = " + rect);
         rect.width *= other.getScaleX();
         rect.height *= other.getScaleY();
         rect.x = rect.x * other.getScaleX() + other.getTranslateX();
         rect.y = rect.y * other.getScaleY() + other.getTranslateY();
-        System.out.println(", new = " + rect);
         update();
     }
 
