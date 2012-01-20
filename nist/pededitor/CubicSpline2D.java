@@ -615,6 +615,10 @@ final public class CubicSpline2D {
         return output.toArray(new Point2D.Double[0]);
     }
 
+    public CubicSpline1D.SegmentAndT getSegment(double t) {
+        return xSpline.getSegment(t);
+    }
+
     /** Just a test harness */
     public static void main(String[] args) {
         Point[] points = {

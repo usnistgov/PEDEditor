@@ -11,7 +11,7 @@ import java.util.*;
  */
 final public class CubicSpline1D {
 
-    static class SegmentAndT {
+    public static class SegmentAndT {
         SegmentAndT(int segment, double t) {
             this.segment = segment;
             this.t = t;
@@ -54,9 +54,9 @@ final public class CubicSpline1D {
     }
 
     /** Return an array of the second derivative values d2y/dx2 at
-        each of the data points. This function is called "sety2" in
-        Numerical Recipes.
- */
+        each of the data points. This function is derived from the one
+        called "sety2" in Numerical Recipes.
+    */
     double[] computeSecondDerivatives(final double[] xs, final double[] ys) {
         // Second derivatives (d2y/dx2) at (y[i], x[i]).
         double[] d2s = new double[xs.length];
@@ -218,7 +218,7 @@ final public class CubicSpline1D {
 
     /* Parameterize the entire curve as t in [0,1] and return the
        function of the curve at the given t value */
-    SegmentAndT getSegment(double t) {
+    public SegmentAndT getSegment(double t) {
         int cnt = coefficients.length;
 
         if (cnt == 0) {

@@ -58,6 +58,18 @@ public class AnchoredLabel {
         this.yWeight = yWeight;
     }
 
+    @Override
+    public AnchoredLabel clone() {
+        AnchoredLabel output = new AnchoredLabel(text, xWeight, yWeight);
+        output.setX(getX());
+        output.setY(getY());
+        output.setAngle(getAngle());
+        output.setFontSize(getFontSize());
+        output.setBoxed(isBoxed());
+        output.setOpaque(isOpaque());
+        return output;
+    }
+
     public void setX(double x) { this.x = x; }
     public void setY(double y) { this.y = y; }
     public void setXWeight(double xWeight) { this.xWeight = xWeight; }

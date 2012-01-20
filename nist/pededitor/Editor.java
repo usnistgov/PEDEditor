@@ -15,6 +15,7 @@ import java.awt.geom.*;
 import java.net.*;
 import java.text.*;
 import java.util.*;
+import java.util.Timer;
 import java.util.prefs.Preferences;
 import java.io.*;
 import java.awt.print.*;
@@ -278,6 +279,179 @@ import org.codehaus.jackson.map.annotate.*;
 public class Editor implements CropEventListener, MouseListener,
                                MouseMotionListener, Printable {
     static ObjectMapper objectMapper = null;
+
+    class ImageBlinker extends TimerTask {
+        public void run() {
+            backgroundImageEnabled = !backgroundImageEnabled;
+            repaintEditFrame();
+        }
+    }
+
+    /** Series of classes that implement the Movable interface so that
+        different types of selections, such as vertices and labels,
+        can be manipulated the same way. */
+    class VertexSelection implements Selectable {
+        int curveNo;
+        int vertexNo;
+
+        VertexSelection(int curveNo, int vertexNo) {
+            this.curveNo = curveNo;
+            this.vertexNo = vertexNo;
+        }
+
+        @Override
+        public VertexSelection remove() {
+            GeneralPolyline cur = paths.get(curveNo);
+            int oldVertexCnt = cur.size();
+            repaintEditFrame();
+
+            if (oldVertexCnt >= 2) {
+                cur.remove(vertexNo);
+                return new VertexSelection
+                    (curveNo,
+                     (vertexNo > 0) ? (vertexNo - 1) : 0);
+            } else {
+                paths.remove(curveNo);
+                return null;
+            }
+        }
+
+        @Override
+        public void move(Point2D target) {
+            paths.get(curveNo).set(vertexNo, target);
+        }
+
+        @Override
+        public void copy(Point2D dest) {
+            Point2D.Double delta = getLocation();
+            delta.x = dest.getX() - delta.x;
+            delta.y = dest.getY() - delta.y;
+            GeneralPolyline path = paths.get(curveNo).clone();
+            for (int i = 0; i < path.size(); ++i) {
+                Point2D.Double point = path.get(i);
+                point.x += delta.x;
+                point.y += delta.y;
+                path.set(i, point);
+            }
+            paths.add(path);
+            repaintEditFrame();
+        }
+
+        @Override
+        public Point2D.Double getLocation() {
+            return paths.get(curveNo).get(vertexNo);
+        }
+
+        @Override
+        public boolean equals(Object other) {
+            if (this == other) return true;
+            if (this.getClass() != VertexSelection.class) return false;
+            if (this.getClass() != other.getClass()) return false;
+
+            VertexSelection cast = (VertexSelection) other;
+            return this.curveNo == cast.curveNo
+                && this.vertexNo == cast.vertexNo;
+        }
+    }
+
+
+    class LabelSelection implements Selectable {
+        int index;
+
+        LabelSelection(int index) {
+            this.index = index;
+        }
+
+        @Override
+        public LabelSelection remove() {
+            labels.remove(index);
+            labelViews.remove(index);
+            repaintEditFrame();
+            return null;
+        }
+
+        @Override
+        public void move(Point2D dest) {
+            AnchoredLabel item = labels.get(index);
+            item.setX(dest.getX());
+            item.setY(dest.getY());
+            repaintEditFrame();
+        }
+
+        @Override
+        public void copy(Point2D dest) {
+            AnchoredLabel item = labels.get(index).clone();
+            item.setX(dest.getX());
+            item.setY(dest.getY());
+            add(item);
+            repaintEditFrame();
+        }
+
+        @Override
+        public Point2D.Double getLocation() {
+            AnchoredLabel item = labels.get(index);
+            return new Point2D.Double(item.getX(), item.getY());
+        }
+
+        @Override
+        public boolean equals(Object other) {
+            if (this == other) return true;
+            if (this.getClass() != LabelSelection.class) return false;
+            if (this.getClass() != other.getClass()) return false;
+
+            LabelSelection cast = (LabelSelection) other;
+            return this.index == cast.index;
+        }
+    }
+
+
+    class ArrowSelection implements Selectable {
+        int index;
+
+        ArrowSelection(int index) {
+            this.index = index;
+        }
+
+        @Override
+        public ArrowSelection remove() {
+            arrows.remove(index);
+            repaintEditFrame();
+            return null;
+        }
+
+        @Override
+        public void move(Point2D dest) {
+            Arrow item = arrows.get(index);
+            item.x = dest.getX();
+            item.y = dest.getY();
+        }
+
+        @Override
+        public void copy(Point2D dest) {
+            Arrow item = arrows.get(index).clonus();
+            item.x = dest.getX();
+            item.y = dest.getY();
+            arrows.add(item);
+            repaintEditFrame();
+        }
+
+        @Override
+        public Point2D.Double getLocation() {
+            Arrow item = arrows.get(index);
+            return new Point2D.Double(item.x, item.y);
+        }
+
+        @Override
+        public boolean equals(Object other) {
+            if (this == other) return true;
+            if (this.getClass() != ArrowSelection.class) return false;
+            if (this.getClass() != other.getClass()) return false;
+
+            ArrowSelection cast = (ArrowSelection) other;
+            return this.index == cast.index;
+        }
+    }
+
     
     /** Apply the NIST MML PED standard binary diagram axis style. */
     class DefaultBinaryRuler extends LinearRuler {
@@ -290,6 +464,7 @@ public class Editor implements CropEventListener, MouseListener,
                                // in the diagram. Don't draw it twice.
         }
     }
+
 
     /** Apply the NIST MML PED standard ternary diagram axis style. */
     class DefaultTernaryRuler extends LinearRuler {
@@ -337,11 +512,17 @@ public class Editor implements CropEventListener, MouseListener,
     protected ArrayList<AnchoredLabel> labels;
     protected ArrayList<Point2D.Double> labelCenters;
     protected ArrayList<View> labelViews;
-    protected int activeCurveNo;
-    protected int activeVertexNo;
     @JsonProperty protected ArrayList<Arrow> arrows;
     protected BufferedImage originalImage;
     protected String originalFilename;
+    /** The item (vertex, label, etc.) that is selected, or null if nothing is. */
+    protected Selectable selection;
+    /** If the timer exists, the original image (if any) upon which
+        the new diagram is overlaid will blink. */
+    Timer imageBlinker = null;
+    /** True if imageBlinker is enabled and the original image should
+        be displayed in the background at this time. */
+    boolean backgroundImageEnabled;
 
     protected ArrayList<LinearAxis> axes;
     /** principal coordinates are used to define rulers' startPoints
@@ -361,6 +542,10 @@ public class Editor implements CropEventListener, MouseListener,
         far enough to un-stick the mouse from that location. */
     protected boolean mouseIsStuck;
     protected ArrayList<ScaledCroppedImage> scaledOriginalImages;
+    /** This is the darkened version of the original image, or null if
+        no darkened version exists. At most one dark image is kept in
+        memory at a time. */
+    protected ScaledCroppedImage darkImage;
     protected double labelXMargin = 0;
     protected double labelYMargin = 0;
 
@@ -408,8 +593,7 @@ public class Editor implements CropEventListener, MouseListener,
         labels = new ArrayList<AnchoredLabel>();
         labelViews = new ArrayList<View>();
         labelCenters = new ArrayList<Point2D.Double>();
-        activeCurveNo = -1;
-        activeVertexNo = -1;
+        selection = null;
         axes = new ArrayList<LinearAxis>();
         rulers = new ArrayList<LinearRuler>();
         mprin = null;
@@ -421,6 +605,7 @@ public class Editor implements CropEventListener, MouseListener,
         vertexInfo.setLineWidth(lineWidth);
         mouseIsStuck = false;
         paintSuppressionRequestCnt = 0;
+        setBlink(false);
     }
 
     @JsonProperty("curves")
@@ -436,27 +621,79 @@ public class Editor implements CropEventListener, MouseListener,
 
     @JsonProperty("curves")
     void setPaths(Collection<GeneralPolyline> paths) {
-        activeCurveNo = -1;
-        activeVertexNo = -1;
+        selection = null;
         this.paths = new ArrayList<GeneralPolyline>(paths);
     }
 
     @JsonIgnore
-    public Point2D.Double getActiveVertex() {
-        return (activeVertexNo == -1) ? null
-            : getActiveCurve().get(activeVertexNo);
+    VertexSelection getSelectedVertex() {
+        return (selection instanceof VertexSelection)
+            ? ((VertexSelection) selection)
+            : null;
     }
 
-    /** Reset the location of all vertices and labels located at
-        getActiveVertex() to mprin. */
-    public void moveVertex() {
-        Point2D.Double p = getActiveVertex();
+    @JsonIgnore
+    LabelSelection getSelectedLabel() {
+        return (selection instanceof LabelSelection)
+            ? ((LabelSelection) selection)
+            : null;
+    }
 
-        if (p == null) {
+    @JsonIgnore
+    ArrowSelection getSelectedArrow() {
+        return (selection instanceof ArrowSelection)
+            ? ((ArrowSelection) selection)
+            : null;
+    }
+
+    /** @return The currently selected GeneralPolyline, or null if no
+        curve is selected. */
+    @JsonIgnore
+    public GeneralPolyline getActiveCurve() {
+        VertexSelection sel = getSelectedVertex();
+        return (sel == null)
+            ? null
+            : paths.get(sel.curveNo);
+    }
+
+    @JsonIgnore
+    public Point2D.Double getActiveVertex() {
+        VertexSelection sel = getSelectedVertex();
+        return (sel == null)
+            ? null
+            : paths.get(sel.curveNo).get(sel.vertexNo);
+    }
+
+    public synchronized void toggleBlink() {
+        setBlink(editFrame.getBlinkMenuItem().getState());
+    }
+
+    /** Set whether the original image should blink in the background
+        of the new image. If false, a grayed-out version of the
+        original will be shown instead. */
+    @JsonIgnore public synchronized void setBlink(boolean blink) {
+        editFrame.getBlinkMenuItem().setState(blink);
+        if (!blink) {
+            if (imageBlinker != null) {
+                imageBlinker.cancel();
+            }
+            imageBlinker = null;
+            darkImage = null;
+        } else if (imageBlinker == null) {
+            imageBlinker = new Timer("ImageBlinker", true);
+            imageBlinker.scheduleAtFixedRate(new ImageBlinker(), 500, 500);
+            backgroundImageEnabled = true;
+        }
+        repaintEditFrame();
+    }
+
+    /** Reset the location of all vertices and labels that have the
+        same location as the selection to mprin. */
+    public void moveSelection() {
+        if (selection == null) {
             JOptionPane.showMessageDialog
                 (editFrame,
-                 "You must select a vertex (perhaps using the '?' shortcut " +
-                 "key) before you can move it.");
+                 "You must select an item before you can move it.");
             return;
         }
 
@@ -464,10 +701,62 @@ public class Editor implements CropEventListener, MouseListener,
             JOptionPane.showMessageDialog
                 (editFrame,
                  "You must move the mouse to the target destination " +
-                 "before you can move vertices.");
+                 "before you can move items.");
             return;
         }
 
+        if (mouseIsStuckAtSelection()) {
+            unstickMouse();
+        }
+
+        moveSelection(mprin);
+
+    }
+
+    /** Copy the selection, moving it to mprin. */
+    public void copySelection() {
+
+        if (selection == null) {
+            JOptionPane.showMessageDialog
+                (editFrame,
+                 "You must select an item before you can copy it.");
+            return;
+        }
+
+        if (mprin == null) {
+            JOptionPane.showMessageDialog
+                (editFrame,
+                 "You must move the mouse to the target destination " +
+                 "before you can copy.");
+            return;
+        }
+
+        if (mouseIsStuckAtSelection()) {
+            unstickMouse();
+        }
+
+        selection.copy(mprin);
+    }
+
+    /** Return true if p1 and p2 are equal to within reasonable
+        limits, where "reasonable limits" means the distance between
+        their transformations to the standard page is less than
+        1e-6. */
+    boolean principalCoordinatesMatch(Point2D p1, Point2D p2) {
+        Point2D.Double page1 = principalToStandardPage.transform(p1);
+        Point2D.Double page2 = principalToStandardPage.transform(p2);
+        return page1.distanceSq(page2) < 1e-12;
+    }
+
+    boolean mouseIsStuckAtSelection() {
+        return mouseIsStuck && selection != null
+            && principalCoordinatesMatch(selection.getLocation(), mprin);
+    }
+
+    /** Reset the location of all vertices and labels that have the
+        same location as the selection to dest. */
+    public void moveSelection(Point2D.Double dest) {
+        Point2D.Double p = selection.getLocation();
         Point2D.Double pagePoint = principalToStandardPage.transform(p);
         double tinyDistSq = 1e-12;
 
@@ -480,7 +769,7 @@ public class Editor implements CropEventListener, MouseListener,
                 double dist2 = pagePoint.distanceSq(thisPagePoint);
 
                 if (dist2 < tinyDistSq) {
-                    path.set(vertexNo, mprin);
+                    path.set(vertexNo, dest);
                 }
             }
         }
@@ -491,33 +780,18 @@ public class Editor implements CropEventListener, MouseListener,
             double dist2 = pagePoint.distanceSq(thisPagePoint);
 
             if (dist2 < tinyDistSq) {
-                label.setX(mprin.x);
-                label.setY(mprin.y);
+                label.setX(dest.x);
+                label.setY(dest.y);
             }
         }
 
         repaintEditFrame();
     }
 
-    /** Remove the current vertex. */
-    public void removeCurrentVertex() {
-        GeneralPolyline cur = getActiveCurve();
-        if (cur == null) {
-            return;
+    public void removeSelection() {
+        if (selection != null) {
+            selection = selection.remove();
         }
-
-        int oldVertexCnt = cur.size();
-
-        if (oldVertexCnt >= 2) {
-            cur.remove(activeVertexNo);
-            if (activeVertexNo > 0) {
-                --activeVertexNo;
-            }
-        } else {
-            removeActiveCurve();
-        }
-
-        repaintEditFrame();
     }
 
     /** Cycle the currently active curve.
@@ -529,12 +803,14 @@ public class Editor implements CropEventListener, MouseListener,
             return;
         }
 
-        if (activeCurveNo == -1) {
-            activeCurveNo = (delta > 0) ? -1 : 0;
+        VertexSelection sel = getSelectedVertex();
+
+        if (sel == null) {
+            selection = sel = new VertexSelection((delta > 0) ? -1 : 0, -1);
         }
 
-        activeCurveNo = (activeCurveNo + delta + paths.size()) % paths.size();
-        activeVertexNo = paths.get(activeCurveNo).size() - 1;
+        sel.curveNo = (sel.curveNo + delta + paths.size()) % paths.size();
+        sel.vertexNo = paths.get(sel.curveNo).size() - 1;
         repaintEditFrame();
     }
 
@@ -566,18 +842,28 @@ public class Editor implements CropEventListener, MouseListener,
         return output;
     }
 
-    /** Move the location of the last curve vertex added so that the
-        screen location changes by the given amount. */
-    public void moveLastVertex(int dx, int dy) {
-        Point2D.Double p = getActiveVertex();
-        if (p != null) {
-            principalToStandardPage.transform(p, p);
-            p.x += dx / scale;
-            p.y += dy / scale;
-            standardPageToPrincipal.transform(p, p);
-            getActiveCurve().set(activeVertexNo, p);
-            repaintEditFrame();
+    /** Move mprin, plus the selection if the mouse is stuck at the
+        selection's location, the given distance.
+
+        @param dx The change in x position, expressed in screen pixels
+        @param dy The change in y position, expressed in screen pixels
+    */
+    public void move(int dx, int dy) {
+        if (mprin == null) {
+            return;
         }
+
+        Point2D.Double mousePage = principalToStandardPage.transform(mprin);
+        mousePage.x += dx / scale;
+        mousePage.y += dy / scale;
+        Point2D.Double newMprin = standardPageToPrincipal.transform(mousePage);
+
+        if (mouseIsStuckAtSelection()) {
+            moveSelection(newMprin);
+        }
+        mprin = newMprin;
+        moveMouse(mprin);
+        mouseIsStuck = true;
     }
 
 
@@ -651,11 +937,33 @@ public class Editor implements CropEventListener, MouseListener,
             return;
         }
 
-        if (tracingImage() && editing) {
+        if (tracingImage() && editing
+            && (imageBlinker == null || backgroundImageEnabled)) {
+            // Draw a background image
             ScaledCroppedImage im = getScaledOriginalImage();
+            if (imageBlinker != null) {
+                if (darkImage != null
+                    && im.imageBounds.equals(darkImage.imageBounds)
+                    && im.cropBounds.equals(darkImage.cropBounds)) {
+                    // The cached image darkImage can be used.
+                    im = darkImage;
+                } else {
+                    // Darken this image and cache it.
+                    darkImage = new ScaledCroppedImage();
+                    darkImage.imageBounds = (Rectangle) im.imageBounds.clone();
+                    darkImage.cropBounds = (Rectangle) im.cropBounds.clone();
+                    BufferedImage src = im.croppedImage;
+                    darkImage.croppedImage = new BufferedImage
+                        (src.getWidth(), src.getHeight(), BufferedImage.TYPE_INT_RGB);
+                    unfade(src, darkImage.croppedImage);
+                    im = darkImage;
+                }
+            }
             g.drawImage(im.croppedImage, im.cropBounds.x, im.cropBounds.y,
                         null);
         } else {
+            // Draw a white background.
+
             // TODO might need more work, but not a priority now
 
             // TODO Prohibit drawing outside the page, or expand the
@@ -680,8 +988,10 @@ public class Editor implements CropEventListener, MouseListener,
             return;
         }
 
+        VertexSelection vsel = editing ? getSelectedVertex() : null;
+
         for (int i = 0; i < pathCnt; ++i) {
-            if (!editing || i != activeCurveNo) {
+            if (vsel == null || vsel.curveNo != i) {
                 GeneralPolyline path = paths.get(i);
                 if (path.size() == 1) {
                     double r = path.getLineWidth() * 2 * scale;
@@ -706,60 +1016,81 @@ public class Editor implements CropEventListener, MouseListener,
             }
         }
 
-        for (int i = 0; i < labels.size(); ++i) {
-            drawLabel(g, i, scale);
+        {
+            LabelSelection sel = editing ? getSelectedLabel() : null;
+            for (int i = 0; i < labels.size(); ++i) {
+                boolean selected = (sel != null && i == sel.index);
+                if (selected) {
+                    g.setColor(Color.GREEN);
+                    // TODO BUG Have to create a new view, because
+                    // views ignore setColor.
+                }
+                drawLabel(g, i, scale);
+                g.setColor(Color.BLACK);
+            }
         }
 
-        for (Arrow arrow: arrows) {
-            drawArrow(g, scale, arrow);
+        {
+            ArrowSelection sel = editing ? getSelectedArrow() : null;
+            for (int i = 0; i < arrows.size(); ++i) {
+                Arrow arrow = arrows.get(i);
+                boolean selected = (sel != null && i == sel.index);
+                if (selected) {
+                    g.setColor(Color.GREEN);
+                }
+                drawArrow(g, scale, arrow);
+                g.setColor(Color.BLACK);
+            }
         }
 
         for (LinearRuler ruler: rulers) {
             ruler.draw(g, principalToStandardPage, scale);
         }
 
-        if (editing) {
+        if (vsel != null) {
             GeneralPolyline path = getActiveCurve();
 
-            if (path != null) {
+            // Disable anti-aliasing for this phase because it
+            // prevents the green line from precisely overwriting the
+            // red line.
 
-                // Disable anti-aliasing for this phase because it
-                // prevents the green line from precisely overwriting the
-                // red line.
+            g.setRenderingHint(RenderingHints.KEY_ANTIALIASING,
+                               RenderingHints.VALUE_ANTIALIAS_OFF);
 
-                g.setRenderingHint(RenderingHints.KEY_ANTIALIASING,
-                                   RenderingHints.VALUE_ANTIALIAS_OFF);
+            Point2D.Double extraVertex = mprin;
+            if (mouseIsStuckAtSelection() && getSelectedVertex() != null) {
+                // Show the point that would be added if the mouse
+                // became unstuck.
+                extraVertex = getMousePosition();
+            }
 
-                if (mprin != null && !isDuplicate(mprin)) {
-                    g.setColor(Color.RED);
-                    path.add(activeVertexNo + 1, mprin);
-                    draw(g, path, scale);
-                    path.remove(activeVertexNo + 1);
-                }
+            if (extraVertex != null && !isDuplicate(extraVertex)) {
+                // Add the current mouse position to the path
+                // immediately after the currently selected vertex,
+                // and draw the curve that results from this addtion
+                // in red. Then remove the extra vertex.
 
-                g.setColor(Color.GREEN);
+                g.setColor(Color.RED);
+                path.add(vsel.vertexNo + 1, extraVertex);
                 draw(g, path, scale);
-                double r = Math.max(path.getLineWidth() * scale * 1.5, 4.0);
-                circleVertices(g, path, scale, false, r);
+                path.remove(vsel.vertexNo + 1);
+            }
 
-                // Mark the active vertex specifically.
-                Point2D.Double point = getActiveVertex();
-                if (point != null) {
-                    Point2D.Double xpoint = new Point2D.Double();
-                    Affine p2d = principalToScaledPage(scale);
-                    p2d.transform(point, xpoint);
-                    g.fill(new Ellipse2D.Double
-                           (xpoint.x - r, xpoint.y - r, r * 2, r * 2));
-                }
+            g.setColor(Color.GREEN);
+            draw(g, path, scale);
+            double r = Math.max(path.getLineWidth() * scale * 1.5, 4.0);
+            circleVertices(g, path, scale, false, r);
+
+            // Mark the active vertex specifically.
+            Point2D.Double point = getActiveVertex();
+            if (point != null) {
+                Point2D.Double xpoint = new Point2D.Double();
+                Affine p2d = principalToScaledPage(scale);
+                p2d.transform(point, xpoint);
+                g.fill(new Ellipse2D.Double
+                       (xpoint.x - r, xpoint.y - r, r * 2, r * 2));
             }
         }
-    }
-
-    /** @return The currently selected GeneralPolyline, or null if no
-        curve is selected. */
-    @JsonIgnore
-    public GeneralPolyline getActiveCurve() {
-        return (activeCurveNo == -1) ? null : paths.get(activeCurveNo);
     }
 
     /** @return a curve to which a vertex can be appended or inserted.
@@ -772,23 +1103,21 @@ public class Editor implements CropEventListener, MouseListener,
             return null;
         }
 
-        if (activeCurveNo == -1) {
-            paths.add(GeneralPolyline.create
-                      (GeneralPolyline.LINEAR,
-                       new Point2D.Double[0], lineStyle, lineWidth));
-            activeCurveNo = paths.size() - 1;
-            activeVertexNo = -1;
+        GeneralPolyline activeCurve = getActiveCurve();
+        if (activeCurve != null) {
+            return activeCurve;
         }
-            
-        return paths.get(activeCurveNo);
+
+        paths.add(GeneralPolyline.create
+                  (GeneralPolyline.LINEAR,
+                   new Point2D.Double[0], lineStyle, lineWidth));
+        selection = new VertexSelection(paths.size() - 1, -1);
+        return getActiveCurve();
     }
 
     public void deselectCurve() {
-        if (activeCurveNo >= 0) {
-            activeVertexNo = -1;
-            activeCurveNo = -1;
-            repaintEditFrame();
-        }
+        selection = null;
+        repaintEditFrame();
     }
 
     /** Start a new curve where the old curve ends. */
@@ -858,12 +1187,12 @@ public class Editor implements CropEventListener, MouseListener,
         than when coming from the right) at interior vertices, but
         arbitarily choose the slope of the segment following the
         vertex if possible. */
-    public void showTangent(int pathNo, int vertexNo) {
+    public void showTangent(int curveNo, int vertexNo) {
         if (vertexNo < 0) {
             return;
         }
 
-        GeneralPolyline path = paths.get(pathNo);
+        GeneralPolyline path = paths.get(curveNo);
         int vertexCnt = path.size();
         if (vertexCnt == 1) {
             return;
@@ -884,27 +1213,32 @@ public class Editor implements CropEventListener, MouseListener,
         vertexInfo.setLineWidth(path.getLineWidth());
     }
 
+    /** Return true if point p is the same as either the currently
+        selected vertex or the vertex that immediately follows them.
+        The reason to care is that SplinePolyline barfs if you pass
+        the same vertex twice in a row. */
     boolean isDuplicate(Point2D p) {
-        if (activeVertexNo == -1) {
+        VertexSelection sel = getSelectedVertex();
+        if (sel == null) {
             return false;
         }
 
-        GeneralPolyline path = paths.get(activeCurveNo);
+        GeneralPolyline path = paths.get(sel.curveNo);
 
-        return (activeVertexNo >= 0 && p.equals(path.get(activeVertexNo)))
-            || (activeVertexNo < path.size() - 1 && p.equals(path.get(activeVertexNo + 1)));
+        return (sel.vertexNo >= 0 && p.equals(path.get(sel.vertexNo)))
+            || (sel.vertexNo < path.size() - 1 && p.equals(path.get(sel.vertexNo + 1)));
     }
 
     /** Add a point to getActiveCurve(). */
     public void add(Point2D.Double point) {
-        GeneralPolyline p = getCurveForAppend();
-        int s = p.size();
         if (isDuplicate(point)) {
             return; // Adding the same point twice causes problems.
         }
+        GeneralPolyline path = getCurveForAppend();
+        VertexSelection sel = getSelectedVertex();
 
-        p.add(++activeVertexNo, point);
-        showTangent(activeCurveNo, activeVertexNo);
+        path.add(++sel.vertexNo, point);
+        showTangent(sel.curveNo, sel.vertexNo);
         repaintEditFrame();
     }
 
@@ -912,6 +1246,10 @@ public class Editor implements CropEventListener, MouseListener,
         tangent to the curve at that location and that points
         rightward (or downward if the curve is vertical). */
     public void addArrow(boolean rightward) {
+        if (mouseIsStuckAtSelection() && getSelectedArrow() != null) {
+            unstickMouse();
+        }
+
         double theta = vertexInfo.getAngle();
         if (!rightward) {
             theta += Math.PI;
@@ -944,66 +1282,56 @@ public class Editor implements CropEventListener, MouseListener,
         return output;
     }
 
-    /** Move the mouse to the nearest vertex or intersection of curves.
+    /** Move the mouse to the nearest key point.
 
-        @param select If true, select that vertex (if possible). */
+        @param select If true, exclude unselectable points, and select
+        the point that is returned. */
     public void seekNearestPoint(boolean select) {
         if (mouseIsStuck) {
-            mouseIsStuck = false;
-            updateMousePosition();
+            unstickMouse();
         }
 
-        Point2D.Double nearPoint = nearestPoint();
-        if (nearPoint == null) {
-            return;
-        }
+        Point2D.Double point;
 
-        // Since a single point may belong to multiple curves, point
-        // visitation order matters. Start with the point immediately
-        // preceding the current point and work backwards. That means
-        // visiting the current curve twice -- first visiting the
-        // portion of the curve that precedes the current vertex, and
-        // then, as the last step, visiting the rest (which means
-        // re-visiting a few previously visited points, but that's
-        // harmless).
+        if (!select) {
+            point = nearestPoint();
+            if (point == null) {
+                return;
+            }
+        } else {
+            ArrayList<Selectable> points = nearestSelections();
+            if (points.isEmpty()) {
+                return;
+            }
 
-        Point2D.Double nearPagePoint
-            = principalToStandardPage.transform(nearPoint);
+            Selectable sel = points.get(0);
 
-        int pathCnt = paths.size();
-
-        int acn = (activeCurveNo > 0) ? activeCurveNo : 0;
-
-        double tinyDistSq = 1e-12;
-
-        for (int i = 0; i <= pathCnt; ++i) {
-            int pathNo = (acn - i + pathCnt) % pathCnt;
-            GeneralPolyline path = paths.get(pathNo);
-            int vertexCnt = path.size();
-            int startVertex = (i == 0) ? (activeVertexNo-1) : (vertexCnt-1);
-            for (int vertexNo = startVertex; vertexNo >= 0; --vertexNo) {
-                Point2D.Double vertex = path.get(vertexNo);
-                Point2D.Double pagePoint
-                    = principalToStandardPage.transform(vertex);
-                double dist2 = pagePoint.distanceSq(nearPagePoint);
-
-                if (dist2 < tinyDistSq) {
-                    moveMouse(vertex);
-                    mouseIsStuck = true;
-                    showTangent(pathNo, vertexNo);
-                    if (select) {
-                        activeCurveNo = pathNo;
-                        activeVertexNo = vertexNo;
+            if (selection != null) {
+                // Check if the old selection is one of the nearest
+                // points. If so, then choose the next one after it. This
+                // is to allow users to cycle through a set of overlapping
+                // key points using the selection key. Select once for the
+                // first item; select it again and get the second one,
+                // then the third, and so on.
+                for (int i = 0; i < points.size() - 1; ++i) {
+                    if (selection.equals(points.get(i))) {
+                        sel = points.get(i+1);
+                        break;
                     }
-                    return;
                 }
             }
+
+            selection = sel;
+
+            if (sel instanceof VertexSelection) {
+                VertexSelection vsel = (VertexSelection) sel;
+                showTangent(vsel.curveNo, vsel.vertexNo);
+            }
+
+            point = sel.getLocation();
         }
 
-        // This point wasn't in the list; it must be an intersection.
-        // (It would be kinda nice to see slope information at
-        // intersections, but it's not worth it.)
-        moveMouse(nearPoint);
+        moveMouse(point);
         mouseIsStuck = true;
     }
 
@@ -1011,7 +1339,8 @@ public class Editor implements CropEventListener, MouseListener,
         existing set of vertices and insert the points in the normal
         forwards order. */
     public void reverseInsertionOrder() {
-        if (activeVertexNo < 0) {
+        VertexSelection vsel = getSelectedVertex();
+        if (vsel == null) {
             return;
         }
 
@@ -1029,8 +1358,8 @@ public class Editor implements CropEventListener, MouseListener,
              oldCurve.getStroke(),
              oldCurve.getLineWidth());
         curve.setClosed(oldCurve.isClosed());
-        paths.set(activeCurveNo, curve);
-        activeVertexNo = curve.size() - 1 - activeVertexNo;
+        paths.set(vsel.curveNo, curve);
+        vsel.vertexNo = curve.size() - 1 - vsel.vertexNo;
         repaintEditFrame();
     }
 
@@ -1086,8 +1415,6 @@ public class Editor implements CropEventListener, MouseListener,
         double y1 = (Double) output[0][1];
         double y2 = (Double) output[1][1];
 
-        System.out.println(x1 + ", " + x2 + ", " + y1 + ", " + y2);
-
         if (x1 == x2 || y1 == y2) {
             JOptionPane.showMessageDialog
                 (editFrame,
@@ -1098,7 +1425,6 @@ public class Editor implements CropEventListener, MouseListener,
 
         double m = (y2 - y1)/(x2 - x1);
         double b = y1 - m * x1;
-        System.out.println("y = " + m + " x + " + b);
 
         AffineTransform xform = isX
             ? new AffineTransform(m, 0.0, 0.0, 1.0, b, 0.0)
@@ -1137,6 +1463,10 @@ public class Editor implements CropEventListener, MouseListener,
             return;
         }
 
+        if (mouseIsStuckAtSelection() && getSelectedLabel() != null) {
+            unstickMouse();
+        }
+
         AnchoredLabel t = (new LabelDialog(editFrame, "Add Label"))
             .showModal();
         if (t == null) {
@@ -1145,8 +1475,12 @@ public class Editor implements CropEventListener, MouseListener,
 
         t.setX(mprin.x);
         t.setY(mprin.y);
-        labels.add(t);
-        labelViews.add(toView(t.getText(), t.getXWeight()));
+        add(t);
+    }
+
+    public void add(AnchoredLabel label) {
+        labels.add(label);
+        labelViews.add(toView(label.getText(), label.getXWeight()));
         labelCenters.add(new Point2D.Double());
         repaintEditFrame();
     }
@@ -1171,6 +1505,9 @@ public class Editor implements CropEventListener, MouseListener,
         dialog.setFontSize(label.getFontSize());
         dialog.setAngle(label.getAngle());
 
+        selection = new LabelSelection(nl);
+        repaintEditFrame();
+
         AnchoredLabel newLabel = dialog.showModal();
         if (newLabel == null) {
             return;
@@ -1180,7 +1517,6 @@ public class Editor implements CropEventListener, MouseListener,
         newLabel.setY(label.getY());
         labels.set(nl, newLabel);
         labelViews.set(nl, toView(newLabel.getText(), newLabel.getXWeight()));
-        repaintEditFrame();
     }
 
     /** @param xWeight Used to determine how to justify rows of text. */
@@ -1294,9 +1630,8 @@ public class Editor implements CropEventListener, MouseListener,
         principalToStandardPage.transform(mprin, xpoint);
         Point2D.Double xpoint2 = new Point2D.Double();
 
-        // Square of the minimum distance of all key points examined
-        // so far from mprin, as measured in standard page
-        // coordinates.
+        // Square of the minimum distance from mprin of all key points
+        // examined so far, as measured in standard page coordinates.
         double minDistSq = 0;
 
         for (Point2D.Double point: keyPoints()) {
@@ -1311,25 +1646,100 @@ public class Editor implements CropEventListener, MouseListener,
         return nearPoint;
     }
 
-    /** @return a list of all segment intersections and user-defined
-        points in the diagram. */
-    public ArrayList<Point2D.Double> keyPoints() {
-        ArrayList<Point2D.Double> output
-            = new ArrayList<Point2D.Double>();
+    /** @return a list of all selectable items located at the
+        selectable point closest (by page distance) to mprin. */
+    ArrayList<Selectable> nearestSelections() {
+        if (mprin == null) {
+            return null;
+        }
+        Point2D.Double nearPagePoint = null;
+        Point2D.Double xpoint = new Point2D.Double();
+        principalToStandardPage.transform(mprin, xpoint);
+        Point2D.Double xpoint2 = new Point2D.Double();
 
-        // Check all explicitly selected points in this diagram.
+        // Square of the minimum distance from mprin of all key points
+        // examined so far, as measured in standard page coordinates.
+        double minDistSq = 0;
 
-        for (GeneralPolyline path : paths) {
-            for (Point2D.Double point : path.getPoints()) {
-                output.add(point);
+        ArrayList<Selectable> sels = selectables();
+        for (Selectable sel: sels) {
+            Point2D.Double point = sel.getLocation();
+            principalToStandardPage.transform(point, xpoint2);
+            double distSq = xpoint.distanceSq(xpoint2);
+            if (nearPagePoint == null || distSq < minDistSq) {
+                nearPagePoint = (Point2D.Double) xpoint2.clone();
+                minDistSq = distSq;
             }
         }
 
+        ArrayList<Selectable> output = new ArrayList<Selectable>();
+        if (nearPagePoint == null) {
+            return output;
+        }
+
+        // Now that we know where the nearest point is, return all
+        // selections that match that point.
+
+        double tinyDistSq = 1e-12;
+
+        for (Selectable sel: sels) {
+            principalToStandardPage.transform(sel.getLocation(), xpoint2);
+            if (nearPagePoint.distanceSq(xpoint2) < tinyDistSq) {
+                output.add(sel);
+            }
+        }
+
+        return output;
+    }
+
+    /** @return a list of all key points in the diagram. Some
+        duplication is likely. */
+    public ArrayList<Point2D.Double> keyPoints() {
+        ArrayList<Point2D.Double> output = intersections();
+
+        for (Selectable m: selectables()) {
+            output.add(m.getLocation());
+        }
+
+        return output;
+    }
+
+
+    /** @return a list of all possible selections. */
+    ArrayList<Selectable> selectables() {
+        ArrayList<Selectable> output
+            = new ArrayList<Selectable>();
+
+        // Add vertices of all curves.
+        for (int i = 0; i < paths.size(); ++i) {
+            GeneralPolyline path = paths.get(i);
+            for (int j = 0; j < path.size(); ++j) {
+                output.add(new VertexSelection(i,j));
+            }
+        }
+
+        // Add labels.
+        for (int i = 0; i < labels.size(); ++i) {
+            output.add(new LabelSelection(i));
+        }
+
+        // Add arrows.
+        for (int i = 0; i < arrows.size(); ++i) {
+            output.add(new ArrowSelection(i));
+        }
+
+        return output;
+    }
+
+
+    /** @return a list of all segment+segment and segment+curve
+        intersections. curve+curve intersections are not detected at
+        this time. */
+    ArrayList<Point2D.Double> intersections() {
+        ArrayList<Point2D.Double> output = new ArrayList<Point2D.Double>();
         LineSegment[] segments = getAllLineSegments();
 
-        // Check all intersections of straight line segments.
-        // Intersections of two curves, or one curve and one segment,
-        // are not detected at this time.
+        // Add segment+segment intersections.
         for (int i = 0; i < segments.length; ++i) {
             LineSegment s1 = segments[i];
             for (int j = i + 1; j < segments.length; ++j) {
@@ -1342,8 +1752,13 @@ public class Editor implements CropEventListener, MouseListener,
             }
         }
 
-        // Check cubic+straight line segment intersections.
+        // Add curve+segment intersections.
 
+        // Spline curves are defined in the page coordinates (and the
+        // transformation of a spline fit in principal coordinates
+        // does not equal the spline fit of the transformation), so
+        // convert the segments to page coordinates to match the
+        // splines.
         LineSegment[] pageSegments = new LineSegment[segments.length];
         for (int i = 0; i < segments.length; ++i) {
             pageSegments[i] = new LineSegment
@@ -1354,7 +1769,7 @@ public class Editor implements CropEventListener, MouseListener,
         for (GeneralPolyline path: paths) {
             if (path.size() <= 2
                 || path.getSmoothingType() !=  GeneralPolyline.CUBIC_SPLINE) {
-                // Curve is not actually curved.
+                // This path does not curve.
                 continue;
             }
 
@@ -1367,8 +1782,9 @@ public class Editor implements CropEventListener, MouseListener,
                     output.add(point);
                 }
             }
-
         }
+
+        // Curve+curve intersections are not detected at this time.
 
         return output;
     }
@@ -1376,11 +1792,13 @@ public class Editor implements CropEventListener, MouseListener,
 
     /** Like seekNearestPoint(), but instead select the point on a
         previously added segment that is nearest to the mouse pointer
-        as measured by distance on the standard page. */
-    public void seekNearestSegment() {
+        as measured by distance on the standard page.
+
+        @param select If true, select the vertex preceding that segment.
+    */
+    public void seekNearestSegment(boolean select) {
         if (mouseIsStuck) {
-            mouseIsStuck = false;
-            updateMousePosition();
+            unstickMouse();
         }
 
         if (mprin == null) {
@@ -1394,12 +1812,12 @@ public class Editor implements CropEventListener, MouseListener,
         Point2D.Double xpoint2 = new Point2D.Double();
         Point2D.Double xpoint3 = new Point2D.Double();
         double minDist = 0;
-        int pathNo = -1;
-        int nearPathNo = -1;
+        int curveNo = -1;
+        VertexSelection vsel = new VertexSelection(-1, -1);
         Point2D.Double gradient = null;
 
         for (GeneralPolyline path : paths) {
-            ++pathNo;
+            ++curveNo;
             Point2D.Double point;
 
             if (path.getSmoothingType() == GeneralPolyline.CUBIC_SPLINE) {
@@ -1418,7 +1836,10 @@ public class Editor implements CropEventListener, MouseListener,
                     }
                     standardPageToPrincipal.transform(di.point, di.point);
                     nearPoint = di.point;
-                    nearPathNo = pathNo;
+                    vsel.curveNo = curveNo;
+                    vsel.vertexNo = (di.t >= 1)
+                        ? path.size() - 1
+                        : spline.getSegment(di.t).segment;
                     gradient = spline.gradient(di.t);
                     minDist = di.distance;
                 }
@@ -1442,7 +1863,8 @@ public class Editor implements CropEventListener, MouseListener,
                     if (nearPoint == null || dist < minDist) {
                         standardPageToPrincipal.transform(point, point);
                         nearPoint = point;
-                        nearPathNo = pathNo;
+                        vsel.curveNo = curveNo;
+                        vsel.vertexNo = i;
                         gradient = new Point2D.Double
                             (xpoint3.x - xpoint2.x, xpoint3.y - xpoint2.y);
                         minDist = dist;
@@ -1451,10 +1873,13 @@ public class Editor implements CropEventListener, MouseListener,
             }
         }
 
+        if (select) {
+            selection = vsel;
+        }
         moveMouse(nearPoint);
         mouseIsStuck = true;
         vertexInfo.setGradient(gradient);
-        vertexInfo.setLineWidth(paths.get(nearPathNo).getLineWidth());
+        vertexInfo.setLineWidth(paths.get(vsel.curveNo).getLineWidth());
     }
 
     public void toggleSmoothing() {
@@ -1466,22 +1891,14 @@ public class Editor implements CropEventListener, MouseListener,
         GeneralPolyline path = oldPath.nearClone
             (oldPath.getSmoothingType() == GeneralPolyline.LINEAR
              ? GeneralPolyline.CUBIC_SPLINE : GeneralPolyline.LINEAR);
-        paths.set(activeCurveNo, path);
+        paths.set(getSelectedVertex().curveNo, path);
         repaintEditFrame();
-    }
-
-    void removeActiveCurve() {
-        if (activeCurveNo == -1)
-            return;
-
-        paths.remove(activeCurveNo);
-        activeVertexNo = -1;
-        activeCurveNo = -1;
     }
 
     /** Toggle the closed/open status of the currently selected
         curve. */
     public void toggleCurveClosure() {
+
         GeneralPolyline path = getActiveCurve();
         if (path == null) {
             return;
@@ -2155,16 +2572,11 @@ public class Editor implements CropEventListener, MouseListener,
         initializeDiagram();
         paths = other.paths;
 
-        // TODO initializeDiagram wants to initialize the axes, but I
-        // already have the axes I want... It seems wasteful to create
-        // the axes and then ditch them, and it means xAxis and so on
-        // are bogus.
         axes = other.axes;
         rulers = other.rulers;
         labels = other.labels;
         initializeLabelViews();
-        activeCurveNo = -1;
-        activeVertexNo = -1;
+        selection = null;
     }
 
     /** Populate the "rulers" fields of the axes, and then return the
@@ -2475,16 +2887,14 @@ public class Editor implements CropEventListener, MouseListener,
         }
     }
 
-    public void cToF() {
-        AffineTransform ct = new
-            AffineTransform(1.0, 0.0, 0.0, 1.8, 0.0, 32);
-        invisiblyTransformPrincipalCoordinates(ct);
-        repaintEditFrame();
-    }
-
     @Override
         public void mouseDragged(MouseEvent e) {
         mouseMoved(e);
+    }
+
+    public void unstickMouse() {
+        mouseIsStuck = false;
+        updateMousePosition();
     }
 
     @Override
@@ -2492,8 +2902,11 @@ public class Editor implements CropEventListener, MouseListener,
         if (principalToStandardPage == null) {
             return;
         }
+        if (mouseIsStuckAtSelection() && getSelectedVertex() != null) {
+            unstickMouse();
+        }
         add(mprin);
-        mouseIsStuck = false;
+        mouseIsStuck = true;
     }
 
     /** @return true if diagram editing is enabled, or false if the
@@ -2529,20 +2942,10 @@ public class Editor implements CropEventListener, MouseListener,
         }
 
         Point mpos = getEditPane().getMousePosition();
-       if (mpos != null && !preserveMprin) {
-
-            double sx = mpos.getX() + 0.5;
-            double sy = mpos.getY() + 0.5;
-
+        if (mpos != null && !preserveMprin) {
             boolean updateMprin = (mprin == null) || !mouseIsStuck;
 
             if (!updateMprin) {
-                // Leave mprin alone if it is already accurate to the
-                // nearest pixel. This allows "jump to point"
-                // operations' accuracy to exceed the screen
-                // resolution, which matters when zooming the screen
-                // or viewing the coordinates in the status bar.
-
                 Point mprinScreen = Duh.floorPoint
                     (principalToScaledPage(scale).transform(mprin));
                 if (mprinScreen.distance(mpos) >= MOUSE_UNSTICK_DISTANCE) {
@@ -2552,11 +2955,33 @@ public class Editor implements CropEventListener, MouseListener,
             }
 
             if (updateMprin) {
-                mprin = standardPageToPrincipal.transform(sx/scale, sy/scale);
+                mprin = getMousePosition();
             }
         }
 
         updateStatusBar();
+    }
+
+    /** Return the actual mouse position in principal coordinates. For
+        most purposes, you should use mprin instead of this function.
+        If mouseIsStuck is true, then getMousePosition() will be
+        different from mprin, but mprin (the location that the mouse
+        is notionally stuck at, as opposed to the mouse pointer's true
+        location) is more useful. */
+    Point2D.Double getMousePosition() {
+        if (principalToStandardPage == null) {
+            return null;
+        }
+
+        Point mpos = getEditPane().getMousePosition();
+        if (mpos == null) {
+            return null;
+        }
+
+        double sx = mpos.getX() + 0.5;
+        double sy = mpos.getY() + 0.5;
+
+        return standardPageToPrincipal.transform(sx/scale, sy/scale);
     }
 
     void updateStatusBar() {
@@ -2716,8 +3141,13 @@ public class Editor implements CropEventListener, MouseListener,
 
     /** Compress the brightness into the upper third of the range
         0..255. */
-    static int fade1(int i) {
+    static int fade(int i) {
         return 255 - (255 - i)/3;
+    }
+
+    /** Reverse the fade() transformation (as best one can). */
+    static int unfade(int i) {
+        return 255 - (255 - i)*3;
     }
 
     static void fade(BufferedImage image) { 
@@ -2726,10 +3156,24 @@ public class Editor implements CropEventListener, MouseListener,
         for (int x = 0; x < width; ++x) {
             for (int y = 0; y < height; ++y) {
                 Color c = new Color(image.getRGB(x,y));
-                c = new Color(fade1(c.getRed()),
-                              fade1(c.getGreen()),
-                              fade1(c.getBlue()));
+                c = new Color(fade(c.getRed()),
+                              fade(c.getGreen()),
+                              fade(c.getBlue()));
                 image.setRGB(x,y,c.getRGB());
+            }
+        }
+    }
+
+    static void unfade(BufferedImage src, BufferedImage dest) { 
+        int width = src.getWidth();
+        int height = src.getHeight();
+        for (int x = 0; x < width; ++x) {
+            for (int y = 0; y < height; ++y) {
+                Color c = new Color(src.getRGB(x,y));
+                c = new Color(unfade(c.getRed()),
+                              unfade(c.getGreen()),
+                              unfade(c.getBlue()));
+                dest.setRGB(x,y,c.getRGB());
             }
         }
     }
@@ -2845,12 +3289,13 @@ public class Editor implements CropEventListener, MouseListener,
             principalToStandardPage.transform(label.getX(), label.getY());
 
         if (label.isOpaque()) {
+            Color oldColor = g.getColor();
             g.setColor(Color.WHITE);
             boxHTML(g, view, scale * label.getFontSize(),
                     label.getAngle(),
                     point.x * scale, point.y * scale,
                     label.getXWeight(), label.getYWeight(), true);
-            g.setColor(Color.BLACK);
+            g.setColor(oldColor);
         }
 
         if (label.isBoxed()) {
@@ -3042,7 +3487,7 @@ public class Editor implements CropEventListener, MouseListener,
         g.fill(arr);
     }
 
-    ScaledCroppedImage getScaledOriginalImage() {
+    synchronized ScaledCroppedImage getScaledOriginalImage() {
         JScrollPane spane = editFrame.getScrollPane();
         Rectangle viewBounds = spane.getViewport().getViewRect();
         Rectangle imageBounds = scaledPageBounds(scale);

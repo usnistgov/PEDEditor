@@ -20,8 +20,13 @@ public class EditFrame extends JFrame {
     protected JPanel statusBar;
     protected JLabel statusLabel;
     protected Editor parentEditor;
+    protected JCheckBoxMenuItem blinkMenuItem;
     protected ButtonGroup lineStyleGroup = new ButtonGroup();
     protected ButtonGroup lineWidthGroup = new ButtonGroup();
+
+    public JCheckBoxMenuItem getBlinkMenuItem() {
+        return blinkMenuItem;
+    }
 
     protected EditFrameAction setLeftComponent = new EditFrameAction
         ("Set left component", KeyEvent.VK_L) {
@@ -154,7 +159,7 @@ public class EditFrame extends JFrame {
 
         @Override
             public void actionPerformed(ActionEvent e) {
-            getParentEditor().moveLastVertex(dx, dy);
+            getParentEditor().move(dx, dy);
         }
     }
 
@@ -271,6 +276,41 @@ public class EditFrame extends JFrame {
 
 
         // "Vertex" top-level menu
+        JMenu mnEdit = new JMenu("Edit");
+        mnEdit.setMnemonic(KeyEvent.VK_E);
+        menuBar.add(mnEdit);
+
+        if (editable) {
+
+            mnEdit.add(new EditFrameAction("Move",
+                                             KeyEvent.VK_M,
+                                             KeyStroke.getKeyStroke('m')) {
+                    @Override
+                        public void actionPerformed(ActionEvent e) {
+                        getParentEditor().moveSelection();
+                    }
+                });
+
+            mnEdit.add(new EditFrameAction("Copy",
+                                             KeyEvent.VK_M,
+                                             KeyStroke.getKeyStroke('c')) {
+                    @Override
+                        public void actionPerformed(ActionEvent e) {
+                        getParentEditor().copySelection();
+                    }
+                });
+
+            mnEdit.add(new EditFrameAction("Delete",
+                                             KeyEvent.VK_D,
+                                             "DELETE") {
+                    @Override
+                        public void actionPerformed(ActionEvent e) {
+                        getParentEditor().removeSelection();
+                    }
+                });
+        }
+
+        // "Vertex" top-level menu
         JMenu mnVertex = new JMenu("Vertex");
         mnVertex.setMnemonic(KeyEvent.VK_V);
         menuBar.add(mnVertex);
@@ -309,35 +349,7 @@ public class EditFrame extends JFrame {
                 });
         }
 
-        mnVertex.add(new EditFrameAction
-                   ("Nearest on curve",
-                    KeyEvent.VK_C,
-                    KeyStroke.getKeyStroke('_')) {
-                @Override
-                    public void actionPerformed(ActionEvent e) {
-                    getParentEditor().seekNearestSegment();
-                }
-            });
-
         if (editable) {
-
-            mnVertex.add(new EditFrameAction("Move",
-                                             KeyEvent.VK_M,
-                                             KeyStroke.getKeyStroke('m')) {
-                    @Override
-                        public void actionPerformed(ActionEvent e) {
-                        getParentEditor().moveVertex();
-                    }
-                });
-
-            mnVertex.add(new EditFrameAction("Delete",
-                                             KeyEvent.VK_D,
-                                             "DELETE") {
-                    @Override
-                        public void actionPerformed(ActionEvent e) {
-                        getParentEditor().removeCurrentVertex();
-                    }
-                });
 
             mnVertex.addSeparator();
 
@@ -360,6 +372,16 @@ public class EditFrame extends JFrame {
         JMenu mnCurve = new JMenu("Curve");
         mnCurve.setMnemonic(KeyEvent.VK_C);
 
+        mnCurve.add(new EditFrameAction
+                   ("Move to curve",
+                    KeyEvent.VK_C,
+                    KeyStroke.getKeyStroke('l')) {
+                @Override
+                    public void actionPerformed(ActionEvent e) {
+                    getParentEditor().seekNearestSegment(false);
+                }
+            });
+
         mnCurve.add(new EditFrameAction("Deselect",
                                         KeyEvent.VK_D, "pressed END") {
                 @Override
@@ -369,6 +391,17 @@ public class EditFrame extends JFrame {
             });
 
         if (editable) {
+
+            mnCurve.add(new EditFrameAction
+                        ("Select curve",
+                         KeyEvent.VK_C,
+                         KeyStroke.getKeyStroke('L')) {
+                    @Override
+                        public void actionPerformed(ActionEvent e) {
+                        getParentEditor().seekNearestSegment(true);
+                    }
+                });
+
             mnCurve.add(new EditFrameAction
                         ("Add cusp", KeyEvent.VK_C, "typed ,") {
                     @Override
@@ -404,7 +437,7 @@ public class EditFrame extends JFrame {
 
             mnCurve.add(new EditFrameAction("Toggle curve closure",
                                             KeyEvent.VK_C,
-                                            KeyStroke.getKeyStroke('c')) {
+                                            KeyStroke.getKeyStroke('o')) {
                     @Override
                         public void actionPerformed(ActionEvent e) {
                         getParentEditor().toggleCurveClosure();
@@ -564,19 +597,20 @@ public class EditFrame extends JFrame {
                     }
                 });
 
+            blinkMenuItem = new JCheckBoxMenuItem
+                (new EditFrameAction("Blink background image", KeyEvent.VK_B) {
+                        @Override
+                            public void actionPerformed(ActionEvent e) {
+                            getParentEditor().toggleBlink();
+                        }
+                    });
+            mnDiagram.add(blinkMenuItem);
+
             JMenu mnComponents = new JMenu("Components");
             mnComponents.add(setLeftComponent);
             mnComponents.add(setRightComponent);
             mnComponents.add(setTopComponent);
             mnDiagram.add(mnComponents);
-
-            mnDiagram.add(new EditFrameAction
-                          ("C-to-F...", KeyEvent.VK_T) {
-                    @Override
-                        public void actionPerformed(ActionEvent e) {
-                        getParentEditor().cToF();
-                    }
-                });
         }
 
         if (mnDiagram.getItemCount() > 0) {

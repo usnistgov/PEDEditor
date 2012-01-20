@@ -33,6 +33,13 @@ public class Arrow extends Path2D.Double {
         addArrow(this, x, y, size, theta);
     }
 
+    /** For some reason, the clone() method is declared final in
+        Path2D.Double, so I had to give my clone method a different
+        name. */
+    public Arrow clonus() {
+        return new Arrow(x, y, size, theta);
+    }
+
     static public void addArrow
         (Path2D.Double output, double x, double y,
          double size, double theta) {
