@@ -20,12 +20,41 @@ public class EditFrame extends JFrame {
     protected JPanel statusBar;
     protected JLabel statusLabel;
     protected Editor parentEditor;
-    protected JCheckBoxMenuItem blinkMenuItem;
     protected ButtonGroup lineStyleGroup = new ButtonGroup();
     protected ButtonGroup lineWidthGroup = new ButtonGroup();
+    protected ButtonGroup backgroundImageGroup = new ButtonGroup();
+    protected JMenu mnBackgroundImage = new JMenu("Background Image");
+    protected JRadioButtonMenuItem grayBackgroundImage;
+    protected JRadioButtonMenuItem blinkBackgroundImage;
+    protected JRadioButtonMenuItem noBackgroundImage;
 
-    public JCheckBoxMenuItem getBlinkMenuItem() {
-        return blinkMenuItem;
+    // How to show the original scanned image in the background of
+    // the new diagram:
+    enum BackgroundImage
+    { GRAY, // White parts look white, black parts appear gray
+      BLINK, // Blinks on and off
+      NONE // Not shown
+    };
+
+    public BackgroundImage getBackgroundImage() {
+        return !mnBackgroundImage.isEnabled() ? BackgroundImage.NONE
+            : blinkBackgroundImage.isSelected() ? BackgroundImage.BLINK
+            : grayBackgroundImage.isSelected() ? BackgroundImage.GRAY
+            : BackgroundImage.NONE;
+    }
+
+    public void setBackgroundImage(BackgroundImage value) {
+        switch (value) {
+        case NONE:
+            noBackgroundImage.setSelected(true);
+            break;
+        case GRAY:
+            grayBackgroundImage.setSelected(true);
+            break;
+        case BLINK:
+            blinkBackgroundImage.setSelected(true);
+            break;
+        }
     }
 
     protected EditFrameAction setLeftComponent = new EditFrameAction
@@ -117,8 +146,8 @@ public class EditFrame extends JFrame {
         }
     }
 
-    class LineWidthRadioMenuItem extends JRadioButtonMenuItem {
-        LineWidthRadioMenuItem(String imagePath, double lineWidth) {
+    class LineWidthMenuItem extends JRadioButtonMenuItem {
+        LineWidthMenuItem(String imagePath, double lineWidth) {
             super(new LineWidthAction(imagePath, lineWidth));
             lineWidthGroup.add(this);
         }
@@ -138,10 +167,30 @@ public class EditFrame extends JFrame {
         }
     }
 
-    class LineStyleRadioMenuItem extends JRadioButtonMenuItem {
-        LineStyleRadioMenuItem(String imagePath, CompositeStroke lineStyle) {
+    class LineStyleMenuItem extends JRadioButtonMenuItem {
+        LineStyleMenuItem(String imagePath, CompositeStroke lineStyle) {
             super(new LineStyleAction(imagePath, lineStyle));
             lineStyleGroup.add(this);
+        }
+    }
+
+    class BackgroundImageAction extends AbstractAction {
+        BackgroundImage value;
+
+        BackgroundImageAction(String name, BackgroundImage value) {
+            super(name);
+            this.value = value;
+        }
+
+        @Override public void actionPerformed(ActionEvent e) {
+            getParentEditor().setBackground(value);
+        }
+    }
+
+    class BackgroundImageMenuItem extends JRadioButtonMenuItem {
+        BackgroundImageMenuItem(String name, BackgroundImage back) {
+            super(new BackgroundImageAction(name, back));
+            backgroundImageGroup.add(this);
         }
     }
 
@@ -447,34 +496,34 @@ public class EditFrame extends JFrame {
             JMenu mnLineStyle = new JMenu("Line style");
             mnLineStyle.setMnemonic(KeyEvent.VK_T);
         
-            LineStyleRadioMenuItem solidLineItem = 
-                new LineStyleRadioMenuItem("images/line.png",
+            LineStyleMenuItem solidLineItem = 
+                new LineStyleMenuItem("images/line.png",
                                            CompositeStroke.getSolidLine());
             solidLineItem.setSelected(true);
             mnLineStyle.add(solidLineItem);
             mnLineStyle.add
-                (new LineStyleRadioMenuItem("images/dashedline.png",
+                (new LineStyleMenuItem("images/dashedline.png",
                                             CompositeStroke.getDashedLine()));
             mnLineStyle.add
-                (new LineStyleRadioMenuItem("images/dottedline.png",
+                (new LineStyleMenuItem("images/dottedline.png",
                                             CompositeStroke.getDottedLine()));
             mnLineStyle.add
-                (new LineStyleRadioMenuItem("images/dashdotline.png",
+                (new LineStyleMenuItem("images/dashdotline.png",
                                             CompositeStroke.getDotDashLine()));
             mnLineStyle.add
-                (new LineStyleRadioMenuItem("images/railroadline.png",
+                (new LineStyleMenuItem("images/railroadline.png",
                                             CompositeStroke.getRailroadLine()));
             mnCurve.add(mnLineStyle);
 
             JMenu mnLineWidth = new JMenu("Line width");
             mnLineWidth.setMnemonic(KeyEvent.VK_W);
-            mnLineWidth.add(new LineWidthRadioMenuItem("images/line1.png", 0.0006));
-            LineWidthRadioMenuItem normalWidthItem = 
-                new LineWidthRadioMenuItem("images/line2.png", 0.0012);
+            mnLineWidth.add(new LineWidthMenuItem("images/line1.png", 0.0006));
+            LineWidthMenuItem normalWidthItem = 
+                new LineWidthMenuItem("images/line2.png", 0.0012);
             normalWidthItem.setSelected(true);
             mnLineWidth.add(normalWidthItem);
-            mnLineWidth.add(new LineWidthRadioMenuItem("images/line4.png", 0.0024));
-            mnLineWidth.add(new LineWidthRadioMenuItem("images/line8.png", 0.0048));
+            mnLineWidth.add(new LineWidthMenuItem("images/line4.png", 0.0024));
+            mnLineWidth.add(new LineWidthMenuItem("images/line8.png", 0.0048));
             mnLineWidth.add(new JRadioButtonMenuItem
                             (new AbstractAction("Custom...") {
                                     @Override
@@ -597,14 +646,19 @@ public class EditFrame extends JFrame {
                     }
                 });
 
-            blinkMenuItem = new JCheckBoxMenuItem
-                (new EditFrameAction("Blink background image", KeyEvent.VK_B) {
-                        @Override
-                            public void actionPerformed(ActionEvent e) {
-                            getParentEditor().toggleBlink();
-                        }
-                    });
-            mnDiagram.add(blinkMenuItem);
+            mnBackgroundImage.setMnemonic(KeyEvent.VK_B);
+            mnBackgroundImage.setEnabled(false);
+            grayBackgroundImage = new BackgroundImageMenuItem
+                ("Gray", BackgroundImage.GRAY);
+            grayBackgroundImage.setSelected(true);
+            blinkBackgroundImage = new BackgroundImageMenuItem
+                ("Blink", BackgroundImage.BLINK);
+            noBackgroundImage = new BackgroundImageMenuItem
+                ("None", BackgroundImage.NONE);
+            mnBackgroundImage.add(grayBackgroundImage);
+            mnBackgroundImage.add(blinkBackgroundImage);
+            mnBackgroundImage.add(noBackgroundImage);
+            mnDiagram.add(mnBackgroundImage);
 
             JMenu mnComponents = new JMenu("Components");
             mnComponents.add(setLeftComponent);

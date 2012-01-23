@@ -605,7 +605,7 @@ public class Editor implements CropEventListener, MouseListener,
         vertexInfo.setLineWidth(lineWidth);
         mouseIsStuck = false;
         paintSuppressionRequestCnt = 0;
-        setBlink(false);
+        setBackground(EditFrame.BackgroundImage.GRAY);
     }
 
     @JsonProperty("curves")
@@ -664,26 +664,22 @@ public class Editor implements CropEventListener, MouseListener,
             : paths.get(sel.curveNo).get(sel.vertexNo);
     }
 
-    public synchronized void toggleBlink() {
-        setBlink(editFrame.getBlinkMenuItem().getState());
-    }
+    public synchronized void setBackground(EditFrame.BackgroundImage value) {
+        // Turn blinking off
+        if (imageBlinker != null) {
+            imageBlinker.cancel();
+        }
+        imageBlinker = null;
+        darkImage = null;
 
-    /** Set whether the original image should blink in the background
-        of the new image. If false, a grayed-out version of the
-        original will be shown instead. */
-    @JsonIgnore public synchronized void setBlink(boolean blink) {
-        editFrame.getBlinkMenuItem().setState(blink);
-        if (!blink) {
-            if (imageBlinker != null) {
-                imageBlinker.cancel();
-            }
-            imageBlinker = null;
-            darkImage = null;
-        } else if (imageBlinker == null) {
+        if (value == EditFrame.BackgroundImage.BLINK) {
             imageBlinker = new Timer("ImageBlinker", true);
             imageBlinker.scheduleAtFixedRate(new ImageBlinker(), 500, 500);
             backgroundImageEnabled = true;
         }
+
+        // The rest is handed in paintDiagram().
+
         repaintEditFrame();
     }
 
@@ -937,9 +933,13 @@ public class Editor implements CropEventListener, MouseListener,
             return;
         }
 
-        if (tracingImage() && editing
-            && (imageBlinker == null || backgroundImageEnabled)) {
-            // Draw a background image
+        EditFrame.BackgroundImage back = editFrame.getBackgroundImage();
+        boolean showImage = tracingImage() && editing
+            && back != EditFrame.BackgroundImage.NONE
+            && (back == EditFrame.BackgroundImage.GRAY
+                || backgroundImageEnabled);
+
+        if (showImage) {
             ScaledCroppedImage im = getScaledOriginalImage();
             if (imageBlinker != null) {
                 if (darkImage != null
@@ -962,7 +962,7 @@ public class Editor implements CropEventListener, MouseListener,
             g.drawImage(im.croppedImage, im.cropBounds.x, im.cropBounds.y,
                         null);
         } else {
-            // Draw a white background.
+            // Draw a white box the size of the page.
 
             // TODO might need more work, but not a priority now
 
@@ -1924,6 +1924,7 @@ public class Editor implements CropEventListener, MouseListener,
         originalImage = null;
         zoomFrame.setVisible(false);
         editFrame.setTitle("Edit " + diagramType);
+        editFrame.mnBackgroundImage.setEnabled(false);
     }
 
     public void setOriginalFilename(String filename) {
@@ -1954,6 +1955,7 @@ public class Editor implements CropEventListener, MouseListener,
             zoomFrame.setImage(getOriginalImage());
             initializeCrosshairs();
             zoomFrame.getImageZoomPane().crosshairs = crosshairs;
+            editFrame.mnBackgroundImage.setEnabled(true);
         } catch (IOException e) {
             JOptionPane.showMessageDialog
                 (editFrame,
