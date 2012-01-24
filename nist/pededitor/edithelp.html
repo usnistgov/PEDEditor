@@ -55,10 +55,97 @@ piece of paper will yield a larger diagram).</p>
 to fix that, because the problem occurs in a Java library, not in my
 own code.</p>
 
+<h2><a name="positioning">Diagram positioning</a></h2>
+
+<p>You can position items within the diagram using just the mouse, but
+there are also a number of alternative commands for diagram
+positioning:</p>
+
+<ul>
+
+<li><p>Move to ('p') or move to and select ('P') the nearest key point.
+Key points include corners of the diagram, the locations of items you
+have inserted into the diagram, and the intersections of curves and
+lines within the diagram.</p>
+
+<p>If several items share the same location, such as many curves
+meeting at a single vertex, then you may press the 'P' key repeatedly
+to cycle among those items until the correct item is highlighted.</p>
+</li>
+
+<li>Move to ('l', that is, a lower-case L) or move to and select ('L')
+the closest line or curve.</li>
+
+<li>Enter numeric coordinates from the keyboard with '='. You may
+enter the coordinates using any two variables whose combination
+defines a point.</li>
+
+</ul>
+
+<p>The mouse will temporarily act as if stuck at the chosen point even
+if vibration or a hand twich causes the mouse pointer to slip by a
+pixel or two. When the mouse is "stuck", the pointer can still move,
+but the coordinates displayed in the status bar do not change</p>
+
+<p>You may unstick the mouse pointer by moving it a longer distance.
+In addition, the mouse may automatically become unstuck if you request
+an operation that might otherwise be redundant, such as adding a
+second vertex to a curve in a row.</p>
+
+<h2>Editing items</h2>
+
+<p>The arrow keys move the mouse pointer in one pixel in any
+direction. In addition, if an item is selected in green <b>and</b> the
+mouse is positioned on that selection, then that item and every other
+item located at the same position will be moved.</p>
+
+<p>The following editing commands may be applied to any selected item.
+An item must be selected (highlighted in <font
+color="green">green</font>) before these commands have any effect.</p>
+
+<ul>
+
+<li>The <code>Delete</code> key deletes the selection.</li>
+
+<li>The 'c' key creates a copy of the selection at the mouse's current
+location. As a special case, if a vertex is selected, the 'c' key
+copies the entire curve.</li>
+
+<li>The 'm' key moves the selection and every other item that shares
+its location. If you really want to move the selected item only, then
+you will need to copy the selection and then delete the selection
+instead.</li>
+
+<li>If one of the four arrow keys is pressed while the mouse is
+located at the selection, then the selection and every other item that
+shares its location is moved one pixel in the direction indicated by
+the arrow key. If an arrow key is pressed when no selection is active,
+or when the mouse is not located at the selection, then only the mouse
+pointer moves.</li>
+
+</ul>
+
+<li><p><b>Selecting key points:</b> Previously inserted vertices,
+corners of the diagram, label anchors, arrowhead locations, and
+intersections of curves are called key points. Press 'p' to move the
+mouse to the closest key point.</p>
+
+<p>In the coordinates in the status bar, and for operations such as
+inserting a vertex, label, or arrowhead, the mouse will behave as if
+stuck at the key point. This behavior is to protect you from losing
+your place if the mouse slips by just a pixel or two. The mouse will
+become unstuck if an operation is selected. You may also unstick the
+mouse by moving it a couple dozen pixels away.</p>
+</li>
+
+<li><p><b>Selecting the nearest point on a curve:</b> Type an
+underscore ('_') to make the mouse move to and become stuck at the
+nearest point (key or not) on any curve or edge of the
+diagram.</p></li>
+
 <h2>Curves and Vertices</h2>
 
-<p>The currently selected curve, if any, appears highlighted in <font
-color="green">green</font>. Most vertices (control points) of the
+ Most vertices (control points) of the
 currently selected curve are indicated by empty green circles, while
 the currently selected point is indicated by a solid green circle.</p>
 
@@ -114,11 +201,11 @@ curve.</p>
 <p>Press 's' to turn curve smoothing on or off for the currently selected
 curve.</p>
 
-<p>Press 'c' to close or open the currently selected curve. Closed
-curves loop back to their starting points (there is no need to
-explicitly repeat the starting vertex). Explicitly closing a smoothed
-curve usually gives better results than just repeating the starting
-vertex does.</p>
+<p>Press 'o' to close the currently selected curve the close or open
+the currently selected curve. Closed curves loop back to their
+starting points. There is no need to explicitly repeat the starting
+vertex. Explicitly closing a smoothed curve usually gives better
+results than just repeating the starting vertex does.</p>
 
 <h3>Line styles</h3>
 
@@ -143,45 +230,9 @@ but not smooth). This is just shorthand for adding a vertex at the
 current mouse position and then starting a separate curve from the
 same vertex.</p>
 
-<h2><a name="positioning">Diagram positioning</a></h2>
+<h2>Decorations</h2>
 
-<p>Sometimes there are better alternatives to using the mouse pointer
-alone when drawing diagrams. Even if you could position the mouse
-pointer on the exact pixel desired, one-pixel accuracy is not always
-sufficient.</p>
-
-<ul>
-
-<li><p><b>Selecting key points:</b> Previously inserted vertices,
-corners of the diagram, and intersections of curves are called key
-points. Press the period ('.') key to move the mouse to the closest
-key point. (The '.' and '?' keys both move the mouse pointer to the
-closest key point, but the '?' key changes the curve and vertex
-selection, while the '.' key does not. That makes '.' the correct
-choice to position the mouse over a key point in order to add that
-point to the currently selected curve.)</p>
-
-<p>In the coordinates in the status bar, and for operations such as
-inserting a vertex, label, or arrowhead, the mouse will behave as if
-stuck at the key point. This behavior is to protect you from losing
-your place if the mouse slips by just a pixel or two. The mouse will
-become unstuck if an operation is selected. You may also unstick the
-mouse by moving it a couple dozen pixels away.</p>
-</li>
-
-<li><p><b>Selecting the nearest point on a curve:</b> Type an
-underscore ('_') to make the mouse move to and become stuck at the
-nearest point (key or not) on any curve or edge of the
-diagram.</p></li>
-
-<li><p><b>Keyboard entry:</b> Press the equals sign ('=') to enter
-numeric coordinates from the keyboard. You may enter the coordinates
-using any two variables that together can uniquely identify a diagram
-location.</p></li>
-
-</ul>
-
-<h2>Labels</h2>
+<h3>Labels</h3>
 
 <p>Press <code>Enter</code> to create a new label anchored at the
 current mouse location. The "Add Label" dialog will open, permitting
@@ -211,17 +262,13 @@ a label whose text reads "Label" will always have the top of the "L"
 located near the anchor, even if the text is rotated 180 degrees
 backwards causing the anchor to end up southeast of its label.</p>
 
-<p>The circle with the green arrow is just a picture for use with the
-"Text angle" text box. Edit the number in the text box to change the
-text angle.</p>
+<p>The circle with the green arrow is just an illustration of angle
+values, not a usable control. Edit the number in the text box to
+change the text angle.</p>
 
-<p>Press <code>e</code> to edit or delete an existing label. To delete
-the label, simply erase all of its text.</p>
-
-<p>Relocating a label is not currently supported. Just delete the
-existing label and create a new one.</p>
-
-<h2>Decorations</h2>
+<p>Press <code>e</code> to edit the currently selected label, if there
+is one, or to select and edit the label whose center is closest to the
+current mouse position.</p>
 
 <h3>Symbols</h3>
 
@@ -242,38 +289,20 @@ To draw an arrowhead that points in the opposite direction, press
 '&lt;'. The size of the arrowhead is a fixed multiple of the line
 width indicated in the "Tangent" window.</p>
 
-<h4>Deletion</h4>
-
-<p>Press 'z' to delete the nearest symbol. (TODO: right now, 'z'
-deletes arrowheads only.)</p>
-
-<p>(TODO This isn't true, but it probably should be.) To delete a
-symbol, right-click on it and select the
-<code><u>D</u>ecorations/<u>D</u>elete nearest symbol</code> menu
-item.</p>
-
-<h4>Editing</h4>
-
-<p>Arrowheads are permanently fixed in position, orientation, and
-appearance at the time they are created. If you have to make changes,
-perhaps because the curve the arrowhead is attached to was modified,
-you will have to delete the existing arrowhead and add another one.</p>
-
-<p>TODO? It would be logical if one could select not just curves and
-dots, but also labels and symbols, so these things can be moved just
-as easily as vertices can be. Maybe more importantly, allowing label
-and symbol selection allows consistent access to editing commands: the
-Delete key can be used with anything, and Paste/Copy could be linked
-to the selection as well (imaging pasting a label). Symbol selection
-is unimportant, but being able to move labels would be nice.</p>
-
 <h2>View Menu</h2>
 
-<p>Press '-' to zoom out, '+' to zoom in, and Control-B to obtain the
-best fit of the diagram to the edit window's current size.</p>
+<p>Press '-' to zoom out, '+' to zoom in, and <code>Control-B</code>
+to obtain the best fit of the diagram to the edit window's current
+size.</p>
 
-<p>Zooming in to a digitized image at high magnification may take a
-number of seconds, so be patient.</p>
+<p>Resizing the scanned image or moving around an image at a high zoom
+level may take some time, so be patient. You may turn off display of the
+background image with <code><u>V</u>iew/<u>B</u>ackground
+Image/<u>N</u>one</code> to eliminate this delay.</p>
+
+<p>Use the <code>Background Image</code> submenu to select how to
+display the original image (if any) in the background of the new
+diagram: in light, faded colors (the default); blinking on and off; or not at all.</p>
 
 </body>
 </html>

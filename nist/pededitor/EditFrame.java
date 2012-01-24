@@ -154,9 +154,9 @@ public class EditFrame extends JFrame {
     }
 
     class LineStyleAction extends AbstractAction {
-        CompositeStroke lineStyle;
+        StandardStroke lineStyle;
 
-        LineStyleAction(String imagePath, CompositeStroke lineStyle) {
+        LineStyleAction(String imagePath, StandardStroke lineStyle) {
             super(null, loadIcon(imagePath));
             this.lineStyle = lineStyle;
         }
@@ -168,7 +168,7 @@ public class EditFrame extends JFrame {
     }
 
     class LineStyleMenuItem extends JRadioButtonMenuItem {
-        LineStyleMenuItem(String imagePath, CompositeStroke lineStyle) {
+        LineStyleMenuItem(String imagePath, StandardStroke lineStyle) {
             super(new LineStyleAction(imagePath, lineStyle));
             lineStyleGroup.add(this);
         }
@@ -177,8 +177,10 @@ public class EditFrame extends JFrame {
     class BackgroundImageAction extends AbstractAction {
         BackgroundImage value;
 
-        BackgroundImageAction(String name, BackgroundImage value) {
+        BackgroundImageAction(String name, BackgroundImage value,
+                              int mnemonic) {
             super(name);
+            putValue(MNEMONIC_KEY, new Integer(mnemonic));
             this.value = value;
         }
 
@@ -188,8 +190,9 @@ public class EditFrame extends JFrame {
     }
 
     class BackgroundImageMenuItem extends JRadioButtonMenuItem {
-        BackgroundImageMenuItem(String name, BackgroundImage back) {
-            super(new BackgroundImageAction(name, back));
+        BackgroundImageMenuItem(String name, BackgroundImage back,
+                                int mnemonic) {
+            super(new BackgroundImageAction(name, back, mnemonic));
             backgroundImageGroup.add(this);
         }
     }
@@ -379,7 +382,7 @@ public class EditFrame extends JFrame {
         mnVertex.add(new EditFrameAction
                    ("Nearest",
                     KeyEvent.VK_N,
-                    KeyStroke.getKeyStroke('.')) {
+                    KeyStroke.getKeyStroke('p')) {
                 @Override
                     public void actionPerformed(ActionEvent e) {
                     getParentEditor().seekNearestPoint(false);
@@ -390,7 +393,7 @@ public class EditFrame extends JFrame {
             mnVertex.add(new EditFrameAction
                          ("Select nearest",
                           KeyEvent.VK_S,
-                          KeyStroke.getKeyStroke('?')) {
+                          KeyStroke.getKeyStroke('P')) {
                     @Override
                         public void actionPerformed(ActionEvent e) {
                         getParentEditor().seekNearestPoint(true);
@@ -498,21 +501,21 @@ public class EditFrame extends JFrame {
         
             LineStyleMenuItem solidLineItem = 
                 new LineStyleMenuItem("images/line.png",
-                                           CompositeStroke.getSolidLine());
+                                           StandardStroke.SOLID);
             solidLineItem.setSelected(true);
             mnLineStyle.add(solidLineItem);
             mnLineStyle.add
                 (new LineStyleMenuItem("images/dashedline.png",
-                                            CompositeStroke.getDashedLine()));
+                                       StandardStroke.DASH));
             mnLineStyle.add
                 (new LineStyleMenuItem("images/dottedline.png",
-                                            CompositeStroke.getDottedLine()));
+                                            StandardStroke.DOT));
             mnLineStyle.add
                 (new LineStyleMenuItem("images/dashdotline.png",
-                                            CompositeStroke.getDotDashLine()));
+                                            StandardStroke.DOT_DASH));
             mnLineStyle.add
                 (new LineStyleMenuItem("images/railroadline.png",
-                                            CompositeStroke.getRailroadLine()));
+                                            StandardStroke.RAILROAD));
             mnCurve.add(mnLineStyle);
 
             JMenu mnLineWidth = new JMenu("Line width");
@@ -579,14 +582,6 @@ public class EditFrame extends JFrame {
                 });
 
             mnLabel.add(new EditFrameAction
-                        ("Change label font", KeyEvent.VK_F) {
-                    @Override
-                        public void actionPerformed(ActionEvent e) {
-                        getParentEditor().setLabelFont();
-                    }
-                });
-
-            mnLabel.add(new EditFrameAction
                         ("Add dot", KeyEvent.VK_D, "typed d") {
                     @Override
                         public void actionPerformed(ActionEvent e) {
@@ -609,15 +604,6 @@ public class EditFrame extends JFrame {
                     @Override
                         public void actionPerformed(ActionEvent e) {
                         getParentEditor().addArrow(true);
-                    }
-                });
-
-            mnLabel.add(new EditFrameAction("Delete nearest symbol",
-                                            KeyEvent.VK_D,
-                                            KeyStroke.getKeyStroke('z')) {
-                    @Override
-                        public void actionPerformed(ActionEvent e) {
-                        getParentEditor().deleteSymbol();
                     }
                 });
 
@@ -645,20 +631,6 @@ public class EditFrame extends JFrame {
                         getParentEditor().editMargins();
                     }
                 });
-
-            mnBackgroundImage.setMnemonic(KeyEvent.VK_B);
-            mnBackgroundImage.setEnabled(false);
-            grayBackgroundImage = new BackgroundImageMenuItem
-                ("Gray", BackgroundImage.GRAY);
-            grayBackgroundImage.setSelected(true);
-            blinkBackgroundImage = new BackgroundImageMenuItem
-                ("Blink", BackgroundImage.BLINK);
-            noBackgroundImage = new BackgroundImageMenuItem
-                ("None", BackgroundImage.NONE);
-            mnBackgroundImage.add(grayBackgroundImage);
-            mnBackgroundImage.add(blinkBackgroundImage);
-            mnBackgroundImage.add(noBackgroundImage);
-            mnDiagram.add(mnBackgroundImage);
 
             JMenu mnComponents = new JMenu("Components");
             mnComponents.add(setLeftComponent);
@@ -702,6 +674,22 @@ public class EditFrame extends JFrame {
                     getParentEditor().bestFit();
                 }
             });
+
+        if (editable) {
+            mnBackgroundImage.setMnemonic(KeyEvent.VK_B);
+            mnBackgroundImage.setEnabled(false);
+            grayBackgroundImage = new BackgroundImageMenuItem
+                ("Gray", BackgroundImage.GRAY, KeyEvent.VK_G);
+            grayBackgroundImage.setSelected(true);
+            blinkBackgroundImage = new BackgroundImageMenuItem
+                ("Blink", BackgroundImage.BLINK, KeyEvent.VK_B);
+            noBackgroundImage = new BackgroundImageMenuItem
+                ("None", BackgroundImage.NONE, KeyEvent.VK_N);
+            mnBackgroundImage.add(grayBackgroundImage);
+            mnBackgroundImage.add(blinkBackgroundImage);
+            mnBackgroundImage.add(noBackgroundImage);
+            mnView.add(mnBackgroundImage);
+        }
 
         JMenu mnHelp = new JMenu("Help");
         mnHelp.setMnemonic(KeyEvent.VK_H);

@@ -13,7 +13,7 @@ public class SplinePolyline extends GeneralPolyline {
     }
 
     public SplinePolyline(Point2D.Double[] points,
-                          CompositeStroke stroke,
+                          StandardStroke stroke,
                           double lineWidth) {
         super(points, stroke, lineWidth);
     }

@@ -18,8 +18,8 @@ import org.codehaus.jackson.map.annotate.*;
 // blog, "Deserialize JSON with Jackson into Polymorphic Types". -- EB
 
 /** A class for pairing the anchor points of a possibly smoothed
-    polyline with its associated color, CompositeStroke, and the line
-    width multiplier to use with the CompositeStroke. */
+    polyline with its associated color, StandardStroke, and the line
+    width multiplier to use with the StandardStroke. */
 @JsonTypeInfo(
               use = JsonTypeInfo.Id.NAME,
               include = JsonTypeInfo.As.PROPERTY,
@@ -29,11 +29,11 @@ import org.codehaus.jackson.map.annotate.*;
             @Type(value=SplinePolyline.class, name = "cubic spline") })
 public abstract class GeneralPolyline {
     protected ArrayList<Point2D.Double> points;
-    protected CompositeStroke stroke = null;
+    protected StandardStroke stroke = null;
     protected Color color = null;
     protected double lineWidth = 1.0;
 
-    /** Set the line width for this polyline. The CompositeStroke may
+    /** Set the line width for this polyline. The StandardStroke may
         further modify the chosen line width further for some or all
         of the BasicStroke elements (for example, railroad ties tend
         to be much wider than the basic line width). */
@@ -50,7 +50,7 @@ public abstract class GeneralPolyline {
     }
 
     public GeneralPolyline(Point2D.Double[] points,
-                           CompositeStroke stroke,
+                           StandardStroke stroke,
                            double lineWidth) {
         this.points = new ArrayList(Arrays.asList(points));
         this.stroke = stroke;
@@ -60,7 +60,7 @@ public abstract class GeneralPolyline {
     /** @return a new GeneralPolyline of the given type. */
     public static GeneralPolyline create
         (int smoothingType, Point2D.Double[] points,
-         CompositeStroke stroke, double lineWidth) {
+         StandardStroke stroke, double lineWidth) {
         switch (smoothingType) {
         case LINEAR:
             return new Polyline(points, stroke, lineWidth);
@@ -121,7 +121,7 @@ public abstract class GeneralPolyline {
             g.setColor(color);
         }
 
-        stroke.draw(g, path, lineWidth);
+        stroke.getStroke().draw(g, path, lineWidth);
 
         if (color != null) {
             g.setColor(oldColor);
@@ -140,7 +140,7 @@ public abstract class GeneralPolyline {
                      double scale) {
         AffineTransform xform = AffineTransform.getScaleInstance(scale, scale);
         xform.concatenate(originalToSquarePixel);
-        stroke.draw(g, getPath(xform), scale * lineWidth);
+        stroke.getStroke().draw(g, getPath(xform), scale * lineWidth);
     }
 
     public boolean isClosed() {
@@ -151,7 +151,7 @@ public abstract class GeneralPolyline {
 
     /** @return null unless this polyline has been assigned a
         stroke. */
-    @JsonProperty("lineStyle") public CompositeStroke getStroke() {
+    @JsonProperty("lineStyle") public StandardStroke getStroke() {
         return stroke;
     }
 
@@ -195,7 +195,7 @@ public abstract class GeneralPolyline {
             g.setColor(color);
         }
 
-        stroke.draw(g, path, lineWidth * strokeScale);
+        stroke.getStroke().draw(g, path, lineWidth * strokeScale);
 
         if (color != null) {
             g.setColor(oldColor);
@@ -218,7 +218,7 @@ public abstract class GeneralPolyline {
     /** Set the stroke. Use null to indicate that the stroke should be
         the same as whatever was last chosen for the graphics
         context. */
-    @JsonProperty("lineStyle") public void setStroke(CompositeStroke stroke) {
+    @JsonProperty("lineStyle") public void setStroke(StandardStroke stroke) {
         this.stroke = stroke;
     }
 

@@ -17,7 +17,6 @@ public class CompositeStroke {
 
        @param s The BasicStroke to use for drawing this.
     */
-
     public void add(BasicStroke s) {
         strokes.add(s);
     }

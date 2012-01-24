@@ -551,7 +551,7 @@ public class Editor implements CropEventListener, MouseListener,
 
     static final double STANDARD_LINE_WIDTH = 0.0012;
     protected double lineWidth = STANDARD_LINE_WIDTH;
-    protected CompositeStroke lineStyle = CompositeStroke.getSolidLine();
+    protected StandardStroke lineStyle = StandardStroke.SOLID;
     @JsonProperty protected String filename;
 
     // TODO Set saveNeeded
@@ -1020,13 +1020,9 @@ public class Editor implements CropEventListener, MouseListener,
             LabelSelection sel = editing ? getSelectedLabel() : null;
             for (int i = 0; i < labels.size(); ++i) {
                 boolean selected = (sel != null && i == sel.index);
-                if (selected) {
-                    g.setColor(Color.GREEN);
-                    // TODO BUG Have to create a new view, because
-                    // views ignore setColor.
+                if (!selected) { // Draw selection later.
+                    drawLabel(g, i, scale);
                 }
-                drawLabel(g, i, scale);
-                g.setColor(Color.BLACK);
             }
         }
 
@@ -1091,6 +1087,21 @@ public class Editor implements CropEventListener, MouseListener,
                        (xpoint.x - r, xpoint.y - r, r * 2, r * 2));
             }
         }
+
+
+        { // Draw the label selection, if any.
+            LabelSelection sel = editing ? getSelectedLabel() : null;
+            if (sel != null) {
+                AnchoredLabel label = labels.get(sel.index);
+                View normalView = labelViews.get(sel.index);
+                labelViews.set(sel.index,
+                               toView(label.getText(), label.getXWeight(),
+                                      Color.GREEN));
+                drawLabel(g, sel.index, scale);
+                labelViews.set(sel.index, normalView);
+            }
+        }
+
     }
 
     /** @return a curve to which a vertex can be appended or inserted.
@@ -1488,16 +1499,16 @@ public class Editor implements CropEventListener, MouseListener,
     /** Invoked from the EditFrame menu */
     public void editLabel() {
 
-        // TODO Important assign and mark default anchor location that
-        // is selected or at least underlined when one presses return
-        // instead of clicking on a button.
-
-        int nl = nearestLabelNo();
-        if (nl == -1) {
-            return;
+        LabelSelection lsel = getSelectedLabel();
+        if (lsel == null) {
+            int nl = nearestLabelNo();
+            if (nl == -1) {
+                return;
+            }
+            selection = lsel = new LabelSelection(nl);
         }
 
-        AnchoredLabel label = labels.get(nl);
+        AnchoredLabel label = labels.get(lsel.index);
         LabelDialog dialog = new LabelDialog(editFrame, "Edit Label");
         dialog.setText(label.getText());
         dialog.setXWeight(label.getXWeight());
@@ -1505,7 +1516,6 @@ public class Editor implements CropEventListener, MouseListener,
         dialog.setFontSize(label.getFontSize());
         dialog.setAngle(label.getAngle());
 
-        selection = new LabelSelection(nl);
         repaintEditFrame();
 
         AnchoredLabel newLabel = dialog.showModal();
@@ -1515,12 +1525,17 @@ public class Editor implements CropEventListener, MouseListener,
 
         newLabel.setX(label.getX());
         newLabel.setY(label.getY());
-        labels.set(nl, newLabel);
-        labelViews.set(nl, toView(newLabel.getText(), newLabel.getXWeight()));
+        labels.set(lsel.index, newLabel);
+        labelViews.set(lsel.index,
+                       toView(newLabel.getText(), newLabel.getXWeight()));
+    }
+
+    View toView(String str, double xWeight) {
+        return toView(str, xWeight, null);
     }
 
     /** @param xWeight Used to determine how to justify rows of text. */
-    View toView(String str, double xWeight) {
+    View toView(String str, double xWeight, Color textColor) {
         xWeight = 0.0;
         if (xWeight >= 0.75) {
             str = "<html><div align=\"right\">" + str + "</div></html>";
@@ -1532,6 +1547,9 @@ public class Editor implements CropEventListener, MouseListener,
         }
 
         JLabel bogus = new JLabel(str);
+        if (textColor != null) {
+            bogus.setForeground(textColor);
+        }
         bogus.setFont(getEditPane().getFont());
         return (View) bogus.getClientProperty("html");
     }
@@ -1561,15 +1579,9 @@ public class Editor implements CropEventListener, MouseListener,
         this.diagramType = t;
     }
 
-    /** Invoked from the EditFrame menu */
-    public void setLabelFont() {
-        // TODO setLabelFont
-    }
-
-
 
     /** Invoked from the EditFrame menu */
-    public void setLineStyle(CompositeStroke lineStyle) {
+    public void setLineStyle(StandardStroke lineStyle) {
         this.lineStyle = lineStyle;
 
         GeneralPolyline path = getActiveCurve();
@@ -2384,7 +2396,7 @@ public class Editor implements CropEventListener, MouseListener,
             GeneralPolyline outline = GeneralPolyline.create
                 (GeneralPolyline.LINEAR,
                  diagramOutline.toArray(new Point2D.Double[0]),
-                 CompositeStroke.getSolidLine(),
+                 StandardStroke.SOLID,
                  STANDARD_LINE_WIDTH);
             outline.setClosed(closeDiagramOutline);
             paths.add(outline);

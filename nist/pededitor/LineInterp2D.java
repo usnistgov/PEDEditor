@@ -13,7 +13,7 @@ public class Polyline extends GeneralPolyline {
     }
 
     public Polyline(Point2D.Double[] points,
-                    CompositeStroke stroke,
+                    StandardStroke stroke,
                     double lineWidth) {
         super(points, stroke, lineWidth);
     }
