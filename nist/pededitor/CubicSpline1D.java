@@ -168,7 +168,7 @@ final public class CubicSpline1D {
     }
 
     /* Parameterize the entire curve as t in [0,1] and return the
-       slope of the curve at the given t value */
+       value of the curve at the given t value */
     public double value(double t) {
         int cnt = coefficients.length;
 
