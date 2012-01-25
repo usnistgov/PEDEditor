@@ -1749,54 +1749,30 @@ public class Editor implements CropEventListener, MouseListener,
         this time. */
     ArrayList<Point2D.Double> intersections() {
         ArrayList<Point2D.Double> output = new ArrayList<Point2D.Double>();
-        LineSegment[] segments = getAllLineSegments();
+        Line2D.Double[] segments = getAllLineSegments();
 
-        // Add segment+segment intersections.
-        for (int i = 0; i < segments.length; ++i) {
-            LineSegment s1 = segments[i];
-            for (int j = i + 1; j < segments.length; ++j) {
-                LineSegment s2 = segments[j];
-                Point2D.Double p = Duh.segmentIntersection
-                    (s1.p1, s1.p2, s2.p1, s2.p2);
-                if (p != null) {
-                    output.add(p);
-                }
-            }
-        }
-
-        // Add curve+segment intersections.
-
-        // Spline curves are defined in the page coordinates (and the
+        // Spline curves are defined in the page coordinates, and the
         // transformation of a spline fit in principal coordinates
-        // does not equal the spline fit of the transformation), so
+        // does not equal the spline fit of the transformation, so
         // convert the segments to page coordinates to match the
         // splines.
-        LineSegment[] pageSegments = new LineSegment[segments.length];
+        Line2D.Double[] pageSegments = new Line2D.Double[segments.length];
         for (int i = 0; i < segments.length; ++i) {
-            pageSegments[i] = new LineSegment
-                    (principalToStandardPage.transform(segments[i].p1),
-                     principalToStandardPage.transform(segments[i].p2));
+            pageSegments[i] = new Line2D.Double
+                (principalToStandardPage.transform(segments[i].getP1()),
+                 principalToStandardPage.transform(segments[i].getP2()));
         }
 
         for (GeneralPolyline path: paths) {
-            if (path.size() <= 2
-                || path.getSmoothingType() !=  GeneralPolyline.CUBIC_SPLINE) {
-                // This path does not curve.
-                continue;
-            }
+            GeneralPolyline pagePath = path.createTransform(principalToStandardPage);
 
-            CubicSpline2D spline
-                = ((SplinePolyline) path).getSpline(principalToStandardPage);
-
-            for (LineSegment segment: pageSegments) {
-                for (Point2D.Double point: spline.intersections(segment)) {
+            for (Line2D segment: pageSegments) {
+                for (Point2D.Double point: pagePath.segmentIntersections(segment)) {
                     standardPageToPrincipal.transform(point, point);
                     output.add(point);
                 }
             }
         }
-
-        // Curve+curve intersections are not detected at this time.
 
         return output;
     }
@@ -1862,8 +1838,7 @@ public class Editor implements CropEventListener, MouseListener,
                 // For closed polylines, don't forget the segment
                 // connecting the last vertex to the first one.
 
-                int segCnt = (points.length >= 3 && path.isClosed())
-                    ? points.length : (points.length-1);
+                int segCnt = path.getSegmentCnt();
 
                 for (int i = 0; i < segCnt; ++i) {
                     principalToStandardPage.transform(points[i], xpoint2);
@@ -3235,28 +3210,26 @@ public class Editor implements CropEventListener, MouseListener,
     /** @return an array of all straight line segments defined for
         this diagram. */
     @JsonIgnore
-    public LineSegment[] getAllLineSegments() {
-        ArrayList<LineSegment> output
-            = new ArrayList<LineSegment>();
+    public Line2D.Double[] getAllLineSegments() {
+        ArrayList<Line2D.Double> output
+            = new ArrayList<Line2D.Double>();
          
         for (GeneralPolyline path : paths) {
             if (path.getSmoothingType() == GeneralPolyline.LINEAR) {
                 Point2D.Double[] points = path.getPoints();
                 for (int i = 1; i < points.length; ++i) {
-                    output.add(new LineSegment(points[i-1], points[i]));
+                    output.add(new Line2D.Double(points[i-1], points[i]));
                 }
                 if (points.length >= 3 && path.isClosed()) {
-                    output.add(new LineSegment(points[points.length-1], points[0]));
+                    output.add(new Line2D.Double(points[points.length-1], points[0]));
                 }
             } else if (path.size() == 2) {
-                // Easy case -- this path is smoothed between exactly
-                // 2 points, which means it is equivalent to a
-                // segment.
-                output.add(new LineSegment(path.get(0), path.get(1)));
+                // A smooth path between two points is a segment.
+                output.add(new Line2D.Double(path.get(0), path.get(1)));
             }
         }
 
-        return output.toArray(new LineSegment[0]);
+        return output.toArray(new Line2D.Double[0]);
     }
 
     /** Draw a circle around each point in path. */
