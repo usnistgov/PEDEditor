@@ -470,22 +470,6 @@ final public class CubicSpline2D {
                 if (iterations >= maxIterations) {
                     System.err.println("Reached maximum iterations count.");
                 }
-
-                if (false) {
-                    // It's possible that something funny is going on
-                    // here, but it's hard to tell after numerical
-                    // error is factored in, and I haven't seen visual
-                    // evidence of any mistakes.
-
-                    System.out.println
-                        (this + ".closePoint(" + p + ", " + maxError
-                         + "): solution " + bestCandidate 
-                         + " within " + (bestCandidate.distance - lowerBound)
-                         + " of ideal after trying  " + iterations + " ranges.");
-                    if (bestCandidate.distance < lowerBound) {
-                        throw new IllegalStateException("Better than perfect?!");
-                    }
-                }
                 return bestCandidate;
             }
 
@@ -493,19 +477,23 @@ final public class CubicSpline2D {
         }
     }
 
-    public Point2D.Double[] intersections(LineSegment segment) {
-        double sdx = segment.p2.getX() - segment.p1.getX();
-        double sdy = segment.p2.getY() - segment.p1.getY();
+
+    /** Return the t values for all intersections of this spline with segment. */
+    public double[] intersectionTs(Line2D segment) {
+        double sdx = segment.getX2() - segment.getX1();
+        double sdy = segment.getY2() - segment.getY1();
         if (sdx == 0 && sdy == 0) {
             // The segment is a point, so the claim that segment
             // doesn't intersect the spline is either true or within
             // an infinitesimal distance of being true, and we don't
             // guarantee infinite precision, so just return nothing.
-            return new Point2D.Double[0];
+            return new double[0];
         }
         boolean swapxy = Math.abs(sdx) < Math.abs(sdy);
         if (swapxy) {
-            segment = segment.transpose();
+            segment = new Line2D.Double
+                (segment.getY1(), segment.getX1(),
+                 segment.getY2(), segment.getX2());
             double tmp = sdx;
             sdx = sdy;
             sdy = tmp;
@@ -517,16 +505,19 @@ final public class CubicSpline2D {
         // instability.
 
         double m = sdy/sdx; // |m| <= 1
-        double b = segment.p1.getY() - m * segment.p1.getX();
+        double b = segment.getY1() - m * segment.getX1();
 
         // y = mx + b
 
-        double minx = Math.min(segment.p1.getX(), segment.p2.getX());
-        double maxx = Math.max(segment.p1.getX(), segment.p2.getX());
+        double minx = Math.min(segment.getX1(), segment.getX2());
+        double maxx = Math.max(segment.getX1(), segment.getX2());
 
-        ArrayList<Point2D.Double> output = new ArrayList<Point2D.Double>();
+        ArrayList<Double> output = new ArrayList<Double>();
 
-        for (int segNo = 0; segNo < segmentCnt(); ++segNo) {
+        double oldT = -1;
+        int segCnt = segmentCnt();
+
+        for (int segNo = 0; segNo < segCnt; ++segNo) {
             double[] xCubic = xSpline.getPoly(segNo);
             double[] yCubic = ySpline.getPoly(segNo);
 
@@ -599,21 +590,35 @@ final public class CubicSpline2D {
                     continue;
                 }
 
-                double y = Polynomial.evaluate(t, yCubic);
-                Point2D.Double p = new Point2D.Double();
-                if (swapxy) {
-                    p.x = y;
-                    p.y = x;
-                } else {
-                    p.x = x;
-                    p.y = y;
+                // Convert t value within segment to t value within
+                // whole curve.
+                t = (segNo + t) / segCnt;
+                if (t > oldT) {
+                    output.add(t);
+                    oldT = t;
                 }
-                output.add(p);
             }
         }
 
-        return output.toArray(new Point2D.Double[0]);
+
+        double[] o = new double[output.size()];
+        for (int i = 0; i < o.length; ++i) {
+            o[i] = output.get(i);
+        }
+        return o;
     }
+
+
+    /** Return the positions of all intersections of this spline with segment. */
+    public Point2D.Double[] intersections(Line2D segment) {
+        double[] ts = intersectionTs(segment);
+        Point2D.Double[] output = new Point2D.Double[ts.length];
+        for (int i = 0; i < ts.length; ++i) {
+            output[i] = value(ts[i]);
+        }
+        return output;
+    }
+
 
     public CubicSpline1D.SegmentAndT getSegment(double t) {
         return xSpline.getSegment(t);
