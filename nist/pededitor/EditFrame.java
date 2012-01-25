@@ -516,6 +516,9 @@ public class EditFrame extends JFrame {
             mnLineStyle.add
                 (new LineStyleMenuItem("images/railroadline.png",
                                             StandardStroke.RAILROAD));
+            mnLineStyle.add
+                (new LineStyleMenuItem("images/soliddotline.png",
+                                            StandardStroke.SOLID_DOT));
             mnCurve.add(mnLineStyle);
 
             JMenu mnLineWidth = new JMenu("Line width");
@@ -684,7 +687,7 @@ public class EditFrame extends JFrame {
             blinkBackgroundImage = new BackgroundImageMenuItem
                 ("Blink", BackgroundImage.BLINK, KeyEvent.VK_B);
             noBackgroundImage = new BackgroundImageMenuItem
-                ("None", BackgroundImage.NONE, KeyEvent.VK_N);
+                ("Hide", BackgroundImage.NONE, KeyEvent.VK_N);
             mnBackgroundImage.add(grayBackgroundImage);
             mnBackgroundImage.add(blinkBackgroundImage);
             mnBackgroundImage.add(noBackgroundImage);

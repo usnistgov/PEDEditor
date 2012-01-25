@@ -156,6 +156,27 @@ public class CompositeStroke {
         return output;
     }
 
+    /** A superposition of a dotted and a solid line. */
+    public static CompositeStroke getSolidDotLine() {
+        CompositeStroke output = new CompositeStroke();
+
+        // Solid (thinner than normal so the dots stand out)
+        output.add(new BasicStroke
+                   (0.6f,
+                    BasicStroke.CAP_ROUND,
+                    BasicStroke.JOIN_ROUND));
+        // Dots
+        output.add(new BasicStroke
+                   (1.8f,
+                    BasicStroke.CAP_ROUND,
+                    BasicStroke.JOIN_ROUND,
+                    3.0f,
+                    new float[] { 0, 5.4f },
+                    0.0f));
+        return output;
+    }
+
+    /**  Put a dot at the starting point and that's all. */
     public static CompositeStroke getStartingDot() {
         CompositeStroke output = new CompositeStroke();
         output.add(new BasicStroke
