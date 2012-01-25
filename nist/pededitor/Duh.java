@@ -611,6 +611,83 @@ public class Duh {
     }
     
 
+    /** @return the point where the lines a1a2 and b1b2 intersect, or
+        null if the lines are parallel. For segment intersection
+        instead, use segmentIntersection().
+
+        The return value is undefined if tiny changes to the locations
+        of one or more input points could yield major changes in the
+        correct result.
+    */
+    public static Point2D.Double lineIntersection
+        (Point2D a1, Point2D a2, Point2D b1, Point2D b2) {
+
+        if (crossProduct(a1, a2, b1, b2) == 0) {
+            return null;
+        }
+
+        // Don't worry too much about the intractible instability
+        // problems, but the problem of one or both of a1a2 and b1b2
+        // being parallel or nearly parallel to the x or y axis is
+        // important and sometimes tractible.
+
+        if (crossProduct
+            (new Point2D.Double(Math.abs(a2.getX() - a1.getX()),
+                                Math.abs(a2.getY() - a1.getY())),
+             new Point2D.Double(Math.abs(b2.getX() - b1.getX()),
+                                Math.abs(b2.getY() - b1.getY()))) < 0) {
+            // a1a2 has steeper slope than b1b2, which could cause
+            // numerical instability problems later. Swap the two
+            // pairs.
+
+            Point2D tmpp;
+
+            tmpp = a1;
+            a1 = b1;
+            b1 = tmpp;
+
+            tmpp = a2;
+            a2 = b2;
+            b2 = tmpp;
+        }
+
+        // a1a2 and b1b2 are non-parallel segments with positive
+        // length, and b1b2 is steeper than a1a2. So a1a2 is not
+        // vertical, and b1b2 is not horizontal.
+
+        double m = (a2.getY() - a1.getY()) / (a2.getX() - a1.getX());
+        double b = a2.getY() - m * a2.getX();
+
+        // a1a2 lies on the line y = m x + b
+
+        double q = (b2.getX() - b1.getX()) / (b2.getY() - b1.getY());
+        double r = b2.getX() - q * b2.getY();
+
+        // b1b2 lies on the line x = qy + r
+
+        // Substitute (x = qy + r) into the first equation:
+
+        // y = m (qy + r) + b
+
+        // y(1 - mq) = mr + b
+
+        double denom = 1 - m * q;
+
+        if (denom == 0) {
+            // It looks like the two lines are parallel after all --
+            // limits of numerical precision must be at fault. In that
+            // numerically unstable case, the answer is undefined and
+            // we can just as well return "no intersection".
+
+            return null;
+        }
+
+        double y = (m * r + b) / denom;
+        double x = q * y + r;
+        return new Point2D.Double(x,y);
+    }
+    
+
     /** @return a point where segments a1a2 and b1b2 intersect, or
         null if no such point exists.
 
@@ -722,6 +799,34 @@ public class Duh {
         } else {
             return null;
         }
+    }
+    
+
+    /** Return -1 if the two segments do not intersect. Otherwise,
+        return a value in [0, 1] where 0 indicates an intersection at
+        a1, 1 indicates an intersection at a2, and intermediate values
+        indicate proportionally intermediate points. */
+    public static double segmentIntersectionT
+        (Point2D a1, Point2D a2, Point2D b1, Point2D b2) {
+        Point2D.Double intersection = segmentIntersection(a1, a2, b1, b2);
+
+        if (intersection == null) {
+            return -1;
+        }
+
+        if (a1.equals(a2)) {
+            return 0.5;
+        }
+
+        double output =
+            (Math.abs(intersection.getX() - a1.getX()) + Math.abs(intersection.getY() - a1.getY())) /
+            (Math.abs(a2.getX() - a1.getX()) + Math.abs(a2.getY() - a1.getY()));
+
+        return (output > 1.0) ? 1.0 : (output < 0.0) ? 0.0 : output;
+    }
+
+    public static double toAngle(Line2D ray) {
+        return Math.atan2(ray.getY2() - ray.getY1(), ray.getX2() - ray.getX1());
     }
     
 
