@@ -1764,7 +1764,7 @@ public class Editor implements CropEventListener, MouseListener,
         }
 
         for (GeneralPolyline path: paths) {
-            GeneralPolyline pagePath = path.createTransform(principalToStandardPage);
+            GeneralPolyline pagePath = path.createTransformed(principalToStandardPage);
 
             for (Line2D segment: pageSegments) {
                 for (Point2D.Double point: pagePath.segmentIntersections(segment)) {
