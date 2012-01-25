@@ -90,6 +90,21 @@ public abstract class GeneralPolyline {
         return output;
     }
 
+    /** @return a new GeneralPolyline that is like this one, but xform
+        has been applied to its control points. Note that the smooth
+        of the transform is generally not the same as the transform of
+        the smoothing. */
+    public GeneralPolyline createTransformed(AffineTransform xform) {
+        GeneralPolyline output = clone();
+        Point2D.Double[] points = getPoints();
+
+        for (Point2D.Double point: points) {
+            xform.transform(point, point);
+        }
+        output.setPoints(Arrays.asList(points));
+        return output;
+    }
+
     /** @return this's corresponding Path2D.Double. */
     @JsonIgnore
     abstract public Path2D.Double getPath();
@@ -104,6 +119,22 @@ public abstract class GeneralPolyline {
         define your CompositeStroke line width to fit the dimensions of
         the transformed space. */
     abstract public Path2D.Double getPath(AffineTransform at);
+
+    /** @return the t values of all intersections between segment and
+        this. The t values can be used with getLocation() and
+        getGradient(). */
+    abstract public double[] segmentIntersectionTs(Line2D segment);
+
+    /** @return an array of all intersections between segment and
+        this. */
+    public Point2D.Double[] segmentIntersections(Line2D segment) {
+        double[] ts = segmentIntersectionTs(segment);
+        Point2D.Double[] output = new Point2D.Double[ts.length];
+        for (int i = 0; i < ts.length; ++i) {
+            output[i] = getLocation(ts[i]);
+        }
+        return output;
+    }
 
     /** @return either GeneralPolyline.LINEAR or
         GeneralPolyline.CUBIC_SPLINE. */
@@ -268,9 +299,19 @@ public abstract class GeneralPolyline {
         return (size == 0) ? null : points.get(size-1);
     }
 
-    /** @return the number of segments in the line. */
+    /** @return the number of vertices in this. */
     public int size() {
         return points.size();
+    }
+
+    /** @return the number of segments in this drawing. That equals
+        the number of vertices minus 1 for open curves and closed
+        curves with just 1 vertex, or the number of vertices for
+        closed curves with at least 2 vertices. */
+    @JsonIgnore
+    public int getSegmentCnt() {
+        int size = points.size();
+        return (size >= 2 && isClosed()) ? size : (size - 1);
     }
 
     @Override
@@ -284,10 +325,19 @@ public abstract class GeneralPolyline {
         }
     }
 
+    /** @return the location of this curve at parameterized point t of
+        segment segmentNo (where segment 0 connects vertices 0 and 1,
+        segment 1 connects vertices 1 and 2, and so forth) */
+    abstract public Point2D.Double getLocation(int segmentNo, double t);
+
     /** @return the gradient of this curve at parameterized point t of
         segment segmentNo (where segment 0 connects vertices 0 and 1,
         segment 1 connects vertices 1 and 2, and so forth) */
     abstract public Point2D.Double getGradient(int segmentNo, double t);
+
+    /* Parameterize the entire curve as t in [0,1] and return the
+       location corresponding to the given t value */
+    abstract public Point2D.Double getLocation(double t);
 
     public static final int LINEAR = 0;
     public static final int CUBIC_SPLINE = 1;
