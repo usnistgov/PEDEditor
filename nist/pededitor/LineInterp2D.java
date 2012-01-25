@@ -79,13 +79,80 @@ public class Polyline extends GeneralPolyline {
 
     @Override
     public Point2D.Double getGradient(int segmentNo, double t) {
-        if (points.size() == 0) {
+        if (points.size() < 2) {
             return null;
         }
 
         Point2D.Double p1 = points.get(segmentNo);
         Point2D.Double p2 = points.get(segmentNo + 1);
         return new Point2D.Double(p2.x - p1.x, p2.y - p1.y);
+    }
+
+    @Override
+    public Point2D.Double getLocation(int segmentNo, double t) {
+        if (points.size() == 0) {
+            return null;
+        }
+
+        Point2D.Double p1 = points.get(segmentNo);
+        Point2D.Double p2 = points.get((segmentNo + 1) % size());
+        return new Point2D.Double(p1.x + (p2.x - p1.x) * t,
+                                  p1.y + (p2.y - p1.y) * t);
+    }
+
+    @Override public double[] segmentIntersectionTs(Line2D segment) {
+        ArrayList<Double> output = new ArrayList<Double>();
+        Point2D s1 = segment.getP1();
+        Point2D s2 = segment.getP2();
+        int segCnt = getSegmentCnt();
+        Point2D.Double p1 = getControlPoint(0);
+
+        double oldT2 = -1.0;
+
+        for (int i = 0; i < segCnt; ++i) {
+            Point2D.Double p2 = getControlPoint(i+1);
+            double t = Duh.segmentIntersectionT(p1, p2, s1, s2);
+            p1 = p2;
+            // Convert t value within segment to t value within
+            // whole curve.
+            double t2 = (t + i) / segCnt;
+            if (t < 0 /* No intersection */ || t2 <= oldT2 /* Repeat */) {
+                continue;
+            }
+            oldT2 = t2;
+            output.add(t2);
+        }
+
+        double[] o = new double[output.size()];
+        for (int i = 0; i < o.length; ++i) {
+            o[i] = output.get(i);
+        }
+        return o;
+    }
+
+    /* Parameterize the entire curve as t in [0,1] and return the
+       location corresponding to the given t value */
+    @Override public Point2D.Double getLocation(double t) {
+        int segCnt = getSegmentCnt();
+
+        if (t < 0 || segCnt <= 0) {
+            return (Point2D.Double) points.get(0).clone();
+        }
+
+        if (t >= 1) {
+            return (Point2D.Double)
+                points.get(isClosed() ? 0 : points.size() - 1).clone();
+        }
+
+        t *= segCnt;
+        double segment = Math.floor(t);
+
+        return getLocation((int) segment, t - segment);
+    }
+
+    /* Return control point #i. */
+    public Point2D.Double getControlPoint(int i) {
+        return points.get(isClosed() ? (i % points.size()) : i);
     }
 
     public String toString(AffineTransform at) {
