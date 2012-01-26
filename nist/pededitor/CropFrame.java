@@ -192,27 +192,9 @@ public class CropFrame extends ImageScrollFrame {
 
     protected void help() {
         if (helpDialog == null) {
-            String filename = "crophelp.html";
-            URL helpURL = CropFrame.class.getResource(filename);
-            if (helpURL == null) {
-                throw new Error("File " + filename + " not found");
-            }
-            JEditorPane editorPane = new JEditorPane();
-            editorPane.setEditable(false);
-            try {
-                editorPane.setPage(helpURL);
-            } catch (IOException e) {
-                throw new Error(e);
-            }
-            JScrollPane editorScrollPane = new JScrollPane(editorPane);
-            editorScrollPane.setPreferredSize(new Dimension(500, 500));
-            
-            helpDialog = new JDialog(this, "Diagram Selection Help");
-            helpDialog.getContentPane().add(editorScrollPane);
-            helpDialog.pack();
+            helpDialog = new HTMLDialog
+                (this, "crophelp.html", "Diagram Selection Help");
         }
-        Rectangle r = getBounds();
-        helpDialog.setLocation(r.x + r.width, r.y);
         helpDialog.setVisible(true);
         helpDialog.toFront();
     }
