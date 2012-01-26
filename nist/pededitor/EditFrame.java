@@ -10,6 +10,7 @@ import javax.swing.*;
 
 public class EditFrame extends JFrame {
     static JDialog helpDialog = null;
+    static JDialog aboutDialog = null;
 
     protected JPanel contentPane;
     protected JScrollPane scrollPane;
@@ -344,7 +345,7 @@ public class EditFrame extends JFrame {
                 });
 
             mnEdit.add(new EditFrameAction("Copy",
-                                             KeyEvent.VK_M,
+                                             KeyEvent.VK_C,
                                              KeyStroke.getKeyStroke('c')) {
                     @Override
                         public void actionPerformed(ActionEvent e) {
@@ -360,16 +361,24 @@ public class EditFrame extends JFrame {
                         getParentEditor().removeSelection();
                     }
                 });
+
+            mnEdit.add(new EditFrameAction("Deselect",
+                                           KeyEvent.VK_E, "pressed END") {
+                    @Override
+                        public void actionPerformed(ActionEvent e) {
+                        getParentEditor().deselectCurve();
+                    }
+                });
         }
 
         // "Vertex" top-level menu
-        JMenu mnVertex = new JMenu("Vertex");
-        mnVertex.setMnemonic(KeyEvent.VK_V);
-        menuBar.add(mnVertex);
+        JMenu mnPosition = new JMenu("Position");
+        mnPosition.setMnemonic(KeyEvent.VK_P);
+        menuBar.add(mnPosition);
 
         if (editable) {
-            mnVertex.add(new EditFrameAction
-                         ("Enter location",
+            mnPosition.add(new EditFrameAction
+                         ("Enter coordinates",
                           KeyEvent.VK_L,
                           KeyStroke.getKeyStroke('=')) {
                     @Override
@@ -379,8 +388,8 @@ public class EditFrame extends JFrame {
                 });
         }
 
-        mnVertex.add(new EditFrameAction
-                   ("Nearest",
+        mnPosition.add(new EditFrameAction
+                   ("Nearest key point",
                     KeyEvent.VK_N,
                     KeyStroke.getKeyStroke('p')) {
                 @Override
@@ -390,8 +399,8 @@ public class EditFrame extends JFrame {
             });
 
         if (editable) {
-            mnVertex.add(new EditFrameAction
-                         ("Select nearest",
+            mnPosition.add(new EditFrameAction
+                         ("Select nearest key point",
                           KeyEvent.VK_S,
                           KeyStroke.getKeyStroke('P')) {
                     @Override
@@ -401,32 +410,9 @@ public class EditFrame extends JFrame {
                 });
         }
 
-        if (editable) {
-
-            mnVertex.addSeparator();
-
-            JMenuItem mnAdjust = new JMenuItem("Adjust");
-            mnAdjust.setEnabled(false);
-            mnVertex.add(mnAdjust);
-
-            AdjustAction[] arrows =
-                { new AdjustAction("Up", KeyEvent.VK_U, "UP", 0, -1),
-                  new AdjustAction("Down", KeyEvent.VK_D, "DOWN", 0, 1),
-                  new AdjustAction("Left", KeyEvent.VK_L, "LEFT", -1, 0),
-                  new AdjustAction("Right", KeyEvent.VK_R, "RIGHT", 1, 0) };
-            for (AdjustAction a : arrows) {
-                mnVertex.add(a);
-            }
-        }
-
-
-        // "Curve" top-level menu
-        JMenu mnCurve = new JMenu("Curve");
-        mnCurve.setMnemonic(KeyEvent.VK_C);
-
-        mnCurve.add(new EditFrameAction
-                   ("Move to curve",
-                    KeyEvent.VK_C,
+        mnPosition.add(new EditFrameAction
+                   ("Nearest line/curve",
+                    KeyEvent.VK_L,
                     KeyStroke.getKeyStroke('l')) {
                 @Override
                     public void actionPerformed(ActionEvent e) {
@@ -434,25 +420,35 @@ public class EditFrame extends JFrame {
                 }
             });
 
-        mnCurve.add(new EditFrameAction("Deselect",
-                                        KeyEvent.VK_D, "pressed END") {
-                @Override
-                    public void actionPerformed(ActionEvent e) {
-                    getParentEditor().deselectCurve();
-                }
-            });
-
         if (editable) {
-
-            mnCurve.add(new EditFrameAction
-                        ("Select curve",
-                         KeyEvent.VK_C,
+            mnPosition.add(new EditFrameAction
+                        ("Select nearest line/curve",
+                         KeyEvent.VK_I,
                          KeyStroke.getKeyStroke('L')) {
                     @Override
                         public void actionPerformed(ActionEvent e) {
                         getParentEditor().seekNearestSegment(true);
                     }
                 });
+        }
+
+        mnPosition.addSeparator();
+
+        AdjustAction[] arrows =
+            { new AdjustAction("Up", KeyEvent.VK_U, "UP", 0, -1),
+              new AdjustAction("Down", KeyEvent.VK_D, "DOWN", 0, 1),
+              new AdjustAction("Left", KeyEvent.VK_L, "LEFT", -1, 0),
+              new AdjustAction("Right", KeyEvent.VK_R, "RIGHT", 1, 0) };
+        for (AdjustAction a : arrows) {
+                mnPosition.add(a);
+        }
+
+
+        // "Curve" top-level menu
+        JMenu mnCurve = new JMenu("Curve");
+        mnCurve.setMnemonic(KeyEvent.VK_C);
+
+        if (editable) {
 
             mnCurve.add(new EditFrameAction
                         ("Add cusp", KeyEvent.VK_C, "typed ,") {
@@ -488,7 +484,7 @@ public class EditFrame extends JFrame {
                 });
 
             mnCurve.add(new EditFrameAction("Toggle curve closure",
-                                            KeyEvent.VK_C,
+                                            KeyEvent.VK_O,
                                             KeyStroke.getKeyStroke('o')) {
                     @Override
                         public void actionPerformed(ActionEvent e) {
@@ -548,10 +544,6 @@ public class EditFrame extends JFrame {
                 });
         }
 
-        JMenuItem mnCopyCurve = new JMenuItem("Copy");
-        mnCopyCurve.setEnabled(false);
-        mnCurve.add(mnCopyCurve);
-
         if (editable) {
             JMenuItem mnGradient = new JMenuItem("Apply gradient");
             mnGradient.setEnabled(false);
@@ -560,11 +552,12 @@ public class EditFrame extends JFrame {
         menuBar.add(mnCurve);
 
 
-        // "Label" top-level menu
-        JMenu mnLabel = new JMenu("Decorations");
+        // "Decorations" top-level menu
+        JMenu mnDecorations = new JMenu("Decorations");
+        mnDecorations.setMnemonic(KeyEvent.VK_D);
 
         if (editable) {
-            mnLabel.add(new EditFrameAction
+            mnDecorations.add(new EditFrameAction
                         ("New label",
                          KeyEvent.VK_N,
                          KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0)) {
@@ -574,7 +567,7 @@ public class EditFrame extends JFrame {
                     }
                 });
 
-            mnLabel.add(new EditFrameAction
+            mnDecorations.add(new EditFrameAction
                         ("Edit label",
                          KeyEvent.VK_E,
                          KeyStroke.getKeyStroke('e')) {
@@ -584,7 +577,7 @@ public class EditFrame extends JFrame {
                     }
                 });
 
-            mnLabel.add(new EditFrameAction
+            mnDecorations.add(new EditFrameAction
                         ("Add dot", KeyEvent.VK_D, "typed d") {
                     @Override
                         public void actionPerformed(ActionEvent e) {
@@ -592,7 +585,7 @@ public class EditFrame extends JFrame {
                     }
                 });
 
-            mnLabel.add(new EditFrameAction("Add left arrowhead",
+            mnDecorations.add(new EditFrameAction("Add left arrowhead",
                                             KeyEvent.VK_L,
                                             KeyStroke.getKeyStroke('<')) {
                     @Override
@@ -601,7 +594,7 @@ public class EditFrame extends JFrame {
                     }
                 });
 
-            mnLabel.add(new EditFrameAction("Add right arrowhead",
+            mnDecorations.add(new EditFrameAction("Add right arrowhead",
                                             KeyEvent.VK_R,
                                             KeyStroke.getKeyStroke('>')) {
                     @Override
@@ -610,7 +603,7 @@ public class EditFrame extends JFrame {
                     }
                 });
 
-            mnLabel.add(new EditFrameAction
+            mnDecorations.add(new EditFrameAction
                         ("Compute Chemical Label Coordinates", KeyEvent.VK_C) {
                     @Override
                         public void actionPerformed(ActionEvent e) {
@@ -618,16 +611,32 @@ public class EditFrame extends JFrame {
                         // getParentEditor().computeLabelCoordinates();
                     }
                 });
+
+            mnDecorations.add(new EditFrameAction
+                        ("Add tie lines", KeyEvent.VK_T) {
+                    @Override
+                        public void actionPerformed(ActionEvent e) {
+                        getParentEditor().addTieLine();
+                    }
+                });
         }
 
-        if (mnLabel.getItemCount() > 0) {
-            menuBar.add(mnLabel);
+        if (mnDecorations.getItemCount() > 0) {
+            menuBar.add(mnDecorations);
         }
 
-        // "Diagram" top-level menu
-        JMenu mnDiagram = new JMenu("Diagram");
+        // "Layout" top-level menu
+        JMenu mnLayout = new JMenu("Layout");
+        mnLayout.setMnemonic(KeyEvent.VK_L);
+
         if (editable) {
-            mnDiagram.add(new EditFrameAction
+            JMenu mnAxes = new JMenu("Axes");
+            mnAxes.setMnemonic(KeyEvent.VK_X);
+            mnLayout.add(mnAxes);
+            mnAxes.add(changeXUnits);
+            mnAxes.add(changeYUnits);
+
+            mnLayout.add(new EditFrameAction
                           ("Margins...", KeyEvent.VK_M) {
                     @Override
                         public void actionPerformed(ActionEvent e) {
@@ -639,18 +648,11 @@ public class EditFrame extends JFrame {
             mnComponents.add(setLeftComponent);
             mnComponents.add(setRightComponent);
             mnComponents.add(setTopComponent);
-            mnDiagram.add(mnComponents);
+            mnLayout.add(mnComponents);
         }
 
-        if (mnDiagram.getItemCount() > 0) {
-            menuBar.add(mnDiagram);
-        }
-
-        if (editable) {
-            JMenu mnAxes = new JMenu("Axes");
-            menuBar.add(mnAxes);
-            mnAxes.add(changeXUnits);
-            mnAxes.add(changeYUnits);
+        if (mnLayout.getItemCount() > 0) {
+            menuBar.add(mnLayout);
         }
 
 
@@ -704,9 +706,12 @@ public class EditFrame extends JFrame {
                 }
             });
 
-        JMenuItem mnAbout = new JMenuItem("About");
-        mnAbout.setEnabled(false);
-        mnHelp.add(mnAbout);
+        mnHelp.add(new EditFrameAction("About", KeyEvent.VK_A) {
+                @Override
+                    public void actionPerformed(ActionEvent e) {
+                    about();
+                }
+            });
     }
 
     /** Set the maximum number of components in the diagram. A
@@ -732,29 +737,20 @@ public class EditFrame extends JFrame {
 
     protected void help() {
         if (helpDialog == null) {
-            String filename = "edithelp.html";
-            URL helpURL = CropFrame.class.getResource(filename);
-            if (helpURL == null) {
-                throw new Error("File " + filename + " not found");
-            }
-            JEditorPane editorPane = new JEditorPane();
-            editorPane.setEditable(false);
-            try {
-                editorPane.setPage(helpURL);
-            } catch (IOException e) {
-                throw new Error(e);
-            }
-            JScrollPane editorScrollPane = new JScrollPane(editorPane);
-            editorScrollPane.setPreferredSize(new Dimension(500, 500));
-            
-            helpDialog = new JDialog(this, "PED Edit Window Help");
-            helpDialog.getContentPane().add(editorScrollPane);
-            helpDialog.pack();
+            helpDialog = new HTMLDialog
+                (this, "edithelp.html", "PED Edit Window Help");
         }
-        Rectangle r = getBounds();
-        helpDialog.setLocation(r.x + r.width, r.y);
         helpDialog.setVisible(true);
         helpDialog.toFront();
+    }
+
+    protected void about() {
+        if (aboutDialog == null) {
+            aboutDialog = new HTMLDialog
+                (this, "about.html", "About PED Editor");
+        }
+        aboutDialog.setVisible(true);
+        aboutDialog.toFront();
     }
 
     protected void setStatus(String s) {

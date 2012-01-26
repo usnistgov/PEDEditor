@@ -174,8 +174,12 @@ public class Duh {
         return new Point2D.Double((a.x + b.x) / 2, (a.y + b.y) / 2);
     }
 
-    public static String toString(Point2D.Double point) {
-        return "(" + point.x + ", " + point.y + ")";
+    public static String toString(Point2D point) {
+        return "(" + point.getX() + ", " + point.getY() + ")";
+    }
+
+    public static String toString(Line2D line) {
+        return toString(line.getP1()) + " - " + toString(line.getP2());
     }
 
     public static double toAngle(Point2D.Double ray) {
@@ -803,9 +807,9 @@ public class Duh {
     
 
     /** Return -1 if the two segments do not intersect. Otherwise,
-        return a value in [0, 1] where 0 indicates an intersection at
-        a1, 1 indicates an intersection at a2, and intermediate values
-        indicate proportionally intermediate points. */
+        imagine a ruler with the 0 mark at a1 and the 1 mark at a2,
+        and return the ruler's value (in [0,1]) at the segments'
+        intersection. */
     public static double segmentIntersectionT
         (Point2D a1, Point2D a2, Point2D b1, Point2D b2) {
         Point2D.Double intersection = segmentIntersection(a1, a2, b1, b2);
@@ -823,6 +827,27 @@ public class Duh {
             (Math.abs(a2.getX() - a1.getX()) + Math.abs(a2.getY() - a1.getY()));
 
         return (output > 1.0) ? 1.0 : (output < 0.0) ? 0.0 : output;
+    }
+    
+
+    /** Return Double.NaN if the two lines are parallel. Otherwise,
+        imagine a ruler with the 0 mark at a1 and the 1 mark at a2,
+        and return the ruler's value at the lines' intersection. */
+    public static double lineIntersectionT
+        (Point2D a1, Point2D a2, Point2D b1, Point2D b2) {
+        Point2D.Double intersection = lineIntersection(a1, a2, b1, b2);
+
+        if (intersection == null) {
+            return Double.NaN;
+        }
+
+        if (a1.equals(a2)) {
+            return 0.5;
+        }
+
+        return
+            (Math.abs(intersection.getX() - a1.getX()) + Math.abs(intersection.getY() - a1.getY())) /
+            (Math.abs(a2.getX() - a1.getX()) + Math.abs(a2.getY() - a1.getY()));
     }
 
     public static double toAngle(Line2D ray) {
