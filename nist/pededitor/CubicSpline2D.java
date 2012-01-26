@@ -609,9 +609,142 @@ final public class CubicSpline2D {
     }
 
 
+    /** Return the t values for all intersections of this spline with line. */
+    public double[] lineIntersectionTs(Line2D line) {
+        double sdx = line.getX2() - line.getX1();
+        double sdy = line.getY2() - line.getY1();
+        if (sdx == 0 && sdy == 0) {
+            // The "line" is a point, so the claim that line doesn't
+            // intersect the spline is either true or within an
+            // infinitesimal distance of being true, and we don't
+            // guarantee infinite precision, so just return nothing.
+            return new double[0];
+        }
+        boolean swapxy = Math.abs(sdx) < Math.abs(sdy);
+        if (swapxy) {
+            line = new Line2D.Double
+                (line.getY1(), line.getX1(),
+                 line.getY2(), line.getX2());
+            double tmp = sdx;
+            sdx = sdy;
+            sdy = tmp;
+        }
+
+        // Now the line (with x and y swapped if necessary) has
+        // slope with absolute value less than 1. That reduces the
+        // number of corner cases and helps avoid numerical
+        // instability.
+
+        double m = sdy/sdx; // |m| <= 1
+        double b = line.getY1() - m * line.getX1();
+
+        // y = mx + b
+
+        ArrayList<Double> output = new ArrayList<Double>();
+
+        double oldT = -1;
+        int segCnt = segmentCnt();
+
+        for (int segNo = 0; segNo < segCnt; ++segNo) {
+            double[] xCubic = xSpline.getPoly(segNo);
+            double[] yCubic = ySpline.getPoly(segNo);
+
+            if (swapxy) {
+                double[] temp = xCubic;
+                xCubic = yCubic;
+                yCubic = temp;
+            }
+
+            // Let cubic = yCubic, equate cubic(t) = mx + b, and
+            // solve for x(t).
+
+            // Equate yCubic(t) = mx + b  and solve for x(t).
+
+            double cubic[] = (double[]) yCubic.clone();
+
+            cubic[0] -= b;
+
+            // Divide cubic by m.
+            for (int i = 0; i < cubic.length; ++i) {
+                cubic[i] /= m;
+            }
+
+            // Now we have
+
+            // xCubic(t) = x
+            // cubic(t) = x
+
+            // therefore
+
+            // (cubic - xCubic) = 0
+
+            // and with that we can solve for t.
+
+            for (int i = 0; i < 4; ++i) {
+                cubic[i] -= xCubic[i];
+            }
+
+            double[] res = new double[3];
+            int rootCnt = CubicCurve2D.solveCubic(cubic, res);
+
+            if (rootCnt == -1) {
+                continue;
+            }
+
+            for (int i = 0; i < rootCnt; ++i) {
+                double t = res[i];
+
+                // Handling the joints of the spline can get messy if
+                // you want to mathematically eliminate the
+                // possibilites of counting a single intersection as
+                // zero or two intersections due to precision
+                // limitations, but let's keep it simple. It's not too
+                // bad if we register two intersections at (or nearly
+                // at) the same place where we really should get just
+                // one, while it's (hopefully) very unlikely that lack
+                // of precision plus bad luck should yield zero
+                // intersections where there should be one.
+
+                if (t < 0 || t > 1) {
+                    // Bounds error: the poly domain is t in [0,1].
+                    continue;
+                }
+
+                double x = Polynomial.evaluate(t, xCubic);
+
+                // Convert t value within segment to t value within
+                // whole curve.
+                t = (segNo + t) / segCnt;
+                if (t > oldT) {
+                    output.add(t);
+                    oldT = t;
+                }
+            }
+        }
+
+
+        double[] o = new double[output.size()];
+        for (int i = 0; i < o.length; ++i) {
+            o[i] = output.get(i);
+        }
+        return o;
+    }
+
+
     /** Return the positions of all intersections of this spline with segment. */
     public Point2D.Double[] intersections(Line2D segment) {
         double[] ts = intersectionTs(segment);
+        Point2D.Double[] output = new Point2D.Double[ts.length];
+        for (int i = 0; i < ts.length; ++i) {
+            output[i] = value(ts[i]);
+        }
+        return output;
+    }
+
+
+    /** Return the positions of all intersections of this spline with segment. */
+    public Point2D.Double[] lineIntersections(Line2D line) {
+        double[] ts = lineIntersectionTs(line);
         Point2D.Double[] output = new Point2D.Double[ts.length];
         for (int i = 0; i < ts.length; ++i) {
             output[i] = value(ts[i]);
