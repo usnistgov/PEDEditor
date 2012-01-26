@@ -513,6 +513,8 @@ public class Editor implements CropEventListener, MouseListener,
     protected ArrayList<Point2D.Double> labelCenters;
     protected ArrayList<View> labelViews;
     @JsonProperty protected ArrayList<Arrow> arrows;
+    // TODO save...
+    protected ArrayList<TieLine> tieLines;
     protected BufferedImage originalImage;
     protected String originalFilename;
     /** The item (vertex, label, etc.) that is selected, or null if nothing is. */
@@ -590,6 +592,7 @@ public class Editor implements CropEventListener, MouseListener,
         scale = 800.0;
         paths = new ArrayList<GeneralPolyline>();
         arrows = new ArrayList<Arrow>();
+        tieLines = new ArrayList<TieLine>();
         labels = new ArrayList<AnchoredLabel>();
         labelViews = new ArrayList<View>();
         labelCenters = new ArrayList<Point2D.Double>();
@@ -745,7 +748,7 @@ public class Editor implements CropEventListener, MouseListener,
     }
 
     boolean mouseIsStuckAtSelection() {
-        return mouseIsStuck && selection != null
+        return mouseIsStuck && selection != null && mprin != null
             && principalCoordinatesMatch(selection.getLocation(), mprin);
     }
 
@@ -1039,6 +1042,10 @@ public class Editor implements CropEventListener, MouseListener,
             }
         }
 
+        for (TieLine tie: tieLines) {
+            draw(g, tie, scale);
+        }
+
         for (LinearRuler ruler: rulers) {
             ruler.draw(g, principalToStandardPage, scale);
         }
@@ -1267,6 +1274,111 @@ public class Editor implements CropEventListener, MouseListener,
         }
 
         arrows.add(new Arrow(mprin.x, mprin.y, lineWidth, theta));
+        repaintEditFrame();
+    }
+
+    public void addTieLine() {
+        VertexSelection vsel = getSelectedVertex();
+        if (vsel == null) {
+            JOptionPane.showMessageDialog
+                (editFrame,
+                 "You must select three or four points to create tie lines.");
+            return;
+        }
+
+        GeneralPolyline pointsPath = paths.get(vsel.curveNo);
+
+        int cnt = pointsPath.size() ;
+        if (cnt < 3 || cnt > 4) {
+            JOptionPane.showMessageDialog
+                (editFrame,
+                 "You must select three or four points to create tie lines.");
+            return;
+        }
+
+        Point2D.Double outer1 = pointsPath.get(0);
+        Point2D.Double outer2 = pointsPath.get(1);
+        Point2D.Double inner1 = pointsPath.get(2);
+        Point2D.Double inner2 = (cnt == 4) ? pointsPath.get(3) : inner1;
+
+        // TODO Do this right later, but for now, just do it.
+
+        // Figure out what other curves besides the selection might
+        // have control points at the selected locations.
+
+        int pathCnt = paths.size();
+
+        GeneralPolyline inner = null;
+        GeneralPolyline outer = null;
+
+        double ot1 = -1.0;
+        double ot2 = -1.0;
+        double it1 = -1.0;
+        double it2 = -1.0;
+
+        for (GeneralPolyline path: paths) {
+            if (path == pointsPath) {
+                continue;
+            }
+
+            double tot1 = -1.0;
+            double tot2 = -1.0;
+            double tit1 = -1.0;
+            double tit2 = -1.0;
+
+            int vertexNo = -1;
+            int segCnt = path.getSegmentCnt();
+            for (Point2D.Double point: path.getPoints()) {
+                ++vertexNo;
+                double t = (segCnt == 0) ? 0.0 : (((double) vertexNo) / segCnt);
+                if (principalCoordinatesMatch(outer1, point)) {
+                    tot1 = t;
+                }
+                if (principalCoordinatesMatch(outer2, point)) {
+                    tot2 = t;
+                }
+                if (principalCoordinatesMatch(inner1, point)) {
+                    tit1 = t;
+                }
+                if (principalCoordinatesMatch(inner2, point)) {
+                    tit2 = t;
+                }
+            }
+
+            if (tot1 >= 0 && tot2 >= 0) {
+                outer = path;
+                ot1 = tot1;
+                ot2 = tot2;
+            }
+
+            if (tit1 >= 0 && tit2 >= 0) {
+                inner = path;
+                it1 = tit1;
+                it2 = tit2;
+            }
+        }
+
+        if (outer == null || inner == null) {
+            JOptionPane.showMessageDialog
+                (editFrame,
+                 "The endpoints of tie lines must (TODO for now, anyhow)\n"
+                 + "correspond to vertices of other curves. The first pair must\n"
+                 + "lie on a single curve, and if there are four endpoints, the\n"
+                 + "second pair must lie on a single curve as well.");
+            return;
+        }
+
+        // TODO pick the number the right way...
+        TieLine tie = new TieLine(9, lineStyle);
+        tie.innerEdge = inner;
+        tie.outerEdge = outer;
+        tie.lineWidth = lineWidth;
+        tie.ot1 = ot1;
+        tie.ot2 = ot2;
+        tie.it1 = it1;
+        tie.it2 = it2;
+        tieLines.add(tie);
+        System.out.println(tie);
         repaintEditFrame();
     }
 
@@ -1896,6 +2008,10 @@ public class Editor implements CropEventListener, MouseListener,
 
     void draw(Graphics2D g, GeneralPolyline path, double scale) {
         path.draw(g, principalToStandardPage, scale);
+    }
+
+    void draw(Graphics2D g, TieLine tie, double scale) {
+        tie.draw(g, principalToStandardPage, scale);
     }
 
     /** @return the name of the image file that this diagram was
@@ -2560,6 +2676,7 @@ public class Editor implements CropEventListener, MouseListener,
         arrows = other.arrows;
         initializeDiagram();
         paths = other.paths;
+        tieLines = other.tieLines;
 
         axes = other.axes;
         rulers = other.rulers;
@@ -3503,9 +3620,6 @@ public class Editor implements CropEventListener, MouseListener,
                 // position in the ArrayList).
                 scaledOriginalImages.remove(i);
                 scaledOriginalImages.add(im);
-                if (i < cnt - 1) {
-                    System.out.println("Matched #" + (cnt - i));
-                }
                 return im;
             }
 
@@ -3528,15 +3642,9 @@ public class Editor implements CropEventListener, MouseListener,
         int totalMemoryLimit = 20000000; // Limit is 20 megapixels total.
         int totalImageCntLimit = 50;
         if (totalMemoryUsage > totalMemoryLimit) {
-            System.out.println("Booting #" + (cnt - maxScoreIndex) + " ("
-                               + scaledOriginalImages.get(maxScoreIndex) + ") "
-                               +" for score " + maxScore);
             scaledOriginalImages.remove(maxScoreIndex);
         } else if (cnt >= totalImageCntLimit) {
             // Remove the oldest image.
-            System.out.println("Booting #" + cnt + " ("
-                               + scaledOriginalImages.get(maxScoreIndex) + ") "
-                               +" for age.");
             scaledOriginalImages.remove(0);
         }
 
@@ -3604,8 +3712,6 @@ public class Editor implements CropEventListener, MouseListener,
             int ivmax = ivmin + imageViewBounds.height;
             int immax = imageBounds.y + imageBounds.height;
 
-            System.out.println("Margins were " + margin1 + ", " + margin2);
-
             int extra = margin1 - ivmin;
             if (extra > 0) {
                 // We don't need so much of a margin on this side, so
@@ -3622,7 +3728,6 @@ public class Editor implements CropEventListener, MouseListener,
                 margin1 += extra;
             }
 
-            System.out.println("Margins are " + margin1 + ", " + margin2);
             cropBounds.y = imageViewBounds.y - margin1;
             cropBounds.height = imageViewBounds.height + margin1 + margin2;
         }
@@ -3651,10 +3756,8 @@ public class Editor implements CropEventListener, MouseListener,
             (originalToCrop, getOriginalImage(), Color.WHITE,
              new Dimension(cropBounds.width, cropBounds.height));
         fade(im.croppedImage);
-        System.out.println("Finished.");
         scaledOriginalImages.add(im);
         --paintSuppressionRequestCnt;
-        System.out.println("New = " + im);
         editFrame.setCursor(oldCursor);
         return im;
     }
