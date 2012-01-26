@@ -51,11 +51,7 @@ problems cannot be resolved.)</p>
 <p>Print the diagram to fit on a single sheet of paper (so a larger
 piece of paper will yield a larger diagram).</p>
 
-<p>TODO Word spacing is broken in printed diagrams. I don't know how
-to fix that, because the problem occurs in a Java library, not in my
-own code.</p>
-
-<h2><a name="positioning">Diagram positioning</a></h2>
+<h2><a name="positioning">Position</a></h2>
 
 <p>You can position items within the diagram using just the mouse, but
 there are also a number of alternative commands for diagram
@@ -63,10 +59,11 @@ positioning:</p>
 
 <ul>
 
-<li><p>Move to ('p') or move to and select ('P') the nearest key point.
-Key points include corners of the diagram, the locations of items you
-have inserted into the diagram, and the intersections of curves and
-lines within the diagram.</p>
+<li><p>Move to ('p') or move to and select ('P') the nearest key
+point. Key points include corners of the diagram, the locations of
+items you have inserted into the diagram, and the intersections of
+line segments with other segments or curves within the diagram.
+Currently curve+curve intersections are not detected.</p>
 
 <p>If several items share the same location, such as many curves
 meeting at a single vertex, then you may press the 'P' key repeatedly
@@ -74,7 +71,7 @@ to cycle among those items until the correct item is highlighted.</p>
 </li>
 
 <li>Move to ('l', that is, a lower-case L) or move to and select ('L')
-the closest line or curve.</li>
+the closest line segment or curve.</li>
 
 <li>Enter numeric coordinates from the keyboard with '='. You may
 enter the coordinates using any two variables whose combination
@@ -92,7 +89,7 @@ In addition, the mouse may automatically become unstuck if you request
 an operation that might otherwise be redundant, such as adding a
 second vertex to a curve in a row.</p>
 
-<h2>Editing items</h2>
+<h2>Edit</h2>
 
 <p>The arrow keys move the mouse pointer in one pixel in any
 direction. In addition, if an item is selected in green <b>and</b> the
@@ -109,7 +106,8 @@ color="green">green</font>) before these commands have any effect.</p>
 
 <li>The 'c' key creates a copy of the selection at the mouse's current
 location. As a special case, if a vertex is selected, the 'c' key
-copies the entire curve.</li>
+copies the entire curve. (To create one new vertex or curve control
+point, press the left mouse button.)</li>
 
 <li>The 'm' key moves the selection and every other item that shares
 its location. If you really want to move the selected item only, then
@@ -281,12 +279,11 @@ radius equals twice the line width.</p>
 
 <h4>Arrowheads</h4>
 
-<p>To draw an arrowhead at the current location (as selected using the
-'.', '_', or '?' keys, or at the current mouse position otherwise) and
-pointing at the angle indicated in the "Tangent" window, press '&gt;'.
-To draw an arrowhead that points in the opposite direction, press
-'&lt;'. The size of the arrowhead is a fixed multiple of the line
-width indicated in the "Tangent" window.</p>
+<p>To draw an arrowhead that points at the angle indicated in the
+"Tangent" window, press '&gt;'. To draw an arrowhead that points in
+the opposite direction, press '&lt;'. The size of the arrowhead is a
+fixed multiple of the line width indicated in the "Tangent"
+window.</p>
 
 <h2>View Menu</h2>
 
