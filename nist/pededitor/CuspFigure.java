@@ -125,10 +125,26 @@ public abstract class GeneralPolyline {
         getGradient(). */
     abstract public double[] segmentIntersectionTs(Line2D segment);
 
+    /** @return the t values of all intersections between segment and
+        this. The t values can be used with getLocation() and
+        getGradient(). */
+    abstract public double[] lineIntersectionTs(Line2D segment);
+
     /** @return an array of all intersections between segment and
         this. */
     public Point2D.Double[] segmentIntersections(Line2D segment) {
         double[] ts = segmentIntersectionTs(segment);
+        Point2D.Double[] output = new Point2D.Double[ts.length];
+        for (int i = 0; i < ts.length; ++i) {
+            output[i] = getLocation(ts[i]);
+        }
+        return output;
+    }
+
+    /** @return an array of all intersections between line and
+        this. */
+    public Point2D.Double[] lineIntersections(Line2D line) {
+        double[] ts = lineIntersectionTs(line);
         Point2D.Double[] output = new Point2D.Double[ts.length];
         for (int i = 0; i < ts.length; ++i) {
             output[i] = getLocation(ts[i]);
@@ -160,7 +176,7 @@ public abstract class GeneralPolyline {
     }
 
 
-    /** draw the path of this GeneralPolyline. The coordinates for
+    /** Draw the path of this GeneralPolyline. The coordinates for
         this path should be defined in the "Original" coordinate
         system, but line widths are defined with respect to the
         "SquarePixel" coordinate system. Also, the output is scaled by
@@ -171,6 +187,15 @@ public abstract class GeneralPolyline {
                      double scale) {
         AffineTransform xform = AffineTransform.getScaleInstance(scale, scale);
         xform.concatenate(originalToSquarePixel);
+        stroke.getStroke().draw(g, getPath(xform), scale * lineWidth);
+    }
+
+
+    /** Draw the path of this GeneralPolyline. The output is scaled by
+        "scale" before being drawn.
+    */
+    public void draw(Graphics2D g, double scale) {
+        AffineTransform xform = AffineTransform.getScaleInstance(scale, scale);
         stroke.getStroke().draw(g, getPath(xform), scale * lineWidth);
     }
 

@@ -130,6 +130,36 @@ public class Polyline extends GeneralPolyline {
         return o;
     }
 
+    @Override public double[] lineIntersectionTs(Line2D line) {
+        ArrayList<Double> output = new ArrayList<Double>();
+        Point2D s1 = line.getP1();
+        Point2D s2 = line.getP2();
+        int segCnt = getSegmentCnt();
+        Point2D.Double p1 = getControlPoint(0);
+
+        double oldT2 = -1.0;
+
+        for (int i = 0; i < segCnt; ++i) {
+            Point2D.Double p2 = getControlPoint(i+1);
+            double t = Duh.lineIntersectionT(p1, p2, s1, s2);
+            p1 = p2;
+            // Convert t value within segment to t value within
+            // whole curve.
+            double t2 = (t + i) / segCnt;
+            if ((t < 0 || t > 1 /* No intersection */) || t2 <= oldT2 /* Repeat */) {
+                continue;
+            }
+            oldT2 = t2;
+            output.add(t2);
+        }
+
+        double[] o = new double[output.size()];
+        for (int i = 0; i < o.length; ++i) {
+            o[i] = output.get(i);
+        }
+        return o;
+    }
+
     /* Parameterize the entire curve as t in [0,1] and return the
        location corresponding to the given t value */
     @Override public Point2D.Double getLocation(double t) {

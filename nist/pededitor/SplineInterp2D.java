@@ -5,6 +5,8 @@ import java.awt.event.*;
 import java.awt.geom.*;
 import java.util.*;
 
+import org.codehaus.jackson.annotate.JsonIgnore;
+
 /** Specialization of GeneralPolyline for open cubic splines. */
 public class SplinePolyline extends GeneralPolyline {
     private boolean closed = false;
@@ -31,7 +33,7 @@ public class SplinePolyline extends GeneralPolyline {
         return getSpline().path();
     }
 
-    public CubicSpline2D getSpline() {
+    @JsonIgnore public CubicSpline2D getSpline() {
         return new CubicSpline2D(points.toArray(new Point2D.Double[0]),
                                  isClosed());
     }
@@ -53,8 +55,18 @@ public class SplinePolyline extends GeneralPolyline {
 
     /** @return an array of all intersections between segment and
         this. */
-    public Point2D.Double[] segmentIntersections(Line2D segment) {
+    @Override public Point2D.Double[] segmentIntersections(Line2D segment) {
         return getSpline().intersections(segment);
+    }
+
+    @Override public double[] lineIntersectionTs(Line2D line) {
+        return getSpline().lineIntersectionTs(line);
+    }
+
+    /** @return an array of all intersections between line and
+        this. */
+    @Override public Point2D.Double[] lineIntersections(Line2D line) {
+        return getSpline().lineIntersections(line);
     }
 
     @Override
