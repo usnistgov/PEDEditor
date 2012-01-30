@@ -4,32 +4,12 @@ import java.awt.geom.*;
 import java.awt.*;
 import java.util.*;
 
-/** Class to handle 1D cubic spline interpolations for open curves
-    ("polylines" in Java terms). For higher dimensions, just combine
-    multiple 1D cubic splines.
- */
+/** 2D cubic spline class. Differences in t values are proportional to
+    chord distances. Open splines have zero second derivative at the
+    endpoints; closed splines are approximated by computing an open
+    spline with each end extended by 5 extra control points' worth of
+    padding from the opposite end of the curve. */
 final public class CubicSpline2D {
-    /** Information about where the curve comes closest to a given point. */
-    static public class DistanceInfo {
-        public DistanceInfo(double t, Point2D point, double distance) {
-            this.t = t;
-            this.point = new Point2D.Double(point.getX(), point.getY());
-            this.distance = distance;
-        }
-
-        public String toString() {
-            return "DistanceInfo[t = " + t + ", p = " + point + ", d = "
-                + distance + "]";
-        }
-
-        /** t in [0,1] is the parameterization variable value. */
-        public double t;
-        /** Point of closest approach. */
-        public Point2D.Double point;
-        /** Distance at closest approach. */
-        public double distance;
-    }
-
     CubicSpline1D xSpline;
     CubicSpline1D ySpline;
 
@@ -242,7 +222,7 @@ final public class CubicSpline2D {
         approaches most closely, and then computing the actual value
         of the spline at that t value.
     */
-    public DistanceInfo closePointGuess(Point2D p, double t0, double t1) {
+    public CurveDistance nearPointGuess(Point2D p, double t0, double t1) {
         Point2D.Double p0 = value(t0);
         Point2D.Double p1 = value(t1);
     
@@ -254,23 +234,23 @@ final public class CubicSpline2D {
         double p0p1LengthSq = dx * dx + dy * dy;
 
         if (p0p1LengthSq == 0 || t0 == t1) {
-            return closePointInfo(p, (t0 + t1) / 2);
+            return curveDistance(p, (t0 + t1) / 2);
         }
         dot /= p0p1LengthSq;
 
         if (dot < 0) {
-            return closePointInfo(p, t0);
+            return curveDistance(p, t0);
         } else if (dot > 1) {
-            return closePointInfo(p, t1);
+            return curveDistance(p, t1);
         } else {
-            return closePointInfo(p, t0 + (t1 - t0) * dot);
+            return curveDistance(p, t0 + (t1 - t0) * dot);
         }
     }
 
-    /** @return DistanceInfo for value(t). */
-    DistanceInfo closePointInfo(Point2D p, double t) {
+    /** @return CurveDistance for value(t). */
+    CurveDistance curveDistance(Point2D p, double t) {
         Point2D.Double p2 = value(t);
-        return new DistanceInfo(t, p2, p.distance(p2));
+        return new CurveDistance(t, p2, p.distance(p2));
     }
 
     /** @return a lower bound on the distance between p and spline(t)
@@ -378,7 +358,7 @@ final public class CubicSpline2D {
         return Math.max(d, d2);
     }
 
-    /** @return a DistanceInfo object for a point on the spline curve
+    /** @return a CurveDistance object for a point on the spline curve
         whose distance from p is no more than maxError greater than
         the minimum distance between any point on the spline curve and
         p.
@@ -394,21 +374,21 @@ final public class CubicSpline2D {
         number of iterations, then run just a bit longer and return
         the best estimate so far.
     */
-    public DistanceInfo closePoint(Point2D p, double maxError,
+    public CurveDistance curveDistance(Point2D p, double maxError,
                                    int maxIterations) {
         int cnt = segmentCnt();
         if (cnt == -1) {
             return null;
         } else if (cnt == 0) {
             Point2D p2 = value(0);
-            return new DistanceInfo(0.0, p2, p.distance(p2));
+            return new CurveDistance(0.0, p2, p.distance(p2));
         }
 
         // Initialize bestCandidate with an arbitrary point.
         // bestCandidate.distance represents the lowest proven upper
         // bound on the distance from p to the spline curve.
 
-        DistanceInfo bestCandidate = closePointGuess(p, 0.0, 1.0);
+        CurveDistance bestCandidate = nearPointGuess(p, 0.0, 1.0);
 
         ArrayList<double[]> candidateRanges =
             new ArrayList<double[]>();
@@ -454,7 +434,7 @@ final public class CubicSpline2D {
                     continue;
                 }
 
-                DistanceInfo di = closePointGuess(p, t0, t1);
+                CurveDistance di = nearPointGuess(p, t0, t1);
                 // di.distance is an upper bound on distance.
                 if (di.distance < bestCandidate.distance) {
                     bestCandidate = di;
