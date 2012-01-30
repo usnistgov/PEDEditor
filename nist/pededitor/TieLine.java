@@ -53,22 +53,22 @@ public class TieLine {
         return outerEdge.getLocation(t);
     }
 
-    @JsonIgnore
+    /** Return the location of endpoint #1 of the inner edge. */
     public Point2D.Double getInner1() {
         return getInnerEdge(it1);
     }
 
-    @JsonIgnore
+    /** Return the location of endpoint #2 of the inner edge. */
     public Point2D.Double getInner2() {
         return getInnerEdge(it2);
     }
 
-    @JsonIgnore
+    /** Return the location of endpoint #1 of the outer edge. */
     public Point2D.Double getOuter1() {
         return getOuterEdge(ot1);
     }
 
-    @JsonIgnore
+    /** Return the location of endpoint #2 of the outer edge. */
     public Point2D.Double getOuter2() {
         return getOuterEdge(ot2);
     }
@@ -83,11 +83,16 @@ public class TieLine {
         return new Line2D.Double(getInner2(), getOuter2());
     }
 
+    /** Return the point at which all tie lines converge. */
     public Point2D.Double convergencePoint() {
         return Duh.lineIntersection(getOuter1(), getInner1(),
                                     getOuter2(), getInner2());
     }
 
+    /** Return true if the inner and outer edges are oriented in
+        opposite directions. If left alone, convergencePoint() will
+        lie somewhere between the two edges instead of somewhere
+        beyond them, which is almost certainly not the intent. */
     boolean isInverted() {
         Point2D.Double i1 = getInner1();
         Point2D.Double i2 = getInner2();
@@ -104,12 +109,7 @@ public class TieLine {
         Path2D.Double output = new Path2D.Double();
 
         if (isInverted()) {
-            // The inner and outer edges are oriented in opposite
-            // directions. If we draw tie lines like this, they will
-            // look like an hourglass, converging at a point between
-            // the two edges instead of somewhere beyond them. Swap i1
-            // and i2 to make the two edges face in the same
-            // direction.
+            // Swapping ot1 <=> ot2 will undo the inversion.
             double tmp = ot1;
             ot1 = ot2;
             ot2 = tmp;
