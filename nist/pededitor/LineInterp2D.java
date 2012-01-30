@@ -84,7 +84,7 @@ public class Polyline extends GeneralPolyline {
         }
 
         Point2D.Double p1 = points.get(segmentNo);
-        Point2D.Double p2 = points.get(segmentNo + 1);
+        Point2D.Double p2 = get(segmentNo + 1);
         return new Point2D.Double(p2.x - p1.x, p2.y - p1.y);
     }
 
@@ -105,12 +105,12 @@ public class Polyline extends GeneralPolyline {
         Point2D s1 = segment.getP1();
         Point2D s2 = segment.getP2();
         int segCnt = getSegmentCnt();
-        Point2D.Double p1 = getControlPoint(0);
+        Point2D.Double p1 = get(0);
 
         double oldT2 = -1.0;
 
         for (int i = 0; i < segCnt; ++i) {
-            Point2D.Double p2 = getControlPoint(i+1);
+            Point2D.Double p2 = get(i+1);
             double t = Duh.segmentIntersectionT(p1, p2, s1, s2);
             p1 = p2;
             // Convert t value within segment to t value within
@@ -135,12 +135,12 @@ public class Polyline extends GeneralPolyline {
         Point2D s1 = line.getP1();
         Point2D s2 = line.getP2();
         int segCnt = getSegmentCnt();
-        Point2D.Double p1 = getControlPoint(0);
+        Point2D.Double p1 = get(0);
 
         double oldT2 = -1.0;
 
         for (int i = 0; i < segCnt; ++i) {
-            Point2D.Double p2 = getControlPoint(i+1);
+            Point2D.Double p2 = get(i+1);
             double t = Duh.lineIntersectionT(p1, p2, s1, s2);
             p1 = p2;
             // Convert t value within segment to t value within
@@ -180,9 +180,27 @@ public class Polyline extends GeneralPolyline {
         return getLocation((int) segment, t - segment);
     }
 
-    /* Return control point #i. */
-    public Point2D.Double getControlPoint(int i) {
-        return points.get(isClosed() ? (i % points.size()) : i);
+    @Override
+    public CurveDistance distance(Point2D p) {
+        // For closed polylines, don't forget the segment
+        // connecting the last vertex to the first one.
+        int segCnt = getSegmentCnt();
+        Point2D.Double nearPoint = null;
+        CurveDistance minDist = null;
+
+        for (int i = 0; i < segCnt; ++i) {
+            CurveDistance dist = CurveDistance.pointSegmentDistance
+                (p, points.get(i), points.get((i+1) % points.size()));
+            if (minDist == null || dist.distance < minDist.distance) {
+                // Convert the parameterized t-value within the
+                // segment to a parameterized t-value for the entire
+                // polyline.
+                dist.t = (i + dist.t) / segCnt;
+                minDist = dist;
+            }
+        }
+
+        return minDist;
     }
 
     public String toString(AffineTransform at) {

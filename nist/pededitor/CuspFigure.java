@@ -175,6 +175,7 @@ public abstract class GeneralPolyline {
         }
     }
 
+    abstract public CurveDistance distance(Point2D p);
 
     /** Draw the path of this GeneralPolyline. The coordinates for
         this path should be defined in the "Original" coordinate
@@ -288,8 +289,11 @@ public abstract class GeneralPolyline {
                                         (new Point2D.Double[0]))));
     }
 
+    /* Return control point #i. For closed curves, control points may
+       be recounted (such as the 0th point being counted as the next
+       one after the last). */
     public Point2D.Double get(int vertexNo) {
-        return (Point2D.Double) points.get(vertexNo).clone();
+        return (Point2D.Double) points.get(vertexNo % points.size()).clone();
     }
 
     /** Add the point to the end of the polyline. */
@@ -324,7 +328,8 @@ public abstract class GeneralPolyline {
         return (size == 0) ? null : points.get(size-1);
     }
 
-    /** @return the number of vertices in this. */
+    /* Return the number of control points without duplication (so for
+       closed curves, the return trip to point #0 does not count). */
     public int size() {
         return points.size();
     }
@@ -363,6 +368,24 @@ public abstract class GeneralPolyline {
     /* Parameterize the entire curve as t in [0,1] and return the
        location corresponding to the given t value */
     abstract public Point2D.Double getLocation(double t);
+
+    /* Return the index of the control point that neighbors
+       getLocation(t) on the t' <= t side of the curve. The index of
+       the adjacent control point on the t' > t size of the curve
+       would be one greater than the returned value. */
+    public int firstControlPointIndex(double t) {
+        int segCnt = getSegmentCnt();
+
+        if (segCnt < 0) {
+            throw new IllegalArgumentException("No control points exist");
+        }
+
+        if (segCnt == 0) {
+            return 0;
+        }
+
+        return ((int) Math.floor(t * segCnt)) % segCnt;
+    }
 
     public static final int LINEAR = 0;
     public static final int CUBIC_SPLINE = 1;
