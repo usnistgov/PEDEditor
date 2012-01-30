@@ -316,6 +316,10 @@ public class Editor implements CropEventListener, MouseListener,
             }
         }
 
+        @Override public String toString() {
+            return "VertexSelection[" + curveNo + ", " + vertexNo + "]";
+        }
+
         @Override
         public void move(Point2D target) {
             paths.get(curveNo).set(vertexNo, target);
@@ -1876,10 +1880,12 @@ public class Editor implements CropEventListener, MouseListener,
         }
 
         for (GeneralPolyline path: paths) {
-            GeneralPolyline pagePath = path.createTransformed(principalToStandardPage);
+            GeneralPolyline pagePath = path.createTransformed
+                (principalToStandardPage);
 
             for (Line2D segment: pageSegments) {
-                for (Point2D.Double point: pagePath.segmentIntersections(segment)) {
+                for (Point2D.Double point:
+                         pagePath.segmentIntersections(segment)) {
                     standardPageToPrincipal.transform(point, point);
                     output.add(point);
                 }
@@ -1905,77 +1911,60 @@ public class Editor implements CropEventListener, MouseListener,
             return;
         }
 
-        /** Location of the mouse on the standard page: */
-        Point2D.Double xpoint = principalToStandardPage.transform(mprin);
-
-        Point2D.Double nearPoint = null;
-        Point2D.Double xpoint2 = new Point2D.Double();
-        Point2D.Double xpoint3 = new Point2D.Double();
-        double minDist = 0;
-        int curveNo = -1;
-        VertexSelection vsel = new VertexSelection(-1, -1);
+        Point2D.Double mousePage = principalToStandardPage.transform(mprin);
+        VertexSelection vsel = null;
         Point2D.Double gradient = null;
 
+        CurveDistance minDist = null;
+        boolean isCloserToNext = false;
+
+        int curveNo = -1;
         for (GeneralPolyline path : paths) {
             ++curveNo;
             Point2D.Double point;
 
-            if (path.getSmoothingType() == GeneralPolyline.CUBIC_SPLINE) {
-                // Locate a point on the cubic spline that is nearly
-                // closest to this one.
+            GeneralPolyline pagePath
+                = path.createTransformed(principalToStandardPage);
+            CurveDistance dist = pagePath.distance(mousePage);
 
-                CubicSpline2D spline = ((SplinePolyline) path)
-                    .getSpline(principalToStandardPage);
-                CubicSpline2D.DistanceInfo di
-                    = spline.closePoint(xpoint, 1e-9, 200);
+            if (minDist == null || dist.distance < minDist.distance) {
+                minDist = dist;
 
-                if (nearPoint == null || (di != null && di.distance < minDist)) {
-                    if (di.distance < 0) {
-                        throw new IllegalStateException
-                            (xpoint + " => " + path + " dist = " + di.distance + " < 0");
-                    }
-                    standardPageToPrincipal.transform(di.point, di.point);
-                    nearPoint = di.point;
-                    vsel.curveNo = curveNo;
-                    vsel.vertexNo = (di.t >= 1)
-                        ? path.size() - 1
-                        : spline.getSegment(di.t).segment;
-                    gradient = spline.gradient(di.t);
-                    minDist = di.distance;
-                }
-            } else {
-                // Straight connect-the-dots polyline.
-                Point2D.Double[] points = path.getPoints();
+                int vertexNo = pagePath.firstControlPointIndex(dist.t);
+                isCloserToNext
+                    = (pagePath.get(vertexNo).distanceSq(mousePage) >
+                       pagePath.get(vertexNo + 1).distanceSq(mousePage));
+                vsel = new VertexSelection(curveNo, vertexNo);
 
-                // For closed polylines, don't forget the segment
-                // connecting the last vertex to the first one.
-
-                int segCnt = path.getSegmentCnt();
-
-                for (int i = 0; i < segCnt; ++i) {
-                    principalToStandardPage.transform(points[i], xpoint2);
-                    principalToStandardPage.transform
-                        (points[(i+1) % points.length], xpoint3);
-                    point = Duh.nearestPointOnSegment
-                        (xpoint, xpoint2, xpoint3);
-                    double dist = xpoint.distance(point);
-                    if (nearPoint == null || dist < minDist) {
-                        standardPageToPrincipal.transform(point, point);
-                        nearPoint = point;
-                        vsel.curveNo = curveNo;
-                        vsel.vertexNo = i;
-                        gradient = new Point2D.Double
-                            (xpoint3.x - xpoint2.x, xpoint3.y - xpoint2.y);
-                        minDist = dist;
-                    }
-                }
+                // TODO Have to decide whether to use principal
+                // coordinates for gradients or not, but continue to
+                // use page coordinates for now.
+                gradient = pagePath.getGradient(vertexNo, dist.t);
             }
+        }
+
+        if (minDist == null) {
+            return;
         }
 
         if (select) {
             selection = vsel;
+            if (isCloserToNext) {
+                // pagePoint is closer to the next vertex than to this
+                // one. Incrementing the selection number, possibly
+                // cycling back to 0 for closed curves.
+                vsel.vertexNo = (vsel.vertexNo + 1)
+                    % paths.get(vsel.curveNo).size();
+
+                // Incrementing vertexNo introduces a new problem: if
+                // we added a new vertex at this moment, it would be
+                // inserted after the second off the two neighboring
+                // vertices vertex instead of between them. Reversing
+                // the vertex order fixes this.
+                reverseInsertionOrder();
+            }
         }
-        moveMouse(nearPoint);
+        moveMouse(standardPageToPrincipal.transform(minDist.point));
         mouseIsStuck = true;
         vertexInfo.setGradient(gradient);
         vertexInfo.setLineWidth(paths.get(vsel.curveNo).getLineWidth());
