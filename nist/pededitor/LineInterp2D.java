@@ -195,7 +195,7 @@ public class Polyline extends GeneralPolyline {
                 // Convert the parameterized t-value within the
                 // segment to a parameterized t-value for the entire
                 // polyline.
-                dist.t = (i + dist.t) / segCnt;
+                dist.t = segmentToT(i, dist.t);
                 minDist = dist;
             }
         }

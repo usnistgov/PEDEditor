@@ -377,11 +377,15 @@ final public class CubicSpline2D {
     public CurveDistance curveDistance(Point2D p, double maxError,
                                    int maxIterations) {
         int cnt = segmentCnt();
+        
         if (cnt == -1) {
             return null;
         } else if (cnt == 0) {
             Point2D p2 = value(0);
             return new CurveDistance(0.0, p2, p.distance(p2));
+        } else if (cnt == 1) {
+            return CurveDistance.pointSegmentDistance
+                (p, value(0), value(1));
         }
 
         // Initialize bestCandidate with an arbitrary point.
@@ -733,7 +737,7 @@ final public class CubicSpline2D {
     }
 
 
-    public CubicSpline1D.SegmentAndT getSegment(double t) {
+    public SegmentAndT getSegment(double t) {
         return xSpline.getSegment(t);
     }
 
