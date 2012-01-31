@@ -301,12 +301,63 @@ public class Editor implements CropEventListener, MouseListener,
 
         @Override
         public VertexSelection remove() {
-            GeneralPolyline cur = paths.get(curveNo);
-            int oldVertexCnt = cur.size();
+            GeneralPolyline path = paths.get(curveNo);
+            int oldVertexCnt = path.size();
             repaintEditFrame();
 
             if (oldVertexCnt >= 2) {
-                cur.remove(vertexNo);
+                ArrayList<SegmentAndT> segments = getPathSegments(path);
+
+                // While deleting this vertex, adjust t values that
+                // reference this segment. Previous segments that
+                // don't touch point are left alone; following
+                // segments that don't touch point have their
+                // segmentNo decremented; and the two segments that
+                // touch point are combined into a single segment
+                // number newSeg. What a pain in the neck!
+
+                if (oldVertexCnt == 2) {
+                    for (SegmentAndT segment: segments) {
+                        segment.segment = 0;
+                        segment.t = 0;
+                    }
+                } else {
+                    int segCnt = path.getSegmentCnt();
+
+                    Point2D point = path.get(vertexNo);
+                    int prevSeg = (vertexNo > 0) ? (vertexNo - 1)
+                        : path.isClosed() ? (segCnt-1) : -1;
+                    Point2D previous = path.get((prevSeg >= 0) ? prevSeg : 0);
+                    int nextSeg = vertexNo;
+                    Point2D next = path.get
+                        ((!path.isClosed()  && (vertexNo == oldVertexCnt - 1))
+                         ? vertexNo
+                         : (vertexNo + 1));
+                    int newSeg = (vertexNo > 0) ? (vertexNo - 1)
+                        : path.isClosed() ? (segCnt - 2)
+                        : 0;
+                    // T values for segments prevSeg and nextSeg should be
+                    // combined into a single segment newSeg.
+
+                    double dist1 = point.distance(previous);
+                    double dist2 = point.distance(next);
+                    double splitT = dist1 / (dist1 + dist2);
+
+                    for (SegmentAndT segment: segments) {
+                        if (segment.segment == prevSeg) {
+                            segment.segment = newSeg;
+                            segment.t *= splitT;
+                        } else if (segment.segment == nextSeg) {
+                            segment.segment = newSeg;
+                            segment.t = splitT + segment.t * (1 - splitT);
+                        } else if (segment.segment > vertexNo) {
+                            segment.segment--;
+                        }
+                    }
+                }
+
+                path.remove(vertexNo);
+                setPathSegments(path, segments);
                 return new VertexSelection
                     (curveNo,
                      (vertexNo > 0) ? (vertexNo - 1) : 0);
@@ -322,7 +373,9 @@ public class Editor implements CropEventListener, MouseListener,
 
         @Override
         public void move(Point2D target) {
-            paths.get(curveNo).set(vertexNo, target);
+            GeneralPolyline path = paths.get(curveNo);
+            Point2D.Double oldPos = path.get(vertexNo);
+            path.set(vertexNo, target);
         }
 
         @Override
@@ -517,7 +570,6 @@ public class Editor implements CropEventListener, MouseListener,
     protected ArrayList<Point2D.Double> labelCenters;
     protected ArrayList<View> labelViews;
     @JsonProperty protected ArrayList<Arrow> arrows;
-    // TODO save...
     protected ArrayList<TieLine> tieLines;
     protected BufferedImage originalImage;
     protected String originalFilename;
@@ -617,19 +669,28 @@ public class Editor implements CropEventListener, MouseListener,
 
     @JsonProperty("curves")
     ArrayList<GeneralPolyline> getPaths() {
-        ArrayList<GeneralPolyline> output = new ArrayList<GeneralPolyline>();
-        for (GeneralPolyline path: paths) {
-            if (path != null && path.size() > 0) {
-                output.add(path);
-            }
-        }
-        return output;
+        return paths;
     }
 
     @JsonProperty("curves")
     void setPaths(Collection<GeneralPolyline> paths) {
         selection = null;
         this.paths = new ArrayList<GeneralPolyline>(paths);
+    }
+
+    @JsonProperty("tieLines")
+    ArrayList<TieLine> getTieLines() {
+        return tieLines;
+    }
+
+    GeneralPolyline idToCurve(int id) {
+        for (GeneralPolyline path: paths) {
+            if (path.getJSONId() == id) {
+                return path;
+            }
+        }
+        System.err.println("No curve found with id " + id + ".");
+        return null;
     }
 
     @JsonIgnore
@@ -1259,9 +1320,95 @@ public class Editor implements CropEventListener, MouseListener,
         GeneralPolyline path = getCurveForAppend();
         VertexSelection sel = getSelectedVertex();
 
-        path.add(++sel.vertexNo, point);
+        add(paths.get(sel.curveNo), sel.vertexNo, point);
+        ++sel.vertexNo;
         showTangent(sel.curveNo, sel.vertexNo);
         repaintEditFrame();
+    }
+
+    /** Add a new vertex to path, located at point, and inserted just
+        after vertex vertexNo. */
+    public void add(GeneralPolyline path, int vertexNo,
+                    Point2D.Double point) {
+        if (vertexNo == -1) {
+            path.add(vertexNo + 1, point);
+            return;
+        }
+
+        ArrayList<SegmentAndT> segments = getPathSegments(path);
+        int segCnt = path.getSegmentCnt();
+
+        double dist1 = point.distance(path.get(vertexNo));
+        double dist2 = (vertexNo == segCnt) ? 0
+            : point.distance(path.get(vertexNo + 1));
+
+        // For old segment vertexNo, map the t range [0, splitT] to
+        // new segment vertexNo range [0,1], and map the t range
+        // (splitT, 1] to new segment vertexNo+1 range [0,1]. If
+        // vertexNo == segCnt then segment vertexNo never existed
+        // before, so it doesn't matter what splitT value we use.
+        double splitT = dist1 / (dist1 + dist2);
+
+        for (SegmentAndT segment: segments) {
+            if (segment.segment > vertexNo) {
+                segment.segment++;
+            } else if (segment.segment == vertexNo) {
+                if (segment.t <= splitT) {
+                    segment.t /= splitT;
+                } else {
+                    segment.segment++;
+                    segment.t = (segment.t - splitT) / (1.0 - splitT);
+                }
+            }
+        }
+
+        path.add(vertexNo + 1, point);
+        setPathSegments(path, segments);
+    }
+
+
+    /** Make a list of SegmentAndT values that appear in this Editor
+        object and that refer to locations on the given path. */
+    ArrayList<SegmentAndT> getPathSegments(GeneralPolyline path) {
+        ArrayList<SegmentAndT> output = new ArrayList<SegmentAndT>();
+
+        // Tie Lines' limits are defined by t values.
+        for (TieLine tie: tieLines) {
+            if (tie.innerEdge == path) {
+                output.add(path.getSegment(tie.it1));
+                output.add(path.getSegment(tie.it2));
+            }
+            if (tie.outerEdge == path) {
+                output.add(path.getSegment(tie.ot1));
+                output.add(path.getSegment(tie.ot2));
+            }
+        }
+
+        return output;
+    }
+
+    /** You can then change the segments returned by getPathSegments()
+        and call setPathSegments() to make corresponding updates to
+        the fields from which they came. */
+    void setPathSegments(GeneralPolyline path,
+                         ArrayList<SegmentAndT> segments) {
+
+        ArrayList<Double> ts = new ArrayList<Double>();
+        for (SegmentAndT segment: segments) {
+            ts.add(path.segmentToT(segment.segment, segment.t));
+        }
+
+        int index = 0;
+        for (TieLine tie: tieLines) {
+            if (tie.innerEdge == path) {
+                tie.it1 = ts.get(index++);
+                tie.it2 = ts.get(index++);
+            }
+            if (tie.outerEdge == path) {
+                tie.ot1 = ts.get(index++);
+                tie.ot2 = ts.get(index++);
+            }
+        }
     }
 
     /** Print an arrow at the currently selected location that is
@@ -1382,7 +1529,6 @@ public class Editor implements CropEventListener, MouseListener,
         tie.it1 = it1;
         tie.it2 = it2;
         tieLines.add(tie);
-        System.out.println(tie);
         repaintEditFrame();
     }
 
@@ -1471,22 +1617,45 @@ public class Editor implements CropEventListener, MouseListener,
             return;
         }
 
-        GeneralPolyline oldCurve = getActiveCurve();
+        GeneralPolyline path = getActiveCurve();
 
         ArrayList<Point2D.Double> points
             = new ArrayList<Point2D.Double>();
-        for (int i = oldCurve.size() - 1; i >= 0; --i) {
-            points.add(oldCurve.get(i));
+
+        if (path.isClosed()) {
+            // Leave vertex #0 in place, but reverse the order of the
+            // others.
+            points.add(path.get(0));
+
+            for (int i = path.size() - 1; i >= 1; --i) {
+                points.add(path.get(i));
+            }
+
+            if (vsel.vertexNo > 0) {
+                vsel.vertexNo = path.size() - vsel.vertexNo;
+            }
+        } else {
+            // Reverse the order of all vertices.
+
+            for (int i = path.size() - 1; i >= 0; --i) {
+                points.add(path.get(i));
+            }
+
+            vsel.vertexNo = path.size() - 1 - vsel.vertexNo;
         }
 
-        GeneralPolyline curve = GeneralPolyline.create
-            (oldCurve.getSmoothingType(),
-             points.toArray(new Point2D.Double[0]),
-             oldCurve.getStroke(),
-             oldCurve.getLineWidth());
-        curve.setClosed(oldCurve.isClosed());
-        paths.set(vsel.curveNo, curve);
-        vsel.vertexNo = curve.size() - 1 - vsel.vertexNo;
+        for (TieLine tie: tieLines) {
+            if (tie.innerEdge == path) {
+                tie.it1 = 1.0 - tie.it1;
+                tie.it2 = 1.0 - tie.it2;
+            }
+            if (tie.outerEdge == path) {
+                tie.ot1 = 1.0 - tie.ot1;
+                tie.ot2 = 1.0 - tie.ot2;
+            }
+        }
+        
+        path.setPoints(points);
         repaintEditFrame();
     }
 
@@ -1979,6 +2148,19 @@ public class Editor implements CropEventListener, MouseListener,
         GeneralPolyline path = oldPath.nearClone
             (oldPath.getSmoothingType() == GeneralPolyline.LINEAR
              ? GeneralPolyline.CUBIC_SPLINE : GeneralPolyline.LINEAR);
+
+        // Switch over all tie lines defined using the old path to use
+        // the new one instead. T values remain unchanged.
+
+        for (TieLine tie: tieLines) {
+            if (tie.innerEdge == oldPath) {
+                tie.innerEdge = path;
+            }
+            if (tie.outerEdge == oldPath) {
+                tie.outerEdge = path;
+            }
+        }
+
         paths.set(getSelectedVertex().curveNo, path);
         repaintEditFrame();
     }
@@ -2633,6 +2815,11 @@ public class Editor implements CropEventListener, MouseListener,
         try {
             ObjectMapper mapper = getObjectMapper();
             cannibalize((Editor) mapper.readValue(file, getClass()));
+            for (TieLine tie: tieLines) {
+                tie.innerEdge = idToCurve(tie.innerId);
+                tie.outerEdge = idToCurve(tie.outerId);
+                tie.updateTs();
+            }
         } catch (Exception e) {
             // TODO More?
             JOptionPane.showMessageDialog
@@ -2702,6 +2889,11 @@ public class Editor implements CropEventListener, MouseListener,
             rulers.addAll(axis.rulers);
             axis.rulers = null;
         }
+    }
+
+    @JsonProperty("tieLines")
+    void setTieLines(ArrayList<TieLine> tieLines) {
+        this.tieLines = tieLines;
     }
 
     @JsonIgnore public BufferedImage getOriginalImage() {

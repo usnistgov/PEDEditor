@@ -33,6 +33,10 @@ public abstract class GeneralPolyline {
     protected Color color = null;
     protected double lineWidth = 1.0;
 
+    static private int minFreeId = 0;
+    /** Used only during serialization and deserialization. */
+    protected int jsonId = -1;
+
     /** Set the line width for this polyline. The StandardStroke may
         further modify the chosen line width further for some or all
         of the BasicStroke elements (for example, railroad ties tend
@@ -43,6 +47,22 @@ public abstract class GeneralPolyline {
 
     public double getLineWidth() {
         return lineWidth;
+    }
+
+    @JsonProperty("id") int getJSONId() {
+        if (jsonId == -1) {
+            jsonId = minFreeId;
+            ++minFreeId;
+        }
+        return jsonId;
+    }
+
+    @JsonProperty("id") void setJSONId(int id) {
+        if (id >= minFreeId) {
+            minFreeId = id + 1;
+        }
+
+        jsonId = id;
     }
 
     public GeneralPolyline() {
@@ -316,6 +336,33 @@ public abstract class GeneralPolyline {
     /** Remove the given vertex. */
     public void remove(int vertexNo) {
         points.remove(vertexNo);
+    }
+
+    /** Convert the segment number and t-value parameterized over
+        [0,1] over the length of that segment into a t-value
+        parameterized over the entire curve. */
+    public double segmentToT(int segNo, double t) {
+        int segCnt = getSegmentCnt();
+        return (segCnt == 0) ? 0.0 : ((segNo + t) / segCnt);
+    }
+
+    /* Parameterize the entire curve as t in [0,1] and return the
+       SegmentAndT corresponding to the given t value */
+    public SegmentAndT getSegment(double t) {
+        int segCnt = getSegmentCnt();
+
+        if (segCnt == 0) {
+            return new SegmentAndT(0, 0.0);
+        }
+
+        if (t >= 1) {
+            return new SegmentAndT(segCnt-1, 1.0);
+        }
+
+        t *= segCnt;
+        double segment = Math.floor(t);
+
+        return new SegmentAndT((int) segment, t - segment);
     }
 
     /** Replace the given vertex, which must exist. */
