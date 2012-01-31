@@ -449,31 +449,6 @@ public class EditFrame extends JFrame {
         mnCurve.setMnemonic(KeyEvent.VK_C);
 
         if (editable) {
-
-            mnCurve.add(new EditFrameAction
-                        ("Add cusp", KeyEvent.VK_C, "typed ,") {
-                    @Override
-                        public void actionPerformed(ActionEvent e) {
-                        getParentEditor().addCusp();
-                    }
-                });
-        }
-
-        mnCurve.add(new EditFrameAction("Select last", KeyEvent.VK_L) {
-                @Override
-                    public void actionPerformed(ActionEvent e) {
-                    getParentEditor().cycleActiveCurve(-1);
-                }
-            });
-
-        mnCurve.add(new EditFrameAction("Select next", KeyEvent.VK_N) {
-                @Override
-                    public void actionPerformed(ActionEvent e) {
-                    getParentEditor().cycleActiveCurve(+1);
-                }
-            });
-
-        if (editable) {
             mnCurve.add(new EditFrameAction("Toggle smoothing",
                                             KeyEvent.VK_S,
                                             KeyStroke.getKeyStroke('s')) {
@@ -542,7 +517,29 @@ public class EditFrame extends JFrame {
                         getParentEditor().reverseInsertionOrder();
                     }
                 });
+
+            mnCurve.add(new EditFrameAction
+                        ("Add cusp", KeyEvent.VK_C, "typed ,") {
+                    @Override
+                        public void actionPerformed(ActionEvent e) {
+                        getParentEditor().addCusp();
+                    }
+                });
         }
+
+        mnCurve.add(new EditFrameAction("Select last", KeyEvent.VK_L) {
+                @Override
+                    public void actionPerformed(ActionEvent e) {
+                    getParentEditor().cycleActiveCurve(-1);
+                }
+            });
+
+        mnCurve.add(new EditFrameAction("Select next", KeyEvent.VK_N) {
+                @Override
+                    public void actionPerformed(ActionEvent e) {
+                    getParentEditor().cycleActiveCurve(+1);
+                }
+            });
 
         if (editable) {
             JMenuItem mnGradient = new JMenuItem("Apply gradient");
