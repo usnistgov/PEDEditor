@@ -7,6 +7,7 @@ import java.io.File;
 import java.io.IOException;
 import java.util.*;
 
+import org.codehaus.jackson.annotate.JsonCreator;
 import org.codehaus.jackson.annotate.JsonIgnore;
 import org.codehaus.jackson.annotate.JsonIgnoreProperties;
 import org.codehaus.jackson.annotate.JsonProperty;
@@ -19,16 +20,48 @@ public class TieLine {
     public int numLines;
     public StandardStroke stroke;
     public double lineWidth = 1.0;
+
     /** Each tie line starts at innerEdge somewhere along [it1, it2]
         (the two values may be equal for triangular tie line regions)
         and ends somewhere along outerEdge along [ot1, ot2]. */
+    @JsonIgnore public GeneralPolyline innerEdge;
+    @JsonIgnore public GeneralPolyline outerEdge;
+    @JsonIgnore public double it1 = -1.0;
+    @JsonIgnore public double it2 = -1.0;
+    @JsonIgnore public double ot1 = -1.0;
+    @JsonIgnore public double ot2 = -1.0;
 
-    public GeneralPolyline innerEdge;
-    public GeneralPolyline outerEdge;
-    public double it1, it2, ot1, ot2;
+    /** inner1, inner2, etc., combined with inner/outerEdge.getId(),
+        provide a way to specify the bounds of the curve that isn't
+        spoiled as soon as someone adds or removes vertices (though
+        moving vertices must be handled somehow). */
+    Point2D.Double inner1, inner2, outer1, outer2;
+    /** Used only during JSON deserialization. */
+    int innerId = -1;
+    int outerId = -1;
 
-    public TieLine(@JsonProperty("numLines") int numLines,
-                    @JsonProperty("lineStyle") StandardStroke stroke) {
+    public TieLine(int numLines, StandardStroke stroke) {
+        this.numLines = numLines;
+        this.stroke = stroke;
+    }
+
+    @JsonCreator
+    TieLine(@JsonProperty("numLines") int numLines,
+            @JsonProperty("lineStyle") StandardStroke stroke,
+            @JsonProperty("inner1") Point2D inner1,
+            @JsonProperty("inner2") Point2D inner2,
+            @JsonProperty("outer1") Point2D outer1,
+            @JsonProperty("outer2") Point2D outer2,
+            @JsonProperty("innerId") int innerId,
+            @JsonProperty("outerId") int outerId) {
+        this.inner1 = new Point2D.Double(inner1.getX(), inner1.getY());
+        this.inner2 = new Point2D.Double(inner2.getX(), inner2.getY());
+        this.innerId = innerId;
+
+        this.outer1 = new Point2D.Double(outer1.getX(), outer1.getY());
+        this.outer2 = new Point2D.Double(outer2.getX(), outer2.getY());
+        this.outerId = outerId;
+
         this.numLines = numLines;
         this.stroke = stroke;
     }
@@ -43,6 +76,14 @@ public class TieLine {
         output.innerEdge = (GeneralPolyline) innerEdge.clone();
         output.outerEdge = (GeneralPolyline) outerEdge.clone();
         return output;
+    }
+
+    @JsonProperty int getInnerId() {
+        return (innerEdge == null) ? -1 : innerEdge.getJSONId();
+    }
+
+    @JsonProperty int getOuterId() {
+        return (outerEdge == null) ? -1 : outerEdge.getJSONId();
     }
 
     public Point2D.Double getInnerEdge(double t) {
@@ -83,6 +124,23 @@ public class TieLine {
         return new Line2D.Double(getInner2(), getOuter2());
     }
 
+    /** Use inner1, etc. to set it1, etc. This should only be done
+        once, during JSON deserialization. */
+    public void updateTs() {
+        it1 = innerEdge.distance(inner1).t;
+        it2 = innerEdge.distance(inner2).t;
+        ot1 = outerEdge.distance(outer1).t;
+        ot2 = outerEdge.distance(outer2).t;
+
+        // inner1, etc. are not maintained and later changes may cause
+        // them to no longer equal getInner1() etc. Null them out to
+        // avoid confusion.
+        inner1 = null;
+        inner2 = null;
+        outer1 = null;
+        outer2 = null;
+    }
+
     /** Return the point at which all tie lines converge. */
     public Point2D.Double convergencePoint() {
         return Duh.lineIntersection(getOuter1(), getInner1(),
@@ -93,7 +151,7 @@ public class TieLine {
         opposite directions. If left alone, convergencePoint() will
         lie somewhere between the two edges instead of somewhere
         beyond them, which is almost certainly not the intent. */
-    boolean isInverted() {
+    boolean isTwisted() {
         Point2D.Double i1 = getInner1();
         Point2D.Double i2 = getInner2();
         Point2D.Double o1 = getOuter1();
@@ -105,11 +163,11 @@ public class TieLine {
         return (dot < 0);
     }
 
-    public Path2D.Double getPath() {
+    @JsonIgnore public Path2D.Double getPath() {
         Path2D.Double output = new Path2D.Double();
 
-        if (isInverted()) {
-            // Swapping ot1 <=> ot2 will undo the inversion.
+        if (isTwisted()) {
+            // Swap ot1 <=> ot2 to untwist.
             double tmp = ot1;
             ot1 = ot2;
             ot2 = tmp;
