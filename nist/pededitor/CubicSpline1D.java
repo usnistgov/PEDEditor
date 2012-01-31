@@ -11,20 +11,6 @@ import java.util.*;
  */
 final public class CubicSpline1D {
 
-    public static class SegmentAndT {
-        SegmentAndT(int segment, double t) {
-            this.segment = segment;
-            this.t = t;
-        }
-
-        public String toString() {
-            return "SegmentAndT[" + segment + ", " + t + "]";
-        }
-
-        int segment;
-        double t;
-    }
-
     /** coefficients[n][d] represents the d-th degree coefficient of
         the cubic polynomial over the segment of the spline that
         connects ys[n] to ys[n+1]. */
@@ -217,7 +203,7 @@ final public class CubicSpline1D {
     }
 
     /* Parameterize the entire curve as t in [0,1] and return the
-       function of the curve at the given t value */
+       SegmentAndT corresponding to the given t value */
     public SegmentAndT getSegment(double t) {
         int cnt = coefficients.length;
 
