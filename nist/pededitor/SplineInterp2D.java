@@ -28,6 +28,11 @@ public class SplinePolyline extends GeneralPolyline {
         points.set(vertexNo, new Point2D.Double(point.getX(), point.getY()));
     }
 
+    @Override public void setPoints(Collection<Point2D.Double> points) {
+        super.setPoints(points);
+        spline = null;
+    }
+
     @Override public void setClosed(boolean closed) {
         if (closed != this.closed) {
             this.closed = closed;
