@@ -30,6 +30,8 @@ import org.codehaus.jackson.annotate.JsonSubTypes.Type;
 import org.codehaus.jackson.map.*;
 import org.codehaus.jackson.map.annotate.*;
 
+// TODO Actually use the Selectable#move() methods!
+
 // TODO (major, mandatory) Axes and user-defined variables.
 // Some of the groundwork has been done, but there is a lot left.
 
@@ -280,6 +282,12 @@ public class Editor implements CropEventListener, MouseListener,
                                MouseMotionListener, Printable {
     static ObjectMapper objectMapper = null;
 
+    abstract class Action extends AbstractAction {
+        Action(String name) {
+            super(name);
+        }
+    }
+
     class ImageBlinker extends TimerTask {
         public void run() {
             backgroundImageEnabled = !backgroundImageEnabled;
@@ -509,6 +517,70 @@ public class Editor implements CropEventListener, MouseListener,
         }
     }
 
+    static enum TieLineHandle { INNER1, INNER2, OUTER1, OUTER2 };
+
+    class TieLineSelection implements Selectable {
+
+        /** Index into tieLines list. */
+        int index;
+        /** A tie line is not a point object. It has up to four
+         corners that can be used as handles to select it. */
+        TieLineHandle handle;
+
+        TieLineSelection(int index, TieLineHandle handle) {
+            this.index = index;
+            this.handle = handle;
+        }
+
+        @Override
+        public TieLineSelection remove() {
+            tieLines.remove(index);
+            repaintEditFrame();
+            return null;
+        }
+
+        @Override
+        public void move(Point2D dest) {
+            // Tie line movement happens indirectly: normally,
+            // everything at a key point moves at once, which means
+            // that the control point that delimits the tie line moves
+            // with it. No additional work is required here.
+        }
+
+        @Override
+        public void copy(Point2D dest) {
+            JOptionPane.showMessageDialog
+                (editFrame, "Tie lines cannot be copied.");
+        }
+
+        @Override
+        public Point2D.Double getLocation() {
+            TieLine item = tieLines.get(index);
+            switch (handle) {
+            case INNER1:
+                return item.getInner1();
+            case INNER2:
+                return item.getInner2();
+            case OUTER1:
+                return item.getOuter1();
+            case OUTER2:
+                return item.getOuter2();
+            }
+
+            return null;
+        }
+
+        @Override
+        public boolean equals(Object other) {
+            if (this == other) return true;
+            if (this.getClass() != TieLineSelection.class) return false;
+            if (this.getClass() != other.getClass()) return false;
+
+            TieLineSelection cast = (TieLineSelection) other;
+            return index == cast.index && handle == cast.handle;
+        }
+    }
+
     
     /** Apply the NIST MML PED standard binary diagram axis style. */
     class DefaultBinaryRuler extends LinearRuler {
@@ -538,6 +610,11 @@ public class Editor implements CropEventListener, MouseListener,
             drawSpine = false; // The ruler spine is already a curve
                                // in the diagram. Don't draw it twice.
         }
+    }
+
+    class PathAndT {
+        GeneralPolyline path;
+        double t;
     }
 
     private static final String PREF_DIR = "dir";
@@ -610,6 +687,36 @@ public class Editor implements CropEventListener, MouseListener,
     static final double STANDARD_LINE_WIDTH = 0.0012;
     protected double lineWidth = STANDARD_LINE_WIDTH;
     protected StandardStroke lineStyle = StandardStroke.SOLID;
+
+    static String[] tieLineStepStrings =
+    { "<html><div width=\"200 px\"><p>"
+      + "Use the 'L' or 'P' short-cut keys to select an outside "
+      + "corner of the tie line "
+      + "display region. Make sure to select not just the right "
+      + "point, but also the specific curve that forms the "
+      + "outside edge of the region."
+      + "</p></div></html>",
+      "<html><div width=\"200 px\"><p>"
+      + "Select the second outside corner." 
+      + "</p></div></html>",
+      "<html><div width=\"200 px\"><p>"
+      + "Select the convergence point, if the tie lines extend far enough "
+      + "to converge, or one of the two inside corners otherwise."
+      + "</p></div></html>",
+      "<html><div width=\"200 px\"><p>"
+      + "Select the second inside corner (or just press \"OK\" right away "
+      + "if the tie lines converge)."
+      + "</p></div></html>" };
+
+    StepDialog tieLineDialog = new StepDialog
+        (editFrame, "Select Tie Line Display Region",
+         new Editor.Action("Item selected") {
+             @Override public void actionPerformed(ActionEvent e) {
+                 tieLineCornerSelected();
+             }
+         });
+    ArrayList<PathAndT> tieLineSelections;
+
     @JsonProperty protected String filename;
 
     // TODO Set saveNeeded
@@ -623,6 +730,8 @@ public class Editor implements CropEventListener, MouseListener,
     protected Point2D.Double mprin = null;
 
     public Editor() {
+        zoomFrame.setFocusableWindowState(false);
+        tieLineDialog.setFocusableWindowState(false);
         clear();
         getEditPane().addMouseListener(this);
         getEditPane().addMouseMotionListener(this);
@@ -665,6 +774,8 @@ public class Editor implements CropEventListener, MouseListener,
         mouseIsStuck = false;
         paintSuppressionRequestCnt = 0;
         setBackground(EditFrame.BackgroundImage.GRAY);
+        tieLineDialog.setVisible(false);
+        tieLineSelections = new ArrayList<PathAndT>();
     }
 
     @JsonProperty("curves")
@@ -704,6 +815,13 @@ public class Editor implements CropEventListener, MouseListener,
     LabelSelection getSelectedLabel() {
         return (selection instanceof LabelSelection)
             ? ((LabelSelection) selection)
+            : null;
+    }
+
+    @JsonIgnore
+    TieLineSelection getSelectedTieLine() {
+        return (selection instanceof TieLineSelection)
+            ? ((TieLineSelection) selection)
             : null;
     }
 
@@ -821,35 +939,12 @@ public class Editor implements CropEventListener, MouseListener,
         same location as the selection to dest. */
     public void moveSelection(Point2D.Double dest) {
         Point2D.Double p = selection.getLocation();
-        Point2D.Double pagePoint = principalToStandardPage.transform(p);
-        double tinyDistSq = 1e-12;
 
-        for (GeneralPolyline path: paths) {
-            for (int vertexNo = 0; vertexNo < path.size(); ++vertexNo) {
-                Point2D.Double vertex = path.get(vertexNo);
-                Point2D.Double thisPagePoint
-                    = principalToStandardPage.transform(vertex);
-
-                double dist2 = pagePoint.distanceSq(thisPagePoint);
-
-                if (dist2 < tinyDistSq) {
-                    path.set(vertexNo, dest);
-                }
+        for (Selectable sel: selectables()) {
+            if (principalCoordinatesMatch(p, sel.getLocation())) {
+                sel.move(dest);
             }
         }
-
-        for (AnchoredLabel label: labels) {
-            Point2D.Double thisPagePoint = principalToStandardPage
-                .transform(label.getX(), label.getY());
-            double dist2 = pagePoint.distanceSq(thisPagePoint);
-
-            if (dist2 < tinyDistSq) {
-                label.setX(dest.x);
-                label.setY(dest.y);
-            }
-        }
-
-        repaintEditFrame();
     }
 
     public void removeSelection() {
@@ -1107,8 +1202,17 @@ public class Editor implements CropEventListener, MouseListener,
             }
         }
 
-        for (TieLine tie: tieLines) {
-            draw(g, tie, scale);
+        {
+            TieLineSelection sel = editing ? getSelectedTieLine() : null;
+            for (int i = 0; i < tieLines.size(); ++i) {
+                TieLine item = tieLines.get(i);
+                boolean selected = (sel != null && i == sel.index);
+                if (selected) {
+                    g.setColor(Color.GREEN);
+                }
+                draw(g, item, scale);
+                g.setColor(Color.BLACK);
+            }
         }
 
         for (LinearRuler ruler: rulers) {
@@ -1428,108 +1532,86 @@ public class Editor implements CropEventListener, MouseListener,
         repaintEditFrame();
     }
 
-    public void addTieLine() {
+    void tieLineCornerSelected() {
         VertexSelection vsel = getSelectedVertex();
         if (vsel == null) {
             JOptionPane.showMessageDialog
                 (editFrame,
-                 "You must select three or four points to create tie lines.");
+                 "You must select a vertex.");
             return;
         }
 
-        GeneralPolyline pointsPath = paths.get(vsel.curveNo);
+        PathAndT pat = new PathAndT();
+        pat.path = paths.get(vsel.curveNo);
+        pat.t = pat.path.segmentToT(vsel.vertexNo, 0.0);
 
-        int cnt = pointsPath.size() ;
-        if (cnt < 3 || cnt > 4) {
+        int oldCnt = tieLineSelections.size();
+        System.out.println("OldCnt = " + oldCnt);
+
+        if ((oldCnt == 1 || oldCnt == 3)
+            && pat.path != tieLineSelections.get(oldCnt-1).path) {
             JOptionPane.showMessageDialog
                 (editFrame,
-                 "You must select three or four points to create tie lines.");
+                 "This selection must belong to the same\n" +
+                 "curve as the previous selection.");
             return;
         }
 
-        Point2D.Double outer1 = pointsPath.get(0);
-        Point2D.Double outer2 = pointsPath.get(1);
-        Point2D.Double inner1 = pointsPath.get(2);
-        Point2D.Double inner2 = (cnt == 4) ? pointsPath.get(3) : inner1;
+        tieLineSelections.add(pat);
 
-        // TODO Do this right later, but for now, just do it.
+        if (oldCnt < 3) {
+            tieLineDialog.getLabel().setText(tieLineStepStrings[oldCnt + 1]);
+            return;
+        }
 
-        // Figure out what other curves besides the selection might
-        // have control points at the selected locations.
+        tieLineDialog.setVisible(false);
+        int lineCnt;
 
-        int pathCnt = paths.size();
-
-        GeneralPolyline inner = null;
-        GeneralPolyline outer = null;
-
-        double ot1 = -1.0;
-        double ot2 = -1.0;
-        double it1 = -1.0;
-        double it2 = -1.0;
-
-        for (GeneralPolyline path: paths) {
-            if (path == pointsPath) {
+        while (true) {
+            try {
+                String lineCntStr = JOptionPane.showInputDialog
+                    (editFrame,
+                     "Number of tie lines to display (interior only):",
+                     new Integer(10));
+                if (lineCntStr == null) {
+                    tieLineDialog.setVisible(false);
+                    tieLineSelections = null;
+                    return;
+                }
+                lineCnt = Integer.parseInt(lineCntStr);
+                if (lineCnt <= 0) {
+                    JOptionPane.showMessageDialog
+                        (null, "Enter a positive integer.");
+                    continue;
+                }
+            } catch (NumberFormatException e) {
+                JOptionPane.showMessageDialog(null, "Invalid number format.");
                 continue;
             }
-
-            double tot1 = -1.0;
-            double tot2 = -1.0;
-            double tit1 = -1.0;
-            double tit2 = -1.0;
-
-            int vertexNo = -1;
-            int segCnt = path.getSegmentCnt();
-            for (Point2D.Double point: path.getPoints()) {
-                ++vertexNo;
-                double t = (segCnt == 0) ? 0.0 : (((double) vertexNo) / segCnt);
-                if (principalCoordinatesMatch(outer1, point)) {
-                    tot1 = t;
-                }
-                if (principalCoordinatesMatch(outer2, point)) {
-                    tot2 = t;
-                }
-                if (principalCoordinatesMatch(inner1, point)) {
-                    tit1 = t;
-                }
-                if (principalCoordinatesMatch(inner2, point)) {
-                    tit2 = t;
-                }
-            }
-
-            if (tot1 >= 0 && tot2 >= 0) {
-                outer = path;
-                ot1 = tot1;
-                ot2 = tot2;
-            }
-
-            if (tit1 >= 0 && tit2 >= 0) {
-                inner = path;
-                it1 = tit1;
-                it2 = tit2;
-            }
+            break;
         }
 
-        if (outer == null || inner == null) {
-            JOptionPane.showMessageDialog
-                (editFrame,
-                 "The endpoints of tie lines must (TODO for now, anyhow)\n"
-                 + "correspond to vertices of other curves. The first pair must\n"
-                 + "lie on a single curve, and if there are four endpoints, the\n"
-                 + "second pair must lie on a single curve as well.");
-            return;
-        }
-
-        // TODO pick the number the right way...
-        TieLine tie = new TieLine(9, lineStyle);
-        tie.innerEdge = inner;
-        tie.outerEdge = outer;
+        TieLine tie = new TieLine(lineCnt, lineStyle);
         tie.lineWidth = lineWidth;
-        tie.ot1 = ot1;
-        tie.ot2 = ot2;
-        tie.it1 = it1;
-        tie.it2 = it2;
+
+        tie.innerEdge = tieLineSelections.get(0).path;
+        tie.it1 = tieLineSelections.get(0).t;
+        tie.it2 = tieLineSelections.get(1).t;
+
+        tie.outerEdge = tieLineSelections.get(2).path;
+        tie.ot1 = tieLineSelections.get(2).t;
+        tie.ot2 = tieLineSelections.get(3).t;
+
         tieLines.add(tie);
         repaintEditFrame();
+    }
+
+    public void addTieLine() {
+        tieLineSelections = new ArrayList<PathAndT>();
+        tieLineDialog.getLabel().setText(tieLineStepStrings[0]);
+        tieLineDialog.pack();
+        tieLineDialog.setVisible(true);
+        tieLineDialog.toFront();
     }
 
     /** @return the index of the label that is closest to mprin, as
@@ -2025,6 +2107,13 @@ public class Editor implements CropEventListener, MouseListener,
             output.add(new ArrowSelection(i));
         }
 
+        // Add tie lines.
+        for (int i = 0; i < tieLines.size(); ++i) {
+            for (TieLineHandle handle: TieLineHandle.values()) {
+                output.add(new TieLineSelection(i, handle));
+            }
+        }
+
         return output;
     }
 
@@ -2341,8 +2430,8 @@ public class Editor implements CropEventListener, MouseListener,
                         heightS = initialHeight;
                     }
                     try {
-                        height = Double.valueOf(heightS);
-                    } catch (Exception e) {
+                        height = Double.parseDouble(heightS);
+                    } catch (NumberFormatException e) {
                         JOptionPane.showMessageDialog(null, "Invalid number format.");
                         continue;
                     }
@@ -2484,9 +2573,9 @@ public class Editor implements CropEventListener, MouseListener,
                     }
                     try {
                         for (int i = 0; i < pageMaxStrings.length; ++i) {
-                            pageMaxes[i] = Double.valueOf(pageMaxStrings[i]);
+                            pageMaxes[i] = Double.parseDouble(pageMaxStrings[i]);
                         }
-                    } catch (Exception e) {
+                    } catch (NumberFormatException e) {
                         JOptionPane.showMessageDialog(null, "Invalid number format.");
                         continue;
                     }
@@ -2818,7 +2907,6 @@ public class Editor implements CropEventListener, MouseListener,
             for (TieLine tie: tieLines) {
                 tie.innerEdge = idToCurve(tie.innerId);
                 tie.outerEdge = idToCurve(tie.outerId);
-                tie.updateTs();
             }
         } catch (Exception e) {
             // TODO More?

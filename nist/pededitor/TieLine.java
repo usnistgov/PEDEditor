@@ -16,58 +16,57 @@ public class TieLine {
     /** Number of tie lines. Lines are painted only on the interior of
         the tie line region; the angle at which
         outerEdge(ot1)innerEdge(it1) and outerEdge(ot2)innerEdge(it2)
-        meet is sectioned into numLines+1 equal parts. */
-    public int numLines;
+        meet is sectioned into lineCnt+1 equal parts. */
+    public int lineCnt;
     public StandardStroke stroke;
     public double lineWidth = 1.0;
 
     /** Each tie line starts at innerEdge somewhere along [it1, it2]
         (the two values may be equal for triangular tie line regions)
         and ends somewhere along outerEdge along [ot1, ot2]. */
-    @JsonIgnore public GeneralPolyline innerEdge;
-    @JsonIgnore public GeneralPolyline outerEdge;
-    @JsonIgnore public double it1 = -1.0;
-    @JsonIgnore public double it2 = -1.0;
-    @JsonIgnore public double ot1 = -1.0;
-    @JsonIgnore public double ot2 = -1.0;
 
-    /** inner1, inner2, etc., combined with inner/outerEdge.getId(),
-        provide a way to specify the bounds of the curve that isn't
-        spoiled as soon as someone adds or removes vertices (though
-        moving vertices must be handled somehow). */
-    Point2D.Double inner1, inner2, outer1, outer2;
-    /** Used only during JSON deserialization. */
+    @JsonProperty("innerT1") public double it1 = -1.0;
+    @JsonProperty("innerT2") public double it2 = -1.0;
+    @JsonIgnore public GeneralPolyline innerEdge;
+    /** Used only during JSON deserialization. Later, use getInnerID()
+        instead. */
     int innerId = -1;
+
+    @JsonProperty("outerT1") public double ot1 = -1.0;
+    @JsonProperty("outerT2") public double ot2 = -1.0;
+    @JsonIgnore public GeneralPolyline outerEdge;
+    /** Used only during JSON deserialization. Later, use getOuterID()
+        instead. */
     int outerId = -1;
 
-    public TieLine(int numLines, StandardStroke stroke) {
-        this.numLines = numLines;
+    public TieLine(int lineCnt, StandardStroke stroke) {
+        this.lineCnt = lineCnt;
         this.stroke = stroke;
     }
 
     @JsonCreator
-    TieLine(@JsonProperty("numLines") int numLines,
+    TieLine(@JsonProperty("lineCnt") int lineCnt,
             @JsonProperty("lineStyle") StandardStroke stroke,
-            @JsonProperty("inner1") Point2D inner1,
-            @JsonProperty("inner2") Point2D inner2,
-            @JsonProperty("outer1") Point2D outer1,
-            @JsonProperty("outer2") Point2D outer2,
             @JsonProperty("innerId") int innerId,
-            @JsonProperty("outerId") int outerId) {
-        this.inner1 = new Point2D.Double(inner1.getX(), inner1.getY());
-        this.inner2 = new Point2D.Double(inner2.getX(), inner2.getY());
-        this.innerId = innerId;
-
-        this.outer1 = new Point2D.Double(outer1.getX(), outer1.getY());
-        this.outer2 = new Point2D.Double(outer2.getX(), outer2.getY());
-        this.outerId = outerId;
-
-        this.numLines = numLines;
+            @JsonProperty("innerT1") double it1,
+            @JsonProperty("innerT2") double it2,
+            @JsonProperty("outerId") int outerId,
+            @JsonProperty("outerT1") double ot1,
+            @JsonProperty("outerT2") double ot2) {
+        this.lineCnt = lineCnt;
         this.stroke = stroke;
+
+        this.innerId = innerId;
+        this.it1 = it1;
+        this.it2 = it2;
+
+        this.outerId = outerId;
+        this.ot1 = ot1;
+        this.ot2 = ot2;
     }
 
     public TieLine clone() {
-        TieLine output = new TieLine(numLines, stroke);
+        TieLine output = new TieLine(lineCnt, stroke);
         output.it1 = it1;
         output.it2 = it2;
         output.ot1 = ot1;
@@ -78,10 +77,12 @@ public class TieLine {
         return output;
     }
 
+    /** Used during JSON serialization. */
     @JsonProperty int getInnerId() {
         return (innerEdge == null) ? -1 : innerEdge.getJSONId();
     }
 
+    /** Used during JSON serialization. */
     @JsonProperty int getOuterId() {
         return (outerEdge == null) ? -1 : outerEdge.getJSONId();
     }
@@ -95,22 +96,22 @@ public class TieLine {
     }
 
     /** Return the location of endpoint #1 of the inner edge. */
-    public Point2D.Double getInner1() {
+    @JsonIgnore public Point2D.Double getInner1() {
         return getInnerEdge(it1);
     }
 
     /** Return the location of endpoint #2 of the inner edge. */
-    public Point2D.Double getInner2() {
+    @JsonIgnore public Point2D.Double getInner2() {
         return getInnerEdge(it2);
     }
 
     /** Return the location of endpoint #1 of the outer edge. */
-    public Point2D.Double getOuter1() {
+    @JsonIgnore public Point2D.Double getOuter1() {
         return getOuterEdge(ot1);
     }
 
     /** Return the location of endpoint #2 of the outer edge. */
-    public Point2D.Double getOuter2() {
+    @JsonIgnore public Point2D.Double getOuter2() {
         return getOuterEdge(ot2);
     }
 
@@ -122,23 +123,6 @@ public class TieLine {
     @JsonIgnore
     public Line2D.Double getEdge2() {
         return new Line2D.Double(getInner2(), getOuter2());
-    }
-
-    /** Use inner1, etc. to set it1, etc. This should only be done
-        once, during JSON deserialization. */
-    public void updateTs() {
-        it1 = innerEdge.distance(inner1).t;
-        it2 = innerEdge.distance(inner2).t;
-        ot1 = outerEdge.distance(outer1).t;
-        ot2 = outerEdge.distance(outer2).t;
-
-        // inner1, etc. are not maintained and later changes may cause
-        // them to no longer equal getInner1() etc. Null them out to
-        // avoid confusion.
-        inner1 = null;
-        inner2 = null;
-        outer1 = null;
-        outer2 = null;
     }
 
     /** Return the point at which all tie lines converge. */
@@ -225,10 +209,10 @@ public class TieLine {
             theta2 = theta1 + theta2Minus1;
         }
 
-        double deltaTheta = (theta2 - theta1) / (numLines + 1);
+        double deltaTheta = (theta2 - theta1) / (lineCnt + 1);
         double theta = theta1;
 
-        for (int i = 0; i < numLines; ++i) {
+        for (int i = 0; i < lineCnt; ++i) {
             theta += deltaTheta;
             Line2D.Double line = new Line2D.Double
                 (v.x, v.y, v.x + Math.cos(theta), v.y + Math.sin(theta));
@@ -291,7 +275,7 @@ public class TieLine {
     }
 
     public String toString() {
-        return "TieLines[numlines=" + numLines + ", stroke = " + stroke
+        return "TieLines[lineCnt=" + lineCnt + ", stroke = " + stroke
             + ", lineWidth = " + lineWidth
             + ", inner = " + innerEdge + ",  outer = " + outerEdge
             + ", ot1 = " + ot1 + ", ot2 = " + ot2
