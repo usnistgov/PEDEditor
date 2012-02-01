@@ -642,6 +642,9 @@ public class EditFrame extends JFrame {
                 });
 
             JMenu mnComponents = new JMenu("Components");
+            setLeftComponent.setEnabled(false);
+            setRightComponent.setEnabled(false);
+            setTopComponent.setEnabled(false);
             mnComponents.add(setLeftComponent);
             mnComponents.add(setRightComponent);
             mnComponents.add(setTopComponent);

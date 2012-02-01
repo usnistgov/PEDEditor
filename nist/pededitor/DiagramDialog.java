@@ -14,8 +14,6 @@ public class DiagramDialog extends JDialog
     DiagramType selectedDiagram = null;
     boolean pressedOK = false;
     JButton okButton;
-    protected List<DiagramSelectionEventListener> diagramSelectedListeners
-        = new ArrayList<DiagramSelectionEventListener>();
 
     abstract class DiagramDialogAction extends AbstractAction {
         DiagramDialogAction(String name) {
@@ -25,15 +23,6 @@ public class DiagramDialog extends JDialog
 
     DiagramType getSelectedDiagram() {
         return selectedDiagram;
-    }
-
-    public synchronized void addDiagramSelectionEventListener
-        (DiagramSelectionEventListener listener) {
-        diagramSelectedListeners.add(listener);
-    }
-    public synchronized void removeDiagramSelectionEventListener
-        (DiagramSelectionEventListener listener) {
-        diagramSelectedListeners.remove(listener);
     }
 
     DiagramDialog(Frame owner) {
@@ -69,11 +58,6 @@ public class DiagramDialog extends JDialog
                 @Override
                     public void actionPerformed(ActionEvent e) {
                     DiagramDialog.this.pressedOK = true;
-                    DiagramSelectionEvent se
-                        = new DiagramSelectionEvent(DiagramDialog.this);
-                    for (DiagramSelectionEventListener l : diagramSelectedListeners) {
-                        l.diagramSelected(se);
-                    }
                     DiagramDialog.this.setVisible(false);
                 }
             });
@@ -93,13 +77,6 @@ public class DiagramDialog extends JDialog
 
             pane.add(imagePane);
         }
-    }
-
-    /** Listen for OK button press events, which indicate that the
-        user has accepted a diagram type. To find out what that type
-        is, call getSelectedDiagram(). */
-    void addSelectionListener(ActionListener listener) {
-        okButton.addActionListener(listener);
     }
 
     /** Show the dialog as document-modal, and return the DiagramType

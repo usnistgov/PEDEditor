@@ -2916,6 +2916,7 @@ public class Editor implements CropEventListener, MouseListener,
             return;
         }
         filename = file.getAbsolutePath();
+        clear();
 
         try {
             ObjectMapper mapper = getObjectMapper();
