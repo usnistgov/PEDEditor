@@ -615,6 +615,10 @@ public class Editor implements CropEventListener, MouseListener,
     class PathAndT {
         GeneralPolyline path;
         double t;
+
+        public String toString() {
+            return "PathAndT[" + path + ", " + t + "]";
+        }
     }
 
     private static final String PREF_DIR = "dir";
@@ -1546,7 +1550,6 @@ public class Editor implements CropEventListener, MouseListener,
         pat.t = pat.path.segmentToT(vsel.vertexNo, 0.0);
 
         int oldCnt = tieLineSelections.size();
-        System.out.println("OldCnt = " + oldCnt);
 
         if ((oldCnt == 1 || oldCnt == 3)
             && pat.path != tieLineSelections.get(oldCnt-1).path) {
@@ -1554,6 +1557,13 @@ public class Editor implements CropEventListener, MouseListener,
                 (editFrame,
                  "This selection must belong to the same\n" +
                  "curve as the previous selection.");
+            return;
+        }
+
+        if ((oldCnt == 1) && pat.t == tieLineSelections.get(0).t) {
+            JOptionPane.showMessageDialog
+                (editFrame,
+                 "The second point cannot be the same as the first.");
             return;
         }
 
@@ -1734,6 +1744,12 @@ public class Editor implements CropEventListener, MouseListener,
             if (tie.outerEdge == path) {
                 tie.ot1 = 1.0 - tie.ot1;
                 tie.ot2 = 1.0 - tie.ot2;
+            }
+        }
+
+        for (PathAndT pat: tieLineSelections) {
+            if (pat.path == path) {
+                pat.t = 1.0 - pat.t;
             }
         }
         
