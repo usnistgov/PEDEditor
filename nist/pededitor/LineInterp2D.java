@@ -188,6 +188,10 @@ public class Polyline extends GeneralPolyline {
         Point2D.Double nearPoint = null;
         CurveDistance minDist = null;
 
+        if (segCnt == 0) {
+            return CurveDistance.distance(p, points.get(0));
+        }
+
         for (int i = 0; i < segCnt; ++i) {
             CurveDistance dist = CurveDistance.pointSegmentDistance
                 (p, points.get(i), points.get((i+1) % points.size()));
