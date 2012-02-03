@@ -30,8 +30,6 @@ import org.codehaus.jackson.annotate.JsonSubTypes.Type;
 import org.codehaus.jackson.map.*;
 import org.codehaus.jackson.map.annotate.*;
 
-// TODO Actually use the Selectable#move() methods!
-
 // TODO (major, mandatory) Axes and user-defined variables.
 // Some of the groundwork has been done, but there is a lot left.
 
@@ -583,6 +581,89 @@ public class Editor implements CropEventListener, MouseListener,
         }
     }
 
+    static enum RulerHandle { START, END };
+
+    class RulerSelection implements Selectable {
+
+        /** Index into rulers list. */
+        int index;
+        /** Either end of the ruler may be used as a handle. */
+        RulerHandle handle; 
+
+        RulerSelection(int index, RulerHandle handle) {
+            this.index = index;
+            this.handle = handle;
+        }
+
+        @Override
+        public RulerSelection remove() {
+            rulers.remove(index);
+            repaintEditFrame();
+            return null;
+        }
+
+        @Override public void move(Point2D dest) {
+            Point2D.Double d = new Point2D.Double(dest.getX(), dest.getY());
+            LinearRuler r = rulers.get(index);
+            
+            switch (handle) {
+            case START:
+                r.startPoint = d;
+                break;
+            case END:
+                r.endPoint = d;
+                break;
+            }
+
+            repaintEditFrame();
+        }
+
+        @Override public void copy(Point2D dest) {
+            Point2D.Double d = new Point2D.Double(dest.getX(), dest.getY());
+            LinearRuler r = rulers.get(index).clone();
+            double dx = r.endPoint.x - r.startPoint.x;
+            double dy = r.endPoint.y - r.startPoint.y;
+            
+            switch (handle) {
+            case START:
+                r.startPoint = d;
+                r.endPoint = new Point2D.Double(d.x + dx, d.y + dy);
+                break;
+            case END:
+                r.endPoint = d;
+                r.startPoint = new Point2D.Double(d.x - dx, d.y - dy);
+                break;
+            }
+
+            rulers.add(r);
+            repaintEditFrame();
+        }
+
+        @Override
+        public Point2D.Double getLocation() {
+            LinearRuler item = rulers.get(index);
+            Point point = null;
+            switch (handle) {
+            case START:
+                return (Point2D.Double) item.startPoint.clone();
+            case END:
+                return (Point2D.Double) item.endPoint.clone();
+            }
+
+            return null;
+        }
+
+        @Override
+        public boolean equals(Object other) {
+            if (this == other) return true;
+            if (this.getClass() != RulerSelection.class) return false;
+            if (this.getClass() != other.getClass()) return false;
+
+            RulerSelection cast = (RulerSelection) other;
+            return index == cast.index && handle == cast.handle;
+        }
+    }
+
     
     /** Apply the NIST MML PED standard binary diagram axis style. */
     class DefaultBinaryRuler extends LinearRuler {
@@ -722,7 +803,14 @@ public class Editor implements CropEventListener, MouseListener,
                  tieLineCornerSelected();
              }
          });
-    ArrayList<PathAndT> tieLineSelections;
+
+    // When the user selects the "Add tie line" menu item,
+    // tieLineCorners temporarily holds the corner locations until all
+    // corners are specified and the tie line can actually be created.
+    // (In retrospect, it would have been simpler to create the
+    // TieLine with dummy values and fill the corners in as they are
+    // added, but whatever, this works.)
+    ArrayList<PathAndT> tieLineCorners;
 
     @JsonProperty protected String filename;
 
@@ -782,7 +870,7 @@ public class Editor implements CropEventListener, MouseListener,
         paintSuppressionRequestCnt = 0;
         setBackground(EditFrame.BackgroundImage.GRAY);
         tieLineDialog.setVisible(false);
-        tieLineSelections = new ArrayList<PathAndT>();
+        tieLineCorners = new ArrayList<PathAndT>();
     }
 
     @JsonProperty("curves")
@@ -833,6 +921,13 @@ public class Editor implements CropEventListener, MouseListener,
     }
 
     @JsonIgnore
+    RulerSelection getSelectedRuler() {
+        return (selection instanceof RulerSelection)
+            ? ((RulerSelection) selection)
+            : null;
+    }
+
+    @JsonIgnore
     ArrowSelection getSelectedArrow() {
         return (selection instanceof ArrowSelection)
             ? ((ArrowSelection) selection)
@@ -877,8 +972,13 @@ public class Editor implements CropEventListener, MouseListener,
     }
 
     /** Reset the location of all vertices and labels that have the
-        same location as the selection to mprin. */
-    public void moveSelection() {
+        same location as the selection to mprin.
+        
+        @param moveAll If true, all items located at the selected
+        point will move moved. If false, only the selected item itself
+        will be moved.
+    */
+    public void moveSelection(boolean moveAll) {
         if (selection == null) {
             JOptionPane.showMessageDialog
                 (editFrame,
@@ -898,8 +998,7 @@ public class Editor implements CropEventListener, MouseListener,
             unstickMouse();
         }
 
-        moveSelection(mprin);
-
+        moveSelection(mprin, moveAll);
     }
 
     /** Copy the selection, moving it to mprin. */
@@ -943,14 +1042,22 @@ public class Editor implements CropEventListener, MouseListener,
     }
 
     /** Reset the location of all vertices and labels that have the
-        same location as the selection to dest. */
-    public void moveSelection(Point2D.Double dest) {
-        Point2D.Double p = selection.getLocation();
+        same location as the selection to dest.
 
-        for (Selectable sel: selectables()) {
-            if (principalCoordinatesMatch(p, sel.getLocation())) {
-                sel.move(dest);
+        @param moveAll If true, move all selectable items that have
+        the same location as the selection to dest. If false, move
+        only the selection itself. */
+    public void moveSelection(Point2D.Double dest, boolean moveAll) {
+        if (moveAll) {
+            Point2D.Double p = selection.getLocation();
+
+            for (Selectable sel: selectables()) {
+                if (principalCoordinatesMatch(p, sel.getLocation())) {
+                    sel.move(dest);
+                }
             }
+        } else {
+            selection.move(dest);
         }
     }
 
@@ -1040,7 +1147,7 @@ public class Editor implements CropEventListener, MouseListener,
         Point2D.Double newMprin = standardPageToPrincipal.transform(mousePage);
 
         if (mouseIsStuckAtSelection()) {
-            moveSelection(newMprin);
+            moveSelection(newMprin, true);
         }
         mprin = newMprin;
         moveMouse(mprin);
@@ -1169,9 +1276,6 @@ public class Editor implements CropEventListener, MouseListener,
         g.setColor(Color.BLACK);
 
         int pathCnt = paths.size();
-        if (pathCnt == 0) {
-            return;
-        }
 
         VertexSelection vsel = editing ? getSelectedVertex() : null;
 
@@ -1237,8 +1341,17 @@ public class Editor implements CropEventListener, MouseListener,
             }
         }
 
-        for (LinearRuler ruler: rulers) {
-            ruler.draw(g, getPrincipalToAlignedPage(), scale);
+        {
+            RulerSelection sel = editing ? getSelectedRuler() : null;
+            for (int i = 0; i < rulers.size(); ++i) {
+                LinearRuler item = rulers.get(i);
+                boolean selected = (sel != null && i == sel.index);
+                if (selected) {
+                    g.setColor(Color.GREEN);
+                }
+                item.draw(g, getPrincipalToAlignedPage(), scale);
+                g.setColor(Color.BLACK);
+            }
         }
 
         if (vsel != null) {
@@ -1526,10 +1639,10 @@ public class Editor implements CropEventListener, MouseListener,
         pat.path = paths.get(vsel.curveNo);
         pat.t = pat.path.segmentToT(vsel.vertexNo, 0.0);
 
-        int oldCnt = tieLineSelections.size();
+        int oldCnt = tieLineCorners.size();
 
         if ((oldCnt == 1 || oldCnt == 3)
-            && pat.path != tieLineSelections.get(oldCnt-1).path) {
+            && pat.path != tieLineCorners.get(oldCnt-1).path) {
             JOptionPane.showMessageDialog
                 (editFrame,
                  "This selection must belong to the same\n" +
@@ -1537,14 +1650,14 @@ public class Editor implements CropEventListener, MouseListener,
             return;
         }
 
-        if ((oldCnt == 1) && pat.t == tieLineSelections.get(0).t) {
+        if ((oldCnt == 1) && pat.t == tieLineCorners.get(0).t) {
             JOptionPane.showMessageDialog
                 (editFrame,
                  "The second point cannot be the same as the first.");
             return;
         }
 
-        tieLineSelections.add(pat);
+        tieLineCorners.add(pat);
 
         if (oldCnt < 3) {
             tieLineDialog.getLabel().setText(tieLineStepStrings[oldCnt + 1]);
@@ -1562,7 +1675,7 @@ public class Editor implements CropEventListener, MouseListener,
                      new Integer(10));
                 if (lineCntStr == null) {
                     tieLineDialog.setVisible(false);
-                    tieLineSelections = null;
+                    tieLineCorners = null;
                     return;
                 }
                 lineCnt = Integer.parseInt(lineCntStr);
@@ -1581,20 +1694,20 @@ public class Editor implements CropEventListener, MouseListener,
         TieLine tie = new TieLine(lineCnt, lineStyle);
         tie.lineWidth = lineWidth;
 
-        tie.innerEdge = tieLineSelections.get(0).path;
-        tie.it1 = tieLineSelections.get(0).t;
-        tie.it2 = tieLineSelections.get(1).t;
+        tie.innerEdge = tieLineCorners.get(0).path;
+        tie.it1 = tieLineCorners.get(0).t;
+        tie.it2 = tieLineCorners.get(1).t;
 
-        tie.outerEdge = tieLineSelections.get(2).path;
-        tie.ot1 = tieLineSelections.get(2).t;
-        tie.ot2 = tieLineSelections.get(3).t;
+        tie.outerEdge = tieLineCorners.get(2).path;
+        tie.ot1 = tieLineCorners.get(2).t;
+        tie.ot2 = tieLineCorners.get(3).t;
 
         tieLines.add(tie);
         repaintEditFrame();
     }
 
     public void addTieLine() {
-        tieLineSelections = new ArrayList<PathAndT>();
+        tieLineCorners = new ArrayList<PathAndT>();
         tieLineDialog.getLabel().setText(tieLineStepStrings[0]);
         tieLineDialog.pack();
         tieLineDialog.setVisible(true);
@@ -1724,7 +1837,7 @@ public class Editor implements CropEventListener, MouseListener,
             }
         }
 
-        for (PathAndT pat: tieLineSelections) {
+        for (PathAndT pat: tieLineCorners) {
             if (pat.path == path) {
                 pat.t = 1.0 - pat.t;
             }
@@ -2070,6 +2183,10 @@ public class Editor implements CropEventListener, MouseListener,
     public ArrayList<Point2D.Double> keyPoints() {
         ArrayList<Point2D.Double> output = intersections();
 
+        for (Point2D.Double p: principalToStandardPage.getInputVertices()) {
+            output.add(p);
+        }
+
         for (Selectable m: selectables()) {
             output.add(m.getLocation());
         }
@@ -2105,6 +2222,13 @@ public class Editor implements CropEventListener, MouseListener,
         for (int i = 0; i < tieLines.size(); ++i) {
             for (TieLineHandle handle: TieLineHandle.values()) {
                 output.add(new TieLineSelection(i, handle));
+            }
+        }
+
+        // Add rulers.
+        for (int i = 0; i < rulers.size(); ++i) {
+            for (RulerHandle handle: RulerHandle.values()) {
+                output.add(new RulerSelection(i, handle));
             }
         }
 
