@@ -357,7 +357,16 @@ public class EditFrame extends JFrame {
                                              KeyStroke.getKeyStroke('m')) {
                     @Override
                         public void actionPerformed(ActionEvent e) {
-                        getParentEditor().moveSelection();
+                        getParentEditor().moveSelection(true);
+                    }
+                });
+
+            mnEdit.add(new Action("Move selection only",
+                                             KeyEvent.VK_V,
+                                             KeyStroke.getKeyStroke('M')) {
+                    @Override
+                        public void actionPerformed(ActionEvent e) {
+                        getParentEditor().moveSelection(false);
                     }
                 });
 
