@@ -384,6 +384,7 @@ public class Editor implements CropEventListener, MouseListener,
             GeneralPolyline path = paths.get(curveNo);
             Point2D.Double oldPos = path.get(vertexNo);
             path.set(vertexNo, target);
+            repaintEditFrame();
         }
 
         @Override
@@ -489,6 +490,7 @@ public class Editor implements CropEventListener, MouseListener,
             Arrow item = arrows.get(index);
             item.x = dest.getX();
             item.y = dest.getY();
+            repaintEditFrame();
         }
 
         @Override
@@ -622,6 +624,7 @@ public class Editor implements CropEventListener, MouseListener,
     }
 
     private static final String PREF_DIR = "dir";
+    private static final double BASE_SCALE = 615.0;
     static protected double MOUSE_UNSTICK_DISTANCE = 30; /* pixels */
     static protected Image crosshairs = null;
 
@@ -688,7 +691,7 @@ public class Editor implements CropEventListener, MouseListener,
     protected double labelXMargin = 0;
     protected double labelYMargin = 0;
 
-    static final double STANDARD_LINE_WIDTH = 0.0012;
+    static final double STANDARD_LINE_WIDTH = 0.0016;
     protected double lineWidth = STANDARD_LINE_WIDTH;
     protected StandardStroke lineStyle = StandardStroke.SOLID;
 
@@ -758,7 +761,7 @@ public class Editor implements CropEventListener, MouseListener,
         principalToStandardPage = null;
         standardPageToPrincipal = null;
         pageBounds = null;
-        scale = 800.0;
+        scale = BASE_SCALE;
         paths = new ArrayList<GeneralPolyline>();
         arrows = new ArrayList<Arrow>();
         tieLines = new ArrayList<TieLine>();
@@ -771,7 +774,7 @@ public class Editor implements CropEventListener, MouseListener,
         mprin = null;
         filename = null;
         saveNeeded = false;
-        scaledOriginalImages = new ArrayList<ScaledCroppedImage>();
+        scaledOriginalImages = null;
         vertexInfo.setAngle(0);
         vertexInfo.setSlope(0);
         vertexInfo.setLineWidth(lineWidth);
@@ -989,20 +992,35 @@ public class Editor implements CropEventListener, MouseListener,
 
     /** @param scale A multiple of standardPage coordinates
 
-        @return a transform from standard page coordinates to device
-        coordinates. */
+        @return a transform from principal coordinates to device
+        coordinates. In additon to the scaling, the coordinates are
+        translated to make (0,0) the top left corner. */
     Affine standardPageToDevice(double scale) {
-        return Affine.getScaleInstance(scale, scale);
+        Affine output = Affine.getScaleInstance(scale, scale);
+        output.translate(-pageBounds.x, -pageBounds.y);
+        return output;
     }
 
     /** @param scale A multiple of standardPage coordinates
 
         @return a transform from principal coordinates to device
-        coordinates. */
+        coordinates. In additon to the scaling, the coordinates are
+        translated to make (0,0) the top left corner. */
     Affine principalToScaledPage(double scale) {
         Affine output = standardPageToDevice(scale);
         output.concatenate(principalToStandardPage);
         return output;
+    }
+
+    Affine scaledPageToPrincipal(double scale) {
+        try {
+            return principalToScaledPage(scale).createInverse();
+        } catch (NoninvertibleTransformException e) {
+            System.err.println("p2sp = " + principalToStandardPage);
+            System.err.println("p2scp = " + principalToScaledPage(scale));
+            throw new IllegalStateException("Transform at scale " + scale
+                                            + " is not invertible");
+        }
     }
 
     /** Move mprin, plus the selection if the mouse is stuck at the
@@ -1058,8 +1076,8 @@ public class Editor implements CropEventListener, MouseListener,
         pageBounds) to fill deviceBounds as much as possible without
         going over.
 
-        xxx This might be worthless because of the failure to take
-        margins into account.
+        xxx This might be worthless because of the failure to account
+        for the device's hardware-enforced margins.
     */
     double deviceScale(AffineTransform xform, Rectangle2D deviceBounds) {
         AffineTransform itrans;
@@ -1086,8 +1104,8 @@ public class Editor implements CropEventListener, MouseListener,
 
     /** Paint the diagram to the given graphics context.
 
-        @param standardPageToDevice Transformation from standard page
-        coordinates to device coordinates
+        @param scale Scaling factor to convert standard page
+        coordinates to device coordinates.
 
         @param editing If true, then paint editing hints (highlight
         the currently active curve in green, show the consequences of
@@ -1220,7 +1238,7 @@ public class Editor implements CropEventListener, MouseListener,
         }
 
         for (LinearRuler ruler: rulers) {
-            ruler.draw(g, principalToStandardPage, scale);
+            ruler.draw(g, getPrincipalToAlignedPage(), scale);
         }
 
         if (vsel != null) {
@@ -1281,7 +1299,6 @@ public class Editor implements CropEventListener, MouseListener,
                 labelViews.set(sel.index, normalView);
             }
         }
-
     }
 
     /** @return a curve to which a vertex can be appended or inserted.
@@ -1320,46 +1337,6 @@ public class Editor implements CropEventListener, MouseListener,
         add(mprin);
         deselectCurve();
         add(mprin);
-    }
-
-    public void deleteSymbol() {
-        // TODO Symbol handling is an ugly hack that will have to be
-        // consolidated later, probably with Arrow becoming a subclass
-        // of something else.
-
-        if (mprin == null) {
-            return;
-        }
-
-        Point2D.Double nearPoint = null;
-        Point2D.Double mousePage = new Point2D.Double();
-        principalToStandardPage.transform(mprin, mousePage);
-
-        // Square of the minimum distance of all key points examined
-        // so far from mprin, as measured in standard page
-        // coordinates.
-        double minDistSq = 0;
-        int indexOfMin = -1;
-
-        int num = -1;
-
-        for (Arrow arrow: arrows) {
-            ++num;
-            Point2D.Double symbolPage
-                = principalToStandardPage.transform(arrow.x, arrow.y);
-            double distSq = mousePage.distanceSq(symbolPage);
-            if (indexOfMin == -1 || distSq < minDistSq) {
-                indexOfMin = num;
-                minDistSq = distSq;
-            }
-        }
-
-        if (indexOfMin == -1) {
-            return;
-        }
-
-        arrows.remove(indexOfMin);
-        repaintEditFrame();
     }
 
     /** Add a dot. */
@@ -1589,16 +1566,16 @@ public class Editor implements CropEventListener, MouseListener,
                     return;
                 }
                 lineCnt = Integer.parseInt(lineCntStr);
-                if (lineCnt <= 0) {
-                    JOptionPane.showMessageDialog
-                        (null, "Enter a positive integer.");
-                    continue;
+                if (lineCnt > 0) {
+                    break;
                 }
+
+                JOptionPane.showMessageDialog
+                    (editFrame, "Enter a positive integer.");
             } catch (NumberFormatException e) {
-                JOptionPane.showMessageDialog(null, "Invalid number format.");
-                continue;
+                JOptionPane.showMessageDialog
+                    (editFrame, "Invalid number format.");
             }
-            break;
         }
 
         TieLine tie = new TieLine(lineCnt, lineStyle);
@@ -1632,7 +1609,7 @@ public class Editor implements CropEventListener, MouseListener,
             return -1;
         }
 
-        Point2D.Double mousePage = principalToStandardPage.transform(mprin);
+        Point2D.Double mousePage = getPrincipalToAlignedPage().transform(mprin);
 
         int output = -1;
         double minDistance = 0.0;
@@ -1870,6 +1847,7 @@ public class Editor implements CropEventListener, MouseListener,
         t.setX(mprin.x);
         t.setY(mprin.y);
         add(t);
+        selection = new LabelSelection(labels.size() - 1);
     }
 
     public void add(AnchoredLabel label) {
@@ -2282,12 +2260,21 @@ public class Editor implements CropEventListener, MouseListener,
         repaintEditFrame();
     }
 
+    /** principalToStandardPage shifted to put the pageBounds corner
+        at (0,0). */
+    Affine getPrincipalToAlignedPage() {
+        Affine xform = new Affine
+            (AffineTransform.getTranslateInstance(-pageBounds.x, -pageBounds.y));
+        xform.concatenate(principalToStandardPage);
+        return xform;
+    }
+
     void draw(Graphics2D g, GeneralPolyline path, double scale) {
-        path.draw(g, principalToStandardPage, scale);
+        path.draw(g, getPrincipalToAlignedPage(), scale);
     }
 
     void draw(Graphics2D g, TieLine tie, double scale) {
-        tie.draw(g, principalToStandardPage, scale);
+        tie.draw(g, getPrincipalToAlignedPage(), scale);
     }
 
     /** @return the name of the image file that this diagram was
@@ -2384,7 +2371,12 @@ public class Editor implements CropEventListener, MouseListener,
             return;
         }
 
-        diagramType = (new DiagramDialog(null)).showModal();
+        DiagramType temp = (new DiagramDialog(null)).showModal();
+        if (temp == null) {
+            return;
+        }
+
+        diagramType = temp;
         newDiagram(null, null);
     }
 
@@ -2407,13 +2399,12 @@ public class Editor implements CropEventListener, MouseListener,
         clear();
         setOriginalFilename(originalFilename);
 
-        double leftMargin = 0.15;
-        double rightMargin = 0.15;
-        double topMargin = 0.15;
-        double bottomMargin = 0.15;
-        double maxPageHeight = 1.0;
-        double maxPageWidth = 1.0;
-        double aspectRatio = 1.0;
+        double leftMargin = 0.10;
+        double rightMargin = 0.10;
+        double topMargin = 0.10;
+        double bottomMargin = 0.10;
+        double maxDiagramHeight = 1.0;
+        double maxDiagramWidth = 1.0;
 
         Point2D.Double[] principalTrianglePoints =
             { new Point2D.Double(0.0, 0.0),
@@ -2447,11 +2438,10 @@ public class Editor implements CropEventListener, MouseListener,
                     }
                     try {
                         height = Double.parseDouble(heightS);
+                        break;
                     } catch (NumberFormatException e) {
                         JOptionPane.showMessageDialog(null, "Invalid number format.");
-                        continue;
                     }
-                    break;
                 }
 
                 // The logical coordinates of the four legs of the
@@ -2475,16 +2465,16 @@ public class Editor implements CropEventListener, MouseListener,
                     originalToPrincipal = new QuadToQuad(vertices, outputVertices);
                 }
 
-                r = new Rescale(1.0, leftMargin + rightMargin, maxPageWidth,
+                r = new Rescale(1.0, 0.0, maxDiagramWidth,
                                 TriangleTransform.UNIT_TRIANGLE_HEIGHT * height/100,
-                                topMargin + bottomMargin, maxPageHeight);
+                                0.0, maxDiagramHeight);
 
-                double rx = r.width - rightMargin;
-                double bottom = r.height - bottomMargin;
+                double rx = r.width;
+                double bottom = r.height;
 
                 Point2D.Double[] trianglePagePositions =
-                    { new Point2D.Double(leftMargin, bottom),
-                      new Point2D.Double((leftMargin + rx)/2,
+                    { new Point2D.Double(0.0, bottom),
+                      new Point2D.Double(rx/2,
                                          bottom - TriangleTransform.UNIT_TRIANGLE_HEIGHT * r.t),
                       new Point2D.Double(rx, bottom) };
                 principalToStandardPage = new TriangleTransform
@@ -2511,6 +2501,9 @@ public class Editor implements CropEventListener, MouseListener,
             }
         case OTHER:
             {
+                if (diagramType == DiagramType.OTHER) {
+                    leftMargin = rightMargin = topMargin = bottomMargin = 0.0;
+                }
                 Rectangle2D.Double principalBounds
                     = new Rectangle2D.Double(0.0, 0.0, 100.0, 100.0);
                 if (tracing) {
@@ -2521,12 +2514,12 @@ public class Editor implements CropEventListener, MouseListener,
                     originalToPrincipal = q;
                 }
 
-                r = new Rescale(100.0, leftMargin + rightMargin, maxPageWidth,
-                                100.0, topMargin + bottomMargin, maxPageHeight);
+                r = new Rescale(100.0, 0.0, maxDiagramWidth,
+                                100.0, 0.0, maxDiagramHeight);
 
                 principalToStandardPage = new RectangleTransform
                     (new Rectangle2D.Double(0.0, 0.0, 100.0, 100.0),
-                     new Rectangle2D.Double(leftMargin, 1.0 - bottomMargin,
+                     new Rectangle2D.Double(0.0, 1.0,
                                             100.0 * r.t, -100.0 * r.t));
                 if (diagramType == DiagramType.BINARY) {
                     diagramOutline.addAll
@@ -2591,11 +2584,10 @@ public class Editor implements CropEventListener, MouseListener,
                         for (int i = 0; i < pageMaxStrings.length; ++i) {
                             pageMaxes[i] = Double.parseDouble(pageMaxStrings[i]);
                         }
+                        break;
                     } catch (NumberFormatException e) {
                         JOptionPane.showMessageDialog(null, "Invalid number format.");
-                        continue;
                     }
-                    break;
                 }
 
                 double[] sideLengths = new double[3];
@@ -2689,9 +2681,8 @@ public class Editor implements CropEventListener, MouseListener,
 
                 Rectangle2D.Double bounds = Duh.bounds(xformed);
                 r = new Rescale
-                    (bounds.width, leftMargin + rightMargin, maxPageWidth,
-                     bounds.height, topMargin + bottomMargin,
-                     maxPageHeight);
+                    (bounds.width, 0.0, maxDiagramWidth,
+                     bounds.height, 0.0, maxDiagramHeight);
                 xform.preConcatenate
                     (AffineTransform.getScaleInstance(r.t, -r.t));
 
@@ -2705,8 +2696,7 @@ public class Editor implements CropEventListener, MouseListener,
                     (top.x, xform.transform(trianglePoints[LEFT_VERTEX]).x);
                 double minY = top.y;
                 xform.preConcatenate
-                    (AffineTransform.getTranslateInstance
-                     (leftMargin - minX, topMargin - minY));
+                    (AffineTransform.getTranslateInstance(-minX, -minY));
 
                 // Change the input vertices to be the actual
                 // corners of the triangle in principal
@@ -2733,17 +2723,13 @@ public class Editor implements CropEventListener, MouseListener,
                         (vertices, principalTrianglePoints);
                 }
 
-                r = new Rescale(1.0, leftMargin + rightMargin, maxPageWidth,
+                r = new Rescale(1.0, 0.0, maxDiagramWidth,
                                 TriangleTransform.UNIT_TRIANGLE_HEIGHT,
-                                topMargin + bottomMargin,
-                                maxPageHeight);
-                double rx = r.width - rightMargin;
-                double bottom = r.height - bottomMargin;
-
+                                0.0, maxDiagramHeight);
                 Point2D.Double[] trianglePagePositions =
-                    { new Point2D.Double(leftMargin, bottom),
-                      new Point2D.Double((leftMargin + rx)/2, topMargin),
-                      new Point2D.Double(rx, bottom) };
+                    { new Point2D.Double(0.0, r.height),
+                      new Point2D.Double(r.width/2, 0.0),
+                      new Point2D.Double(r.width, r.height) };
                 principalToStandardPage = new TriangleTransform
                     (principalTrianglePoints, trianglePagePositions);
                 diagramOutline.addAll
@@ -2755,7 +2741,10 @@ public class Editor implements CropEventListener, MouseListener,
                 break;
             }
         }
-        pageBounds = new Rectangle2D.Double(0.0, 0.0, r.width, r.height);
+
+        pageBounds = new Rectangle2D.Double
+            (-leftMargin, -topMargin, r.width + leftMargin + topMargin,
+             r.height + topMargin + bottomMargin);
 
         if (diagramOutline.size() > 0) {
             // Insert the polyline outline of the diagram into the set
@@ -2812,12 +2801,16 @@ public class Editor implements CropEventListener, MouseListener,
     }
 
     protected double normalFontSize() {
-        return 12.0 / 800;
+        return 12.0 / BASE_SCALE;
     }
 
     protected void initializeDiagram() {
 
-        if (diagramType.isTernary()) {
+        boolean isTernary = diagramType.isTernary();
+        editFrame.setAspectRatio.setEnabled(!isTernary);
+        editFrame.setTopComponent.setEnabled(isTernary);
+
+        if (isTernary) {
             NumberFormat pctFormat = new DecimalFormat("##0.0'%'");
             xAxis = LinearAxis.createXAxis(pctFormat);
             // Confusingly, the axis that goes from 0 at the bottom
@@ -2905,6 +2898,154 @@ public class Editor implements CropEventListener, MouseListener,
         return true;
     }
 
+
+    /** Invoked from the EditFrame menu */
+    public void setAspectRatio() {
+        if (diagramType == null) {
+            return;
+        }
+
+        Rectangle2D.Double bounds = principalToStandardPage.outputBounds();
+        if (bounds.height < 0) {
+            bounds.y += bounds.height;
+            bounds.height *= -1;
+        }
+
+        double oldValue = ((double) bounds.width) / bounds.height;
+        String oldString = String.format("%.3f", oldValue);
+        double aspectRatio;
+
+        while (true) {
+            try {
+                String aspectRatioStr = JOptionPane.showInputDialog
+                    (editFrame,
+                     "Enter the width-to-height ratio for the core diagram:",
+                     oldString);
+                if (aspectRatioStr == null) {
+                    return;
+                }
+
+                aspectRatio = Double.parseDouble(aspectRatioStr);
+                if (aspectRatio <= 0) {
+                    JOptionPane.showMessageDialog
+                        (editFrame, "Enter a positive integer.");
+                } else {
+                    break;
+                }
+            } catch (NumberFormatException e) {
+                JOptionPane.showMessageDialog
+                    (editFrame, "Invalid number format.");
+            }
+        }
+
+        double stretchFactor = aspectRatio / oldValue;
+        System.out.println("Stretch factor = " + stretchFactor);
+        ((RectangleTransform) principalToStandardPage).scaleOutput
+            (stretchFactor, 1.0);
+        try {
+            standardPageToPrincipal = principalToStandardPage.createInverse();
+        } catch (NoninvertibleTransformException e) {
+            System.err.println("This transform is not invertible");
+            System.exit(2);
+        }
+
+        pageBounds.x *= stretchFactor;
+        pageBounds.width *= stretchFactor;
+        getEditPane().setPreferredSize(scaledPageBounds(scale).getSize());
+        getEditPane().revalidate();
+        scaledOriginalImages = null;
+
+
+        repaintEditFrame();
+    }
+
+
+    /** Invoked from the EditFrame menu */
+    public void setMargin(Side side) {
+        if (diagramType == null) {
+            return;
+        }
+
+        Rectangle2D.Double bounds = principalToStandardPage.outputBounds();
+        if (bounds.height < 0) {
+            bounds.y += bounds.height;
+            bounds.height *= -1;
+        }
+
+        String standard;
+        switch (diagramType) {
+        case BINARY:
+        case OTHER:
+            standard = "core diagram height";
+            break;
+        case TERNARY:
+            standard = "triangle side length";
+            break;
+        default:
+            standard = "core diagram "
+                + ((bounds.width >= bounds.height) ? "width" : "height");
+            break;
+        }
+
+        double oldValue = 0.0;
+        switch (side) {
+        case LEFT:
+            oldValue = -pageBounds.x;
+            break;
+        case RIGHT:
+            oldValue = pageBounds.getMaxX() - bounds.getMaxX();
+            break;
+        case TOP:
+            oldValue = -pageBounds.y;
+            break;
+        case BOTTOM:
+            oldValue = pageBounds.getMaxY() - bounds.getMaxY();
+            break;
+        }
+
+        String oldString = String.format("%.1f", oldValue * 100);
+        double margin;
+
+        while (true) {
+            try {
+                String marginStr = JOptionPane.showInputDialog
+                    (editFrame,
+                     "Margin size as a percentage of the " + standard + ":",
+                     oldString);
+                if (marginStr == null) {
+                    return;
+                }
+
+                margin = Double.parseDouble(marginStr) / 100.0;
+                break;
+            } catch (NumberFormatException e) {
+                JOptionPane.showMessageDialog(null, "Invalid number format.");
+            }
+        }
+
+        double delta = margin - oldValue;
+
+        switch (side) {
+        case LEFT:
+            pageBounds.x = -margin;
+            // Fall through
+        case RIGHT:
+            pageBounds.width += delta;
+            break;
+        case TOP:
+            pageBounds.y = -margin;
+            // Fall through
+        case BOTTOM:
+            pageBounds.height += delta;
+            break;
+        }
+
+        getEditPane().setPreferredSize(scaledPageBounds(scale).getSize());
+        getEditPane().revalidate();
+        scaledOriginalImages = null;
+        repaintEditFrame();
+    }
+
     /** Invoked from the EditFrame menu */
     public void openDiagram() {
         if (!verifyNewDiagram()) {
@@ -2952,6 +3093,7 @@ public class Editor implements CropEventListener, MouseListener,
         originalToPrincipal = other.originalToPrincipal;
         principalToStandardPage = other.principalToStandardPage;
         pageBounds = other.pageBounds;
+        filename = other.filename;
         originalFilename = other.originalFilename;
         scale = other.scale;
         arrows = other.arrows;
@@ -3056,7 +3198,7 @@ public class Editor implements CropEventListener, MouseListener,
         Preferences prefs = Preferences.userNodeForPackage(getClass());
         String dir = prefs.get(PREF_DIR,  null);
         JFileChooser chooser = new JFileChooser();
-        chooser.setDialogTitle("Save as " + ext.toUpperCase());
+        chooser.setDialogTitle("Open " + ext.toUpperCase() + " file");
         if (dir != null) {
             chooser.setCurrentDirectory(new File(dir));
         }
@@ -3335,18 +3477,10 @@ public class Editor implements CropEventListener, MouseListener,
 
         Point mpos = getEditPane().getMousePosition();
         if (mpos != null && !preserveMprin) {
-            boolean updateMprin = (mprin == null) || !mouseIsStuck;
-
-            if (!updateMprin) {
-                Point mprinScreen = Duh.floorPoint
-                    (principalToScaledPage(scale).transform(mprin));
-                if (mprinScreen.distance(mpos) >= MOUSE_UNSTICK_DISTANCE) {
-                    mouseIsStuck = false;
-                    updateMprin = true;
-                }
-            }
-
-            if (updateMprin) {
+            if (!mouseIsStuck || mprin == null
+                || (principalToScaledPage(scale).transform(mprin)
+                    .distance(mpos) >= MOUSE_UNSTICK_DISTANCE)) {
+                mouseIsStuck = false;
                 mprin = getMousePosition();
             }
         }
@@ -3373,7 +3507,7 @@ public class Editor implements CropEventListener, MouseListener,
         double sx = mpos.getX() + 0.5;
         double sy = mpos.getY() + 0.5;
 
-        return standardPageToPrincipal.transform(sx/scale, sy/scale);
+        return scaledPageToPrincipal(scale).transform(sx,sy);
     }
 
     void updateStatusBar() {
@@ -3479,7 +3613,7 @@ public class Editor implements CropEventListener, MouseListener,
         if (mprin != null) {
             // Preserve the mouse position: transform mprin into
             // somewhere in the pixel viewportPoint.
-            pagePoint = principalToStandardPage.transform(mprin);
+            pagePoint = getPrincipalToAlignedPage().transform(mprin);
             viewportPoint =
                 new Point((int) Math.floor(pagePoint.x * oldScale) - view.x,
                           (int) Math.floor(pagePoint.y * oldScale) - view.y);
@@ -3676,7 +3810,7 @@ public class Editor implements CropEventListener, MouseListener,
         AnchoredLabel label = labels.get(labelNo);
         View view = labelViews.get(labelNo);
         Point2D.Double point =
-            principalToStandardPage.transform(label.getX(), label.getY());
+            getPrincipalToAlignedPage().transform(label.getX(), label.getY());
 
         if (label.isOpaque()) {
             Color oldColor = g.getColor();
@@ -3750,7 +3884,7 @@ public class Editor implements CropEventListener, MouseListener,
         double height = view.getPreferredSpan(View.Y_AXIS) + labelYMargin * 2;
 
         Graphics2D g2d = (Graphics2D) g;
-        double textScale = scale / 800.0;
+        double textScale = scale / BASE_SCALE;
 
         AffineTransform xform = AffineTransform.getRotateInstance(angle);
         xform.scale(textScale, textScale);
@@ -3798,7 +3932,7 @@ public class Editor implements CropEventListener, MouseListener,
         double height = view.getPreferredSpan(View.Y_AXIS) + labelYMargin * 2;
 
         Graphics2D g2d = (Graphics2D) g;
-        double textScale = scale / 800.0;
+        double textScale = scale / BASE_SCALE;
 
         AffineTransform xform = AffineTransform.getRotateInstance(angle);
         xform.scale(textScale, textScale);
@@ -3893,6 +4027,9 @@ public class Editor implements CropEventListener, MouseListener,
         int maxScoreIndex = -1;
         int maxScore = 0;
 
+        if (scaledOriginalImages == null) {
+            scaledOriginalImages = new ArrayList<ScaledCroppedImage>();
+        }
         int cnt = scaledOriginalImages.size();
 
         for (int i = cnt - 1; i>=0; --i) {
