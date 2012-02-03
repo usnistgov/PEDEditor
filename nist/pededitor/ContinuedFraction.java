@@ -20,24 +20,28 @@ public class ContinuedFraction {
         no approximation that satisfies maxError and maxMinAtor
         exists.
 
-       @param maxError If nonzero, this sets an upper limit on the
-       absolute value of the approximation error times the numerator
-       times the denominator. If the floating point value is truly an
-       approximation of a fraction, then low maxError values such as
-       0.0001 are usually achievable.
+       @param maxRelativeError If nonzero, this sets an upper limit on
+       the absolute value of (error * (numerator + 1) *
+       (denominator)). If the floating point value is truly the
+       closest approximation of a fraction, then low maxError values
+       such as 0.0001 are usually achievable.
 
        @param maxMinAtor If nonzero, sets an upper limit on the
        minimum of the absolute value of the numerator and the
        denominator of a fractional representation. This reflects a
        sense that a fraction such as 6673/1 may be legitimate, and a
        fraction such as 3/295837 may be legitimate, but a fraction
-       like 24983/47292 is more likely to be random noise.
+       like 24983/47292 looks like trying to find a pattern in a
+       floating point value when there is none.
     */
     static public ContinuedFraction create
         (double x, double maxRelativeError, double maxMinAtor) {
         double oldError = 0.0;
 
         for (int steps = 0; ; ++steps) {
+            // Starting from scratch each time is not the way to
+            // achieve good performance, but it is easier to understand.
+
             ContinuedFraction f = createBySteps(x, steps);
             double error = Math.abs(((double) f.numerator) / f.denominator - x);
             if (steps > 0 && error > oldError) {
@@ -48,14 +52,13 @@ public class ContinuedFraction {
             oldError = error;
 
             if (maxRelativeError != 0
-                && error * Math.abs((double) f.numerator * f.denominator)
+                && error * (Math.abs(f.numerator + 1.0) * f.denominator)
                                     > maxRelativeError) {
                 continue;
             }
 
             if (maxMinAtor != 0 &&
-                Math.min(Math.abs(f.numerator), Math.abs(f.denominator))
-                > maxMinAtor) {
+                Math.min(Math.abs(f.numerator), f.denominator) > maxMinAtor) {
                 return null;
             }
 
@@ -78,16 +81,23 @@ public class ContinuedFraction {
         i = i * output.numerator + output.denominator;
         output.denominator = output.numerator;
         output.numerator = i;
+        if (output.denominator < 0) {
+            output.numerator *= -1;
+            output.denominator *= -1;
+        }
         return output;
     }
 
+    /** Return true if this fraction equals and looks better as a
+        terminating decimal. For example, 7/50 looks nicer as 0.14
+        (true), but 1/8 looks nicer than 0.125 (false). */
     public boolean looksLikeDecimal() {
         if (Math.abs(numerator) <= 1) {
             return false;
         }
 
         int twos = 0;
-        long deno = Math.abs(denominator);
+        long deno = denominator;
         while (deno % 2 == 0) {
             ++twos;
             deno /= 2;
@@ -99,5 +109,9 @@ public class ContinuedFraction {
         }
 
         return (deno == 1 && fives >= 1 && fives * 2 >= twos);
+    }
+
+    public String toString() {
+        return numerator + "/" + denominator;
     }
 }
