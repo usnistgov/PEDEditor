@@ -51,4 +51,8 @@ public class CurveDistance {
         output.distance = p.distance(output.point);
         return output;
     }
+
+    public static CurveDistance distance(Point2D p1, Point2D p2) {
+        return new CurveDistance(0.0, p2, p1.distance(p2));
+    }
 }
