@@ -114,6 +114,16 @@ public class RectangleTransform extends AffinePolygonTransform {
         return (Rectangle2D.Double) output.clone();
     }
 
+    /** Scale the output rectangle by sx along the x axis and sy along
+        the y axis. */
+    public void scaleOutput(double sx, double sy) {
+        output.x *= sx;
+        output.width *= sx;
+        output.y *= sy;
+        output.height *= sy;
+        update();
+    }
+
     public String toString() {
         return PolygonTransformAdapter.toString(this) + "(" + super.toString() + ")";
     }
