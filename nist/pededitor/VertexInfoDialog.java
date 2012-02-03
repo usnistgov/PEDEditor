@@ -30,6 +30,7 @@ public class VertexInfoDialog extends JDialog {
 
     public VertexInfoDialog(Frame owner) {
         super(owner, "Tangent", false);
+        setFocusableWindowState(false);
 
         GridBagLayout gb = new GridBagLayout();
         getContentPane().setLayout(gb);
