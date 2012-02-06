@@ -30,6 +30,8 @@ import org.codehaus.jackson.annotate.JsonSubTypes.Type;
 import org.codehaus.jackson.map.*;
 import org.codehaus.jackson.map.annotate.*;
 
+// TODO Kill xAxis, etc!!!
+
 // TODO (major, mandatory) Axes and user-defined variables.
 // Some of the groundwork has been done, but there is a lot left.
 
@@ -736,6 +738,7 @@ public class Editor implements CropEventListener, MouseListener,
     protected ArrayList<View> labelViews;
     @JsonProperty protected ArrayList<Arrow> arrows;
     protected ArrayList<TieLine> tieLines;
+    @JsonProperty protected String[] diagramComponents = null;
     protected BufferedImage originalImage;
     protected String originalFilename;
     /** The item (vertex, label, etc.) that is selected, or null if nothing is. */
@@ -751,9 +754,6 @@ public class Editor implements CropEventListener, MouseListener,
     /** principal coordinates are used to define rulers' startPoints
         and endPoints. */
     protected ArrayList<LinearRuler> rulers;
-    protected LinearAxis xAxis = null;
-    protected LinearAxis yAxis = null;
-    protected LinearAxis zAxis = null;
     protected LinearAxis pageXAxis = null;
     protected LinearAxis pageYAxis = null;
     protected boolean preserveMprin = false;
@@ -859,6 +859,7 @@ public class Editor implements CropEventListener, MouseListener,
         selection = null;
         axes = new ArrayList<LinearAxis>();
         rulers = new ArrayList<LinearRuler>();
+        diagramComponents = new String[Side.values().length];
         mprin = null;
         filename = null;
         saveNeeded = false;
@@ -1085,16 +1086,6 @@ public class Editor implements CropEventListener, MouseListener,
         sel.curveNo = (sel.curveNo + delta + paths.size()) % paths.size();
         sel.vertexNo = paths.get(sel.curveNo).size() - 1;
         repaintEditFrame();
-    }
-
-    public void editMargins() {
-        System.out.println("TODO this");
-        // TODO editMargins
-    }
-
-    public void editDiagramComponents() {
-        System.out.println("TODO this");
-        // TODO editDiagramComponents
     }
 
     /** @param scale A multiple of standardPage coordinates
@@ -1918,8 +1909,52 @@ public class Editor implements CropEventListener, MouseListener,
         repaintEditFrame();
     }
 
-    public void setComponent(int componentNum) {
-        // TODO Do...
+    public void setDiagramComponent(Side side) {
+        String old = diagramComponents[side.ordinal()];
+        if (old == null) {
+            old = "";
+        }
+
+        String str = JOptionPane.showInputDialog
+            (editFrame, side + " diagram component name:", old);
+        if (str == null) {
+            return;
+        }
+
+        // When updating a diagram component, you may also have to
+        // update the corresponding axis name and format (since xx.x%
+        // format is used with component axes).
+
+        if (str.equals("")) {
+            // Reset this axis to the default.
+            diagramComponents[side.ordinal()] = null;
+            LinearAxis axis = getAxis(side);
+            if (axis != null) {
+                axes.remove(axis);
+            }
+            axes.add(defaultAxis(side));
+        } else {
+            LinearAxis axis = getAxis(side);
+            if (axis != null) {
+                axis.name = str;
+                axis.format = new DecimalFormat("##0.0'%'");
+            }
+            diagramComponents[side.ordinal()] = (str.equals("") ? null : str);
+        }
+        updateTitle();
+    }
+
+    LinearAxis getAxis(Side side) {
+        System.out.println("getAxis(" + side + ")");
+        switch (side) {
+        case RIGHT:
+            return getXAxis();
+        case TOP:
+            return getYAxis();
+        case LEFT:
+            return getZAxis();
+        }
+        return null;
     }
 
     @JsonIgnore public LinearAxis getXAxis() {
@@ -1938,6 +1973,31 @@ public class Editor implements CropEventListener, MouseListener,
             }
         }
         return null;
+    }
+
+    static boolean isZAxis(LinearAxis axis) {
+        return axis.getA() == -1.0 && axis.getB() == -1.0
+            && axis.getC() == 100.0;
+    }
+
+    @JsonIgnore public LinearAxis getZAxis() {
+        for (LinearAxis axis: axes) {
+            if (axis.getA() == -1.0 && axis.getB() == -1.0
+                && axis.getC() == 100.0) {
+                return axis;
+            }
+        }
+        return null;
+    }
+
+    public String getDiagramComponent(Side side) {
+        return diagramComponents[side.ordinal()];
+    }
+
+    public boolean axisIsFractional(LinearAxis axis) {
+        return (axis.isXAxis() && getDiagramComponent(Side.RIGHT) != null)
+            || (axis.isYAxis() && getDiagramComponent(Side.TOP) != null)
+            || (isZAxis(axis) && getDiagramComponent(Side.LEFT) != null);
     }
 
     /** Invoked from the EditFrame menu */
@@ -2194,6 +2254,16 @@ public class Editor implements CropEventListener, MouseListener,
         return output;
     }
 
+    ArrayList<LabelSelection> labelSelections() {
+        ArrayList<LabelSelection> output
+            = new ArrayList<LabelSelection>();
+
+        for (int i = 0; i < labels.size(); ++i) {
+            output.add(new LabelSelection(i));
+        }
+        return output;
+   }
+
 
     /** @return a list of all possible selections. */
     ArrayList<Selectable> selectables() {
@@ -2208,10 +2278,7 @@ public class Editor implements CropEventListener, MouseListener,
             }
         }
 
-        // Add labels.
-        for (int i = 0; i < labels.size(); ++i) {
-            output.add(new LabelSelection(i));
-        }
+        output.addAll(labelSelections());
 
         // Add arrows.
         for (int i = 0; i < arrows.size(); ++i) {
@@ -2413,8 +2480,68 @@ public class Editor implements CropEventListener, MouseListener,
         originalToPrincipal = null;
         originalImage = null;
         zoomFrame.setVisible(false);
-        editFrame.setTitle("Edit " + diagramType);
+        updateTitle();
         editFrame.mnBackgroundImage.setEnabled(false);
+    }
+
+    void updateTitle() {
+        StringBuilder title = new StringBuilder
+            (isEditable() ? "Edit " : "View ");
+        title.append(diagramType);
+
+        String str = systemName();
+        if (str != null) {
+            title.append(" ");
+            title.append(str);
+        }
+
+        str = getOriginalFilename();
+        if (str != null) {
+            title.append(" ");
+            title.append(str);
+        }
+
+        editFrame.setTitle(title.toString());
+    }
+
+    /** @return the system name if known, with components sorted into
+        alphabetical order, or null otherwise.
+
+        This might not be an actual system name if the diagram
+        components are not principal components, but whatever. */
+    public String systemName() {
+        Side[] sides = null;
+        if (diagramType.isTernary()) {
+            sides = new Side[] {Side.LEFT, Side.RIGHT, Side.TOP};
+        } else {
+            sides = new Side[] {Side.LEFT, Side.RIGHT};
+        }
+
+        ArrayList<String> comps = new ArrayList<String>();
+        for (Side side: sides) {
+            String str = getDiagramComponent(side);
+            if (str == null) {
+                return null;
+            } else {
+                comps.add(str);
+            }
+        }
+
+        if (comps != null) {
+            Collections.sort(comps);
+        }
+
+        StringBuilder str = null;
+        for (String comp: comps) {
+            if (str == null) {
+                str = new StringBuilder();
+            } else {
+                str.append("-");
+            }
+            str.append(comp);
+        }
+
+        return str.toString();
     }
 
     public void setOriginalFilename(String filename) {
@@ -2441,7 +2568,7 @@ public class Editor implements CropEventListener, MouseListener,
                 throw new IOException(filename + ": unknown image format");
             }
             originalImage = im;
-            editFrame.setTitle("Edit " + diagramType + " " + filename);
+            updateTitle();
             zoomFrame.setImage(getOriginalImage());
             initializeCrosshairs();
             zoomFrame.getImageZoomPane().crosshairs = crosshairs;
@@ -2890,35 +3017,35 @@ public class Editor implements CropEventListener, MouseListener,
         case TERNARY:
         case TERNARY_BOTTOM:
             {
-                rulers.get(0).axis = xAxis;
-                rulers.get(1).axis = yAxis;
-                rulers.get(2).axis = yAxis;
+                rulers.get(0).axis = getXAxis();
+                rulers.get(1).axis = getYAxis();
+                rulers.get(2).axis = getYAxis();
                 break;
             }
         case BINARY:
             {
-                rulers.get(0).axis = xAxis;
-                rulers.get(1).axis = xAxis;
-                rulers.get(2).axis = yAxis;
-                rulers.get(3).axis = yAxis;
+                rulers.get(0).axis = getXAxis();
+                rulers.get(1).axis = getXAxis();
+                rulers.get(2).axis = getYAxis();
+                rulers.get(3).axis = getYAxis();
                 break;
             }
         case TERNARY_LEFT:
             {
-                rulers.get(0).axis = xAxis;
-                rulers.get(1).axis = yAxis;
+                rulers.get(0).axis = getXAxis();
+                rulers.get(1).axis = getYAxis();
                 break;
             }
         case TERNARY_RIGHT:
             {
-                rulers.get(0).axis = xAxis;
-                rulers.get(1).axis = yAxis;
+                rulers.get(0).axis = getXAxis();
+                rulers.get(1).axis = getYAxis();
                 break;
             }
         case TERNARY_TOP:
             {
-                rulers.get(0).axis = yAxis;
-                rulers.get(1).axis = yAxis;
+                rulers.get(0).axis = getYAxis();
+                rulers.get(1).axis = getYAxis();
                 break;
             }
         }
@@ -2928,6 +3055,39 @@ public class Editor implements CropEventListener, MouseListener,
         return 12.0 / BASE_SCALE;
     }
 
+    LinearAxis defaultAxis(Side side) {
+        if (diagramType.isTernary()) {
+            NumberFormat format = new DecimalFormat("##0.0'%'");
+            // Confusingly, the axis that goes from 0 at the bottom
+            // left to 100 at the bottom right like a normal x-axis
+            // and that is called "xAxis" actually ends at component
+            // 'Z'.
+            LinearAxis axis = LinearAxis.createXAxis(format);
+
+            switch (side) {
+            case RIGHT:
+                axis = LinearAxis.createXAxis(format);
+                axis.name = "Z";
+                return axis;
+            case LEFT:
+                axis = new LinearAxis(format, -1.0, -1.0, 100.0);
+                axis.name = "Z";
+                return axis;
+            case TOP:
+                return LinearAxis.createYAxis(format);
+            }
+        } else {
+            NumberFormat format = new DecimalFormat("##0.0");
+            switch (side) {
+            case RIGHT:
+                return LinearAxis.createXAxis(format);
+            case TOP:
+                return LinearAxis.createYAxis(format);
+            }
+        }
+        throw new IllegalStateException("No such side " + side);
+    }
+
     protected void initializeDiagram() {
 
         boolean isTernary = diagramType.isTernary();
@@ -2935,26 +3095,12 @@ public class Editor implements CropEventListener, MouseListener,
         editFrame.setTopComponent.setEnabled(isTernary);
 
         if (isTernary) {
-            NumberFormat pctFormat = new DecimalFormat("##0.0'%'");
-            xAxis = LinearAxis.createXAxis(pctFormat);
-            // Confusingly, the axis that goes from 0 at the bottom
-            // left to 100 at the bottom right like a normal x-axis
-            // and that is called "xAxis" actually ends at component
-            // 'Z'.
-            xAxis.name = "Z";
-            yAxis = LinearAxis.createYAxis(pctFormat);
-            zAxis = new LinearAxis(pctFormat, -1.0, -1.0, 100.0);
-            zAxis.name = "X";
-
-            axes.add(zAxis);
-            axes.add(yAxis);
-            axes.add(xAxis);
+            axes.add(defaultAxis(Side.LEFT));
+            axes.add(defaultAxis(Side.RIGHT));
+            axes.add(defaultAxis(Side.TOP));
         } else {
-            NumberFormat format = new DecimalFormat("##0.0");
-            xAxis = LinearAxis.createXAxis(format);
-            yAxis = LinearAxis.createYAxis(format);
-            axes.add(xAxis);
-            axes.add(yAxis);
+            axes.add(defaultAxis(Side.RIGHT));
+            axes.add(defaultAxis(Side.TOP));
         }
 
         try {
@@ -3030,10 +3176,6 @@ public class Editor implements CropEventListener, MouseListener,
         }
 
         Rectangle2D.Double bounds = principalToStandardPage.outputBounds();
-        if (bounds.height < 0) {
-            bounds.y += bounds.height;
-            bounds.height *= -1;
-        }
 
         double oldValue = ((double) bounds.width) / bounds.height;
         String oldString = String.format("%.3f", oldValue);
@@ -3091,10 +3233,6 @@ public class Editor implements CropEventListener, MouseListener,
         }
 
         Rectangle2D.Double bounds = principalToStandardPage.outputBounds();
-        if (bounds.height < 0) {
-            bounds.y += bounds.height;
-            bounds.height *= -1;
-        }
 
         String standard;
         switch (diagramType) {
@@ -3214,6 +3352,7 @@ public class Editor implements CropEventListener, MouseListener,
         other. */
     void cannibalize(Editor other) {
         diagramType = other.diagramType;
+        diagramComponents = other.diagramComponents;
         originalToPrincipal = other.originalToPrincipal;
         principalToStandardPage = other.principalToStandardPage;
         pageBounds = other.pageBounds;
@@ -3628,10 +3767,22 @@ public class Editor implements CropEventListener, MouseListener,
             return null;
         }
 
-        double sx = mpos.getX() + 0.5;
-        double sy = mpos.getY() + 0.5;
+        // To discourage confusion between random mouse positions and
+        // deliberately chosen fractions, add a fudge factor to all
+        // mouse positions.
+
+        final double ABOUT_HALF = 0.48917592383497298103;
+
+        double sx = mpos.getX() + ABOUT_HALF;
+        double sy = mpos.getY() + ABOUT_HALF;
 
         return scaledPageToPrincipal(scale).transform(sx,sy);
+    }
+
+    static ContinuedFraction approximateFraction(double d) {
+        // Digitization isn't precise enough to justify guessing
+        // ratios. Only show fractions that are clearly meaningful.
+        return ContinuedFraction.create(d, 0.000001, 0, 90);
     }
 
     void updateStatusBar() {
@@ -3642,7 +3793,7 @@ public class Editor implements CropEventListener, MouseListener,
         StringBuilder status = new StringBuilder("");
 
         boolean first = true;
-        for (Axis axis : axes) {
+        for (LinearAxis axis : axes) {
             if (first) {
                 first = false;
             } else {
@@ -3651,6 +3802,18 @@ public class Editor implements CropEventListener, MouseListener,
             status.append(axis.name.toString());
             status.append(" = ");
             status.append(axis.valueAsString(mprin.x, mprin.y));
+
+            if (axisIsFractional(axis)) {
+                // Express values in fractional terms if the decimal
+                // value is a close approximation to a fraction.
+                double d = axis.value(mprin.x, mprin.y);
+                ContinuedFraction f = approximateFraction(d/100.0);
+                if (f != null && f.numerator != 0) {
+                    double num = d * f.denominator / 100.0;
+                    status.append(" (" + String.format("%.3f", num)
+                                  + "/" + f.denominator + ")");
+                }
+            }
         }
         editFrame.setStatus(status.toString());
             
