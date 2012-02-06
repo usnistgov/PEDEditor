@@ -106,12 +106,27 @@ public class RectangleTransform extends AffinePolygonTransform {
         }
     }
 
-    @JsonProperty("input") public Rectangle2D.Double inputBounds() {
+    @JsonProperty("input") public Rectangle2D.Double inputRectangle() {
         return (Rectangle2D.Double) input.clone();
     }
 
-    @JsonProperty("output") public Rectangle2D.Double outputBounds() {
+    static Rectangle2D.Double normalize(Rectangle2D.Double rect) {
+        return new Rectangle2D.Double
+            ((rect.width < 0) ? (rect.x + rect.width) : rect.x,
+             (rect.height < 0) ? (rect.y + rect.height) : rect.y,
+             Math.abs(rect.width), Math.abs(rect.height));
+    }
+
+    @JsonProperty("output") public Rectangle2D.Double outputRectangle() {
         return (Rectangle2D.Double) output.clone();
+    }
+
+    public Rectangle2D.Double inputBounds() {
+        return normalize(input);
+    }
+
+    public Rectangle2D.Double outputBounds() {
+        return normalize(output);
     }
 
     /** Scale the output rectangle by sx along the x axis and sy along
