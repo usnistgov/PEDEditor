@@ -63,7 +63,7 @@ public class EditFrame extends JFrame {
         ("Set left component", KeyEvent.VK_L) {
                 @Override
                     public void actionPerformed(ActionEvent e) {
-                    getParentEditor().setComponent(0);
+                    getParentEditor().setDiagramComponent(Side.LEFT);
                 }
             };
 
@@ -71,7 +71,7 @@ public class EditFrame extends JFrame {
         ("Set right component", KeyEvent.VK_R) {
                 @Override
                     public void actionPerformed(ActionEvent e) {
-                    getParentEditor().setComponent(1);
+                    getParentEditor().setDiagramComponent(Side.RIGHT);
                 }
             };
 
@@ -79,7 +79,7 @@ public class EditFrame extends JFrame {
         ("Set top component", KeyEvent.VK_T) {
                 @Override
                     public void actionPerformed(ActionEvent e) {
-                    getParentEditor().setComponent(2);
+                    getParentEditor().setDiagramComponent(Side.TOP);
                 }
             };
 

@@ -74,7 +74,7 @@ public class LabelDialog extends JDialog {
     }
 
     public void setFontSize(double scale) {
-        ContinuedFraction f = ContinuedFraction.create(scale, 0.00001, 9.0);
+        ContinuedFraction f = ContinuedFraction.create(scale, 0.00001, 9, 0);
         if (f == null || f.looksLikeDecimal()) {
             sizeNumerator.setText(String.format("%6f", scale));
             sizeDenominator.setText("1");

@@ -4,21 +4,31 @@
 </head>
 <body>
 
+<p>This program is used to create new phase equilibria diagrams or to
+digitize images of existing ones. It can also be used for general
+two-dimensional scientific drawing and digitization.</p>
+
 <h2>File operations</h2>
 
 <h3>New Diagram</h3>
 
-<p>Begin creating a new PED diagram from scratch. If you wish to
-digitize a scanned image of an existing diagram, use the <a
-href="#openimage"><code><u>F</u>ile/<u>O</u>pen/<u>I</u>mage for
-Digitization</code></a> option instead.</p>
+<p>Create a new diagram from scratch. If you wish to digitize a
+scanned image of an existing diagram, use the
+<code><u>F</u>ile/<u>O</u>pen/<u>I</u>mage for Digitization</code>
+option instead.</p>
+
+<p>You are presented with a selection of diagram types. If you need to
+use one of the ternary diagram types, you probably know it. Otherwise,
+choose either the "Binary" diagram type to draw a rectangular graph
+using a Cartesian coordinate system or the "Other/Schematic" type to
+draw free-form diagrams starting with an empty page.</p>
 
 <h3>Open diagram</h3>
 
 <p>Open a diagram that was previously saved in this program's native
 <code>PED</code> format. If the diagram was created using the "Open
 Image for Digitization" option and the original image is still
-available, then the image will also be loaded.</p>
+available, then it will be loaded also.</p>
 
 <a name="openimage"><h3>Open Image for Digitization</h3></a>
 
@@ -60,14 +70,28 @@ positioning:</p>
 <ul>
 
 <li><p>Move to ('p') or move to and select ('P') the nearest key
-point. Key points include corners of the diagram, the locations of
-items you have inserted into the diagram, and the intersections of
-line segments with other segments or curves within the diagram.
-Currently curve+curve intersections are not detected.</p>
+point. Key points include</p>
+
+<ul>
+  <li>vertices of curves</li>
+  <li>label anchors</li>
+  <li>corners of tie line regions</li>
+  <li>endpoints of axes</li>
+</ul>
+
+<p>In addition, the following key points may be moved to, but cannot
+be selected:</p>
+
+<ul>
+  <li>intersections of line segments with other segments or curves
+  within the diagram (Currently curve+curve intersections are not
+  detected.)</li>
+  <li>corners of the diagram</li>
+</ul>
 
 <p>If several items share the same location, such as many curves
-meeting at a single vertex, then you may press the 'P' key repeatedly
-to cycle among those items until the correct item is highlighted.</p>
+meeting at a single vertex, then you may press 'P' repeatedly to cycle
+among those items until the correct item is highlighted.</p>
 </li>
 
 <li>Move to ('l', that is, a lower-case L) or move to and select ('L')
@@ -110,36 +134,16 @@ copies the entire curve. (To create one new vertex or curve control
 point, press the left mouse button.)</li>
 
 <li>The 'm' key moves the selection and every other item that shares
-its location. If you really want to move the selected item only, then
-you will need to copy the selection and then delete the selection
-instead.</li>
+its location. Use capital 'M' to move the selected item only.</li>
 
 <li>If one of the four arrow keys is pressed while the mouse is
 located at the selection, then the selection and every other item that
 shares its location is moved one pixel in the direction indicated by
-the arrow key. If an arrow key is pressed when no selection is active,
-or when the mouse is not located at the selection, then only the mouse
+the arrow key. If you press an arrow key when no selection is active
+or the mouse is not located at the selection, then only the mouse
 pointer moves.</li>
 
 </ul>
-
-<li><p><b>Selecting key points:</b> Previously inserted vertices,
-corners of the diagram, label anchors, arrowhead locations, and
-intersections of curves are called key points. Press 'p' to move the
-mouse to the closest key point.</p>
-
-<p>In the coordinates in the status bar, and for operations such as
-inserting a vertex, label, or arrowhead, the mouse will behave as if
-stuck at the key point. This behavior is to protect you from losing
-your place if the mouse slips by just a pixel or two. The mouse will
-become unstuck if an operation is selected. You may also unstick the
-mouse by moving it a couple dozen pixels away.</p>
-</li>
-
-<li><p><b>Selecting the nearest point on a curve:</b> Type an
-underscore ('_') to make the mouse move to and become stuck at the
-nearest point (key or not) on any curve or edge of the
-diagram.</p></li>
 
 <h2>Curves and Vertices</h2>
 
