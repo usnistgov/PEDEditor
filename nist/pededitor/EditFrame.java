@@ -402,14 +402,24 @@ public class EditFrame extends JFrame {
         mnPosition.setMnemonic(KeyEvent.VK_P);
         menuBar.add(mnPosition);
 
+        mnPosition.add(new Action
+                       ("Type coordinates",
+                        KeyEvent.VK_T,
+                        KeyStroke.getKeyStroke('t')) {
+                @Override
+                    public void actionPerformed(ActionEvent e) {
+                    getParentEditor().enterPosition(false);
+                }
+            });
+
         if (editable) {
             mnPosition.add(new Action
-                         ("Enter coordinates",
-                          KeyEvent.VK_L,
-                          KeyStroke.getKeyStroke('=')) {
+                         ("Move selection to typed coordinates",
+                          KeyEvent.VK_M,
+                          KeyStroke.getKeyStroke('T')) {
                     @Override
                         public void actionPerformed(ActionEvent e) {
-                        getParentEditor().addVertexLocation();
+                        getParentEditor().enterPosition(true);
                     }
                 });
         }
