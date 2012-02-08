@@ -46,8 +46,10 @@ class LinearRuler {
 
 
     /** Indicate where labels are to be anchored: NONE: No labels;
-        LEFT: at the tip of the left-side tick; RIGHT: at the tip of
-        the right-side tick. */
+        LEFT: at the tip of the left-side tick (or left of the spine,
+        if there are no left-side ticks); RIGHT: at the tip of the
+        right-side tick (or right of the spine, if there are no
+        right-side ticks). */
     @JsonProperty LabelAnchor labelAnchor;
 
     @JsonBackReference LinearAxis axis;
