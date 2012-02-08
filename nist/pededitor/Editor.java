@@ -30,12 +30,24 @@ import org.codehaus.jackson.annotate.JsonSubTypes.Type;
 import org.codehaus.jackson.map.*;
 import org.codehaus.jackson.map.annotate.*;
 
-// TODO Kill xAxis, etc!!!
+// TODO For default axes, use percentages instead of actual values.
 
-// TODO (major, mandatory) Axes and user-defined variables.
-// Some of the groundwork has been done, but there is a lot left.
+// TODO Ruler dialog
+
+// TODO Axis dialog. (Wait, really?)
+
+// TODO When a curve is selected, update the line width and line style
+// settings.
+
+// TODO Fix issues with tie lines and closed curves.
+
+// TODO Ignore intersections of virtually parallel segments.
 
 // TODO (mandatory bug fix) Non-ASCII characters get lost during "save as PDF".
+
+// ===== The junkyard
+
+// TODO User-defined variables -- are they really needed?
 
 // TODO Text rendering issues: inaccurate text bounding boxes and
 // incorrect spacing of space characters during diagram printing.
@@ -757,6 +769,7 @@ public class Editor implements CropEventListener, MouseListener,
     protected LinearAxis pageXAxis = null;
     protected LinearAxis pageYAxis = null;
     protected boolean preserveMprin = false;
+    protected boolean showRoughFractions = false;
     protected int paintSuppressionRequestCnt;
 
     /** mouseIsStuck is true if the user recently performed a
@@ -1135,12 +1148,18 @@ public class Editor implements CropEventListener, MouseListener,
         Point2D.Double mousePage = principalToStandardPage.transform(mprin);
         mousePage.x += dx / scale;
         mousePage.y += dy / scale;
-        Point2D.Double newMprin = standardPageToPrincipal.transform(mousePage);
+        moveMouseAndMaybeSelection
+            (standardPageToPrincipal.transform(mousePage));
+    }
 
+    /** Move the mouse to position p (defined in principal
+        coordinates). If the mouse is stuck at the selection, then
+        move everything at the mouse to the new position as well. */
+    public void moveMouseAndMaybeSelection(Point2D.Double p) {
         if (mouseIsStuckAtSelection()) {
-            moveSelection(newMprin, true);
+            moveSelection(p, true);
         }
-        mprin = newMprin;
+        mprin = p;
         moveMouse(mprin);
         mouseIsStuck = true;
     }
@@ -1937,7 +1956,7 @@ public class Editor implements CropEventListener, MouseListener,
             LinearAxis axis = getAxis(side);
             if (axis != null) {
                 axis.name = str;
-                axis.format = new DecimalFormat("##0.0'%'");
+                axis.format = new DecimalFormat("##0.0%");
             }
             diagramComponents[side.ordinal()] = (str.equals("") ? null : str);
         }
@@ -1977,13 +1996,12 @@ public class Editor implements CropEventListener, MouseListener,
 
     static boolean isZAxis(LinearAxis axis) {
         return axis.getA() == -1.0 && axis.getB() == -1.0
-            && axis.getC() == 100.0;
+            && axis.getC() == 1.0;
     }
 
     @JsonIgnore public LinearAxis getZAxis() {
         for (LinearAxis axis: axes) {
-            if (axis.getA() == -1.0 && axis.getB() == -1.0
-                && axis.getC() == 100.0) {
+            if (isZAxis(axis)) {
                 return axis;
             }
         }
@@ -2043,12 +2061,8 @@ public class Editor implements CropEventListener, MouseListener,
         }
 
         AnchoredLabel label = labels.get(lsel.index);
-        LabelDialog dialog = new LabelDialog(editFrame, "Edit Label");
-        dialog.setText(label.getText());
-        dialog.setXWeight(label.getXWeight());
-        dialog.setYWeight(label.getYWeight());
-        dialog.setFontSize(label.getFontSize());
-        dialog.setAngle(label.getAngle());
+        LabelDialog dialog = new LabelDialog
+            (editFrame, "Edit Label", label);
 
         repaintEditFrame();
 
@@ -2659,8 +2673,8 @@ public class Editor implements CropEventListener, MouseListener,
 
         Point2D.Double[] principalTrianglePoints =
             { new Point2D.Double(0.0, 0.0),
-              new Point2D.Double(0.0, 100.0),
-              new Point2D.Double(100.0, 0.0) };
+              new Point2D.Double(0.0, 1.0),
+              new Point2D.Double(1.0, 0.0) };
 
         Rescale r = null;
 
@@ -2674,21 +2688,20 @@ public class Editor implements CropEventListener, MouseListener,
                     : (1.0
                        - (vertices[1].distance(vertices[2]) / 
                           vertices[0].distance(vertices[3])));
-                Formatter f = new Formatter();
-                f.format("%.1f", defaultHeight * 100);
-                String initialHeight = f.toString();
+                String initialHeight = String.format
+                    ("%.1f%%", defaultHeight * 100);
 
                 while (true) {
                     String heightS = (String) JOptionPane.showInputDialog
                         (null,
                          "Enter the visual height of the diagram\n" +
-                         "as a percentage of the full triangle height:",
+                         "as a fraction of the full triangle height:",
                          initialHeight);
                     if (heightS == null) {
                         heightS = initialHeight;
                     }
                     try {
-                        height = Double.parseDouble(heightS);
+                        height = parseDouble(heightS);
                         break;
                     } catch (NumberFormatException e) {
                         JOptionPane.showMessageDialog(null, "Invalid number format.");
@@ -2709,15 +2722,15 @@ public class Editor implements CropEventListener, MouseListener,
                 Point2D.Double[] outputVertices =
                     { new Point2D.Double(0.0, 0.0),
                       new Point2D.Double(0.0, height),
-                      new Point2D.Double(100.0 - height, height),
-                      new Point2D.Double(100.0, 0.0) };
+                      new Point2D.Double(1.0 - height, height),
+                      new Point2D.Double(1.0, 0.0) };
 
                 if (tracing) {
                     originalToPrincipal = new QuadToQuad(vertices, outputVertices);
                 }
 
                 r = new Rescale(1.0, 0.0, maxDiagramWidth,
-                                TriangleTransform.UNIT_TRIANGLE_HEIGHT * height/100,
+                                TriangleTransform.UNIT_TRIANGLE_HEIGHT * height,
                                 0.0, maxDiagramHeight);
 
                 double rx = r.width;
@@ -2737,7 +2750,7 @@ public class Editor implements CropEventListener, MouseListener,
                 diagramOutline.add(outputVertices[3]);
                 diagramOutline.add(outputVertices[2]);
 
-                addTernaryBottomRuler(0.0, 100.0);
+                addTernaryBottomRuler(0.0, 1.0);
                 addTernaryLeftRuler(0.0, height);
                 addTernaryRightRuler(0.0, height);
                 break;
@@ -2756,7 +2769,7 @@ public class Editor implements CropEventListener, MouseListener,
                     leftMargin = rightMargin = topMargin = bottomMargin = 0.0;
                 }
                 Rectangle2D.Double principalBounds
-                    = new Rectangle2D.Double(0.0, 0.0, 100.0, 100.0);
+                    = new Rectangle2D.Double(0.0, 0.0, 1.0, 1.0);
                 if (tracing) {
                     // Transform the input quadrilateral into a rectangle
                     QuadToRect q = new QuadToRect();
@@ -2765,13 +2778,13 @@ public class Editor implements CropEventListener, MouseListener,
                     originalToPrincipal = q;
                 }
 
-                r = new Rescale(100.0, 0.0, maxDiagramWidth,
-                                100.0, 0.0, maxDiagramHeight);
+                r = new Rescale(1.0, 0.0, maxDiagramWidth,
+                                1.0, 0.0, maxDiagramHeight);
 
                 principalToStandardPage = new RectangleTransform
-                    (new Rectangle2D.Double(0.0, 0.0, 100.0, 100.0),
+                    (new Rectangle2D.Double(0.0, 0.0, 1.0, 1.0),
                      new Rectangle2D.Double(0.0, 1.0,
-                                            100.0 * r.t, -100.0 * r.t));
+                                            1.0 * r.t, -1.0 * r.t));
                 if (diagramType == DiagramType.BINARY) {
                     diagramOutline.addAll
                         (Arrays.asList(principalToStandardPage.getInputVertices()));
@@ -2803,7 +2816,7 @@ public class Editor implements CropEventListener, MouseListener,
                 double pageMaxes[];
 
                 if (!tracing) {
-                    pageMaxes = new double[] { 100.0, 100.0 };
+                    pageMaxes = new double[] { 1.0, 1.0 };
                 } else {
                     double angleSideLengths[] =
                         { vertices[angleVertex].distance(vertices[ov2]),
@@ -2811,14 +2824,14 @@ public class Editor implements CropEventListener, MouseListener,
                     double maxSideLength = Math.max(angleSideLengths[0],
                                                     angleSideLengths[1]);
                     pageMaxes = new double[]
-                        { 100.0 * angleSideLengths[0] / maxSideLength,
-                          100.0 * angleSideLengths[1] / maxSideLength };
+                        { angleSideLengths[0] / maxSideLength,
+                          angleSideLengths[1] / maxSideLength };
                 }
 
                 String pageMaxInitialValues[] = new String[pageMaxes.length];
                 for (int i = 0; i < pageMaxes.length; ++i) {
                     Formatter f = new Formatter();
-                    f.format("%.1f", pageMaxes[i]);
+                    f.format("%.1f%%", pageMaxes[i] * 100.0);
                     pageMaxInitialValues[i] = f.toString();
                 }
                 DimensionsDialog dialog = new DimensionsDialog
@@ -2833,7 +2846,7 @@ public class Editor implements CropEventListener, MouseListener,
                     }
                     try {
                         for (int i = 0; i < pageMaxStrings.length; ++i) {
-                            pageMaxes[i] = Double.parseDouble(pageMaxStrings[i]);
+                            pageMaxes[i] = parseDouble(pageMaxStrings[i]);
                         }
                         break;
                     } catch (NumberFormatException e) {
@@ -2880,19 +2893,19 @@ public class Editor implements CropEventListener, MouseListener,
 
                 case TERNARY_TOP:
                     trianglePoints[LEFT_VERTEX]
-                        = new Point2D.Double(0, 100.0 - leftLength);
+                        = new Point2D.Double(0, 1.0 - leftLength);
                     trianglePoints[RIGHT_VERTEX]
-                        = new Point2D.Double(rightLength, 100.0 - rightLength);
-                    addTernaryLeftRuler(100 - leftLength, 100.0);
-                    addTernaryRightRuler(100 - rightLength, 100.0);
+                        = new Point2D.Double(rightLength, 1.0 - rightLength);
+                    addTernaryLeftRuler(1 - leftLength, 1.0);
+                    addTernaryRightRuler(1 - rightLength, 1.0);
                     break;
 
                 case TERNARY_RIGHT:
                     trianglePoints[LEFT_VERTEX]
-                        = new Point2D.Double(100.0 - bottomLength, 0.0);
+                        = new Point2D.Double(1.0 - bottomLength, 0.0);
                     trianglePoints[TOP_VERTEX]
-                        = new Point2D.Double(100.0 - rightLength, rightLength);
-                    addTernaryBottomRuler(100.0 - bottomLength, 100.0);
+                        = new Point2D.Double(1.0 - rightLength, rightLength);
+                    addTernaryBottomRuler(1.0 - bottomLength, 1.0);
                     addTernaryRightRuler(0.0, rightLength);
                     break;
                 }
@@ -2986,9 +2999,9 @@ public class Editor implements CropEventListener, MouseListener,
                 diagramOutline.addAll
                     (Arrays.asList(principalToStandardPage.getInputVertices()));
 
-                addTernaryBottomRuler(0.0, 100.0);
-                addTernaryLeftRuler(0.0, 100.0);
-                addTernaryRightRuler(0.0, 100.0);
+                addTernaryBottomRuler(0.0, 1.0);
+                addTernaryLeftRuler(0.0, 1.0);
+                addTernaryRightRuler(0.0, 1.0);
                 break;
             }
         }
@@ -3056,10 +3069,10 @@ public class Editor implements CropEventListener, MouseListener,
     }
 
     LinearAxis defaultAxis(Side side) {
+        NumberFormat format = new DecimalFormat("##0.0%");
         if (diagramType.isTernary()) {
-            NumberFormat format = new DecimalFormat("##0.0'%'");
             // Confusingly, the axis that goes from 0 at the bottom
-            // left to 100 at the bottom right like a normal x-axis
+            // left to 1 at the bottom right like a normal x-axis
             // and that is called "xAxis" actually ends at component
             // 'Z'.
             LinearAxis axis = LinearAxis.createXAxis(format);
@@ -3070,14 +3083,13 @@ public class Editor implements CropEventListener, MouseListener,
                 axis.name = "Z";
                 return axis;
             case LEFT:
-                axis = new LinearAxis(format, -1.0, -1.0, 100.0);
-                axis.name = "Z";
+                axis = new LinearAxis(format, -1.0, -1.0, 1.0);
+                axis.name = "X";
                 return axis;
             case TOP:
                 return LinearAxis.createYAxis(format);
             }
         } else {
-            NumberFormat format = new DecimalFormat("##0.0");
             switch (side) {
             case RIGHT:
                 return LinearAxis.createXAxis(format);
@@ -3265,20 +3277,20 @@ public class Editor implements CropEventListener, MouseListener,
             break;
         }
 
-        String oldString = String.format("%.1f", oldValue * 100);
+        String oldString = String.format("%.1f%%", oldValue * 100);
         double margin;
 
         while (true) {
             try {
                 String marginStr = JOptionPane.showInputDialog
                     (editFrame,
-                     "Margin size as a percentage of the " + standard + ":",
+                     "Margin size as a fraction of the " + standard + ":",
                      oldString);
                 if (marginStr == null) {
                     return;
                 }
 
-                margin = Double.parseDouble(marginStr) / 100.0;
+                margin = parseDouble(marginStr);
                 break;
             } catch (NumberFormatException e) {
                 JOptionPane.showMessageDialog(null, "Invalid number format.");
@@ -3605,9 +3617,111 @@ public class Editor implements CropEventListener, MouseListener,
         return Printable.PAGE_EXISTS;
     }
 
+    /** Extend Double.parseDouble() with fraction and percentage
+        handling. */
+    public static double parseDouble(String s)
+        throws NumberFormatException {
+        s = s.trim();
+        double mul = 1.0;
+        if (s.length() > 0 && s.charAt(s.length() - 1) == '%') {
+            mul = 0.01;
+            s = s.substring(0, s.length() -1);
+        }
+
+        try {
+            return mul * Double.parseDouble(s);
+        } catch (NumberFormatException e) {
+            // Test for fraction format.
+        }
+
+        int p = s.indexOf('/');
+        if (p <= 0) {
+            throw new NumberFormatException
+                ("Invalid number format '" + s + "'");
+        }
+
+        long num = Long.parseLong(s.substring(0, p));
+        long den = Long.parseLong(s.substring(p + 1));
+
+        if (den == 0) {
+            throw new NumberFormatException("Zero denominator");
+        }
+
+        return mul * num / den;
+    }
+
     /** Invoked from the EditFrame menu */
-    public void addVertexLocation() {
-        // TODO (mandatory) Explicitly select label or vertex location.
+    public void enterPosition(boolean move) {
+        String[] labels = new String[axes.size()];
+        int i = -1;
+        for (Axis axis: axes) {
+            ++i;
+            labels[i] = (String) axis.name;
+        }
+        StringArrayDialog dog = new StringArrayDialog
+            (editFrame, labels, null,
+             "<html><body width=\"200 px\"><p>"
+             + "Enter exactly two values. Fractions and percentages are "
+             + "allowed."
+             + "</p></body></html>");
+        dog.setTitle("Set mouse position");
+        String[] values = dog.showModal();
+        if (values == null) {
+            return;
+        }
+
+        ArrayList<LinearAxis> axs = new ArrayList<LinearAxis>();
+        ArrayList<Double> vs = new ArrayList<Double>();
+
+        try {
+            i = -1;
+            for (String str: values) {
+                ++i;
+                if (str == null) {
+                    continue;
+                }
+                str = str.trim();
+                if (str.equals("")) {
+                    continue;
+                }
+                vs.add(parseDouble(str));
+                axs.add(axes.get(i));
+            }
+        } catch (NumberFormatException e) {
+            JOptionPane.showMessageDialog(editFrame, e.getMessage());
+            return;
+        }
+
+        if (vs.size() != 2) {
+            JOptionPane.showMessageDialog
+                (editFrame, "You did not enter exactly two values.");
+            return;
+        }
+
+        LinearAxis ax0 = axs.get(0);
+        LinearAxis ax1 = axs.get(1);
+        Affine xform = new Affine
+            (ax0.getA(), ax1.getA(),
+             ax0.getB(), ax1.getB(),
+             ax0.getC(), ax1.getC());
+
+        try {
+            Affine xformi = xform.createInverse();
+            Point2D.Double newMprin = xformi.transform(vs.get(0), vs.get(1));
+            if (move) {
+                moveMouseAndMaybeSelection(newMprin);
+            } else {
+                mprin = newMprin;
+                moveMouse(newMprin);
+                mouseIsStuck = true;
+            }
+        } catch (NoninvertibleTransformException e) {
+            JOptionPane.showMessageDialog
+                (editFrame,
+                 "The two variables you entered cannot be\n"
+                 + "combined to identify a position.");
+            return;
+        }
     }
 
 
@@ -3654,7 +3768,7 @@ public class Editor implements CropEventListener, MouseListener,
         principal component axis ticks and (2) principal coordinate
         values as indicated in the status bar. For example, one might
         use this method to convert a binary diagram's y-axis from one
-        temperature scale to another, or from the default range 0-100
+        temperature scale to another, or from the default range 0-1
         to the range you really want. */
     public void invisiblyTransformPrincipalCoordinates(AffineTransform trans) {
         transformPrincipalCoordinates(trans);
@@ -3779,10 +3893,20 @@ public class Editor implements CropEventListener, MouseListener,
         return scaledPageToPrincipal(scale).transform(sx,sy);
     }
 
-    static ContinuedFraction approximateFraction(double d) {
+    ContinuedFraction approximateFraction(double d) {
         // Digitization isn't precise enough to justify guessing
-        // ratios. Only show fractions that are clearly meaningful.
-        return ContinuedFraction.create(d, 0.000001, 0, 90);
+        // ratios. Only show fractions that are almost exact.
+        ContinuedFraction f = ContinuedFraction.create(d, 0.000001, 0, 90);
+
+        if (f != null) {
+            return f;
+        }
+
+        if (showRoughFractions) {
+            f = ContinuedFraction.create(d, 0.1, 0, 15);
+        }
+
+        return f;
     }
 
     void updateStatusBar() {
@@ -3807,11 +3931,9 @@ public class Editor implements CropEventListener, MouseListener,
                 // Express values in fractional terms if the decimal
                 // value is a close approximation to a fraction.
                 double d = axis.value(mprin.x, mprin.y);
-                ContinuedFraction f = approximateFraction(d/100.0);
-                if (f != null && f.numerator != 0) {
-                    double num = d * f.denominator / 100.0;
-                    status.append(" (" + String.format("%.3f", num)
-                                  + "/" + f.denominator + ")");
+                ContinuedFraction f = approximateFraction(d);
+                if (f != null && f.numerator != 0 && f.denominator > 1) {
+                    status.append(" (" + f + ")");
                 }
             }
         }
@@ -3856,9 +3978,8 @@ public class Editor implements CropEventListener, MouseListener,
 
         JScrollPane spane = editFrame.getScrollPane();
         Dimension bounds = spane.getSize(null);
-        bounds.width -= 2;
-        bounds.height -= 2;
-        // Rectangle bounds = spane.getViewportBorderBounds();
+        bounds.width -= 3;
+        bounds.height -= 3;
         Rescale r = new Rescale(pageBounds.width, 0, (double) bounds.width,
                                 pageBounds.height, 0, (double) bounds.height);
         setScale(r.t);
@@ -4484,7 +4605,7 @@ public class Editor implements CropEventListener, MouseListener,
         r.startPoint = new Point2D.Double(start, 0.0);
         r.endPoint = new Point2D.Double(end, 0);
         r.startArrow = Math.abs(start) > 1e-8;
-        r.endArrow = (Math.abs(end - 100) > 1e-4);
+        r.endArrow = (Math.abs(end - 1) > 1e-4);
         rulers.add(r);
     }
 
@@ -4500,7 +4621,7 @@ public class Editor implements CropEventListener, MouseListener,
         r.startPoint = new Point2D.Double(0.0, start);
         r.endPoint = new Point2D.Double(0.0, end);
         r.startArrow = Math.abs(start) > 1e-8;
-        r.endArrow = (Math.abs(end - 100) > 1e-4);
+        r.endArrow = (Math.abs(end - 1) > 1e-4);
         rulers.add(r);
     }
 
@@ -4513,10 +4634,10 @@ public class Editor implements CropEventListener, MouseListener,
             labelAnchor = LinearRuler.LabelAnchor.RIGHT;
         }};
 
-        r.startPoint = new Point2D.Double(100 - start, start);
-        r.endPoint = new Point2D.Double(100 - end, end);
+        r.startPoint = new Point2D.Double(1 - start, start);
+        r.endPoint = new Point2D.Double(1 - end, end);
         r.startArrow = Math.abs(start) > 1e-8;
-        r.endArrow = (Math.abs(end - 100) > 1e-4);
+        r.endArrow = (Math.abs(end - 1) > 1e-4);
         rulers.add(r);
     }
 
@@ -4529,7 +4650,7 @@ public class Editor implements CropEventListener, MouseListener,
             labelAnchor = LinearRuler.LabelAnchor.RIGHT;
 
             startPoint = new Point2D.Double(0.0, 0.0);
-            endPoint = new Point2D.Double(100.0, 0.0);
+            endPoint = new Point2D.Double(1.0, 0.0);
         }});
     }
 
@@ -4541,8 +4662,8 @@ public class Editor implements CropEventListener, MouseListener,
             tickRight = true;
             labelAnchor = LinearRuler.LabelAnchor.NONE;
 
-            startPoint = new Point2D.Double(0.0, 100.0);
-            endPoint = new Point2D.Double(100.0, 100.0);
+            startPoint = new Point2D.Double(0.0, 1.0);
+            endPoint = new Point2D.Double(1.0, 1.0);
         }});
     }
 
@@ -4555,7 +4676,7 @@ public class Editor implements CropEventListener, MouseListener,
             labelAnchor = LinearRuler.LabelAnchor.LEFT;
 
             startPoint = new Point2D.Double(0.0, 0.0);
-            endPoint = new Point2D.Double(0.0, 100.0);
+            endPoint = new Point2D.Double(0.0, 1.0);
         }});
     }
 
@@ -4567,8 +4688,8 @@ public class Editor implements CropEventListener, MouseListener,
             tickLeft = true;
             labelAnchor = LinearRuler.LabelAnchor.NONE;
 
-            startPoint = new Point2D.Double(100.0, 0.0);
-            endPoint = new Point2D.Double(100.0, 100.0);
+            startPoint = new Point2D.Double(1.0, 0.0);
+            endPoint = new Point2D.Double(1.0, 1.0);
         }});
     }
 
