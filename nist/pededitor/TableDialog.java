@@ -31,9 +31,6 @@ public class TableDialog extends JDialog {
         table.putClientProperty("terminateEditOnFocusLost", Boolean.TRUE);
         table.setPreferredScrollableViewportSize(new Dimension(350, 40));
 
-        // This is a cheat...
-
-        
         table.setFillsViewportHeight(true);
 
 
@@ -49,6 +46,7 @@ public class TableDialog extends JDialog {
             });
 
         contentPane.add(okButton, BorderLayout.PAGE_END);
+        getRootPane().setDefaultButton(okButton);
     }
 
     public int getRowCount() {
