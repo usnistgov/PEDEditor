@@ -543,13 +543,13 @@ public class EditFrame extends JFrame {
 
             JMenu mnLineWidth = new JMenu("Line width");
             mnLineWidth.setMnemonic(KeyEvent.VK_W);
-            mnLineWidth.add(new LineWidthMenuItem("images/line1.png", 0.0006));
+            mnLineWidth.add(new LineWidthMenuItem("images/line1.png", 0.0008));
             LineWidthMenuItem normalWidthItem = 
-                new LineWidthMenuItem("images/line2.png", 0.0012);
+                new LineWidthMenuItem("images/line2.png", 0.0016);
             normalWidthItem.setSelected(true);
             mnLineWidth.add(normalWidthItem);
-            mnLineWidth.add(new LineWidthMenuItem("images/line4.png", 0.0024));
-            mnLineWidth.add(new LineWidthMenuItem("images/line8.png", 0.0048));
+            mnLineWidth.add(new LineWidthMenuItem("images/line4.png", 0.0032));
+            mnLineWidth.add(new LineWidthMenuItem("images/line8.png", 0.0064));
             mnLineWidth.add(new JRadioButtonMenuItem
                             (new AbstractAction("Custom...") {
                                     @Override
