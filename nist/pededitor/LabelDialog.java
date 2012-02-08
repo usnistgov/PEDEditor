@@ -18,6 +18,8 @@ public class LabelDialog extends JDialog {
     /** See AnchoredLabel.yWeight for the definition of this field. */
     double yWeight = 0;
     JTextField textField;
+    JCheckBox mIsOpaque = new JCheckBox("Erase background");
+    JCheckBox mIsBoxed = new JCheckBox("Box label");
     JTextField sizeNumerator;
     JTextField sizeDenominator;
 
@@ -47,6 +49,15 @@ public class LabelDialog extends JDialog {
         }
     }
 
+    public boolean isOpaque() { return mIsOpaque.isSelected(); }
+    public boolean isBoxed() { return mIsBoxed.isSelected(); }
+    public void setOpaque(boolean v) {
+        mIsOpaque.setSelected(v);
+    }
+    public void setBoxed(boolean v) {
+        mIsBoxed.setSelected(v);
+    }
+
     double getXWeight() { return xWeight; }
     double getYWeight() { return yWeight; }
 
@@ -67,6 +78,9 @@ public class LabelDialog extends JDialog {
         int y = (int) Math.round(yWeight * 2.0);
         anchorButtons[y][x].setAction
             (createAnchorAction(xWeight, yWeight, b));
+        if (b) {
+            getRootPane().setDefaultButton(anchorButtons[y][x]);
+        }
     }
 
     public void setText(String s) {
@@ -98,6 +112,12 @@ public class LabelDialog extends JDialog {
         }
     }
 
+    static void add(JComponent parent, JComponent child,
+                       GridBagLayout gb, GridBagConstraints gbc) {
+        gb.setConstraints(child, gbc);
+        parent.add(child);
+    }
+
     LabelDialog(Frame owner, String title) {
         super(owner, "Edit Label", true);
 
@@ -125,12 +145,11 @@ public class LabelDialog extends JDialog {
         box.add(sizeBox);
 
         Box orientationBox = new Box(BoxLayout.LINE_AXIS);
-        angleField = new JTextField("0");
+        angleField = new JTextField("0", 7);
         compassPane = new ImagePane();
         compassPane.setImage(createCompassImage());
         orientationBox.add(compassPane);
         Box ob2 = new Box(BoxLayout.PAGE_AXIS);
-        angleField.setPreferredSize(new Dimension(90, 30));
         angleField.setMaximumSize(new Dimension(90, 30));
         ob2.add(new JLabel("Text angle:"));
         Box ob3 = new Box(BoxLayout.LINE_AXIS);
@@ -138,9 +157,34 @@ public class LabelDialog extends JDialog {
         ob3.add(new JLabel("degrees"));
         ob2.add(ob3);
         orientationBox.add(ob2);
-
-
         box.add(orientationBox);
+
+        GridBagLayout gb = new GridBagLayout();
+        JPanel panel = new JPanel();
+        panel.setLayout(gb);
+
+        Insets insets = new Insets(0, 3, 0, 3);
+        GridBagConstraints east = new GridBagConstraints();
+        east.anchor = GridBagConstraints.EAST;
+        east.insets = insets;
+
+        GridBagConstraints west = new GridBagConstraints();
+        west.anchor = GridBagConstraints.WEST;
+        west.insets = insets;
+
+        GridBagConstraints endRow = new GridBagConstraints();
+        endRow.anchor = GridBagConstraints.WEST;
+        endRow.gridwidth = GridBagConstraints.REMAINDER;
+
+        add(panel, mIsOpaque, gb, west);
+
+        JPanel boxMe = new JPanel();
+        boxMe.add(mIsBoxed);
+        boxMe.setBorder(BorderFactory.createLineBorder(Color.black));
+
+        add(panel, boxMe, gb, endRow);
+
+        box.add(panel);
         
         box.add(new JLabel("Label position relative to anchor:"));
         JPanel anchorPane = new JPanel();
@@ -155,6 +199,17 @@ public class LabelDialog extends JDialog {
 
         box.add(anchorPane);
         contentPane.add(box);
+    }
+
+    LabelDialog(Frame owner, String title, AnchoredLabel label) {
+        this(owner, title);
+        setText(label.getText());
+        setXWeight(label.getXWeight());
+        setYWeight(label.getYWeight());
+        setFontSize(label.getFontSize());
+        setAngle(label.getAngle());
+        setOpaque(label.isOpaque());
+        setBoxed(label.isBoxed());
     }
 
     BufferedImage createCompassImage() {
@@ -238,6 +293,8 @@ public class LabelDialog extends JDialog {
             new AnchoredLabel(textField.getText(), xWeight, yWeight);
         al.setFontSize(getFontSize());
         al.setAngle(getAngle());
+        al.setOpaque(mIsOpaque.isSelected());
+        al.setBoxed(mIsBoxed.isSelected());
         return al;
     }
 
