@@ -64,6 +64,7 @@ public class DimensionsDialog extends JDialog {
             });
 
         contentPane.add(okButton, BorderLayout.PAGE_END);
+        getRootPane().setDefaultButton(okButton);
     }
 
     DimensionsDialog(Frame owner) {
