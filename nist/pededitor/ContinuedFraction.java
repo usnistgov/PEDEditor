@@ -6,20 +6,9 @@ public class ContinuedFraction {
     public long numerator;
     public long denominator;
 
-    static class Extra {
-        long numerator;
-        long denominator;
-
-        // lastFrac, the frac value of the last step, is a quality
-        // indicator: a value much closer to 0 than 1 indicates a good
-        // fit.
-        double lastFrac;
-
-        Extra(long n, long d, double f) {
-            numerator = n;
-            denominator = d;
-            lastFrac = f;
-        }
+    public ContinuedFraction() {
+        numerator = 0;
+        denominator = 0;
     }
 
     public ContinuedFraction(long numerator, long denominator) {
@@ -27,9 +16,24 @@ public class ContinuedFraction {
         this.denominator = denominator;
     }
 
-    public ContinuedFraction() {
-        numerator = 0;
-        denominator = 0;
+    /** Internal-use class to keep track of the fraction plus the
+        extra field lastFrac. */
+    static class Extra {
+        long numerator;
+        long denominator;
+
+        // lastFrac, the frac value of the last step, is a quality
+        // indicator: values << 1 indicate a good fit, unless this is
+        // the very first step and the value was very close to 0 to
+        // begin with.
+
+        double lastFrac;
+
+        Extra(long n, long d, double f) {
+            numerator = n;
+            denominator = d;
+            lastFrac = f;
+        }
     }
 
     ContinuedFraction(Extra extra) {
@@ -41,40 +45,43 @@ public class ContinuedFraction {
         return ((double) numerator) / denominator;
     }
 
-    /** @return a fractional approximation of the value d, or null if
-        no approximation that satisfies maxError and maxMinAtor
+    /** Return a fractional approximation of the value d, or null if
+        no approximation that satisfies maxStepError is found
+
+ and maxMinAtor
         exists.
 
-       @param maxRelativeError Terminate successfully if during any
-       step after step #0,
+       @param maxStepError This is the success criterion for accuracy.
+       Return the current fractional approximation if during any
+       iteration of the continued fraction, the integer part of the
+       remainder is nonzero and the fractional part is less than
+       (stepNo * maxStepError). For example, if maxStepError = 0.001
+       and
 
-           | error * denominator * stepNo | < maxRelativeError
+           x= 4 + 1/(3 + 1/(5 + .000001))
 
-       If the floating point value is truly the closest approximation
-       of a fraction, then low limits such as 0.00001 are usually
-       achievable.
+       then this function will return (4 + 1/(3 + 1/5)) = 69/16.
 
-       (With infinite precision, the probability of the above test
-       eventually passing during some step would equal 1, but
+       (With infinite precision, the probability that the above test
+       would eventually succeed because of blind luck equals 1, but
        realistically, and especially if maxMinAtor is small, the
-       probability will be a small multiple of maxRelativeError.)
+       probability will be a small multiple of maxStepError.)
 
        @param maxMinAtor If nonzero, then return null (failure) if
-       during any step,
+       during any iteration of the continued fraction,
 
            min(|numerator|, denominator) > maxMinAtor
 
-       @param maxDenominator If nonzero, return null (failure) if the
-       denominator exceeds this value.
+       @param maxDenominator If nonzero, return null (failure) if
+       during any step, the denominator exceeds this value.
     */
     static public ContinuedFraction create
-        (double x, double maxRelativeError, int maxMinAtor,
+        (double x, double maxStepError, int maxMinAtor,
          long maxDenominator) {
         double oldError = 0.0;
 
         for (int steps = 0; ; ++steps) {
-            // Starting from scratch each time is not the way to
-            // achieve good performance, but it is easier to understand.
+            // Starting from scratch each time is inefficient but easy to follow.
 
             Extra f = createBySteps(x, steps);
 
@@ -86,9 +93,6 @@ public class ContinuedFraction {
             }
 
             double error = Math.abs(((double) f.numerator) / f.denominator - x);
-            if (error == 0) {
-                return new ContinuedFraction(f);
-            }
 
             if (steps > 0 && error >= oldError) {
                 // The limit of numerical accuracy was reached, but
@@ -97,7 +101,8 @@ public class ContinuedFraction {
             }
             oldError = error;
 
-            if (steps > 0 && Math.abs(f.lastFrac) * steps <= maxRelativeError) {
+            if (f.numerator != 0
+                && Math.abs(f.lastFrac) * (steps+1) <= maxStepError) {
                 return new ContinuedFraction(f);
             }
         }
