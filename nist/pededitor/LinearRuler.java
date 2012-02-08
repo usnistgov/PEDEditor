@@ -13,7 +13,8 @@ import javax.swing.*;
 import org.codehaus.jackson.annotate.JsonBackReference;
 import org.codehaus.jackson.annotate.JsonProperty;
 
-/** Class describing a ruler decorating a linear axis. */
+/** Class describing a ruler whose tick marks describe values from a
+    LinearAxis. */
 class LinearRuler {
     public static enum LabelAnchor { NONE, LEFT, RIGHT };
 
@@ -53,6 +54,11 @@ class LinearRuler {
     @JsonProperty LabelAnchor labelAnchor;
 
     @JsonBackReference LinearAxis axis;
+
+    /** Multiply the axis values by scale. Normally scale = 1.0, but
+        scale = 100.0 for rulers that show percentages without a
+        percent sign. */
+    @JsonProperty double scale = 1.0;
 
     /** To simplify axis rotations, textAngle indicates the angle of
         the text relative to the ray from startPoint to endPoint. So
@@ -117,9 +123,9 @@ class LinearRuler {
         line twice can yield an inferior rendering.) */
     @JsonProperty boolean drawSpine = true;
 
-    /** clone() does not clone the axis, because the axis is
-        considered a relation of the ruler instead of an owned field of
-        it. */
+    /** clone() copies but does not clone the axis field, because the
+        axis is considered a relation of the ruler instead of an owned
+        field. */
     public LinearRuler clone() {
         LinearRuler o = new LinearRuler();
         o.startPoint = (Point2D.Double) startPoint.clone();
@@ -136,16 +142,17 @@ class LinearRuler {
         o.labelAnchor = labelAnchor;
         o.tickType = tickType;
         o.axis = axis;
+        o.scale = scale;
         return o;
     }
 
     /** Start of range of logical values covered by this axis. */
     double getStart() {
-        return axis.value(startPoint);
+        return axis.value(startPoint) * scale;
     }
     /** End of range of logical values covered by this axis. */
     double getEnd() {
-        return axis.value(endPoint);
+        return axis.value(endPoint) * scale;
     }
 
     /** Linear function mapping logical values to points in 2D. */
