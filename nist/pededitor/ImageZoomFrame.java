@@ -6,9 +6,9 @@ import javax.swing.*;
 /** A frame that holds a pane that displays a viewport into an image
     centered at position. */
 public class ImageZoomFrame extends JFrame {
+    private static final long serialVersionUID = 1239106959208277289L;
 
-	private static final long serialVersionUID = 1239106959208277289L;
-	protected ImageZoomPane contentPane;
+    protected ImageZoomPane contentPane;
 
     public ImageZoomFrame() {
       setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);

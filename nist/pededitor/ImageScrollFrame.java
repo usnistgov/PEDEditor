@@ -15,9 +15,9 @@ import javax.swing.JScrollPane;
 /** A frame that holds a scroll pane that displays an image. That's
     pretty much it. */
 public class ImageScrollFrame extends JFrame {
+    private static final long serialVersionUID = -1397111479616890694L;
 
-	private static final long serialVersionUID = -1397111479616890694L;
-	protected JPanel contentPane;
+    protected JPanel contentPane;
     protected JScrollPane scrollPane;
     protected ImagePane imagePane;
     protected int preferredWidth = 800;

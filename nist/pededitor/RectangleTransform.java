@@ -12,9 +12,9 @@ import org.codehaus.jackson.annotate.JsonProperty;
     linear functions for the x- and y-axes. This is equivalent to the
     set of affine transformations that have 0 shear. */
 public class RectangleTransform extends AffinePolygonTransform {
-	private static final long serialVersionUID = 3262190356272005695L;
-	
-	Rectangle2D.Double input;
+    private static final long serialVersionUID = 3262190356272005695L;
+
+    Rectangle2D.Double input;
     Rectangle2D.Double output;
 
     public RectangleTransform(RectangleTransform other) {

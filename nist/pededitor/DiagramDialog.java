@@ -8,15 +8,15 @@ import javax.swing.*;
 /** GUI for selecting a DiagramType. */
 public class DiagramDialog extends JDialog
     implements ActionListener  {
-	private static final long serialVersionUID = -1082463709970796523L;
-	DiagramType selectedDiagram = null;
+    private static final long serialVersionUID = -1082463709970796523L;
+    DiagramType selectedDiagram = null;
     boolean pressedOK = false;
     JButton okButton;
 
-    abstract class DiagramDialogAction extends AbstractAction {
-		private static final long serialVersionUID = -7296210099594024294L;
+    abstract class Action extends AbstractAction {
+        private static final long serialVersionUID = -7296210099594024294L;
 
-		DiagramDialogAction(String name) {
+        Action(String name) {
             super(name);
         }
     }
@@ -54,11 +54,10 @@ public class DiagramDialog extends JDialog
             button.addActionListener(this);
         }
 
-        okButton = new JButton(new DiagramDialogAction("OK") {
-			private static final long serialVersionUID = -4517446754034705381L;
+        okButton = new JButton(new Action("OK") {
+                private static final long serialVersionUID = -4517446754034705381L;
 
-				@Override
-                    public void actionPerformed(ActionEvent e) {
+                @Override public void actionPerformed(ActionEvent e) {
                     DiagramDialog.this.pressedOK = true;
                     DiagramDialog.this.setVisible(false);
                 }

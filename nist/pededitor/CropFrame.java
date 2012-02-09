@@ -101,9 +101,9 @@ public class CropFrame extends ImageScrollFrame {
     public CropFrame() {
         // contentPane.setBorder(new EmptyBorder(5, 5, 5, 5));
         setTitle("Select Diagram");
-		
+
         JMenuBar menuBar = new JMenuBar();
-		
+
         JMenu mnFile = new JMenu("File");
         mnFile.setMnemonic('F');
         menuBar.add(mnFile);
@@ -115,7 +115,7 @@ public class CropFrame extends ImageScrollFrame {
                     showOpenDialog();
                 }
             };
-		
+
         mnFile.add(openAction);
 
         JMenu mnEdit = new JMenu("Edit");

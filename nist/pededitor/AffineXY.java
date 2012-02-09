@@ -43,8 +43,7 @@ public class AffineXY extends AffineXYCommon implements Transform2D {
         return true;
     }
 
-    @Override
-	public AffineXY clone() {
+    @Override public AffineXY clone() {
         AffineXY output = new AffineXY();
         output.copyFieldsFrom(this);
         return output;

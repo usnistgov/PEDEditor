@@ -110,7 +110,7 @@ public class TriangleTransform extends AffinePolygonTransform {
     }
 
     private void concatSub(AffineTransform other, Point2D.Double[] points) {
-    	Point2D.Double xpt = new Point2D.Double();
+        Point2D.Double xpt = new Point2D.Double();
         for (Point2D.Double point : points) {
             other.transform(point, xpt);
             point.setLocation(xpt.x, xpt.y);

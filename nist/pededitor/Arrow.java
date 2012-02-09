@@ -7,8 +7,9 @@ import org.codehaus.jackson.annotate.JsonProperty;
 @JsonIgnoreProperties
     ({"bounds2D", "bounds", "windingRule", "currentPoint"})
 public class Arrow extends Path2D.Double {
-	private static final long serialVersionUID = -3704208186216534922L;
-	@JsonProperty public double x;
+    private static final long serialVersionUID = -3704208186216534922L;
+
+    @JsonProperty public double x;
     @JsonProperty public double y;
     @JsonProperty public double size;
     @JsonProperty public double theta;

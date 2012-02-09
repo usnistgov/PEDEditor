@@ -11,9 +11,9 @@ import javax.swing.JScrollPane;
 
 /** Simple dialog to display HTML. */
 public class HTMLDialog extends JDialog {
-	private static final long serialVersionUID = 2081369025744823207L;
+    private static final long serialVersionUID = 2081369025744823207L;
 
-	public HTMLDialog(JFrame parent, String filename, String title) {
+    public HTMLDialog(JFrame parent, String filename, String title) {
         super(parent, title);
         URL aboutURL = parent.getClass().getResource(filename);
         if (aboutURL == null) {

@@ -18,8 +18,7 @@ public class RectToQuad extends RectToQuadCommon {
         copyFieldsFrom(other);
     }
 
-    @Override
-	public RectToQuad clone() {
+    @Override public RectToQuad clone() {
         return new RectToQuad(this);
     }
 

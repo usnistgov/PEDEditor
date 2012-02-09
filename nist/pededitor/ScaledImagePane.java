@@ -11,8 +11,9 @@ import javax.swing.*;
     This is not efficient, because the rescaling happens with every
     repaint. */
 public class ScaledImagePane extends JPanel {
-	private static final long serialVersionUID = -5722774110161790794L;
-	protected BufferedImage image;
+    private static final long serialVersionUID = -5722774110161790794L;
+
+    protected BufferedImage image;
 
     public void setImage(BufferedImage image) {
         this.image = image;

@@ -333,7 +333,7 @@ public class CropPane extends ImagePane {
 
         if (mpos != null) {
             @SuppressWarnings("unchecked")
-			ArrayList<Point> newVertices = (ArrayList<Point>) vertices.clone();
+                ArrayList<Point> newVertices = (ArrayList<Point>) vertices.clone();
             if (addVertex(newVertices, mpos)) {
                 Polygon poly = getSelection(newVertices);
                 if (poly != null) {
@@ -359,7 +359,7 @@ public class CropPane extends ImagePane {
 
             g.setColor(Color.RED);
             @SuppressWarnings("unchecked")
-			ArrayList<Point> newPoints = (ArrayList<Point>) vertices.clone();
+                ArrayList<Point> newPoints = (ArrayList<Point>) vertices.clone();
             if (mpos != null) {
                 newPoints.add(mpos);
             }

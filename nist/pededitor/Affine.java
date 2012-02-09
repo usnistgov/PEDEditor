@@ -103,12 +103,11 @@ public class Affine extends AffineTransform implements Transform2D {
         return true;
     }
     
-    public Affine clone() {
-    	return new Affine(this); 
+    @Override public Affine clone() {
+        return new Affine(this); 
     }
 
-    @Override
-    public String toString() {
+    @Override public String toString() {
         return "Affine(" + super.toString() + ")";
     }
 }

@@ -12,8 +12,9 @@ import javax.swing.JPanel;
 
 /** A label and anGUI for selecting a DiagramType. */
 class StepDialog extends JDialog {
-	private static final long serialVersionUID = -1250462809033476919L;
-	JButton okButton;
+    private static final long serialVersionUID = -1250462809033476919L;
+
+    JButton okButton;
     JLabel label = new JLabel();
 
     public JLabel getLabel() {

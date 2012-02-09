@@ -9,16 +9,17 @@ import javax.swing.*;
 
 /** Dialog to ask for the length of two axes. */
 public class DimensionsDialog extends JDialog {
-	private static final long serialVersionUID = 2093995331175795482L;
-	boolean pressedOK = false;
+    private static final long serialVersionUID = 2093995331175795482L;
+
+    boolean pressedOK = false;
     JButton okButton;
     JTextField[] textFields;
     String[] dimensions = {"100.0", "100.0"};
 
     abstract class DimensionDialogAction extends AbstractAction {
-		private static final long serialVersionUID = 2659325739020932406L;
+        private static final long serialVersionUID = 2659325739020932406L;
 
-		DimensionDialogAction(String name) {
+        DimensionDialogAction(String name) {
             super(name);
         }
     }
@@ -56,10 +57,9 @@ public class DimensionsDialog extends JDialog {
         contentPane.add(rows, BorderLayout.CENTER);
 
         okButton = new JButton(new DimensionDialogAction("OK") {
-			private static final long serialVersionUID = 2235207000149359195L;
+                private static final long serialVersionUID = 2235207000149359195L;
 
-				@Override
-                    public void actionPerformed(ActionEvent e) {
+                @Override public void actionPerformed(ActionEvent e) {
                     DimensionsDialog.this.pressedOK = true;
                     setVisible(false);
                 }

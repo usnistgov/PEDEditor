@@ -34,8 +34,7 @@ public class AffineXYInverse extends AffineXYCommon
         return inv;
     }
 
-    @Override
-	public AffineXYInverse clone() {
+    @Override public AffineXYInverse clone() {
         AffineXYInverse output = new AffineXYInverse();
         output.copyFieldsFrom(this);
         return output;

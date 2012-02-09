@@ -451,8 +451,10 @@ public abstract class GeneralPolyline {
     public static void main(String[] args) {
         String filename = "/eb/polyline-test.json";
 
-        GeneralPolyline o = new Polyline(new Point2D.Double[] { new Point2D.Double(3.1, 5.7), new Point2D.Double(0.0, 0.1) },
-        		null, 1.3);
+        GeneralPolyline o = new Polyline
+            (new Point2D.Double[] { new Point2D.Double(3.1, 5.7),
+                                    new Point2D.Double(0.0, 0.1) },
+                null, 1.3);
 
         try {
             ObjectMapper mapper = new ObjectMapper();

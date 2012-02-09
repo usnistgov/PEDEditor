@@ -6,9 +6,9 @@ import java.util.*;
     /** A CropEvent is triggered when the user indicates that their
         crop selection is final. */
 public class CropEvent extends EventObject {
+    private static final long serialVersionUID = -6745947304923005101L;
 
-		private static final long serialVersionUID = -6745947304923005101L;
-	/** Coordinate spaces
+    /** Coordinate spaces
 
         The transforms between spaces are all affine, except that
         transforms from the original space to other spaces will be

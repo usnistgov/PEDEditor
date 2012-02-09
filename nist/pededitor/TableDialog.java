@@ -18,8 +18,9 @@ import javax.swing.JTable;
     corresponding text boxes and returns the array of text box text
     values once the user presses "OK". */
 public class TableDialog extends JDialog {
-	private static final long serialVersionUID = -8184443211996144705L;
-	boolean pressedOK = false;
+    private static final long serialVersionUID = -8184443211996144705L;
+
+    boolean pressedOK = false;
     JButton okButton;
     JTable table;
 
@@ -29,9 +30,9 @@ public class TableDialog extends JDialog {
         JPanel contentPane = (JPanel) getContentPane();
         
         table = new JTable(data, columnNames) {
-			private static final long serialVersionUID = -5653753441232401173L;
+                private static final long serialVersionUID = -5653753441232401173L;
 
-				@Override public Class<?> getColumnClass(int c) {
+                @Override public Class<?> getColumnClass(int c) {
                     return Double.class;
                 }
             };
@@ -45,10 +46,9 @@ public class TableDialog extends JDialog {
         contentPane.add(scrollPane, BorderLayout.CENTER);
 
         okButton = new JButton(new AbstractAction("OK") {
-			private static final long serialVersionUID = -8082661716737814979L;
+                private static final long serialVersionUID = -8082661716737814979L;
 
-				@Override
-                    public void actionPerformed(ActionEvent e) {
+                @Override public void actionPerformed(ActionEvent e) {
                     TableDialog.this.pressedOK = true;
                     setVisible(false);
                 }

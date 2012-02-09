@@ -9,8 +9,9 @@ import java.awt.event.MouseEvent;
 import javax.swing.JPanel;
 
 public class EditPane extends JPanel {
-	private static final long serialVersionUID = 2995661544080625928L;
-	protected String filename = null;
+    private static final long serialVersionUID = 2995661544080625928L;
+
+    protected String filename = null;
     protected EditFrame parentFrame;
     protected Shape diagramOutline = null;
 

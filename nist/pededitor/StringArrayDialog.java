@@ -19,8 +19,9 @@ import javax.swing.JTextField;
     corresponding text boxes and returns the array of text box text
     values once the user presses "OK". */
 public class StringArrayDialog extends JDialog {
-	private static final long serialVersionUID = 4234603969579529313L;
-	boolean pressedOK = false;
+    private static final long serialVersionUID = 4234603969579529313L;
+
+    boolean pressedOK = false;
     JTextField[] textFields;
     String[] limits = {"0.0", "100.0"};
 
@@ -71,13 +72,9 @@ public class StringArrayDialog extends JDialog {
         }
 
         AbstractAction okAction = new AbstractAction("OK") {
-                /**
-			 * 
-			 */
-			private static final long serialVersionUID = 979439543555230448L;
+                private static final long serialVersionUID = 979439543555230448L;
 
-				@Override
-                    public void actionPerformed(ActionEvent e) {
+                @Override public void actionPerformed(ActionEvent e) {
                     StringArrayDialog.this.pressedOK = true;
                     setVisible(false);
                 }
