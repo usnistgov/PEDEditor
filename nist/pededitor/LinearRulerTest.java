@@ -20,10 +20,8 @@ class TestPanelZ extends JPanel {
    public TestPanelZ() {
        r.startPoint = new Point2D.Double(10.0, 510.0);
        r.endPoint = new Point2D.Double(610.0, 110.0);
-       r.xWeight = 1.0;
-       r.yWeight = 0.5;
        r.fontSize = 12.0;
-       r.textAngle = Math.PI/2;
+       r.textAngle = (Math.PI / 2) * 3.5;
        r.tickRight = true;
        r.lineWidth = 1.5;
        r.labelAnchor = LinearRuler.LabelAnchor.LEFT;
