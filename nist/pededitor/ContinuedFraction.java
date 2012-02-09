@@ -167,6 +167,39 @@ public class ContinuedFraction {
         return numerator + "/" + denominator;
     }
 
+    /** Extend Double.parseDouble() with fraction and percentage
+        handling. */
+    public static double parseDouble(String s)
+        throws NumberFormatException {
+        s = s.trim();
+        double mul = 1.0;
+        if (s.length() > 0 && s.charAt(s.length() - 1) == '%') {
+            mul = 0.01;
+            s = s.substring(0, s.length() -1);
+        }
+
+        try {
+            return mul * Double.parseDouble(s);
+        } catch (NumberFormatException e) {
+            // Test for fraction format.
+        }
+
+        int p = s.indexOf('/');
+        if (p <= 0) {
+            throw new NumberFormatException
+                ("Invalid number format '" + s + "'");
+        }
+
+        long num = Long.parseLong(s.substring(0, p));
+        long den = Long.parseLong(s.substring(p + 1));
+
+        if (den == 0) {
+            throw new NumberFormatException("Zero denominator");
+        }
+
+        return mul * num / den;
+    }
+
     /** Return a string representation of x as a fraction if x
         resembles a fraction and looks good as one, or a decimal or
         exponential format otherwise.
