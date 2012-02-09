@@ -2,23 +2,23 @@ package gov.nist.pededitor;
 
 import java.awt.*;
 import java.awt.event.*;
-import java.awt.geom.*;
-import java.awt.image.*;
 import java.io.*;
 import java.net.*;
 import java.util.*;
-import java.util.List;
 import javax.swing.*;
 
 /** Dialog to ask for the length of two axes. */
 public class DimensionsDialog extends JDialog {
-    boolean pressedOK = false;
+	private static final long serialVersionUID = 2093995331175795482L;
+	boolean pressedOK = false;
     JButton okButton;
     JTextField[] textFields;
     String[] dimensions = {"100.0", "100.0"};
 
     abstract class DimensionDialogAction extends AbstractAction {
-        DimensionDialogAction(String name) {
+		private static final long serialVersionUID = 2659325739020932406L;
+
+		DimensionDialogAction(String name) {
             super(name);
         }
     }
@@ -56,7 +56,9 @@ public class DimensionsDialog extends JDialog {
         contentPane.add(rows, BorderLayout.CENTER);
 
         okButton = new JButton(new DimensionDialogAction("OK") {
-                @Override
+			private static final long serialVersionUID = 2235207000149359195L;
+
+				@Override
                     public void actionPerformed(ActionEvent e) {
                     DimensionsDialog.this.pressedOK = true;
                     setVisible(false);

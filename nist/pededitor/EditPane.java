@@ -1,15 +1,16 @@
 package gov.nist.pededitor;
 
-import java.awt.*;
-import java.awt.event.*;
-import java.awt.geom.*;
-import java.util.*;
+import java.awt.Cursor;
+import java.awt.Graphics;
+import java.awt.Shape;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 
 import javax.swing.JPanel;
 
 public class EditPane extends JPanel {
-
-    protected String filename = null;
+	private static final long serialVersionUID = 2995661544080625928L;
+	protected String filename = null;
     protected EditFrame parentFrame;
     protected Shape diagramOutline = null;
 

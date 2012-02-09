@@ -1,9 +1,10 @@
 package gov.nist.pededitor;
 
-import java.awt.*;
-import java.awt.event.*;
-import java.awt.geom.*;
-import java.util.*;
+import java.awt.geom.AffineTransform;
+import java.awt.geom.Line2D;
+import java.awt.geom.Path2D;
+import java.awt.geom.Point2D;
+import java.util.ArrayList;
 
 /** Specialization of GeneralPolyline for vanilla polylines. */
 public class Polyline extends GeneralPolyline {
@@ -185,7 +186,6 @@ public class Polyline extends GeneralPolyline {
         // For closed polylines, don't forget the segment
         // connecting the last vertex to the first one.
         int segCnt = getSegmentCnt();
-        Point2D.Double nearPoint = null;
         CurveDistance minDist = null;
 
         if (segCnt == 0) {

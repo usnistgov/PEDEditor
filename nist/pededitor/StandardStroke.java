@@ -1,10 +1,5 @@
 package gov.nist.pededitor;
 
-import java.awt.*;
-import java.awt.event.*;
-import java.awt.geom.*;
-import java.util.*;
-
 /** Enum for standard stroke styles. */
 public enum StandardStroke {
     SOLID (CompositeStroke.getSolidLine()),

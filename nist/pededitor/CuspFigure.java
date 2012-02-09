@@ -1,17 +1,27 @@
 package gov.nist.pededitor;
 
-import java.awt.*;
-import java.awt.event.*;
-import java.awt.geom.*;
+import java.awt.BasicStroke;
+import java.awt.Color;
+import java.awt.Graphics2D;
+import java.awt.geom.AffineTransform;
+import java.awt.geom.Line2D;
+import java.awt.geom.Path2D;
+import java.awt.geom.Point2D;
 import java.io.File;
 import java.io.IOException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
 
-import org.codehaus.jackson.*;
-import org.codehaus.jackson.annotate.*;
+import org.codehaus.jackson.JsonGenerationException;
+import org.codehaus.jackson.annotate.JsonIgnore;
+import org.codehaus.jackson.annotate.JsonProperty;
+import org.codehaus.jackson.annotate.JsonSubTypes;
 import org.codehaus.jackson.annotate.JsonSubTypes.Type;
-import org.codehaus.jackson.map.*;
-import org.codehaus.jackson.map.annotate.*;
+import org.codehaus.jackson.annotate.JsonTypeInfo;
+import org.codehaus.jackson.map.JsonMappingException;
+import org.codehaus.jackson.map.ObjectMapper;
+import org.codehaus.jackson.map.SerializationConfig;
 
 // The annotations below for deserializing this GeneralPolyline into
 // its appropriate subtype were recommended on Programmer Bruce's
@@ -72,7 +82,7 @@ public abstract class GeneralPolyline {
     public GeneralPolyline(Point2D.Double[] points,
                            StandardStroke stroke,
                            double lineWidth) {
-        this.points = new ArrayList(Arrays.asList(points));
+        this.points = new ArrayList<Point2D.Double>(Arrays.asList(points));
         this.stroke = stroke;
         this.lineWidth = lineWidth;
     }

@@ -29,9 +29,7 @@ public class Compass {
         g2d.setStroke(stroke);
         Shape shape = new Ellipse2D.Double(cx - r, cy - r, r * 2, r * 2);
         g2d.draw(shape);
-        // double r2 = stroke.getLineWidth();
-        // shape = new Ellipse2D.Double(cx - r2, cy - r2, r2 * 2, r2 * 2);
-        // g2d.fill(shape);
+        g2d.setStroke(oldStroke);
     }
 
     public void drawTick(Graphics2D g2d, double degrees, String text) {

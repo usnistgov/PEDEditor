@@ -3,10 +3,6 @@ package gov.nist.pededitor;
 import java.awt.geom.*;
 
 import org.codehaus.jackson.annotate.JsonIgnoreProperties;
-import org.codehaus.jackson.annotate.JsonProperty;
-import org.codehaus.jackson.annotate.JsonSubTypes;
-import org.codehaus.jackson.annotate.JsonSubTypes.Type;
-import org.codehaus.jackson.annotate.JsonTypeInfo;
 
 @JsonIgnoreProperties
     ({"scaleX", "scaleY", "shearX", "shearY", "translateX", "translateY",
@@ -14,7 +10,8 @@ import org.codehaus.jackson.annotate.JsonTypeInfo;
 public abstract class AffinePolygonTransform extends Affine
                                               implements PolygonTransform {
         
-    /** The polygon's input vertices. */
+	private static final long serialVersionUID = 7329000844756906085L;
+	/** The polygon's input vertices. */
     public abstract Point2D.Double[] getInputVertices();
     /** The polygon's output vertices. */
     public abstract Point2D.Double[] getOutputVertices();

@@ -6,8 +6,6 @@ import javax.print.attribute.standard.*;
 import javax.swing.*;
 import javax.swing.filechooser.*;
 import javax.swing.text.*;
-import javax.swing.plaf.basic.BasicHTML;
-
 import java.awt.*;
 import java.awt.event.*;
 import java.awt.image.*;
@@ -24,7 +22,6 @@ import com.itextpdf.text.Document;
 import com.itextpdf.text.PageSize;
 import com.itextpdf.text.pdf.*;
 
-import org.codehaus.jackson.*;
 import org.codehaus.jackson.annotate.*;
 import org.codehaus.jackson.annotate.JsonSubTypes.Type;
 import org.codehaus.jackson.map.*;
@@ -291,7 +288,9 @@ public class Editor implements CropEventListener, MouseListener,
     static ObjectMapper objectMapper = null;
 
     abstract class Action extends AbstractAction {
-        Action(String name) {
+		private static final long serialVersionUID = 1834208008403586162L;
+
+		Action(String name) {
             super(name);
         }
     }
@@ -406,7 +405,6 @@ public class Editor implements CropEventListener, MouseListener,
         @Override
         public void move(Point2D target) {
             GeneralPolyline path = paths.get(curveNo);
-            Point2D.Double oldPos = path.get(vertexNo);
             path.set(vertexNo, target);
             repaintEditFrame();
         }
@@ -744,7 +742,6 @@ public class Editor implements CropEventListener, MouseListener,
 
         @Override
         public Point2D.Double getLocation() {
-            Point point = null;
             switch (handle) {
             case START:
                 return (Point2D.Double) getItem().startPoint.clone();
@@ -897,7 +894,8 @@ public class Editor implements CropEventListener, MouseListener,
       + "right away if the tie lines converge)."
       + "</p></div></html>" };
 
-    StepDialog tieLineDialog = new StepDialog
+    @SuppressWarnings("serial")
+	StepDialog tieLineDialog = new StepDialog
         (editFrame, "Select Tie Line Display Region",
          new Editor.Action("Item selected") {
              @Override public void actionPerformed(ActionEvent e) {
@@ -1665,7 +1663,7 @@ public class Editor implements CropEventListener, MouseListener,
         if (isDuplicate(point)) {
             return; // Adding the same point twice causes problems.
         }
-        GeneralPolyline path = getCurveForAppend();
+        getCurveForAppend();
         VertexSelection sel = getSelectedVertex();
 
         add(paths.get(sel.curveNo), sel.vertexNo, point);
@@ -2205,6 +2203,7 @@ public class Editor implements CropEventListener, MouseListener,
             return;
         }
         selection = new LabelSelection(nl);
+        repaintEditFrame();
     }
 
     public void editLabel(int index) {
@@ -2520,8 +2519,6 @@ public class Editor implements CropEventListener, MouseListener,
         int curveNo = -1;
         for (GeneralPolyline path : paths) {
             ++curveNo;
-            Point2D.Double point;
-
             GeneralPolyline pagePath
                 = path.createTransformed(principalToStandardPage);
             CurveDistance dist = pagePath.distance(mousePage);
@@ -2953,7 +2950,6 @@ public class Editor implements CropEventListener, MouseListener,
                 int angleVertex = diagramType.getTriangleVertexNo();
                 int ov1 = (angleVertex+1) % 3; // Other Vertex #1
                 int ov2 = (angleVertex+2) % 3; // Other Vertex #2
-                int otherVertices[] = { ov1, ov2 };
 
                 double pageMaxes[];
 
@@ -3148,7 +3144,7 @@ public class Editor implements CropEventListener, MouseListener,
         }
 
         pageBounds = new Rectangle2D.Double
-            (-leftMargin, -topMargin, r.width + leftMargin + topMargin,
+            (-leftMargin, -topMargin, r.width + leftMargin + rightMargin,
              r.height + topMargin + bottomMargin);
 
         if (diagramOutline.size() > 0) {
@@ -3923,8 +3919,11 @@ public class Editor implements CropEventListener, MouseListener,
         updateMousePosition();
     }
 
-    @Override
-        public void mousePressed(MouseEvent e) {
+    @Override public void mousePressed(MouseEvent e) {
+        addVertex();
+    }
+
+    public void addVertex() {
         if (principalToStandardPage == null) {
             return;
         }
@@ -4844,6 +4843,7 @@ abstract class Point2DAnnotations {
 abstract class Rectangle2DAnnotations {
 }
 
+@SuppressWarnings("serial")
 abstract class Rectangle2DDoubleAnnotations
     extends Rectangle2D.Double {
     @Override @JsonIgnore abstract public Rectangle getBounds();
@@ -4868,6 +4868,7 @@ class BasicStrokeAnnotations {
          @JsonProperty("dashPhase") float dashPhase) {}
 }
 
+@SuppressWarnings("serial")
 class DecimalFormatAnnotations extends DecimalFormat {
     @Override @JsonProperty("pattern")
 	public String toPattern() {
@@ -4876,6 +4877,7 @@ class DecimalFormatAnnotations extends DecimalFormat {
     DecimalFormatAnnotations(@JsonProperty("pattern") String pattern) {}
 }
 
+@SuppressWarnings("serial")
 @JsonTypeInfo(
               use = JsonTypeInfo.Id.NAME,
               include = JsonTypeInfo.As.PROPERTY,

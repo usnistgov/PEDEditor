@@ -1,10 +1,18 @@
 package gov.nist.pededitor;
 
-import javax.swing.*;
-import java.awt.*;
-import java.awt.geom.*;
-import java.util.*;
+import java.awt.Color;
+import java.awt.Dimension;
+import java.awt.Graphics;
+import java.awt.Graphics2D;
+import java.awt.Rectangle;
+import java.awt.RenderingHints;
+import java.awt.geom.AffineTransform;
+import java.awt.geom.Point2D;
 
+import javax.swing.JFrame;
+import javax.swing.JPanel;
+
+@SuppressWarnings("serial")
 class TestPanelZ extends JPanel {
 
     LinearRuler r = new LinearRuler();
@@ -38,6 +46,7 @@ class TestPanelZ extends JPanel {
    }
 }
 
+@SuppressWarnings("serial")
 class TestFrameZ extends JFrame {
    public TestFrameZ() {
       setContentPane(new TestPanelZ());

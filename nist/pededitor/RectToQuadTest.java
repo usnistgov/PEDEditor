@@ -5,6 +5,7 @@ import java.awt.*;
 import java.awt.geom.*;
 import java.util.*;
 
+@SuppressWarnings("serial")
 class TestPanel extends JPanel {
 
    /** The transformation used for this panel */
@@ -139,6 +140,7 @@ class TestPanel extends JPanel {
    }
 }
 
+@SuppressWarnings("serial")
 class TestFrame extends JFrame {
    public TestFrame(QuadrilateralTransform xform) {
       setContentPane(new TestPanel(xform));

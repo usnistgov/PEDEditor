@@ -209,15 +209,8 @@ public class ContinuedFraction {
 
     static String toString(double x, boolean showPercentage) {
         String suffix = showPercentage ? "%" : "";
-        if (x == 0) {
-            return "0" + suffix;
-        }
-
         double xp = showPercentage ? (x * 100) : x;
-
         ContinuedFraction f = ContinuedFraction.create(x, 0.0000001, 1000, 0);
-
-        String format = null;
 
         if (f != null) {
             if (f.denominator == 1) {

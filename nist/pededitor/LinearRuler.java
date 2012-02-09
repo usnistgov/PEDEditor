@@ -1,14 +1,14 @@
 package gov.nist.pededitor;
 
-import java.awt.*;
+import java.awt.BasicStroke;
+import java.awt.Font;
+import java.awt.FontMetrics;
+import java.awt.Graphics2D;
+import java.awt.Stroke;
 import java.awt.geom.AffineTransform;
-import java.awt.geom.Ellipse2D;
 import java.awt.geom.Line2D;
 import java.awt.geom.Point2D;
 import java.awt.geom.Rectangle2D;
-import java.util.ArrayList;
-
-import javax.swing.*;
 
 import org.codehaus.jackson.annotate.JsonBackReference;
 import org.codehaus.jackson.annotate.JsonProperty;
@@ -206,7 +206,6 @@ class LinearRuler {
         // m = page distance divided by logical distance.
 
         double m = distance / (aend - astart);
-        double maxLabels = Math.floor(distance / digitBounds.getWidth());
         double minBigTickDelta = digitBounds.getHeight() / m;
 
         // Construct an approximation of the largest string that is

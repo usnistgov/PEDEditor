@@ -283,8 +283,6 @@ public class Duh {
     /** @return the distance between p and the nearest point on rect.
         The return value will be 0 if p is in rect. */
     public static double distanceSq(Point2D p, Rectangle2D rect) {
-        double min;
-        double max;
         double x0 = p.getX();
         double x1 = (x0 > rect.getMaxX()) ? rect.getMaxX()
             : (x0 < rect.getMinX()) ? rect.getMinX()
@@ -317,7 +315,7 @@ public class Duh {
         int[] indices = sortIndices(points, yAxisPointsDown);
         Point2D.Double[] output = new Point2D.Double[points.length];
         for (int i = 0; i < points.length; ++i) {
-            output[i] = points[i];
+            output[i] = points[indices[i]];
         }
         return output;
     }
@@ -521,7 +519,6 @@ public class Duh {
             Point2D.Double point = inputs[pointIndices[i]];
             double dx = point.x - lowestPoint.x;
             double dy = point.y - lowestPoint.y;
-            double dx2 = dx * dx;
             pseudoAngles[i] = dx / (dy + Math.abs(dx));
         }
         Arrays.sort(pointIndices, 1, pointIndices.length,

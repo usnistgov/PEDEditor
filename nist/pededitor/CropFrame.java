@@ -5,7 +5,6 @@ import java.awt.*;
 import javax.imageio.ImageIO;
 import java.awt.event.*;
 import java.awt.image.*;
-import java.net.*;
 import java.io.*;
 import java.util.*;
 import java.util.List;
@@ -15,6 +14,8 @@ import java.util.prefs.*;
 /** A frame that displays a scanned image with scrollbars and permits
     selection of a cropping region. */
 public class CropFrame extends ImageScrollFrame {
+    private static final long serialVersionUID = -4522482981189328347L;
+
     /** Name of the preferences key value that identifies the
         directory from which the last image was pulled, so the file
         chooser can automatically start in that directory next
@@ -48,6 +49,8 @@ public class CropFrame extends ImageScrollFrame {
     }
 
     abstract class CropFrameAction extends AbstractAction {
+        private static final long serialVersionUID = 7152450019959819145L;
+
         CropFrameAction(String name, int mnemonic, String accelerator) {
             super(name);
             if (mnemonic != 0) {
@@ -67,6 +70,8 @@ public class CropFrame extends ImageScrollFrame {
 
     /** Class for fine-grain adjustments of the last vertex added. */
     class AdjustAction extends CropFrameAction {
+        private static final long serialVersionUID = -3339878862920887087L;
+
         int dx;
         int dy;
 
@@ -104,8 +109,9 @@ public class CropFrame extends ImageScrollFrame {
         menuBar.add(mnFile);
 
         openAction = new CropFrameAction("Open", KeyEvent.VK_O) {
-                @Override
-                    public void actionPerformed(ActionEvent e) {
+                private static final long serialVersionUID = -8441353884343354948L;
+
+                @Override public void actionPerformed(ActionEvent e) {
                     showOpenDialog();
                 }
             };
@@ -118,9 +124,9 @@ public class CropFrame extends ImageScrollFrame {
 
         cropAction = new CropFrameAction("Selection Complete",
                                          KeyEvent.VK_S, "ENTER") {
-                @Override
-                    public void actionPerformed(ActionEvent e) {
-                    CropEvent ce = new CropEvent(CropFrame.this);
+                private static final long serialVersionUID = 6287954432789148634L;
+
+                @Override public void actionPerformed(ActionEvent e) {
                     cropDone();
                 }
             };
@@ -129,8 +135,9 @@ public class CropFrame extends ImageScrollFrame {
 
         mnEdit.add(new CropFrameAction("Delete last vertex", KeyEvent.VK_D,
                                        "DELETE") {
-                @Override
-                    public void actionPerformed(ActionEvent e) {
+                private static final long serialVersionUID = 2227992506850526182L;
+
+                @Override public void actionPerformed(ActionEvent e) {
                     ArrayList<Point> vs = getCropPane().vertices;
                     int cnt = vs.size();
                     if (cnt > 0) {
@@ -157,8 +164,9 @@ public class CropFrame extends ImageScrollFrame {
 
         CropFrameAction help = new
             CropFrameAction("Help", KeyEvent.VK_H, "F1") {
-                @Override
-                    public void actionPerformed(ActionEvent e) {
+                private static final long serialVersionUID = -5668311761560787337L;
+
+                @Override public void actionPerformed(ActionEvent e) {
                     help();
                 }
             };

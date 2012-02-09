@@ -692,8 +692,6 @@ final public class CubicSpline2D {
                     continue;
                 }
 
-                double x = Polynomial.evaluate(t, xCubic);
-
                 // Convert t value within segment to t value within
                 // whole curve.
                 t = (segNo + t) / segCnt;

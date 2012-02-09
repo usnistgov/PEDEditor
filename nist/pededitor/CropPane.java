@@ -317,9 +317,6 @@ public class CropPane extends ImagePane {
         if (diagramType == null)
             return;
         
-        int cnt = vertices.size();
-        int maxCnt = diagramType.getVertexCnt();
-
         // Paint the selection that would result from clicking on the
         // current mouse position, if there is one, first, so that it
         // does not obscure the more important outline of the current
@@ -335,7 +332,8 @@ public class CropPane extends ImagePane {
         boolean markedVertices = false;
 
         if (mpos != null) {
-            ArrayList<Point> newVertices = (ArrayList<Point>) vertices.clone();
+            @SuppressWarnings("unchecked")
+			ArrayList<Point> newVertices = (ArrayList<Point>) vertices.clone();
             if (addVertex(newVertices, mpos)) {
                 Polygon poly = getSelection(newVertices);
                 if (poly != null) {
@@ -360,7 +358,8 @@ public class CropPane extends ImagePane {
             // and the current mouse position, if any.
 
             g.setColor(Color.RED);
-            ArrayList<Point> newPoints = (ArrayList<Point>) vertices.clone();
+            @SuppressWarnings("unchecked")
+			ArrayList<Point> newPoints = (ArrayList<Point>) vertices.clone();
             if (mpos != null) {
                 newPoints.add(mpos);
             }

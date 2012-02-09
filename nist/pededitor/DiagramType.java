@@ -1,11 +1,6 @@
 package gov.nist.pededitor;
 
-import java.awt.*;
-import java.awt.event.*;
-import java.awt.geom.*;
-import java.awt.image.*;
 import java.net.*;
-import java.util.*;
 import javax.swing.*;
 
 /** IDs and icons for different types of PEDs */

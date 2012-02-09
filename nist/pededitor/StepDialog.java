@@ -1,16 +1,19 @@
 package gov.nist.pededitor;
 
-import java.awt.*;
-import java.awt.event.*;
-import java.awt.geom.*;
-import java.awt.image.*;
-import java.util.*;
-import java.util.List;
-import javax.swing.*;
+import java.awt.Frame;
+
+import javax.swing.AbstractAction;
+import javax.swing.Action;
+import javax.swing.BoxLayout;
+import javax.swing.JButton;
+import javax.swing.JDialog;
+import javax.swing.JLabel;
+import javax.swing.JPanel;
 
 /** A label and anGUI for selecting a DiagramType. */
 class StepDialog extends JDialog {
-    JButton okButton;
+	private static final long serialVersionUID = -1250462809033476919L;
+	JButton okButton;
     JLabel label = new JLabel();
 
     public JLabel getLabel() {

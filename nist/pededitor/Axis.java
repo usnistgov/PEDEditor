@@ -1,7 +1,6 @@
 package gov.nist.pededitor;
 
 import java.awt.geom.*;
-import java.util.*;
 import java.text.*;
 
 /** Simple class to hold information about an axis/variable. */

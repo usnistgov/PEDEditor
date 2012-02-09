@@ -7,7 +7,8 @@ import java.util.*;
         crop selection is final. */
 public class CropEvent extends EventObject {
 
-    /** Coordinate spaces
+		private static final long serialVersionUID = -6745947304923005101L;
+	/** Coordinate spaces
 
         The transforms between spaces are all affine, except that
         transforms from the original space to other spaces will be

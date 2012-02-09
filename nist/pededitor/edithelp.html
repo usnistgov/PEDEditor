@@ -89,7 +89,7 @@ be selected:</p>
   <li>corners of the diagram</li>
 </ul>
 
-<p>Often, several items will share the same precise location. Press
+<p>Often, several items will share the same precise position. Press
 'P' repeatedly to cycle among those items until the correct item is
 highlighted. This only works for items whose positions are truly
 identical, and not for items whose positions differ by even a fraction
@@ -125,24 +125,22 @@ color="green">green</font>) before these commands have any effect.</p>
 
 <ul>
 
-<li>The <code>Delete</code> key deletes the selection.</li>
+<li>Press <code>Delete</code> to delete the selection.</li>
 
-<li>The 'c' key creates a copy of the selection at the mouse's current
-location. As a special case, if a vertex is selected, the 'c' key
-copies the entire curve. (To create one new vertex or curve control
-point, press the left mouse button.)</li>
+<li>Press 'c' to create a copy to the selection at the current mouse
+position.</li>
 
-<li>The 'm' key moves the selection and every other item that shares
-its location. Use capital 'M' to move the selected item only.</li>
+<li>Press 'm' to move the selection point, including all other items
+that share that point. Press capital 'M' to move only the item in
+green while leaving all other items at that point unchanged.</li>
 
-<li>The 'e' key opens an edit dialog for items that support editing,
-namely labels, tie lines, and rulers.</li>
+<li>Press 'e' to edit the selection. Items that support editing
+include labels, tie lines, and rulers.</li>
 
-<li>If one of the four arrow keys is pressed while the mouse is
-located at the selection, then the selection and every other item that
-shares its location is moved one pixel in the direction indicated by
-the arrow key. If no selection is active or the mouse is not located
-at the selection, then only the mouse pointer moves.</li>
+<li>Pressing an arrow key moves the mouse position one pixel in the
+corresponding direction. If the mouse is positioned at the selection,
+then the selection and every other item that shares its position moves
+with it.</li>
 
 </ul>
 
@@ -157,7 +155,7 @@ the currently selected point is indicated by a solid green circle.</p>
 <p>To start a new curve, first deselect the current curve if one is
 highlighted. Press the <code>End</code> key or choose main menu item
 <code><u>C</u>urve/<u>D</u>eselect</code>) to do this. Then press the
-left mouse button at the appropriate location to insert the first
+left mouse button at the appropriate position to insert the first
 endpoint of the new curve.</p>
 
 <h3>Selecting an existing curve</h3>
@@ -176,8 +174,8 @@ until the correct curve is highlighted in green.</p>
 <p>Move the selected vertex one pixel in any directions by using the
 arrow keys.</p>
 
-<p>You can move all vertices at a single location by selecting that
-location with '?', positioning the mouse at the desired destination,
+<p>You can move all vertices at a single position by selecting that
+position with '?', positioning the mouse at the desired destination,
 and pressing 'm'.</p>
 
 <p>There is no specific 'move a vertex' operation, but once a vertex

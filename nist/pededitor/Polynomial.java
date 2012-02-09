@@ -1,8 +1,6 @@
 package gov.nist.pededitor;
 
-import java.util.*;
-
-/** Simple utilites for polynomials encoded as an array of their
+/** Simple utilities for polynomials encoded as an array of their
     coefficients. */
 public class Polynomial {
     public static double[] derivative(double[] poly) {

@@ -1,8 +1,6 @@
 package gov.nist.pededitor;
 
 import java.awt.geom.*;
-import java.awt.*;
-import java.util.*;
 
 /** Simple object to store information about a single point on a
     parameterized curve and its distance from something. */

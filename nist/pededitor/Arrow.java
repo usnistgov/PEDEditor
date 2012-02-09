@@ -1,19 +1,14 @@
 package gov.nist.pededitor;
 
-import java.awt.*;
-import java.awt.event.*;
 import java.awt.geom.*;
-import java.io.File;
-import java.io.IOException;
-import java.util.*;
-
 import org.codehaus.jackson.annotate.JsonIgnoreProperties;
 import org.codehaus.jackson.annotate.JsonProperty;
 
 @JsonIgnoreProperties
     ({"bounds2D", "bounds", "windingRule", "currentPoint"})
 public class Arrow extends Path2D.Double {
-    @JsonProperty public double x;
+	private static final long serialVersionUID = -3704208186216534922L;
+	@JsonProperty public double x;
     @JsonProperty public double y;
     @JsonProperty public double size;
     @JsonProperty public double theta;

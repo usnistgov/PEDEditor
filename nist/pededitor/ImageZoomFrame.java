@@ -7,7 +7,8 @@ import javax.swing.*;
     centered at position. */
 public class ImageZoomFrame extends JFrame {
 
-    protected ImageZoomPane contentPane;
+	private static final long serialVersionUID = 1239106959208277289L;
+	protected ImageZoomPane contentPane;
 
     public ImageZoomFrame() {
       setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);

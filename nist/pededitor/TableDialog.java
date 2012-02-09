@@ -1,20 +1,25 @@
 package gov.nist.pededitor;
 
-import java.awt.*;
-import java.awt.event.*;
-import java.awt.geom.*;
-import java.awt.image.*;
-import java.io.*;
-import java.net.*;
-import java.util.*;
-import java.util.List;
-import javax.swing.*;
+import java.awt.BorderLayout;
+import java.awt.Dialog;
+import java.awt.Dimension;
+import java.awt.Frame;
+import java.awt.event.ActionEvent;
+import java.util.Arrays;
+
+import javax.swing.AbstractAction;
+import javax.swing.JButton;
+import javax.swing.JDialog;
+import javax.swing.JPanel;
+import javax.swing.JScrollPane;
+import javax.swing.JTable;
 
 /** Generic dialog that presents several rows of labels and
     corresponding text boxes and returns the array of text box text
     values once the user presses "OK". */
 public class TableDialog extends JDialog {
-    boolean pressedOK = false;
+	private static final long serialVersionUID = -8184443211996144705L;
+	boolean pressedOK = false;
     JButton okButton;
     JTable table;
 
@@ -24,7 +29,9 @@ public class TableDialog extends JDialog {
         JPanel contentPane = (JPanel) getContentPane();
         
         table = new JTable(data, columnNames) {
-                @Override public Class<?> getColumnClass(int c) {
+			private static final long serialVersionUID = -5653753441232401173L;
+
+				@Override public Class<?> getColumnClass(int c) {
                     return Double.class;
                 }
             };
@@ -38,7 +45,9 @@ public class TableDialog extends JDialog {
         contentPane.add(scrollPane, BorderLayout.CENTER);
 
         okButton = new JButton(new AbstractAction("OK") {
-                @Override
+			private static final long serialVersionUID = -8082661716737814979L;
+
+				@Override
                     public void actionPerformed(ActionEvent e) {
                     TableDialog.this.pressedOK = true;
                     setVisible(false);

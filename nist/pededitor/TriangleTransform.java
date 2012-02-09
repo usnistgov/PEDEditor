@@ -1,12 +1,13 @@
 package gov.nist.pededitor;
 
-import java.awt.geom.*;
-import java.util.*;
-import Jama.*;
+import java.awt.geom.AffineTransform;
+import java.awt.geom.NoninvertibleTransformException;
+import java.awt.geom.Point2D;
+import java.awt.geom.Rectangle2D;
 
-import org.codehaus.jackson.annotate.JsonIgnoreProperties;
 import org.codehaus.jackson.annotate.JsonProperty;
-import org.codehaus.jackson.annotate.JsonTypeInfo;
+
+import Jama.Matrix;
 
 /** Transform a triangle into any other triangle. All that is needed
     is an affine transformation. */

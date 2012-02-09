@@ -2,12 +2,10 @@ package gov.nist.pededitor;
 
 import java.awt.*;
 import java.awt.event.*;
-import java.io.IOException;
 import java.net.URL;
-import java.util.*;
-
 import javax.swing.*;
 
+@SuppressWarnings("serial")
 public class EditFrame extends JFrame {
     static JDialog helpDialog = null;
     static JDialog aboutDialog = null;
@@ -144,9 +142,6 @@ public class EditFrame extends JFrame {
             throw new IllegalStateException("Could not load " + imagePath);
         }
         Icon icon = new ImageIcon(url);
-        if (icon == null) {
-            throw new IllegalStateException("Could not load image " + imagePath);
-        }
         return icon;
     }
 

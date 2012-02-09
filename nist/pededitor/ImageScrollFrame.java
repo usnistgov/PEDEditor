@@ -16,7 +16,8 @@ import javax.swing.JScrollPane;
     pretty much it. */
 public class ImageScrollFrame extends JFrame {
 
-    protected JPanel contentPane;
+	private static final long serialVersionUID = -1397111479616890694L;
+	protected JPanel contentPane;
     protected JScrollPane scrollPane;
     protected ImagePane imagePane;
     protected int preferredWidth = 800;

@@ -2,21 +2,21 @@ package gov.nist.pededitor;
 
 import java.awt.*;
 import java.awt.event.*;
-import java.awt.geom.*;
 import java.awt.image.*;
-import java.util.*;
-import java.util.List;
 import javax.swing.*;
 
 /** GUI for selecting a DiagramType. */
 public class DiagramDialog extends JDialog
     implements ActionListener  {
-    DiagramType selectedDiagram = null;
+	private static final long serialVersionUID = -1082463709970796523L;
+	DiagramType selectedDiagram = null;
     boolean pressedOK = false;
     JButton okButton;
 
     abstract class DiagramDialogAction extends AbstractAction {
-        DiagramDialogAction(String name) {
+		private static final long serialVersionUID = -7296210099594024294L;
+
+		DiagramDialogAction(String name) {
             super(name);
         }
     }
@@ -55,7 +55,9 @@ public class DiagramDialog extends JDialog
         }
 
         okButton = new JButton(new DiagramDialogAction("OK") {
-                @Override
+			private static final long serialVersionUID = -4517446754034705381L;
+
+				@Override
                     public void actionPerformed(ActionEvent e) {
                     DiagramDialog.this.pressedOK = true;
                     DiagramDialog.this.setVisible(false);

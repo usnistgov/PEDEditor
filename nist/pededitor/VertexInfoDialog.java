@@ -1,20 +1,22 @@
 package gov.nist.pededitor;
 
-import java.awt.*;
-import java.awt.event.*;
-import java.awt.geom.*;
-import java.awt.image.*;
-import java.util.*;
-import java.util.List;
-import javax.swing.*;
+import java.awt.Frame;
+import java.awt.GridBagConstraints;
+import java.awt.GridBagLayout;
+import java.awt.Insets;
+import java.awt.geom.Point2D;
+
+import javax.swing.JComponent;
+import javax.swing.JDialog;
+import javax.swing.JLabel;
 
 import org.codehaus.jackson.annotate.JsonIgnore;
 
 /** GUI to display information about a tangency point in the
     diagram. */
 public class VertexInfoDialog extends JDialog {
-
-    // TODO Use diagram components to determine slope.
+	private static final long serialVersionUID = 1686051698640332170L;
+	// TODO Use diagram components to determine slope.
 
 
     public JLabel angle = new JLabel("180.00");

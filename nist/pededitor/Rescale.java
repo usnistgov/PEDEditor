@@ -1,7 +1,5 @@
 package gov.nist.pededitor;
 
-import java.awt.geom.*;
-import java.util.*;
 
 /** This class' purpose is described in its constructor docs. */
 public class Rescale {

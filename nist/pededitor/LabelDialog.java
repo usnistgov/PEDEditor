@@ -1,19 +1,41 @@
 package gov.nist.pededitor;
 
-import java.awt.*;
-import java.awt.event.*;
-import java.awt.geom.*;
-import java.awt.image.*;
-import java.util.*;
-import java.util.List;
-import javax.swing.*;
+import java.awt.Color;
+import java.awt.Dialog;
+import java.awt.Font;
+import java.awt.FontMetrics;
+import java.awt.Frame;
+import java.awt.Graphics;
+import java.awt.Graphics2D;
+import java.awt.GridBagConstraints;
+import java.awt.GridBagLayout;
+import java.awt.GridLayout;
+import java.awt.Image;
+import java.awt.Insets;
+import java.awt.RenderingHints;
+import java.awt.event.ActionEvent;
+import java.awt.geom.Ellipse2D;
+import java.awt.geom.Rectangle2D;
+import java.awt.image.BufferedImage;
+
+import javax.swing.AbstractAction;
+import javax.swing.BorderFactory;
+import javax.swing.ImageIcon;
+import javax.swing.JButton;
+import javax.swing.JCheckBox;
+import javax.swing.JComponent;
+import javax.swing.JDialog;
+import javax.swing.JLabel;
+import javax.swing.JPanel;
+import javax.swing.JTextField;
 
 import org.codehaus.jackson.annotate.JsonIgnore;
 
 /** GUI for selecting a label string and an anchoring position for
     that label. */
 public class LabelDialog extends JDialog {
-    /** See AnchoredLabel.xWeight for the definition of this field. */
+	private static final long serialVersionUID = 7836636038916887920L;
+	/** See AnchoredLabel.xWeight for the definition of this field. */
     double xWeight = 0;
     /** See AnchoredLabel.yWeight for the definition of this field. */
     double yWeight = 0;
@@ -32,7 +54,8 @@ public class LabelDialog extends JDialog {
     JButton[][] anchorButtons = new JButton[3][3];
 
     class AnchorAction extends AbstractAction {
-        final double xWeight;
+		private static final long serialVersionUID = -4526429983591205919L;
+		final double xWeight;
         final double yWeight;
         AnchorAction(Image image, double xWeight, double yWeight) {
             super(null, new ImageIcon(image));
@@ -107,8 +130,6 @@ public class LabelDialog extends JDialog {
 
     LabelDialog(Frame owner, String title) {
         super(owner, "Edit Text", true);
-
-        ButtonGroup group = new ButtonGroup();
 
         JPanel contentPane = (JPanel) getContentPane();
         contentPane.setLayout(new GridLayout(0,1));
@@ -335,7 +356,11 @@ public class LabelDialog extends JDialog {
 }
 
 class LabelAnchorButton extends JButton {
-    double xWeight;
+    /**
+	 * 
+	 */
+	private static final long serialVersionUID = 7002196720099380748L;
+	double xWeight;
     double yWeight;
 
     LabelAnchorButton(double xWeight, double yWeight) {

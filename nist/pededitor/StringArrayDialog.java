@@ -1,20 +1,26 @@
 package gov.nist.pededitor;
 
-import java.awt.*;
-import java.awt.event.*;
-import java.awt.geom.*;
-import java.awt.image.*;
-import java.io.*;
-import java.net.*;
-import java.util.*;
-import java.util.List;
-import javax.swing.*;
+import java.awt.Dialog;
+import java.awt.Frame;
+import java.awt.GridBagConstraints;
+import java.awt.GridBagLayout;
+import java.awt.Insets;
+import java.awt.event.ActionEvent;
+import java.util.Arrays;
+
+import javax.swing.AbstractAction;
+import javax.swing.JButton;
+import javax.swing.JComponent;
+import javax.swing.JDialog;
+import javax.swing.JLabel;
+import javax.swing.JTextField;
 
 /** Generic dialog that presents several rows of labels and
     corresponding text boxes and returns the array of text box text
     values once the user presses "OK". */
 public class StringArrayDialog extends JDialog {
-    boolean pressedOK = false;
+	private static final long serialVersionUID = 4234603969579529313L;
+	boolean pressedOK = false;
     JTextField[] textFields;
     String[] limits = {"0.0", "100.0"};
 
@@ -28,7 +34,6 @@ public class StringArrayDialog extends JDialog {
                       String intro) {
         super(owner, "Edit values", false);
 
-        JPanel contentPane = (JPanel) getContentPane();
         GridBagLayout gb = new GridBagLayout();
         getContentPane().setLayout(gb);
 
@@ -66,7 +71,12 @@ public class StringArrayDialog extends JDialog {
         }
 
         AbstractAction okAction = new AbstractAction("OK") {
-                @Override
+                /**
+			 * 
+			 */
+			private static final long serialVersionUID = 979439543555230448L;
+
+				@Override
                     public void actionPerformed(ActionEvent e) {
                     StringArrayDialog.this.pressedOK = true;
                     setVisible(false);

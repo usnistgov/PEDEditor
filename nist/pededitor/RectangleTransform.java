@@ -1,20 +1,20 @@
 package gov.nist.pededitor;
 
-import java.awt.geom.*;
-import java.util.*;
-import Jama.*;
+import java.awt.geom.AffineTransform;
+import java.awt.geom.NoninvertibleTransformException;
+import java.awt.geom.Point2D;
+import java.awt.geom.Rectangle2D;
 
 import org.codehaus.jackson.annotate.JsonIgnore;
-import org.codehaus.jackson.annotate.JsonIgnoreProperties;
 import org.codehaus.jackson.annotate.JsonProperty;
-import org.codehaus.jackson.annotate.JsonTypeInfo;
 
 /** Transform a Rectangle2D into another Rectangle2D using independent
     linear functions for the x- and y-axes. This is equivalent to the
     set of affine transformations that have 0 shear. */
 public class RectangleTransform extends AffinePolygonTransform {
-
-    Rectangle2D.Double input;
+	private static final long serialVersionUID = 3262190356272005695L;
+	
+	Rectangle2D.Double input;
     Rectangle2D.Double output;
 
     public RectangleTransform(RectangleTransform other) {

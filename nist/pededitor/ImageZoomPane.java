@@ -9,7 +9,8 @@ import java.awt.image.BufferedImage;
 import java.awt.Rectangle;
 
 public class ImageZoomPane extends ImagePane {
-    /** The x offset into the image to display in the center of this pane. */
+	private static final long serialVersionUID = 5357695613573941516L;
+	/** The x offset into the image to display in the center of this pane. */
     protected int zoomX = 0;
     /** The y offset into the image to display in the center of this pane. */
     protected int zoomY = 0;
