@@ -12,4 +12,8 @@ public interface Selectable {
     void move(Point2D dest);
     void copy(Point2D dest);
     Point2D.Double getLocation();
+    boolean isEditable();
+    void edit();
+    void setLineWidth(double lineWidth);
+    void setLineStyle(StandardStroke lineStyle);
 }
