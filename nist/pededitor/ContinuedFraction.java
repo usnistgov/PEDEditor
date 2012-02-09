@@ -46,10 +46,8 @@ public class ContinuedFraction {
     }
 
     /** Return a fractional approximation of the value d, or null if
-        no approximation that satisfies maxStepError is found
-
- and maxMinAtor
-        exists.
+        no approximation that satisfies maxStepError is found before
+        maxMinAtor or maxDenominator is exceeded.
 
        @param maxStepError This is the success criterion for accuracy.
        Return the current fractional approximation if during any
@@ -84,6 +82,9 @@ public class ContinuedFraction {
             // Starting from scratch each time is inefficient but easy to follow.
 
             Extra f = createBySteps(x, steps);
+            if (f == null) {
+                return null;
+            }
 
             long minAtor = Math.min(Math.abs(f.numerator), f.denominator);
 
@@ -110,9 +111,15 @@ public class ContinuedFraction {
 
     /**
        @return the ContinuedFraction that is obtained after continuing
-       the fraction for "steps" steps. */
+       the fraction for "steps" steps, or null if the fraction cannot
+       be computed. */
     static Extra createBySteps(double x, int steps) {
-        long i = (x < 0) ? (long) Math.ceil(x) : (long) Math.floor(x);
+        double di = (x < 0) ? Math.ceil(x) : Math.floor(x);
+        if (di < Long.MIN_VALUE || di > Long.MAX_VALUE) {
+            return null;
+        }
+
+        long i = (long) di;
         double frac = x - i;
 
         if (steps == 0 || frac == 0) {
@@ -120,6 +127,9 @@ public class ContinuedFraction {
         }
 
         Extra output = createBySteps(1.0 / frac, steps-1);
+        if (output == null) {
+            return null;
+        }
         i = i * output.numerator + output.denominator;
         output.denominator = output.numerator;
         output.numerator = i;
@@ -155,5 +165,50 @@ public class ContinuedFraction {
 
     public String toString() {
         return numerator + "/" + denominator;
+    }
+
+    /** Return a string representation of x as a fraction if x
+        resembles a fraction and looks good as one, or a decimal or
+        exponential format otherwise.
+
+        @param showPercentage Show non-fractions as percentages, but
+        leave fractions alone. */
+
+    static String toString(double x, boolean showPercentage) {
+        String suffix = showPercentage ? "%" : "";
+        if (x == 0) {
+            return "0" + suffix;
+        }
+
+        double xp = showPercentage ? (x * 100) : x;
+
+        ContinuedFraction f = ContinuedFraction.create(x, 0.0000001, 1000, 0);
+
+        String format = null;
+
+        if (f != null) {
+            if (f.denominator == 1) {
+                return xp + suffix;
+            }
+            if (!f.looksLikeDecimal()) {
+                return f.toString();
+            }
+
+            
+            int tens = 0;
+            long pow10 = 1;
+            while (pow10 % f.denominator != 0) {
+                ++tens;
+                pow10 *= 10;
+            }
+            if (showPercentage) {
+                tens -= 2;
+            }
+
+            return String.format("%." + (tens > 0 ? tens : 0) + "f", xp)
+                + suffix;
+        }
+
+        return String.format("%g", xp) + suffix;
     }
 }
