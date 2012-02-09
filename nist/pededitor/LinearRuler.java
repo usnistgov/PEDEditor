@@ -36,16 +36,6 @@ class LinearRuler {
     @JsonProperty double fontSize;
     @JsonProperty double lineWidth;
 
-    /** Tick marks act as anchor points for their corresponding
-        labels. As in AnchoredLabel, xWeight determines the positioning of
-        the label relative to its anchor. */
-    @JsonProperty double xWeight;
-    /** Tick marks act as anchor points for their corresponding
-        labels. As in AnchoredLabel, yWeight determines the positioning of
-        the label relative to its anchor. */
-    @JsonProperty double yWeight;
-
-
     /** Indicate where labels are to be anchored: NONE: No labels;
         LEFT: at the tip of the left-side tick (or left of the spine,
         if there are no left-side ticks); RIGHT: at the tip of the
@@ -130,8 +120,6 @@ class LinearRuler {
         LinearRuler o = new LinearRuler();
         o.startPoint = (Point2D.Double) startPoint.clone();
         o.endPoint = (Point2D.Double) endPoint.clone();
-        o.xWeight = xWeight;
-        o.yWeight = yWeight;
         o.fontSize = fontSize;
         o.textAngle = textAngle;
         o.lineWidth = lineWidth;
@@ -153,6 +141,56 @@ class LinearRuler {
     /** End of range of logical values covered by this axis. */
     double getEnd() {
         return axis.value(endPoint) * multiplier;
+    }
+
+    /** Return { xWeight, yWeight }, which depend upon the value of
+     * labelAnchor and textAngle. */
+    double[] weights() {
+        double quadrant = textAngle / (Math.PI / 2) + 0.01;
+        quadrant -= 4 * Math.floor(quadrant / 4);
+
+        double xWeight;
+        double yWeight;
+
+        // If the text is parallel or perpendicular to the ruler, then
+        // the anchor belongs in the middle (0.5) of one of the two
+        // dimensions. For text at other angles, the anchor belongs at
+        // a corner (that may not be ideal, but at least it guarantees
+        // that the label will not cross the spine of the ruler).
+
+        // These values are correct for right-side text.
+        if (quadrant < 0.02) {
+            xWeight = 0.5;
+            yWeight = 0.0;
+        } else if (quadrant < 1) {
+            xWeight = 0.0;
+            yWeight = 0.0;
+        } else if (quadrant < 1.02) {
+            xWeight = 0.0;
+            yWeight = 0.5;
+        } else if (quadrant < 2) {
+            xWeight = 0.0;
+            yWeight = 1.0;
+        } else if (quadrant < 2.02) {
+            xWeight = 0.5;
+            yWeight = 1.0;
+        } else if (quadrant < 3) {
+            xWeight = 1.0;
+            yWeight = 1.0;
+        } else if (quadrant < 3.02) {
+            xWeight = 1.0;
+            yWeight = 0.5;
+        } else  {
+            xWeight = 1.0;
+            yWeight = 0.0;
+        }
+
+        if (labelAnchor == LabelAnchor.LEFT) {
+            xWeight = 1.0 - xWeight;
+            yWeight = 1.0 - yWeight;
+        }
+
+        return new double[] { xWeight, yWeight };
     }
 
     /** Linear function mapping logical values to points in 2D. */
@@ -185,6 +223,10 @@ class LinearRuler {
 
         double astart = Math.min(start, end);
         double aend = Math.max(start, end);
+
+        double ws[] = weights();
+        double xWeight = ws[0];
+        double yWeight = ws[1];
 
         AffineTransform xform = AffineTransform.getScaleInstance(scale, scale);
         xform.concatenate(originalToSquarePixel);
