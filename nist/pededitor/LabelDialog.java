@@ -7,11 +7,8 @@ import java.awt.FontMetrics;
 import java.awt.Frame;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
-import java.awt.GridBagConstraints;
-import java.awt.GridBagLayout;
 import java.awt.GridLayout;
 import java.awt.Image;
-import java.awt.Insets;
 import java.awt.RenderingHints;
 import java.awt.event.ActionEvent;
 import java.awt.geom.Ellipse2D;
@@ -23,7 +20,6 @@ import javax.swing.BorderFactory;
 import javax.swing.ImageIcon;
 import javax.swing.JButton;
 import javax.swing.JCheckBox;
-import javax.swing.JComponent;
 import javax.swing.JDialog;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
@@ -34,8 +30,9 @@ import org.codehaus.jackson.annotate.JsonIgnore;
 /** GUI for selecting a label string and an anchoring position for
     that label. */
 public class LabelDialog extends JDialog {
-	private static final long serialVersionUID = 7836636038916887920L;
-	/** See AnchoredLabel.xWeight for the definition of this field. */
+    private static final long serialVersionUID = 7836636038916887920L;
+
+    /** See AnchoredLabel.xWeight for the definition of this field. */
     double xWeight = 0;
     /** See AnchoredLabel.yWeight for the definition of this field. */
     double yWeight = 0;
@@ -54,8 +51,9 @@ public class LabelDialog extends JDialog {
     JButton[][] anchorButtons = new JButton[3][3];
 
     class AnchorAction extends AbstractAction {
-		private static final long serialVersionUID = -4526429983591205919L;
-		final double xWeight;
+        private static final long serialVersionUID = -4526429983591205919L;
+
+        final double xWeight;
         final double yWeight;
         AnchorAction(Image image, double xWeight, double yWeight) {
             super(null, new ImageIcon(image));
@@ -122,100 +120,61 @@ public class LabelDialog extends JDialog {
         }
     }
 
-    static void add(JComponent parent, JComponent child,
-                       GridBagLayout gb, GridBagConstraints gbc) {
-        gb.setConstraints(child, gbc);
-        parent.add(child);
-    }
-
     LabelDialog(Frame owner, String title) {
         super(owner, "Edit Text", true);
-
         JPanel contentPane = (JPanel) getContentPane();
-        contentPane.setLayout(new GridLayout(0,1));
-
-        Insets insets = new Insets(0, 3, 0, 3);
-        GridBagConstraints east = new GridBagConstraints();
-        east.anchor = GridBagConstraints.EAST;
-        east.insets = insets;
-
-        GridBagConstraints west = new GridBagConstraints();
-        west.anchor = GridBagConstraints.WEST;
-        west.insets = insets;
-
-        GridBagConstraints endRow = new GridBagConstraints();
-        endRow.anchor = GridBagConstraints.WEST;
-        endRow.gridwidth = GridBagConstraints.REMAINDER;
-
-        GridBagLayout gbc = new GridBagLayout();
-        contentPane.setLayout(gbc);
+        GridBagUtil cpgb = new GridBagUtil(contentPane);
 
         {
-            GridBagLayout gb = new GridBagLayout();
             JPanel panel = new JPanel();
-            panel.setLayout(gb);
+            GridBagUtil gb = new GridBagUtil(panel);
 
-            {
-                JLabel label = new JLabel("Text:");
-                label.setLabelFor(textField);
+            JLabel textLabel = new JLabel("Text:");
+            textLabel.setLabelFor(textField);
 
-                add(panel, label, gb, west);
-                add(panel, textField, gb, endRow);
-            }
+            gb.addWest(textLabel);
+            gb.endRowWith(textField);
 
-            {
-                JLabel label = new JLabel("Font size:");
-                label.setLabelFor(fontSize);
+            JLabel fontSizeLabel = new JLabel("Font size:");
+            fontSizeLabel.setLabelFor(fontSize);
 
-                add(panel, label, gb, west);
-                add(panel, fontSize, gb, west);
-                JLabel label2 = new JLabel("of standard");
-                add(panel, label2, gb, endRow);
-            }
-
-            add(contentPane, panel, gbc, endRow);
+            gb.addWest(fontSizeLabel);
+            gb.addWest(fontSize);
+            gb.endRowWith(new JLabel("of standard"));
+            cpgb.endRowWith(panel);
         }
 
         {
-            GridBagLayout gb = new GridBagLayout();
             JPanel panel = new JPanel();
-            panel.setLayout(gb);
+            GridBagUtil gb = new GridBagUtil(panel);
 
-            {
-                JLabel label = new JLabel("Text angle:");
-                label.setLabelFor(angleField);
-                add(panel, label, gb, west);
-                add(panel, angleField, gb, west);
+            JLabel textAngleLabel = new JLabel("Text angle:");
+            textAngleLabel.setLabelFor(angleField);
+            gb.addWest(textAngleLabel);
+            gb.addWest(angleField);
+            gb.addWest(new JLabel("degrees"));
 
-                JLabel label2 = new JLabel("degrees");
-                add(panel, label2, gb, west);
-            }
-
-            compassPane = new ImagePane();
-            compassPane.setImage(createCompassImage());
-            add(panel, compassPane, gb, endRow);
-
-            add(contentPane, panel, gbc, endRow);
+            compassPane = new ImagePane(createCompassImage());
+            gb.endRowWith(compassPane);
+            cpgb.endRowWith(panel);
         }
 
         {
-            GridBagLayout gb = new GridBagLayout();
             JPanel panel = new JPanel();
-            panel.setLayout(gb);
+            GridBagUtil gb = new GridBagUtil(panel);
 
-            add(panel, mIsOpaque, gb, west);
+            gb.addWest(mIsOpaque);
 
             JPanel boxMe = new JPanel();
             boxMe.add(mIsBoxed);
             boxMe.setBorder(BorderFactory.createLineBorder(Color.black));
 
-            add(panel, boxMe, gb, endRow);
-            add(contentPane, panel, gbc, endRow);
+            gb.endRowWith(boxMe);
+            cpgb.endRowWith(panel);
         }
 
-        
-        add(contentPane, new JLabel("Label position relative to anchor:"),
-            gbc, endRow);
+        cpgb.endRowWith(new JLabel("Label position relative to anchor:"));
+
         JPanel anchorPane = new JPanel();
         anchorPane.setLayout(new GridLayout(3, 3));
         for (int y = 2; y >= 0; --y) {
@@ -226,7 +185,7 @@ public class LabelDialog extends JDialog {
             }
         }
 
-        add(contentPane, anchorPane, gbc, endRow);
+        cpgb.endRowWith(anchorPane);
     }
 
     LabelDialog(Frame owner, String title, AnchoredLabel label) {
@@ -356,11 +315,9 @@ public class LabelDialog extends JDialog {
 }
 
 class LabelAnchorButton extends JButton {
-    /**
-	 * 
-	 */
-	private static final long serialVersionUID = 7002196720099380748L;
-	double xWeight;
+    private static final long serialVersionUID = 7002196720099380748L;
+
+    double xWeight;
     double yWeight;
 
     LabelAnchorButton(double xWeight, double yWeight) {

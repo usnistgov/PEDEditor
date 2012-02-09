@@ -1,12 +1,8 @@
 package gov.nist.pededitor;
 
 import java.awt.Frame;
-import java.awt.GridBagConstraints;
-import java.awt.GridBagLayout;
-import java.awt.Insets;
 import java.awt.geom.Point2D;
 
-import javax.swing.JComponent;
 import javax.swing.JDialog;
 import javax.swing.JLabel;
 
@@ -15,49 +11,30 @@ import org.codehaus.jackson.annotate.JsonIgnore;
 /** GUI to display information about a tangency point in the
     diagram. */
 public class VertexInfoDialog extends JDialog {
-	private static final long serialVersionUID = 1686051698640332170L;
-	// TODO Use diagram components to determine slope.
+    private static final long serialVersionUID = 1686051698640332170L;
 
+    // TODO Use diagram components to determine slope.
 
     public JLabel angle = new JLabel("180.00");
     public JLabel slope = new JLabel("9999.99");
     JLabel slopeLabel;
     public JLabel lineWidth = new JLabel("0.00000");
 
-    protected void add(JComponent c, GridBagLayout gb,
-                       GridBagConstraints gbc) {
-        gb.setConstraints(c, gbc);
-        getContentPane().add(c);
-    }
-
     public VertexInfoDialog(Frame owner) {
         super(owner, "Tangent", false);
         setFocusableWindowState(false);
 
-        GridBagLayout gb = new GridBagLayout();
-        getContentPane().setLayout(gb);
+        GridBagUtil gb = new GridBagUtil(getContentPane());
 
-        Insets insets = new Insets(0, 3, 0, 3);
-        GridBagConstraints east = new GridBagConstraints();
-        east.anchor = GridBagConstraints.EAST;
-        east.insets = insets;
-        GridBagConstraints west = new GridBagConstraints();
-        west.anchor = GridBagConstraints.WEST;
-        west.insets = insets;
+        gb.addEast(new JLabel("Angle:"));
+        gb.addWest(angle);
+        gb.endRowWith(new JLabel("\u00B0") /* degree symbol */);
 
-        GridBagConstraints endRow = new GridBagConstraints();
-        endRow.anchor = GridBagConstraints.WEST;
-        endRow.gridwidth = GridBagConstraints.REMAINDER;
+        gb.addEast(new JLabel("Slope:"));
+        gb.endRowWith(slope);
 
-        add(new JLabel("Angle:"), gb, east);
-        add(angle, gb, west);
-        add(new JLabel("\u00B0"), gb, endRow);
-
-        add(new JLabel("Slope:"), gb, east);
-        add(slope, gb, endRow);
-
-        add(new JLabel("Line width:"), gb, east);
-        add(lineWidth, gb, endRow);
+        gb.addEast(new JLabel("Line width:"));
+        gb.endRowWith(lineWidth);
         pack();
         setGradient(null);
         setLineWidth(0.0);
