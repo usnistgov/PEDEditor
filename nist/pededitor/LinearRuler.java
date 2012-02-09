@@ -55,10 +55,10 @@ class LinearRuler {
 
     @JsonBackReference LinearAxis axis;
 
-    /** Multiply the axis values by scale. Normally scale = 1.0, but
-        scale = 100.0 for rulers that show percentages without a
-        percent sign. */
-    @JsonProperty double scale = 1.0;
+    /** Multiply the axis values by multiplier. Normally multiplier =
+        1.0, but multiplier = 100.0 for rulers that show percentages
+        without a percent sign. */
+    @JsonProperty double multiplier = 1.0;
 
     /** To simplify axis rotations, textAngle indicates the angle of
         the text relative to the ray from startPoint to endPoint. So
@@ -142,17 +142,17 @@ class LinearRuler {
         o.labelAnchor = labelAnchor;
         o.tickType = tickType;
         o.axis = axis;
-        o.scale = scale;
+        o.multiplier = multiplier;
         return o;
     }
 
     /** Start of range of logical values covered by this axis. */
     double getStart() {
-        return axis.value(startPoint) * scale;
+        return axis.value(startPoint) * multiplier;
     }
     /** End of range of logical values covered by this axis. */
     double getEnd() {
-        return axis.value(endPoint) * scale;
+        return axis.value(endPoint) * multiplier;
     }
 
     /** Linear function mapping logical values to points in 2D. */
