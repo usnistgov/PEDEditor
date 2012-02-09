@@ -288,9 +288,9 @@ public class Editor implements CropEventListener, MouseListener,
     static ObjectMapper objectMapper = null;
 
     abstract class Action extends AbstractAction {
-		private static final long serialVersionUID = 1834208008403586162L;
+        private static final long serialVersionUID = 1834208008403586162L;
 
-		Action(String name) {
+        Action(String name) {
             super(name);
         }
     }
@@ -679,8 +679,11 @@ public class Editor implements CropEventListener, MouseListener,
         @Override public boolean isEditable() { return true; }
 
         @Override public void edit() {
-            throw new UnsupportedOperationException
-                ("Ruler#edit(): not implemented yet");
+            LinearRuler item = getItem();
+            if ((new RulerDialog(editFrame, "Edit Ruler", item))
+                .showModal(item)) {
+                repaintEditFrame();
+            }
         }
 
         @Override public void setLineWidth(double lineWidth) {
@@ -894,10 +897,11 @@ public class Editor implements CropEventListener, MouseListener,
       + "right away if the tie lines converge)."
       + "</p></div></html>" };
 
-    @SuppressWarnings("serial")
-	StepDialog tieLineDialog = new StepDialog
+    StepDialog tieLineDialog = new StepDialog
         (editFrame, "Select Tie Line Display Region",
          new Editor.Action("Item selected") {
+             private static final long serialVersionUID = -6676297149495177006L;
+
              @Override public void actionPerformed(ActionEvent e) {
                  tieLineCornerSelected();
              }
@@ -2103,6 +2107,7 @@ public class Editor implements CropEventListener, MouseListener,
                 axis.format = new DecimalFormat("##0.0%");
                 for (LinearRuler r: rulers) {
                     if (r.axis == axis) {
+                        // Show percentages on this axis.
                         r.multiplier = 100.0;
                     }
                 }
@@ -4729,8 +4734,6 @@ public class Editor implements CropEventListener, MouseListener,
 
     void addTernaryBottomRuler(double start /* Z */, double end /* Z */) {
         LinearRuler r = new DefaultTernaryRuler() {{ // Component-Z axis
-            xWeight = 0.5;
-            yWeight = 0.0;
             textAngle = 0;
             tickLeft = true;
             labelAnchor = LinearRuler.LabelAnchor.RIGHT;
@@ -4745,8 +4748,6 @@ public class Editor implements CropEventListener, MouseListener,
 
     void addTernaryLeftRuler(double start /* Y */, double end /* Y */) {
         LinearRuler r = new DefaultTernaryRuler() {{ // Left Y-axis
-            xWeight = 1.0;
-            yWeight = 0.5;
             textAngle = Math.PI / 3;
             tickRight = true;
             labelAnchor = LinearRuler.LabelAnchor.LEFT;
@@ -4761,8 +4762,6 @@ public class Editor implements CropEventListener, MouseListener,
 
     void addTernaryRightRuler(double start /* Y */, double end /* Y */) {
         LinearRuler r = new DefaultTernaryRuler() {{ // Right Y-axis
-            xWeight = 0.0;
-            yWeight = 0.5;
             textAngle = Math.PI * 2 / 3;
             tickLeft = true;
             labelAnchor = LinearRuler.LabelAnchor.RIGHT;
@@ -4777,8 +4776,6 @@ public class Editor implements CropEventListener, MouseListener,
 
     void addBinaryBottomRuler() {
         rulers.add(new DefaultBinaryRuler() {{ // X-axis
-            xWeight = 0.5;
-            yWeight = 0.0;
             textAngle = 0;
             tickLeft = true;
             labelAnchor = LinearRuler.LabelAnchor.RIGHT;
@@ -4790,8 +4787,6 @@ public class Editor implements CropEventListener, MouseListener,
 
     void addBinaryTopRuler() {
         rulers.add(new DefaultBinaryRuler() {{ // X-axis
-            xWeight = 0.5;
-            yWeight = 1.0;
             textAngle = 0;
             tickRight = true;
             labelAnchor = LinearRuler.LabelAnchor.NONE;
@@ -4803,8 +4798,6 @@ public class Editor implements CropEventListener, MouseListener,
 
     void addBinaryLeftRuler() {
         rulers.add(new DefaultBinaryRuler() {{ // Left Y-axis
-            xWeight = 1.0;
-            yWeight = 0.5;
             textAngle = Math.PI / 2;
             tickRight = true;
             labelAnchor = LinearRuler.LabelAnchor.LEFT;
@@ -4816,8 +4809,6 @@ public class Editor implements CropEventListener, MouseListener,
 
     void addBinaryRightRuler() {
         rulers.add(new DefaultBinaryRuler() {{ // Right Y-axis
-            xWeight = 0.0;
-            yWeight = 0.5;
             textAngle = Math.PI / 2;
             tickLeft = true;
             labelAnchor = LinearRuler.LabelAnchor.NONE;
@@ -4870,10 +4861,9 @@ class BasicStrokeAnnotations {
 
 @SuppressWarnings("serial")
 class DecimalFormatAnnotations extends DecimalFormat {
-    @Override @JsonProperty("pattern")
-	public String toPattern() {
-		return null;
-	}
+    @Override @JsonProperty("pattern") public String toPattern() {
+        return null;
+    }
     DecimalFormatAnnotations(@JsonProperty("pattern") String pattern) {}
 }
 
