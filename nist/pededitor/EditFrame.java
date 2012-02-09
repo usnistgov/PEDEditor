@@ -345,12 +345,22 @@ public class EditFrame extends JFrame {
         mnExit.setEnabled(false);
 
 
-        // "Vertex" top-level menu
+        // "Edit" top-level menu
         JMenu mnEdit = new JMenu("Edit");
         mnEdit.setMnemonic(KeyEvent.VK_E);
         menuBar.add(mnEdit);
 
         if (editable) {
+
+            mnEdit.add(new Action
+                        ("Edit selection...",
+                         KeyEvent.VK_E,
+                         KeyStroke.getKeyStroke('e')) {
+                    @Override
+                        public void actionPerformed(ActionEvent e) {
+                        getParentEditor().editSelection();
+                    }
+                });
 
             mnEdit.add(new Action("Move",
                                              KeyEvent.VK_M,
@@ -361,7 +371,7 @@ public class EditFrame extends JFrame {
                     }
                 });
 
-            mnEdit.add(new Action("Move selection only",
+            mnEdit.add(new Action("Move green item only",
                                              KeyEvent.VK_V,
                                              KeyStroke.getKeyStroke('M')) {
                     @Override
@@ -389,7 +399,7 @@ public class EditFrame extends JFrame {
                 });
 
             mnEdit.add(new Action("Deselect",
-                                           KeyEvent.VK_E, "pressed END") {
+                                           KeyEvent.VK_S, "pressed END") {
                     @Override
                         public void actionPerformed(ActionEvent e) {
                         getParentEditor().deselectCurve();
@@ -403,26 +413,14 @@ public class EditFrame extends JFrame {
         menuBar.add(mnPosition);
 
         mnPosition.add(new Action
-                       ("Type coordinates",
+                       ("Enter coordinates",
                         KeyEvent.VK_T,
-                        KeyStroke.getKeyStroke('t')) {
+                        KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0)) {
                 @Override
                     public void actionPerformed(ActionEvent e) {
-                    getParentEditor().enterPosition(false);
+                    getParentEditor().enterPosition();
                 }
             });
-
-        if (editable) {
-            mnPosition.add(new Action
-                         ("Move selection to typed coordinates",
-                          KeyEvent.VK_M,
-                          KeyStroke.getKeyStroke('T')) {
-                    @Override
-                        public void actionPerformed(ActionEvent e) {
-                        getParentEditor().enterPosition(true);
-                    }
-                });
-        }
 
         mnPosition.add(new Action
                    ("Nearest key point",
@@ -560,14 +558,6 @@ public class EditFrame extends JFrame {
             mnCurve.add(mnLineWidth);
 
             mnCurve.add(new Action
-                        ("Reverse vertex order", KeyEvent.VK_R) {
-                    @Override
-                        public void actionPerformed(ActionEvent e) {
-                        getParentEditor().reverseInsertionOrder();
-                    }
-                });
-
-            mnCurve.add(new Action
                         ("Add cusp", KeyEvent.VK_C, "typed ,") {
                     @Override
                         public void actionPerformed(ActionEvent e) {
@@ -576,14 +566,28 @@ public class EditFrame extends JFrame {
                 });
         }
 
-        mnCurve.add(new Action("Select last", KeyEvent.VK_L) {
+        mnCurve.add(new Action("Select previous vertex", KeyEvent.VK_P) {
+                @Override
+                    public void actionPerformed(ActionEvent e) {
+                    getParentEditor().cycleActiveVertex(-1);
+                }
+            });
+
+        mnCurve.add(new Action("Select next vertex", KeyEvent.VK_N) {
+                @Override
+                    public void actionPerformed(ActionEvent e) {
+                    getParentEditor().cycleActiveVertex(+1);
+                }
+            });
+
+        mnCurve.add(new Action("Select previous curve", KeyEvent.VK_R) {
                 @Override
                     public void actionPerformed(ActionEvent e) {
                     getParentEditor().cycleActiveCurve(-1);
                 }
             });
 
-        mnCurve.add(new Action("Select next", KeyEvent.VK_N) {
+        mnCurve.add(new Action("Select next curve", KeyEvent.VK_X) {
                 @Override
                     public void actionPerformed(ActionEvent e) {
                     getParentEditor().cycleActiveCurve(+1);
@@ -604,9 +608,9 @@ public class EditFrame extends JFrame {
 
         if (editable) {
             mnDecorations.add(new Action
-                        ("New label",
-                         KeyEvent.VK_N,
-                         KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0)) {
+                        ("Add text...",
+                         KeyEvent.VK_T,
+                         KeyStroke.getKeyStroke('t')) {
                     @Override
                         public void actionPerformed(ActionEvent e) {
                         getParentEditor().addLabel();
@@ -614,12 +618,12 @@ public class EditFrame extends JFrame {
                 });
 
             mnDecorations.add(new Action
-                        ("Edit label",
+                        ("Select nearest text",
                          KeyEvent.VK_E,
-                         KeyStroke.getKeyStroke('e')) {
+                         KeyStroke.getKeyStroke('T')) {
                     @Override
                         public void actionPerformed(ActionEvent e) {
-                        getParentEditor().editLabel();
+                        getParentEditor().selectNearestLabel();
                     }
                 });
 
@@ -659,7 +663,7 @@ public class EditFrame extends JFrame {
                 });
 
             mnDecorations.add(new Action
-                        ("Add tie lines", KeyEvent.VK_T) {
+                        ("Add tie lines", KeyEvent.VK_I) {
                     @Override
                         public void actionPerformed(ActionEvent e) {
                         getParentEditor().addTieLine();
