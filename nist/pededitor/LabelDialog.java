@@ -17,15 +17,15 @@ public class LabelDialog extends JDialog {
     double xWeight = 0;
     /** See AnchoredLabel.yWeight for the definition of this field. */
     double yWeight = 0;
-    JTextField textField;
-    JCheckBox mIsOpaque = new JCheckBox("Erase background");
+    JTextField textField = new JTextField(30);
+
+    JCheckBox mIsOpaque = new JCheckBox("Opaque background");
     JCheckBox mIsBoxed = new JCheckBox("Box label");
-    JTextField sizeNumerator;
-    JTextField sizeDenominator;
+    JTextField fontSize = new JTextField("100%", 10);
 
     /** Text angle in degrees, where 0 = left-to-right and 90 =
         bottom-to-top. */
-    JTextField angleField;
+    JTextField angleField = new JTextField("0", 7);
     boolean pressedOK = false;
     ImagePane compassPane;
 
@@ -88,25 +88,12 @@ public class LabelDialog extends JDialog {
     }
 
     public void setFontSize(double scale) {
-        ContinuedFraction f = ContinuedFraction.create(scale, 0.00001, 9, 0);
-        if (f == null || f.looksLikeDecimal()) {
-            sizeNumerator.setText(String.format("%6f", scale));
-            sizeDenominator.setText("1");
-        } else {
-            sizeNumerator.setText(Long.toString(f.numerator));
-            sizeDenominator.setText(Long.toString(f.denominator));
-        }
+        fontSize.setText(ContinuedFraction.toString(scale, true));
     }
 
     public double getFontSize() {
-        double n, d;
         try {
-            n = Double.valueOf(sizeNumerator.getText());
-            d = Double.valueOf(sizeDenominator.getText());
-            if (d == 0) {
-                throw new NumberFormatException("Zero denominator");
-            }
-            return n/d;
+            return ContinuedFraction.parseDouble(fontSize.getText());
         } catch (NumberFormatException e) {
             return 0;
         }
@@ -119,49 +106,12 @@ public class LabelDialog extends JDialog {
     }
 
     LabelDialog(Frame owner, String title) {
-        super(owner, "Edit Label", true);
+        super(owner, "Edit Text", true);
 
         ButtonGroup group = new ButtonGroup();
 
         JPanel contentPane = (JPanel) getContentPane();
         contentPane.setLayout(new GridLayout(0,1));
-
-        Box box = new Box(BoxLayout.PAGE_AXIS);
-
-        textField = new JTextField();
-
-        box.add(new JLabel("Label:"));
-
-        box.add(textField);
-        box.add(new JLabel("Font size:"));
-        Box sizeBox = new Box(BoxLayout.LINE_AXIS);
-        sizeBox.add(new JLabel("("));
-        sizeNumerator = new JTextField("1");
-        sizeBox.add(sizeNumerator);
-        sizeBox.add(new JLabel("\u00F7"));
-        sizeDenominator = new JTextField("1");
-        sizeBox.add(sizeDenominator);
-        sizeBox.add(new JLabel(") \u00D7 normal size"));
-        box.add(sizeBox);
-
-        Box orientationBox = new Box(BoxLayout.LINE_AXIS);
-        angleField = new JTextField("0", 7);
-        compassPane = new ImagePane();
-        compassPane.setImage(createCompassImage());
-        orientationBox.add(compassPane);
-        Box ob2 = new Box(BoxLayout.PAGE_AXIS);
-        angleField.setMaximumSize(new Dimension(90, 30));
-        ob2.add(new JLabel("Text angle:"));
-        Box ob3 = new Box(BoxLayout.LINE_AXIS);
-        ob3.add(angleField);
-        ob3.add(new JLabel("degrees"));
-        ob2.add(ob3);
-        orientationBox.add(ob2);
-        box.add(orientationBox);
-
-        GridBagLayout gb = new GridBagLayout();
-        JPanel panel = new JPanel();
-        panel.setLayout(gb);
 
         Insets insets = new Insets(0, 3, 0, 3);
         GridBagConstraints east = new GridBagConstraints();
@@ -176,17 +126,75 @@ public class LabelDialog extends JDialog {
         endRow.anchor = GridBagConstraints.WEST;
         endRow.gridwidth = GridBagConstraints.REMAINDER;
 
-        add(panel, mIsOpaque, gb, west);
+        GridBagLayout gbc = new GridBagLayout();
+        contentPane.setLayout(gbc);
 
-        JPanel boxMe = new JPanel();
-        boxMe.add(mIsBoxed);
-        boxMe.setBorder(BorderFactory.createLineBorder(Color.black));
+        {
+            GridBagLayout gb = new GridBagLayout();
+            JPanel panel = new JPanel();
+            panel.setLayout(gb);
 
-        add(panel, boxMe, gb, endRow);
+            {
+                JLabel label = new JLabel("Text:");
+                label.setLabelFor(textField);
 
-        box.add(panel);
+                add(panel, label, gb, west);
+                add(panel, textField, gb, endRow);
+            }
+
+            {
+                JLabel label = new JLabel("Font size:");
+                label.setLabelFor(fontSize);
+
+                add(panel, label, gb, west);
+                add(panel, fontSize, gb, west);
+                JLabel label2 = new JLabel("of standard");
+                add(panel, label2, gb, endRow);
+            }
+
+            add(contentPane, panel, gbc, endRow);
+        }
+
+        {
+            GridBagLayout gb = new GridBagLayout();
+            JPanel panel = new JPanel();
+            panel.setLayout(gb);
+
+            {
+                JLabel label = new JLabel("Text angle:");
+                label.setLabelFor(angleField);
+                add(panel, label, gb, west);
+                add(panel, angleField, gb, west);
+
+                JLabel label2 = new JLabel("degrees");
+                add(panel, label2, gb, west);
+            }
+
+            compassPane = new ImagePane();
+            compassPane.setImage(createCompassImage());
+            add(panel, compassPane, gb, endRow);
+
+            add(contentPane, panel, gbc, endRow);
+        }
+
+        {
+            GridBagLayout gb = new GridBagLayout();
+            JPanel panel = new JPanel();
+            panel.setLayout(gb);
+
+            add(panel, mIsOpaque, gb, west);
+
+            JPanel boxMe = new JPanel();
+            boxMe.add(mIsBoxed);
+            boxMe.setBorder(BorderFactory.createLineBorder(Color.black));
+
+            add(panel, boxMe, gb, endRow);
+            add(contentPane, panel, gbc, endRow);
+        }
+
         
-        box.add(new JLabel("Label position relative to anchor:"));
+        add(contentPane, new JLabel("Label position relative to anchor:"),
+            gbc, endRow);
         JPanel anchorPane = new JPanel();
         anchorPane.setLayout(new GridLayout(3, 3));
         for (int y = 2; y >= 0; --y) {
@@ -197,8 +205,7 @@ public class LabelDialog extends JDialog {
             }
         }
 
-        box.add(anchorPane);
-        contentPane.add(box);
+        add(contentPane, anchorPane, gbc, endRow);
     }
 
     LabelDialog(Frame owner, String title, AnchoredLabel label) {
