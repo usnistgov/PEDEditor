@@ -89,18 +89,17 @@ be selected:</p>
   <li>corners of the diagram</li>
 </ul>
 
-<p>If several items share the same location, such as many curves
-meeting at a single vertex, then you may press 'P' repeatedly to cycle
-among those items until the correct item is highlighted.</p>
+<p>Often, several items will share the same precise location. Press
+'P' repeatedly to cycle among those items until the correct item is
+highlighted. This only works for items whose positions are truly
+identical, and not for items whose positions differ by even a fraction
+of a pixel.</p>
 </li>
 
 <li>Move to ('l', that is, a lower-case L) or move to and select ('L')
 the closest line segment or curve.</li>
 
-<li>Enter numeric coordinates from the keyboard with '='. You may
-enter the coordinates using any two variables whose combination
-defines a point.</li>
-
+<li>Type ('t') the desired coordinates.</li>
 </ul>
 
 <p>The mouse will temporarily act as if stuck at the chosen point even
@@ -136,12 +135,14 @@ point, press the left mouse button.)</li>
 <li>The 'm' key moves the selection and every other item that shares
 its location. Use capital 'M' to move the selected item only.</li>
 
+<li>The 'e' key opens an edit dialog for items that support editing,
+namely labels, tie lines, and rulers.</li>
+
 <li>If one of the four arrow keys is pressed while the mouse is
 located at the selection, then the selection and every other item that
 shares its location is moved one pixel in the direction indicated by
-the arrow key. If you press an arrow key when no selection is active
-or the mouse is not located at the selection, then only the mouse
-pointer moves.</li>
+the arrow key. If no selection is active or the mouse is not located
+at the selection, then only the mouse pointer moves.</li>
 
 </ul>
 
@@ -193,8 +194,8 @@ outline, if any, displays the curve that will be result if you do
 this.</p>
 
 <p>To add a new vertex before (instead of after) the currently
-selected point, select the menu item <code><u>C</u>urve/<u>R</u>everse
-vertex order</code> and then add the vertex normally. This step is
+selected point, select the menu item <code><u>C</u>urve/<u>S</u>elect
+previous vertex</code> and then press the mouse button. This step is
 necessary if you wish to add a point before the first vertex of the
 curve.</p>
 
@@ -213,17 +214,16 @@ results than just repeating the starting vertex does.</p>
 
 <p>Use the <code><u>C</u>urve/Line style</code> menu item and select
 your preferred line style to change the style of the currently
-selected curve (if any) and the initial style of any subsequently
-added curves. The spacing of dots and dashes and so forth is
-proportional to the line width: if you reduce the width of a dashed
-line by half, then the length of the dashes is also reduced by
-half.</p>
+selected item (if any) and the initial style of any subsequently added
+items. The spacing of dots, dashes, and railroad ties is proportional
+to the line width: if you reduce the width of a dashed line by half,
+then the length of the dashes is also reduced by half.</p>
 
 <h3>Line widths</h3>
 
 <p>Use the <code><u>C</u>urve/Line width</code> menu item to change
-the width of the currently selected curve (if any) and the initial
-line width of any subsequently created curves.</p>
+the line width for the currently selected item (if any) and the
+initial line width of any subsequently created items.</p>
 
 <h3>Adding a cusp</h3>
 
@@ -236,10 +236,9 @@ same vertex.</p>
 
 <h3>Labels</h3>
 
-<p>Press <code>Enter</code> to create a new label anchored at the
-current mouse location. The "Add Label" dialog will open, permitting
-you to choose the text, font size, angle, and anchor orientation for
-the label.</p>
+<p>Press 't' to add text or a symbol anchored at the current mouse
+position. A window will open, permitting you to choose the text, font
+size, angle, and anchor orientation for the label.</p>
 
 <p>Some HTML tags and Unicode notations are allowed. To avoid
 confusion with HTML tags, less than signs ('&lt;') should be entered
@@ -249,10 +248,13 @@ palette), and greater than signs ('&gt;') should be entered as
 palette).</p>
 
 <p>The standard font size has characters whose height equals about
-1.5% of the length of the longer axis (height or width) of the
-diagram. You may enter multiples of this base font size as a fraction
-such as 1\u00F74, or as a decimal -- enter the decimal in the
-numerator portion of the font size and use 1 as the denominator.</p>
+0.16% of the height of binary diagrams, or 0.16% of the length of the
+longest side of ternary diagrams. You may enter multiples of this base
+font size as a fraction, percentage, or ordinary number.</p>
+
+<p>Press capital 'T' to select the text whose center is closed to the
+current mouse position. This may be more convenient than trying to
+select the text by pressing 'P' at the mouse's anchor.</p>
 
 <p>Press one of the nine anchor buttons when you are finished entering
 the other fields (text and font size) for this label. The anchor
