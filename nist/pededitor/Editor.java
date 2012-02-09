@@ -30,11 +30,7 @@ import org.codehaus.jackson.annotate.JsonSubTypes.Type;
 import org.codehaus.jackson.map.*;
 import org.codehaus.jackson.map.annotate.*;
 
-// TODO For default axes, use percentages instead of actual values.
-
 // TODO Ruler dialog
-
-// TODO Axis dialog. (Wait, really?)
 
 // TODO When a curve is selected, update the line width and line style
 // settings.
@@ -319,6 +315,22 @@ public class Editor implements CropEventListener, MouseListener,
             this.vertexNo = vertexNo;
         }
 
+        @Override public boolean isEditable() { return false; }
+
+        @Override public void edit() {
+            throw new IllegalStateException("Can't edit " + this);
+        }
+
+        @Override public void setLineWidth(double lineWidth) {
+            paths.get(curveNo).setLineWidth(lineWidth);
+            repaintEditFrame();
+        }
+
+        @Override public void setLineStyle(StandardStroke lineStyle) {
+            paths.get(curveNo).setStroke(lineStyle);
+            repaintEditFrame();
+        }
+
         @Override
         public VertexSelection remove() {
             GeneralPolyline path = paths.get(curveNo);
@@ -440,6 +452,8 @@ public class Editor implements CropEventListener, MouseListener,
             this.index = index;
         }
 
+        AnchoredLabel getItem() { return labels.get(index); }
+
         @Override
         public LabelSelection remove() {
             labels.remove(index);
@@ -450,7 +464,7 @@ public class Editor implements CropEventListener, MouseListener,
 
         @Override
         public void move(Point2D dest) {
-            AnchoredLabel item = labels.get(index);
+            AnchoredLabel item = getItem();
             item.setX(dest.getX());
             item.setY(dest.getY());
             repaintEditFrame();
@@ -458,17 +472,31 @@ public class Editor implements CropEventListener, MouseListener,
 
         @Override
         public void copy(Point2D dest) {
-            AnchoredLabel item = labels.get(index).clone();
-            item.setX(dest.getX());
-            item.setY(dest.getY());
-            add(item);
+            AnchoredLabel output = getItem().clone();
+            output.setX(dest.getX());
+            output.setY(dest.getY());
+            add(output);
             repaintEditFrame();
         }
 
         @Override
         public Point2D.Double getLocation() {
-            AnchoredLabel item = labels.get(index);
+            AnchoredLabel item = getItem();
             return new Point2D.Double(item.getX(), item.getY());
+        }
+
+        @Override public boolean isEditable() { return true; }
+
+        @Override public void edit() {
+            editLabel(index);
+        }
+
+        @Override public void setLineWidth(double lineWidth) {
+            // TODO This should really define the box style...
+        }
+
+        @Override public void setLineStyle(StandardStroke lineStyle) {
+            // TODO This should really define the box style...
         }
 
         @Override
@@ -490,6 +518,8 @@ public class Editor implements CropEventListener, MouseListener,
             this.index = index;
         }
 
+        Arrow getItem() { return arrows.get(index); }
+
         @Override
         public ArrowSelection remove() {
             arrows.remove(index);
@@ -499,7 +529,7 @@ public class Editor implements CropEventListener, MouseListener,
 
         @Override
         public void move(Point2D dest) {
-            Arrow item = arrows.get(index);
+            Arrow item = getItem();
             item.x = dest.getX();
             item.y = dest.getY();
             repaintEditFrame();
@@ -507,16 +537,31 @@ public class Editor implements CropEventListener, MouseListener,
 
         @Override
         public void copy(Point2D dest) {
-            Arrow item = arrows.get(index).clonus();
-            item.x = dest.getX();
-            item.y = dest.getY();
-            arrows.add(item);
+            Arrow output = getItem().clonus();
+            output.x = dest.getX();
+            output.y = dest.getY();
+            arrows.add(output);
             repaintEditFrame();
+        }
+
+        @Override public boolean isEditable() { return false; }
+
+        @Override public void edit() {
+            throw new IllegalStateException("Can't edit " + this);
+        }
+
+        @Override public void setLineWidth(double lineWidth) {
+            getItem().size = lineWidth;
+            repaintEditFrame();
+        }
+
+        @Override public void setLineStyle(StandardStroke lineStyle) {
+            // Nothing to do here
         }
 
         @Override
         public Point2D.Double getLocation() {
-            Arrow item = arrows.get(index);
+            Arrow item = getItem();
             return new Point2D.Double(item.x, item.y);
         }
 
@@ -546,6 +591,29 @@ public class Editor implements CropEventListener, MouseListener,
             this.handle = handle;
         }
 
+        TieLine getItem() { return tieLines.get(index); }
+
+        @Override public boolean isEditable() { return true; }
+
+        @Override public void edit() {
+            TieLine item = getItem();
+            int lineCnt = askNumberOfTieLines(item.lineCnt);
+            if (lineCnt >= 0) {
+                item.lineCnt = lineCnt;
+                repaintEditFrame();
+            }
+        }
+
+        @Override public void setLineWidth(double lineWidth) {
+            getItem().lineWidth = lineWidth;
+            repaintEditFrame();
+        }
+
+        @Override public void setLineStyle(StandardStroke lineStyle) {
+            getItem().stroke = lineStyle;
+            repaintEditFrame();
+        }
+
         @Override
         public TieLineSelection remove() {
             tieLines.remove(index);
@@ -569,16 +637,15 @@ public class Editor implements CropEventListener, MouseListener,
 
         @Override
         public Point2D.Double getLocation() {
-            TieLine item = tieLines.get(index);
             switch (handle) {
             case INNER1:
-                return item.getInner1();
+                return getItem().getInner1();
             case INNER2:
-                return item.getInner2();
+                return getItem().getInner2();
             case OUTER1:
-                return item.getOuter1();
+                return getItem().getOuter1();
             case OUTER2:
-                return item.getOuter2();
+                return getItem().getOuter2();
             }
 
             return null;
@@ -609,6 +676,29 @@ public class Editor implements CropEventListener, MouseListener,
             this.handle = handle;
         }
 
+        LinearRuler getItem() { return rulers.get(index); }
+
+        @Override public boolean isEditable() { return true; }
+
+        @Override public void edit() {
+            throw new UnsupportedOperationException
+                ("Ruler#edit(): not implemented yet");
+        }
+
+        @Override public void setLineWidth(double lineWidth) {
+            LinearRuler item = getItem();
+            // Change fontSize too, to maintain a fixed ratio between
+            // lineWidth and fontSize.
+            double ratio  = lineWidth / item.lineWidth;
+            item.lineWidth = lineWidth;
+            item.fontSize *= ratio;
+            repaintEditFrame();
+        }
+
+        @Override public void setLineStyle(StandardStroke lineStyle) {
+            // Nothing to do here
+        }
+
         @Override
         public RulerSelection remove() {
             rulers.remove(index);
@@ -618,14 +708,13 @@ public class Editor implements CropEventListener, MouseListener,
 
         @Override public void move(Point2D dest) {
             Point2D.Double d = new Point2D.Double(dest.getX(), dest.getY());
-            LinearRuler r = rulers.get(index);
-            
+
             switch (handle) {
             case START:
-                r.startPoint = d;
+                getItem().startPoint = d;
                 break;
             case END:
-                r.endPoint = d;
+                getItem().endPoint = d;
                 break;
             }
 
@@ -634,7 +723,7 @@ public class Editor implements CropEventListener, MouseListener,
 
         @Override public void copy(Point2D dest) {
             Point2D.Double d = new Point2D.Double(dest.getX(), dest.getY());
-            LinearRuler r = rulers.get(index).clone();
+            LinearRuler r = getItem().clone();
             double dx = r.endPoint.x - r.startPoint.x;
             double dy = r.endPoint.y - r.startPoint.y;
             
@@ -655,13 +744,12 @@ public class Editor implements CropEventListener, MouseListener,
 
         @Override
         public Point2D.Double getLocation() {
-            LinearRuler item = rulers.get(index);
             Point point = null;
             switch (handle) {
             case START:
-                return (Point2D.Double) item.startPoint.clone();
+                return (Point2D.Double) getItem().startPoint.clone();
             case END:
-                return (Point2D.Double) item.endPoint.clone();
+                return (Point2D.Double) getItem().endPoint.clone();
             }
 
             return null;
@@ -698,7 +786,7 @@ public class Editor implements CropEventListener, MouseListener,
             fontSize = normalFontSize();
             lineWidth = STANDARD_LINE_WIDTH;
             tickPadding = 3.0;
-            drawSpine = false;
+            multiplier = 100.0;
 
             tickType = LinearRuler.TickType.V;
             keepStartClear = true;
@@ -805,8 +893,8 @@ public class Editor implements CropEventListener, MouseListener,
       + "to converge, or one of the two inside corners otherwise."
       + "</p></div></html>",
       "<html><div width=\"200 px\"><p>"
-      + "Select the second inside corner (or just press \"OK\" right away "
-      + "if the tie lines converge)."
+      + "Select the second inside corner (or just press \"Item Selected\" "
+      + "right away if the tie lines converge)."
       + "</p></div></html>" };
 
     StepDialog tieLineDialog = new StepDialog
@@ -1040,6 +1128,25 @@ public class Editor implements CropEventListener, MouseListener,
         selection.copy(mprin);
     }
 
+    /** Edit the selection. */
+    public void editSelection() {
+
+        if (selection == null) {
+            JOptionPane.showMessageDialog
+                (editFrame,
+                 "You must select an item before you can edit it.");
+            return;
+        }
+
+        if (!selection.isEditable()) {
+            JOptionPane.showMessageDialog
+                (editFrame,
+                 "This item does not have a special edit function.");
+            return;
+        }
+        selection.edit();
+    }
+
     /** Return true if p1 and p2 are equal to within reasonable
         limits, where "reasonable limits" means the distance between
         their transformations to the standard page is less than
@@ -1083,11 +1190,11 @@ public class Editor implements CropEventListener, MouseListener,
 
     /** Cycle the currently active curve.
 
-        @param delta if 1, then cycle forwards; if 0, then cycle backwards. */
+        @param delta if 1, then cycle forwards; if -1, then cycle
+        backwards. */
     public void cycleActiveCurve(int delta) {
         if (paths.size() == 0) {
-            // Nothing to do.
-            return;
+            return; // Nothing to do.
         }
 
         VertexSelection sel = getSelectedVertex();
@@ -1098,6 +1205,39 @@ public class Editor implements CropEventListener, MouseListener,
 
         sel.curveNo = (sel.curveNo + delta + paths.size()) % paths.size();
         sel.vertexNo = paths.get(sel.curveNo).size() - 1;
+        repaintEditFrame();
+    }
+
+    /** Cycle the currently active vertex.
+
+        @param delta if 1, then cycle forwards; if -1, then cycle
+        backwards. */
+    public void cycleActiveVertex(int delta) {
+        VertexSelection sel = getSelectedVertex();
+
+        if (sel == null) {
+            return; // Nothing to do.
+        }
+
+        GeneralPolyline path = getActiveCurve();
+        int cnt = path.size();
+
+        if (path.isClosed()) {
+            sel.vertexNo = (sel.vertexNo + cnt + delta) % cnt;
+        } else {
+            sel.vertexNo += delta;
+            if (sel.vertexNo > cnt - 1) {
+                sel.vertexNo = cnt - 1;
+            } else if (sel.vertexNo < 0) {
+                // We can't go back before the zeroth vertex, but we
+                // can reverse the insertion order to make it possible
+                // to insert vertices before it.
+                sel.vertexNo = 0;
+                reverseInsertionOrder();
+                return;
+            }
+        }
+
         repaintEditFrame();
     }
 
@@ -1316,16 +1456,6 @@ public class Editor implements CropEventListener, MouseListener,
         }
 
         {
-            LabelSelection sel = editing ? getSelectedLabel() : null;
-            for (int i = 0; i < labels.size(); ++i) {
-                boolean selected = (sel != null && i == sel.index);
-                if (!selected) { // Draw selection later.
-                    drawLabel(g, i, scale);
-                }
-            }
-        }
-
-        {
             ArrowSelection sel = editing ? getSelectedArrow() : null;
             for (int i = 0; i < arrows.size(); ++i) {
                 Arrow arrow = arrows.get(i);
@@ -1361,6 +1491,16 @@ public class Editor implements CropEventListener, MouseListener,
                 }
                 item.draw(g, getPrincipalToAlignedPage(), scale);
                 g.setColor(Color.BLACK);
+            }
+        }
+
+        {
+            LabelSelection sel = editing ? getSelectedLabel() : null;
+            for (int i = 0; i < labels.size(); ++i) {
+                boolean selected = (sel != null && i == sel.index);
+                if (!selected) { // Draw selection later.
+                    drawLabel(g, i, scale);
+                }
             }
         }
 
@@ -1675,30 +1815,12 @@ public class Editor implements CropEventListener, MouseListener,
         }
 
         tieLineDialog.setVisible(false);
-        int lineCnt;
+        int lineCnt = askNumberOfTieLines(10);
 
-        while (true) {
-            try {
-                String lineCntStr = JOptionPane.showInputDialog
-                    (editFrame,
-                     "Number of tie lines to display (interior only):",
-                     new Integer(10));
-                if (lineCntStr == null) {
-                    tieLineDialog.setVisible(false);
-                    tieLineCorners = null;
-                    return;
-                }
-                lineCnt = Integer.parseInt(lineCntStr);
-                if (lineCnt > 0) {
-                    break;
-                }
-
-                JOptionPane.showMessageDialog
-                    (editFrame, "Enter a positive integer.");
-            } catch (NumberFormatException e) {
-                JOptionPane.showMessageDialog
-                    (editFrame, "Invalid number format.");
-            }
+        if (lineCnt <= 0) {
+            tieLineDialog.setVisible(false);
+            tieLineCorners = null;
+            return;
         }
 
         TieLine tie = new TieLine(lineCnt, lineStyle);
@@ -1714,6 +1836,30 @@ public class Editor implements CropEventListener, MouseListener,
 
         tieLines.add(tie);
         repaintEditFrame();
+    }
+
+    int askNumberOfTieLines(int oldCount) {
+        while (true) {
+            try {
+                String lineCntStr = JOptionPane.showInputDialog
+                    (editFrame,
+                     "Number of tie lines to display (interior only):",
+                     new Integer(oldCount));
+                if (lineCntStr == null) {
+                    return -1;
+                }
+                int lineCnt = Integer.parseInt(lineCntStr);
+                if (lineCnt > 0) {
+                    return lineCnt;
+                }
+
+                JOptionPane.showMessageDialog
+                    (editFrame, "Enter a positive integer.");
+            } catch (NumberFormatException e) {
+                JOptionPane.showMessageDialog
+                    (editFrame, "Invalid number format.");
+            }
+        }
     }
 
     public void addTieLine() {
@@ -1957,6 +2103,11 @@ public class Editor implements CropEventListener, MouseListener,
             if (axis != null) {
                 axis.name = str;
                 axis.format = new DecimalFormat("##0.0%");
+                for (LinearRuler r: rulers) {
+                    if (r.axis == axis) {
+                        r.multiplier = 100.0;
+                    }
+                }
             }
             diagramComponents[side.ordinal()] = (str.equals("") ? null : str);
         }
@@ -1964,7 +2115,6 @@ public class Editor implements CropEventListener, MouseListener,
     }
 
     LinearAxis getAxis(Side side) {
-        System.out.println("getAxis(" + side + ")");
         switch (side) {
         case RIGHT:
             return getXAxis();
@@ -2049,23 +2199,18 @@ public class Editor implements CropEventListener, MouseListener,
     }
 
     /** Invoked from the EditFrame menu */
-    public void editLabel() {
-
-        LabelSelection lsel = getSelectedLabel();
-        if (lsel == null) {
-            int nl = nearestLabelNo();
-            if (nl == -1) {
-                return;
-            }
-            selection = lsel = new LabelSelection(nl);
+    public void selectNearestLabel() {
+        int nl = nearestLabelNo();
+        if (nl == -1) {
+            return;
         }
+        selection = new LabelSelection(nl);
+    }
 
-        AnchoredLabel label = labels.get(lsel.index);
+    public void editLabel(int index) {
+        AnchoredLabel label = labels.get(index);
         LabelDialog dialog = new LabelDialog
             (editFrame, "Edit Label", label);
-
-        repaintEditFrame();
-
         AnchoredLabel newLabel = dialog.showModal();
         if (newLabel == null) {
             return;
@@ -2073,9 +2218,11 @@ public class Editor implements CropEventListener, MouseListener,
 
         newLabel.setX(label.getX());
         newLabel.setY(label.getY());
-        labels.set(lsel.index, newLabel);
-        labelViews.set(lsel.index,
+        labels.set(index, newLabel);
+        labelViews.set(index,
                        toView(newLabel.getText(), newLabel.getXWeight()));
+
+        repaintEditFrame();
     }
 
     View toView(String str, double xWeight) {
@@ -2131,14 +2278,9 @@ public class Editor implements CropEventListener, MouseListener,
     /** Invoked from the EditFrame menu */
     public void setLineStyle(StandardStroke lineStyle) {
         this.lineStyle = lineStyle;
-
-        GeneralPolyline path = getActiveCurve();
-
-        if (path != null) {
-            path.setStroke(lineStyle);
-            repaintEditFrame();
+        if (selection != null) {
+            selection.setLineStyle(lineStyle);
         }
-
     }
 
     /** Move the mouse pointer so its position corresponds to the
@@ -2701,7 +2843,7 @@ public class Editor implements CropEventListener, MouseListener,
                         heightS = initialHeight;
                     }
                     try {
-                        height = parseDouble(heightS);
+                        height = ContinuedFraction.parseDouble(heightS);
                         break;
                     } catch (NumberFormatException e) {
                         JOptionPane.showMessageDialog(null, "Invalid number format.");
@@ -2830,9 +2972,8 @@ public class Editor implements CropEventListener, MouseListener,
 
                 String pageMaxInitialValues[] = new String[pageMaxes.length];
                 for (int i = 0; i < pageMaxes.length; ++i) {
-                    Formatter f = new Formatter();
-                    f.format("%.1f%%", pageMaxes[i] * 100.0);
-                    pageMaxInitialValues[i] = f.toString();
+                    pageMaxInitialValues[i] = ContinuedFraction.toString
+                        (pageMaxes[i], true);
                 }
                 DimensionsDialog dialog = new DimensionsDialog
                     (null, new String[] { sideNames[ov1], sideNames[ov2] });
@@ -2846,7 +2987,7 @@ public class Editor implements CropEventListener, MouseListener,
                     }
                     try {
                         for (int i = 0; i < pageMaxStrings.length; ++i) {
-                            pageMaxes[i] = parseDouble(pageMaxStrings[i]);
+                            pageMaxes[i] = ContinuedFraction.parseDouble(pageMaxStrings[i]);
                         }
                         break;
                     } catch (NumberFormatException e) {
@@ -3190,20 +3331,20 @@ public class Editor implements CropEventListener, MouseListener,
         Rectangle2D.Double bounds = principalToStandardPage.outputBounds();
 
         double oldValue = ((double) bounds.width) / bounds.height;
-        String oldString = String.format("%.3f", oldValue);
         double aspectRatio;
 
         while (true) {
             try {
                 String aspectRatioStr = JOptionPane.showInputDialog
                     (editFrame,
-                     "Enter the width-to-height ratio for the core diagram:",
-                     oldString);
+                     "Enter the width-to-height ratio for the core diagram.\n"
+                     + "(Most diagrams in the database uses a ratio of ~4/5.)",
+                     ContinuedFraction.toString(oldValue, true));
                 if (aspectRatioStr == null) {
                     return;
                 }
 
-                aspectRatio = Double.parseDouble(aspectRatioStr);
+                aspectRatio = ContinuedFraction.parseDouble(aspectRatioStr);
                 if (aspectRatio <= 0) {
                     JOptionPane.showMessageDialog
                         (editFrame, "Enter a positive integer.");
@@ -3217,7 +3358,6 @@ public class Editor implements CropEventListener, MouseListener,
         }
 
         double stretchFactor = aspectRatio / oldValue;
-        System.out.println("Stretch factor = " + stretchFactor);
         ((RectangleTransform) principalToStandardPage).scaleOutput
             (stretchFactor, 1.0);
         try {
@@ -3277,7 +3417,7 @@ public class Editor implements CropEventListener, MouseListener,
             break;
         }
 
-        String oldString = String.format("%.1f%%", oldValue * 100);
+        String oldString = ContinuedFraction.toString(oldValue, true);
         double margin;
 
         while (true) {
@@ -3290,7 +3430,7 @@ public class Editor implements CropEventListener, MouseListener,
                     return;
                 }
 
-                margin = parseDouble(marginStr);
+                margin = ContinuedFraction.parseDouble(marginStr);
                 break;
             } catch (NumberFormatException e) {
                 JOptionPane.showMessageDialog(null, "Invalid number format.");
@@ -3617,49 +3757,25 @@ public class Editor implements CropEventListener, MouseListener,
         return Printable.PAGE_EXISTS;
     }
 
-    /** Extend Double.parseDouble() with fraction and percentage
-        handling. */
-    public static double parseDouble(String s)
-        throws NumberFormatException {
-        s = s.trim();
-        double mul = 1.0;
-        if (s.length() > 0 && s.charAt(s.length() - 1) == '%') {
-            mul = 0.01;
-            s = s.substring(0, s.length() -1);
-        }
-
-        try {
-            return mul * Double.parseDouble(s);
-        } catch (NumberFormatException e) {
-            // Test for fraction format.
-        }
-
-        int p = s.indexOf('/');
-        if (p <= 0) {
-            throw new NumberFormatException
-                ("Invalid number format '" + s + "'");
-        }
-
-        long num = Long.parseLong(s.substring(0, p));
-        long den = Long.parseLong(s.substring(p + 1));
-
-        if (den == 0) {
-            throw new NumberFormatException("Zero denominator");
-        }
-
-        return mul * num / den;
-    }
-
     /** Invoked from the EditFrame menu */
-    public void enterPosition(boolean move) {
+    public void enterPosition() {
         String[] labels = new String[axes.size()];
+        String[] oldValues = new String[axes.size()];
         int i = -1;
+        LinearAxis xAxis = getXAxis();
+        LinearAxis yAxis = getYAxis();
+
+        // Fill in default values.
         for (Axis axis: axes) {
             ++i;
             labels[i] = (String) axis.name;
+            oldValues[i] = null;
+            if ((axis == xAxis || axis == yAxis) && mprin != null) {
+                oldValues[i] = axis.valueAsString(mprin.x, mprin.y);
+            }
         }
         StringArrayDialog dog = new StringArrayDialog
-            (editFrame, labels, null,
+            (editFrame, labels, oldValues,
              "<html><body width=\"200 px\"><p>"
              + "Enter exactly two values. Fractions and percentages are "
              + "allowed."
@@ -3684,7 +3800,7 @@ public class Editor implements CropEventListener, MouseListener,
                 if (str.equals("")) {
                     continue;
                 }
-                vs.add(parseDouble(str));
+                vs.add(ContinuedFraction.parseDouble(str));
                 axs.add(axes.get(i));
             }
         } catch (NumberFormatException e) {
@@ -3698,6 +3814,9 @@ public class Editor implements CropEventListener, MouseListener,
             return;
         }
 
+        // Solve the linear system to determine the pair of principal
+        // coordinates that corresponds to this pair of
+        // whatever-coordinates.
         LinearAxis ax0 = axs.get(0);
         LinearAxis ax1 = axs.get(1);
         Affine xform = new Affine
@@ -3708,13 +3827,9 @@ public class Editor implements CropEventListener, MouseListener,
         try {
             Affine xformi = xform.createInverse();
             Point2D.Double newMprin = xformi.transform(vs.get(0), vs.get(1));
-            if (move) {
-                moveMouseAndMaybeSelection(newMprin);
-            } else {
-                mprin = newMprin;
-                moveMouse(newMprin);
-                mouseIsStuck = true;
-            }
+            mprin = newMprin;
+            moveMouse(newMprin);
+            mouseIsStuck = true;
         } catch (NoninvertibleTransformException e) {
             JOptionPane.showMessageDialog
                 (editFrame,
@@ -3958,10 +4073,8 @@ public class Editor implements CropEventListener, MouseListener,
         page dimensions. */
     void setLineWidth(double lineWidth) {
         this.lineWidth = lineWidth;
-        GeneralPolyline path = getActiveCurve();
-        if (path != null) {
-            path.setLineWidth(lineWidth);
-            repaintEditFrame();
+        if (selection != null) {
+            selection.setLineWidth(lineWidth);
         }
     }
 
@@ -4061,8 +4174,30 @@ public class Editor implements CropEventListener, MouseListener,
         repaintEditFrame();
     }
 
+    double getLineWidth() {
+        GeneralPolyline path = getActiveCurve();
+        if (path != null) {
+            return path.getLineWidth();
+        }
+        return lineWidth;
+    }
+
     void customLineWidth() {
-        // TODO Just a stub.
+        while (true) {
+            String str = (String) JOptionPane.showInputDialog
+                (null,
+                 "Line width in page X/Y units:",
+                 String.format("%.5f", getLineWidth()));
+            if (str == null) {
+                return;
+            }
+            try {
+                setLineWidth(ContinuedFraction.parseDouble(str));
+                return;
+            } catch (NumberFormatException e) {
+                JOptionPane.showMessageDialog(null, "Invalid number format.");
+            }
+        }
     }
 
     EditPane getEditPane() { return editFrame.getEditPane(); }
