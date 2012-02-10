@@ -15,5 +15,6 @@ public interface Selectable {
     boolean isEditable();
     void edit();
     void setLineWidth(double lineWidth);
+    double getLineWidth();
     void setLineStyle(StandardStroke lineStyle);
 }
