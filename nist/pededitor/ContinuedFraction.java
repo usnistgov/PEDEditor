@@ -78,6 +78,10 @@ public class ContinuedFraction {
          long maxDenominator) {
         double oldError = 0.0;
 
+        if (x == 0) {
+            return new ContinuedFraction(0, 1);
+        }
+
         for (int steps = 0; ; ++steps) {
             // Starting from scratch each time is inefficient but easy to follow.
 
@@ -214,7 +218,7 @@ public class ContinuedFraction {
 
         if (f != null) {
             if (f.denominator == 1) {
-                return xp + suffix;
+                return ((int) xp) + suffix;
             }
             if (!f.looksLikeDecimal()) {
                 return f.toString();
