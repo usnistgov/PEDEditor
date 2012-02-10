@@ -649,11 +649,10 @@ public class EditFrame extends JFrame {
                 });
 
             mnDecorations.add(new Action
-                        ("Compute Chemical Label Coordinates", KeyEvent.VK_C) {
+                        ("Add ruler", KeyEvent.VK_U) {
                     @Override
                         public void actionPerformed(ActionEvent e) {
-                        // TODO not defined yet...
-                        // getParentEditor().computeLabelCoordinates();
+                        getParentEditor().addRuler();
                     }
                 });
 
@@ -662,6 +661,15 @@ public class EditFrame extends JFrame {
                     @Override
                         public void actionPerformed(ActionEvent e) {
                         getParentEditor().addTieLine();
+                    }
+                });
+
+            mnDecorations.add(new Action
+                        ("Compute Chemical Label Coordinates", KeyEvent.VK_C) {
+                    @Override
+                        public void actionPerformed(ActionEvent e) {
+                        // TODO not defined yet...
+                        // getParentEditor().computeLabelCoordinates();
                     }
                 });
         }
