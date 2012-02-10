@@ -13,6 +13,8 @@ public class GridBagUtil {
     public static final GridBagConstraints east = new GridBagConstraints();
     public static final GridBagConstraints west = new GridBagConstraints();
     public static final GridBagConstraints endRow = new GridBagConstraints();
+    public static final GridBagConstraints endRowCentered
+        = new GridBagConstraints();
 
     {
         east.anchor = GridBagConstraints.EAST;
@@ -24,6 +26,10 @@ public class GridBagUtil {
         endRow.anchor = GridBagConstraints.WEST;
         endRow.gridwidth = GridBagConstraints.REMAINDER;
         endRow.insets = insets;
+
+        endRowCentered.anchor = GridBagConstraints.CENTER;
+        endRowCentered.gridwidth = GridBagConstraints.REMAINDER;
+        endRowCentered.insets = insets;
     }
 
     public Container parent;
@@ -34,15 +40,6 @@ public class GridBagUtil {
 
         gbl = new GridBagLayout();
         parent.setLayout(gbl);
-
-        east.anchor = GridBagConstraints.EAST;
-        east.insets = insets;
-
-        west.anchor = GridBagConstraints.WEST;
-        west.insets = insets;
-
-        endRow.anchor = GridBagConstraints.WEST;
-        endRow.gridwidth = GridBagConstraints.REMAINDER;
     }
 
     void add(Container child, GridBagConstraints gbc) {
@@ -60,5 +57,9 @@ public class GridBagUtil {
 
     void endRowWith(Container child) {
         add(child, endRow);
+    }
+
+    void centerAndEndRow(Container child) {
+        add(child, endRowCentered);
     }
 }
