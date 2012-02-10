@@ -88,6 +88,8 @@ import org.codehaus.jackson.map.annotate.*;
 // points should be included in the vertex set, too, and label anchor
 // points should not, in general, be dotted.
 
+// TODO (optional, easy) Add color!
+
 // TODO (optional) Automatic margin recomputation
 
 // TODO (optional) Curve tags, including liquidus, solidus, and

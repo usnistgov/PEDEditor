@@ -1,13 +1,13 @@
 package gov.nist.pededitor;
 
+import java.awt.Component;
 import java.awt.Container;
 import java.awt.GridBagConstraints;
-import java.awt.GridBagLayout;
 import java.awt.Insets;
 
 /** Stupid class to marginally simplify use of GridBagLayout in a
     simple consistent style. */
-public class GridBagUtil {
+public class GridBagUtil extends GridBagWrapper {
     private Insets insets = new Insets(0, 3, 0, 3);
 
     public static final GridBagConstraints east = new GridBagConstraints();
@@ -32,34 +32,23 @@ public class GridBagUtil {
         endRowCentered.insets = insets;
     }
 
-    public Container parent;
-    public GridBagLayout gbl;
-
     public GridBagUtil(Container parent) {
-        this.parent = parent;
-
-        gbl = new GridBagLayout();
-        parent.setLayout(gbl);
+        super(parent);
     }
 
-    void add(Container child, GridBagConstraints gbc) {
-        gbl.setConstraints(child, gbc);
-        parent.add(child);
-    }
-
-    void addEast(Container child) {
+    void addEast(Component child) {
         add(child, east);
     }
 
-    void addWest(Container child) {
+    void addWest(Component child) {
         add(child, west);
     }
 
-    void endRowWith(Container child) {
+    void endRowWith(Component child) {
         add(child, endRow);
     }
 
-    void centerAndEndRow(Container child) {
+    void centerAndEndRow(Component child) {
         add(child, endRowCentered);
     }
 }

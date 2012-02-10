@@ -131,9 +131,26 @@ public class LabelDialog extends JDialog {
 
             JLabel textLabel = new JLabel("Text:");
             textLabel.setLabelFor(textField);
-
             gb.addWest(textLabel);
             gb.endRowWith(textField);
+
+            StringPalettePanel pal;
+
+            pal = new StringPalettePanel(new HTMLPalette(), 5);
+            pal.addListener(new StringEventListener() {
+                    @Override public void actionPerformed(StringEvent e) {
+                        textField.setText(textField.getText() + e.getString());
+                    }
+                });
+            gb.endRowWith(pal);
+
+            pal = new StringPalettePanel(new PedPalette(), 8);
+            pal.addListener(new StringEventListener() {
+                    @Override public void actionPerformed(StringEvent e) {
+                        textField.setText(textField.getText() + e.getString());
+                    }
+                });
+            gb.endRowWith(pal);
 
             JLabel fontSizeLabel = new JLabel("Font size:");
             fontSizeLabel.setLabelFor(fontSize);
@@ -186,6 +203,9 @@ public class LabelDialog extends JDialog {
         }
 
         cpgb.endRowWith(anchorPane);
+
+        setXWeight(0.5);
+        setYWeight(0.5);
     }
 
     LabelDialog(Frame owner, String title, AnchoredLabel label) {
