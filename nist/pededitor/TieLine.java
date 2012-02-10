@@ -161,6 +161,10 @@ public class TieLine {
         Point2D.Double o2 = getOuter2();
         Point2D.Double v = convergencePoint();
 
+        if (v == null) {
+            return output;
+        }
+
         // For triangular tie-line regions, i1.equals(i2) or
         // o1.equals(o2), but the midpoint of i1o1 never equals the
         // midpoint of i2o2.
