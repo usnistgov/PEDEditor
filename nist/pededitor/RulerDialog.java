@@ -10,8 +10,10 @@ import javax.swing.JButton;
 import javax.swing.JCheckBox;
 import javax.swing.JDialog;
 import javax.swing.JLabel;
+import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JRadioButton;
+import javax.swing.JTextField;
 
 /** GUI for changing tickLeft/tickRight, startArrow, endArrow,
     labelAnchor, and multiplier. */
@@ -54,9 +56,17 @@ public class RulerDialog extends JDialog {
 
     JCheckBox tickLeft = new JCheckBox("Left-side tick marks");
     JCheckBox tickRight = new JCheckBox("Right-side tick marks");
+    JCheckBox tickTypeV = new JCheckBox("V-shaped tick marks");
+
     JCheckBox startArrow = new JCheckBox("Start arrow");
     JCheckBox endArrow = new JCheckBox("End arrow");
+
+    JCheckBox keepStartClear = new JCheckBox("Keep start clear");
+    JCheckBox keepEndClear = new JCheckBox("Keep end clear");
+
     JCheckBox showPercentages = new JCheckBox("Use percentages in labels");
+    JTextField tickPadding = new JTextField("0", 10);
+
     boolean pressedOK = false;
     LinearRuler.LabelAnchor labelAnchor = null;
     ButtonGroup labelAnchorGroup = new ButtonGroup();
@@ -76,28 +86,54 @@ public class RulerDialog extends JDialog {
 
         cpgb.addWest(new JLabel("Tick labels:"));
         labelAnchor = ruler.labelAnchor;
-        cpgb.addWest
-            (new LabelAnchorButton
-             ("None", LinearRuler.LabelAnchor.NONE));
-        cpgb.addWest
-            (new LabelAnchorButton
-             ("On left", LinearRuler.LabelAnchor.LEFT));
-        cpgb.endRowWith
-            (new LabelAnchorButton
-             ("On right", LinearRuler.LabelAnchor.RIGHT));
+
+        {
+            JPanel panel = new JPanel();
+            GridBagUtil gb = new GridBagUtil(panel);
+            gb.addWest
+                (new LabelAnchorButton
+                 ("None", LinearRuler.LabelAnchor.NONE));
+            gb.addWest
+                (new LabelAnchorButton
+                 ("On left", LinearRuler.LabelAnchor.LEFT));
+            gb.endRowWith
+                (new LabelAnchorButton
+                 ("On right", LinearRuler.LabelAnchor.RIGHT));
+            cpgb.endRowWith(panel);
+        }
+
+        JLabel tickPaddingLabel = new JLabel("Extra padding between ticks:");
+        tickPaddingLabel.setLabelFor(tickPadding);
+        cpgb.addWest(tickPaddingLabel);
+        cpgb.endRowWith(tickPadding);
+        {
+            JPanel panel = new JPanel();
+            GridBagUtil gb = new GridBagUtil(panel);
+            gb.addWest(tickPaddingLabel);
+            gb.endRowWith(tickPadding);
+            cpgb.endRowWith(panel);
+        }
 
         cpgb.addWest(tickLeft);
         cpgb.endRowWith(tickRight);
+        cpgb.addWest(tickTypeV);
+        cpgb.endRowWith(showPercentages);
+
         cpgb.addWest(startArrow);
         cpgb.endRowWith(endArrow);
-        cpgb.endRowWith(showPercentages);
-        cpgb.endRowWith(okButton);
+        cpgb.addWest(keepStartClear);
+        cpgb.endRowWith(keepEndClear);
+
+        cpgb.centerAndEndRow(okButton);
         getRootPane().setDefaultButton(okButton);
 
         tickLeft.setSelected(ruler.tickLeft);
         tickRight.setSelected(ruler.tickRight);
+        tickTypeV.setSelected(ruler.tickType == LinearRuler.TickType.V);
         startArrow.setSelected(ruler.startArrow);
         endArrow.setSelected(ruler.endArrow);
+        keepStartClear.setSelected(ruler.keepStartClear);
+        keepEndClear.setSelected(ruler.keepEndClear);
 
         boolean showPct;
 
@@ -111,6 +147,8 @@ public class RulerDialog extends JDialog {
             throw new IllegalStateException("Multiplier = " + ruler.multiplier);
         }
         showPercentages.setSelected(showPct);
+        tickPadding.setText(ContinuedFraction.toString(ruler.tickPadding,
+                                                       false));
     }
 
     /** Show the dialog as document-modal. If the dialog is closed
@@ -128,8 +166,21 @@ public class RulerDialog extends JDialog {
         dest.tickRight = tickRight.isSelected();
         dest.startArrow = startArrow.isSelected();
         dest.endArrow = endArrow.isSelected();
+        dest.keepStartClear = keepStartClear.isSelected();
+        dest.keepEndClear = keepEndClear.isSelected();
         dest.multiplier = showPercentages.isSelected() ? 100.0 : 1.0;
         dest.labelAnchor = labelAnchor;
+        dest.tickType = tickTypeV.isSelected() ? LinearRuler.TickType.V
+            : LinearRuler.TickType.NORMAL;
+        String padStr = tickPadding.getText();
+        try {
+            dest.tickPadding = ContinuedFraction.parseDouble(padStr);
+        } catch (NumberFormatException e) {
+            JOptionPane.showMessageDialog
+                (getOwner(),
+                 "Warning: could not parse tickPadding value '" + padStr + "'");
+            dest.tickPadding = 0.0;
+        }
         return true;
     }
 }
