@@ -27,20 +27,10 @@ import org.codehaus.jackson.annotate.JsonSubTypes.Type;
 import org.codehaus.jackson.map.*;
 import org.codehaus.jackson.map.annotate.*;
 
-// TODO Ruler dialog
-
-// TODO When a curve is selected, update the line width and line style
-// settings.
-
 // TODO Fix issues with tie lines and closed curves.
 
-// TODO Ignore intersections of virtually parallel segments.
-
-// TODO (mandatory bug fix) Non-ASCII characters get lost during "save as PDF".
-
-// ===== The junkyard
-
-// TODO User-defined variables -- are they really needed?
+// TODO (mandatory bug fix) Non-ASCII characters get lost during "save
+// as PDF".
 
 // TODO Text rendering issues: inaccurate text bounding boxes and
 // incorrect spacing of space characters during diagram printing.
@@ -52,26 +42,15 @@ import org.codehaus.jackson.map.annotate.*;
 
 // TODO (mandatory) Label tags: diagram components, chemical formulas,
 // temperatures. The only mandatory element so far is that these three
-// elememts are associated with the diagram as a whole, not
-// necessarily with specific locations or labels. A minimal
-// implementation would involve manually adding diagram tags (which
-// should be allowable anyhow). Optional: eutectic and peritectic
-// points (which *would* have to be associated with specific points),
-// user-defined.
+// elements are associated with the diagram as a whole, not
+// necessarily with specific locations or labels. Optional: eutectic
+// and peritectic points (which *would* have to be associated with
+// specific points), user-defined.
 
 // TODO (major, mandatory) Read GRUMP data.
 
 // TODO (mandatory?, backwards compatibility) Duplicate existing
 // program's smoothing algorithm when displaying GRUMP files.
-
-// TODO (mandatory) Support tie lines. Per discussion with Chris, tie
-// lines are defined by three or four endpoints, and all tie lines
-// intersect at a single vanishing point, so quadrilateral tie lines
-// are created by regularly sectioning the angle through that point
-// and selectioning the region between the two boundary curves.
-
-// TODO (mandatory) Paired squiggles that indicate elided portions of
-// an axis
 
 // TODO (mandatory) Chemical formula typing short-cuts (relative to
 // entering the whole thing by hand as HTML) of some kind.
@@ -86,8 +65,6 @@ import org.codehaus.jackson.map.annotate.*;
 // TODO (mandatory?) Curve section decorations (e.g. pen-up/pen-down).
 // Not important for new diagrams as far as I can see, but may be
 // required for backwards compatibility.
-
-// TODO (helpful, not too hard) Allow labels to be moved.
 
 // TODO (mandatory?, preexisting) Apply a gradient to all control
 // points on a curve. Specifically, apply the following transformation
@@ -111,12 +88,7 @@ import org.codehaus.jackson.map.annotate.*;
 // points should be included in the vertex set, too, and label anchor
 // points should not, in general, be dotted.
 
-// TODO (important) Smarter diagram margin settings. Currently, the
-// diagram fills a hard-coded portion of the page, regardless of
-// whether the user needs more or less room than that. Allow the user
-// to expand, shrink, and ideally recompute (that is, define margins
-// in terms of the amount of screen space that is actually being used,
-// instead of relative to the size of the core diagram)
+// TODO (optional) Automatic margin recomputation
 
 // TODO (optional) Curve tags, including liquidus, solidus, and
 // presumably user-defined tags too.
@@ -138,8 +110,8 @@ import org.codehaus.jackson.map.annotate.*;
 // in which you end up mapping noise (experimental error, scanner
 // noise, twitches in the hand of the digitizer or the person who drew
 // the image in the first place, or whatever). Peter's program already
-// does fitting, but forcing arbitrary curves only a cubic Bezier is
-// too restrictive. (Consider Kriging?)
+// does fitting, but forcing arbitrary curves onto a cubic Bezier is
+// too restrictive.
 
 // Heuristics may be used to identify good cutoffs for fit quality. At
 // the over-fitting end of the spectrum, if you find the sum of the
@@ -161,24 +133,15 @@ import org.codehaus.jackson.map.annotate.*;
 // TODO "Undo" option. Any good drawing program has that feature, but
 // making everything undoable would take work.
 
-// TODO (easy enhancement) Support non-solid tie lines.
-
-// TODO (requires a checkmark and fix of incorrect dimensions)
-// Allow boxes around labels
-
 // TODO (enhancement) Tiling fill patterns. These are important for
 // general diagram drawing, but they seem to be less important for
 // PEDs
 
 // TODO (mandatory) "Symbol" type lines are not implemented.
 
-// TODO (optional) User-defined line and point widths.
-
 // TODO (preexisting in viewer) Periodic table integration and
 // automatic conversion of diagrams from mole percent to weight
 // percent
-
-// TODO (optional) Standard line style shorthand in PED-format file.
 
 // TODO (preexisting but not mandatory) Smart line dash lengths.
 // Peter Schenk's PED Editor adjusts the segment length for dashed
@@ -195,11 +158,6 @@ import org.codehaus.jackson.map.annotate.*;
 // use its estimate than to do a better but different estimate of
 // one's own -- but I don't know how practical it would be to access
 // that information.)
-
-// TODO Allow copy and paste of curves.
-
-// TODO (optional) When multiple curves share a vertex, allow the
-// vertex to be moved in all curves instead of just one of them.
 
 // TODO (optional) More general gradients, e.g. identify a polygon (or
 // circle?) and a point in the interior of that polygon that is to be
@@ -239,15 +197,6 @@ import org.codehaus.jackson.map.annotate.*;
 // computer vision can be expensive, and how much of our own brains
 // are dedicated to vision-related tasks?)
 
-// TODO (optional) Write GRUMP data. May not be practical because of
-// format limitations.
-
-// TODO (Don't do?) Define bounding rectangles for labels, instead of
-// just identifying a corner or the center of the text. Bounding
-// rectangles for text entry are useful if you're doing a lot of text
-// that involves word wrap, but they are probably not needed for this
-// application.
-
 // TODO (minor bug (in Java itself?)) Fix or work around the bug (which I think
 // is a Java bug, not an application bug) where scrolling the scroll
 // pane doesn't cause the image to be redrawn.
@@ -260,27 +209,9 @@ import org.codehaus.jackson.map.annotate.*;
 // TODO (feature, lower priority, low difficulty) Add a "bring mouse
 // and diagram under mouse to center" operation
 
-// TODO (feature, lower priority) Zoom by mouse dragging would be nice
-// too (there would have to be a minimum drag distance; maybe also
-// require that there be no currently selected curve)
-
-// TODO (feature, low difficulty) When choosing the nearest point, use
-// a two-step process: first identify the nearest curve, then identify
-// the nearest point on that curve.
-
-// TODO (bug, medium severity) Sometimes the zoom window steals the
-// focus, which is disorienting because you can't do anything until
-// the focus is returned to the edit or crop window
-
 // TODO Convert from wt% to mol%
 
-// TODO Standard page coordinates become invalid if you stretch a
-// diagram or modify margins (which should be easy to do). Perhaps it
-// would be better to define everything, even page decorations, in
-// principal coordinates, or to redefine standard page coordinates so
-// the smallest rectangle circumscribing the diagram is identified
-// with the unit square. The real problem here is only with ternary
-// diagrams -- rectangles' principal coordinates are fine.
+// TODO Define angles in principal coordinates?
 
 /** Main driver class for Phase Equilibria Diagram digitization and creation. */
 public class Editor implements CropEventListener, MouseListener,
@@ -323,6 +254,10 @@ public class Editor implements CropEventListener, MouseListener,
         @Override public void setLineWidth(double lineWidth) {
             paths.get(curveNo).setLineWidth(lineWidth);
             repaintEditFrame();
+        }
+
+        @Override public double getLineWidth() {
+            return paths.get(curveNo).getLineWidth();
         }
 
         @Override public void setLineStyle(StandardStroke lineStyle) {
@@ -393,7 +328,7 @@ public class Editor implements CropEventListener, MouseListener,
                     (curveNo,
                      (vertexNo > 0) ? (vertexNo - 1) : 0);
             } else {
-                paths.remove(curveNo);
+                removeCurve(curveNo);
                 return null;
             }
         }
@@ -490,7 +425,12 @@ public class Editor implements CropEventListener, MouseListener,
         }
 
         @Override public void setLineWidth(double lineWidth) {
-            // TODO This should really define the box style...
+            // TODO This should really define the box line width...
+        }
+
+        @Override public double getLineWidth() {
+            return 0.0; // TODO xxx What IS the line width for labels,
+                        // anyhow?
         }
 
         @Override public void setLineStyle(StandardStroke lineStyle) {
@@ -553,6 +493,10 @@ public class Editor implements CropEventListener, MouseListener,
             repaintEditFrame();
         }
 
+        @Override public double getLineWidth() {
+            return getItem().size;
+        }
+
         @Override public void setLineStyle(StandardStroke lineStyle) {
             // Nothing to do here
         }
@@ -605,6 +549,10 @@ public class Editor implements CropEventListener, MouseListener,
         @Override public void setLineWidth(double lineWidth) {
             getItem().lineWidth = lineWidth;
             repaintEditFrame();
+        }
+
+        @Override public double getLineWidth() {
+            return getItem().lineWidth;
         }
 
         @Override public void setLineStyle(StandardStroke lineStyle) {
@@ -696,6 +644,10 @@ public class Editor implements CropEventListener, MouseListener,
             repaintEditFrame();
         }
 
+        @Override public double getLineWidth() {
+            return getItem().lineWidth;
+        }
+
         @Override public void setLineStyle(StandardStroke lineStyle) {
             // Nothing to do here
         }
@@ -773,9 +725,7 @@ public class Editor implements CropEventListener, MouseListener,
             fontSize = normalFontSize();
             lineWidth = STANDARD_LINE_WIDTH;
             tickPadding = 3.0;
-
-            drawSpine = false; // The ruler spine is already a curve
-                               // in the diagram. Don't draw it twice.
+            drawSpine = true;
         }
     }
 
@@ -792,8 +742,7 @@ public class Editor implements CropEventListener, MouseListener,
             keepStartClear = true;
             keepEndClear = true;
 
-            drawSpine = false; // The ruler spine is already a curve
-                               // in the diagram. Don't draw it twice.
+            drawSpine = true;
         }
     }
 
@@ -815,12 +764,6 @@ public class Editor implements CropEventListener, MouseListener,
     protected EditFrame editFrame = new EditFrame(this);
     protected ImageZoomFrame zoomFrame = new ImageZoomFrame();
     protected VertexInfoDialog vertexInfo = new VertexInfoDialog(editFrame);
-
-    // TODO Allow inclusion of attribution data? (Debatable -- in the
-    // larger digitization context, the attribution data would be
-    // stored elsewhere, but if diagram files are flying around, some
-    // people might like to insure that the attribution information is
-    // attached to those files.)
 
     @JsonProperty protected PolygonTransform originalToPrincipal;
     protected PolygonTransform principalToOriginal;
@@ -1408,13 +1351,6 @@ public class Editor implements CropEventListener, MouseListener,
         } else {
             // Draw a white box the size of the page.
 
-            // TODO might need more work, but not a priority now
-
-            // TODO Prohibit drawing outside the page, or expand the
-            // page to accommodate such drawings?
-
-            // TODO Shrink the diagram to the used space?
-
             if (editing) {
                 g.setColor(Color.WHITE);
                 g.fill(scaledPageBounds(scale));
@@ -1716,6 +1652,30 @@ public class Editor implements CropEventListener, MouseListener,
         setPathSegments(path, segments);
     }
 
+    void removeCurve(int curveNo) {
+        GeneralPolyline path = paths.get(curveNo);
+
+        // Remove all associated tie lines.
+        for (int i = tieLines.size() - 1; i >= 0; --i) {
+            TieLine tie = tieLines.get(i);
+            if (tie.innerEdge == path || tie.outerEdge == path) {
+                tieLines.remove(i);
+            }
+        }
+
+        // If an incomplete tie line selection refers to this curve,
+        // then stop selecting a tie line.
+
+        for (PathAndT pat: tieLineCorners) {
+            if (pat.path == path) {
+                tieLineDialog.setVisible(false);
+                tieLineCorners = null;
+                break;
+            }
+        }
+
+        paths.remove(curveNo);
+    }
 
     /** Make a list of SegmentAndT values that appear in this Editor
         object and that refer to locations on the given path. */
@@ -1862,6 +1822,78 @@ public class Editor implements CropEventListener, MouseListener,
                     (editFrame, "Invalid number format.");
             }
         }
+    }
+
+    public void addRuler() {
+        GeneralPolyline path = getActiveCurve();
+        if (path == null || path.size() != 2) {
+            JOptionPane.showMessageDialog
+                (editFrame,
+                 "Before you can create a new ruler,\n"
+                 + "you must create and select a curve\n"
+                 + "consisting of exactly two vertices\n"
+                 + "which will become the rulers' endpoints.\n");
+            return;
+        }
+
+        Object[] choices = new Object[axes.size()];
+        int i = -1;
+        for (LinearAxis axis: axes) {
+            ++i;
+            choices[i] = axis.name;
+        }
+
+        String s = (String) JOptionPane.showInputDialog
+            (editFrame,
+             "Select variable to display:",
+             "New ruler",
+             JOptionPane.PLAIN_MESSAGE,
+             null, choices, choices[0]);
+
+        if (s == null) {
+            return;
+        }
+
+        int choiceNo;
+        for (choiceNo = 0; choiceNo < axes.size(); ++choiceNo) {
+            if (s.equals(axes.get(choiceNo).name)) {
+                break;
+            }
+        }
+
+        if (choiceNo == axes.size()) {
+            throw new IllegalStateException("Choice " + s + " is not on the list!");
+        }
+
+        LinearAxis axis = axes.get(choiceNo);
+
+        LinearRuler ruler = new LinearRuler() {{
+            fontSize = currentFontSize();
+            tickPadding = 3.0;
+            drawSpine = true;
+        }};
+
+        ruler.lineWidth = lineWidth;
+        ruler.axis = axis;
+
+        if (diagramType.isTernary()) {
+            ruler.tickType = LinearRuler.TickType.V;
+        }
+
+        VertexSelection vsel = getSelectedVertex();
+        ruler.startPoint = path.get(1 - vsel.vertexNo);
+        ruler.endPoint = path.get(vsel.vertexNo);
+
+        if (!(new RulerDialog(editFrame, "Edit Ruler", ruler))
+            .showModal(ruler)) {
+            return;
+        }
+
+        removeCurve(vsel.curveNo);
+        rulers.add(ruler);
+
+        selection = new RulerSelection(rulers.size() - 1, RulerHandle.END);
+        repaintEditFrame();
     }
 
     public void addTieLine() {
@@ -2173,8 +2205,15 @@ public class Editor implements CropEventListener, MouseListener,
 
     /** Invoked from the EditFrame menu */
     public void addLabel() {
+        if (principalToStandardPage == null) {
+            return;
+        }
+
         if (mprin == null) {
-            // TODO What if mprin is not defined?
+            JOptionPane.showMessageDialog
+                (editFrame,
+                 "Position the mouse where the label belongs,\n"
+                 + "then press the Enter short-cut key to add the label.");
             return;
         }
 
@@ -2500,11 +2539,12 @@ public class Editor implements CropEventListener, MouseListener,
 
 
     /** Like seekNearestPoint(), but instead select the point on a
-        previously added segment that is nearest to the mouse pointer
+        previously added curve that is nearest to the mouse position
         as measured by distance on the standard page.
 
-        @param select If true, select the vertex preceding that segment.
-    */
+        @param select If true, select the curve and the closer of the
+        two control points that neighbor the selected point on the
+        curve. */
     public void seekNearestSegment(boolean select) {
         if (mouseIsStuck) {
             unstickMouse();
@@ -2515,7 +2555,7 @@ public class Editor implements CropEventListener, MouseListener,
         }
 
         Point2D.Double mousePage = principalToStandardPage.transform(mprin);
-        VertexSelection vsel = null;
+        Selectable sel = null;
         Point2D.Double gradient = null;
 
         CurveDistance minDist = null;
@@ -2535,7 +2575,36 @@ public class Editor implements CropEventListener, MouseListener,
                 isCloserToNext
                     = (pagePath.get(vertexNo).distanceSq(mousePage) >
                        pagePath.get(vertexNo + 1).distanceSq(mousePage));
-                vsel = new VertexSelection(curveNo, vertexNo);
+                sel = new VertexSelection(curveNo, vertexNo);
+
+                // TODO Have to decide whether to use principal
+                // coordinates for gradients or not, but continue to
+                // use page coordinates for now.
+                gradient = pagePath.getGradient(vertexNo, dist.t);
+            }
+        }
+
+        // It feels weird if you can't use the 'L' command to select a
+        // ruler, so let people do that.
+
+        int rulerNo = -1;
+        for (LinearRuler ruler: rulers) {
+            GeneralPolyline path = ruler.spinePolyline();
+            ++rulerNo;
+            GeneralPolyline pagePath
+                = path.createTransformed(principalToStandardPage);
+            CurveDistance dist = pagePath.distance(mousePage);
+
+            if (minDist == null || dist.distance < minDist.distance) {
+                minDist = dist;
+
+                int vertexNo = pagePath.firstControlPointIndex(dist.t);
+                isCloserToNext
+                    = (pagePath.get(vertexNo).distanceSq(mousePage) >
+                       pagePath.get(vertexNo + 1).distanceSq(mousePage));
+                sel = new RulerSelection
+                    (rulerNo,
+                     isCloserToNext? RulerHandle.END : RulerHandle.START);
 
                 // TODO Have to decide whether to use principal
                 // coordinates for gradients or not, but continue to
@@ -2549,26 +2618,29 @@ public class Editor implements CropEventListener, MouseListener,
         }
 
         if (select) {
-            selection = vsel;
-            if (isCloserToNext) {
-                // pagePoint is closer to the next vertex than to this
-                // one. Incrementing the selection number, possibly
-                // cycling back to 0 for closed curves.
-                vsel.vertexNo = (vsel.vertexNo + 1)
-                    % paths.get(vsel.curveNo).size();
+            selection = sel;
+            if (sel instanceof VertexSelection) {
+                VertexSelection vsel = getSelectedVertex();
+                if (isCloserToNext) {
+                    // pagePoint is closer to the next vertex than to this
+                    // one. Incrementing the selection number, possibly
+                    // cycling back to 0 for closed curves.
+                    vsel.vertexNo = (vsel.vertexNo + 1)
+                        % paths.get(vsel.curveNo).size();
 
-                // Incrementing vertexNo introduces a new problem: if
-                // we added a new vertex at this moment, it would be
-                // inserted after the second off the two neighboring
-                // vertices vertex instead of between them. Reversing
-                // the vertex order fixes this.
-                reverseInsertionOrder();
+                    // Incrementing vertexNo introduces a new problem: if
+                    // we added a new vertex at this moment, it would be
+                    // inserted after the second off the two neighboring
+                    // vertices vertex instead of between them. Reversing
+                    // the vertex order fixes this.
+                    reverseInsertionOrder();
+                }
             }
         }
         moveMouse(standardPageToPrincipal.transform(minDist.point));
         mouseIsStuck = true;
         vertexInfo.setGradient(gradient);
-        vertexInfo.setLineWidth(paths.get(vsel.curveNo).getLineWidth());
+        vertexInfo.setLineWidth(sel.getLineWidth());
     }
 
     public void toggleSmoothing() {
@@ -2746,7 +2818,7 @@ public class Editor implements CropEventListener, MouseListener,
         try {
             // Work-around for a bug that affects EB's PC as of 11/11.
             System.setProperty("sun.java2d.d3d", "false");
-            // TODO UNDO
+            // TODO UNDO?
             // UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
 
         } catch (Exception e) {
@@ -2802,8 +2874,6 @@ public class Editor implements CropEventListener, MouseListener,
                               Point2D.Double[] vertices) {
         ArrayList<Point2D.Double> diagramOutline
             = new ArrayList<Point2D.Double>();
-        boolean closeDiagramOutline = true;
-
         boolean tracing = (vertices != null);
         clear();
         setOriginalFilename(originalFilename);
@@ -2825,7 +2895,6 @@ public class Editor implements CropEventListener, MouseListener,
         switch (diagramType) {
         case TERNARY_BOTTOM:
             {
-                closeDiagramOutline = false;
                 double height;
 
                 double defaultHeight = !tracing ? 0.45
@@ -2942,7 +3011,6 @@ public class Editor implements CropEventListener, MouseListener,
         case TERNARY_RIGHT:
         case TERNARY_TOP:
             {
-                closeDiagramOutline = false;
                 final int LEFT_VERTEX = 0;
                 final int TOP_VERTEX = 1;
                 final int RIGHT_VERTEX = 2;
@@ -3152,18 +3220,6 @@ public class Editor implements CropEventListener, MouseListener,
             (-leftMargin, -topMargin, r.width + leftMargin + rightMargin,
              r.height + topMargin + bottomMargin);
 
-        if (diagramOutline.size() > 0) {
-            // Insert the polyline outline of the diagram into the set
-            // of paths.
-            GeneralPolyline outline = GeneralPolyline.create
-                (GeneralPolyline.LINEAR,
-                 diagramOutline.toArray(new Point2D.Double[0]),
-                 StandardStroke.SOLID,
-                 STANDARD_LINE_WIDTH);
-            outline.setClosed(closeDiagramOutline);
-            paths.add(outline);
-        }
-
         initializeDiagram();
 
         // xAxis etc. don't exist until initializeDiagram() is called,
@@ -3208,6 +3264,10 @@ public class Editor implements CropEventListener, MouseListener,
 
     protected double normalFontSize() {
         return 12.0 / BASE_SCALE;
+    }
+
+    protected double currentFontSize() {
+        return normalFontSize() * lineWidth / STANDARD_LINE_WIDTH;
     }
 
     LinearAxis defaultAxis(Side side) {
@@ -3471,23 +3531,24 @@ public class Editor implements CropEventListener, MouseListener,
         if (file == null) {
             return;
         }
-        filename = file.getAbsolutePath();
-        clear();
+
+        Editor ned;
 
         try {
             ObjectMapper mapper = getObjectMapper();
-            cannibalize((Editor) mapper.readValue(file, getClass()));
-            for (TieLine tie: tieLines) {
-                tie.innerEdge = idToCurve(tie.innerId);
-                tie.outerEdge = idToCurve(tie.outerId);
-            }
+            ned = (Editor) mapper.readValue(file, getClass());
         } catch (Exception e) {
-            // TODO More?
             JOptionPane.showMessageDialog
-                (editFrame, "Error: " + e);
+                (editFrame, "File load error: " + e);
+            return;
+        }
 
-            // TODO only for testing...
-            throw new Error(e);
+        clear();
+        cannibalize(ned);
+        filename = file.getAbsolutePath();
+        for (TieLine tie: tieLines) {
+            tie.innerEdge = idToCurve(tie.innerId);
+            tie.outerEdge = idToCurve(tie.outerId);
         }
     }
 
@@ -3509,7 +3570,6 @@ public class Editor implements CropEventListener, MouseListener,
         originalToPrincipal = other.originalToPrincipal;
         principalToStandardPage = other.principalToStandardPage;
         pageBounds = other.pageBounds;
-        filename = other.filename;
         originalFilename = other.originalFilename;
         scale = other.scale;
         arrows = other.arrows;
@@ -3698,12 +3758,8 @@ public class Editor implements CropEventListener, MouseListener,
             getObjectMapper().writeValue(file, this);
             JOptionPane.showMessageDialog(editFrame, "File saved.");
         } catch (Exception e) {
-            // TODO More?
             JOptionPane.showMessageDialog
-                (editFrame, "Error: " + e);
-
-            // TODO only for testing...
-            throw new Error(e);
+                (editFrame, "File save error: " + e);
         }
     }
 
@@ -3828,6 +3884,23 @@ public class Editor implements CropEventListener, MouseListener,
         try {
             Affine xformi = xform.createInverse();
             Point2D.Double newMprin = xformi.transform(vs.get(0), vs.get(1));
+
+            Point2D.Double newMousePage = principalToStandardPage
+                .transform(newMprin);
+            Rectangle2D.Double bounds = principalToStandardPage.outputBounds();
+            if (!bounds.contains(newMousePage.x, newMousePage.y)) {
+                int n = JOptionPane.showConfirmDialog
+                    (editFrame,
+                     "These coordinates lie beyond the edge of the page.\n"
+                     + "(Maybe you forgot to include a % sign?)\n\n"
+                     + "Are these coordinates correct?",
+                     "Off-page coordinates",
+                     JOptionPane.YES_NO_OPTION);
+                if (n != JOptionPane.YES_OPTION) {
+                    return;
+                }
+            }
+
             mprin = newMprin;
             moveMouse(newMprin);
             mouseIsStuck = true;
@@ -4311,6 +4384,11 @@ public class Editor implements CropEventListener, MouseListener,
                 // A smooth path between two points is a segment.
                 output.add(new Line2D.Double(path.get(0), path.get(1)));
             }
+        }
+
+        for (LinearRuler ruler: rulers) {
+            GeneralPolyline path = ruler.spinePolyline();
+            output.add(new Line2D.Double(path.get(0), path.get(1)));
         }
 
         return output.toArray(new Line2D.Double[0]);
