@@ -143,6 +143,12 @@ class LinearRuler {
         return axis.value(endPoint) * multiplier;
     }
 
+    Polyline spinePolyline() {
+        return new Polyline
+            (new Point2D.Double[] { startPoint, endPoint },
+             StandardStroke.SOLID, lineWidth);
+    }
+
     /** Return { xWeight, yWeight }, which depend upon the value of
      * labelAnchor and textAngle. */
     double[] weights() {
