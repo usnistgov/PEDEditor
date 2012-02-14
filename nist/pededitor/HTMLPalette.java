@@ -9,7 +9,6 @@ public class HTMLPalette extends StringPalette {
                 {"<i>", "<html>\u2713 <i>italic</i></html>"},
                 {"<b>", "<html>\u2713 <b>bold</b></html>"},
                 {"<u>", "<html>\u2713 <u>under</u></html>"},
-                null,
 
                 // Turn-off row
                 {"</sub>", "<html>\u2715 T<sub>sub</sub></html>"},

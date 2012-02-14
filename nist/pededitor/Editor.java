@@ -3333,7 +3333,7 @@ public class Editor implements CropEventListener, MouseListener,
     }
 
     LinearAxis defaultAxis(Side side) {
-        NumberFormat format = new DecimalFormat("##0.0%");
+        NumberFormat format = new DecimalFormat("0.000");
         if (diagramType.isTernary()) {
             // Confusingly, the axis that goes from 0 at the bottom
             // left to 1 at the bottom right like a normal x-axis

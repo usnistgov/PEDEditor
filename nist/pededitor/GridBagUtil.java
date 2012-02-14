@@ -12,6 +12,7 @@ public class GridBagUtil extends GridBagWrapper {
 
     public static final GridBagConstraints east = new GridBagConstraints();
     public static final GridBagConstraints west = new GridBagConstraints();
+    public static final GridBagConstraints northwest = new GridBagConstraints();
     public static final GridBagConstraints endRow = new GridBagConstraints();
     public static final GridBagConstraints endRowCentered
         = new GridBagConstraints();
@@ -21,6 +22,9 @@ public class GridBagUtil extends GridBagWrapper {
         east.insets = insets;
 
         west.anchor = GridBagConstraints.WEST;
+        west.insets = insets;
+
+        northwest.anchor = GridBagConstraints.NORTHWEST;
         west.insets = insets;
 
         endRow.anchor = GridBagConstraints.WEST;
@@ -42,6 +46,10 @@ public class GridBagUtil extends GridBagWrapper {
 
     void addWest(Component child) {
         add(child, west);
+    }
+
+    void addNorthwest(Component child) {
+        add(child, northwest);
     }
 
     void endRowWith(Component child) {
