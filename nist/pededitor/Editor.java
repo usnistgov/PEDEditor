@@ -262,6 +262,14 @@ public class Editor implements CropEventListener, MouseListener,
             repaintEditFrame();
         }
 
+        @Override public void setColor(Color color) {
+            paths.get(curveNo).setColor(color);
+        }
+
+        @Override public Color getColor() {
+            return paths.get(curveNo).getColor();
+        }
+
         @Override
         public VertexSelection remove() {
             GeneralPolyline path = paths.get(curveNo);
@@ -434,6 +442,15 @@ public class Editor implements CropEventListener, MouseListener,
             // TODO This should really define the box style...
         }
 
+        @Override public void setColor(Color color) {
+            AnchoredLabel item = getItem();
+            item.setColor(color);
+            labelViews.set(index, toView(item));
+            repaintEditFrame();
+        }
+
+        @Override public Color getColor() { return getItem().getColor(); }
+
         @Override
         public boolean equals(Object other) {
             if (this == other) return true;
@@ -503,6 +520,9 @@ public class Editor implements CropEventListener, MouseListener,
             Arrow item = getItem();
             return new Point2D.Double(item.x, item.y);
         }
+
+        @Override public void setColor(Color color) { getItem().setColor(color); }
+        @Override public Color getColor() { return getItem().getColor(); }
 
         @Override
         public boolean equals(Object other) {
@@ -593,6 +613,9 @@ public class Editor implements CropEventListener, MouseListener,
 
             return null;
         }
+
+        @Override public void setColor(Color color) { getItem().setColor(color); }
+        @Override public Color getColor() { return getItem().getColor(); }
 
         @Override
         public boolean equals(Object other) {
@@ -704,6 +727,9 @@ public class Editor implements CropEventListener, MouseListener,
             return null;
         }
 
+        @Override public void setColor(Color color) { getItem().setColor(color); }
+        @Override public Color getColor() { return getItem().getColor(); }
+
         @Override
         public boolean equals(Object other) {
             if (this == other) return true;
@@ -761,6 +787,8 @@ public class Editor implements CropEventListener, MouseListener,
     protected EditFrame editFrame = new EditFrame(this);
     protected ImageZoomFrame zoomFrame = new ImageZoomFrame();
     protected VertexInfoDialog vertexInfo = new VertexInfoDialog(editFrame);
+    protected JColorChooser colorChooser = null;
+    protected JDialog colorDialog = null;
 
     @JsonProperty protected PolygonTransform originalToPrincipal;
     protected PolygonTransform principalToOriginal;
@@ -1089,6 +1117,34 @@ public class Editor implements CropEventListener, MouseListener,
         selection.edit();
     }
 
+    /** Change the selection's color. */
+    public void colorSelection() {
+
+        if (selection == null) {
+            JOptionPane.showMessageDialog
+                (editFrame,
+                 "You must select an item before you can edit it.");
+            return;
+        }
+
+        if (colorChooser == null) {
+            colorChooser = new JColorChooser();
+            colorDialog = JColorChooser.createDialog
+            (editFrame, "Choose color", true,
+             colorChooser, new ActionListener() {
+                 @Override public void actionPerformed(ActionEvent e) {
+                     Editor.this.selection.setColor(colorChooser.getColor());
+                 }
+             },
+             null);
+            colorDialog.pack();
+        }
+
+        Color c = thisOrBlack(selection.getColor());
+        colorChooser.setColor(c);
+        colorDialog.setVisible(true);
+    }
+
     /** Return true if p1 and p2 are equal to within reasonable
         limits, where "reasonable limits" means the distance between
         their transformations to the standard page is less than
@@ -1358,7 +1414,6 @@ public class Editor implements CropEventListener, MouseListener,
                            RenderingHints.VALUE_ANTIALIAS_ON);
         g.setRenderingHint(RenderingHints.KEY_RENDERING,
                             RenderingHints.VALUE_RENDER_QUALITY);
-        g.setColor(Color.BLACK);
 
         int pathCnt = paths.size();
 
@@ -1367,6 +1422,7 @@ public class Editor implements CropEventListener, MouseListener,
         for (int i = 0; i < pathCnt; ++i) {
             if (vsel == null || vsel.curveNo != i) {
                 GeneralPolyline path = paths.get(i);
+                g.setColor(thisOrBlack(path.getColor()));
                 if (path.size() == 1) {
                     double r = path.getLineWidth() * 2 * scale;
                     circleVertices(g, path, scale, true, r);
@@ -1393,12 +1449,11 @@ public class Editor implements CropEventListener, MouseListener,
         {
             ArrowSelection sel = editing ? getSelectedArrow() : null;
             for (int i = 0; i < arrows.size(); ++i) {
-                Arrow arrow = arrows.get(i);
+                Arrow item = arrows.get(i);
                 boolean selected = (sel != null && i == sel.index);
-                if (selected) {
-                    g.setColor(Color.GREEN);
-                }
-                drawArrow(g, scale, arrow);
+                g.setColor(selected ? Color.GREEN
+                           : thisOrBlack(item.getColor()));
+                drawArrow(g, scale, item);
                 g.setColor(Color.BLACK);
             }
         }
@@ -1408,11 +1463,9 @@ public class Editor implements CropEventListener, MouseListener,
             for (int i = 0; i < tieLines.size(); ++i) {
                 TieLine item = tieLines.get(i);
                 boolean selected = (sel != null && i == sel.index);
-                if (selected) {
-                    g.setColor(Color.GREEN);
-                }
+                g.setColor(selected ? Color.GREEN
+                           : thisOrBlack(item.getColor()));
                 draw(g, item, scale);
-                g.setColor(Color.BLACK);
             }
         }
 
@@ -1421,11 +1474,9 @@ public class Editor implements CropEventListener, MouseListener,
             for (int i = 0; i < rulers.size(); ++i) {
                 LinearRuler item = rulers.get(i);
                 boolean selected = (sel != null && i == sel.index);
-                if (selected) {
-                    g.setColor(Color.GREEN);
-                }
+                g.setColor(selected ? Color.GREEN
+                           : thisOrBlack(item.getColor()));
                 item.draw(g, getPrincipalToAlignedPage(), scale);
-                g.setColor(Color.BLACK);
             }
         }
 
@@ -1488,13 +1539,10 @@ public class Editor implements CropEventListener, MouseListener,
         { // Draw the label selection, if any.
             LabelSelection sel = editing ? getSelectedLabel() : null;
             if (sel != null) {
-                AnchoredLabel label = labels.get(sel.index);
-                View normalView = labelViews.get(sel.index);
-                labelViews.set(sel.index,
-                               toView(label.getText(), label.getXWeight(),
-                                      Color.GREEN));
+                Color c= sel.getColor();
+                sel.setColor(Color.GREEN);
                 drawLabel(g, sel.index, scale);
-                labelViews.set(sel.index, normalView);
+                sel.setColor(c);
             }
         }
     }
@@ -2232,7 +2280,7 @@ public class Editor implements CropEventListener, MouseListener,
 
     public void add(AnchoredLabel label) {
         labels.add(label);
-        labelViews.add(toView(label.getText(), label.getXWeight()));
+        labelViews.add(toView(label));
         labelCenters.add(new Point2D.Double());
         repaintEditFrame();
     }
@@ -2259,14 +2307,8 @@ public class Editor implements CropEventListener, MouseListener,
         newLabel.setX(label.getX());
         newLabel.setY(label.getY());
         labels.set(index, newLabel);
-        labelViews.set(index,
-                       toView(newLabel.getText(), newLabel.getXWeight()));
-
+        labelViews.set(index, toView(newLabel));
         repaintEditFrame();
-    }
-
-    View toView(String str, double xWeight) {
-        return toView(str, xWeight, null);
     }
 
     /** @param xWeight Used to determine how to justify rows of text. */
@@ -2282,18 +2324,20 @@ public class Editor implements CropEventListener, MouseListener,
         }
 
         JLabel bogus = new JLabel(str);
-        if (textColor != null) {
-            bogus.setForeground(textColor);
-        }
+        bogus.setForeground(thisOrBlack(textColor));
         bogus.setFont(getEditPane().getFont());
         return (View) bogus.getClientProperty("html");
+    }
+
+    View toView(AnchoredLabel label) {
+        return toView(label.getText(), label.getXWeight(), label.getColor());
     }
 
     /** Regenerate the labelViews field from the labels field. */
     void initializeLabelViews() {
         labelViews = new ArrayList<View>();
         for (AnchoredLabel label: labels) {
-            labelViews.add(toView(label.getText(), label.getXWeight()));
+            labelViews.add(toView(label));
             labelCenters.add(new Point2D.Double());
         }
     }
@@ -3426,7 +3470,7 @@ public class Editor implements CropEventListener, MouseListener,
         } else {
             vertexInfo.setLocation(rect.x + rect.width, rect.y);
         }
-        View em = toView("m", 0);
+        View em = toView("m", 0, Color.BLACK);
         labelXMargin = em.getPreferredSpan(View.X_AXIS) / 2.0;
         labelYMargin = em.getPreferredSpan(View.Y_AXIS) / 5.0;
         
@@ -4661,6 +4705,11 @@ public class Editor implements CropEventListener, MouseListener,
                                     NumberFormatAnnotations.class);
             des.addMixInAnnotations(NumberFormat.class,
                                     NumberFormatAnnotations.class);
+
+            ser.addMixInAnnotations(Color.class,
+                                    ColorAnnotations.class);
+            des.addMixInAnnotations(Color.class,
+                                    ColorAnnotations.class);
         }
 
         return objectMapper;
@@ -4933,6 +4982,10 @@ public class Editor implements CropEventListener, MouseListener,
         }});
     }
 
+    static Color thisOrBlack(Color c) {
+        return (c == null) ? Color.BLACK : c;
+    }
+
     @JsonIgnore public Rectangle2D.Double getPrincipalBounds() {
         return principalToStandardPage.inputBounds();
     }
@@ -5007,6 +5060,16 @@ class DecimalFormatAnnotations extends DecimalFormat {
       "decimalFormatSymbols",
       "currency"})
 abstract class NumberFormatAnnotations extends NumberFormat {
+}
+
+@SuppressWarnings("serial")
+@JsonIgnoreProperties
+    ({"alpha", "red", "green", "blue",
+            "colorSpace", "transparency"})
+abstract class ColorAnnotations extends Color {
+    ColorAnnotations(@JsonProperty("rgb") int rgb) {
+        super(rgb);
+    }
 }
 
 class ScaledCroppedImage {

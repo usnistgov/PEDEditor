@@ -1,5 +1,6 @@
 package gov.nist.pededitor;
 
+import java.awt.Color;
 import java.awt.Graphics2D;
 import java.awt.geom.AffineTransform;
 import java.awt.geom.Line2D;
@@ -18,6 +19,7 @@ public class TieLine {
     public int lineCnt;
     public StandardStroke stroke;
     public double lineWidth = 1.0;
+    protected Color color = null;
 
     /** Each tie line starts at innerEdge somewhere along [it1, it2]
         (the two values may be equal for triangular tie line regions)
@@ -72,7 +74,21 @@ public class TieLine {
         output.lineWidth = lineWidth;
         output.innerEdge = (GeneralPolyline) innerEdge.clone();
         output.outerEdge = (GeneralPolyline) outerEdge.clone();
+        output.setColor(getColor());
         return output;
+    }
+
+    /** @return null unless this polyline has been assigned a
+        color. */
+    public Color getColor() {
+        return color;
+    }
+
+    /** Set the color. Use null to indicate that the color should be
+        the same as whatever was last chosen for the graphics
+        context. */
+    public void setColor(Color color) {
+        this.color = color;
     }
 
     /** Used during JSON serialization. */

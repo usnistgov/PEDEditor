@@ -1,6 +1,7 @@
 package gov.nist.pededitor;
 
 import java.awt.BasicStroke;
+import java.awt.Color;
 import java.awt.Font;
 import java.awt.FontMetrics;
 import java.awt.Graphics2D;
@@ -35,6 +36,7 @@ class LinearRuler {
         strange. */
     @JsonProperty double fontSize;
     @JsonProperty double lineWidth;
+    protected Color color = null;
 
     /** Indicate where labels are to be anchored: NONE: No labels;
         LEFT: at the tip of the left-side tick (or left of the spine,
@@ -132,6 +134,19 @@ class LinearRuler {
         o.axis = axis;
         o.multiplier = multiplier;
         return o;
+    }
+
+    /** @return null unless this polyline has been assigned a
+        color. */
+    public Color getColor() {
+        return color;
+    }
+
+    /** Set the color. Use null to indicate that the color should be
+        the same as whatever was last chosen for the graphics
+        context. */
+    public void setColor(Color color) {
+        this.color = color;
     }
 
     /** Start of range of logical values covered by this axis. */

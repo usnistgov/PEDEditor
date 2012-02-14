@@ -1,5 +1,6 @@
 package gov.nist.pededitor;
 
+import java.awt.Color;
 import java.awt.geom.*;
 import org.codehaus.jackson.annotate.JsonIgnoreProperties;
 import org.codehaus.jackson.annotate.JsonProperty;
@@ -13,6 +14,8 @@ public class Arrow extends Path2D.Double {
     @JsonProperty public double y;
     @JsonProperty public double size;
     @JsonProperty public double theta;
+
+    Color color = null;
 
     /** @param size The "size" of the arrow is a bit arbitrary, but
         it should be roughly equal to the line width of any line that
@@ -29,13 +32,28 @@ public class Arrow extends Path2D.Double {
         addArrow(this, x, y, size, theta);
     }
 
+    /** @return null unless this has been assigned a color. */
+    public Color getColor() {
+        return color;
+    }
+
+    /** Set the color. Use null to indicate that the color should be
+        the same as whatever was last chosen for the graphics
+        context. */
+    public void setColor(Color color) {
+        this.color = color;
+    }
+
     /** For some reason, the clone() method is declared final in
         Path2D.Double, so I had to give my clone method a different
         name. */
     public Arrow clonus() {
-        return new Arrow(x, y, size, theta);
+        Arrow output = new Arrow(x, y, size, theta);
+        output.setColor(getColor());
+        return output;
     }
 
+    /** Add an arrow to the path "output". */
     static public void addArrow
         (Path2D.Double output, double x, double y,
          double size, double theta) {

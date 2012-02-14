@@ -1,5 +1,7 @@
 package gov.nist.pededitor;
 
+import java.awt.Color;
+
 import org.codehaus.jackson.annotate.JsonProperty;
 
 /** Class to hold definitions of a text or HTML string anchored to a
@@ -46,6 +48,8 @@ public class AnchoredLabel {
         standard font size is defined by the application. */
     double fontSize;
 
+    Color color = null;
+
     boolean boxed = false;
     boolean opaque = false;
 
@@ -81,6 +85,18 @@ public class AnchoredLabel {
     public void setBoxed(boolean boxed) { this.boxed = boxed; }
     /** If true, erase the label's background before drawing. */
     public void setOpaque(boolean opaque) { this.opaque = opaque; }
+
+    /** @return null unless this has been assigned a color. */
+    public Color getColor() {
+        return color;
+    }
+
+    /** Set the color. Use null to indicate that the color should be
+        the same as whatever was last chosen for the graphics
+        context. */
+    public void setColor(Color color) {
+        this.color = color;
+    }
 
     public double getX() { return x; }
     public double getY() { return y; }

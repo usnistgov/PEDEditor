@@ -357,6 +357,16 @@ public class EditFrame extends JFrame {
                     }
                 });
 
+            mnEdit.add(new Action
+                        ("Change color...",
+                         KeyEvent.VK_R,
+                         KeyStroke.getKeyStroke('r')) {
+                    @Override
+                        public void actionPerformed(ActionEvent e) {
+                        getParentEditor().colorSelection();
+                    }
+                });
+
             mnEdit.add(new Action("Move",
                                              KeyEvent.VK_M,
                                              KeyStroke.getKeyStroke('m')) {
@@ -699,6 +709,7 @@ public class EditFrame extends JFrame {
             mnAxes.add(changeYUnits);
 
             JMenu mnMargins = new JMenu("Margins");
+            mnAxes.setMnemonic(KeyEvent.VK_M);
             for (Side side: Side.values()) {
                 mnMargins.add(new MarginAction(side));
             }

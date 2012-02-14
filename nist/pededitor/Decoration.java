@@ -1,5 +1,6 @@
 package gov.nist.pededitor;
 
+import java.awt.Color;
 import java.awt.geom.*;
 
 /** Interface that permits common operations to be applied to
@@ -17,4 +18,6 @@ public interface Selectable {
     void setLineWidth(double lineWidth);
     double getLineWidth();
     void setLineStyle(StandardStroke lineStyle);
+    Color getColor();
+    void setColor(Color color);
 }
