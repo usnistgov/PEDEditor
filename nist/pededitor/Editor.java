@@ -29,6 +29,9 @@ import org.codehaus.jackson.map.annotate.*;
 
 // TODO Fix issues with tie lines and closed curves.
 
+// TODO In the label dialog, add the string from the character palette at the
+// selection, not just at the end of the line.
+
 // TODO (mandatory bug fix) Non-ASCII characters get lost during "save
 // as PDF".
 
@@ -52,15 +55,7 @@ import org.codehaus.jackson.map.annotate.*;
 // TODO (mandatory?, backwards compatibility) Duplicate existing
 // program's smoothing algorithm when displaying GRUMP files.
 
-// TODO (mandatory) Chemical formula typing short-cuts (relative to
-// entering the whole thing by hand as HTML) of some kind.
-// Possibilities include 1) use of LaTeX syntax (or even just a
-// severely limited subset of LaTex); 2) HTML input with special
-// macros (character palette; press a button to turn subscripting on
-// and another to turn it off; a set of buttons for more commonly-used
-// special symbols); and 3) automatic subscripting for the majority of
-// relatively simple formulas. Not all of those are mandatory, but it
-// sounds like implementing at least one of them is.
+// TODO (optional) Chemical formula auto-parsing.
 
 // TODO (mandatory?) Curve section decorations (e.g. pen-up/pen-down).
 // Not important for new diagrams as far as I can see, but may be
@@ -2336,33 +2331,98 @@ public class Editor implements CropEventListener, MouseListener,
             return;
         }
 
-        ++paintSuppressionRequestCnt;
         Point mpos = Duh.floorPoint
             (principalToScaledPage(scale).transform(mprin));
         
         JScrollPane spane = editFrame.getScrollPane();
         Rectangle view = spane.getViewport().getViewRect();
-        Point topCorner = spane.getLocationOnScreen();
 
-        // For whatever reason (Java bug?), I need to add 1 to the x
-        // and y coordinates if I want the output to satisfy
+        if (view.contains(mpos)) {
+            Point topCorner = spane.getLocationOnScreen();
 
-        // getEditPane().getMousePosition() == original mpos value.
+            // For whatever reason (Java bug?), I need to add 1 to the x
+            // and y coordinates if I want the output to satisfy
 
-        mpos.x += topCorner.x - view.x + 1;
-        mpos.y += topCorner.y - view.y + 1;
+            // getEditPane().getMousePosition() == original mpos value.
 
-        // TODO (mandatory bug fix) mouse jumping out of bounds...
+            mpos.x += topCorner.x - view.x + 1;
+            mpos.y += topCorner.y - view.y + 1;
 
-        try {
-            Robot robot = new Robot();
-            robot.mouseMove(mpos.x, mpos.y);
-        } catch (AWTException e) {
-            throw new RuntimeException(e);
-        } finally {
-            --paintSuppressionRequestCnt;
+            try {
+                ++paintSuppressionRequestCnt;
+                Robot robot = new Robot();
+                robot.mouseMove(mpos.x, mpos.y);
+            } catch (AWTException e) {
+                throw new RuntimeException(e);
+            } finally {
+                --paintSuppressionRequestCnt;
+            }
+
+            repaintEditFrame();
+        } else {
+            centerMouse();
         }
 
+    }
+
+    /** Put mprin and the mouse in the center of the screen (with
+        somre restrictions). */
+    public void centerMouse() {
+        JScrollPane spane = editFrame.getScrollPane();
+        Rectangle view = spane.getViewport().getViewRect();
+        setViewportRelation(mprin,
+                            new Point(view.width/2, view.height/2));
+    }
+
+    /** Adjust the viewport to place principal coordinates point prin
+        at the given position within the viewport of the scroll pane,
+        unless that would require bringing off-page regions into view.
+    */
+    public void setViewportRelation(Point2D prin,
+                                    Point viewportPoint) {
+        ++paintSuppressionRequestCnt;
+        Affine xform = principalToScaledPage(scale);
+        Point panePoint = Duh.floorPoint(xform.transform(prin));
+        JScrollPane spane = editFrame.getScrollPane();
+        Rectangle view = spane.getViewport().getViewRect();
+
+        // Compute the view that would result from placing prin
+        // exactly at viewportPoint.
+        view.x = panePoint.x - viewportPoint.x;
+        view.y = panePoint.y - viewportPoint.y;
+
+        Rectangle spb = scaledPageBounds(scale);
+        // If mapping prin to viewportPoint would bring off-page
+        // regions into view, then adjust the mapping.
+
+        if (view.width >= spb.width || view.x < 0) {
+            // Never show off-page regions to the left.
+            view.x = 0;
+        } else if (view.x + view.width > spb.width) {
+            // Don't show off-page regions to the right unless the
+            // other rules take priority.
+            view.x = spb.width - view.width;
+        }
+
+        if (view.height >= spb.height || view.y < 0) {
+            view.y = 0;
+        } else if (view.y + view.height > spb.height) {
+            view.y = spb.height - view.height;
+        }
+
+        Point viewPosition = new Point(view.x, view.y);
+
+        // Java 1.6_29 needs to be told twice which viewport to
+        // use. It seems to get the Y scrollbar right the first
+        // time, and the X scrollbar right the second time.
+        preserveMprin = true;
+        spane.getViewport().setViewPosition(viewPosition);
+        spane.getViewport().setViewPosition(viewPosition);
+        if (mprin != null) {
+            moveMouse(mprin);
+        }
+        preserveMprin = false;
+        --paintSuppressionRequestCnt;
         repaintEditFrame();
     }
 
@@ -3886,21 +3946,22 @@ public class Editor implements CropEventListener, MouseListener,
         try {
             Affine xformi = xform.createInverse();
             Point2D.Double newMprin = xformi.transform(vs.get(0), vs.get(1));
-
             Point2D.Double newMousePage = principalToStandardPage
                 .transform(newMprin);
-            Rectangle2D.Double bounds = principalToStandardPage.outputBounds();
-            if (!bounds.contains(newMousePage.x, newMousePage.y)) {
-                int n = JOptionPane.showConfirmDialog
+            if (!pageBounds.contains(newMousePage.x, newMousePage.y)) {
+                System.out.println(pageBounds + " does not contain "
+                                   + newMousePage);
+                JOptionPane.showMessageDialog
                     (editFrame,
-                     "These coordinates lie beyond the edge of the page.\n"
-                     + "(Maybe you forgot to include a % sign?)\n\n"
-                     + "Are these coordinates correct?",
-                     "Off-page coordinates",
-                     JOptionPane.YES_NO_OPTION);
-                if (n != JOptionPane.YES_OPTION) {
-                    return;
-                }
+                     "<html><body width = \"300 px\""
+                     + "<p>The coordinates you selected lie beyond the edge "
+                     + "of the page. "
+                     + "Maybe you left out a % sign, or maybe you need "
+                     + "to adjust the margins using the "
+                     + "<code><u>L</u>ayout/<u>M</u>argins</code> "
+                     + "menu selections.</p>"
+                     + "</body></html>");
+                return;
             }
 
             mprin = newMprin;
@@ -4191,66 +4252,40 @@ public class Editor implements CropEventListener, MouseListener,
             return;
         }
 
-        ++paintSuppressionRequestCnt;
-
         // Keep the center of the viewport where it was if the center
         // was a part of the image.
 
         JScrollPane spane = editFrame.getScrollPane();
         Rectangle view = spane.getViewport().getViewRect();
 
-        // Adjust the viewport to allow pagePoint in standard page
-        // coordinates to remain located at offset viewportPoint from
-        // the upper left corner of the viewport, to prevent the part
-        // of the diagram that is visible from changing too
-        // drastically when you zoom in and out. The viewport's
-        // preferred size also sets constraints on the visible region,
-        // so the diagram may not actually stay in the same place.
+        // Adjust the viewport to allow prin in principal coordinates
+        // to remain located at offset viewportPoint from the upper
+        // left corner of the viewport, to prevent the part of the
+        // diagram that is visible from changing too drastically when
+        // you zoom in and out. The viewport's preferred size also
+        // sets constraints on the visible region, so the diagram may
+        // not actually stay in the same place.
 
-        Point2D.Double pagePoint = null;
+        Point2D.Double prin;
         Point viewportPoint = null;
 
         if (mprin != null) {
-            // Preserve the mouse position: transform mprin into
-            // somewhere in the pixel viewportPoint.
-            pagePoint = getPrincipalToAlignedPage().transform(mprin);
+            prin = mprin;
+            Point2D.Double mousePage = principalToScaledPage(oldScale)
+                .transform(mprin);
             viewportPoint =
-                new Point((int) Math.floor(pagePoint.x * oldScale) - view.x,
-                          (int) Math.floor(pagePoint.y * oldScale) - view.y);
+                new Point((int) Math.floor(mousePage.x * oldScale) - view.x,
+                          (int) Math.floor(mousePage.y * oldScale) - view.y);
         } else {
             // Preserve the center of the viewport.
-            viewportPoint = new Point(view.width / 2, view.height / 2);
-            pagePoint =
-                new Point2D.Double
-                ((viewportPoint.x + view.x + 0.5) / oldScale,
-                 (viewportPoint.y + view.y + 0.5) / oldScale);
+            viewportPoint = new Point(view.x + view.width / 2,
+                                      view.y + view.height / 2);
+            prin = scaledPageToPrincipal(oldScale).transform(viewportPoint);
         }
 
         getEditPane().setPreferredSize(scaledPageBounds(scale).getSize());
-
-        if (pagePoint != null) {
-            // Adjust viewport to preserve pagePoint => viewportPoint
-            // relationship.
-
-            Point screenPoint =
-                new Point((int) Math.floor(pagePoint.x * scale),
-                          (int) Math.floor(pagePoint.y * scale));
-
-            Point viewPosition
-                = new Point(Math.max(0, screenPoint.x - viewportPoint.x),
-                            Math.max(0, screenPoint.y - viewportPoint.y));
-
-            // Java 1.6_29 needs to be told twice which viewport to
-            // use. It seems to get the Y scrollbar right the first
-            // time, and the X scrollbar right the second time.
-            preserveMprin = true;
-            spane.getViewport().setViewPosition(viewPosition);
-            spane.getViewport().setViewPosition(viewPosition);
-            preserveMprin = false;
-        }
         getEditPane().revalidate();
-        --paintSuppressionRequestCnt;
-        repaintEditFrame();
+        setViewportRelation(prin, viewportPoint);
     }
 
     double getLineWidth() {
