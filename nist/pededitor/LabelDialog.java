@@ -151,6 +151,15 @@ public class LabelDialog extends JDialog {
                     }
                 });
             gb.endRowWith(pal);
+            cpgb.addWest(panel);
+        }
+
+        JPanel miscPane = new JPanel();
+        GridBagUtil mgb = new GridBagUtil(miscPane);
+
+        {
+            JPanel panel = new JPanel();
+            GridBagUtil gb = new GridBagUtil(panel);
 
             JLabel fontSizeLabel = new JLabel("Font size:");
             fontSizeLabel.setLabelFor(fontSize);
@@ -158,7 +167,7 @@ public class LabelDialog extends JDialog {
             gb.addWest(fontSizeLabel);
             gb.addWest(fontSize);
             gb.endRowWith(new JLabel("of standard"));
-            cpgb.endRowWith(panel);
+            mgb.endRowWith(panel);
         }
 
         {
@@ -173,7 +182,7 @@ public class LabelDialog extends JDialog {
 
             compassPane = new ImagePane(createCompassImage());
             gb.endRowWith(compassPane);
-            cpgb.endRowWith(panel);
+            mgb.endRowWith(panel);
         }
 
         {
@@ -187,10 +196,10 @@ public class LabelDialog extends JDialog {
             boxMe.setBorder(BorderFactory.createLineBorder(Color.black));
 
             gb.endRowWith(boxMe);
-            cpgb.endRowWith(panel);
+            mgb.endRowWith(panel);
         }
 
-        cpgb.endRowWith(new JLabel("Label position relative to anchor:"));
+        mgb.endRowWith(new JLabel("Label position relative to anchor:"));
 
         JPanel anchorPane = new JPanel();
         anchorPane.setLayout(new GridLayout(3, 3));
@@ -202,7 +211,8 @@ public class LabelDialog extends JDialog {
             }
         }
 
-        cpgb.endRowWith(anchorPane);
+        mgb.endRowWith(anchorPane);
+        cpgb.endRowWith(miscPane);
 
         setXWeight(0.5);
         setYWeight(0.5);
