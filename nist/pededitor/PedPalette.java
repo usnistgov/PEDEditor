@@ -5,6 +5,18 @@ public class PedPalette extends StringPalette {
         super
             (new Object[]
                 { 
+                    // Quickies
+                    new Object[][] {
+                        { "\u207a", "H\u207a" } /* superscript plus */,
+                        {"\u207b", "H\u207b" } /* superscript minus */,
+                        {"<sub>2</sub>", "<html>H<sub>2</sub></html>"},
+                        {"<sub>3</sub>", "<html>H<sub>3</sub></html>"},
+                        {"<sub>4</sub>", "<html>H<sub>4</sub></html>"},
+                        {"<sub>5</sub>", "<html>H<sub>5</sub></html>"},
+                        {"<sub>6</sub>", "<html>H<sub>6</sub></html>"},
+                        null,
+                    },
+
                     // Diacriticals
                     new Object[][] {
                         {"\u0300", "o\u0300"},
@@ -24,11 +36,14 @@ public class PedPalette extends StringPalette {
                     null,
 
                     // Miscellaneous
-                    "\u221A" /* square root */, "\u2207" /* nabla / gradient symbol */,
-                    "\u221E" /* infinity */, "\u222b" /* integral */, "\u222e" /* contour integral */,
+                    "\u00b0" /* degree */,
+                    new Object[] { "\u00b7",  "H\u00b7H" } /* dot */,
+                    "\u221A" /* square root */,
                     "\u2192" /* right arrow */, "\u2190" /* left arrow */,
-                    "\u21cc" /* right-over-left harpoon */,
-                    "\u00b1" /* plus-minus */, "\u2264" /* <= */, "\u2265" /* >= */,
+                    "\u00b1" /* plus-minus */, "\u2245" /* approximately equal */,
+                    "\u2264" /* <= */, "\u2265" /* >= */,
+                    "\u221E" /* infinity */, "\u21cc" /* right-over-left harpoon */,
+                    "\u2207" /* nabla / gradient symbol */, "\u222b" /* integral */,
                     null,
 
                     // Greek lowercase
@@ -45,6 +60,11 @@ public class PedPalette extends StringPalette {
                     "\u039b", "\u039c", "\u039d",  "\u039e", "\u039f", 
                     "\u03a0", "\u03a1",  "\u03a3", "\u03a4", 
                     "\u03a5", "\u03a6", "\u03a7",  "\u03a8", "\u03a9", 
+                    null,
+
+                    // Roman numerals
+                    "\u2160", "\u2161", "\u2162", "\u2163", "\u2164",
+                    "\u2169", "\u216c", "\u216d",
                     null,
                 });
     }
