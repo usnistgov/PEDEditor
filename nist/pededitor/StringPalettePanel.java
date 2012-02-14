@@ -1,11 +1,13 @@
 package gov.nist.pededitor;
 
 import java.awt.GridBagConstraints;
+import java.awt.Insets;
 import java.awt.event.ActionEvent;
 import java.util.ArrayList;
 
 import javax.swing.AbstractAction;
 import javax.swing.Action;
+import javax.swing.BorderFactory;
 import javax.swing.Icon;
 import javax.swing.JButton;
 import javax.swing.JPanel;
@@ -59,15 +61,27 @@ public class StringPalettePanel extends JPanel {
         this.palette = palette;
         int cnt = palette.size();
 
+        GridBagLineWrap gb = null;
+
         GridBagConstraints gbc = new GridBagConstraints();
         gbc.anchor = GridBagConstraints.WEST;
 
-        GridBagLineWrap gb = new GridBagLineWrap(this, gbc, colCnt);
-        for (int i = 0; i < cnt; ++i) {
-            Object label = palette.getLabel(i);
+        GridBagConstraints wholeRow = new GridBagConstraints();
+        wholeRow.anchor = GridBagConstraints.WEST;
+        wholeRow.gridwidth = GridBagConstraints.REMAINDER;
+        wholeRow.insets = new Insets(3, 3, 3, 3);
+        GridBagWrapper gb0 = new GridBagWrapper(this);
+
+        for (int i = 0; i <= cnt; ++i) {
+            Object label = (i < cnt) ? palette.getLabel(i) : null;
             if (label == null) {
-                gb.endRow();
+                gb = null;
             } else {
+                if (gb == null) {
+                    JPanel subpanel = new JPanel();
+                    gb0.add(subpanel, wholeRow);
+                    gb = new GridBagLineWrap(subpanel, gbc, colCnt);
+                }
                 JButton b = new JButton(new StringAction(label, i));
                 b.setRequestFocusEnabled(false);
                 gb.add(b);
