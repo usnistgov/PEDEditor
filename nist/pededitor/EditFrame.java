@@ -741,6 +741,12 @@ public class EditFrame extends JFrame {
                     getParentEditor().bestFit();
                 }
             });
+        mnView.add(new Action("Center Mouse", KeyEvent.VK_C,
+                                       KeyStroke.getKeyStroke("control L")) {
+                public void actionPerformed(ActionEvent e) {
+                    getParentEditor().centerMouse();
+                }
+            });
 
         if (editable) {
             mnBackgroundImage.setMnemonic(KeyEvent.VK_B);
