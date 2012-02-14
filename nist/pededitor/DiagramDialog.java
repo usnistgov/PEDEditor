@@ -62,6 +62,7 @@ public class DiagramDialog extends JDialog
                     DiagramDialog.this.setVisible(false);
                 }
             });
+        getRootPane().setDefaultButton(okButton);
         
         radioPanel.add(okButton);
 
