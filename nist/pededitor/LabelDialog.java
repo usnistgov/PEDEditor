@@ -36,7 +36,7 @@ public class LabelDialog extends JDialog {
     double xWeight = 0;
     /** See AnchoredLabel.yWeight for the definition of this field. */
     double yWeight = 0;
-    JTextField textField = new JTextField(30);
+    JTextField textField = new JTextField(65);
 
     JCheckBox mIsOpaque = new JCheckBox("Opaque background");
     JCheckBox mIsBoxed = new JCheckBox("Box label");
@@ -133,25 +133,33 @@ public class LabelDialog extends JDialog {
             textLabel.setLabelFor(textField);
             gb.addWest(textLabel);
             gb.endRowWith(textField);
+            cpgb.endRowWith(panel);
+        }
+
+        {
+            JPanel panel = new JPanel();
+            GridBagUtil gb = new GridBagUtil(panel);
 
             StringPalettePanel pal;
 
-            pal = new StringPalettePanel(new HTMLPalette(), 5);
-            pal.addListener(new StringEventListener() {
+            StringEventListener listen = new StringEventListener() {
                     @Override public void actionPerformed(StringEvent e) {
-                        textField.setText(textField.getText() + e.getString());
+                        String str = textField.getText();
+                        textField.setText
+                            (str.substring(0, textField.getSelectionStart()) +
+                             e.getString()
+                             + str.substring(textField.getSelectionEnd()));
                     }
-                });
+                };
+
+            pal = new StringPalettePanel(new HTMLPalette(), 5);
+            pal.addListener(listen);
             gb.endRowWith(pal);
 
             pal = new StringPalettePanel(new PedPalette(), 8);
-            pal.addListener(new StringEventListener() {
-                    @Override public void actionPerformed(StringEvent e) {
-                        textField.setText(textField.getText() + e.getString());
-                    }
-                });
+            pal.addListener(listen);
             gb.endRowWith(pal);
-            cpgb.addWest(panel);
+            cpgb.addNorthwest(panel);
         }
 
         JPanel miscPane = new JPanel();
