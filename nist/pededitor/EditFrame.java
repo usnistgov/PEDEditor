@@ -129,6 +129,13 @@ public class EditFrame extends JFrame {
         MarginAction(Side side) {
             super(side.toString());
             this.side = side;
+            char ch = side.toString().charAt(0);
+            int code = (ch == 'L') ? KeyEvent.VK_L
+                : (ch == 'R') ? KeyEvent.VK_R
+                : (ch == 'T') ? KeyEvent.VK_T
+                : (ch == 'B') ? KeyEvent.VK_B
+                : 0;
+            putValue(MNEMONIC_KEY, code);
         }
 
         @Override public void actionPerformed(ActionEvent e) {
@@ -358,7 +365,7 @@ public class EditFrame extends JFrame {
                 });
 
             mnEdit.add(new Action
-                        ("Change color...",
+                        ("Color...",
                          KeyEvent.VK_R,
                          KeyStroke.getKeyStroke('r')) {
                     @Override
@@ -709,7 +716,7 @@ public class EditFrame extends JFrame {
             mnAxes.add(changeYUnits);
 
             JMenu mnMargins = new JMenu("Margins");
-            mnAxes.setMnemonic(KeyEvent.VK_M);
+            mnMargins.setMnemonic(KeyEvent.VK_M);
             for (Side side: Side.values()) {
                 mnMargins.add(new MarginAction(side));
             }
