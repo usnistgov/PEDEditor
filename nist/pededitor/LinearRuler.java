@@ -115,6 +115,12 @@ class LinearRuler {
         line twice can yield an inferior rendering.) */
     @JsonProperty boolean drawSpine = true;
 
+    /** Define the following only if you don't want to use the
+        automatically selected tick range. The start tick is assumed
+        to be a big tick. */
+    @JsonProperty("tickStart") Double tickStartD = null;
+    @JsonProperty("tickEnd") Double tickEndD = null;
+
     /** clone() copies but does not clone the axis field, because the
         axis is considered a relation of the ruler instead of an owned
         field. */
@@ -347,23 +353,38 @@ class LinearRuler {
         double minTickDelta = minTickPageDelta / m;
 
         double clearDistance = Math.abs(scale * lineWidth * 8 / m);
-        double tickStart = astart;
-        if (keepStartClear || startArrow) {
-            tickStart += clearDistance;
-        }
-        double tickEnd = aend;
-        if (keepEndClear || endArrow) {
-            tickEnd -= clearDistance;
+
+        /* Minimum value allowed for ticks. */
+        double tickStart;
+        /* Actual minimum tick value. */
+        double actualTickStart;
+        if (tickStartD != null) {
+            actualTickStart = tickStart = tickStartD;
+        } else {
+            tickStart = astart;
+            if (keepStartClear || startArrow) {
+                tickStart += clearDistance;
+            }
+            actualTickStart = tickD
+                * Math.ceil((tickStart - 1e-6 * (aend - astart)) / tickD);
         }
 
+        double tickEnd;
+        if (tickEndD != null) {
+            tickEnd = tickEndD;
+        } else {
+            tickEnd = aend;
+            if (keepEndClear || endArrow) {
+                tickEnd -= clearDistance;
+            }
+        }
+        tickEnd += 1e-6 * (tickEnd - tickStart) / tickD;
+
+        Point2D.Double tmpPoint = new Point2D.Double();
+
         if (tickD >= minTickDelta && tickDelta != 0) {
-            long starti = (long) Math.ceil
-                ((tickStart - 1e-6 * (aend - astart)) / tickD);
-            long endi = (long) Math.floor
-                ((tickEnd + 1e-6 * (aend - astart)) / tickD);
-            Point2D.Double tmpPoint = new Point2D.Double();
-            for (long i = starti; i <= endi; ++i) {
-                double logical = i * tickD;
+            for (double logical = actualTickStart; logical <= tickEnd;
+                 logical += tickD) {
                 Point2D.Double location
                     = toPhysical(logical, pageStartPoint, pageEndPoint);
                 if (tickRight) {
@@ -406,15 +427,14 @@ class LinearRuler {
         String formatString = RulerTick.formatString(start, end, bigTickD);
 
         if (bigTickDelta != 0) {
-            long starti = (long) Math.ceil
-                ((tickStart - 1e-6 * (aend - astart)) / bigTickD);
-            long endi = (long) Math.floor
-                ((tickEnd + 1e-6 * (aend - astart)) / bigTickD);
-            Point2D.Double tmpPoint = new Point2D.Double();
+
+            actualTickStart = (tickStartD != null) ? tickStartD
+                : (tickD * Math.ceil((tickStart - 1e-6 * (aend - astart)) / bigTickD));
+
             AffineTransform oldTransform = g.getTransform();
 
-            for (long i = starti; i <= endi; ++i) {
-                double logical = i * bigTickD;
+            for (double logical = actualTickStart; logical <= tickEnd;
+                 logical += bigTickD) {
                 Point2D.Double location
                     = toPhysical(logical, pageStartPoint, pageEndPoint);
 
