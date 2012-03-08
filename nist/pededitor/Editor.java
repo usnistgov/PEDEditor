@@ -1838,7 +1838,12 @@ public class Editor implements CropEventListener, MouseListener,
             theta += Math.PI;
         }
 
-        arrows.add(new Arrow(mprin.x, mprin.y, lineWidth, theta));
+        System.out.println("Converting " + theta + " to "
+                           + pageToPrincipalAngle(theta));
+
+        arrows.add
+            (new Arrow(mprin.x, mprin.y, lineWidth,
+                       pageToPrincipalAngle(theta)));
         repaintEditFrame();
     }
 
@@ -2331,14 +2336,15 @@ public class Editor implements CropEventListener, MouseListener,
 
         LabelDialog dog = new LabelDialog
             (editFrame, "Add Label", defaultFont().deriveFont(16.0f));
-        AnchoredLabel t = dog.showModal();
-        if (t == null) {
+        AnchoredLabel newLabel = dog.showModal();
+        if (newLabel == null) {
             return;
         }
 
-        t.setX(mprin.x);
-        t.setY(mprin.y);
-        add(t);
+        newLabel.setAngle(pageToPrincipalAngle(newLabel.getAngle()));
+        newLabel.setX(mprin.x);
+        newLabel.setY(mprin.y);
+        add(newLabel);
         selection = new LabelSelection(labels.size() - 1, LabelHandle.ANCHOR);
     }
 
@@ -2350,7 +2356,8 @@ public class Editor implements CropEventListener, MouseListener,
     }
 
     public void editLabel(int index) {
-        AnchoredLabel label = labels.get(index);
+        AnchoredLabel label = (AnchoredLabel) labels.get(index).clone();
+        label.setAngle(principalToPageAngle(label.getAngle()));
         LabelDialog dog = new LabelDialog
             (editFrame, "Edit Label", label, defaultFont().deriveFont(16.0f));
         dog.setFont(defaultFont());
@@ -2359,6 +2366,7 @@ public class Editor implements CropEventListener, MouseListener,
             return;
         }
 
+        newLabel.setAngle(pageToPrincipalAngle(newLabel.getAngle()));
         newLabel.setX(label.getX());
         newLabel.setY(label.getY());
         labels.set(index, newLabel);
@@ -2384,9 +2392,9 @@ public class Editor implements CropEventListener, MouseListener,
         }
 
         JLabel bogus = new JLabel(str);
-        bogus.setForeground(thisOrBlack(textColor));
         Font f = defaultFont();
         bogus.setFont(f.deriveFont((float) f.getSize() * VIEW_MAGNIFICATION));
+        bogus.setForeground(thisOrBlack(textColor));
         return (View) bogus.getClientProperty("html");
     }
 
@@ -2419,6 +2427,17 @@ public class Editor implements CropEventListener, MouseListener,
         this.diagramType = t;
     }
 
+    double principalToPageAngle(double theta) {
+        Point2D.Double p = new Point2D.Double(Math.cos(theta), Math.sin(theta));
+        principalToStandardPage.deltaTransform(p, p);
+        return Math.atan2(p.y, p.x);
+    }
+
+    double pageToPrincipalAngle(double theta) {
+        Point2D.Double p = new Point2D.Double(Math.cos(theta), Math.sin(theta));
+        standardPageToPrincipal.deltaTransform(p, p);
+        return Math.atan2(p.y, p.x);
+    }
 
     /** Invoked from the EditFrame menu */
     public void setLineStyle(StandardStroke lineStyle) {
@@ -4185,15 +4204,32 @@ public class Editor implements CropEventListener, MouseListener,
             principalToOriginal.concatenate(itrans);
         }
 
+        // Convert all angles from principal to page coordinates.
+        for (Arrow item: arrows) {
+            item.setAngle(principalToPageAngle(item.getAngle()));
+        }
+        for (AnchoredLabel item: labels) {
+            item.setAngle(principalToPageAngle(item.getAngle()));
+        }
+
         principalToStandardPage.concatenate(itrans);
         standardPageToPrincipal.preConcatenate(atrans);
 
+        // Convert all angles from page to the new principal coordinates.
         for (LinearAxis axis: axes) {
             if (axis.isXAxis() || axis.isYAxis()) {
                 continue;
             }
             axis.concatenate(itrans);
         }
+
+        for (Arrow item: arrows) {
+            item.setAngle(pageToPrincipalAngle(item.getAngle()));
+        }
+        for (AnchoredLabel item: labels) {
+            item.setAngle(pageToPrincipalAngle(item.getAngle()));
+        }
+
     }
 
     @Override
@@ -4627,28 +4663,26 @@ public class Editor implements CropEventListener, MouseListener,
         View view = labelViews.get(labelNo);
         Affine toPage = getPrincipalToAlignedPage();
         Point2D.Double point = toPage.transform(label.getX(), label.getY());
+        double angle = principalToPageAngle(label.getAngle());
 
         if (label.isOpaque()) {
             Color oldColor = g.getColor();
             g.setColor(Color.WHITE);
             boxHTML(g, view, scale * label.getFontSize(),
-                    label.getAngle(),
-                    point.x * scale, point.y * scale,
+                    angle, point.x * scale, point.y * scale,
                     label.getXWeight(), label.getYWeight(), true);
             g.setColor(oldColor);
         }
 
         if (label.isBoxed()) {
             boxHTML(g, view, scale * label.getFontSize(),
-                    label.getAngle(),
-                    point.x * scale, point.y * scale,
+                    angle, point.x * scale, point.y * scale,
                     label.getXWeight(), label.getYWeight(), false);
         }
 
         Point2D.Double centerPage = new Point2D.Double();
         drawHTML(g, view, scale * label.getFontSize(),
-                 label.getAngle(),
-                 point.x * scale, point.y * scale,
+                 angle, point.x * scale, point.y * scale,
                  label.getXWeight(), label.getYWeight(),
                  centerPage);
 
@@ -4865,7 +4899,9 @@ public class Editor implements CropEventListener, MouseListener,
     void drawArrow(Graphics2D g, double scale, Arrow ai) {
         Affine xform = principalToScaledPage(scale);
         Point2D.Double xpoint = xform.transform(ai.x, ai.y);
-        Arrow arr = new Arrow(xpoint.x, xpoint.y, scale * ai.size, ai.theta);
+        Arrow arr = new Arrow
+            (xpoint.x, xpoint.y, scale * ai.size,
+             principalToPageAngle(ai.theta));
         g.fill(arr);
     }
 
