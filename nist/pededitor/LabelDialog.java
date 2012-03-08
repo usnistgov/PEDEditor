@@ -7,6 +7,7 @@ import java.awt.FontMetrics;
 import java.awt.Frame;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
+import java.awt.GraphicsEnvironment;
 import java.awt.GridLayout;
 import java.awt.Image;
 import java.awt.RenderingHints;
@@ -22,6 +23,7 @@ import javax.swing.JButton;
 import javax.swing.JCheckBox;
 import javax.swing.JDialog;
 import javax.swing.JLabel;
+import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JTextField;
 
@@ -36,7 +38,7 @@ public class LabelDialog extends JDialog {
     double xWeight = 0;
     /** See AnchoredLabel.yWeight for the definition of this field. */
     double yWeight = 0;
-    JTextField textField = new JTextField(65);
+    JTextField textField = new JTextField(55);
 
     JCheckBox mIsOpaque = new JCheckBox("Opaque background");
     JCheckBox mIsBoxed = new JCheckBox("Box label");
@@ -61,8 +63,7 @@ public class LabelDialog extends JDialog {
             this.yWeight = yWeight;
         }
 
-        @Override
-            public void actionPerformed(ActionEvent e) {
+        @Override public void actionPerformed(ActionEvent e) {
             LabelDialog.this.xWeight = xWeight;
             LabelDialog.this.yWeight = yWeight;
             pressedOK = true;
@@ -120,10 +121,10 @@ public class LabelDialog extends JDialog {
         }
     }
 
-    LabelDialog(Frame owner, String title) {
+    LabelDialog(Frame owner, String title, Font font) {
         super(owner, "Edit Text", true);
-        JPanel contentPane = (JPanel) getContentPane();
-        GridBagUtil cpgb = new GridBagUtil(contentPane);
+
+        GridBagUtil cpgb = new GridBagUtil(this);
 
         {
             JPanel panel = new JPanel();
@@ -131,6 +132,7 @@ public class LabelDialog extends JDialog {
 
             JLabel textLabel = new JLabel("Text:");
             textLabel.setLabelFor(textField);
+            textField.setFont(font.deriveFont(16f));
             gb.addWest(textLabel);
             gb.endRowWith(textField);
             cpgb.endRowWith(panel);
@@ -152,11 +154,11 @@ public class LabelDialog extends JDialog {
                     }
                 };
 
-            pal = new StringPalettePanel(new HTMLPalette(), 5);
+            pal = new StringPalettePanel(new HTMLPalette(), 5, font);
             pal.addListener(listen);
             gb.endRowWith(pal);
 
-            pal = new StringPalettePanel(new PedPalette(), 8);
+            pal = new StringPalettePanel(new PedPalette(), 8, font);
             pal.addListener(listen);
             gb.endRowWith(pal);
             cpgb.addNorthwest(panel);
@@ -168,6 +170,29 @@ public class LabelDialog extends JDialog {
         {
             JPanel panel = new JPanel();
             GridBagUtil gb = new GridBagUtil(panel);
+
+            gb.endRowWith
+                (new JButton(new AbstractAction("H2SO4 \u2192 H\u2082SO\u2084") {
+                        private static final long serialVersionUID = 197868896745807236L;
+
+                        @Override public void actionPerformed(ActionEvent e) {
+                            textField.setText(ChemicalString.autoSubscript
+                                              (textField.getText()));
+                        }
+                    }));
+
+            /* TODO
+
+            gb.endRowWith
+                (new JButton(new AbstractAction("Compute location") {
+                        private static final long serialVersionUID = 197868896745807236L;
+
+                        @Override public void actionPerformed(ActionEvent e) {
+                            textField.setText(ChemicalString.autoSubscript
+                                              (textField.getText()));
+                        }
+                    }));
+            */
 
             JLabel fontSizeLabel = new JLabel("Font size:");
             fontSizeLabel.setLabelFor(fontSize);
@@ -226,8 +251,8 @@ public class LabelDialog extends JDialog {
         setYWeight(0.5);
     }
 
-    LabelDialog(Frame owner, String title, AnchoredLabel label) {
-        this(owner, title);
+    LabelDialog(Frame owner, String title, AnchoredLabel label, Font font) {
+        this(owner, title, font);
         setText(label.getText());
         setXWeight(label.getXWeight());
         setYWeight(label.getYWeight());
@@ -343,8 +368,25 @@ public class LabelDialog extends JDialog {
     }
 
     public static void main(String[] args) {
-        LabelDialog dialog = new LabelDialog(null, "Labels test");
-        dialog.setFontSize(1.333333333333);
+        // String fontName = "Free Serif";
+        // String fontName = "Arial Unicode MS";
+        String fontName = "Lucida Sans Unicode";
+        Font font = new Font(fontName, 0, 14);
+        boolean foundFont = false;
+        for (Font f: GraphicsEnvironment.getLocalGraphicsEnvironment()
+                 .getAllFonts()) {
+            if (f.getFontName().equals(fontName)) {
+                foundFont = true;
+                break;
+            }
+        }
+
+        if (!foundFont) {
+            JOptionPane.showMessageDialog
+                (null, "Warning: font '" + fontName + "' not found.");
+        }
+        LabelDialog dialog = new LabelDialog(null, "Labels test", font);
+        dialog.setFontSize(4.0/3);
         dialog.setAngle(Math.PI / 2);
         AnchoredLabel t = dialog.showModal();
         System.out.println("You selected " + t);
