@@ -1,5 +1,6 @@
 package gov.nist.pededitor;
 
+import java.awt.Font;
 import java.awt.GridBagConstraints;
 import java.awt.Insets;
 import java.awt.event.ActionEvent;
@@ -7,7 +8,6 @@ import java.util.ArrayList;
 
 import javax.swing.AbstractAction;
 import javax.swing.Action;
-import javax.swing.BorderFactory;
 import javax.swing.Icon;
 import javax.swing.JButton;
 import javax.swing.JPanel;
@@ -58,6 +58,17 @@ public class StringPalettePanel extends JPanel {
         @param colCnt Maximum number of buttons per row, or 0 if no limit.
     */
     public StringPalettePanel(StringPalette palette, int colCnt) {
+        this(palette, colCnt, null);
+    }
+
+    /** Create a panel full of buttons with the appropriate labels that
+        emit the appropriate string when pressed.
+
+        @param colCnt Maximum number of buttons per row, or 0 if no limit.
+
+        @param font Font to use for the buttons.
+    */
+    public StringPalettePanel(StringPalette palette, int colCnt, Font font) {
         this.palette = palette;
         int cnt = palette.size();
 
@@ -83,6 +94,9 @@ public class StringPalettePanel extends JPanel {
                     gb = new GridBagLineWrap(subpanel, gbc, colCnt);
                 }
                 JButton b = new JButton(new StringAction(label, i));
+                if (font != null) {
+                    b.setFont(font);
+                }
                 b.setRequestFocusEnabled(false);
                 gb.add(b);
             }
