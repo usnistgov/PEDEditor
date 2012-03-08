@@ -175,7 +175,7 @@ public class CompositeStroke {
         return output;
     }
 
-    /**  Put a dot at the starting point and that's all. */
+    /** Put a dot at the starting point and that's all. */
     public static CompositeStroke getStartingDot() {
         CompositeStroke output = new CompositeStroke();
         output.add(new BasicStroke
@@ -185,6 +185,19 @@ public class CompositeStroke {
                     3.0f,
                     new float[] { 0, 1e6f },
                     0.0f));
+        return output;
+    }
+
+    /** Plot nothing. */
+    public static CompositeStroke getInvisibleLine() {
+        CompositeStroke output = new CompositeStroke();
+        output.add(new BasicStroke
+                   (1.0f,
+                    BasicStroke.CAP_ROUND,
+                    BasicStroke.JOIN_ROUND,
+                    3.0f,
+                    new float[] { 0, 1e6f },
+                    2.0f));
         return output;
     }
 }

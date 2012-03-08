@@ -7,7 +7,8 @@ public enum StandardStroke {
     DASH (CompositeStroke.getDashedLine()),
     DOT_DASH (CompositeStroke.getDotDashLine()),
     RAILROAD (CompositeStroke.getRailroadLine()),
-    SOLID_DOT (CompositeStroke.getSolidDotLine());
+    SOLID_DOT (CompositeStroke.getSolidDotLine()),
+    INVISIBLE (CompositeStroke.getInvisibleLine());
 
     private final CompositeStroke stroke;
 
