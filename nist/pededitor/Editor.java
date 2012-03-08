@@ -11,6 +11,7 @@ import java.awt.event.*;
 import java.awt.image.*;
 import java.awt.geom.*;
 import java.net.*;
+// Java7 import java.nio.file.Files;
 import java.text.*;
 import java.util.*;
 import java.util.Timer;
@@ -27,27 +28,21 @@ import org.codehaus.jackson.annotate.JsonSubTypes.Type;
 import org.codehaus.jackson.map.*;
 import org.codehaus.jackson.map.annotate.*;
 
+import org.apache.batik.svggen.SVGGeneratorContext;
+import org.apache.batik.svggen.SVGGraphics2D;
+import org.apache.batik.dom.GenericDOMImplementation;
+
+import org.w3c.dom.DOMImplementation;
+
 // TODO Fix issues with tie lines and closed curves.
 
-// TODO In the label dialog, add the string from the character palette at the
-// selection, not just at the end of the line.
+// TODO (mandatory) Fix the issue with the FreeSerif.ttf font not
+// printing correctly.
 
-// TODO (mandatory bug fix) Non-ASCII characters get lost during "save
-// as PDF".
-
-// TODO Text rendering issues: inaccurate text bounding boxes and
-// incorrect spacing of space characters during diagram printing.
-// These are likely to be especially problematic because they are in
-// code that I do not control. The inaccurate text bounding boxes
-// causes problems for the following items: multi-line label
-// justification (minor) and curve breaking for text (major), and it
-// also degrades image quality.
-
-// TODO (mandatory) Label tags: diagram components, chemical formulas,
-// temperatures. The only mandatory element so far is that these three
-// elements are associated with the diagram as a whole, not
-// necessarily with specific locations or labels. Optional: eutectic
-// and peritectic points (which *would* have to be associated with
+// TODO (mandatory) Label tags: chemical formulas, temperatures
+// (optional). These diagrams do not have to be associated with
+// specific locations or labels at this time. Optional: eutectic and
+// peritectic points (which *would* have to be associated with
 // specific points), user-defined.
 
 // TODO (major, mandatory) Read GRUMP data.
@@ -55,17 +50,32 @@ import org.codehaus.jackson.map.annotate.*;
 // TODO (mandatory?, backwards compatibility) Duplicate existing
 // program's smoothing algorithm when displaying GRUMP files.
 
-// TODO (optional) Chemical formula auto-parsing.
-
-// TODO (mandatory?) Curve section decorations (e.g. pen-up/pen-down).
-// Not important for new diagrams as far as I can see, but may be
-// required for backwards compatibility.
+// TODO (mandatory) Existing GRUMP files use a condensed font. Either
+// derive a narrower font or find your own condensed font.
+// Unfortunately, derived condensed circles just won't do. :(
 
 // TODO (mandatory?, preexisting) Apply a gradient to all control
 // points on a curve. Specifically, apply the following transformation
 // to all points on the currently selected curve for which $variable
 // is between v1 and v2: "$variable = $variable + k * ($variable - v1)
 // / (v2 - v1)"
+
+// TODO (optional) LinearRulers with explicitly assigned logical
+// values instead of an Axis dependence? A lot of schematics could
+// benefit. Click two endpoints of a segment, specify the values, then
+// away you go.
+
+// TODO (optional) Allow the diagram to be expanded? The idea is that
+// the four corners of the diagram would be moved, while everything
+// else would remain in place, or perhaps point not within the diagram
+// interior get translated. But how do you handle the original image?
+// Not a problem; you leave it untouched. Instead, you change
+// principalToStandardPage and pageBounds. For example, when reducing
+// minX, also reduce every coordinate less than minX.
+
+// TODO (mandatory?) Curve section decorations (e.g. pen-up/pen-down).
+// Not important for new diagrams as far as I can see, but may be
+// required for backwards compatibility.
 
 // TODO (important) Right-click popup menus. The program works just
 // fine with using keyboard shortcuts instead of right-click menus,
@@ -77,13 +87,8 @@ import org.codehaus.jackson.map.annotate.*;
 // (select action, then selection location) is possible but would be
 // slow at best and awkward to implement as well.
 
-// TODO (important) More intuitive dot placement process (the black
-// circles around interesting points). Currently a dot is printed at
-// any curve or polyline that has only 1 vertex, but all label anchor
-// points should be included in the vertex set, too, and label anchor
-// points should not, in general, be dotted.
-
-// TODO (optional, easy) Add color!
+// TODO (important) More compact data-point set representation? Also,
+// the "draw a dot for a 1-element polyline" is unintuitive.
 
 // TODO (optional) Automatic margin recomputation
 
@@ -92,7 +97,8 @@ import org.codehaus.jackson.map.annotate.*;
 
 // TODO (major time-saver) Semi-automatically infer diagram location
 // from composition where equation balancing is possible. Discarding
-// ubiquitous elements like O, H, N, or C may be required.
+// elements like O, H, N, or C where possible may help, but may not
+// help *much*.
 
 // TODO (feature, harder) Allow detection of the intersections of two
 // splines. (What makes this feature more desirable than it would be
@@ -130,9 +136,8 @@ import org.codehaus.jackson.map.annotate.*;
 // TODO "Undo" option. Any good drawing program has that feature, but
 // making everything undoable would take work.
 
-// TODO (enhancement) Tiling fill patterns. These are important for
-// general diagram drawing, but they seem to be less important for
-// PEDs
+// TODO (enhancement) Region identification and filling. As old
+// diagrams show, such a feature would get use.
 
 // TODO (mandatory) "Symbol" type lines are not implemented.
 
@@ -194,9 +199,10 @@ import org.codehaus.jackson.map.annotate.*;
 // computer vision can be expensive, and how much of our own brains
 // are dedicated to vision-related tasks?)
 
-// TODO (minor bug (in Java itself?)) Fix or work around the bug (which I think
-// is a Java bug, not an application bug) where scrolling the scroll
-// pane doesn't cause the image to be redrawn.
+// TODO (minor bug (in Java itself?)) Fix or work around the bug
+// (which I think is a Java bug, not an application bug) where
+// scrolling the scroll pane doesn't cause the image to be redrawn.
+// (Last confirmed in Java 6.29; not known whether it still exists.)
 
 // TODO (feature, easy) Use Robot to make sure that when the mouse is
 // inside the diagram, zooming the image never causes you to lose your
@@ -350,7 +356,7 @@ public class Editor implements CropEventListener, MouseListener,
         }
 
         @Override
-        public void copy(Point2D dest) {
+        public VertexSelection copy(Point2D dest) {
             Point2D.Double delta = getLocation();
             delta.x = dest.getX() - delta.x;
             delta.y = dest.getY() - delta.y;
@@ -363,6 +369,7 @@ public class Editor implements CropEventListener, MouseListener,
             }
             paths.add(path);
             repaintEditFrame();
+            return new VertexSelection(paths.size() - 1, vertexNo);
         }
 
         @Override
@@ -382,45 +389,53 @@ public class Editor implements CropEventListener, MouseListener,
         }
     }
 
+    static enum LabelHandle { CENTER, ANCHOR };
 
     class LabelSelection implements Selectable {
         int index;
+        /** A tie line may be selected from its anchor or its center. */
+        LabelHandle handle;
 
-        LabelSelection(int index) {
+        LabelSelection(int index, LabelHandle handle) {
             this.index = index;
+            this.handle = handle;
         }
 
         AnchoredLabel getItem() { return labels.get(index); }
 
-        @Override
-        public LabelSelection remove() {
+        @Override public LabelSelection remove() {
             labels.remove(index);
             labelViews.remove(index);
             repaintEditFrame();
             return null;
         }
 
-        @Override
-        public void move(Point2D dest) {
+        @Override public void move(Point2D dest) {
+            Point2D.Double destAnchor = getAnchorLocation(dest);
             AnchoredLabel item = getItem();
-            item.setX(dest.getX());
-            item.setY(dest.getY());
+            item.setX(destAnchor.getX());
+            item.setY(destAnchor.getY());
             repaintEditFrame();
         }
 
-        @Override
-        public void copy(Point2D dest) {
+        @Override public LabelSelection copy(Point2D dest) {
             AnchoredLabel output = getItem().clone();
-            output.setX(dest.getX());
-            output.setY(dest.getY());
+            Point2D.Double destAnchor = getAnchorLocation(dest);
+            output.setX(destAnchor.getX());
+            output.setY(destAnchor.getY());
             add(output);
             repaintEditFrame();
+            return new LabelSelection(labels.size() - 1, handle);
         }
 
-        @Override
-        public Point2D.Double getLocation() {
-            AnchoredLabel item = getItem();
-            return new Point2D.Double(item.getX(), item.getY());
+        @Override public Point2D.Double getLocation() {
+            switch (handle) {
+            case ANCHOR:
+                return getAnchorLocation();
+            case CENTER:
+                return getCenterLocation();
+            }
+            return null;
         }
 
         @Override public boolean isEditable() { return true; }
@@ -446,19 +461,43 @@ public class Editor implements CropEventListener, MouseListener,
             AnchoredLabel item = getItem();
             item.setColor(color);
             labelViews.set(index, toView(item));
-            repaintEditFrame();
         }
 
         @Override public Color getColor() { return getItem().getColor(); }
 
-        @Override
-        public boolean equals(Object other) {
+        @Override public boolean equals(Object other) {
             if (this == other) return true;
             if (this.getClass() != LabelSelection.class) return false;
             if (this.getClass() != other.getClass()) return false;
 
             LabelSelection cast = (LabelSelection) other;
             return this.index == cast.index;
+        }
+
+        public Point2D.Double getCenterLocation() {
+            return labelCenters.get(index);
+        }
+
+        public Point2D.Double getAnchorLocation() {
+            AnchoredLabel item = getItem();
+            return new Point2D.Double(item.getX(), item.getY());
+        }
+
+        /** @return the anchor location for a label whose handle is at
+            dest. */
+        public Point2D.Double getAnchorLocation(Point2D dest) {
+            if (handle == LabelHandle.ANCHOR) {
+                return new Point2D.Double(dest.getX(), dest.getY());
+            }
+
+            // Compute the difference between the anchor
+            // location and the center, and apply the same
+            // difference to dest.
+            Point2D.Double anchor = getAnchorLocation();
+            Point2D.Double center = getCenterLocation();
+            double dx = anchor.x - center.x;
+            double dy = anchor.y - center.y;
+            return new Point2D.Double(dest.getX() + dx, dest.getY() + dy);
         }
     }
 
@@ -488,12 +527,13 @@ public class Editor implements CropEventListener, MouseListener,
         }
 
         @Override
-        public void copy(Point2D dest) {
+        public ArrowSelection copy(Point2D dest) {
             Arrow output = getItem().clonus();
             output.x = dest.getX();
             output.y = dest.getY();
             arrows.add(output);
             repaintEditFrame();
+            return new ArrowSelection(arrows.size() - 1);
         }
 
         @Override public boolean isEditable() { return false; }
@@ -593,9 +633,10 @@ public class Editor implements CropEventListener, MouseListener,
         }
 
         @Override
-        public void copy(Point2D dest) {
+        public TieLineSelection copy(Point2D dest) {
             JOptionPane.showMessageDialog
                 (editFrame, "Tie lines cannot be copied.");
+            return this;
         }
 
         @Override
@@ -694,7 +735,7 @@ public class Editor implements CropEventListener, MouseListener,
             repaintEditFrame();
         }
 
-        @Override public void copy(Point2D dest) {
+        @Override public RulerSelection copy(Point2D dest) {
             Point2D.Double d = new Point2D.Double(dest.getX(), dest.getY());
             LinearRuler r = getItem().clone();
             double dx = r.endPoint.x - r.startPoint.x;
@@ -713,6 +754,7 @@ public class Editor implements CropEventListener, MouseListener,
 
             rulers.add(r);
             repaintEditFrame();
+            return new RulerSelection(rulers.size() - 1, handle);
         }
 
         @Override
@@ -780,8 +822,21 @@ public class Editor implements CropEventListener, MouseListener,
 
     private static final String PREF_DIR = "dir";
     private static final double BASE_SCALE = 615.0;
+
+    // The label views are grid-fitted at the font size of the buttons
+    // they were created from. Grid-fitting throws off the font
+    // metrics, but the bigger the font size, the less effect
+    // grid-fitting has, and the less error it induces. So make the
+    // Views big enough that grid-fitting is largely irrelevant.
+    private static final int VIEW_MAGNIFICATION = 8;
     static protected double MOUSE_UNSTICK_DISTANCE = 30; /* pixels */
     static protected Image crosshairs = null;
+    static protected final String embeddedFontName = "FreeSerif.ttf";
+    // static protected final String embeddedFontName = "DejaVuLGCSerifCondensed.ttf";
+    // static protected final String embeddedFontName = "DejaVuLGCSerif.ttf";
+    // JAVA7 static protected final String embeddedFontName = "FreeSerif.otf";
+    // embeddedFont is initialized when needed.
+    static protected Font embeddedFont = null;
 
     protected CropFrame cropFrame = new CropFrame();
     protected EditFrame editFrame = new EditFrame(this);
@@ -841,7 +896,8 @@ public class Editor implements CropEventListener, MouseListener,
     protected double labelXMargin = 0;
     protected double labelYMargin = 0;
 
-    static final double STANDARD_LINE_WIDTH = 0.0016;
+    static final double STANDARD_LINE_WIDTH = 0.0024;
+    static final double STANDARD_FONT_SIZE = 15.0;
     protected double lineWidth = STANDARD_LINE_WIDTH;
     protected StandardStroke lineStyle = StandardStroke.SOLID;
 
@@ -899,6 +955,7 @@ public class Editor implements CropEventListener, MouseListener,
         zoomFrame.setFocusableWindowState(false);
         tieLineDialog.setFocusableWindowState(false);
         clear();
+        getEditPane().setFont(defaultFont());
         getEditPane().addMouseListener(this);
         getEditPane().addMouseMotionListener(this);
         cropFrame.addCropEventListener(this);
@@ -1071,6 +1128,7 @@ public class Editor implements CropEventListener, MouseListener,
         }
 
         moveSelection(mprin, moveAll);
+        mouseIsStuck = true;
     }
 
     /** Copy the selection, moving it to mprin. */
@@ -1095,7 +1153,7 @@ public class Editor implements CropEventListener, MouseListener,
             unstickMouse();
         }
 
-        selection.copy(mprin);
+        selection = selection.copy(mprin);
     }
 
     /** Edit the selection. */
@@ -1134,6 +1192,7 @@ public class Editor implements CropEventListener, MouseListener,
              colorChooser, new ActionListener() {
                  @Override public void actionPerformed(ActionEvent e) {
                      Editor.this.selection.setColor(colorChooser.getColor());
+                     repaintEditFrame();
                  }
              },
              null);
@@ -1521,7 +1580,7 @@ public class Editor implements CropEventListener, MouseListener,
 
             g.setColor(Color.GREEN);
             draw(g, path, scale);
-            double r = Math.max(path.getLineWidth() * scale * 1.5, 4.0);
+            double r = Math.max(path.getLineWidth() * scale * 2.0, 4.0);
             circleVertices(g, path, scale, false, r);
 
             // Mark the active vertex specifically.
@@ -1841,6 +1900,7 @@ public class Editor implements CropEventListener, MouseListener,
         tie.ot1 = tieLineCorners.get(2).t;
         tie.ot2 = tieLineCorners.get(3).t;
 
+        selection = new TieLineSelection(tieLines.size(), TieLineHandle.OUTER2);
         tieLines.add(tie);
         repaintEditFrame();
     }
@@ -1957,12 +2017,15 @@ public class Editor implements CropEventListener, MouseListener,
             return -1;
         }
 
-        Point2D.Double mousePage = getPrincipalToAlignedPage().transform(mprin);
+        Affine toPage = getPrincipalToAlignedPage();
+        Point2D.Double mousePage = toPage.transform(mprin);
+        Point2D.Double centerPage = new Point2D.Double();
 
         int output = -1;
         double minDistance = 0.0;
         for (int i = 0; i < labels.size(); ++i) {
-            double distance = labelCenters.get(i).distance(mousePage);
+            toPage.transform(labelCenters.get(i), centerPage);
+            double distance = centerPage.distance(mousePage);
             if (output == -1 || distance < minDistance) {
                 output = i;
                 minDistance = distance;
@@ -2082,15 +2145,15 @@ public class Editor implements CropEventListener, MouseListener,
         repaintEditFrame();
     }
 
-    public void changeXUnits() {
-        changeUnits(getXAxis());
+    public void scaleXUnits() {
+        scaleUnits(getXAxis());
     }
 
-    public void changeYUnits() {
-        changeUnits(getYAxis());
+    public void scaleYUnits() {
+        scaleUnits(getYAxis());
     }
 
-    public void changeUnits(LinearAxis axis) {
+    public void scaleUnits(LinearAxis axis) {
         if (axis == null) {
             return;
         }
@@ -2119,7 +2182,7 @@ public class Editor implements CropEventListener, MouseListener,
         }
 
         TableDialog dog = new TableDialog(editFrame, data, columnNames);
-        dog.setTitle("Change " + axis.name + " units");
+        dog.setTitle("Scale " + axis.name + " units");
         Object[][] output = dog.showModal();
         if (output == null) {
             return;
@@ -2266,8 +2329,9 @@ public class Editor implements CropEventListener, MouseListener,
             unstickMouse();
         }
 
-        AnchoredLabel t = (new LabelDialog(editFrame, "Add Label"))
-            .showModal();
+        LabelDialog dog = new LabelDialog
+            (editFrame, "Add Label", defaultFont().deriveFont(16.0f));
+        AnchoredLabel t = dog.showModal();
         if (t == null) {
             return;
         }
@@ -2275,7 +2339,7 @@ public class Editor implements CropEventListener, MouseListener,
         t.setX(mprin.x);
         t.setY(mprin.y);
         add(t);
-        selection = new LabelSelection(labels.size() - 1);
+        selection = new LabelSelection(labels.size() - 1, LabelHandle.ANCHOR);
     }
 
     public void add(AnchoredLabel label) {
@@ -2285,21 +2349,12 @@ public class Editor implements CropEventListener, MouseListener,
         repaintEditFrame();
     }
 
-    /** Invoked from the EditFrame menu */
-    public void selectNearestLabel() {
-        int nl = nearestLabelNo();
-        if (nl == -1) {
-            return;
-        }
-        selection = new LabelSelection(nl);
-        repaintEditFrame();
-    }
-
     public void editLabel(int index) {
         AnchoredLabel label = labels.get(index);
-        LabelDialog dialog = new LabelDialog
-            (editFrame, "Edit Label", label);
-        AnchoredLabel newLabel = dialog.showModal();
+        LabelDialog dog = new LabelDialog
+            (editFrame, "Edit Label", label, defaultFont().deriveFont(16.0f));
+        dog.setFont(defaultFont());
+        AnchoredLabel newLabel = dog.showModal();
         if (newLabel == null) {
             return;
         }
@@ -2313,19 +2368,25 @@ public class Editor implements CropEventListener, MouseListener,
 
     /** @param xWeight Used to determine how to justify rows of text. */
     View toView(String str, double xWeight, Color textColor) {
-        xWeight = 0.0;
+        // Centering center-anchored text and right-justifying
+        // right-anchored text seems like a good idea, but it screws
+        // up the metrics. That causes boxes and opaque backgrounds to
+        // fail to align with their text, so the disadvantages
+        // outweigh the advantages. Disable it.
+        // xWeight = 0.0;
+
         if (xWeight >= 0.75) {
             str = "<html><div align=\"right\">" + str + "</div></html>";
         } else if (xWeight >= 0.25) {
             str = "<html><div align=\"center\">" + str + "</div></html>";
         } else {
             str = "<html>" + str + "</html>";
-            // str = "<html><div align=\"left\">" + str + "</div></html>";
         }
 
         JLabel bogus = new JLabel(str);
         bogus.setForeground(thisOrBlack(textColor));
-        bogus.setFont(getEditPane().getFont());
+        Font f = defaultFont();
+        bogus.setFont(f.deriveFont((float) f.getSize() * VIEW_MAGNIFICATION));
         return (View) bogus.getClientProperty("html");
     }
 
@@ -2370,6 +2431,7 @@ public class Editor implements CropEventListener, MouseListener,
     /** Move the mouse pointer so its position corresponds to the
         given location in principal coordinates. */
     void moveMouse(Point2D.Double point) {
+        System.out.println("moveMouse(" + point + ")");
         mprin = point;
         if (principalToStandardPage == null) {
             return;
@@ -2382,6 +2444,7 @@ public class Editor implements CropEventListener, MouseListener,
         Rectangle view = spane.getViewport().getViewRect();
 
         if (view.contains(mpos)) {
+            System.out.println(view + ".contains(" + mpos + ")");
             Point topCorner = spane.getLocationOnScreen();
 
             // For whatever reason (Java bug?), I need to add 1 to the x
@@ -2404,14 +2467,28 @@ public class Editor implements CropEventListener, MouseListener,
 
             repaintEditFrame();
         } else {
-            centerMouse();
+            Point2D.Double mousePage = principalToStandardPage
+                .transform(mprin);
+            if (pageBounds.contains(mousePage.x, mousePage.y)) {
+                centerMouse();
+            } else {
+                // mprin can't be both off-screen and off-page at the
+                // same time. Move the mouse to the middle of the page
+                // instead.
+                mousePage.x = pageBounds.x + pageBounds.width/2;
+                mousePage.y = pageBounds.y + pageBounds.height/2;
+                moveMouse(standardPageToPrincipal.transform(mousePage));
+            }
         }
 
     }
 
     /** Put mprin and the mouse in the center of the screen (with
-        somre restrictions). */
+        some restrictions). */
     public void centerMouse() {
+        if (mprin == null) {
+            return;
+        }
         JScrollPane spane = editFrame.getScrollPane();
         Rectangle view = spane.getViewport().getViewRect();
         setViewportRelation(mprin,
@@ -2564,7 +2641,11 @@ public class Editor implements CropEventListener, MouseListener,
             = new ArrayList<LabelSelection>();
 
         for (int i = 0; i < labels.size(); ++i) {
-            output.add(new LabelSelection(i));
+            output.add(new LabelSelection(i, LabelHandle.ANCHOR));
+            AnchoredLabel label = labels.get(i);
+            if (label.getXWeight() != 0.5 || label.getYWeight() != 0.5) {
+                output.add(new LabelSelection(i, LabelHandle.CENTER));
+            }
         }
         return output;
    }
@@ -2888,15 +2969,14 @@ public class Editor implements CropEventListener, MouseListener,
             return;
         }
 
-        // TODO I'd like to use Files here, but it was introduced in
-        // Java 7 and I'm running Java 6.
-
-        // if (Files.notExists(filename)) {
-        if (false) {
-            System.out.println("Warning: file '" + filename + "' not found");
+        /* JAVA7
+        if (Files.notExists(new File(filename).toPath())) {
+            JOptionPane.showMessageDialog
+                (editFrame, "Warning: original file '" + filename + "' not found");
             dontTrace();
             return;
         }
+        */
 
         try {
             BufferedImage im = ImageIO.read(new File(filename));
@@ -2922,11 +3002,10 @@ public class Editor implements CropEventListener, MouseListener,
      */
     public static void main(String[] args) {
         try {
-            // Work-around for a bug that affects EB's PC as of 11/11.
+            // Work-around for a bug that affects EB's PC as of 7.0_3.
             System.setProperty("sun.java2d.d3d", "false");
             // TODO UNDO?
             // UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
-
         } catch (Exception e) {
             throw new Error(e);
         }
@@ -3369,7 +3448,7 @@ public class Editor implements CropEventListener, MouseListener,
     }
 
     protected double normalFontSize() {
-        return 12.0 / BASE_SCALE;
+        return STANDARD_FONT_SIZE / BASE_SCALE;
     }
 
     protected double currentFontSize() {
@@ -3473,7 +3552,6 @@ public class Editor implements CropEventListener, MouseListener,
         View em = toView("m", 0, Color.BLACK);
         labelXMargin = em.getPreferredSpan(View.X_AXIS) / 2.0;
         labelYMargin = em.getPreferredSpan(View.Y_AXIS) / 5.0;
-        
         vertexInfo.setVisible(true);
         editFrame.setVisible(true);
     }
@@ -3514,7 +3592,7 @@ public class Editor implements CropEventListener, MouseListener,
                 aspectRatio = ContinuedFraction.parseDouble(aspectRatioStr);
                 if (aspectRatio <= 0) {
                     JOptionPane.showMessageDialog
-                        (editFrame, "Enter a positive integer.");
+                        (editFrame, "Enter a positive number.");
                 } else {
                     break;
                 }
@@ -3834,8 +3912,12 @@ public class Editor implements CropEventListener, MouseListener,
 
         PdfContentByte cb = writer.getDirectContent();
         PdfTemplate tp = cb.createTemplate((float) bounds.width, (float) bounds.height);
-        Graphics2D g2 = tp.createGraphics((float) bounds.width, (float) bounds.height,
-                                          new DefaultFontMapper());
+        
+        Graphics2D g2 = false
+            ? tp.createGraphics((float) bounds.width, (float) bounds.height,
+                                new DefaultFontMapper())
+            : tp.createGraphicsShapes((float) bounds.width, (float) bounds.height);
+
         paintDiagram(g2, deviceScale(g2, bounds), false);
         g2.dispose();
         cb.addTemplate(tp, doc.left(), doc.bottom());
@@ -3844,7 +3926,27 @@ public class Editor implements CropEventListener, MouseListener,
 
     /** Invoked from the EditFrame menu */
     public void saveAsSVG() {
-        // TODO saveAsSVG (optional feature)
+        File file = showSaveDialog("svg");
+        if (file == null) {
+            return;
+        }
+
+        DOMImplementation imp = GenericDOMImplementation.getDOMImplementation();
+        org.w3c.dom.Document doc = imp.createDocument("http://www.w3.org/2000/svg", "svg", null);
+        SVGGeneratorContext ctx = SVGGeneratorContext.createDefault(doc);
+        ctx.setComment("PED Document exported using Batik SVG Generator");
+        ctx.setEmbeddedFontsOn(true);
+        SVGGraphics2D svgGen = new SVGGraphics2D(ctx, true);
+        paintDiagram(svgGen, BASE_SCALE, false);
+        try {
+            Writer wr = new FileWriter(file);
+            svgGen.stream(wr);
+            wr.close();
+            JOptionPane.showMessageDialog
+                (editFrame, "File saved.");
+        } catch (IOException e) {
+            JOptionPane.showMessageDialog(editFrame, "File save error: " + e);
+        }
     }
 
     /** Invoked from the EditFrame menu */
@@ -4180,10 +4282,18 @@ public class Editor implements CropEventListener, MouseListener,
             return null;
         }
 
-        // To discourage confusion between random mouse positions and
-        // deliberately chosen fractions, add a fudge factor to all
-        // mouse positions.
-
+        // If we treat the mouse as being located precisely at the
+        // midpoint of the pixel, then the mouse position will
+        // typically end up equaling an exact fractional value when
+        // expressed in principal coordinates, and the coordinates
+        // display might misrepresent what was basically a mouse click
+        // at an inexact location as an exact value such as "5/8". To
+        // prevent this, treat the mouse as being located at a very
+        // non-round number position that is only roughly in the
+        // middle of the pixel. That makes it very likely that if a
+        // position is displayed as an exact fraction such as "5/8",
+        // it really means that the value was explicitly entered to be
+        // at that exact position.
         final double ABOUT_HALF = 0.48917592383497298103;
 
         double sx = mpos.getX() + ABOUT_HALF;
@@ -4515,8 +4625,8 @@ public class Editor implements CropEventListener, MouseListener,
     public void drawLabel(Graphics g, int labelNo, double scale) {
         AnchoredLabel label = labels.get(labelNo);
         View view = labelViews.get(labelNo);
-        Point2D.Double point =
-            getPrincipalToAlignedPage().transform(label.getX(), label.getY());
+        Affine toPage = getPrincipalToAlignedPage();
+        Point2D.Double point = toPage.transform(label.getX(), label.getY());
 
         if (label.isOpaque()) {
             Color oldColor = g.getColor();
@@ -4535,11 +4645,19 @@ public class Editor implements CropEventListener, MouseListener,
                     label.getXWeight(), label.getYWeight(), false);
         }
 
+        Point2D.Double centerPage = new Point2D.Double();
         drawHTML(g, view, scale * label.getFontSize(),
                  label.getAngle(),
                  point.x * scale, point.y * scale,
                  label.getXWeight(), label.getYWeight(),
-                 labelCenters.get(labelNo));
+                 centerPage);
+
+        try {
+            labelCenters.set(labelNo,
+                             toPage.createInverse().transform(centerPage));
+        } catch (NoninvertibleTransformException e) {
+            throw new IllegalStateException(toPage + " is not invertible");
+        }
     }
 
 
@@ -4586,16 +4704,19 @@ public class Editor implements CropEventListener, MouseListener,
                   double ax, double ay,
                   double xWeight, double yWeight,
                   Point2D.Double labelCenter) {
-        double width = view.getPreferredSpan(View.X_AXIS) + labelXMargin * 2;
-        double height = view.getPreferredSpan(View.Y_AXIS) + labelYMargin * 2;
+        scale /= VIEW_MAGNIFICATION;
+        double baseWidth = view.getPreferredSpan(View.X_AXIS);
+        double baseHeight = view.getPreferredSpan(View.Y_AXIS);
+        double width = baseWidth + labelXMargin * 2;
+        double height = baseHeight + labelYMargin * 2;
 
         Graphics2D g2d = (Graphics2D) g;
         double textScale = scale / BASE_SCALE;
 
-        AffineTransform xform = AffineTransform.getRotateInstance(angle);
-        xform.scale(textScale, textScale);
+        AffineTransform baselineToPage = AffineTransform.getRotateInstance(angle);
+        baselineToPage.scale(textScale, textScale);
         Point2D.Double xpoint = new Point2D.Double();
-        xform.transform
+        baselineToPage.transform
             (new Point2D.Double(width * xWeight, height * yWeight), xpoint);
 
         ax -= xpoint.x;
@@ -4606,24 +4727,50 @@ public class Editor implements CropEventListener, MouseListener,
         // y-margins.
 
         if (labelCenter != null) {
-            xform.transform(new Point2D.Double(width/2, height/2), xpoint);
+            baselineToPage.transform(new Point2D.Double(width/2, height/2), xpoint);
             labelCenter.x = (xpoint.x + ax) / getScale();
             labelCenter.y = (xpoint.y + ay) / getScale();
         }
 
-        // Displace (ax,ay) by (xMargin, yMargin) (again, in baseline
-        // coordinates) in order to obtain the true upper left corner
-        // of the text block.
+        {
+            // Displace (ax,ay) by (labelXMargin, labelYMargin) (again, in baseline
+            // coordinates) in order to obtain the true upper left corner
+            // of the text block.
 
-        xform.transform(new Point2D.Double(labelXMargin, labelYMargin), xpoint);
-        ax += xpoint.x;
-        ay += xpoint.y;
+            baselineToPage.transform
+                (new Point2D.Double(labelXMargin, labelYMargin), xpoint);
+            ax += xpoint.x;
+            ay += xpoint.y;
+        }
+
+        // Paint the view after creating a transform in which (0,0)
+        // maps to (ax,ay)
 
         AffineTransform oldxform = g2d.getTransform();
         g2d.translate(ax, ay);
-        g2d.transform(xform);
-        view.paint(g, new Rectangle(0, 0,
-                                    (int) Math.ceil(width), (int) Math.ceil(height)));
+        g2d.transform(baselineToPage);
+
+        // Don't pass a rectangle that is larger than necessary to
+        // view.paint(), or else view.paint() will attempt to center
+        // the label on its own, but it won't recenter the way we
+        // want.
+        Rectangle r = new Rectangle
+            (0, 0, (int) Math.ceil(baseWidth), (int) Math.ceil(baseHeight));
+
+        // The views seem to require non-null clip bounds for some
+        // dumb reason, and the SVG uses no clip region, so... TODO
+        // Still needed?!
+        if (g.getClipBounds() == null) {
+            g.setClip(-1000000, -1000000, 2000000, 2000000);
+        }
+
+        try {
+            view.paint(g, r);
+        } catch (NullPointerException e) {
+            System.out.println("Clip = " + g2d.getClipBounds());
+            System.out.println("R = " + r);
+            throw(e);
+        }
         g2d.setTransform(oldxform);
     }
 
@@ -4634,16 +4781,17 @@ public class Editor implements CropEventListener, MouseListener,
     void boxHTML(Graphics g, View view, double scale, double angle,
                   double ax, double ay,
                  double xWeight, double yWeight, boolean fill) {
+        scale /= VIEW_MAGNIFICATION;
         double width = view.getPreferredSpan(View.X_AXIS) + labelXMargin * 2;
         double height = view.getPreferredSpan(View.Y_AXIS) + labelYMargin * 2;
 
         Graphics2D g2d = (Graphics2D) g;
         double textScale = scale / BASE_SCALE;
 
-        AffineTransform xform = AffineTransform.getRotateInstance(angle);
-        xform.scale(textScale, textScale);
+        AffineTransform baselineToPage = AffineTransform.getRotateInstance(angle);
+        baselineToPage.scale(textScale, textScale);
         Point2D.Double xpoint = new Point2D.Double();
-        xform.transform
+        baselineToPage.transform
             (new Point2D.Double(width * xWeight, height * yWeight), xpoint);
 
         ax -= xpoint.x;
@@ -4652,14 +4800,13 @@ public class Editor implements CropEventListener, MouseListener,
         // Now (ax, ay) represents the (in baseline coordinates) upper
         // left corner of the text block expanded by the x- and
         // y-margins.
-
         Path2D.Double path = new Path2D.Double();
         path.moveTo(ax, ay);
-        xform.transform(new Point2D.Double(width, 0), xpoint);
+        baselineToPage.transform(new Point2D.Double(width, 0), xpoint);
         path.lineTo(ax + xpoint.x, ay + xpoint.y);
-        xform.transform(new Point2D.Double(width, height), xpoint);
+        baselineToPage.transform(new Point2D.Double(width, height), xpoint);
         path.lineTo(ax + xpoint.x, ay + xpoint.y);
-        xform.transform(new Point2D.Double(0, height), xpoint);
+        baselineToPage.transform(new Point2D.Double(0, height), xpoint);
         path.lineTo(ax + xpoint.x, ay + xpoint.y);
         path.closePath();
 
@@ -4988,6 +5135,38 @@ public class Editor implements CropEventListener, MouseListener,
 
     @JsonIgnore public Rectangle2D.Double getPrincipalBounds() {
         return principalToStandardPage.inputBounds();
+    }
+
+    public Font defaultFont() {
+        int defaultFontSize = (int) STANDARD_FONT_SIZE;
+        // UNDO
+        if (false) {
+            return new Font("Lucida Sans Unicode", 0, defaultFontSize);
+        } else if (false) {
+            return new Font("Arial Unicode MS", 0, defaultFontSize);
+        } else if (false) {
+            return new Font("Free Serif", 0, defaultFontSize);
+        }
+        if (embeddedFont == null) {
+            InputStream is = getClass().getResourceAsStream(embeddedFontName);
+            if (is == null) {
+                throw new IllegalStateException
+                    ("Could not locate font '" + embeddedFontName + "'");
+            }
+            try {
+                embeddedFont = Font.createFont(Font.TRUETYPE_FONT, is)
+                    .deriveFont((float) defaultFontSize);
+            } catch (IOException e) {
+                throw new IllegalStateException
+                    ("Could not process font '" + embeddedFontName
+                     + "': " + e);
+            } catch (FontFormatException e) {
+                throw new IllegalStateException
+                    ("Could not process font '" + embeddedFontName
+                     + "': " + e);
+            }
+        }
+        return embeddedFont;
     }
 }
 

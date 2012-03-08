@@ -64,10 +64,7 @@ public class StringPalette {
             } else if (o instanceof Object[]) {
                 // {"string", "label"} pair
                 Object[] ss = (Object[]) o;
-                if (ss == null) {
-                    strs.add(null);
-                    labs.add(null);
-                } else if (ss.length != 2) {
+                if (ss.length != 2) {
                     throw new IllegalArgumentException
                         (Arrays.toString(ss)
                          + " does not match {\"string\", \"label\"} format");

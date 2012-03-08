@@ -81,19 +81,19 @@ public class EditFrame extends JFrame {
                 }
             };
 
-    protected Action changeXUnits = new Action
-        ("Change X Units", KeyEvent.VK_X) {
+    protected Action scaleXUnits = new Action
+        ("X Axis", KeyEvent.VK_X) {
                 @Override
                     public void actionPerformed(ActionEvent e) {
-                    getParentEditor().changeXUnits();
+                    getParentEditor().scaleXUnits();
                 }
             };
 
-    protected Action changeYUnits = new Action
-        ("Change Y Units", KeyEvent.VK_Y) {
+    protected Action scaleYUnits = new Action
+        ("Y Axis", KeyEvent.VK_Y) {
                 @Override
                     public void actionPerformed(ActionEvent e) {
-                    getParentEditor().changeYUnits();
+                    getParentEditor().scaleYUnits();
                 }
             };
 
@@ -630,16 +630,6 @@ public class EditFrame extends JFrame {
                 });
 
             mnDecorations.add(new Action
-                        ("Select nearest text",
-                         KeyEvent.VK_E,
-                         KeyStroke.getKeyStroke('T')) {
-                    @Override
-                        public void actionPerformed(ActionEvent e) {
-                        getParentEditor().selectNearestLabel();
-                    }
-                });
-
-            mnDecorations.add(new Action
                         ("Add dot", KeyEvent.VK_D, "typed d") {
                     @Override
                         public void actionPerformed(ActionEvent e) {
@@ -709,11 +699,11 @@ public class EditFrame extends JFrame {
             setAspectRatio.setEnabled(false);
             mnLayout.add(setAspectRatio);
 
-            JMenu mnAxes = new JMenu("Axes");
-            mnAxes.setMnemonic(KeyEvent.VK_X);
-            mnLayout.add(mnAxes);
-            mnAxes.add(changeXUnits);
-            mnAxes.add(changeYUnits);
+            JMenu mnScale = new JMenu("Scale");
+            mnScale.setMnemonic(KeyEvent.VK_S);
+            mnLayout.add(mnScale);
+            mnScale.add(scaleXUnits);
+            mnScale.add(scaleYUnits);
 
             JMenu mnMargins = new JMenu("Margins");
             mnMargins.setMnemonic(KeyEvent.VK_M);
@@ -724,6 +714,7 @@ public class EditFrame extends JFrame {
             mnLayout.add(mnMargins);
 
             JMenu mnComponents = new JMenu("Components");
+            mnComponents.setMnemonic(KeyEvent.VK_C);
             setTopComponent.setEnabled(false);
             mnComponents.add(setLeftComponent);
             mnComponents.add(setRightComponent);
@@ -817,8 +808,8 @@ public class EditFrame extends JFrame {
 
     /** Set the number of meaningful axes that the diagram has. */
     void setAxisCount(int n) {
-        changeXUnits.setEnabled(n >= 1);
-        changeYUnits.setEnabled(n >= 2);
+        scaleXUnits.setEnabled(n >= 1);
+        scaleYUnits.setEnabled(n >= 2);
     }
 
     protected void help() {

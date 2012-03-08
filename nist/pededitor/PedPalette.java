@@ -7,13 +7,13 @@ public class PedPalette extends StringPalette {
                 { 
                     // Quickies
                     new Object[][] {
-                        { "\u207a", "H\u207a" } /* superscript plus */,
-                        {"\u207b", "H\u207b" } /* superscript minus */,
-                        {"<sub>2</sub>", "<html>H<sub>2</sub></html>"},
-                        {"<sub>3</sub>", "<html>H<sub>3</sub></html>"},
-                        {"<sub>4</sub>", "<html>H<sub>4</sub></html>"},
-                        {"<sub>5</sub>", "<html>H<sub>5</sub></html>"},
-                        {"<sub>6</sub>", "<html>H<sub>6</sub></html>"},
+                        { "\u207a", "C\u207a" } /* superscript plus */,
+                        {"\u207b", "C\u207b" } /* superscript minus */,
+                        {"<sub>2</sub>", "<html>C<sub>2</sub></html>"},
+                        {"<sub>3</sub>", "<html>C<sub>3</sub></html>"},
+                        {"<sub>4</sub>", "<html>C<sub>4</sub></html>"},
+                        {"<sub>5</sub>", "<html>C<sub>5</sub></html>"},
+                        {"<sub>6</sub>", "<html>C<sub>6</sub></html>"},
                         null,
                     },
 
@@ -30,20 +30,23 @@ public class PedPalette extends StringPalette {
 
                     // Plotting symbols
                     "\u25cb" /* white circle */, "\u25cf" /* black circle */,
+                    "\u25c9" /* fisheye / white circle with black center */,
                     "\u25a1" /* white square */, "\u25a0" /* black square */, 
-                    "\u25b3" /* white triangle !! */, "\u25b2" /* black triangle */,
+                    "\u25b3" /* white triangle */, "\u25b2" /* black triangle */,
                     "\u2715" /* multiplication x? */,
                     null,
 
                     // Miscellaneous
                     "\u00b0" /* degree */,
-                    new Object[] { "\u00b7",  "H\u00b7H" } /* dot */,
-                    "\u221A" /* square root */,
+                    new Object[] { "\u00b7",  "C\u00b7C" } /* dot */,
+                    "\u221A" /* square root/radical */,
                     "\u2192" /* right arrow */, "\u2190" /* left arrow */,
                     "\u00b1" /* plus-minus */, "\u2245" /* approximately equal */,
-                    "\u2264" /* <= */, "\u2265" /* >= */,
+                    "\u2264" /* <= */, "\u2265" /* >= */, "\u2260" /* != */,
+                    "\u2261" /* congruent */,
                     "\u221E" /* infinity */, "\u21cc" /* right-over-left harpoon */,
                     "\u2207" /* nabla / gradient symbol */, "\u222b" /* integral */,
+                    "\u2202" /* partial differential */,
                     null,
 
                     // Greek lowercase

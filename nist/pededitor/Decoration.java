@@ -11,7 +11,10 @@ public interface Selectable {
         leave the current selection empty. */
     Selectable remove();
     void move(Point2D dest);
-    void copy(Point2D dest);
+
+    /** Copy this selection, placing the copy at dest. Return the
+        Selectable object that represents the copy. */
+    Selectable copy(Point2D dest);
     Point2D.Double getLocation();
     boolean isEditable();
     void edit();

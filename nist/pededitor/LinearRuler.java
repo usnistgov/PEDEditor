@@ -139,6 +139,10 @@ class LinearRuler {
         o.tickType = tickType;
         o.axis = axis;
         o.multiplier = multiplier;
+        o.tickStartD = tickStartD;
+        o.tickEndD = tickEndD;
+        o.keepStartClear = keepStartClear;
+        o.keepEndClear = keepEndClear;
         return o;
     }
 
@@ -261,7 +265,7 @@ class LinearRuler {
         xform.transform(endPoint, pageEndPoint);
 
         Font oldFont = g.getFont();
-        g.setFont(new Font(null, 0, (int) Math.ceil(fontSize * scale)));
+        g.setFont(oldFont.deriveFont((float) (fontSize * scale)));
         FontMetrics fm = g.getFontMetrics();
 
         Rectangle2D digitBounds = fm.getStringBounds("8", g);
@@ -429,7 +433,14 @@ class LinearRuler {
         if (bigTickDelta != 0) {
 
             actualTickStart = (tickStartD != null) ? tickStartD
-                : (tickD * Math.ceil((tickStart - 1e-6 * (aend - astart)) / bigTickD));
+                : (bigTickD * Math.ceil((tickStart - 1e-6 * (aend - astart)) / bigTickD));
+
+            if (actualTickStart <= 0 && actualTickStart >= -bigTickD * 1e6) {
+                // Sidestep stupid Java 6 behavior where tiny values
+                // less than 0 are formatted as "-0.0" instead of
+                // "0.0".
+                actualTickStart = 0;
+            }
 
             AffineTransform oldTransform = g.getTransform();
 
