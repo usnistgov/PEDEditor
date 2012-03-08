@@ -2,6 +2,8 @@ package gov.nist.pededitor;
 
 import java.awt.Color;
 import java.awt.geom.*;
+
+import org.codehaus.jackson.annotate.JsonIgnore;
 import org.codehaus.jackson.annotate.JsonIgnoreProperties;
 import org.codehaus.jackson.annotate.JsonProperty;
 
@@ -35,6 +37,14 @@ public class Arrow extends Path2D.Double {
     /** @return null unless this has been assigned a color. */
     public Color getColor() {
         return color;
+    }
+
+    @JsonIgnore double getAngle() {
+        return theta;
+    }
+
+    @JsonIgnore void setAngle(double theta) {
+        this.theta = theta;
     }
 
     /** Set the color. Use null to indicate that the color should be
