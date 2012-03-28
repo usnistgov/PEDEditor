@@ -35,6 +35,11 @@ public class AnchoredLabel {
         bottom edge (in baseline coordinates) of the text block */
     double yWeight;
 
+    /** Additional offset to apply to this anchor, expressed in
+        baseline coordinates and normalized to match a fontSize of 1. */
+    double baselineXOffset = 0;
+    double baselineYOffset = 0;
+
     /** The actual string to display. (This may be HTML or something
         else as opposed to plain text.) */
     String text;
@@ -71,6 +76,8 @@ public class AnchoredLabel {
         output.setFontSize(getFontSize());
         output.setBoxed(isBoxed());
         output.setOpaque(isOpaque());
+        output.setBaselineXOffset(getBaselineXOffset());
+        output.setBaselineYOffset(getBaselineYOffset());
         return output;
     }
 
@@ -85,6 +92,8 @@ public class AnchoredLabel {
     public void setBoxed(boolean boxed) { this.boxed = boxed; }
     /** If true, erase the label's background before drawing. */
     public void setOpaque(boolean opaque) { this.opaque = opaque; }
+    public void setBaselineXOffset(double v) { baselineXOffset = v; }
+    public void setBaselineYOffset(double v) { baselineYOffset = v; }
 
     /** @return null unless this has been assigned a color. */
     public Color getColor() {
@@ -98,6 +107,8 @@ public class AnchoredLabel {
         this.color = color;
     }
 
+    public double getBaselineXOffset() { return baselineXOffset; }
+    public double getBaselineYOffset() { return baselineYOffset; }
     public double getX() { return x; }
     public double getY() { return y; }
     public String getText() { return text; }
