@@ -15,7 +15,7 @@ public class Arrow extends Path2D.Double {
     @JsonProperty public double x;
     @JsonProperty public double y;
     @JsonProperty public double size;
-    @JsonProperty public double theta;
+    @JsonIgnore public double theta;
 
     Color color = null;
 
@@ -26,11 +26,15 @@ public class Arrow extends Path2D.Double {
     public Arrow(@JsonProperty("x") double x,
                  @JsonProperty("y") double y,
                  @JsonProperty("size") double size,
-                 @JsonProperty("theta") double theta) {
+                 @JsonProperty("angle") double theta) {
         this.x = x;
         this.y = y;
         this.size = size;
         this.theta = theta;
+        addArrow();
+    }
+
+    void addArrow() {
         addArrow(this, x, y, size, theta);
     }
 
@@ -39,12 +43,14 @@ public class Arrow extends Path2D.Double {
         return color;
     }
 
-    @JsonIgnore double getAngle() {
+    public double getAngle() {
         return theta;
     }
 
-    @JsonIgnore void setAngle(double theta) {
+    public void setAngle(double theta) {
         this.theta = theta;
+        reset();
+        addArrow();
     }
 
     /** Set the color. Use null to indicate that the color should be
