@@ -95,6 +95,9 @@ final public class CubicSpline2D {
     }
 
     public Point2D.Double gradient(int segmentNo, double t) {
+        if (segmentCnt() < 1) {
+            return null;
+        }
         return new Point2D.Double(xSpline.slope(segmentNo, t),
                                   ySpline.slope(segmentNo, t));
     }
