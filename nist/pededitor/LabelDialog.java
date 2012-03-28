@@ -13,6 +13,7 @@ import java.awt.Image;
 import java.awt.RenderingHints;
 import java.awt.event.ActionEvent;
 import java.awt.geom.Ellipse2D;
+import java.awt.geom.Line2D;
 import java.awt.geom.Rectangle2D;
 import java.awt.image.BufferedImage;
 
@@ -154,7 +155,9 @@ public class LabelDialog extends JDialog {
                     }
                 };
 
-            pal = new StringPalettePanel(new HTMLPalette(), 5, font);
+            // Kind of a hack to bring in the no-symbol. TODO fix.
+            pal = new StringPalettePanel(new HTMLPalette(), 5,
+                                         new Font("Arial Unicode MS", 0, font.getSize()));
             pal.addListener(listen);
             gb.endRowWith(pal);
 
@@ -319,6 +322,20 @@ public class LabelDialog extends JDialog {
     public static void drawString(Graphics g, String str,
                                   double x, double y,
                                   double xWeight, double yWeight) {
+        drawString(g, str, x, y, xWeight, yWeight, false);
+    }
+
+    /** @param xWeight 0.0 = anchor on left ... 1.0 = anchor on right
+
+        @param yWeight 0.0 = anchor on top ... 1.0 = anchor on bottom
+
+        @param showBounds For debugging purposes, show the 0 line and
+        the string bounding box as returned by getStringBounds().
+    */
+    public static void drawString(Graphics g, String str,
+                                  double x, double y,
+                                  double xWeight, double yWeight,
+                                  boolean showBounds) {
         Graphics2D g2d = (Graphics2D) g;
         FontMetrics fm = g.getFontMetrics();
         Rectangle2D bounds = fm.getStringBounds(str, g);
@@ -326,6 +343,13 @@ public class LabelDialog extends JDialog {
         x += -bounds.getX() - bounds.getWidth() * xWeight;
         y += -bounds.getY() - bounds.getHeight() * yWeight;
         g2d.drawString(str, (float) x, (float) y);
+        if (showBounds) {
+            System.out.println("Bounds are " + bounds);
+            g2d.draw(new Rectangle2D.Double(x + bounds.getX(), y + bounds.getY(),
+                                            bounds.getWidth(), bounds.getHeight()));
+            g2d.draw(new Line2D.Double(x , y + bounds.getY(),
+                                       x + bounds.getWidth(), y + bounds.getY()));
+        }
     }
 
     /** Show the dialog as document-modal, and return the
@@ -371,7 +395,9 @@ public class LabelDialog extends JDialog {
         // String fontName = "Free Serif";
         // String fontName = "Arial Unicode MS";
         String fontName = "Lucida Sans Unicode";
-        Font font = new Font(fontName, 0, 14);
+        // Font font = new Font(fontName, 0, 14);
+        // Font font = new Font(null, 0, 14);
+        Font font = (new Editor()).getFont();
         boolean foundFont = false;
         for (Font f: GraphicsEnvironment.getLocalGraphicsEnvironment()
                  .getAllFonts()) {
