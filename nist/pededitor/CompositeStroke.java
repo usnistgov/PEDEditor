@@ -131,12 +131,13 @@ public class CompositeStroke {
         return output;
     }
 
-    public static CompositeStroke getRailroadLine() {
+    public static CompositeStroke getRailroadLine(float length, float distance) {
         CompositeStroke output = new CompositeStroke();
 
         // Dash structure:
 
-        // Continuous solid line plus cross-hatches 1" wide, 8" long, and 8" apart.
+        // Continuous solid line plus cross-hatches 1" wide, length" long,
+        // and distance" apart.
 
         // Add the solid line.
         output.add(new BasicStroke
@@ -146,12 +147,12 @@ public class CompositeStroke {
 
         // Add the cross-hatches.
         output.add(new BasicStroke
-                   (8.0f,
+                   (length,
                     BasicStroke.CAP_BUTT,
                     BasicStroke.JOIN_BEVEL,
                     3.0f,
-                    new float[] { 1, 8 },
-                    5.0f));
+                    new float[] { 1, distance },
+                    0f));
         return output;
     }
 
