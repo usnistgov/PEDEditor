@@ -25,14 +25,20 @@ public class PedPalette extends StringPalette {
                         {"\u0303", "o\u0303"},
                         {"\u0304", "o\u0304"},
                         {"\u0307", "o\u0307"},
+                        {"\u0308", "o\u0308"},
                         null,
                     },
 
                     // Plotting symbols
                     "\u25cb" /* white circle */, "\u25cf" /* black circle */,
+                    "\u25d3" /* lower-half-filled circle */,
                     "\u25c9" /* fisheye / white circle with black center */,
+                    "\u29b5" /* white circle with horizontal bar */,
                     "\u25a1" /* white square */, "\u25a0" /* black square */, 
                     "\u25b3" /* white triangle */, "\u25b2" /* black triangle */,
+                    "\u25c7" /* white diamond */, "\u25c6" /* black diamond */,
+                    "\u25bd" /* white upside-down triangle */,
+                    "\u25bc" /* black upside-down triangle */,
                     "\u2715" /* multiplication x? */,
                     null,
 
