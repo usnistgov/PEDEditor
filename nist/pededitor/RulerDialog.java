@@ -61,8 +61,10 @@ public class RulerDialog extends JDialog {
     JCheckBox startArrow = new JCheckBox("Start arrow");
     JCheckBox endArrow = new JCheckBox("End arrow");
 
-    JCheckBox keepStartClear = new JCheckBox("Keep start clear");
-    JCheckBox keepEndClear = new JCheckBox("Keep end clear");
+    JCheckBox suppressStartTick = new JCheckBox("Suppress start tick");
+    JCheckBox suppressStartLabel = new JCheckBox("Suppress start label");
+    JCheckBox suppressEndTick = new JCheckBox("Suppress end tick");
+    JCheckBox suppressEndLabel = new JCheckBox("Suppress end label");
 
     JCheckBox showPercentages = new JCheckBox("Use percentages in labels");
     JTextField tickPadding = new JTextField("0", 10);
@@ -121,8 +123,10 @@ public class RulerDialog extends JDialog {
 
         cpgb.addWest(startArrow);
         cpgb.endRowWith(endArrow);
-        cpgb.addWest(keepStartClear);
-        cpgb.endRowWith(keepEndClear);
+        cpgb.addWest(suppressStartTick);
+        cpgb.endRowWith(suppressStartLabel);
+        cpgb.addWest(suppressEndTick);
+        cpgb.endRowWith(suppressEndLabel);
 
         cpgb.centerAndEndRow(okButton);
         getRootPane().setDefaultButton(okButton);
@@ -132,8 +136,10 @@ public class RulerDialog extends JDialog {
         tickTypeV.setSelected(ruler.tickType == LinearRuler.TickType.V);
         startArrow.setSelected(ruler.startArrow);
         endArrow.setSelected(ruler.endArrow);
-        keepStartClear.setSelected(ruler.keepStartClear);
-        keepEndClear.setSelected(ruler.keepEndClear);
+        suppressStartTick.setSelected(ruler.suppressStartTick);
+        suppressStartLabel.setSelected(ruler.suppressStartLabel);
+        suppressEndTick.setSelected(ruler.suppressEndTick);
+        suppressEndLabel.setSelected(ruler.suppressEndLabel);
 
         boolean showPct;
 
@@ -166,8 +172,10 @@ public class RulerDialog extends JDialog {
         dest.tickRight = tickRight.isSelected();
         dest.startArrow = startArrow.isSelected();
         dest.endArrow = endArrow.isSelected();
-        dest.keepStartClear = keepStartClear.isSelected();
-        dest.keepEndClear = keepEndClear.isSelected();
+        dest.suppressStartTick = suppressStartTick.isSelected();
+        dest.suppressStartLabel = suppressStartLabel.isSelected();
+        dest.suppressEndTick = suppressEndTick.isSelected();
+        dest.suppressEndLabel = suppressEndLabel.isSelected();
         dest.multiplier = showPercentages.isSelected() ? 100.0 : 1.0;
         dest.labelAnchor = labelAnchor;
         dest.tickType = tickTypeV.isSelected() ? LinearRuler.TickType.V
