@@ -96,16 +96,14 @@ class LinearRuler {
     /** If true, put an arrow at the end of the ruler. */
     @JsonProperty boolean endArrow = false;
 
-    /** If true, don't put ticks too close to the starting point.
-        Reasons to omit ticks close to the start include that interior
-        ticks and text might cross each other. Ticks are never
-        included too close to the starting point if startArrow is
-        true. */
-    @JsonProperty boolean keepStartClear = false;
-
-    /** If true, don't put ticks too close to the ending point. (This
-        is always treated as true if endArrow is true.) */
-    @JsonProperty boolean keepEndClear = false;
+    /** If true, don't draw ticks too close to the starting point.
+        Suppressing ticks or labels near the start may be needed to
+        stop rulers and their decorations from overlapping. */
+    @JsonProperty boolean suppressStartTick = false;
+    /** Like suppressStartTick, but for the label. */
+    @JsonProperty boolean suppressStartLabel = false;
+    @JsonProperty boolean suppressEndTick = false;
+    @JsonProperty boolean suppressEndLabel = false;
 
     @JsonProperty TickType tickType = TickType.NORMAL;
 
@@ -141,8 +139,10 @@ class LinearRuler {
         o.multiplier = multiplier;
         o.tickStartD = tickStartD;
         o.tickEndD = tickEndD;
-        o.keepStartClear = keepStartClear;
-        o.keepEndClear = keepEndClear;
+        o.suppressStartTick = suppressStartTick;
+        o.suppressStartLabel = suppressStartLabel;
+        o.suppressEndTick = suppressEndTick;
+        o.suppressEndLabel = suppressEndLabel;
         return o;
     }
 
@@ -366,9 +366,6 @@ class LinearRuler {
             actualTickStart = tickStart = tickStartD;
         } else {
             tickStart = astart;
-            if (keepStartClear || startArrow) {
-                tickStart += clearDistance;
-            }
             actualTickStart = tickD
                 * Math.ceil((tickStart - 1e-6 * (aend - astart)) / tickD);
         }
@@ -378,17 +375,22 @@ class LinearRuler {
             tickEnd = tickEndD;
         } else {
             tickEnd = aend;
-            if (keepEndClear || endArrow) {
-                tickEnd -= clearDistance;
-            }
         }
         tickEnd += 1e-6 * (tickEnd - tickStart) / tickD;
 
         Point2D.Double tmpPoint = new Point2D.Double();
 
+        /* Set suppressStartTick if startArrow is set. */
+        boolean sst = startArrow || suppressStartTick;
+        boolean set = endArrow || suppressEndTick;
+
         if (tickD >= minTickDelta && tickDelta != 0) {
             for (double logical = actualTickStart; logical <= tickEnd;
                  logical += tickD) {
+                if ((sst && logical < astart + clearDistance)
+                    || (set && logical > aend - clearDistance)) {
+                    continue;
+                }
                 Point2D.Double location
                     = toPhysical(logical, pageStartPoint, pageEndPoint);
                 if (tickRight) {
@@ -435,7 +437,7 @@ class LinearRuler {
             actualTickStart = (tickStartD != null) ? tickStartD
                 : (bigTickD * Math.ceil((tickStart - 1e-6 * (aend - astart)) / bigTickD));
 
-            if (actualTickStart <= 0 && actualTickStart >= -bigTickD * 1e6) {
+            if (actualTickStart <= 0 && actualTickStart >= -bigTickD * 1e-6) {
                 // Sidestep stupid Java 6 behavior where tiny values
                 // less than 0 are formatted as "-0.0" instead of
                 // "0.0".
@@ -449,36 +451,42 @@ class LinearRuler {
                 Point2D.Double location
                     = toPhysical(logical, pageStartPoint, pageEndPoint);
 
-                if (tickRight) {
-                    if (tickType == TickType.V) {
-                        tmpPoint.x = location.x + tickOffset.x + tickVOffset.x;
-                        tmpPoint.y = location.y + tickOffset.y + tickVOffset.y;
-                        g.draw(new Line2D.Double(location, tmpPoint));
-                        tmpPoint.x = location.x + tickOffset.x - tickVOffset.x;
-                        tmpPoint.y = location.y + tickOffset.y - tickVOffset.y;
-                        g.draw(new Line2D.Double(location, tmpPoint));
-                    } else {
-                        tmpPoint.x = location.x + tickOffset.x;
-                        tmpPoint.y = location.y + tickOffset.y;
-                        g.draw(new Line2D.Double(location, tmpPoint));
-                    }
-                }                
-                if (tickLeft) {
-                    if (tickType == TickType.V) {
-                        tmpPoint.x = location.x - tickOffset.x - tickVOffset.x;
-                        tmpPoint.y = location.y - tickOffset.y - tickVOffset.y;
-                        g.draw(new Line2D.Double(location, tmpPoint));
-                        tmpPoint.x = location.x - tickOffset.x + tickVOffset.x;
-                        tmpPoint.y = location.y - tickOffset.y + tickVOffset.y;
-                        g.draw(new Line2D.Double(location, tmpPoint));
-                    } else {
-                        tmpPoint.x = location.x - tickOffset.x;
-                        tmpPoint.y = location.y - tickOffset.y;
-                        g.draw(new Line2D.Double(location, tmpPoint));
-                    }
-                }                
+                if (!((sst && logical < astart + clearDistance)
+                      || (set && logical > aend - clearDistance))) {
 
-                if (labelAnchor != LabelAnchor.NONE) {
+                    if (tickRight) {
+                        if (tickType == TickType.V) {
+                            tmpPoint.x = location.x + tickOffset.x + tickVOffset.x;
+                            tmpPoint.y = location.y + tickOffset.y + tickVOffset.y;
+                            g.draw(new Line2D.Double(location, tmpPoint));
+                            tmpPoint.x = location.x + tickOffset.x - tickVOffset.x;
+                            tmpPoint.y = location.y + tickOffset.y - tickVOffset.y;
+                            g.draw(new Line2D.Double(location, tmpPoint));
+                        } else {
+                            tmpPoint.x = location.x + tickOffset.x;
+                            tmpPoint.y = location.y + tickOffset.y;
+                            g.draw(new Line2D.Double(location, tmpPoint));
+                        }
+                    }                
+                    if (tickLeft) {
+                        if (tickType == TickType.V) {
+                            tmpPoint.x = location.x - tickOffset.x - tickVOffset.x;
+                            tmpPoint.y = location.y - tickOffset.y - tickVOffset.y;
+                            g.draw(new Line2D.Double(location, tmpPoint));
+                            tmpPoint.x = location.x - tickOffset.x + tickVOffset.x;
+                            tmpPoint.y = location.y - tickOffset.y + tickVOffset.y;
+                            g.draw(new Line2D.Double(location, tmpPoint));
+                        } else {
+                            tmpPoint.x = location.x - tickOffset.x;
+                            tmpPoint.y = location.y - tickOffset.y;
+                            g.draw(new Line2D.Double(location, tmpPoint));
+                        }
+                    }
+                }
+
+                if (!(labelAnchor == LabelAnchor.NONE ||
+                      (suppressStartLabel && logical < tickStart + clearDistance) ||
+                      (suppressEndLabel && logical > tickEnd - clearDistance))) {
                     // If there is a tick on the same side as the
                     // label, then use the tip of the tick (or the
                     // midpoint of the two tips of a V-type tick) as
@@ -503,9 +511,9 @@ class LinearRuler {
                          location.y + mul * tickOffset.y);
 
                     g.rotate(theta + textAngle, anchor.x, anchor.y);
+                    String s = " " + String.format(formatString, logical).trim() + " ";
                     LabelDialog.drawString
-                        (g, " " + String.format(formatString, logical).trim() + " ",
-                                           anchor.x, anchor.y, xWeight, yWeight);
+                        (g, s, anchor.x, anchor.y, xWeight, yWeight);
                     g.setTransform(oldTransform);
                 }
             }
