@@ -34,12 +34,13 @@ public class PedPalette extends StringPalette {
                     "\u25d3" /* lower-half-filled circle */,
                     "\u25c9" /* fisheye / white circle with black center */,
                     "\u29b5" /* white circle with horizontal bar */,
+                    "\u2715" /* multiplication x? */,
                     "\u25a1" /* white square */, "\u25a0" /* black square */, 
                     "\u25b3" /* white triangle */, "\u25b2" /* black triangle */,
-                    "\u25c7" /* white diamond */, "\u25c6" /* black diamond */,
                     "\u25bd" /* white upside-down triangle */,
                     "\u25bc" /* black upside-down triangle */,
-                    "\u2715" /* multiplication x? */,
+                    "\u25c7" /* white diamond */, "\u25c6" /* black diamond */,
+                    "\u2721" /* white Star of David */, "\u2736" /* black star */,
                     null,
 
                     // Miscellaneous
