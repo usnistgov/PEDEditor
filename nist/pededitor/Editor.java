@@ -34,25 +34,14 @@ import org.apache.batik.dom.GenericDOMImplementation;
 
 import org.w3c.dom.DOMImplementation;
 
-// TODO Fix issues with tie lines and closed curves.
-
-// TODO (mandatory) Fix the issue with the FreeSerif.ttf font not
-// printing correctly.
-
 // TODO (mandatory) Label tags: chemical formulas, temperatures
 // (optional). These diagrams do not have to be associated with
 // specific locations or labels at this time. Optional: eutectic and
 // peritectic points (which *would* have to be associated with
 // specific points), user-defined.
 
-// TODO (major, mandatory) Read GRUMP data.
-
 // TODO (mandatory?, backwards compatibility) Duplicate existing
 // program's smoothing algorithm when displaying GRUMP files.
-
-// TODO (mandatory) Existing GRUMP files use a condensed font. Either
-// derive a narrower font or find your own condensed font.
-// Unfortunately, derived condensed circles just won't do. :(
 
 // TODO (mandatory?, preexisting) Apply a gradient to all control
 // points on a curve. Specifically, apply the following transformation
@@ -60,24 +49,60 @@ import org.w3c.dom.DOMImplementation;
 // is between v1 and v2: "$variable = $variable + k * ($variable - v1)
 // / (v2 - v1)"
 
+// TODO (Optional) Use oblique Greek letters and script Kappa?
+
+// TODO (Optional) Fix symbol alignment for GRUMP font. (It's nearly
+// correct already, but it's also easy to do.)
+
+// TODO (optional) Automatically compute necessary margins
+
+// TODO (optional, easy) Include DejaVu sans-serif as an option.
+
+// TODO (Optional) Make regular open symbols look as nice as the
+// GRUMP-converted open symbols do.
+
+// TODO (Optional) Better support for new double subscripts and
+// changing font sizes within a single label.
+
+// TODO (Optional) Add font hints
+
+// TODO (optional) Fix issues with tie lines and closed curves.
+
 // TODO (optional) LinearRulers with explicitly assigned logical
 // values instead of an Axis dependence? A lot of schematics could
-// benefit. Click two endpoints of a segment, specify the values, then
-// away you go.
+// benefit. Click two endpoints of a segment, specify the range, and
+// you're good.
 
-// TODO (optional) Allow the diagram to be expanded? The idea is that
-// the four corners of the diagram would be moved, while everything
-// else would remain in place, or perhaps point not within the diagram
-// interior get translated. But how do you handle the original image?
-// Not a problem; you leave it untouched. Instead, you change
+// TODO (optional) Explicit assignment of label margins.
+
+// TODO (optional) Vector-based label scaling. In other words, you
+// select a point, then move the mouse, and the vector determines the
+// scale and angle of the resulting symbol. Ideally the changes would
+// be visible in real time. Why not do it?
+
+// TODO (optional) Conversion from GRUMP to PED fonts is arguably more
+// jarring than necessary.
+
+// TODO (optional) Support of GRUMP-style explicit assignment of label
+// skip, label density, and so on in new diagrams.
+
+// TODO (optional) Allow the diagram domain and range to be expanded.
+// Right now, you can expand the margins, change the aspect ratio, or
+// rescale the axes, but it is awkward to extend the temperature
+// scale, for example. The idea is that the four corners of the
+// diagram would be moved, while everything else would remain in
+// place, or perhaps point not within the diagram interior get
+// translated. But how do you handle the original image? Not a
+// problem; you leave it untouched. Instead, you change
 // principalToStandardPage and pageBounds. For example, when reducing
 // minX, also reduce every coordinate less than minX.
 
-// TODO (mandatory?) Curve section decorations (e.g. pen-up/pen-down).
-// Not important for new diagrams as far as I can see, but may be
-// required for backwards compatibility.
+// TODO (optional) Curve tags, such as temperature, liquidus, solidus, and
+// presumably user-defined tags too.
 
-// TODO (important) Right-click popup menus. The program works just
+// TODO (optional) Point tags: pen-up, pen-down, temperature
+
+// TODO (optional) Right-click popup menus. The program works just
 // fine with using keyboard shortcuts instead of right-click menus,
 // and I'd probably just go on using the keyboard shortcuts even if an
 // alternative were provided, but forcing the users to remember
@@ -87,13 +112,7 @@ import org.w3c.dom.DOMImplementation;
 // (select action, then selection location) is possible but would be
 // slow at best and awkward to implement as well.
 
-// TODO (important) More compact data-point set representation? Also,
-// the "draw a dot for a 1-element polyline" is unintuitive.
-
-// TODO (optional) Automatic margin recomputation
-
-// TODO (optional) Curve tags, including liquidus, solidus, and
-// presumably user-defined tags too.
+// TODO (optional) More compact representation for symbol sets.
 
 // TODO (major time-saver) Semi-automatically infer diagram location
 // from composition where equation balancing is possible. Discarding
@@ -804,8 +823,8 @@ public class Editor implements CropEventListener, MouseListener,
             multiplier = 100.0;
 
             tickType = LinearRuler.TickType.V;
-            keepStartClear = true;
-            keepEndClear = true;
+            suppressStartTick = true;
+            suppressEndTick = true;
 
             drawSpine = true;
         }
@@ -831,12 +850,16 @@ public class Editor implements CropEventListener, MouseListener,
     private static final int VIEW_MAGNIFICATION = 8;
     static protected double MOUSE_UNSTICK_DISTANCE = 30; /* pixels */
     static protected Image crosshairs = null;
-    static protected final String embeddedFontName = "FreeSerif.ttf";
-    // static protected final String embeddedFontName = "DejaVuLGCSerifCondensed.ttf";
-    // static protected final String embeddedFontName = "DejaVuLGCSerif.ttf";
-    // JAVA7 static protected final String embeddedFontName = "FreeSerif.otf";
+    static protected final String defaultFontName = "DejaVu LGC Serif PED";
+    static protected final Map<String,String> fontFiles = new HashMap<String, String>() {
+        {
+            put("DejaVu LGC Serif PED", "DejaVuLGCSerifPED.ttf");
+            put("DejaVu LGC Serif GRUMP", "DejaVuLGCSerifGRUMP.ttf");
+        }
+    };
+
     // embeddedFont is initialized when needed.
-    static protected Font embeddedFont = null;
+    protected Font embeddedFont = null;
 
     protected CropFrame cropFrame = new CropFrame();
     protected EditFrame editFrame = new EditFrame(this);
@@ -845,6 +868,14 @@ public class Editor implements CropEventListener, MouseListener,
     protected JColorChooser colorChooser = null;
     protected JDialog colorDialog = null;
 
+    /** Transform from original coordinates to principal coordinates.
+        Original coordinates are (x,y) positions within a scanned
+        image. Principal coordinates are either the natural (x,y)
+        coordinates of a Cartesian graph or binary diagram (for
+        example, y may equal a temperature while x equals the atomic
+        fraction of the second diagram component), or the proportion
+        of the right and top components respectively for a ternary
+        diagram. */
     @JsonProperty protected PolygonTransform originalToPrincipal;
     protected PolygonTransform principalToOriginal;
     @JsonProperty protected AffinePolygonTransform principalToStandardPage;
@@ -897,7 +928,7 @@ public class Editor implements CropEventListener, MouseListener,
     protected double labelYMargin = 0;
 
     static final double STANDARD_LINE_WIDTH = 0.0024;
-    static final double STANDARD_FONT_SIZE = 15.0;
+    static final int STANDARD_FONT_SIZE = 15;
     protected double lineWidth = STANDARD_LINE_WIDTH;
     protected StandardStroke lineStyle = StandardStroke.SOLID;
 
@@ -955,7 +986,6 @@ public class Editor implements CropEventListener, MouseListener,
         zoomFrame.setFocusableWindowState(false);
         tieLineDialog.setFocusableWindowState(false);
         clear();
-        getEditPane().setFont(defaultFont());
         getEditPane().addMouseListener(this);
         getEditPane().addMouseMotionListener(this);
         cropFrame.addCropEventListener(this);
@@ -1000,6 +1030,7 @@ public class Editor implements CropEventListener, MouseListener,
         setBackground(EditFrame.BackgroundImage.GRAY);
         tieLineDialog.setVisible(false);
         tieLineCorners = new ArrayList<PathAndT>();
+        embeddedFont = null;
     }
 
     @JsonProperty("curves")
@@ -1483,8 +1514,10 @@ public class Editor implements CropEventListener, MouseListener,
                 GeneralPolyline path = paths.get(i);
                 g.setColor(thisOrBlack(path.getColor()));
                 if (path.size() == 1) {
-                    double r = path.getLineWidth() * 2 * scale;
-                    circleVertices(g, path, scale, true, r);
+                    if (path.getStroke() != StandardStroke.INVISIBLE) {
+                        double r = path.getLineWidth() * 2 * scale;
+                        circleVertices(g, path, scale, true, r);
+                    }
                 } else {
                     draw(g, path, scale);
                 }
@@ -1540,6 +1573,7 @@ public class Editor implements CropEventListener, MouseListener,
         }
 
         {
+            g.setColor(Color.BLACK);
             LabelSelection sel = editing ? getSelectedLabel() : null;
             for (int i = 0; i < labels.size(); ++i) {
                 boolean selected = (sel != null && i == sel.index);
@@ -1837,9 +1871,6 @@ public class Editor implements CropEventListener, MouseListener,
         if (!rightward) {
             theta += Math.PI;
         }
-
-        System.out.println("Converting " + theta + " to "
-                           + pageToPrincipalAngle(theta));
 
         arrows.add
             (new Arrow(mprin.x, mprin.y, lineWidth,
@@ -2249,7 +2280,7 @@ public class Editor implements CropEventListener, MouseListener,
             LinearAxis axis = getAxis(side);
             if (axis != null) {
                 axis.name = str;
-                axis.format = new DecimalFormat("##0.0%");
+                axis.format = new DecimalFormat("##0.00%");
                 for (LinearRuler r: rulers) {
                     if (r.axis == axis) {
                         // Show percentages on this axis.
@@ -2335,7 +2366,7 @@ public class Editor implements CropEventListener, MouseListener,
         }
 
         LabelDialog dog = new LabelDialog
-            (editFrame, "Add Label", defaultFont().deriveFont(16.0f));
+            (editFrame, "Add Label", getFont().deriveFont(16.0f));
         AnchoredLabel newLabel = dog.showModal();
         if (newLabel == null) {
             return;
@@ -2359,8 +2390,8 @@ public class Editor implements CropEventListener, MouseListener,
         AnchoredLabel label = (AnchoredLabel) labels.get(index).clone();
         label.setAngle(principalToPageAngle(label.getAngle()));
         LabelDialog dog = new LabelDialog
-            (editFrame, "Edit Label", label, defaultFont().deriveFont(16.0f));
-        dog.setFont(defaultFont());
+            (editFrame, "Edit Label", label, getFont().deriveFont(16.0f));
+        dog.setFont(getFont());
         AnchoredLabel newLabel = dog.showModal();
         if (newLabel == null) {
             return;
@@ -2369,6 +2400,8 @@ public class Editor implements CropEventListener, MouseListener,
         newLabel.setAngle(pageToPrincipalAngle(newLabel.getAngle()));
         newLabel.setX(label.getX());
         newLabel.setY(label.getY());
+        newLabel.setBaselineXOffset(label.getBaselineXOffset());
+        newLabel.setBaselineYOffset(label.getBaselineYOffset());
         labels.set(index, newLabel);
         labelViews.set(index, toView(newLabel));
         repaintEditFrame();
@@ -2376,24 +2409,35 @@ public class Editor implements CropEventListener, MouseListener,
 
     /** @param xWeight Used to determine how to justify rows of text. */
     View toView(String str, double xWeight, Color textColor) {
-        // Centering center-anchored text and right-justifying
-        // right-anchored text seems like a good idea, but it screws
-        // up the metrics. That causes boxes and opaque backgrounds to
-        // fail to align with their text, so the disadvantages
-        // outweigh the advantages. Disable it.
-        // xWeight = 0.0;
+        String style
+            = "<style type=\"text/css\"><!--"
+            + " body { font-size: 100 pt; } "
+            + " sub { font-size: 75%; } "
+            + " sup { font-size: 75%; } "
+            + " --></style>";
 
-        if (xWeight >= 0.75) {
-            str = "<html><div align=\"right\">" + str + "</div></html>";
-        } else if (xWeight >= 0.25) {
-            str = "<html><div align=\"center\">" + str + "</div></html>";
+        StringBuilder sb = new StringBuilder("<html><head");
+        sb.append(style);
+        sb.append("</head><body>");
+
+        if (xWeight >= 0.67) {
+            sb.append("<div align=\"right\">");
+            sb.append(str);
+            sb.append("</div>");
+        } else if (xWeight >= 0.33) {
+            sb.append("<div align=\"center\">");
+            sb.append(str);
+            sb.append("</div>");
         } else {
-            str = "<html>" + str + "</html>";
+            sb.append(str);
         }
+        sb.append("</body></html>");
+        str = sb.toString();
 
         JLabel bogus = new JLabel(str);
-        Font f = defaultFont();
-        bogus.setFont(f.deriveFont((float) f.getSize() * VIEW_MAGNIFICATION));
+        Font f = getFont();
+        bogus.setFont(f.deriveFont((float) (f.getSize() * VIEW_MAGNIFICATION)));
+        // bogus.setFont(f);
         bogus.setForeground(thisOrBlack(textColor));
         return (View) bogus.getClientProperty("html");
     }
@@ -2450,7 +2494,6 @@ public class Editor implements CropEventListener, MouseListener,
     /** Move the mouse pointer so its position corresponds to the
         given location in principal coordinates. */
     void moveMouse(Point2D.Double point) {
-        System.out.println("moveMouse(" + point + ")");
         mprin = point;
         if (principalToStandardPage == null) {
             return;
@@ -2463,7 +2506,6 @@ public class Editor implements CropEventListener, MouseListener,
         Rectangle view = spane.getViewport().getViewRect();
 
         if (view.contains(mpos)) {
-            System.out.println(view + ".contains(" + mpos + ")");
             Point topCorner = spane.getLocationOnScreen();
 
             // For whatever reason (Java bug?), I need to add 1 to the x
@@ -2512,6 +2554,16 @@ public class Editor implements CropEventListener, MouseListener,
         Rectangle view = spane.getViewport().getViewRect();
         setViewportRelation(mprin,
                             new Point(view.width/2, view.height/2));
+    }
+
+    /** Move the mouse to the selection and center it. */
+    public void centerSelection() {
+        if (selection == null) {
+            return;
+        }
+        mprin = selection.getLocation();
+        centerMouse();
+        mouseIsStuck = true;
     }
 
     /** Adjust the viewport to place principal coordinates point prin
@@ -2932,6 +2984,9 @@ public class Editor implements CropEventListener, MouseListener,
         }
 
         str = getOriginalFilename();
+        if (str == null) {
+            str = getFilename();
+        }
         if (str != null) {
             title.append(" ");
             title.append(str);
@@ -3475,25 +3530,23 @@ public class Editor implements CropEventListener, MouseListener,
     }
 
     LinearAxis defaultAxis(Side side) {
-        NumberFormat format = new DecimalFormat("0.000");
+        NumberFormat format = new DecimalFormat("0.0000");
         if (diagramType.isTernary()) {
-            // Confusingly, the axis that goes from 0 at the bottom
-            // left to 1 at the bottom right like a normal x-axis
-            // and that is called "xAxis" actually ends at component
-            // 'Z'.
-            LinearAxis axis = LinearAxis.createXAxis(format);
+            LinearAxis axis;
 
             switch (side) {
             case RIGHT:
                 axis = LinearAxis.createXAxis(format);
-                axis.name = "Z";
+                axis.name = "Right";
                 return axis;
             case LEFT:
                 axis = new LinearAxis(format, -1.0, -1.0, 1.0);
-                axis.name = "X";
+                axis.name = "Left";
                 return axis;
             case TOP:
-                return LinearAxis.createYAxis(format);
+                axis = LinearAxis.createYAxis(format);
+                axis.name = "Top";
+                return axis;
             }
         } else {
             switch (side) {
@@ -3529,7 +3582,7 @@ public class Editor implements CropEventListener, MouseListener,
         }
 
         {
-            NumberFormat format = new DecimalFormat("0.000");
+            NumberFormat format = new DecimalFormat("0.0000");
             pageXAxis = LinearAxis.createFromAffine
                 (format, principalToStandardPage, false);
             pageXAxis.name = "page X";
@@ -3568,9 +3621,9 @@ public class Editor implements CropEventListener, MouseListener,
         } else {
             vertexInfo.setLocation(rect.x + rect.width, rect.y);
         }
-        View em = toView("m", 0, Color.BLACK);
-        labelXMargin = em.getPreferredSpan(View.X_AXIS) / 2.0;
-        labelYMargin = em.getPreferredSpan(View.Y_AXIS) / 5.0;
+        View em = toView("n", 0, Color.BLACK);
+        labelXMargin = em.getPreferredSpan(View.X_AXIS) / 3.0;
+        // labelYMargin = em.getPreferredSpan(View.Y_AXIS) / 5.0;
         vertexInfo.setVisible(true);
         editFrame.setVisible(true);
     }
@@ -3735,6 +3788,11 @@ public class Editor implements CropEventListener, MouseListener,
             return;
         }
 
+        openDiagram(file);
+    }
+
+    /** Invoked from the EditFrame menu */
+    public void openDiagram(File file) {
         Editor ned;
 
         try {
@@ -3753,6 +3811,21 @@ public class Editor implements CropEventListener, MouseListener,
             tie.innerEdge = idToCurve(tie.innerId);
             tie.outerEdge = idToCurve(tie.outerId);
         }
+        updateTitle();
+    }
+
+    /** Invoked from the EditFrame menu */
+    public void reloadDiagram() {
+        if (!verifyNewDiagram()) {
+            return;
+        }
+
+        String filename = getFilename();
+        if (filename == null) {
+            return;
+        }
+
+        openDiagram(new File(filename));
     }
 
     public Rectangle2D.Double getPageBounds() {
@@ -3779,6 +3852,7 @@ public class Editor implements CropEventListener, MouseListener,
         initializeDiagram();
         paths = other.paths;
         tieLines = other.tieLines;
+        setFontName(other.getFontName());
 
         axes = other.axes;
         rulers = other.rulers;
@@ -3915,6 +3989,10 @@ public class Editor implements CropEventListener, MouseListener,
             return;
         }
 
+        saveAsPDF(file);
+    }
+
+    public void saveAsPDF(File file) {
         Document doc = new Document(PageSize.LETTER);
         PdfWriter writer = null;
         try {
@@ -3937,6 +4015,7 @@ public class Editor implements CropEventListener, MouseListener,
                                 new DefaultFontMapper())
             : tp.createGraphicsShapes((float) bounds.width, (float) bounds.height);
 
+        g2.setFont(getFont());
         paintDiagram(g2, deviceScale(g2, bounds), false);
         g2.dispose();
         cb.addTemplate(tp, doc.left(), doc.bottom());
@@ -4024,6 +4103,7 @@ public class Editor implements CropEventListener, MouseListener,
             return Printable.NO_SUCH_PAGE;
         }
         Graphics2D g = (Graphics2D) g0;
+        g.setFont(getFont());
 
         AffineTransform oldTransform = g.getTransform();
 
@@ -4114,8 +4194,6 @@ public class Editor implements CropEventListener, MouseListener,
             Point2D.Double newMousePage = principalToStandardPage
                 .transform(newMprin);
             if (!pageBounds.contains(newMousePage.x, newMousePage.y)) {
-                System.out.println(pageBounds + " does not contain "
-                                   + newMousePage);
                 JOptionPane.showMessageDialog
                     (editFrame,
                      "<html><body width = \"300 px\""
@@ -4143,9 +4221,8 @@ public class Editor implements CropEventListener, MouseListener,
 
 
     /** Apply the given transform to all curve vertices, all label
-        locations, all arrow locations, all ruler start and endpoints,
-        and all axis definitions *except* for the x- and y-axis
-        definitions. */
+        locations, all arrow locations, and all ruler start- and
+        endpoints. */
     public void transformPrincipalCoordinates(AffineTransform trans) {
         for (GeneralPolyline path: paths) {
             Point2D.Double[] points = path.getPoints();
@@ -4180,13 +4257,13 @@ public class Editor implements CropEventListener, MouseListener,
     /** Apply the given transform to all coordinates defined in
         principal coordinates, but apply corresponding and inverse
         transformations to all transforms to and from principal
-        coordinates, with one exception: leave the x- and y-axes
+        coordinates, with one exception: leave the x-, y-, and z-axes
         alone. So the diagram looks the same as before except for (1)
         principal component axis ticks and (2) principal coordinate
         values as indicated in the status bar. For example, one might
         use this method to convert a binary diagram's y-axis from one
-        temperature scale to another, or from the default range 0-1
-        to the range you really want. */
+        temperature scale to another, or from the default range 0-1 to
+        the range you really want. */
     public void invisiblyTransformPrincipalCoordinates(AffineTransform trans) {
         transformPrincipalCoordinates(trans);
 
@@ -4217,7 +4294,7 @@ public class Editor implements CropEventListener, MouseListener,
 
         // Convert all angles from page to the new principal coordinates.
         for (LinearAxis axis: axes) {
-            if (axis.isXAxis() || axis.isYAxis()) {
+            if (axis.isXAxis() || axis.isYAxis() || isZAxis(axis)) {
                 continue;
             }
             axis.concatenate(itrans);
@@ -4684,6 +4761,7 @@ public class Editor implements CropEventListener, MouseListener,
         drawHTML(g, view, scale * label.getFontSize(),
                  angle, point.x * scale, point.y * scale,
                  label.getXWeight(), label.getYWeight(),
+                 label.getBaselineXOffset(), label.getBaselineYOffset(),
                  centerPage);
 
         try {
@@ -4737,6 +4815,7 @@ public class Editor implements CropEventListener, MouseListener,
     void drawHTML(Graphics g, View view, double scale, double angle,
                   double ax, double ay,
                   double xWeight, double yWeight,
+                  double baselineXOffset, double baselineYOffset,
                   Point2D.Double labelCenter) {
         scale /= VIEW_MAGNIFICATION;
         double baseWidth = view.getPreferredSpan(View.X_AXIS);
@@ -4755,6 +4834,14 @@ public class Editor implements CropEventListener, MouseListener,
 
         ax -= xpoint.x;
         ay -= xpoint.y;
+
+        Point2D.Double baselineOffset = new Point2D.Double
+            (baselineXOffset, baselineYOffset);
+        baselineToPage.transform
+            (baselineOffset, baselineOffset);
+
+        ax += baselineOffset.x;
+        ay += baselineOffset.y;
 
         // Now (ax, ay) represents the (in baseline coordinates) upper
         // left corner of the text block expanded by the x- and
@@ -5173,34 +5260,48 @@ public class Editor implements CropEventListener, MouseListener,
         return principalToStandardPage.inputBounds();
     }
 
-    public Font defaultFont() {
-        int defaultFontSize = (int) STANDARD_FONT_SIZE;
-        // UNDO
-        if (false) {
-            return new Font("Lucida Sans Unicode", 0, defaultFontSize);
-        } else if (false) {
-            return new Font("Arial Unicode MS", 0, defaultFontSize);
-        } else if (false) {
-            return new Font("Free Serif", 0, defaultFontSize);
+    public String getFontName() {
+        return getFont().getFontName();
+    }
+
+    public void setFontName(String s) {
+        // TODO Don't load unless we have to, and support built-in fonts too?
+
+        String filename = fontFiles.get(s);
+        if (filename == null) {
+            throw new IllegalArgumentException("Unrecognized font name '" + s + "'");
         }
+        embeddedFont = loadFont(filename, STANDARD_FONT_SIZE);
+        getEditPane().setFont(embeddedFont);
+        editFrame.setFontName(s);
+    }
+
+    public Font loadFont(String filename, float size) {
+        InputStream is = getClass().getResourceAsStream(filename);
+        if (is == null) {
+            throw new IllegalStateException
+                ("Could not locate font '" + filename + "'");
+        }
+        try {
+            Font f = Font.createFont(Font.TRUETYPE_FONT, is);
+            GraphicsEnvironment.getLocalGraphicsEnvironment().registerFont(f);
+            f = f.deriveFont(size);
+            System.out.println("Done.");
+            return f;
+        } catch (IOException e) {
+            throw new IllegalStateException
+                ("Could not process font '" + filename
+                 + "': " + e);
+        } catch (FontFormatException e) {
+            throw new IllegalStateException
+                ("Could not process font '" + filename
+                 + "': " + e);
+        }
+    }
+
+    @JsonIgnore public Font getFont() {
         if (embeddedFont == null) {
-            InputStream is = getClass().getResourceAsStream(embeddedFontName);
-            if (is == null) {
-                throw new IllegalStateException
-                    ("Could not locate font '" + embeddedFontName + "'");
-            }
-            try {
-                embeddedFont = Font.createFont(Font.TRUETYPE_FONT, is)
-                    .deriveFont((float) defaultFontSize);
-            } catch (IOException e) {
-                throw new IllegalStateException
-                    ("Could not process font '" + embeddedFontName
-                     + "': " + e);
-            } catch (FontFormatException e) {
-                throw new IllegalStateException
-                    ("Could not process font '" + embeddedFontName
-                     + "': " + e);
-            }
+            setFontName(defaultFontName);
         }
         return embeddedFont;
     }
