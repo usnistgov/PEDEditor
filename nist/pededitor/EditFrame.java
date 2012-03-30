@@ -2,7 +2,11 @@ package gov.nist.pededitor;
 
 import java.awt.*;
 import java.awt.event.*;
+import java.awt.geom.Line2D;
+import java.awt.image.BufferedImage;
 import java.net.URL;
+import java.util.EnumSet;
+
 import javax.swing.*;
 
 @SuppressWarnings("serial")
@@ -177,7 +181,11 @@ public class EditFrame extends JFrame {
         StandardStroke lineStyle;
 
         LineStyleAction(String imagePath, StandardStroke lineStyle) {
-            super(null, loadIcon(imagePath));
+            this (loadIcon(imagePath), lineStyle);
+        }
+
+        LineStyleAction(Icon icon, StandardStroke lineStyle) {
+            super(null, icon);
             this.lineStyle = lineStyle;
         }
 
@@ -190,6 +198,11 @@ public class EditFrame extends JFrame {
     class LineStyleMenuItem extends JRadioButtonMenuItem {
         LineStyleMenuItem(String imagePath, StandardStroke lineStyle) {
             super(new LineStyleAction(imagePath, lineStyle));
+            lineStyleGroup.add(this);
+        }
+
+        LineStyleMenuItem(Icon icon, StandardStroke lineStyle) {
+            super(new LineStyleAction(icon, lineStyle));
             lineStyleGroup.add(this);
         }
     }
@@ -331,6 +344,13 @@ public class EditFrame extends JFrame {
 
         mnFile.add(mnSaveAs);
 
+        mnFile.add(new Action("Reload", KeyEvent.VK_R) {
+                @Override
+                    public void actionPerformed(ActionEvent e) {
+                    getParentEditor().reloadDiagram();
+                }
+            });
+
         // "Print" menu item
         mnFile.add(new Action("Print", KeyEvent.VK_P) {
                 @Override
@@ -423,6 +443,16 @@ public class EditFrame extends JFrame {
         JMenu mnPosition = new JMenu("Position");
         mnPosition.setMnemonic(KeyEvent.VK_P);
         menuBar.add(mnPosition);
+
+        mnPosition.add(new Action
+                       ("Jump to selection",
+                        KeyEvent.VK_J,
+                        KeyStroke.getKeyStroke('j')) {
+                @Override
+                    public void actionPerformed(ActionEvent e) {
+                    getParentEditor().centerSelection();
+                }
+            });
 
         mnPosition.add(new Action
                        ("Enter coordinates",
@@ -543,9 +573,37 @@ public class EditFrame extends JFrame {
             mnLineStyle.add
                 (new LineStyleMenuItem("images/dashdotline.png",
                                             StandardStroke.DOT_DASH));
-            mnLineStyle.add
-                (new LineStyleMenuItem("images/railroadline.png",
-                                            StandardStroke.RAILROAD));
+            JMenu mnRailroad = new JMenu();
+            mnRailroad.setIcon(loadIcon("images/railroadline.png"));
+
+            int width = 104;
+            int height = 24;
+
+            Shape line = new Line2D.Float(0f, 12f, (float) width, 12f);
+
+            for (StandardStroke railroad:
+                     EnumSet.range(StandardStroke.RAILROAD1,
+                                   StandardStroke.RAILROAD24)) {
+                // Draw a BufferedImage of this line style and create
+                // an Icon from it. To consider: do that for all line
+                // styles, ditching the pre-drawn images such as
+                // "dottedline.png".)
+                BufferedImage im = new BufferedImage
+                    (width, height, BufferedImage.TYPE_INT_ARGB);
+                Graphics2D g = im.createGraphics();
+                // Set the background color to transparent.
+                g.setBackground(new Color(255, 255, 255, 0));
+                g.clearRect(0, 0, im.getWidth(), im.getHeight());
+                g.setColor(Color.BLACK);
+                g.setRenderingHint(RenderingHints.KEY_ANTIALIASING,
+                                   RenderingHints.VALUE_ANTIALIAS_ON);
+                railroad.getStroke().draw(g, line, 2.0);
+                
+                mnRailroad.add
+                    (new LineStyleMenuItem(new ImageIcon(im), railroad));
+            }
+            mnLineStyle.add(mnRailroad);
+
             mnLineStyle.add
                 (new LineStyleMenuItem("images/soliddotline.png",
                                             StandardStroke.SOLID_DOT));
