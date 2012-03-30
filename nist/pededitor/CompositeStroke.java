@@ -30,12 +30,12 @@ public class CompositeStroke {
 
     /** Draw the given path with this stroke while multiplying the
         line width and dash length by "scale". */
-    public void draw(Graphics2D g, Path2D path, double scale) {
+    public void draw(Graphics2D g, Shape shape, double scale) {
         Stroke oldStroke = g.getStroke();
 
         for (BasicStroke s: strokes) {
             g.setStroke(scaledStroke(s, scale));
-            g.draw(path);
+            g.draw(shape);
         }
 
         g.setStroke(oldStroke);
