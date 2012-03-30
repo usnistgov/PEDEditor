@@ -841,6 +841,7 @@ public class EditFrame extends JFrame {
 
         JMenu mnFont = new JMenu("Font");
         mnFont.setMnemonic(KeyEvent.VK_F);
+        mnFont.add(new FontMenuItem("Sans", "DejaVu LGC Sans PED"));
         mnFont.add(new FontMenuItem("Serif", "DejaVu LGC Serif PED"));
         mnFont.add(new FontMenuItem("Serif (Widely-spaced lines)",
                                   "DejaVu LGC Serif GRUMP"));

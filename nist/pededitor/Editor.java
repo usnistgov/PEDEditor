@@ -850,9 +850,10 @@ public class Editor implements CropEventListener, MouseListener,
     private static final int VIEW_MAGNIFICATION = 8;
     static protected double MOUSE_UNSTICK_DISTANCE = 30; /* pixels */
     static protected Image crosshairs = null;
-    static protected final String defaultFontName = "DejaVu LGC Serif PED";
+    static protected final String defaultFontName = "DejaVu LGC Sans PED";
     static protected final Map<String,String> fontFiles = new HashMap<String, String>() {
         {
+            put("DejaVu LGC Sans PED", "DejaVuLGCSansPED.ttf");
             put("DejaVu LGC Serif PED", "DejaVuLGCSerifPED.ttf");
             put("DejaVu LGC Serif GRUMP", "DejaVuLGCSerifGRUMP.ttf");
         }
@@ -5286,7 +5287,6 @@ public class Editor implements CropEventListener, MouseListener,
             Font f = Font.createFont(Font.TRUETYPE_FONT, is);
             GraphicsEnvironment.getLocalGraphicsEnvironment().registerFont(f);
             f = f.deriveFont(size);
-            System.out.println("Done.");
             return f;
         } catch (IOException e) {
             throw new IllegalStateException
