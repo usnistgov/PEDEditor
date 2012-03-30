@@ -6,6 +6,7 @@ import java.awt.geom.Line2D;
 import java.awt.image.BufferedImage;
 import java.net.URL;
 import java.util.EnumSet;
+import java.util.Enumeration;
 
 import javax.swing.*;
 
@@ -26,6 +27,7 @@ public class EditFrame extends JFrame {
     protected ButtonGroup lineStyleGroup = new ButtonGroup();
     protected ButtonGroup lineWidthGroup = new ButtonGroup();
     protected ButtonGroup backgroundImageGroup = new ButtonGroup();
+    protected ButtonGroup fontGroup = new ButtonGroup();
     protected JMenu mnBackgroundImage = new JMenu("Background Image");
     protected JRadioButtonMenuItem grayBackgroundImage;
     protected JRadioButtonMenuItem blinkBackgroundImage;
@@ -144,6 +146,28 @@ public class EditFrame extends JFrame {
 
         @Override public void actionPerformed(ActionEvent e) {
             getParentEditor().setMargin(side);
+        }
+    }
+
+    class FontAction extends Action {
+        String fontName;
+
+        FontAction(String label, String fontName) {
+            super(label);
+            this.fontName = fontName;
+        }
+
+        @Override public void actionPerformed(ActionEvent e) {
+            getParentEditor().setFontName(fontName);
+            getParentEditor().initializeLabelViews();
+            repaint();
+        }
+    }
+
+    class FontMenuItem extends JRadioButtonMenuItem {
+        FontMenuItem(String label, String fontName) {
+            super(new FontAction(label, fontName));
+            fontGroup.add(this);
         }
     }
 
@@ -815,6 +839,14 @@ public class EditFrame extends JFrame {
                 }
             });
 
+        JMenu mnFont = new JMenu("Font");
+        mnFont.setMnemonic(KeyEvent.VK_F);
+        mnFont.add(new FontMenuItem("Serif", "DejaVu LGC Serif PED"));
+        mnFont.add(new FontMenuItem("Serif (Widely-spaced lines)",
+                                  "DejaVu LGC Serif GRUMP"));
+
+        mnView.add(mnFont);
+
         if (editable) {
             mnBackgroundImage.setMnemonic(KeyEvent.VK_B);
             mnBackgroundImage.setEnabled(false);
@@ -847,6 +879,22 @@ public class EditFrame extends JFrame {
                     about();
                 }
             });
+    }
+
+    /** This method is assumed to be a passive receiver of information
+        that the font name has changed, to reflect the change in the
+        menu selection. To actively change the font name, use
+        Editor#setFontName(s) instead. */
+    void setFontName(String s) {
+        for (Enumeration<AbstractButton> bs = fontGroup.getElements();
+             bs.hasMoreElements();) {
+            AbstractButton b = (FontMenuItem) bs.nextElement();
+            FontAction fact = (FontAction) b.getAction();
+            if (s.equals(fact.fontName)) {
+                b.setSelected(true);
+                break;
+            }
+        }
     }
 
     /** Set the maximum number of components in the diagram. A
