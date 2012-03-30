@@ -156,8 +156,7 @@ public class LabelDialog extends JDialog {
                 };
 
             // Kind of a hack to bring in the no-symbol. TODO fix.
-            pal = new StringPalettePanel(new HTMLPalette(), 5,
-                                         new Font("Arial Unicode MS", 0, font.getSize()));
+            pal = new StringPalettePanel(new HTMLPalette(), 5, font);
             pal.addListener(listen);
             gb.endRowWith(pal);
 
