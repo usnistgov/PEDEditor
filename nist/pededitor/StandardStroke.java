@@ -17,6 +17,8 @@ public enum StandardStroke {
     RAILROAD (CompositeStroke.getRailroadLine(12f, 5f)),
     SOLID_DOT (CompositeStroke.getSolidDotLine()),
     INVISIBLE (CompositeStroke.getInvisibleLine()),
+    RAILROAD1 (CompositeStroke.getRailroadLine(12f, 1f)),
+    RAILROAD2 (CompositeStroke.getRailroadLine(12f, 2f)),
     RAILROAD3 (CompositeStroke.getRailroadLine(12f, 3f)),
     RAILROAD4 (CompositeStroke.getRailroadLine(12f, 4f)),
     RAILROAD5 (CompositeStroke.getRailroadLine(12f, 5f)),
