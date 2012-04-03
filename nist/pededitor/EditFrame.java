@@ -33,6 +33,9 @@ public class EditFrame extends JFrame {
     protected JRadioButtonMenuItem blinkBackgroundImage;
     protected JRadioButtonMenuItem noBackgroundImage;
     protected Action setAspectRatio;
+    protected JSeparator mnTagsSeparator = new JSeparator();
+    protected JMenuItem mnRemoveTag = new JMenuItem("Delete");
+    protected JMenu mnTags = new JMenu("Tags");
 
     // How to show the original scanned image in the background of
     // the new diagram:
@@ -171,15 +174,6 @@ public class EditFrame extends JFrame {
         }
     }
 
-    static Icon loadIcon(String imagePath) {
-        URL url = EditFrame.class.getResource(imagePath);
-        if (url == null) {
-            throw new IllegalStateException("Could not load " + imagePath);
-        }
-        Icon icon = new ImageIcon(url);
-        return icon;
-    }
-
     class LineWidthAction extends AbstractAction {
         double lineWidth;
 
@@ -270,6 +264,26 @@ public class EditFrame extends JFrame {
             public void actionPerformed(ActionEvent e) {
             getParentEditor().move(dx, dy);
         }
+    }
+
+    class RemoveTagAction extends Action {
+        RemoveTagAction(String tag) {
+            super(tag);
+        }
+
+        @Override
+            public void actionPerformed(ActionEvent e) {
+            getParentEditor().removeTag(e.getActionCommand());
+        }
+    }
+
+    static Icon loadIcon(String imagePath) {
+        URL url = EditFrame.class.getResource(imagePath);
+        if (url == null) {
+            throw new IllegalStateException("Could not load " + imagePath);
+        }
+        Icon icon = new ImageIcon(url);
+        return icon;
     }
 
     /**
@@ -383,8 +397,7 @@ public class EditFrame extends JFrame {
                 }
             });
 
-        JSeparator separator = new JSeparator();
-        mnFile.add(separator);
+        mnFile.addSeparator();
 
         JMenuItem mnExit = new JMenuItem("Exit");
         mnFile.add(mnExit);
@@ -597,6 +610,11 @@ public class EditFrame extends JFrame {
             mnLineStyle.add
                 (new LineStyleMenuItem("images/dashdotline.png",
                                             StandardStroke.DOT_DASH));
+            mnLineStyle.add
+                (new LineStyleMenuItem("images/soliddotline.png",
+                                            StandardStroke.SOLID_DOT));
+            mnCurve.add(mnLineStyle);
+
             JMenu mnRailroad = new JMenu();
             mnRailroad.setIcon(loadIcon("images/railroadline.png"));
 
@@ -627,11 +645,6 @@ public class EditFrame extends JFrame {
                     (new LineStyleMenuItem(new ImageIcon(im), railroad));
             }
             mnLineStyle.add(mnRailroad);
-
-            mnLineStyle.add
-                (new LineStyleMenuItem("images/soliddotline.png",
-                                            StandardStroke.SOLID_DOT));
-            mnCurve.add(mnLineStyle);
 
             JMenu mnLineWidth = new JMenu("Line width");
             mnLineWidth.setMnemonic(KeyEvent.VK_W);
@@ -711,14 +724,6 @@ public class EditFrame extends JFrame {
                     }
                 });
 
-            mnDecorations.add(new Action
-                        ("Add dot", KeyEvent.VK_D, "typed d") {
-                    @Override
-                        public void actionPerformed(ActionEvent e) {
-                        getParentEditor().addDot();
-                    }
-                });
-
             mnDecorations.add(new Action("Add left arrowhead",
                                             KeyEvent.VK_L,
                                             KeyStroke.getKeyStroke('<')) {
@@ -767,9 +772,9 @@ public class EditFrame extends JFrame {
             menuBar.add(mnDecorations);
         }
 
-        // "Layout" top-level menu
-        JMenu mnLayout = new JMenu("Layout");
-        mnLayout.setMnemonic(KeyEvent.VK_L);
+        // "Properties" top-level menu
+        JMenu mnLayout = new JMenu("Properties");
+        mnLayout.setMnemonic(KeyEvent.VK_R);
 
         if (editable) {
             setAspectRatio = new Action
@@ -781,12 +786,43 @@ public class EditFrame extends JFrame {
             setAspectRatio.setEnabled(false);
             mnLayout.add(setAspectRatio);
 
-            JMenu mnScale = new JMenu("Scale");
-            mnScale.setMnemonic(KeyEvent.VK_S);
-            mnLayout.add(mnScale);
-            mnScale.add(scaleXUnits);
-            mnScale.add(scaleYUnits);
+            JMenu mnComponents = new JMenu("Components");
+            mnComponents.setMnemonic(KeyEvent.VK_C);
+            setTopComponent.setEnabled(false);
+            mnComponents.add(setLeftComponent);
+            mnComponents.add(setRightComponent);
+            mnComponents.add(setTopComponent);
+            mnLayout.add(mnComponents);
 
+            JMenu mnFont = new JMenu("Font");
+            mnFont.setMnemonic(KeyEvent.VK_F);
+            mnFont.add(new FontMenuItem("Sans", "DejaVu LGC Sans PED"));
+            mnFont.add(new FontMenuItem("Serif", "DejaVu LGC Serif PED"));
+            mnFont.add(new FontMenuItem("Serif (Widely-spaced lines)",
+                                        "DejaVu LGC Serif GRUMP"));
+
+            mnLayout.add(mnFont);
+        }
+
+        JMenu mnKeys = new JMenu("Key/value pairs");
+        mnKeys.setMnemonic(KeyEvent.VK_K);
+
+        if (editable) {
+            mnKeys.add(new Action("Add", KeyEvent.VK_A) {
+                    @Override public void actionPerformed(ActionEvent e) {
+                        getParentEditor().put();
+                    }
+                });
+        }
+
+        mnKeys.add(new Action("List", KeyEvent.VK_L) {
+                @Override public void actionPerformed(ActionEvent e) {
+                    getParentEditor().listKeyValues();
+                }
+            });
+        mnLayout.add(mnKeys);
+
+        if (editable) {
             JMenu mnMargins = new JMenu("Margins");
             mnMargins.setMnemonic(KeyEvent.VK_M);
             for (Side side: Side.values()) {
@@ -795,19 +831,35 @@ public class EditFrame extends JFrame {
 
             mnLayout.add(mnMargins);
 
-            JMenu mnComponents = new JMenu("Components");
-            mnComponents.setMnemonic(KeyEvent.VK_C);
-            setTopComponent.setEnabled(false);
-            mnComponents.add(setLeftComponent);
-            mnComponents.add(setRightComponent);
-            mnComponents.add(setTopComponent);
-            mnLayout.add(mnComponents);
+            JMenu mnScale = new JMenu("Scale");
+            mnScale.setMnemonic(KeyEvent.VK_S);
+            mnLayout.add(mnScale);
+            mnScale.add(scaleXUnits);
+            mnScale.add(scaleYUnits);
+        }
+
+        mnTags.setMnemonic(KeyEvent.VK_T);
+        mnLayout.add(mnTags);
+
+        if (editable) {
+            mnTags.add(new Action("Add", KeyEvent.VK_A) {
+                    @Override public void actionPerformed(ActionEvent e) {
+                        getParentEditor().addTag();
+                    }
+                });
+            mnTags.add(mnTagsSeparator);
+            mnRemoveTag.setEnabled(false);
+            mnTags.add(mnRemoveTag);
+
+            mnTagsSeparator.setVisible(false);
+            mnRemoveTag.setVisible(false);
+        } else {
+            mnTags.setEnabled(false);
         }
 
         if (mnLayout.getItemCount() > 0) {
             menuBar.add(mnLayout);
         }
-
 
         // "View" top-level menu
         JMenu mnView = new JMenu("View");
@@ -816,37 +868,28 @@ public class EditFrame extends JFrame {
 
         mnView.add(new Action("Zoom In", KeyEvent.VK_I,
                                        "typed +") {
-                public void actionPerformed(ActionEvent e) {
+                @Override public void actionPerformed(ActionEvent e) {
                     getParentEditor().zoomBy(1.5);
                 }
             });
         mnView.add(new Action("Zoom Out", KeyEvent.VK_O,
                                        "typed -") {
-                public void actionPerformed(ActionEvent e) {
+                @Override public void actionPerformed(ActionEvent e) {
                     getParentEditor().zoomBy(1 / 1.5);
                 }
             });
         mnView.add(new Action("Best Fit", KeyEvent.VK_B,
                                        KeyStroke.getKeyStroke("control B")) {
-                public void actionPerformed(ActionEvent e) {
+                @Override public void actionPerformed(ActionEvent e) {
                     getParentEditor().bestFit();
                 }
             });
         mnView.add(new Action("Center Mouse", KeyEvent.VK_C,
                                        KeyStroke.getKeyStroke("control L")) {
-                public void actionPerformed(ActionEvent e) {
+                @Override public void actionPerformed(ActionEvent e) {
                     getParentEditor().centerMouse();
                 }
             });
-
-        JMenu mnFont = new JMenu("Font");
-        mnFont.setMnemonic(KeyEvent.VK_F);
-        mnFont.add(new FontMenuItem("Sans", "DejaVu LGC Sans PED"));
-        mnFont.add(new FontMenuItem("Serif", "DejaVu LGC Serif PED"));
-        mnFont.add(new FontMenuItem("Serif (Widely-spaced lines)",
-                                  "DejaVu LGC Serif GRUMP"));
-
-        mnView.add(mnFont);
 
         if (editable) {
             mnBackgroundImage.setMnemonic(KeyEvent.VK_B);
@@ -948,5 +991,57 @@ public class EditFrame extends JFrame {
 
     public JScrollPane getScrollPane() {
         return scrollPane;
+    }
+
+    /** This is not a public interface. It is an interface that Editor
+        uses to perform UI operations in support of an addTag()
+        request. */
+    void addTag(String tag) {
+        mnTagsSeparator.setVisible(true);
+        int itemCount = mnTags.getItemCount();
+        int itemsStart = itemCount;
+        for (int i = 0; i < itemCount; ++i) {
+            if (mnTags.getItem(i) == mnRemoveTag) {
+                itemsStart = i + 1;
+                break;
+            }
+        }
+
+        mnTagsSeparator.setVisible(true);
+        mnRemoveTag.setVisible(true);
+        for (int i = itemsStart; i <= itemCount; ++i) {
+            if (i == itemCount
+                || mnTags.getItem(i).getText().compareToIgnoreCase(tag) > 0) {
+                mnTags.insert(new RemoveTagAction(tag), i);
+                break;
+            }
+        }
+    }
+
+    /** This is not a public interface. It is an interface that Editor
+        uses to perform UI operations in support of an addTag()
+        request. */
+    void removeTag(String tag) {
+        int itemCount = mnTags.getItemCount();
+        int itemsStart = itemCount;
+        for (int i = 0; i < itemCount; ++i) {
+            if (mnTags.getItem(i) == mnRemoveTag) {
+                itemsStart = i + 1;
+                break;
+            }
+        }
+
+        for (int i = itemsStart; i <= itemCount; ++i) {
+            if (mnTags.getItem(i).getText().equals(tag)) {
+                mnTags.remove(i);
+
+                if (itemCount <= itemsStart + 1) {
+                    // Hide the separator and the list of tags.
+                    mnTagsSeparator.setVisible(false);
+                    mnRemoveTag.setVisible(false);
+                }
+                break;
+            }
+        }
     }
 }
