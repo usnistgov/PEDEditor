@@ -11,6 +11,7 @@ import java.awt.event.*;
 import java.awt.image.*;
 import java.awt.geom.*;
 import java.net.*;
+import java.nio.file.Files;
 // Java7 import java.nio.file.Files;
 import java.text.*;
 import java.util.*;
@@ -34,14 +35,9 @@ import org.apache.batik.dom.GenericDOMImplementation;
 
 import org.w3c.dom.DOMImplementation;
 
-// TODO (mandatory) Label tags: chemical formulas, temperatures
-// (optional). These diagrams do not have to be associated with
-// specific locations or labels at this time. Optional: eutectic and
-// peritectic points (which *would* have to be associated with
-// specific points), user-defined.
+// TODO (mandatory?) Verify save when closing the program.
 
-// TODO (mandatory?, backwards compatibility) Duplicate existing
-// program's smoothing algorithm when displaying GRUMP files.
+// TODO (optional) Eutectic and peritectic points.
 
 // TODO (mandatory?, preexisting) Apply a gradient to all control
 // points on a curve. Specifically, apply the following transformation
@@ -49,14 +45,10 @@ import org.w3c.dom.DOMImplementation;
 // is between v1 and v2: "$variable = $variable + k * ($variable - v1)
 // / (v2 - v1)"
 
-// TODO (Optional) Use oblique Greek letters and script Kappa?
-
 // TODO (Optional) Fix symbol alignment for GRUMP font. (It's nearly
 // correct already, but it's also easy to do.)
 
 // TODO (optional) Automatically compute necessary margins
-
-// TODO (optional, easy) Include DejaVu sans-serif as an option.
 
 // TODO (Optional) Make regular open symbols look as nice as the
 // GRUMP-converted open symbols do.
@@ -64,7 +56,8 @@ import org.w3c.dom.DOMImplementation;
 // TODO (Optional) Better support for new double subscripts and
 // changing font sizes within a single label.
 
-// TODO (Optional) Add font hints
+// TODO (Optional) Add font hints (Probably a bad idea: it would
+// increase margin errors in the image the digitizers look at)
 
 // TODO (optional) Fix issues with tie lines and closed curves.
 
@@ -75,13 +68,14 @@ import org.w3c.dom.DOMImplementation;
 
 // TODO (optional) Explicit assignment of label margins.
 
-// TODO (optional) Vector-based label scaling. In other words, you
-// select a point, then move the mouse, and the vector determines the
-// scale and angle of the resulting symbol. Ideally the changes would
-// be visible in real time. Why not do it?
+// TODO (optional) Vector-based label or symbol scaling. In other
+// words, you select a point, then move the mouse, and the vector
+// determines the scale and angle of the resulting symbol. Ideally the
+// changes would be visible in real time. Why not do it?
 
 // TODO (optional) Conversion from GRUMP to PED fonts is arguably more
-// jarring than necessary.
+// jarring than necessary. Can I change the claimed point size of the
+// fonts?
 
 // TODO (optional) Support of GRUMP-style explicit assignment of label
 // skip, label density, and so on in new diagrams.
@@ -114,10 +108,8 @@ import org.w3c.dom.DOMImplementation;
 
 // TODO (optional) More compact representation for symbol sets.
 
-// TODO (major time-saver) Semi-automatically infer diagram location
-// from composition where equation balancing is possible. Discarding
-// elements like O, H, N, or C where possible may help, but may not
-// help *much*.
+// TODO (major time-saver) Automatically infer diagram location from
+// composition where equation balancing is possible.
 
 // TODO (feature, harder) Allow detection of the intersections of two
 // splines. (What makes this feature more desirable than it would be
@@ -157,8 +149,6 @@ import org.w3c.dom.DOMImplementation;
 
 // TODO (enhancement) Region identification and filling. As old
 // diagrams show, such a feature would get use.
-
-// TODO (mandatory) "Symbol" type lines are not implemented.
 
 // TODO (preexisting in viewer) Periodic table integration and
 // automatic conversion of diagrams from mole percent to weight
@@ -218,23 +208,6 @@ import org.w3c.dom.DOMImplementation;
 // computer vision can be expensive, and how much of our own brains
 // are dedicated to vision-related tasks?)
 
-// TODO (minor bug (in Java itself?)) Fix or work around the bug
-// (which I think is a Java bug, not an application bug) where
-// scrolling the scroll pane doesn't cause the image to be redrawn.
-// (Last confirmed in Java 6.29; not known whether it still exists.)
-
-// TODO (feature, easy) Use Robot to make sure that when the mouse is
-// inside the diagram, zooming the image never causes you to lose your
-// place. (For perspective, the program already keeps its location
-// during zooming better than Adobe Reader does.)
-
-// TODO (feature, lower priority, low difficulty) Add a "bring mouse
-// and diagram under mouse to center" operation
-
-// TODO Convert from wt% to mol%
-
-// TODO Define angles in principal coordinates?
-
 /** Main driver class for Phase Equilibria Diagram digitization and creation. */
 public class Editor implements CropEventListener, MouseListener,
                                MouseMotionListener, Printable {
@@ -275,6 +248,7 @@ public class Editor implements CropEventListener, MouseListener,
 
         @Override public void setLineWidth(double lineWidth) {
             paths.get(curveNo).setLineWidth(lineWidth);
+            saveNeeded = true;
             repaintEditFrame();
         }
 
@@ -284,10 +258,12 @@ public class Editor implements CropEventListener, MouseListener,
 
         @Override public void setLineStyle(StandardStroke lineStyle) {
             paths.get(curveNo).setStroke(lineStyle);
+            saveNeeded = true;
             repaintEditFrame();
         }
 
         @Override public void setColor(Color color) {
+            saveNeeded = true;
             paths.get(curveNo).setColor(color);
         }
 
@@ -300,6 +276,7 @@ public class Editor implements CropEventListener, MouseListener,
             GeneralPolyline path = paths.get(curveNo);
             int oldVertexCnt = path.size();
             repaintEditFrame();
+            saveNeeded = true;
 
             if (oldVertexCnt >= 2) {
                 ArrayList<SegmentAndT> segments = getPathSegments(path);
@@ -371,11 +348,13 @@ public class Editor implements CropEventListener, MouseListener,
         public void move(Point2D target) {
             GeneralPolyline path = paths.get(curveNo);
             path.set(vertexNo, target);
+            saveNeeded = true;
             repaintEditFrame();
         }
 
         @Override
         public VertexSelection copy(Point2D dest) {
+            saveNeeded = true;
             Point2D.Double delta = getLocation();
             delta.x = dest.getX() - delta.x;
             delta.y = dest.getY() - delta.y;
@@ -423,6 +402,7 @@ public class Editor implements CropEventListener, MouseListener,
         AnchoredLabel getItem() { return labels.get(index); }
 
         @Override public LabelSelection remove() {
+            saveNeeded = true;
             labels.remove(index);
             labelViews.remove(index);
             repaintEditFrame();
@@ -430,6 +410,7 @@ public class Editor implements CropEventListener, MouseListener,
         }
 
         @Override public void move(Point2D dest) {
+            saveNeeded = true;
             Point2D.Double destAnchor = getAnchorLocation(dest);
             AnchoredLabel item = getItem();
             item.setX(destAnchor.getX());
@@ -438,6 +419,7 @@ public class Editor implements CropEventListener, MouseListener,
         }
 
         @Override public LabelSelection copy(Point2D dest) {
+            saveNeeded = true;
             AnchoredLabel output = getItem().clone();
             Point2D.Double destAnchor = getAnchorLocation(dest);
             output.setX(destAnchor.getX());
@@ -464,19 +446,22 @@ public class Editor implements CropEventListener, MouseListener,
         }
 
         @Override public void setLineWidth(double lineWidth) {
-            // TODO This should really define the box line width...
+            // The capability to change box line width seems
+            // unnecessary to me
         }
 
         @Override public double getLineWidth() {
-            return 0.0; // TODO xxx What IS the line width for labels,
-                        // anyhow?
+            return 0.0;
+            // What IS the line width for labels, anyhow?
         }
 
         @Override public void setLineStyle(StandardStroke lineStyle) {
-            // TODO This should really define the box style...
+            // The capability to change box line style seems
+            // unnecessary to me
         }
 
         @Override public void setColor(Color color) {
+            saveNeeded = true;
             AnchoredLabel item = getItem();
             item.setColor(color);
             labelViews.set(index, toView(item));
@@ -532,6 +517,7 @@ public class Editor implements CropEventListener, MouseListener,
 
         @Override
         public ArrowSelection remove() {
+            saveNeeded = true;
             arrows.remove(index);
             repaintEditFrame();
             return null;
@@ -539,6 +525,7 @@ public class Editor implements CropEventListener, MouseListener,
 
         @Override
         public void move(Point2D dest) {
+            saveNeeded = true;
             Arrow item = getItem();
             item.x = dest.getX();
             item.y = dest.getY();
@@ -547,6 +534,7 @@ public class Editor implements CropEventListener, MouseListener,
 
         @Override
         public ArrowSelection copy(Point2D dest) {
+            saveNeeded = true;
             Arrow output = getItem().clonus();
             output.x = dest.getX();
             output.y = dest.getY();
@@ -562,6 +550,7 @@ public class Editor implements CropEventListener, MouseListener,
         }
 
         @Override public void setLineWidth(double lineWidth) {
+            saveNeeded = true;
             getItem().size = lineWidth;
             repaintEditFrame();
         }
@@ -580,7 +569,11 @@ public class Editor implements CropEventListener, MouseListener,
             return new Point2D.Double(item.x, item.y);
         }
 
-        @Override public void setColor(Color color) { getItem().setColor(color); }
+        @Override public void setColor(Color color) {
+            saveNeeded = true;
+            getItem().setColor(color);
+        }
+
         @Override public Color getColor() { return getItem().getColor(); }
 
         @Override
@@ -617,12 +610,14 @@ public class Editor implements CropEventListener, MouseListener,
             TieLine item = getItem();
             int lineCnt = askNumberOfTieLines(item.lineCnt);
             if (lineCnt >= 0) {
+                saveNeeded = true;
                 item.lineCnt = lineCnt;
                 repaintEditFrame();
             }
         }
 
         @Override public void setLineWidth(double lineWidth) {
+            saveNeeded = true;
             getItem().lineWidth = lineWidth;
             repaintEditFrame();
         }
@@ -632,12 +627,14 @@ public class Editor implements CropEventListener, MouseListener,
         }
 
         @Override public void setLineStyle(StandardStroke lineStyle) {
+            saveNeeded = true;
             getItem().stroke = lineStyle;
             repaintEditFrame();
         }
 
         @Override
         public TieLineSelection remove() {
+            saveNeeded = true;
             tieLines.remove(index);
             repaintEditFrame();
             return null;
@@ -674,7 +671,10 @@ public class Editor implements CropEventListener, MouseListener,
             return null;
         }
 
-        @Override public void setColor(Color color) { getItem().setColor(color); }
+        @Override public void setColor(Color color) {
+            saveNeeded = true;
+            getItem().setColor(color);
+        }
         @Override public Color getColor() { return getItem().getColor(); }
 
         @Override
@@ -710,11 +710,13 @@ public class Editor implements CropEventListener, MouseListener,
             LinearRuler item = getItem();
             if ((new RulerDialog(editFrame, "Edit Ruler", item))
                 .showModal(item)) {
+                saveNeeded = true;
                 repaintEditFrame();
             }
         }
 
         @Override public void setLineWidth(double lineWidth) {
+            saveNeeded = true;
             LinearRuler item = getItem();
             // Change fontSize too, to maintain a fixed ratio between
             // lineWidth and fontSize.
@@ -734,6 +736,7 @@ public class Editor implements CropEventListener, MouseListener,
 
         @Override
         public RulerSelection remove() {
+            saveNeeded = true;
             rulers.remove(index);
             repaintEditFrame();
             return null;
@@ -751,10 +754,12 @@ public class Editor implements CropEventListener, MouseListener,
                 break;
             }
 
+            saveNeeded = true;
             repaintEditFrame();
         }
 
         @Override public RulerSelection copy(Point2D dest) {
+            saveNeeded = true;
             Point2D.Double d = new Point2D.Double(dest.getX(), dest.getY());
             LinearRuler r = getItem().clone();
             double dx = r.endPoint.x - r.startPoint.x;
@@ -788,7 +793,10 @@ public class Editor implements CropEventListener, MouseListener,
             return null;
         }
 
-        @Override public void setColor(Color color) { getItem().setColor(color); }
+        @Override public void setColor(Color color) {
+            saveNeeded = true;
+            getItem().setColor(color);
+        }
         @Override public Color getColor() { return getItem().getColor(); }
 
         @Override
@@ -868,6 +876,8 @@ public class Editor implements CropEventListener, MouseListener,
     protected VertexInfoDialog vertexInfo = new VertexInfoDialog(editFrame);
     protected JColorChooser colorChooser = null;
     protected JDialog colorDialog = null;
+    protected Map<String,String> keyValues = null;
+    protected Set<String> tags = new HashSet<String>();
 
     /** Transform from original coordinates to principal coordinates.
         Original coordinates are (x,y) positions within a scanned
@@ -973,7 +983,6 @@ public class Editor implements CropEventListener, MouseListener,
 
     @JsonProperty protected String filename;
 
-    // TODO Set saveNeeded
     boolean saveNeeded = false;
 
     /** Current mouse position expressed in principal coordinates.
@@ -1032,6 +1041,12 @@ public class Editor implements CropEventListener, MouseListener,
         tieLineDialog.setVisible(false);
         tieLineCorners = new ArrayList<PathAndT>();
         embeddedFont = null;
+        keyValues = new TreeMap<String,String>();
+        if (tags != null) {
+            for (String tag: tags) {
+                removeTag(tag);
+            }
+        }
     }
 
     @JsonProperty("curves")
@@ -1111,6 +1126,123 @@ public class Editor implements CropEventListener, MouseListener,
         return (sel == null)
             ? null
             : paths.get(sel.curveNo).get(sel.vertexNo);
+    }
+
+    public String[] getTags() {
+        return tags.toArray(new String[0]);
+    }
+
+    public void setTags(String[] newTags) {
+        saveNeeded = true;
+        for (String tag: tags) {
+            removeTag(tag);
+        }
+        for (String tag: newTags) {
+            System.out.println("  tag " + tag);
+            addTag(tag);
+        }
+    }
+
+    public void addTag(String tag) {
+        saveNeeded = true;
+        tags.add(tag);
+        editFrame.addTag(tag);
+    }
+
+    public void addTag() {
+        String tag = JOptionPane.showInputDialog(editFrame, "Tag");
+        if (tag != null && tags.add(tag)) {
+            addTag(tag);
+        }
+    }
+
+    public void removeTag(String tag) {
+        saveNeeded = true;
+        tags.remove(tag);
+        editFrame.removeTag(tag);
+    }
+
+    @JsonIgnore public void setSaveNeeded(boolean saveNeeded) {
+        this.saveNeeded = saveNeeded;
+    }
+
+    @JsonIgnore public boolean getSaveNeeded() {
+        return saveNeeded;
+    }
+
+    /** The returned value can be used to modify the
+        internal key/value mapping. */
+    @JsonProperty("keys") Map<String,String> getKeyValues() {
+        return keyValues;
+    }
+
+    void setKeyValues(@JsonProperty("keys") Map<String, String> keyValues) {
+        saveNeeded = true;
+        this.keyValues = keyValues;
+    }
+
+    /** Return the value associated with this key in the keyValues
+        field. */
+    public String get(String key) {
+        return keyValues.get(key);
+    }
+
+    /** Put a key/value pair in the keyValues field. */
+    public void put(String key, String value) {
+        keyValues.put(key, value);
+        updateTitle();
+    }
+
+    public void put() {
+        String[] labels = { "Key", "Value" };
+        String[] values = { "", "" };
+        StringArrayDialog dog = new StringArrayDialog
+                 (editFrame, labels, values,
+                  "To delete a key, replace a value with the empty string.");
+        dog.setTitle("Add key/value pair");
+        values = dog.showModal();
+        if (values == null || "".equals(values[0])) {
+            return;
+        }
+
+        put(values[0], values[1]);
+    }
+
+    public void listKeyValues() {
+        Set<Map.Entry<String,String>> entries = keyValues.entrySet();
+        String[] keys = new String[keyValues.size()];
+        String[] values = new String[keyValues.size()];
+        int ii = 0;
+        for (Map.Entry<String, String> entry: entries) {
+            keys[ii] = entry.getKey();
+            values[ii] = entry.getValue();
+            ++ii;
+        }
+            
+        StringArrayDialog dog = new StringArrayDialog
+                 (editFrame, keys, values, "");
+        dog.setTitle("Key/value pairs");
+        values = dog.showModal();
+        if (values == null || !isEditable()) {
+            return;
+        }
+
+        for (int i = 0; i < keyValues.size(); ++i) {
+            if ("".equals(values[i])) {
+                removeKey(keys[i]);
+            } else if (!values[i].equals(get(keys[i]))) {
+                put(keys[i], values[i]);
+            }
+        }
+    }
+
+    /** Remove the given key from the keyValues field, and return its
+        value, or null if absent. */
+    public String removeKey(String key) {
+        String output = keyValues.remove(key);
+        saveNeeded = true;
+        updateTitle();
+        return output;
     }
 
     public synchronized void setBackground(EditFrame.BackgroundImage value) {
@@ -1421,9 +1553,6 @@ public class Editor implements CropEventListener, MouseListener,
         standardPage coordinates) in order for xform.transform(scale *
         pageBounds) to fill deviceBounds as much as possible without
         going over.
-
-        xxx This might be worthless because of the failure to account
-        for the device's hardware-enforced margins.
     */
     double deviceScale(AffineTransform xform, Rectangle2D deviceBounds) {
         AffineTransform itrans;
@@ -1526,8 +1655,8 @@ public class Editor implements CropEventListener, MouseListener,
         }
 
         if (false) {
-            // TODO Delete dead code -- but sometimes it's helpful to
-            // mark key points...
+            // Yes, dead code -- but I turn it on often during
+            // debugging to mark key points...
 
             Point2D.Double xpoint = new Point2D.Double();
             Affine p2d = principalToScaledPage(scale);
@@ -1679,16 +1808,6 @@ public class Editor implements CropEventListener, MouseListener,
         add(mprin);
     }
 
-    /** Add a dot. */
-    public void addDot() {
-        if (mprin == null) {
-            return;
-        }
-
-        deselectCurve();
-        add(mprin);
-    }
-
     /** Update the tangency information to display the slope at the
         given vertex. For polylines, the slope will generally be
         undefined (having different values when coming from the left
@@ -1755,6 +1874,7 @@ public class Editor implements CropEventListener, MouseListener,
         after vertex vertexNo. */
     public void add(GeneralPolyline path, int vertexNo,
                     Point2D.Double point) {
+        saveNeeded = true;
         if (vertexNo == -1) {
             path.add(vertexNo + 1, point);
             return;
@@ -1792,6 +1912,7 @@ public class Editor implements CropEventListener, MouseListener,
     }
 
     void removeCurve(int curveNo) {
+        saveNeeded = true;
         GeneralPolyline path = paths.get(curveNo);
 
         // Remove all associated tie lines.
@@ -1836,9 +1957,9 @@ public class Editor implements CropEventListener, MouseListener,
         return output;
     }
 
-    /** You can then change the segments returned by getPathSegments()
-        and call setPathSegments() to make corresponding updates to
-        the fields from which they came. */
+    /** You can change the segments returned by getPathSegments() and
+        call setPathSegments() to make corresponding updates to the
+        fields from which they came. */
     void setPathSegments(GeneralPolyline path,
                          ArrayList<SegmentAndT> segments) {
 
@@ -1864,6 +1985,7 @@ public class Editor implements CropEventListener, MouseListener,
         tangent to the curve at that location and that points
         rightward (or downward if the curve is vertical). */
     public void addArrow(boolean rightward) {
+        saveNeeded = true;
         if (mouseIsStuckAtSelection() && getSelectedArrow() != null) {
             unstickMouse();
         }
@@ -1939,6 +2061,7 @@ public class Editor implements CropEventListener, MouseListener,
 
         selection = new TieLineSelection(tieLines.size(), TieLineHandle.OUTER2);
         tieLines.add(tie);
+        saveNeeded = true;
         repaintEditFrame();
     }
 
@@ -2033,6 +2156,7 @@ public class Editor implements CropEventListener, MouseListener,
 
         removeCurve(vsel.curveNo);
         rulers.add(ruler);
+        saveNeeded = true;
 
         selection = new RulerSelection(rulers.size() - 1, RulerHandle.END);
         repaintEditFrame();
@@ -2264,6 +2388,7 @@ public class Editor implements CropEventListener, MouseListener,
         if (str == null) {
             return;
         }
+        saveNeeded = true;
 
         // When updating a diagram component, you may also have to
         // update the corresponding axis name and format (since xx.x%
@@ -2381,6 +2506,7 @@ public class Editor implements CropEventListener, MouseListener,
     }
 
     public void add(AnchoredLabel label) {
+        saveNeeded = true;
         labels.add(label);
         labelViews.add(toView(label));
         labelCenters.add(new Point2D.Double());
@@ -2398,6 +2524,7 @@ public class Editor implements CropEventListener, MouseListener,
             return;
         }
 
+        saveNeeded = true;
         newLabel.setAngle(pageToPrincipalAngle(newLabel.getAngle()));
         newLabel.setX(label.getX());
         newLabel.setY(label.getY());
@@ -2461,6 +2588,7 @@ public class Editor implements CropEventListener, MouseListener,
     }
 
     @JsonProperty void setLabels(Collection<AnchoredLabel> labels) {
+        saveNeeded = true;
         this.labels = new ArrayList<AnchoredLabel>(labels);
     }
 
@@ -2469,6 +2597,7 @@ public class Editor implements CropEventListener, MouseListener,
     }
 
     public void setDiagramType(DiagramType t) {
+        saveNeeded = true;
         this.diagramType = t;
     }
 
@@ -2908,6 +3037,7 @@ public class Editor implements CropEventListener, MouseListener,
             return;
         }
 
+        saveNeeded = true;
         GeneralPolyline path = oldPath.nearClone
             (oldPath.getSmoothingType() == GeneralPolyline.LINEAR
              ? GeneralPolyline.CUBIC_SPLINE : GeneralPolyline.LINEAR);
@@ -2936,6 +3066,7 @@ public class Editor implements CropEventListener, MouseListener,
         if (path == null) {
             return;
         }
+        saveNeeded = true;
         path.setClosed(!path.isClosed());
         repaintEditFrame();
     }
@@ -2964,6 +3095,10 @@ public class Editor implements CropEventListener, MouseListener,
         return originalFilename;
     }
 
+    /** Assert that this diagram should not be represented as the
+        traced version of some other diagram image. Disable the
+        zoomFrame, hide the background image in editFrame, and so
+        on. */
     void dontTrace() {
         originalFilename = null;
         originalToPrincipal = null;
@@ -2973,27 +3108,40 @@ public class Editor implements CropEventListener, MouseListener,
         editFrame.mnBackgroundImage.setEnabled(false);
     }
 
+    public void setTitle(String title) {
+        put("title", title);
+    }
+
+    @JsonIgnore public String getTitle() {
+        return get("title");
+    }
+
     void updateTitle() {
-        StringBuilder title = new StringBuilder
-            (isEditable() ? "Edit " : "View ");
-        title.append(diagramType);
+        StringBuilder titleBuf = new StringBuilder(isEditable() ? "Edit " : "View ");
 
-        String str = systemName();
-        if (str != null) {
-            title.append(" ");
-            title.append(str);
+        String titleStr = getTitle();
+        if (titleStr != null) {
+            titleBuf.append(titleStr);
+        } else {
+            titleBuf.append(diagramType);
+
+            String str = systemName();
+            if (str != null) {
+                titleBuf.append(" ");
+                titleBuf.append(str);
+            }
+
+            str = getOriginalFilename();
+            if (str == null) {
+                str = getFilename();
+            }
+            if (str != null) {
+                titleBuf.append(" ");
+                titleBuf.append(str);
+            }
         }
 
-        str = getOriginalFilename();
-        if (str == null) {
-            str = getFilename();
-        }
-        if (str != null) {
-            title.append(" ");
-            title.append(str);
-        }
-
-        editFrame.setTitle(title.toString());
+        editFrame.setTitle(titleBuf.toString());
     }
 
     /** @return the system name if known, with components sorted into
@@ -3037,6 +3185,7 @@ public class Editor implements CropEventListener, MouseListener,
     }
 
     public void setOriginalFilename(String filename) {
+        saveNeeded = true;
         originalFilename = filename;
 
         if (filename == null) {
@@ -3044,14 +3193,12 @@ public class Editor implements CropEventListener, MouseListener,
             return;
         }
 
-        /* JAVA7
         if (Files.notExists(new File(filename).toPath())) {
             JOptionPane.showMessageDialog
                 (editFrame, "Warning: original file '" + filename + "' not found");
             dontTrace();
             return;
         }
-        */
 
         try {
             BufferedImage im = ImageIO.read(new File(filename));
@@ -3104,6 +3251,7 @@ public class Editor implements CropEventListener, MouseListener,
     public void cropPerformed(CropEvent e) {
         diagramType = e.getDiagramType();
         newDiagram(e.filename, Duh.toPoint2DDoubles(e.getVertices()));
+        saveNeeded = true;
     }
 
     /** Start on a blank new diagram. */
@@ -3119,6 +3267,7 @@ public class Editor implements CropEventListener, MouseListener,
 
         diagramType = temp;
         newDiagram(null, null);
+        saveNeeded = false;
     }
 
     /** Start on a blank new diagram.
@@ -3635,8 +3784,32 @@ public class Editor implements CropEventListener, MouseListener,
         @return false if the user changes their mind and a new diagram
         should not be started. */
     boolean verifyNewDiagram() {
-        // TODO Just a stub.
-        return true;
+        if (!saveNeeded) {
+            return true;
+        }
+        
+        Object[] options = new Object[]
+            {"Save and continue", "Do not save", "Cancel"};
+
+        switch (JOptionPane.showOptionDialog
+                (editFrame,
+                 "This file has changed. Would you like to save it?",
+                 "Confirm new diagram",
+                 JOptionPane.YES_NO_CANCEL_OPTION,
+                 JOptionPane.QUESTION_MESSAGE,
+                 null,
+                 options,
+                 options[0])) {
+        case JOptionPane.YES_OPTION:
+            save();
+            return true;
+
+        case JOptionPane.NO_OPTION:
+            return true;
+
+        default:
+            return false;
+        }
     }
 
 
@@ -3656,7 +3829,7 @@ public class Editor implements CropEventListener, MouseListener,
                 String aspectRatioStr = JOptionPane.showInputDialog
                     (editFrame,
                      "Enter the width-to-height ratio for the core diagram.\n"
-                     + "(Most diagrams in the database uses a ratio of ~4/5.)",
+                     + "(Most diagrams in the database uses a ratio of 80%.)",
                      ContinuedFraction.toString(oldValue, true));
                 if (aspectRatioStr == null) {
                     return;
@@ -3675,6 +3848,7 @@ public class Editor implements CropEventListener, MouseListener,
             }
         }
 
+        saveNeeded = true;
         double stretchFactor = aspectRatio / oldValue;
         ((RectangleTransform) principalToStandardPage).scaleOutput
             (stretchFactor, 1.0);
@@ -3755,6 +3929,7 @@ public class Editor implements CropEventListener, MouseListener,
             }
         }
 
+        saveNeeded = true;
         double delta = margin - oldValue;
 
         switch (side) {
@@ -3813,6 +3988,7 @@ public class Editor implements CropEventListener, MouseListener,
             tie.outerEdge = idToCurve(tie.outerId);
         }
         updateTitle();
+        saveNeeded = false;
     }
 
     /** Invoked from the EditFrame menu */
@@ -3834,6 +4010,7 @@ public class Editor implements CropEventListener, MouseListener,
     }
 
     public void setPageBounds(Rectangle2D.Double rect) {
+        saveNeeded = true;
         pageBounds = (Rectangle2D.Double) rect.clone();
     }
 
@@ -3854,12 +4031,13 @@ public class Editor implements CropEventListener, MouseListener,
         paths = other.paths;
         tieLines = other.tieLines;
         setFontName(other.getFontName());
-
         axes = other.axes;
         rulers = other.rulers;
         labels = other.labels;
         initializeLabelViews();
         selection = null;
+        setTags(other.getTags());
+        setKeyValues(other.getKeyValues());
     }
 
     /** Populate the "rulers" fields of the axes, and then return the
@@ -4063,6 +4241,7 @@ public class Editor implements CropEventListener, MouseListener,
 
         try {
             getObjectMapper().writeValue(file, this);
+            saveNeeded = false;
             JOptionPane.showMessageDialog(editFrame, "File saved.");
         } catch (Exception e) {
             JOptionPane.showMessageDialog
@@ -4225,6 +4404,7 @@ public class Editor implements CropEventListener, MouseListener,
         locations, all arrow locations, and all ruler start- and
         endpoints. */
     public void transformPrincipalCoordinates(AffineTransform trans) {
+        saveNeeded = true;
         for (GeneralPolyline path: paths) {
             Point2D.Double[] points = path.getPoints();
             trans.transform(points, 0, points, 0, points.length);
@@ -5168,6 +5348,7 @@ public class Editor implements CropEventListener, MouseListener,
     }
 
     void addTernaryBottomRuler(double start /* Z */, double end /* Z */) {
+        saveNeeded = true;
         LinearRuler r = new DefaultTernaryRuler() {{ // Component-Z axis
             textAngle = 0;
             tickLeft = true;
@@ -5178,10 +5359,13 @@ public class Editor implements CropEventListener, MouseListener,
         r.endPoint = new Point2D.Double(end, 0);
         r.startArrow = Math.abs(start) > 1e-8;
         r.endArrow = (Math.abs(end - 1) > 1e-4);
+        r.suppressStartTick = (diagramType != DiagramType.TERNARY_RIGHT);
+        r.suppressEndTick = (diagramType != DiagramType.TERNARY_LEFT);
         rulers.add(r);
     }
 
     void addTernaryLeftRuler(double start /* Y */, double end /* Y */) {
+        saveNeeded = true;
         LinearRuler r = new DefaultTernaryRuler() {{ // Left Y-axis
             textAngle = Math.PI / 3;
             tickRight = true;
@@ -5192,15 +5376,36 @@ public class Editor implements CropEventListener, MouseListener,
         r.endPoint = new Point2D.Double(0.0, end);
         r.startArrow = Math.abs(start) > 1e-8;
         r.endArrow = (Math.abs(end - 1) > 1e-4);
+        // The tick label for the bottom of the left ruler is
+        // redundant with the tick label for the left end of the
+        // bottom ruler unless this is a top partial ternary
+        // diagram.
+        r.suppressStartLabel = (diagramType != DiagramType.TERNARY_TOP);
+        r.suppressStartTick = (diagramType != DiagramType.TERNARY_TOP);
+        r.suppressEndTick = (diagramType != DiagramType.TERNARY_LEFT);
         rulers.add(r);
     }
 
     void addTernaryRightRuler(double start /* Y */, double end /* Y */) {
+        saveNeeded = true;
         LinearRuler r = new DefaultTernaryRuler() {{ // Right Y-axis
             textAngle = Math.PI * 2 / 3;
             tickLeft = true;
-            labelAnchor = LinearRuler.LabelAnchor.RIGHT;
-        }};
+                }};
+
+        // The tick labels for the right ruler are redundant with the
+        // tick labels for the left ruler unless this is a top or left
+        // partial ternary diagram.
+        boolean showLabels = diagramType == DiagramType.TERNARY_RIGHT
+            || diagramType == DiagramType.TERNARY_TOP;
+        if (showLabels) {
+            r.labelAnchor = LinearRuler.LabelAnchor.RIGHT;
+            r.suppressEndLabel = diagramType != DiagramType.TERNARY_RIGHT;
+        } else {
+            r.labelAnchor = LinearRuler.LabelAnchor.NONE;
+        }
+        r.suppressStartTick = diagramType != DiagramType.TERNARY_TOP;
+        r.suppressEndTick = diagramType != DiagramType.TERNARY_RIGHT;
 
         r.startPoint = new Point2D.Double(1 - start, start);
         r.endPoint = new Point2D.Double(1 - end, end);
@@ -5210,6 +5415,7 @@ public class Editor implements CropEventListener, MouseListener,
     }
 
     void addBinaryBottomRuler() {
+        saveNeeded = true;
         rulers.add(new DefaultBinaryRuler() {{ // X-axis
             textAngle = 0;
             tickLeft = true;
@@ -5221,6 +5427,7 @@ public class Editor implements CropEventListener, MouseListener,
     }
 
     void addBinaryTopRuler() {
+        saveNeeded = true;
         rulers.add(new DefaultBinaryRuler() {{ // X-axis
             textAngle = 0;
             tickRight = true;
@@ -5232,6 +5439,7 @@ public class Editor implements CropEventListener, MouseListener,
     }
 
     void addBinaryLeftRuler() {
+        saveNeeded = true;
         rulers.add(new DefaultBinaryRuler() {{ // Left Y-axis
             textAngle = Math.PI / 2;
             tickRight = true;
@@ -5243,6 +5451,7 @@ public class Editor implements CropEventListener, MouseListener,
     }
 
     void addBinaryRightRuler() {
+        saveNeeded = true;
         rulers.add(new DefaultBinaryRuler() {{ // Right Y-axis
             textAngle = Math.PI / 2;
             tickLeft = true;
@@ -5266,8 +5475,11 @@ public class Editor implements CropEventListener, MouseListener,
     }
 
     public void setFontName(String s) {
-        // TODO Don't load unless we have to, and support built-in fonts too?
+        if (embeddedFont != null && s.equals(getFontName())) {
+            return; // No change
+        }
 
+        saveNeeded = true;
         String filename = fontFiles.get(s);
         if (filename == null) {
             throw new IllegalArgumentException("Unrecognized font name '" + s + "'");
