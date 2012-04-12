@@ -104,6 +104,18 @@ public class CompositeStroke {
         return output;
     }
 
+    public static CompositeStroke getBlankFirstDashedLine() {
+        CompositeStroke output = new CompositeStroke();
+        output.add(new BasicStroke
+                   (1.0f,
+                    BasicStroke.CAP_ROUND,
+                    BasicStroke.JOIN_ROUND,
+                    3.0f,
+                    new float[] { 5, 4 },
+                    7.0f));
+        return output;
+    }
+
     public static CompositeStroke getDotDashLine() {
         CompositeStroke output = new CompositeStroke();
 

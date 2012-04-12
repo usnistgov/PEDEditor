@@ -35,7 +35,10 @@ import org.apache.batik.dom.GenericDOMImplementation;
 
 import org.w3c.dom.DOMImplementation;
 
-// TODO (mandatory?) Verify save when closing the program.
+// TODO (important) Allow save or cancel if someone clicks on the
+// "close" icon.
+
+// TODO (optional) Add Unicode by hexadecimal code point.
 
 // TODO (optional) Eutectic and peritectic points.
 
@@ -1763,9 +1766,14 @@ public class Editor implements CropEventListener, MouseListener,
             LabelSelection sel = editing ? getSelectedLabel() : null;
             if (sel != null) {
                 Color c= sel.getColor();
+                // Calling setColor sets saveNeeded to true, but in
+                // this case nothing has changed yet, so reset it to
+                // what it was before afterwards.
+                boolean sn = saveNeeded;
                 sel.setColor(Color.GREEN);
                 drawLabel(g, sel.index, scale);
                 sel.setColor(c);
+                saveNeeded = sn;
             }
         }
     }

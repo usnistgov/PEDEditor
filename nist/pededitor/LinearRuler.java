@@ -81,15 +81,15 @@ class LinearRuler {
         a line of text. */
     @JsonProperty double tickPadding = 0.0;
 
-    /** If positive, the fixed delta for big ticks. If zero, there are
-        no big ticks. If negative, compute the number of big ticks
-        automatically. */
-    @JsonProperty double bigTickDelta = -1.0;
+    /** If NaN, compute the number of big ticks automatically
+        (generally recommended). If zero, there are no big ticks.
+        Otherwise, the fixed delta for big ticks. */
+    @JsonProperty double bigTickDelta = Double.NaN;
 
-    /** If positive, the fixed delta for small ticks. If zero, there are
-        no small ticks. If negative, compute the number of small ticks
-        automatically. */
-    @JsonProperty double tickDelta = -1.0;
+    /** If NaN, compute the number of small ticks automatically
+        (generally recommended). If zero, there are no small ticks.
+        Otherwise, the fixed delta for small ticks. */
+    @JsonProperty double tickDelta = -Double.NaN;
 
     /** If true, put an arrow at the end of the ruler. */
     @JsonProperty boolean startArrow = false;
@@ -325,13 +325,15 @@ class LinearRuler {
             minBigTickDelta = (aend - astart) * 100; // Close enough to infinity
         }
 
-        double bigTickD = (bigTickDelta > 0) ? bigTickDelta
-            :  RulerTick.roundCeil(minBigTickDelta);
+        double bigTickD = Double.isNaN(bigTickDelta)
+            ? RulerTick.roundCeil(minBigTickDelta)
+            : bigTickDelta;
 
         // tickD = change in logical coordinates between
         // neighboring ticks.
-        double tickD = (tickDelta > 0) ? tickDelta
-            : RulerTick.nextSmallerRound(bigTickD);
+        double tickD = Double.isNaN(tickDelta)
+            ? RulerTick.nextSmallerRound(bigTickD)
+            : tickDelta;
 
         Stroke oldStroke = g.getStroke();
         g.setStroke(new BasicStroke((float) (scale * lineWidth)));
@@ -376,7 +378,6 @@ class LinearRuler {
         } else {
             tickEnd = aend;
         }
-        tickEnd += 1e-6 * (tickEnd - tickStart) / tickD;
 
         Point2D.Double tmpPoint = new Point2D.Double();
 
@@ -384,8 +385,10 @@ class LinearRuler {
         boolean sst = startArrow || suppressStartTick;
         boolean set = endArrow || suppressEndTick;
 
-        if (tickD >= minTickDelta && tickDelta != 0) {
-            for (double logical = actualTickStart; logical <= tickEnd;
+        if (Math.abs(tickD) >= minTickDelta && tickDelta != 0) {
+            double smallTickEnd = tickEnd + 1e-6 * (tickEnd - tickStart) / tickD;
+            for (double logical = actualTickStart;
+                 (logical <= smallTickEnd) == (tickStart <= smallTickEnd);
                  logical += tickD) {
                 if ((sst && logical < astart + clearDistance)
                     || (set && logical > aend - clearDistance)) {
@@ -437,7 +440,8 @@ class LinearRuler {
             actualTickStart = (tickStartD != null) ? tickStartD
                 : (bigTickD * Math.ceil((tickStart - 1e-6 * (aend - astart)) / bigTickD));
 
-            if (actualTickStart <= 0 && actualTickStart >= -bigTickD * 1e-6) {
+            if (actualTickStart <= 0
+                && actualTickStart >= -Math.abs(bigTickD) * 1e-6) {
                 // Sidestep stupid Java 6 behavior where tiny values
                 // less than 0 are formatted as "-0.0" instead of
                 // "0.0".
@@ -446,7 +450,9 @@ class LinearRuler {
 
             AffineTransform oldTransform = g.getTransform();
 
-            for (double logical = actualTickStart; logical <= tickEnd;
+            double bigTickEnd = tickEnd + 1e-6 * (tickEnd - tickStart) / bigTickD;
+            for (double logical = actualTickStart;
+                 (logical <= bigTickEnd) == (tickStart <= bigTickEnd);
                  logical += bigTickD) {
                 Point2D.Double location
                     = toPhysical(logical, pageStartPoint, pageEndPoint);
@@ -486,7 +492,7 @@ class LinearRuler {
 
                 if (!(labelAnchor == LabelAnchor.NONE ||
                       (suppressStartLabel && logical < tickStart + clearDistance) ||
-                      (suppressEndLabel && logical > tickEnd - clearDistance))) {
+                      (suppressEndLabel && logical > bigTickEnd - clearDistance))) {
                     // If there is a tick on the same side as the
                     // label, then use the tip of the tick (or the
                     // midpoint of the two tips of a V-type tick) as

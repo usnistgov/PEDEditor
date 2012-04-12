@@ -13,6 +13,7 @@ public enum StandardStroke {
     SOLID (CompositeStroke.getSolidLine()),
     DOT (CompositeStroke.getDottedLine()),
     DASH (CompositeStroke.getDashedLine()),
+    BLANK_FIRST_DASH (CompositeStroke.getBlankFirstDashedLine()),
     DOT_DASH (CompositeStroke.getDotDashLine()),
     RAILROAD (CompositeStroke.getRailroadLine(12f, 5f)),
     SOLID_DOT (CompositeStroke.getSolidDotLine()),

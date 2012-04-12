@@ -32,7 +32,7 @@ public class PedPalette extends StringPalette {
                     // Plotting symbols
                     "\u25cb" /* white circle */, "\u25cf" /* black circle */,
                     "\u25d3" /* lower-half-filled circle */,
-                    "\u25c9" /* fisheye / white circle with black center */,
+                    "\u25c9" /* fisheye */,
                     "\u29b5" /* white circle with horizontal bar */,
                     "\u2715" /* multiplication x? */,
                     "\u25a1" /* white square */, "\u25a0" /* black square */, 
