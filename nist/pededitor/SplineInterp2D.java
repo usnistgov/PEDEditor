@@ -4,6 +4,7 @@ import java.awt.geom.AffineTransform;
 import java.awt.geom.Line2D;
 import java.awt.geom.Path2D;
 import java.awt.geom.Point2D;
+import java.awt.geom.Rectangle2D;
 import java.util.Collection;
 
 import org.codehaus.jackson.annotate.JsonIgnore;
@@ -67,6 +68,20 @@ public class SplinePolyline extends GeneralPolyline {
             point.setLocation(xpt.x, xpt.y);
         }
         return new CubicSpline2D(xpoints, isClosed());
+    }
+
+    @Override public Rectangle2D getBounds() {
+        Rectangle2D r = getSpline().getBounds();
+        if (r == null) {
+            return null;
+        }
+
+        // Extend the bounds to account for the line width.
+        double lw = getLineWidth();
+        double lw2 = getLineWidth() / 2.0;
+        return new Rectangle2D.Double
+            (r.getX() - lw2, r.getY() - lw2, 
+             r.getWidth() + lw, r.getHeight() + lw);
     }
 
     @Override public double[] segmentIntersectionTs(Line2D segment) {

@@ -4,6 +4,7 @@ import java.awt.geom.AffineTransform;
 import java.awt.geom.Line2D;
 import java.awt.geom.Path2D;
 import java.awt.geom.Point2D;
+import java.awt.geom.Rectangle2D;
 import java.util.ArrayList;
 
 /** Specialization of GeneralPolyline for vanilla polylines. */
@@ -71,6 +72,36 @@ public class Polyline extends GeneralPolyline {
             output.lineTo(p0.x, p0.y);
         }
         return output;
+    }
+
+    @Override public Rectangle2D.Double getBounds() {
+        int cnt = points.size();
+        if (cnt == 0) {
+            return null;
+        }
+
+        Point2D.Double p = points.get(0);
+        double xMin = p.getX();
+        double xMax = xMin;
+        double yMin = p.getY();
+        double yMax = yMin;
+
+        for (int i = 1; i < cnt; ++i) {
+            p = points.get(0);
+            double x = p.getX();
+            double y = p.getY();
+            if (x < xMin) xMin = x;
+            if (x > xMax) xMax = x;
+            if (y < yMin) yMin = y;
+            if (y > yMax) yMax = y;
+        }
+
+        // Extend the bounds to account for the line width.
+        double lw = getLineWidth();
+        double lw2 = getLineWidth() / 2.0;
+        return new Rectangle2D.Double
+            (xMin - lw2, yMin - lw2, 
+             xMax - xMin + lw, yMax - yMin + lw);
     }
 
     @Override

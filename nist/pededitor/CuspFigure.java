@@ -7,6 +7,7 @@ import java.awt.geom.AffineTransform;
 import java.awt.geom.Line2D;
 import java.awt.geom.Path2D;
 import java.awt.geom.Point2D;
+import java.awt.geom.Rectangle2D;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -58,6 +59,10 @@ public abstract class GeneralPolyline {
     public double getLineWidth() {
         return lineWidth;
     }
+
+    /** @return the bounds of this shape when drawn. Line width is
+        accounted for in the returned value. */
+    abstract public Rectangle2D getBounds();
 
     @JsonProperty("id") int getJSONId() {
         if (jsonId == -1) {
