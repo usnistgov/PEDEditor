@@ -372,7 +372,7 @@ final public class CubicSpline1D {
     /** @return a 2-element array holding the minimum and maximum
         values of spline(t) for t in [t0, t1] within the given
         segment. */
-    public double[] range(int segment, double t0, double t1) {
+    public double[] getBounds(int segment, double t0, double t1) {
         double[] poly = coefficients[segment];
         double[] extrema = quadraticFormula
             (poly[3] * 3, poly[2] * 2, poly[1]);
@@ -385,6 +385,32 @@ final public class CubicSpline1D {
             }
             max = Math.max(max, value(segment, t));
             min = Math.min(min, value(segment, t));
+        }
+
+        return new double[] { min, max };
+    }
+
+
+    /** @return a 2-element array holding the minimum and maximum
+        values of the entire spline curve, or null if this spline is
+        empty. */
+    public double[] getBounds() {
+        int cnt = segmentCnt();
+        if (cnt == -1) {
+            return null;
+        }
+
+        double min = ys[0];
+        double max = ys[0];
+
+        for (int segNo = 0; segNo < cnt; ++segNo) {
+            double[] segRange = getBounds(segNo, 0.0, 1.0);
+            if (segRange[0] < min) {
+                min = segRange[0];
+            }
+            if (segRange[1] > max) {
+                max = segRange[0];
+            }
         }
 
         return new double[] { min, max };
@@ -417,19 +443,19 @@ final public class CubicSpline1D {
         SegmentAndT s1 = getSegment(t1);
 
         if (s0.segment == s1.segment) {
-            return range(s0.segment, s0.t, s1.t);
+            return getBounds(s0.segment, s0.t, s1.t);
         } else {
-            double[] r = range(s0.segment, s0.t, 1.0);
+            double[] r = getBounds(s0.segment, s0.t, 1.0);
             double[] r2;
             int s;
 
             for (s = s0.segment + 1; s < s1.segment; ++s) {
-                r2 = range(s, 0.0, 1.0);
+                r2 = getBounds(s, 0.0, 1.0);
                 r[0] = Math.min(r[0], r2[0]);
                 r[1] = Math.max(r[1], r2[1]);
             }
 
-            r2 = range(s1.segment, 0.0, s1.t);
+            r2 = getBounds(s1.segment, 0.0, s1.t);
             r[0] = Math.min(r[0], r2[0]);
             r[1] = Math.max(r[1], r2[1]);
 
