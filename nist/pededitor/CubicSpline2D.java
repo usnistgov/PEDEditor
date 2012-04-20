@@ -256,6 +256,15 @@ final public class CubicSpline2D {
         return new CurveDistance(t, p2, p.distance(p2));
     }
 
+    /** @return the bounds of this curve. */
+    public Rectangle2D.Double getBounds() {
+        double[] xBounds = xSpline.getBounds();
+        double[] yBounds = ySpline.getBounds();
+        return new Rectangle2D.Double(xBounds[0], yBounds[0],
+                                      xBounds[1] - xBounds[0],
+                                      yBounds[1] - yBounds[0]);
+    }
+
     /** @return a lower bound on the distance between p and spline(t)
         for t in [t0, t1]. */
     public double distanceLowerBound(Point2D p, double t0, double t1) {
