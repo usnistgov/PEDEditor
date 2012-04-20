@@ -35,10 +35,12 @@ import org.apache.batik.dom.GenericDOMImplementation;
 
 import org.w3c.dom.DOMImplementation;
 
-// TODO (important) Allow save or cancel if someone clicks on the
+// TODO (optional) Allow save or cancel if someone clicks on the
 // "close" icon.
 
-// TODO (optional) Add Unicode by hexadecimal code point.
+// TODO (optional) Use the Area class's add() method and perhaps
+// subclass Graphics2D and call Paint() to compute the bounds of a
+// diagram. createGraphicsShapes() may be a good starting example.
 
 // TODO (optional) Eutectic and peritectic points.
 
@@ -51,7 +53,10 @@ import org.w3c.dom.DOMImplementation;
 // TODO (Optional) Fix symbol alignment for GRUMP font. (It's nearly
 // correct already, but it's also easy to do.)
 
-// TODO (optional) Automatically compute necessary margins
+// TODO (optional) Automatically compute necessary margins. This might
+// require adding a bounds() method to all Selectable objects, as well
+// as a list of Selectables without handles. (Computing bounds takes
+// work for most objects -- axes, labels, curves, arrows.)
 
 // TODO (Optional) Make regular open symbols look as nice as the
 // GRUMP-converted open symbols do.
@@ -231,15 +236,26 @@ public class Editor implements CropEventListener, MouseListener,
         }
     }
 
-    /** Series of classes that implement the Movable interface so that
-        different types of selections, such as vertices and labels,
-        can be manipulated the same way. */
-    class VertexSelection implements Selectable {
-        int curveNo;
+    /** Series of classes that implement the Decoration and
+        DecorationHandle interfaces so that different types of
+        decorations, such as curves and labels, can be manipulated the
+        same way. */
+
+    class VertexHandle implements DecorationHandle {
+        CurveDecoration decoration;
         int vertexNo;
 
-        VertexSelection(int curveNo, int vertexNo) {
-            this.curveNo = curveNo;
+        public CurveDecoration getDecoration() {
+            return decoration;
+        }
+
+        VertexHandle(int curveNo, int vertexNo) {
+            this.decoration = new CurveDecoration(curveNo);
+            this.vertexNo = vertexNo;
+        }
+
+        VertexHandle(CurveDecoration decoration, int vertexNo) {
+            this.decoration = decoration;
             this.vertexNo = vertexNo;
         }
 
@@ -249,34 +265,13 @@ public class Editor implements CropEventListener, MouseListener,
             throw new IllegalStateException("Can't edit " + this);
         }
 
-        @Override public void setLineWidth(double lineWidth) {
-            paths.get(curveNo).setLineWidth(lineWidth);
-            saveNeeded = true;
-            repaintEditFrame();
-        }
-
-        @Override public double getLineWidth() {
-            return paths.get(curveNo).getLineWidth();
-        }
-
-        @Override public void setLineStyle(StandardStroke lineStyle) {
-            paths.get(curveNo).setStroke(lineStyle);
-            saveNeeded = true;
-            repaintEditFrame();
-        }
-
-        @Override public void setColor(Color color) {
-            saveNeeded = true;
-            paths.get(curveNo).setColor(color);
-        }
-
-        @Override public Color getColor() {
-            return paths.get(curveNo).getColor();
+        public GeneralPolyline getItem() {
+            return getDecoration().getItem();
         }
 
         @Override
-        public VertexSelection remove() {
-            GeneralPolyline path = paths.get(curveNo);
+        public VertexHandle remove() {
+            GeneralPolyline path = getItem();
             int oldVertexCnt = path.size();
             repaintEditFrame();
             saveNeeded = true;
@@ -334,34 +329,37 @@ public class Editor implements CropEventListener, MouseListener,
 
                 path.remove(vertexNo);
                 setPathSegments(path, segments);
-                return new VertexSelection
-                    (curveNo,
-                     (vertexNo > 0) ? (vertexNo - 1) : 0);
+                return new VertexHandle(decoration, 
+                                        (vertexNo > 0) ? (vertexNo - 1) : 0);
             } else {
-                removeCurve(curveNo);
+                getDecoration().remove();
                 return null;
             }
         }
 
+        @JsonIgnore public int getCurveNo() {
+            return getDecoration().getCurveNo();
+        }
+
         @Override public String toString() {
-            return "VertexSelection[" + curveNo + ", " + vertexNo + "]";
+            return getClass().getName() + "[" + getCurveNo() + ", " + vertexNo + "]";
         }
 
         @Override
         public void move(Point2D target) {
-            GeneralPolyline path = paths.get(curveNo);
+            GeneralPolyline path = getItem();
             path.set(vertexNo, target);
             saveNeeded = true;
             repaintEditFrame();
         }
 
         @Override
-        public VertexSelection copy(Point2D dest) {
+        public VertexHandle copy(Point2D dest) {
             saveNeeded = true;
             Point2D.Double delta = getLocation();
             delta.x = dest.getX() - delta.x;
             delta.y = dest.getY() - delta.y;
-            GeneralPolyline path = paths.get(curveNo).clone();
+            GeneralPolyline path = getItem().clone();
             for (int i = 0; i < path.size(); ++i) {
                 Point2D.Double point = path.get(i);
                 point.x += delta.x;
@@ -370,45 +368,131 @@ public class Editor implements CropEventListener, MouseListener,
             }
             paths.add(path);
             repaintEditFrame();
-            return new VertexSelection(paths.size() - 1, vertexNo);
+            return new VertexHandle(paths.size() - 1, vertexNo);
         }
 
         @Override
         public Point2D.Double getLocation() {
-            return paths.get(curveNo).get(vertexNo);
+            return getItem().get(vertexNo);
         }
 
-        @Override
-        public boolean equals(Object other) {
+        @Override public boolean equals(Object other) {
             if (this == other) return true;
-            if (this.getClass() != VertexSelection.class) return false;
-            if (this.getClass() != other.getClass()) return false;
+            if (other == null || getClass() != other.getClass()) return false;
+            if (getClass() != VertexHandle.class) return false;
 
-            VertexSelection cast = (VertexSelection) other;
-            return this.curveNo == cast.curveNo
+            VertexHandle cast = (VertexHandle) other;
+            return getDecoration().equals(cast.getDecoration())
                 && this.vertexNo == cast.vertexNo;
         }
     }
 
-    static enum LabelHandle { CENTER, ANCHOR };
+    class CurveDecoration implements Decoration {
+        int curveNo;
 
-    class LabelSelection implements Selectable {
-        int index;
+        CurveDecoration(int curveNo) {
+            this.curveNo = curveNo;
+        }
+
+        @Override public void setLineWidth(double lineWidth) {
+            getItem().setLineWidth(lineWidth);
+            saveNeeded = true;
+            repaintEditFrame();
+        }
+
+        @Override public double getLineWidth() {
+            return getItem().getLineWidth();
+        }
+
+        @Override public void setLineStyle(StandardStroke lineStyle) {
+            getItem().setStroke(lineStyle);
+            saveNeeded = true;
+            repaintEditFrame();
+        }
+
+        @Override public void setColor(Color color) {
+            saveNeeded = true;
+            getItem().setColor(color);
+        }
+
+        @Override public Color getColor() {
+            return getItem().getColor();
+        }
+
+        GeneralPolyline getItem() {
+            return paths.get(curveNo);
+        }
+
+        @Override public Rectangle2D getBounds() {
+            return getItem().getBounds();
+        }
+
+        @Override public Rectangle2D getBounds(AffineTransform xform) {
+            return getItem().createTransformed(xform).getBounds();
+        }
+
+        @Override public DecorationHandle remove() {
+            removeCurve(curveNo);
+            return null;
+        }
+
+        @Override public void draw(Graphics2D g, double scale) {
+            getItem().draw(g, getPrincipalToAlignedPage(), scale);
+        }
+
+        public int getCurveNo() {
+            return curveNo;
+        }
+
+        @Override public String toString() {
+            return getClass().getName() + "[" + getCurveNo() + "]";
+        }
+
+        @Override public boolean equals(Object other) {
+            if (this == other) return true;
+            if (other == null || getClass() != other.getClass()) return false;
+            if (getClass() != CurveDecoration.class) return false;
+
+            CurveDecoration cast = (CurveDecoration) other;
+            return this.curveNo == cast.curveNo;
+        }
+
+        @Override public DecorationHandle[] getHandles() {
+            ArrayList<DecorationHandle> output = new ArrayList<>();
+            GeneralPolyline path = getItem();
+            for (int j = 0; j < path.size(); ++j) {
+                output.add(new VertexHandle(this, j));
+            }
+            return output.toArray(new DecorationHandle[0]);
+        }
+
+    }
+
+    static enum LabelHandleType { CENTER, ANCHOR };
+
+    class LabelHandle implements DecorationHandle {
+        LabelDecoration decoration;
         /** A tie line may be selected from its anchor or its center. */
-        LabelHandle handle;
+        LabelHandleType handle;
 
-        LabelSelection(int index, LabelHandle handle) {
-            this.index = index;
+        @Override public  LabelDecoration getDecoration() {
+            return decoration;
+        }
+
+        LabelHandle(int index, LabelHandleType handle) {
+            this.decoration = new LabelDecoration(index);
             this.handle = handle;
         }
 
-        AnchoredLabel getItem() { return labels.get(index); }
+        LabelHandle(LabelDecoration decoration, LabelHandleType handle) {
+            this.decoration = decoration;
+            this.handle = handle;
+        }
 
-        @Override public LabelSelection remove() {
-            saveNeeded = true;
-            labels.remove(index);
-            labelViews.remove(index);
-            repaintEditFrame();
+        AnchoredLabel getItem() { return getDecoration().getItem(); }
+
+        @Override public LabelHandle remove() {
+            getDecoration().remove();
             return null;
         }
 
@@ -421,7 +505,7 @@ public class Editor implements CropEventListener, MouseListener,
             repaintEditFrame();
         }
 
-        @Override public LabelSelection copy(Point2D dest) {
+        @Override public LabelHandle copy(Point2D dest) {
             saveNeeded = true;
             AnchoredLabel output = getItem().clone();
             Point2D.Double destAnchor = getAnchorLocation(dest);
@@ -429,15 +513,15 @@ public class Editor implements CropEventListener, MouseListener,
             output.setY(destAnchor.getY());
             add(output);
             repaintEditFrame();
-            return new LabelSelection(labels.size() - 1, handle);
+            return new LabelHandle(labels.size() - 1, handle);
         }
 
         @Override public Point2D.Double getLocation() {
             switch (handle) {
             case ANCHOR:
-                return getAnchorLocation();
+                return getDecoration().getAnchorLocation();
             case CENTER:
-                return getCenterLocation();
+                return getDecoration().getCenterLocation();
             }
             return null;
         }
@@ -445,7 +529,94 @@ public class Editor implements CropEventListener, MouseListener,
         @Override public boolean isEditable() { return true; }
 
         @Override public void edit() {
-            editLabel(index);
+            editLabel(getDecoration().getIndex());
+        }
+
+        @Override public boolean equals(Object other) {
+            if (this == other) return true;
+            if (other == null || getClass() != other.getClass()) return false;
+            if (getClass() != LabelHandle.class) {
+                return false;
+            }
+
+            LabelHandle cast = (LabelHandle) other;
+            if (this.getDecoration() != cast.getDecoration()) return false;
+            return this.handle == cast.handle;
+        }
+
+        public Point2D.Double getCenterLocation() {
+            return getDecoration().getCenterLocation();
+        }
+
+        public Point2D.Double getAnchorLocation() {
+            return getDecoration().getAnchorLocation();
+        }
+
+        /** @return the anchor location for a label whose handle is at
+            dest. */
+        public Point2D.Double getAnchorLocation(Point2D dest) {
+            if (handle == LabelHandleType.ANCHOR) {
+                return new Point2D.Double(dest.getX(), dest.getY());
+            }
+
+            // Compute the difference between the anchor
+            // location and the center, and apply the same
+            // difference to dest.
+            Point2D.Double anchor = getAnchorLocation();
+            Point2D.Double center = getCenterLocation();
+            double dx = anchor.x - center.x;
+            double dy = anchor.y - center.y;
+            return new Point2D.Double(dest.getX() + dx, dest.getY() + dy);
+        }
+    }
+
+
+    class LabelDecoration implements Decoration {
+        int index;
+
+        LabelDecoration(int index) {
+            this.index = index;
+        }
+
+        public int getIndex() { 
+            return index;
+        }
+
+        AnchoredLabel getItem() { return labels.get(index); }
+
+        @Override public void draw(Graphics2D g, double scale) {
+            drawLabel(g, index, scale);
+        }
+
+        @Override public DecorationHandle remove() {
+            saveNeeded = true;
+            labels.remove(index);
+            labelViews.remove(index);
+            repaintEditFrame();
+            return null;
+        }
+
+        @Override public boolean equals(Object other) {
+            if (this == other) return true;
+            if (other == null || getClass() != other.getClass()) return false;
+            if (getClass() != LabelDecoration.class) return false;
+
+            LabelDecoration cast = (LabelDecoration) other;
+            return this.index == cast.index;
+        }
+
+        public Point2D.Double getCenterLocation() {
+            return labelCenters.get(index);
+        }
+
+        public Point2D.Double getAnchorLocation() {
+            AnchoredLabel item = getItem();
+            return new Point2D.Double(item.getX(), item.getY());
+        }
+
+        public Rectangle2D getBounds() {
+            // TODO
+            return null;
         }
 
         @Override public void setLineWidth(double lineWidth) {
@@ -472,62 +643,52 @@ public class Editor implements CropEventListener, MouseListener,
 
         @Override public Color getColor() { return getItem().getColor(); }
 
-        @Override public boolean equals(Object other) {
-            if (this == other) return true;
-            if (this.getClass() != LabelSelection.class) return false;
-            if (this.getClass() != other.getClass()) return false;
-
-            LabelSelection cast = (LabelSelection) other;
-            return this.index == cast.index;
-        }
-
-        public Point2D.Double getCenterLocation() {
-            return labelCenters.get(index);
-        }
-
-        public Point2D.Double getAnchorLocation() {
-            AnchoredLabel item = getItem();
-            return new Point2D.Double(item.getX(), item.getY());
-        }
-
-        /** @return the anchor location for a label whose handle is at
-            dest. */
-        public Point2D.Double getAnchorLocation(Point2D dest) {
-            if (handle == LabelHandle.ANCHOR) {
-                return new Point2D.Double(dest.getX(), dest.getY());
+        @Override public DecorationHandle[] getHandles() {
+            AnchoredLabel label = getItem();
+            if (label.getXWeight() != 0.5 || label.getYWeight() != 0.5) {
+                return new DecorationHandle[]
+                    { new LabelHandle(this, LabelHandleType.CENTER),
+                      new LabelHandle(this, LabelHandleType.ANCHOR) };
+            } else {
+                return new DecorationHandle[]
+                    { new LabelHandle(this, LabelHandleType.ANCHOR) };
             }
+        }
 
-            // Compute the difference between the anchor
-            // location and the center, and apply the same
-            // difference to dest.
-            Point2D.Double anchor = getAnchorLocation();
-            Point2D.Double center = getCenterLocation();
-            double dx = anchor.x - center.x;
-            double dy = anchor.y - center.y;
-            return new Point2D.Double(dest.getX() + dx, dest.getY() + dy);
+        @Override public Rectangle2D getBounds(AffineTransform xform) {
+            // TODO Auto-generated method stub
+            return null;
         }
     }
 
 
-    class ArrowSelection implements Selectable {
+    class ArrowDecoration implements Decoration, DecorationHandle {
         int index;
 
-        ArrowSelection(int index) {
+        ArrowDecoration(int index) {
             this.index = index;
         }
 
         Arrow getItem() { return arrows.get(index); }
 
-        @Override
-        public ArrowSelection remove() {
+        @Override public void draw(Graphics2D g, double scale) {
+            Arrow arrow = getItem();
+            Affine xform = principalToScaledPage(scale);
+            Point2D.Double xpoint = xform.transform(arrow.x, arrow.y);
+            Arrow arr = new Arrow
+                (xpoint.x, xpoint.y, scale * arrow.size,
+                 principalToPageAngle(arrow.theta));
+            g.fill(arr);
+        }
+
+        @Override public ArrowDecoration remove() {
             saveNeeded = true;
             arrows.remove(index);
             repaintEditFrame();
             return null;
         }
 
-        @Override
-        public void move(Point2D dest) {
+        @Override public void move(Point2D dest) {
             saveNeeded = true;
             Arrow item = getItem();
             item.x = dest.getX();
@@ -535,15 +696,14 @@ public class Editor implements CropEventListener, MouseListener,
             repaintEditFrame();
         }
 
-        @Override
-        public ArrowSelection copy(Point2D dest) {
+        @Override public ArrowDecoration copy(Point2D dest) {
             saveNeeded = true;
             Arrow output = getItem().clonus();
             output.x = dest.getX();
             output.y = dest.getY();
             arrows.add(output);
             repaintEditFrame();
-            return new ArrowSelection(arrows.size() - 1);
+            return new ArrowDecoration(arrows.size() - 1);
         }
 
         @Override public boolean isEditable() { return false; }
@@ -579,33 +739,54 @@ public class Editor implements CropEventListener, MouseListener,
 
         @Override public Color getColor() { return getItem().getColor(); }
 
-        @Override
-        public boolean equals(Object other) {
+        @Override public boolean equals(Object other) {
             if (this == other) return true;
-            if (this.getClass() != ArrowSelection.class) return false;
-            if (this.getClass() != other.getClass()) return false;
+            if (other == null || getClass() != other.getClass()) return false;
+            if (getClass() != ArrowDecoration.class) return false;
 
-            ArrowSelection cast = (ArrowSelection) other;
+            ArrowDecoration cast = (ArrowDecoration) other;
             return this.index == cast.index;
         }
+
+        @Override public ArrowDecoration getDecoration() {
+            return this;
+        }
+
+        @Override public DecorationHandle[] getHandles() {
+            return new DecorationHandle[] { this };
+        }
+
+		@Override
+		public Rectangle2D getBounds() {
+			// TODO Auto-generated method stub
+			return null;
+		}
+
+		@Override
+		public Rectangle2D getBounds(AffineTransform xform) {
+			// TODO Auto-generated method stub
+			return null;
+		}
     }
 
-    static enum TieLineHandle { INNER1, INNER2, OUTER1, OUTER2 };
+    static enum TieLineHandleType { INNER1, INNER2, OUTER1, OUTER2 };
 
-    class TieLineSelection implements Selectable {
-
-        /** Index into tieLines list. */
-        int index;
+    class TieLineHandle implements DecorationHandle {
+        TieLineDecoration decoration;
         /** A tie line is not a point object. It has up to four
          corners that can be used as handles to select it. */
-        TieLineHandle handle;
+        TieLineHandleType handle;
 
-        TieLineSelection(int index, TieLineHandle handle) {
-            this.index = index;
+        TieLineHandle(TieLineDecoration decoration, TieLineHandleType handle) {
+            this.decoration = decoration;
             this.handle = handle;
         }
 
-        TieLine getItem() { return tieLines.get(index); }
+        TieLineHandle(int index, TieLineHandleType handle) {
+            this(new TieLineDecoration(index), handle);
+        }
+
+        TieLine getItem() { return getDecoration().getItem(); }
 
         @Override public boolean isEditable() { return true; }
 
@@ -619,40 +800,11 @@ public class Editor implements CropEventListener, MouseListener,
             }
         }
 
-        @Override public void setLineWidth(double lineWidth) {
-            saveNeeded = true;
-            getItem().lineWidth = lineWidth;
-            repaintEditFrame();
+        @Override public DecorationHandle remove() {
+            return getDecoration().remove();
         }
 
-        @Override public double getLineWidth() {
-            return getItem().lineWidth;
-        }
-
-        @Override public void setLineStyle(StandardStroke lineStyle) {
-            saveNeeded = true;
-            getItem().stroke = lineStyle;
-            repaintEditFrame();
-        }
-
-        @Override
-        public TieLineSelection remove() {
-            saveNeeded = true;
-            tieLines.remove(index);
-            repaintEditFrame();
-            return null;
-        }
-
-        @Override
-        public void move(Point2D dest) {
-            // Tie line movement happens indirectly: normally,
-            // everything at a key point moves at once, which means
-            // that the control point that delimits the tie line moves
-            // with it. No additional work is required here.
-        }
-
-        @Override
-        public TieLineSelection copy(Point2D dest) {
+        @Override public TieLineHandle copy(Point2D dest) {
             JOptionPane.showMessageDialog
                 (editFrame, "Tie lines cannot be copied.");
             return this;
@@ -674,38 +826,119 @@ public class Editor implements CropEventListener, MouseListener,
             return null;
         }
 
+        @Override public void move(Point2D dest) {
+            // Tie line movement happens indirectly: normally,
+            // everything at a key point moves at once, which means
+            // that the control point that delimits the tie line moves
+            // with it. No additional work is required here.
+        }
+
+        @Override public boolean equals(Object other) {
+            if (this == other) return true;
+            if (other == null || getClass() != other.getClass()) return false;
+            if (getClass() != TieLineHandle.class) return false;
+
+            TieLineHandle cast = (TieLineHandle) other;
+            return handle == cast.handle
+                && getDecoration().equals(cast.getDecoration());
+        }
+
+        @Override public TieLineDecoration getDecoration() {
+            return decoration;
+        }
+    }
+
+    class TieLineDecoration implements Decoration {
+        /** Index into tieLines list. */
+        int index;
+
+        TieLineDecoration(int index) {
+            this.index = index;
+        }
+
+        TieLine getItem() { return tieLines.get(index); }
+
+        @Override public void draw(Graphics2D g, double scale) {
+            getItem().draw(g, getPrincipalToAlignedPage(), scale);
+        }
+
+        @Override public void setLineWidth(double lineWidth) {
+            saveNeeded = true;
+            getItem().lineWidth = lineWidth;
+            repaintEditFrame();
+        }
+
+        @Override public double getLineWidth() {
+            return getItem().lineWidth;
+        }
+
+        @Override public void setLineStyle(StandardStroke lineStyle) {
+            saveNeeded = true;
+            getItem().stroke = lineStyle;
+            repaintEditFrame();
+        }
+
+        @Override public DecorationHandle remove() {
+            saveNeeded = true;
+            tieLines.remove(index);
+            repaintEditFrame();
+            return null;
+        }
+
         @Override public void setColor(Color color) {
             saveNeeded = true;
             getItem().setColor(color);
         }
+
         @Override public Color getColor() { return getItem().getColor(); }
 
-        @Override
-        public boolean equals(Object other) {
+        @Override public boolean equals(Object other) {
             if (this == other) return true;
-            if (this.getClass() != TieLineSelection.class) return false;
-            if (this.getClass() != other.getClass()) return false;
+            if (other == null || getClass() != other.getClass()) return false;
+            if (getClass() != TieLineDecoration.class) return false;
 
-            TieLineSelection cast = (TieLineSelection) other;
-            return index == cast.index && handle == cast.handle;
+            TieLineDecoration cast = (TieLineDecoration) other;
+            return index == cast.index;
         }
+
+        @Override public DecorationHandle[] getHandles() {
+            ArrayList<TieLineHandle> output = new ArrayList<>();
+            for (TieLineHandleType handle: TieLineHandleType.values()) {
+                output.add(new TieLineHandle(this, handle));
+            }
+            return output.toArray(new TieLineHandle[0]);
+        }
+
+		@Override
+		public Rectangle2D getBounds() {
+			// TODO Auto-generated method stub
+			return null;
+		}
+
+		@Override
+		public Rectangle2D getBounds(AffineTransform xform) {
+			// TODO Auto-generated method stub
+			return null;
+		}
     }
 
-    static enum RulerHandle { START, END };
+    static enum RulerHandleType { START, END };
 
-    class RulerSelection implements Selectable {
-
-        /** Index into rulers list. */
-        int index;
+    class RulerHandle implements DecorationHandle {
+        RulerDecoration decoration;
         /** Either end of the ruler may be used as a handle. */
-        RulerHandle handle; 
+        RulerHandleType handle; 
 
-        RulerSelection(int index, RulerHandle handle) {
-            this.index = index;
+        RulerHandle(RulerDecoration decoration, RulerHandleType handle) {
+            this.decoration = decoration;
             this.handle = handle;
         }
 
-        LinearRuler getItem() { return rulers.get(index); }
+        RulerHandle(int index, RulerHandleType handle) {
+            this(new RulerDecoration(index), handle);
+        }
+
+        LinearRuler getItem() { return getDecoration().getItem(); }
 
         @Override public boolean isEditable() { return true; }
 
@@ -716,6 +949,88 @@ public class Editor implements CropEventListener, MouseListener,
                 saveNeeded = true;
                 repaintEditFrame();
             }
+        }
+
+        @Override public DecorationHandle remove() {
+            return getDecoration().remove();
+        }
+
+        @Override public void move(Point2D dest) {
+            Point2D.Double d = new Point2D.Double(dest.getX(), dest.getY());
+
+            switch (handle) {
+            case START:
+                getItem().startPoint = d;
+                break;
+            case END:
+                getItem().endPoint = d;
+                break;
+            }
+
+            saveNeeded = true;
+            repaintEditFrame();
+        }
+
+        @Override public RulerHandle copy(Point2D dest) {
+            saveNeeded = true;
+            Point2D.Double d = new Point2D.Double(dest.getX(), dest.getY());
+            LinearRuler r = getItem().clone();
+            double dx = r.endPoint.x - r.startPoint.x;
+            double dy = r.endPoint.y - r.startPoint.y;
+            
+            switch (handle) {
+            case START:
+                r.startPoint = d;
+                r.endPoint = new Point2D.Double(d.x + dx, d.y + dy);
+                break;
+            case END:
+                r.endPoint = d;
+                r.startPoint = new Point2D.Double(d.x - dx, d.y - dy);
+                break;
+            }
+
+            rulers.add(r);
+            repaintEditFrame();
+            return new RulerHandle(rulers.size() - 1, handle);
+        }
+
+        @Override public Point2D.Double getLocation() {
+            switch (handle) {
+            case START:
+                return (Point2D.Double) getItem().startPoint.clone();
+            case END:
+                return (Point2D.Double) getItem().endPoint.clone();
+            }
+
+            return null;
+        }
+
+        @Override public boolean equals(Object other) {
+            if (this == other) return true;
+            if (other == null || getClass() != other.getClass()) return false;
+            if (getClass() != RulerHandle.class) return false;
+
+            RulerHandle cast = (RulerHandle) other;
+            return handle == cast.handle && getDecoration().equals(cast.getDecoration());
+        }
+
+        @Override public RulerDecoration getDecoration() {
+            return decoration;
+        }
+    }
+
+    class RulerDecoration implements Decoration {
+        /** Index into rulers list. */
+        int index;
+
+        RulerDecoration(int index) {
+            this.index = index;
+        }
+
+        LinearRuler getItem() { return rulers.get(index); }
+
+        @Override public void draw(Graphics2D g, double scale) {
+            getItem().draw(g, getPrincipalToAlignedPage(), scale);
         }
 
         @Override public void setLineWidth(double lineWidth) {
@@ -737,62 +1052,10 @@ public class Editor implements CropEventListener, MouseListener,
             // Nothing to do here
         }
 
-        @Override
-        public RulerSelection remove() {
+        @Override public DecorationHandle remove() {
             saveNeeded = true;
             rulers.remove(index);
             repaintEditFrame();
-            return null;
-        }
-
-        @Override public void move(Point2D dest) {
-            Point2D.Double d = new Point2D.Double(dest.getX(), dest.getY());
-
-            switch (handle) {
-            case START:
-                getItem().startPoint = d;
-                break;
-            case END:
-                getItem().endPoint = d;
-                break;
-            }
-
-            saveNeeded = true;
-            repaintEditFrame();
-        }
-
-        @Override public RulerSelection copy(Point2D dest) {
-            saveNeeded = true;
-            Point2D.Double d = new Point2D.Double(dest.getX(), dest.getY());
-            LinearRuler r = getItem().clone();
-            double dx = r.endPoint.x - r.startPoint.x;
-            double dy = r.endPoint.y - r.startPoint.y;
-            
-            switch (handle) {
-            case START:
-                r.startPoint = d;
-                r.endPoint = new Point2D.Double(d.x + dx, d.y + dy);
-                break;
-            case END:
-                r.endPoint = d;
-                r.startPoint = new Point2D.Double(d.x - dx, d.y - dy);
-                break;
-            }
-
-            rulers.add(r);
-            repaintEditFrame();
-            return new RulerSelection(rulers.size() - 1, handle);
-        }
-
-        @Override
-        public Point2D.Double getLocation() {
-            switch (handle) {
-            case START:
-                return (Point2D.Double) getItem().startPoint.clone();
-            case END:
-                return (Point2D.Double) getItem().endPoint.clone();
-            }
-
             return null;
         }
 
@@ -802,14 +1065,31 @@ public class Editor implements CropEventListener, MouseListener,
         }
         @Override public Color getColor() { return getItem().getColor(); }
 
-        @Override
-        public boolean equals(Object other) {
+        @Override public boolean equals(Object other) {
             if (this == other) return true;
-            if (this.getClass() != RulerSelection.class) return false;
-            if (this.getClass() != other.getClass()) return false;
+            if (other == null || getClass() != other.getClass()) return false;
+            if (getClass() != RulerDecoration.class) return false;
 
-            RulerSelection cast = (RulerSelection) other;
-            return index == cast.index && handle == cast.handle;
+            RulerDecoration cast = (RulerDecoration) other;
+            return index == cast.index;
+        }
+
+        @Override public DecorationHandle[] getHandles() {
+            ArrayList<RulerHandle> output = new ArrayList<>();
+            for (RulerHandleType handle: RulerHandleType.values()) {
+                output.add(new RulerHandle(this, handle));
+            }
+            return output.toArray(new DecorationHandle[0]);
+        }
+
+        @Override public Rectangle2D getBounds() {
+            // TODO Auto-generated method stub
+            return null;
+        }
+
+        @Override public Rectangle2D getBounds(AffineTransform xform) {
+            // TODO Auto-generated method stub
+            return null;
         }
     }
 
@@ -910,7 +1190,7 @@ public class Editor implements CropEventListener, MouseListener,
     protected BufferedImage originalImage;
     protected String originalFilename;
     /** The item (vertex, label, etc.) that is selected, or null if nothing is. */
-    protected Selectable selection;
+    protected DecorationHandle selection;
     /** If the timer exists, the original image (if any) upon which
         the new diagram is overlaid will blink. */
     Timer imageBlinker = null;
@@ -1078,57 +1358,72 @@ public class Editor implements CropEventListener, MouseListener,
         return null;
     }
 
-    @JsonIgnore
-    VertexSelection getSelectedVertex() {
-        return (selection instanceof VertexSelection)
-            ? ((VertexSelection) selection)
+    @JsonIgnore VertexHandle getVertexHandle() {
+        return (selection instanceof VertexHandle)
+            ? ((VertexHandle) selection)
             : null;
     }
 
-    @JsonIgnore
-    LabelSelection getSelectedLabel() {
-        return (selection instanceof LabelSelection)
-            ? ((LabelSelection) selection)
+    @JsonIgnore CurveDecoration getSelectedCurve() {
+        return (selection instanceof VertexHandle)
+            ? ((VertexHandle) selection).getDecoration()
             : null;
     }
 
-    @JsonIgnore
-    TieLineSelection getSelectedTieLine() {
-        return (selection instanceof TieLineSelection)
-            ? ((TieLineSelection) selection)
+    @JsonIgnore LabelHandle getLabelHandle() {
+        return (selection instanceof LabelHandle)
+            ? ((LabelHandle) selection)
             : null;
     }
 
-    @JsonIgnore
-    RulerSelection getSelectedRuler() {
-        return (selection instanceof RulerSelection)
-            ? ((RulerSelection) selection)
+    @JsonIgnore LabelDecoration getSelectedLabel() {
+        return (selection instanceof LabelHandle)
+            ? ((LabelHandle) selection).getDecoration()
             : null;
     }
 
-    @JsonIgnore
-    ArrowSelection getSelectedArrow() {
-        return (selection instanceof ArrowSelection)
-            ? ((ArrowSelection) selection)
+    @JsonIgnore TieLineHandle getTieLineHandle() {
+        return (selection instanceof TieLineHandle)
+            ? ((TieLineHandle) selection)
+            : null;
+    }
+
+    @JsonIgnore TieLineDecoration getSelectedTieLine() {
+        return (selection instanceof TieLineHandle)
+            ? ((TieLineHandle) selection).getDecoration()
+            : null;
+    }
+
+    @JsonIgnore RulerHandle getRulerHandle() {
+        return (selection instanceof RulerHandle)
+            ? ((RulerHandle) selection)
+            : null;
+    }
+
+    @JsonIgnore RulerDecoration getRulerSelection() {
+        return (selection instanceof RulerHandle)
+            ? ((RulerHandle) selection).getDecoration()
+            : null;
+    }
+
+    @JsonIgnore ArrowDecoration getSelectedArrow() {
+        return (selection instanceof ArrowDecoration)
+            ? ((ArrowDecoration) selection)
             : null;
     }
 
     /** @return The currently selected GeneralPolyline, or null if no
         curve is selected. */
-    @JsonIgnore
-    public GeneralPolyline getActiveCurve() {
-        VertexSelection sel = getSelectedVertex();
-        return (sel == null)
-            ? null
-            : paths.get(sel.curveNo);
+    @JsonIgnore public GeneralPolyline getActiveCurve() {
+        CurveDecoration sel = getSelectedCurve();
+        return (sel == null) ? null : sel.getItem();
     }
 
-    @JsonIgnore
-    public Point2D.Double getActiveVertex() {
-        VertexSelection sel = getSelectedVertex();
-        return (sel == null)
-            ? null
-            : paths.get(sel.curveNo).get(sel.vertexNo);
+    /** @return The currently selected vertex, or null if no curve is
+        selected. */
+    @JsonIgnore public Point2D.Double getActiveVertex() {
+        VertexHandle handle = getVertexHandle();
+        return (handle == null) ? null : handle.getLocation();
     }
 
     public String[] getTags() {
@@ -1358,7 +1653,7 @@ public class Editor implements CropEventListener, MouseListener,
             (editFrame, "Choose color", true,
              colorChooser, new ActionListener() {
                  @Override public void actionPerformed(ActionEvent e) {
-                     Editor.this.selection.setColor(colorChooser.getColor());
+                     Editor.this.selection.getDecoration().setColor(colorChooser.getColor());
                      repaintEditFrame();
                  }
              },
@@ -1366,7 +1661,7 @@ public class Editor implements CropEventListener, MouseListener,
             colorDialog.pack();
         }
 
-        Color c = thisOrBlack(selection.getColor());
+        Color c = thisOrBlack(selection.getDecoration().getColor());
         colorChooser.setColor(c);
         colorDialog.setVisible(true);
     }
@@ -1396,7 +1691,7 @@ public class Editor implements CropEventListener, MouseListener,
         if (moveAll) {
             Point2D.Double p = selection.getLocation();
 
-            for (Selectable sel: selectables()) {
+            for (DecorationHandle sel: selectables()) {
                 if (principalCoordinatesMatch(p, sel.getLocation())) {
                     sel.move(dest);
                 }
@@ -1421,14 +1716,15 @@ public class Editor implements CropEventListener, MouseListener,
             return; // Nothing to do.
         }
 
-        VertexSelection sel = getSelectedVertex();
+        VertexHandle sel = getVertexHandle();
 
         if (sel == null) {
-            selection = sel = new VertexSelection((delta > 0) ? -1 : 0, -1);
+            selection = sel = new VertexHandle((delta > 0) ? -1 : 0, -1);
         }
+        CurveDecoration csel = sel.getDecoration();
 
-        sel.curveNo = (sel.curveNo + delta + paths.size()) % paths.size();
-        sel.vertexNo = paths.get(sel.curveNo).size() - 1;
+        csel.curveNo = (csel.curveNo + delta + paths.size()) % paths.size();
+        sel.vertexNo = sel.getItem().size() - 1;
         repaintEditFrame();
     }
 
@@ -1437,7 +1733,7 @@ public class Editor implements CropEventListener, MouseListener,
         @param delta if 1, then cycle forwards; if -1, then cycle
         backwards. */
     public void cycleActiveVertex(int delta) {
-        VertexSelection sel = getSelectedVertex();
+        VertexHandle sel = getVertexHandle();
 
         if (sel == null) {
             return; // Nothing to do.
@@ -1580,6 +1876,110 @@ public class Editor implements CropEventListener, MouseListener,
     }
 
 
+    void paintBackgroundImage(Graphics2D g, double scale) {
+        ScaledCroppedImage im = getScaledOriginalImage();
+        if (imageBlinker != null) {
+            if (darkImage != null
+                && im.imageBounds.equals(darkImage.imageBounds)
+                && im.cropBounds.equals(darkImage.cropBounds)) {
+                // The cached image darkImage can be used.
+                im = darkImage;
+            } else {
+                // Darken this image and cache it.
+                darkImage = new ScaledCroppedImage();
+                darkImage.imageBounds = (Rectangle) im.imageBounds.clone();
+                darkImage.cropBounds = (Rectangle) im.cropBounds.clone();
+                BufferedImage src = im.croppedImage;
+                darkImage.croppedImage = new BufferedImage
+                    (src.getWidth(), src.getHeight(), BufferedImage.TYPE_INT_RGB);
+                unfade(src, darkImage.croppedImage);
+                im = darkImage;
+            }
+        }
+        g.drawImage(im.croppedImage, im.cropBounds.x, im.cropBounds.y, null);
+    }
+
+
+    /** Show the result if the mouse point were added to the currently
+        selected curve in red, and show the currently selected curve in
+        green. */
+    void paintSelectedCurve(Graphics2D g, double scale) {
+                
+        // Color in red the curve that would exist if the
+        // current mouse position were added. Color in green
+        // the curve that already exists.
+
+        CurveDecoration csel = getSelectedCurve();
+        GeneralPolyline path = csel.getItem();
+
+        // Disable anti-aliasing for this phase because it
+        // prevents the green line from precisely overwriting
+        // the red line.
+
+        g.setRenderingHint(RenderingHints.KEY_ANTIALIASING,
+                           RenderingHints.VALUE_ANTIALIAS_OFF);
+
+        Point2D.Double extraVertex = mprin;
+        if (mouseIsStuckAtSelection()) {
+            // Show the point that would be added if the mouse
+            // became unstuck.
+            extraVertex = getMousePosition();
+        }
+
+
+        if (extraVertex != null && !isDuplicate(extraVertex)) {
+            // Add the current mouse position to the path
+            // immediately after the currently selected vertex,
+            // and draw the curve that results from this addition
+            // in red. Then remove the extra vertex.
+
+            // TODO TOFIX Will this start an infinite loop of repaints?
+
+            boolean oldSaveNeeded = saveNeeded;
+            Color oldColor = csel.getColor();
+            csel.setColor(Color.RED);
+
+            int vertexNo = getVertexHandle().vertexNo;
+            path.add(vertexNo + 1, extraVertex);
+            csel.draw(g, scale);
+            path.remove(vertexNo + 1);
+            csel.setColor(oldColor);
+            saveNeeded = oldSaveNeeded;
+        }
+
+        csel.draw(g, scale);
+        double r = Math.max(path.getLineWidth() * scale * 2.0, 4.0);
+        circleVertices(g, path, scale, false, r);
+
+        // Mark the active vertex specifically.
+        Point2D.Double point = getActiveVertex();
+        if (point != null) {
+            Point2D.Double xpoint = new Point2D.Double();
+            Affine p2d = principalToScaledPage(scale);
+            p2d.transform(point, xpoint);
+            g.fill(new Ellipse2D.Double
+                   (xpoint.x - r, xpoint.y - r, r * 2, r * 2));
+        }
+    }
+
+
+    /** Show the currently selected label in green. Differs from
+        ordinary Decoration handling because setColor() won't change
+        the color of a label. */
+    void paintSelectedLabel(Graphics2D g, double scale) {
+        LabelDecoration sel = getSelectedLabel();
+        Color c = sel.getColor();
+        // Calling setColor sets saveNeeded to true, but in
+        // this case nothing has changed yet, so reset it to
+        // what it was before afterwards.
+        boolean sn = saveNeeded;
+        sel.setColor(Color.GREEN);
+        sel.draw(g, scale);
+        sel.setColor(c);
+        saveNeeded = sn;
+    }
+
+
     /** Paint the diagram to the given graphics context.
 
         @param scale Scaling factor to convert standard page
@@ -1596,41 +1996,8 @@ public class Editor implements CropEventListener, MouseListener,
             return;
         }
 
-        EditFrame.BackgroundImage back = editFrame.getBackgroundImage();
-        boolean showImage = tracingImage() && editing
-            && back != EditFrame.BackgroundImage.NONE
-            && (back == EditFrame.BackgroundImage.GRAY
-                || backgroundImageEnabled);
-
-        if (showImage) {
-            ScaledCroppedImage im = getScaledOriginalImage();
-            if (imageBlinker != null) {
-                if (darkImage != null
-                    && im.imageBounds.equals(darkImage.imageBounds)
-                    && im.cropBounds.equals(darkImage.cropBounds)) {
-                    // The cached image darkImage can be used.
-                    im = darkImage;
-                } else {
-                    // Darken this image and cache it.
-                    darkImage = new ScaledCroppedImage();
-                    darkImage.imageBounds = (Rectangle) im.imageBounds.clone();
-                    darkImage.cropBounds = (Rectangle) im.cropBounds.clone();
-                    BufferedImage src = im.croppedImage;
-                    darkImage.croppedImage = new BufferedImage
-                        (src.getWidth(), src.getHeight(), BufferedImage.TYPE_INT_RGB);
-                    unfade(src, darkImage.croppedImage);
-                    im = darkImage;
-                }
-            }
-            g.drawImage(im.croppedImage, im.cropBounds.x, im.cropBounds.y,
-                        null);
-        } else {
-            // Draw a white box the size of the page.
-
-            if (editing) {
-                g.setColor(Color.WHITE);
-                g.fill(scaledPageBounds(scale));
-            }
+        if (selection == null) {
+            editing = false;
         }
 
         g.setRenderingHint(RenderingHints.KEY_ANTIALIASING,
@@ -1638,142 +2005,40 @@ public class Editor implements CropEventListener, MouseListener,
         g.setRenderingHint(RenderingHints.KEY_RENDERING,
                             RenderingHints.VALUE_RENDER_QUALITY);
 
-        int pathCnt = paths.size();
+        EditFrame.BackgroundImage back = editFrame.getBackgroundImage();
+        boolean showBackgroundImage = editing && tracingImage()
+            && back != EditFrame.BackgroundImage.NONE
+            && (back == EditFrame.BackgroundImage.GRAY
+                || backgroundImageEnabled);
 
-        VertexSelection vsel = editing ? getSelectedVertex() : null;
+        if (showBackgroundImage) {
+            paintBackgroundImage(g, scale);
+        } else {
+            // Draw a white box the size of the page.
 
-        for (int i = 0; i < pathCnt; ++i) {
-            if (vsel == null || vsel.curveNo != i) {
-                GeneralPolyline path = paths.get(i);
-                g.setColor(thisOrBlack(path.getColor()));
-                if (path.size() == 1) {
-                    if (path.getStroke() != StandardStroke.INVISIBLE) {
-                        double r = path.getLineWidth() * 2 * scale;
-                        circleVertices(g, path, scale, true, r);
-                    }
-                } else {
-                    draw(g, path, scale);
-                }
+            g.setColor(Color.WHITE);
+            g.fill(scaledPageBounds(scale));
+        }
+
+        ArrayList<Decoration> decorations = zelectables();
+
+        Decoration sel = editing ? selection.getDecoration() : null;
+        for (Decoration decoration: decorations) {
+            if (!decoration.equals(sel)) {
+                g.setColor(thisOrBlack(decoration.getColor()));
+                decoration.draw(g, scale);
             }
         }
 
-        if (false) {
-            // Yes, dead code -- but I turn it on often during
-            // debugging to mark key points...
-
-            Point2D.Double xpoint = new Point2D.Double();
-            Affine p2d = principalToScaledPage(scale);
-            for (Point2D.Double point: keyPoints()) {
-                p2d.transform(point, xpoint);
-                double r = 4.0;
-                g.fill(new Ellipse2D.Double
-                       (xpoint.x - r, xpoint.y - r, r * 2, r * 2));
-            }
-        }
-
-        {
-            ArrowSelection sel = editing ? getSelectedArrow() : null;
-            for (int i = 0; i < arrows.size(); ++i) {
-                Arrow item = arrows.get(i);
-                boolean selected = (sel != null && i == sel.index);
-                g.setColor(selected ? Color.GREEN
-                           : thisOrBlack(item.getColor()));
-                drawArrow(g, scale, item);
-                g.setColor(Color.BLACK);
-            }
-        }
-
-        {
-            TieLineSelection sel = editing ? getSelectedTieLine() : null;
-            for (int i = 0; i < tieLines.size(); ++i) {
-                TieLine item = tieLines.get(i);
-                boolean selected = (sel != null && i == sel.index);
-                g.setColor(selected ? Color.GREEN
-                           : thisOrBlack(item.getColor()));
-                draw(g, item, scale);
-            }
-        }
-
-        {
-            RulerSelection sel = editing ? getSelectedRuler() : null;
-            for (int i = 0; i < rulers.size(); ++i) {
-                LinearRuler item = rulers.get(i);
-                boolean selected = (sel != null && i == sel.index);
-                g.setColor(selected ? Color.GREEN
-                           : thisOrBlack(item.getColor()));
-                item.draw(g, getPrincipalToAlignedPage(), scale);
-            }
-        }
-
-        {
-            g.setColor(Color.BLACK);
-            LabelSelection sel = editing ? getSelectedLabel() : null;
-            for (int i = 0; i < labels.size(); ++i) {
-                boolean selected = (sel != null && i == sel.index);
-                if (!selected) { // Draw selection later.
-                    drawLabel(g, i, scale);
-                }
-            }
-        }
-
-        if (vsel != null) {
-            GeneralPolyline path = getActiveCurve();
-
-            // Disable anti-aliasing for this phase because it
-            // prevents the green line from precisely overwriting the
-            // red line.
-
-            g.setRenderingHint(RenderingHints.KEY_ANTIALIASING,
-                               RenderingHints.VALUE_ANTIALIAS_OFF);
-
-            Point2D.Double extraVertex = mprin;
-            if (mouseIsStuckAtSelection() && getSelectedVertex() != null) {
-                // Show the point that would be added if the mouse
-                // became unstuck.
-                extraVertex = getMousePosition();
-            }
-
-            if (extraVertex != null && !isDuplicate(extraVertex)) {
-                // Add the current mouse position to the path
-                // immediately after the currently selected vertex,
-                // and draw the curve that results from this addtion
-                // in red. Then remove the extra vertex.
-
-                g.setColor(Color.RED);
-                path.add(vsel.vertexNo + 1, extraVertex);
-                draw(g, path, scale);
-                path.remove(vsel.vertexNo + 1);
-            }
-
+        if (editing) {
             g.setColor(Color.GREEN);
-            draw(g, path, scale);
-            double r = Math.max(path.getLineWidth() * scale * 2.0, 4.0);
-            circleVertices(g, path, scale, false, r);
 
-            // Mark the active vertex specifically.
-            Point2D.Double point = getActiveVertex();
-            if (point != null) {
-                Point2D.Double xpoint = new Point2D.Double();
-                Affine p2d = principalToScaledPage(scale);
-                p2d.transform(point, xpoint);
-                g.fill(new Ellipse2D.Double
-                       (xpoint.x - r, xpoint.y - r, r * 2, r * 2));
-            }
-        }
-
-
-        { // Draw the label selection, if any.
-            LabelSelection sel = editing ? getSelectedLabel() : null;
-            if (sel != null) {
-                Color c= sel.getColor();
-                // Calling setColor sets saveNeeded to true, but in
-                // this case nothing has changed yet, so reset it to
-                // what it was before afterwards.
-                boolean sn = saveNeeded;
-                sel.setColor(Color.GREEN);
-                drawLabel(g, sel.index, scale);
-                sel.setColor(c);
-                saveNeeded = sn;
+            if (selection instanceof VertexHandle) {
+                paintSelectedCurve(g, scale);
+            } else if (selection instanceof LabelHandle) {
+                paintSelectedLabel(g, scale);
+            } else {
+                sel.draw(g, scale);
             }
         }
     }
@@ -1782,8 +2047,7 @@ public class Editor implements CropEventListener, MouseListener,
         If a curve was already selected, then that will be the return
         value; if no curve is selected, then start a new curve and
         return that. */
-    @JsonIgnore
-    public GeneralPolyline getCurveForAppend() {
+    @JsonIgnore public GeneralPolyline getCurveForAppend() {
         if (principalToStandardPage == null) {
             return null;
         }
@@ -1796,7 +2060,7 @@ public class Editor implements CropEventListener, MouseListener,
         paths.add(GeneralPolyline.create
                   (GeneralPolyline.LINEAR,
                    new Point2D.Double[0], lineStyle, lineWidth));
-        selection = new VertexSelection(paths.size() - 1, -1);
+        selection = new VertexHandle(paths.size() - 1, -1);
         return getActiveCurve();
     }
 
@@ -1822,12 +2086,10 @@ public class Editor implements CropEventListener, MouseListener,
         than when coming from the right) at interior vertices, but
         arbitarily choose the slope of the segment following the
         vertex if possible. */
-    public void showTangent(int curveNo, int vertexNo) {
-        if (vertexNo < 0) {
-            return;
-        }
-
-        GeneralPolyline path = paths.get(curveNo);
+    public void showTangent(VertexHandle vhand) {
+        int vertexNo = vhand.vertexNo;
+        CurveDecoration csel = vhand.getDecoration();
+        GeneralPolyline path = csel.getItem();
         int vertexCnt = path.size();
         if (vertexCnt == 1) {
             return;
@@ -1835,17 +2097,15 @@ public class Editor implements CropEventListener, MouseListener,
 
         Point2D.Double g = null;
 
-        if (vertexCnt >= 1) {
-            g = (vertexNo + 1 == vertexCnt)
-                ? path.getGradient(vertexNo - 1, 1.0)
-                : path.getGradient(vertexNo, 0.0);
-            if (g != null) {
-                principalToStandardPage.deltaTransform(g, g);
-            }
+        g = (vertexNo + 1 == vertexCnt)
+            ? path.getGradient(vertexNo - 1, 1.0)
+            : path.getGradient(vertexNo, 0.0);
+        if (g != null) {
+            principalToStandardPage.deltaTransform(g, g);
         }
 
         vertexInfo.setGradient(g);
-        vertexInfo.setLineWidth(path.getLineWidth());
+        vertexInfo.setLineWidth(csel.getLineWidth());
     }
 
     /** Return true if point p is the same as either the currently
@@ -1853,15 +2113,16 @@ public class Editor implements CropEventListener, MouseListener,
         The reason to care is that SplinePolyline barfs if you pass
         the same vertex twice in a row. */
     boolean isDuplicate(Point2D p) {
-        VertexSelection sel = getSelectedVertex();
-        if (sel == null) {
+        VertexHandle vhand = getVertexHandle();
+        if (vhand == null) {
             return false;
         }
+        if (vhand.getLocation().equals(p)) {
+            return true;
+        }
 
-        GeneralPolyline path = paths.get(sel.curveNo);
-
-        return (sel.vertexNo >= 0 && p.equals(path.get(sel.vertexNo)))
-            || (sel.vertexNo < path.size() - 1 && p.equals(path.get(sel.vertexNo + 1)));
+        GeneralPolyline path = vhand.getItem();
+        return vhand.vertexNo < path.size() - 1 && p.equals(path.get(vhand.vertexNo + 1));
     }
 
     /** Add a point to getActiveCurve(). */
@@ -1870,11 +2131,12 @@ public class Editor implements CropEventListener, MouseListener,
             return; // Adding the same point twice causes problems.
         }
         getCurveForAppend();
-        VertexSelection sel = getSelectedVertex();
+        VertexHandle vhand = getVertexHandle();
+        CurveDecoration csel = vhand.getDecoration();
 
-        add(paths.get(sel.curveNo), sel.vertexNo, point);
-        ++sel.vertexNo;
-        showTangent(sel.curveNo, sel.vertexNo);
+        add(csel.getItem(), vhand.vertexNo, point);
+        ++vhand.vertexNo;
+        showTangent(vhand);
         repaintEditFrame();
     }
 
@@ -2010,17 +2272,18 @@ public class Editor implements CropEventListener, MouseListener,
     }
 
     void tieLineCornerSelected() {
-        VertexSelection vsel = getSelectedVertex();
-        if (vsel == null) {
+        VertexHandle vhand = getVertexHandle();
+        if (vhand == null) {
             JOptionPane.showMessageDialog
                 (editFrame,
                  "You must select a vertex.");
             return;
         }
 
+        CurveDecoration csel = vhand.getDecoration();
         PathAndT pat = new PathAndT();
-        pat.path = paths.get(vsel.curveNo);
-        pat.t = pat.path.segmentToT(vsel.vertexNo, 0.0);
+        pat.path = csel.getItem();
+        pat.t = pat.path.segmentToT(vhand.vertexNo, 0.0);
 
         int oldCnt = tieLineCorners.size();
 
@@ -2067,7 +2330,7 @@ public class Editor implements CropEventListener, MouseListener,
         tie.ot1 = tieLineCorners.get(2).t;
         tie.ot2 = tieLineCorners.get(3).t;
 
-        selection = new TieLineSelection(tieLines.size(), TieLineHandle.OUTER2);
+        selection = new TieLineHandle(tieLines.size(), TieLineHandleType.OUTER2);
         tieLines.add(tie);
         saveNeeded = true;
         repaintEditFrame();
@@ -2153,20 +2416,20 @@ public class Editor implements CropEventListener, MouseListener,
             ruler.tickType = LinearRuler.TickType.V;
         }
 
-        VertexSelection vsel = getSelectedVertex();
-        ruler.startPoint = path.get(1 - vsel.vertexNo);
-        ruler.endPoint = path.get(vsel.vertexNo);
+        VertexHandle vhand = getVertexHandle();
+        ruler.startPoint = path.get(1 - vhand.vertexNo);
+        ruler.endPoint = path.get(vhand.vertexNo);
 
         if (!(new RulerDialog(editFrame, "Edit Ruler", ruler))
             .showModal(ruler)) {
             return;
         }
 
-        removeCurve(vsel.curveNo);
+        removeCurve(vhand.getCurveNo());
         rulers.add(ruler);
         saveNeeded = true;
 
-        selection = new RulerSelection(rulers.size() - 1, RulerHandle.END);
+        selection = new RulerHandle(rulers.size() - 1, RulerHandleType.END);
         repaintEditFrame();
     }
 
@@ -2221,12 +2484,12 @@ public class Editor implements CropEventListener, MouseListener,
                 return;
             }
         } else {
-            ArrayList<Selectable> points = nearestSelections();
+            ArrayList<DecorationHandle> points = nearestSelections();
             if (points.isEmpty()) {
                 return;
             }
 
-            Selectable sel = points.get(0);
+            DecorationHandle sel = points.get(0);
 
             if (selection != null) {
                 // Check if the old selection is one of the nearest
@@ -2245,9 +2508,8 @@ public class Editor implements CropEventListener, MouseListener,
 
             selection = sel;
 
-            if (sel instanceof VertexSelection) {
-                VertexSelection vsel = (VertexSelection) sel;
-                showTangent(vsel.curveNo, vsel.vertexNo);
+            if (sel instanceof VertexHandle) {
+                showTangent((VertexHandle) sel);
             }
 
             point = sel.getLocation();
@@ -2261,15 +2523,14 @@ public class Editor implements CropEventListener, MouseListener,
         existing set of vertices and insert the points in the normal
         forwards order. */
     public void reverseInsertionOrder() {
-        VertexSelection vsel = getSelectedVertex();
-        if (vsel == null) {
+        VertexHandle vhand = getVertexHandle();
+        if (vhand == null) {
             return;
         }
 
-        GeneralPolyline path = getActiveCurve();
-
-        ArrayList<Point2D.Double> points
-            = new ArrayList<Point2D.Double>();
+        CurveDecoration csel = vhand.getDecoration();
+        GeneralPolyline path = csel.getItem();
+        ArrayList<Point2D.Double> points = new ArrayList<>();
 
         if (path.isClosed()) {
             // Leave vertex #0 in place, but reverse the order of the
@@ -2280,8 +2541,8 @@ public class Editor implements CropEventListener, MouseListener,
                 points.add(path.get(i));
             }
 
-            if (vsel.vertexNo > 0) {
-                vsel.vertexNo = path.size() - vsel.vertexNo;
+            if (vhand.vertexNo > 0) {
+                vhand.vertexNo = path.size() - vhand.vertexNo;
             }
         } else {
             // Reverse the order of all vertices.
@@ -2290,7 +2551,7 @@ public class Editor implements CropEventListener, MouseListener,
                 points.add(path.get(i));
             }
 
-            vsel.vertexNo = path.size() - 1 - vsel.vertexNo;
+            vhand.vertexNo = path.size() - 1 - vhand.vertexNo;
         }
 
         for (TieLine tie: tieLines) {
@@ -2510,7 +2771,7 @@ public class Editor implements CropEventListener, MouseListener,
         newLabel.setX(mprin.x);
         newLabel.setY(mprin.y);
         add(newLabel);
-        selection = new LabelSelection(labels.size() - 1, LabelHandle.ANCHOR);
+        selection = new LabelHandle(labels.size() - 1, LabelHandleType.ANCHOR);
     }
 
     public void add(AnchoredLabel label) {
@@ -2625,7 +2886,7 @@ public class Editor implements CropEventListener, MouseListener,
     public void setLineStyle(StandardStroke lineStyle) {
         this.lineStyle = lineStyle;
         if (selection != null) {
-            selection.setLineStyle(lineStyle);
+            selection.getDecoration().setLineStyle(lineStyle);
         }
     }
 
@@ -2785,7 +3046,7 @@ public class Editor implements CropEventListener, MouseListener,
 
     /** @return a list of all selectable items located at the
         selectable point closest (by page distance) to mprin. */
-    ArrayList<Selectable> nearestSelections() {
+    ArrayList<DecorationHandle> nearestSelections() {
         if (mprin == null) {
             return null;
         }
@@ -2798,8 +3059,8 @@ public class Editor implements CropEventListener, MouseListener,
         // examined so far, as measured in standard page coordinates.
         double minDistSq = 0;
 
-        ArrayList<Selectable> sels = selectables();
-        for (Selectable sel: sels) {
+        ArrayList<DecorationHandle> sels = selectables();
+        for (DecorationHandle sel: sels) {
             Point2D.Double point = sel.getLocation();
             principalToStandardPage.transform(point, xpoint2);
             double distSq = xpoint.distanceSq(xpoint2);
@@ -2809,7 +3070,7 @@ public class Editor implements CropEventListener, MouseListener,
             }
         }
 
-        ArrayList<Selectable> output = new ArrayList<Selectable>();
+        ArrayList<DecorationHandle> output = new ArrayList<DecorationHandle>();
         if (nearPagePoint == null) {
             return output;
         }
@@ -2819,7 +3080,7 @@ public class Editor implements CropEventListener, MouseListener,
 
         double tinyDistSq = 1e-12;
 
-        for (Selectable sel: sels) {
+        for (DecorationHandle sel: sels) {
             principalToStandardPage.transform(sel.getLocation(), xpoint2);
             if (nearPagePoint.distanceSq(xpoint2) < tinyDistSq) {
                 output.add(sel);
@@ -2838,62 +3099,44 @@ public class Editor implements CropEventListener, MouseListener,
             output.add(p);
         }
 
-        for (Selectable m: selectables()) {
+        for (DecorationHandle m: selectables()) {
             output.add(m.getLocation());
         }
 
         return output;
     }
 
-    ArrayList<LabelSelection> labelSelections() {
-        ArrayList<LabelSelection> output
-            = new ArrayList<LabelSelection>();
+    /** @return a list of all possible selections. */
+    ArrayList<Decoration> zelectables() {
+        ArrayList<Decoration> output = new ArrayList<>();
 
-        for (int i = 0; i < labels.size(); ++i) {
-            output.add(new LabelSelection(i, LabelHandle.ANCHOR));
-            AnchoredLabel label = labels.get(i);
-            if (label.getXWeight() != 0.5 || label.getYWeight() != 0.5) {
-                output.add(new LabelSelection(i, LabelHandle.CENTER));
-            }
+        for (int i = 0; i < paths.size(); ++i) {
+            output.add(new CurveDecoration(i));
         }
+        for (int i = 0; i < labels.size(); ++i) {
+            output.add(new LabelDecoration(i));
+        }
+        for (int i = 0; i < arrows.size(); ++i) {
+            output.add(new ArrowDecoration(i));
+        }
+        for (int i = 0; i < tieLines.size(); ++i) {
+            output.add(new TieLineDecoration(i));
+        }
+        for (int i = 0; i < rulers.size(); ++i) {
+            output.add(new RulerDecoration(i));
+        }
+
         return output;
-   }
+    }
 
 
     /** @return a list of all possible selections. */
-    ArrayList<Selectable> selectables() {
-        ArrayList<Selectable> output
-            = new ArrayList<Selectable>();
+    ArrayList<DecorationHandle> selectables() {
+        ArrayList<DecorationHandle> output = new ArrayList<>();
 
-        // Add vertices of all curves.
-        for (int i = 0; i < paths.size(); ++i) {
-            GeneralPolyline path = paths.get(i);
-            for (int j = 0; j < path.size(); ++j) {
-                output.add(new VertexSelection(i,j));
-            }
+        for (Decoration selectable: zelectables()) {
+            output.addAll(Arrays.asList(selectable.getHandles()));
         }
-
-        output.addAll(labelSelections());
-
-        // Add arrows.
-        for (int i = 0; i < arrows.size(); ++i) {
-            output.add(new ArrowSelection(i));
-        }
-
-        // Add tie lines.
-        for (int i = 0; i < tieLines.size(); ++i) {
-            for (TieLineHandle handle: TieLineHandle.values()) {
-                output.add(new TieLineSelection(i, handle));
-            }
-        }
-
-        // Add rulers.
-        for (int i = 0; i < rulers.size(); ++i) {
-            for (RulerHandle handle: RulerHandle.values()) {
-                output.add(new RulerSelection(i, handle));
-            }
-        }
-
         return output;
     }
 
@@ -2951,7 +3194,7 @@ public class Editor implements CropEventListener, MouseListener,
         }
 
         Point2D.Double mousePage = principalToStandardPage.transform(mprin);
-        Selectable sel = null;
+        DecorationHandle sel = null;
         Point2D.Double gradient = null;
 
         CurveDistance minDist = null;
@@ -2971,7 +3214,7 @@ public class Editor implements CropEventListener, MouseListener,
                 isCloserToNext
                     = (pagePath.get(vertexNo).distanceSq(mousePage) >
                        pagePath.get(vertexNo + 1).distanceSq(mousePage));
-                sel = new VertexSelection(curveNo, vertexNo);
+                sel = new VertexHandle(curveNo, vertexNo);
 
                 // TODO Have to decide whether to use principal
                 // coordinates for gradients or not, but continue to
@@ -2998,9 +3241,11 @@ public class Editor implements CropEventListener, MouseListener,
                 isCloserToNext
                     = (pagePath.get(vertexNo).distanceSq(mousePage) >
                        pagePath.get(vertexNo + 1).distanceSq(mousePage));
-                sel = new RulerSelection
+                sel = new RulerHandle
                     (rulerNo,
-                     isCloserToNext? RulerHandle.END : RulerHandle.START);
+                     isCloserToNext
+                     ? RulerHandleType.END
+                     : RulerHandleType.START);
 
                 // TODO Have to decide whether to use principal
                 // coordinates for gradients or not, but continue to
@@ -3015,14 +3260,14 @@ public class Editor implements CropEventListener, MouseListener,
 
         if (select) {
             selection = sel;
-            if (sel instanceof VertexSelection) {
-                VertexSelection vsel = getSelectedVertex();
+            if (sel instanceof VertexHandle) {
+                VertexHandle vhand = getVertexHandle();
                 if (isCloserToNext) {
                     // pagePoint is closer to the next vertex than to this
                     // one. Incrementing the selection number, possibly
                     // cycling back to 0 for closed curves.
-                    vsel.vertexNo = (vsel.vertexNo + 1)
-                        % paths.get(vsel.curveNo).size();
+                    vhand.vertexNo = (vhand.vertexNo + 1)
+                        % paths.get(vhand.getCurveNo()).size();
 
                     // Incrementing vertexNo introduces a new problem: if
                     // we added a new vertex at this moment, it would be
@@ -3036,7 +3281,7 @@ public class Editor implements CropEventListener, MouseListener,
         moveMouse(standardPageToPrincipal.transform(minDist.point));
         mouseIsStuck = true;
         vertexInfo.setGradient(gradient);
-        vertexInfo.setLineWidth(sel.getLineWidth());
+        vertexInfo.setLineWidth(sel.getDecoration().getLineWidth());
     }
 
     public void toggleSmoothing() {
@@ -3062,7 +3307,7 @@ public class Editor implements CropEventListener, MouseListener,
             }
         }
 
-        paths.set(getSelectedVertex().curveNo, path);
+        paths.set(getVertexHandle().getCurveNo(), path);
         repaintEditFrame();
     }
 
@@ -4516,7 +4761,7 @@ public class Editor implements CropEventListener, MouseListener,
         if (principalToStandardPage == null) {
             return;
         }
-        if (mouseIsStuckAtSelection() && getSelectedVertex() != null) {
+        if (mouseIsStuckAtSelection() && getVertexHandle() != null) {
             unstickMouse();
         }
         add(mprin);
@@ -4670,7 +4915,7 @@ public class Editor implements CropEventListener, MouseListener,
     void setLineWidth(double lineWidth) {
         this.lineWidth = lineWidth;
         if (selection != null) {
-            selection.setLineWidth(lineWidth);
+            selection.getDecoration().setLineWidth(lineWidth);
         }
     }
 
@@ -4934,16 +5179,20 @@ public class Editor implements CropEventListener, MouseListener,
         if (label.isOpaque()) {
             Color oldColor = g.getColor();
             g.setColor(Color.WHITE);
-            boxHTML(g, view, scale * label.getFontSize(),
+            htmlBox(g, view, scale * label.getFontSize(),
                     angle, point.x * scale, point.y * scale,
-                    label.getXWeight(), label.getYWeight(), true);
+                    label.getXWeight(), label.getYWeight(),
+                    label.getBaselineXOffset(), label.getBaselineYOffset(),
+                    true);
             g.setColor(oldColor);
         }
 
         if (label.isBoxed()) {
-            boxHTML(g, view, scale * label.getFontSize(),
+            htmlBox(g, view, scale * label.getFontSize(),
                     angle, point.x * scale, point.y * scale,
-                    label.getXWeight(), label.getYWeight(), false);
+                    label.getXWeight(), label.getYWeight(),
+                    label.getBaselineXOffset(), label.getBaselineYOffset(),
+                    false);
         }
 
         Point2D.Double centerPage = new Point2D.Double();
@@ -5084,19 +5333,27 @@ public class Editor implements CropEventListener, MouseListener,
         g2d.setTransform(oldxform);
     }
 
+    Rectangle2D.Double htmlBounds
+        (View view, double scale, double angle,
+         double ax, double ay, double xWeight, double yWeight,
+         double baselineXOffset, double baselineYOffset) {
+        ArrayList<Point2D.Double> boundary = htmlBoundary
+            (view, scale, angle, ax, ay, xWeight, yWeight, baselineXOffset, baselineYOffset);
+        return Duh.bounds(boundary.toArray(new Point2D.Double[0]));
+    }
 
-    /** Create a box in the space that the given view would enclose.
-
-        @param fill If true, make a solid box. If false, draw a box outline. */
-    void boxHTML(Graphics g, View view, double scale, double angle,
-                  double ax, double ay,
-                 double xWeight, double yWeight, boolean fill) {
+    /** @return an array of 4 points that form a box that contains the
+        given view after the various modifications are applied. */
+    ArrayList<Point2D.Double> htmlBoundary
+        (View view, double scale, double angle,
+         double ax, double ay, double xWeight, double yWeight,
+         double baselineXOffset, double baselineYOffset) {
         scale /= VIEW_MAGNIFICATION;
         double width = view.getPreferredSpan(View.X_AXIS) + labelXMargin * 2;
         double height = view.getPreferredSpan(View.Y_AXIS) + labelYMargin * 2;
-
-        Graphics2D g2d = (Graphics2D) g;
         double textScale = scale / BASE_SCALE;
+
+        ArrayList<Point2D.Double> output = new ArrayList<>();
 
         AffineTransform baselineToPage = AffineTransform.getRotateInstance(angle);
         baselineToPage.scale(textScale, textScale);
@@ -5107,19 +5364,50 @@ public class Editor implements CropEventListener, MouseListener,
         ax -= xpoint.x;
         ay -= xpoint.y;
 
+        Point2D.Double baselineOffset = new Point2D.Double
+            (baselineXOffset, baselineYOffset);
+        baselineToPage.transform
+            (baselineOffset, baselineOffset);
+
+        ax += baselineOffset.x;
+        ay += baselineOffset.y;
+
         // Now (ax, ay) represents the (in baseline coordinates) upper
         // left corner of the text block expanded by the x- and
         // y-margins.
-        Path2D.Double path = new Path2D.Double();
-        path.moveTo(ax, ay);
+        output.add(new Point2D.Double(ax, ay));
         baselineToPage.transform(new Point2D.Double(width, 0), xpoint);
-        path.lineTo(ax + xpoint.x, ay + xpoint.y);
+        output.add(new Point2D.Double(ax + xpoint.x, ay + xpoint.y));
         baselineToPage.transform(new Point2D.Double(width, height), xpoint);
-        path.lineTo(ax + xpoint.x, ay + xpoint.y);
+        output.add(new Point2D.Double(ax + xpoint.x, ay + xpoint.y));
         baselineToPage.transform(new Point2D.Double(0, height), xpoint);
-        path.lineTo(ax + xpoint.x, ay + xpoint.y);
+        output.add(new Point2D.Double(ax + xpoint.x, ay + xpoint.y));
+        return output;
+    }
+
+
+    /** Create a box in the space that the given view would enclose.
+
+        @param fill If true, make a solid box. If false, draw a box outline. */
+    void htmlBox(Graphics g, View view, double scale, double angle,
+                 double ax, double ay,
+                 double xWeight, double yWeight,
+                 double baselineXOffset, double baselineYOffset, boolean fill) {
+        ArrayList<Point2D.Double> boundary = htmlBoundary
+            (view, scale, angle, ax, ay, xWeight, yWeight, baselineXOffset, baselineYOffset);
+
+        Path2D.Double path = new Path2D.Double();
+        boolean firstPoint = true;
+        for (Point2D.Double point: boundary) {
+            if (firstPoint) {
+                path.moveTo(point.getX(), point.getY());
+            } else {
+                path.lineTo(point.getX(), point.getY());
+            }
+        }
         path.closePath();
 
+        Graphics2D g2d = (Graphics2D) g;
         if (fill) {
             g2d.fill(path);
         } else {
