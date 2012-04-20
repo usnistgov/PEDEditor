@@ -44,6 +44,7 @@ public class LabelDialog extends JDialog {
     JCheckBox mIsOpaque = new JCheckBox("Opaque background");
     JCheckBox mIsBoxed = new JCheckBox("Box label");
     JTextField fontSize = new JTextField("100%", 10);
+    JTextField codePoint = new JTextField(10);
 
     /** Text angle in degrees, where 0 = left-to-right and 90 =
         bottom-to-top. */
@@ -122,6 +123,13 @@ public class LabelDialog extends JDialog {
         }
     }
 
+    public void insertText(String s) {
+        String str = textField.getText();
+        textField.setText
+            (str.substring(0, textField.getSelectionStart()) + s
+             + str.substring(textField.getSelectionEnd()));
+    }
+
     LabelDialog(Frame owner, String title, Font font) {
         super(owner, "Edit Text", true);
 
@@ -144,18 +152,12 @@ public class LabelDialog extends JDialog {
             GridBagUtil gb = new GridBagUtil(panel);
 
             StringPalettePanel pal;
-
             StringEventListener listen = new StringEventListener() {
                     @Override public void actionPerformed(StringEvent e) {
-                        String str = textField.getText();
-                        textField.setText
-                            (str.substring(0, textField.getSelectionStart()) +
-                             e.getString()
-                             + str.substring(textField.getSelectionEnd()));
+                        insertText(e.getString());
                     }
                 };
 
-            // Kind of a hack to bring in the no-symbol. TODO fix.
             pal = new StringPalettePanel(new HTMLPalette(), 5, font);
             pal.addListener(listen);
             gb.endRowWith(pal);
@@ -172,6 +174,35 @@ public class LabelDialog extends JDialog {
         {
             JPanel panel = new JPanel();
             GridBagUtil gb = new GridBagUtil(panel);
+
+            JLabel codePointLabel = new JLabel("Unicode code point (hex):");
+            codePointLabel.setLabelFor(codePoint);
+            gb.addWest(codePointLabel);
+            gb.addWest(codePoint);
+            gb.endRowWith
+                (new JButton(new AbstractAction("Insert") {
+                        private static final long serialVersionUID = 197868896745807236L;
+
+                        @Override public void actionPerformed(ActionEvent e) {
+                            String hex = codePoint.getText();
+                            int codePoint;
+
+                            try {
+                                codePoint = Integer.parseInt(hex, 16);
+                                String utfChar = new String(Character.toChars(codePoint));
+                                insertText(utfChar);
+                            } catch (NumberFormatException nfe) {
+                                JOptionPane.showMessageDialog
+                                    (null, "'" + hex + "' is not a valid input.\n" +
+                                     "Enter a hexadecimal number such as '25bc'.");
+                                return;
+                            } catch (IllegalArgumentException iae) {
+                                JOptionPane.showMessageDialog
+                                    (null, "'" + hex + "' is not a valid Unicode code point.\n");
+                                return;
+                            }
+                        }
+                    }));
 
             gb.endRowWith
                 (new JButton(new AbstractAction("H2SO4 \u2192 H\u2082SO\u2084") {
