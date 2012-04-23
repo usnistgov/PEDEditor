@@ -113,6 +113,7 @@ public abstract class GeneralPolyline {
         GeneralPolyline output
             = create(smoothingType, getPoints(),
                      getStroke(), getLineWidth());
+        output.setColor(getColor());
         output.setClosed(isClosed());
         return output;
     }
@@ -121,6 +122,7 @@ public abstract class GeneralPolyline {
         GeneralPolyline output
             = create(getSmoothingType(), getPoints(),
                      getStroke(), getLineWidth());
+        output.setColor(getColor());
         output.setClosed(isClosed());
         return output;
     }
@@ -223,7 +225,16 @@ public abstract class GeneralPolyline {
                      double scale) {
         AffineTransform xform = AffineTransform.getScaleInstance(scale, scale);
         xform.concatenate(originalToSquarePixel);
+        Color oldColor = g.getColor();
+        Color color = getColor();
+        if (color != null) {
+            g.setColor(color);
+        }
         stroke.getStroke().draw(g, getPath(xform), scale * lineWidth);
+
+        if (color != null) {
+            g.setColor(oldColor);
+        }
     }
 
 
@@ -263,35 +274,6 @@ public abstract class GeneralPolyline {
                                stroke.getEndCap(), stroke.getLineJoin(),
                                stroke.getMiterLimit(), dashes,
                                stroke.getDashPhase() * scale);
-    }
-
-
-    /** curveTo() seems to determine its linearization granularity
-        without regard to the transform defined for the Graphics2D, or
-        at least without regard to deviations from the default
-        transform. This results in unacceptable image quality if the
-        path is decribed in standardPage coordinates (which are in
-        [0,1]) and then transformed into a much larger range such as
-        [0,800].
-
-        A possible work-around would be to blow up standardPage by the
-        maximum of the 4 scaling and shear coefficients (to insure
-        that curveTo's polyline approximation has sufficient
-        resolution) and then correspondingly shrink the final
-        transformation.
-     */
-    void draw(Graphics2D g, Path2D path, double strokeScale) {
-        Color oldColor = g.getColor();
-        Color color = getColor();
-        if (color != null) {
-            g.setColor(color);
-        }
-
-        stroke.getStroke().draw(g, path, lineWidth * strokeScale);
-
-        if (color != null) {
-            g.setColor(oldColor);
-        }
     }
 
     /** @return null unless this polyline has been assigned a
