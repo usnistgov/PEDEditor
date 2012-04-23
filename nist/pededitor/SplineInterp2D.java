@@ -30,6 +30,29 @@ public class SplinePolyline extends GeneralPolyline {
         points.set(vertexNo, new Point2D.Double(point.getX(), point.getY()));
     }
 
+    @Override public void add(Point2D.Double point) {
+        spline = null;
+        super.add(point);
+    }
+
+    /** Add the point to the polyline in the given position. */
+    @Override public void add(int index, Point2D.Double point) {
+        spline = null;
+        super.add(index, point);
+    }
+
+    /** Remove the last point added. */
+    @Override public void remove() {
+        spline = null;
+        super.remove();
+    }
+
+    /** Remove the given vertex. */
+    @Override public void remove(int vertexNo) {
+        spline = null;
+        super.remove(vertexNo);
+    }
+
     @Override public void setPoints(Collection<Point2D.Double> points) {
         super.setPoints(points);
         spline = null;
