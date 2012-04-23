@@ -1436,7 +1436,6 @@ public class Editor implements CropEventListener, MouseListener,
             removeTag(tag);
         }
         for (String tag: newTags) {
-            System.out.println("  tag " + tag);
             addTag(tag);
         }
     }
@@ -1506,6 +1505,7 @@ public class Editor implements CropEventListener, MouseListener,
         put(values[0], values[1]);
     }
 
+
     public void listKeyValues() {
         Set<Map.Entry<String,String>> entries = keyValues.entrySet();
         String[] keys = new String[keyValues.size()];
@@ -1534,6 +1534,7 @@ public class Editor implements CropEventListener, MouseListener,
         }
     }
 
+
     /** Remove the given key from the keyValues field, and return its
         value, or null if absent. */
     public String removeKey(String key) {
@@ -1542,6 +1543,7 @@ public class Editor implements CropEventListener, MouseListener,
         updateTitle();
         return output;
     }
+
 
     public synchronized void setBackground(EditFrame.BackgroundImage value) {
         // Turn blinking off
@@ -1691,7 +1693,7 @@ public class Editor implements CropEventListener, MouseListener,
         if (moveAll) {
             Point2D.Double p = selection.getLocation();
 
-            for (DecorationHandle sel: selectables()) {
+            for (DecorationHandle sel: getDecorationHandles()) {
                 if (principalCoordinatesMatch(p, sel.getLocation())) {
                     sel.move(dest);
                 }
@@ -1844,7 +1846,7 @@ public class Editor implements CropEventListener, MouseListener,
     public void paintEditPane(Graphics g0) {
         updateMousePosition();
         Graphics2D g = (Graphics2D) g0;
-        paintDiagram(g, scale, true);
+        paintDiagram(g, scale, true, true);
     }
 
 
@@ -1979,6 +1981,9 @@ public class Editor implements CropEventListener, MouseListener,
         saveNeeded = sn;
     }
 
+    public void paintDiagram(Graphics2D g, double scale) {
+        paintDiagram(g, scale, false, true);
+    }
 
     /** Paint the diagram to the given graphics context.
 
@@ -1989,8 +1994,13 @@ public class Editor implements CropEventListener, MouseListener,
         the currently active curve in green, show the consequences of
         adding the current mouse position in red, etc.). If false,
         show the final form of the diagram. This parameter should be
-        false except while painting the editFrame. */
-    public void paintDiagram(Graphics2D g, double scale, boolean editing) {
+        false except while painting the editFrame.
+
+        @param drawBackground If false, do not draw the background.
+
+ */
+    public void paintDiagram(Graphics2D g, double scale, boolean editing,
+                             boolean drawBackground) {
         if (principalToStandardPage == null
             || paintSuppressionRequestCnt > 0) {
             return;
@@ -2005,22 +2015,26 @@ public class Editor implements CropEventListener, MouseListener,
         g.setRenderingHint(RenderingHints.KEY_RENDERING,
                             RenderingHints.VALUE_RENDER_QUALITY);
 
-        EditFrame.BackgroundImage back = editFrame.getBackgroundImage();
-        boolean showBackgroundImage = editing && tracingImage()
-            && back != EditFrame.BackgroundImage.NONE
-            && (back == EditFrame.BackgroundImage.GRAY
-                || backgroundImageEnabled);
+        if (drawBackground) {
+            EditFrame.BackgroundImage back = editFrame.getBackgroundImage();
+            boolean showBackgroundImage = editing && tracingImage()
+                && back != EditFrame.BackgroundImage.NONE
+                && (back == EditFrame.BackgroundImage.GRAY
+                    || backgroundImageEnabled);
 
-        if (showBackgroundImage) {
-            paintBackgroundImage(g, scale);
-        } else {
-            // Draw a white box the size of the page.
+            if (showBackgroundImage) {
+                paintBackgroundImage(g, scale);
+            } else {
+                // Draw a white box the size of the page.
 
-            g.setColor(Color.WHITE);
-            g.fill(scaledPageBounds(scale));
+                g.setColor(Color.WHITE);
+                if (pageBounds.width > 0) {
+                    g.fill(scaledPageBounds(scale));
+                }
+            }
         }
 
-        ArrayList<Decoration> decorations = zelectables();
+        ArrayList<Decoration> decorations = getDecorations();
 
         Decoration sel = editing ? selection.getDecoration() : null;
         for (Decoration decoration: decorations) {
@@ -3059,7 +3073,7 @@ public class Editor implements CropEventListener, MouseListener,
         // examined so far, as measured in standard page coordinates.
         double minDistSq = 0;
 
-        ArrayList<DecorationHandle> sels = selectables();
+        ArrayList<DecorationHandle> sels = getDecorationHandles();
         for (DecorationHandle sel: sels) {
             Point2D.Double point = sel.getLocation();
             principalToStandardPage.transform(point, xpoint2);
@@ -3099,7 +3113,7 @@ public class Editor implements CropEventListener, MouseListener,
             output.add(p);
         }
 
-        for (DecorationHandle m: selectables()) {
+        for (DecorationHandle m: getDecorationHandles()) {
             output.add(m.getLocation());
         }
 
@@ -3107,7 +3121,7 @@ public class Editor implements CropEventListener, MouseListener,
     }
 
     /** @return a list of all possible selections. */
-    ArrayList<Decoration> zelectables() {
+    @JsonIgnore ArrayList<Decoration> getDecorations() {
         ArrayList<Decoration> output = new ArrayList<>();
 
         for (int i = 0; i < paths.size(); ++i) {
@@ -3131,10 +3145,10 @@ public class Editor implements CropEventListener, MouseListener,
 
 
     /** @return a list of all possible selections. */
-    ArrayList<DecorationHandle> selectables() {
+    @JsonIgnore ArrayList<DecorationHandle> getDecorationHandles() {
         ArrayList<DecorationHandle> output = new ArrayList<>();
 
-        for (Decoration selectable: zelectables()) {
+        for (Decoration selectable: getDecorations()) {
             output.addAll(Arrays.asList(selectable.getHandles()));
         }
         return output;
@@ -4244,6 +4258,7 @@ public class Editor implements CropEventListener, MouseListener,
         saveNeeded = false;
     }
 
+
     /** Invoked from the EditFrame menu */
     public void reloadDiagram() {
         if (!verifyNewDiagram()) {
@@ -4258,14 +4273,38 @@ public class Editor implements CropEventListener, MouseListener,
         openDiagram(new File(filename));
     }
 
+
     public Rectangle2D.Double getPageBounds() {
         return (Rectangle2D.Double) pageBounds.clone();
     }
 
-    public void setPageBounds(Rectangle2D.Double rect) {
+
+    public void setPageBounds(Rectangle2D rect) {
         saveNeeded = true;
-        pageBounds = (Rectangle2D.Double) rect.clone();
+        pageBounds = Duh.createRectangle2DDouble(rect);
     }
+
+
+    public void computeMargins() {
+        MeteredGraphics mg = new MeteredGraphics();
+        double mscale = 10000;
+        paintDiagram(mg, mscale, false, false);
+        Rectangle2D.Double bounds = mg.getBounds();
+        if (bounds == null) {
+            return;
+        }
+        bounds.x /= mscale;
+        bounds.y /= mscale;
+        bounds.width /= mscale;
+        bounds.height /= mscale;
+        bounds.x += pageBounds.x;
+        bounds.y += pageBounds.y;
+        setPageBounds(bounds);
+        getEditPane().setPreferredSize(scaledPageBounds(scale).getSize());
+        getEditPane().revalidate();
+        repaintEditFrame();
+    }
+
 
     /** Copy data fields from other. Afterwards, it is unsafe to
         modify other, because the modifications may affect this as
@@ -4448,7 +4487,7 @@ public class Editor implements CropEventListener, MouseListener,
             : tp.createGraphicsShapes((float) bounds.width, (float) bounds.height);
 
         g2.setFont(getFont());
-        paintDiagram(g2, deviceScale(g2, bounds), false);
+        paintDiagram(g2, deviceScale(g2, bounds));
         g2.dispose();
         cb.addTemplate(tp, doc.left(), doc.bottom());
         doc.close();
@@ -4467,7 +4506,7 @@ public class Editor implements CropEventListener, MouseListener,
         ctx.setComment("PED Document exported using Batik SVG Generator");
         ctx.setEmbeddedFontsOn(true);
         SVGGraphics2D svgGen = new SVGGraphics2D(ctx, true);
-        paintDiagram(svgGen, BASE_SCALE, false);
+        paintDiagram(svgGen, BASE_SCALE);
         try {
             Writer wr = new FileWriter(file);
             svgGen.stream(wr);
@@ -4548,7 +4587,7 @@ public class Editor implements CropEventListener, MouseListener,
         g.translate(bounds.getX(), bounds.getY());
         double scale = Math.min(bounds.height / pageBounds.height,
                                 bounds.width / pageBounds.width);
-        paintDiagram(g, scale, false);
+        paintDiagram(g, scale);
         g.setTransform(oldTransform);
 
         return Printable.PAGE_EXISTS;
