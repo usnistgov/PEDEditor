@@ -828,6 +828,11 @@ public class EditFrame extends JFrame {
             for (Side side: Side.values()) {
                 mnMargins.add(new MarginAction(side));
             }
+            mnMargins.add(new Action("Compute", KeyEvent.VK_C) {
+                    @Override public void actionPerformed(ActionEvent e) {
+                        getParentEditor().computeMargins();
+                    }
+                });
 
             mnLayout.add(mnMargins);
 
