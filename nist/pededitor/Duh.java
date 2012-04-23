@@ -236,6 +236,12 @@ public class Duh {
         rotateRightInPlace(arr, -amount);
     }
 
+    public static Rectangle2D.Double createRectangle2DDouble
+        (Rectangle2D r) {
+        return new Rectangle2D.Double
+            (r.getX(), r.getY(), r.getWidth(), r.getHeight());
+    }
+
     public static Rectangle2D.Double bounds(Point2D.Double[] points) {
         double mx = minX(points);
         double my = minY(points);
