@@ -56,7 +56,9 @@ public class StringArrayDialog extends JDialog {
 
         textFields = new JTextField[labels.length];
 
-        add(new JLabel(intro), gb, wholeRow);
+        if (intro != null) {
+            add(new JLabel(intro), gb, wholeRow);
+        }
 
         for (int i = 0; i < labels.length; ++i) {
             JLabel label = new JLabel(labels[i]);

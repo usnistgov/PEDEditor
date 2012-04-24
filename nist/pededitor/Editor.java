@@ -38,6 +38,8 @@ import org.w3c.dom.DOMImplementation;
 // TODO (optional) Allow save or cancel if someone clicks on the
 // "close" icon.
 
+// TODO Investigate whether JavaFX is really a plausible alternative.
+
 // TODO (optional) Eutectic and peritectic points.
 
 // TODO (mandatory?, preexisting) Apply a gradient to all control
@@ -1485,8 +1487,7 @@ public class Editor implements CropEventListener, MouseListener,
         String[] labels = { "Key", "Value" };
         String[] values = { "", "" };
         StringArrayDialog dog = new StringArrayDialog
-                 (editFrame, labels, values,
-                  "To delete a key, replace a value with the empty string.");
+            (editFrame, labels, values, null);
         dog.setTitle("Add key/value pair");
         values = dog.showModal();
         if (values == null || "".equals(values[0])) {
@@ -1509,7 +1510,8 @@ public class Editor implements CropEventListener, MouseListener,
         }
             
         StringArrayDialog dog = new StringArrayDialog
-                 (editFrame, keys, values, "");
+                 (editFrame, keys, values,
+                  "To delete a key, replace a value with the empty string.");
         dog.setTitle("Key/value pairs");
         values = dog.showModal();
         if (values == null || !isEditable()) {
@@ -5100,6 +5102,15 @@ public class Editor implements CropEventListener, MouseListener,
     public void run(String filename) {
         editFrame.setTitle("Phase Equilibria Diagram Editor");
         editFrame.pack();
+        if (filename != null) {
+            String lcase = filename.toLowerCase();
+            int index = lcase.lastIndexOf(".ped");
+            if (index >= 0 && index == lcase.length() - 4) {
+                openDiagram(new File(filename));
+            } else {
+                openImage(filename);
+            }
+        }
         editFrame.setVisible(true);
     }
 
