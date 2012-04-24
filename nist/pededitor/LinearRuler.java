@@ -385,13 +385,16 @@ class LinearRuler {
         boolean sst = startArrow || suppressStartTick;
         boolean set = endArrow || suppressEndTick;
 
-        if (Math.abs(tickD) >= minTickDelta && tickDelta != 0) {
-            double smallTickEnd = tickEnd + 1e-6 * (tickEnd - tickStart) / tickD;
+        if (Math.abs(tickD) >= minTickDelta && Math.abs(tickD) > 0
+            && tickDelta != 0 && (tickDelta > 0) == (tickEnd > tickStart)) {
+            double smallTickEnd = tickEnd
+                + 1e-6 * (tickEnd - tickStart) / Math.abs(tickD);
+
             for (double logical = actualTickStart;
                  (logical <= smallTickEnd) == (tickStart <= smallTickEnd);
                  logical += tickD) {
-                if ((sst && logical < astart + clearDistance)
-                    || (set && logical > aend - clearDistance)) {
+                if ((sst && Math.abs(logical - astart) < clearDistance)
+                    || (set && Math.abs(logical -aend) < clearDistance)) {
                     continue;
                 }
                 Point2D.Double location
@@ -450,15 +453,16 @@ class LinearRuler {
 
             AffineTransform oldTransform = g.getTransform();
 
-            double bigTickEnd = tickEnd + 1e-6 * (tickEnd - tickStart) / bigTickD;
+            double bigTickEnd = tickEnd
+                + 1e-6 * (tickEnd - tickStart) / Math.abs(bigTickD);
             for (double logical = actualTickStart;
-                 (logical <= bigTickEnd) == (tickStart <= bigTickEnd);
+                 (logical <= bigTickEnd) == (actualTickStart <= bigTickEnd);
                  logical += bigTickD) {
                 Point2D.Double location
                     = toPhysical(logical, pageStartPoint, pageEndPoint);
 
-                if (!((sst && logical < astart + clearDistance)
-                      || (set && logical > aend - clearDistance))) {
+                if (!((sst && Math.abs(logical - astart) < clearDistance)
+                      || (set && Math.abs(logical -aend) < clearDistance))) {
 
                     if (tickRight) {
                         if (tickType == TickType.V) {
