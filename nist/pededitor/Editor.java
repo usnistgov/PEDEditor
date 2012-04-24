@@ -38,10 +38,6 @@ import org.w3c.dom.DOMImplementation;
 // TODO (optional) Allow save or cancel if someone clicks on the
 // "close" icon.
 
-// TODO (optional) Use the Area class's add() method and perhaps
-// subclass Graphics2D and call Paint() to compute the bounds of a
-// diagram. createGraphicsShapes() may be a good starting example.
-
 // TODO (optional) Eutectic and peritectic points.
 
 // TODO (mandatory?, preexisting) Apply a gradient to all control
@@ -52,11 +48,6 @@ import org.w3c.dom.DOMImplementation;
 
 // TODO (Optional) Fix symbol alignment for GRUMP font. (It's nearly
 // correct already, but it's also easy to do.)
-
-// TODO (optional) Automatically compute necessary margins. This might
-// require adding a bounds() method to all Selectable objects, as well
-// as a list of Selectables without handles. (Computing bounds takes
-// work for most objects -- axes, labels, curves, arrows.)
 
 // TODO (Optional) Make regular open symbols look as nice as the
 // GRUMP-converted open symbols do.
@@ -4299,6 +4290,11 @@ public class Editor implements CropEventListener, MouseListener,
         bounds.height /= mscale;
         bounds.x += pageBounds.x;
         bounds.y += pageBounds.y;
+        double margin = (bounds.width + bounds.height) / 200;
+        bounds.width += margin * 2;
+        bounds.height += margin * 2;
+        bounds.x -= margin;
+        bounds.y -= margin;
         setPageBounds(bounds);
         getEditPane().setPreferredSize(scaledPageBounds(scale).getSize());
         getEditPane().revalidate();
@@ -5235,7 +5231,7 @@ public class Editor implements CropEventListener, MouseListener,
         }
 
         Point2D.Double centerPage = new Point2D.Double();
-        drawHTML(g, view, scale * label.getFontSize(),
+        htmlDraw(g, view, scale * label.getFontSize(),
                  angle, point.x * scale, point.y * scale,
                  label.getXWeight(), label.getYWeight(),
                  label.getBaselineXOffset(), label.getBaselineYOffset(),
@@ -5289,7 +5285,7 @@ public class Editor implements CropEventListener, MouseListener,
        null, then it will be reset to the standard page coordinates of
        the center of the label.
     */
-    void drawHTML(Graphics g, View view, double scale, double angle,
+    void htmlDraw(Graphics g, View view, double scale, double angle,
                   double ax, double ay,
                   double xWeight, double yWeight,
                   double baselineXOffset, double baselineYOffset,
@@ -5372,15 +5368,6 @@ public class Editor implements CropEventListener, MouseListener,
         g2d.setTransform(oldxform);
     }
 
-    Rectangle2D.Double htmlBounds
-        (View view, double scale, double angle,
-         double ax, double ay, double xWeight, double yWeight,
-         double baselineXOffset, double baselineYOffset) {
-        ArrayList<Point2D.Double> boundary = htmlBoundary
-            (view, scale, angle, ax, ay, xWeight, yWeight, baselineXOffset, baselineYOffset);
-        return Duh.bounds(boundary.toArray(new Point2D.Double[0]));
-    }
-
     /** @return an array of 4 points that form a box that contains the
         given view after the various modifications are applied. */
     ArrayList<Point2D.Double> htmlBoundary
@@ -5440,6 +5427,7 @@ public class Editor implements CropEventListener, MouseListener,
         for (Point2D.Double point: boundary) {
             if (firstPoint) {
                 path.moveTo(point.getX(), point.getY());
+                firstPoint = false;
             } else {
                 path.lineTo(point.getX(), point.getY());
             }
