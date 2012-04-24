@@ -375,8 +375,8 @@ public class Editor implements CropEventListener, MouseListener,
             if (getClass() != VertexHandle.class) return false;
 
             VertexHandle cast = (VertexHandle) other;
-            return getDecoration().equals(cast.getDecoration())
-                && this.vertexNo == cast.vertexNo;
+            return vertexNo == cast.vertexNo
+                && getDecoration().equals(cast.getDecoration());
         }
     }
 
@@ -533,8 +533,8 @@ public class Editor implements CropEventListener, MouseListener,
             }
 
             LabelHandle cast = (LabelHandle) other;
-            if (this.getDecoration() != cast.getDecoration()) return false;
-            return this.handle == cast.handle;
+            return handle == cast.handle
+                    && getDecoration().equals(cast.getDecoration());
         }
 
         public Point2D.Double getCenterLocation() {
@@ -1004,7 +1004,8 @@ public class Editor implements CropEventListener, MouseListener,
             if (getClass() != RulerHandle.class) return false;
 
             RulerHandle cast = (RulerHandle) other;
-            return handle == cast.handle && getDecoration().equals(cast.getDecoration());
+            return handle == cast.handle
+                && getDecoration().equals(cast.getDecoration());
         }
 
         @Override public RulerDecoration getDecoration() {
@@ -2506,6 +2507,9 @@ public class Editor implements CropEventListener, MouseListener,
                 // first item; select it again and get the second one,
                 // then the third, and so on.
                 for (int i = 0; i < points.size() - 1; ++i) {
+                    if (selection instanceof LabelHandle) {
+                        LabelHandle hand = (LabelHandle) selection;
+                    }
                     if (selection.equals(points.get(i))) {
                         sel = points.get(i+1);
                         break;
@@ -3120,9 +3124,6 @@ public class Editor implements CropEventListener, MouseListener,
         for (int i = 0; i < paths.size(); ++i) {
             output.add(new CurveDecoration(i));
         }
-        for (int i = 0; i < labels.size(); ++i) {
-            output.add(new LabelDecoration(i));
-        }
         for (int i = 0; i < arrows.size(); ++i) {
             output.add(new ArrowDecoration(i));
         }
@@ -3131,6 +3132,9 @@ public class Editor implements CropEventListener, MouseListener,
         }
         for (int i = 0; i < rulers.size(); ++i) {
             output.add(new RulerDecoration(i));
+        }
+        for (int i = 0; i < labels.size(); ++i) {
+            output.add(new LabelDecoration(i));
         }
 
         return output;
