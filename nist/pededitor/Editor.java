@@ -35,9 +35,6 @@ import org.apache.batik.dom.GenericDOMImplementation;
 
 import org.w3c.dom.DOMImplementation;
 
-// TODO (optional) Allow save or cancel if someone clicks on the
-// "close" icon.
-
 // TODO Investigate whether JavaFX is really a plausible alternative.
 
 // TODO (optional) Eutectic and peritectic points.
@@ -226,6 +223,16 @@ public class Editor implements CropEventListener, MouseListener,
         public void run() {
             backgroundImageEnabled = !backgroundImageEnabled;
             repaintEditFrame();
+        }
+    }
+
+    class CloseListener extends WindowAdapter
+                                implements WindowListener
+    {
+        public void windowClosing(WindowEvent e) {
+            if (verifyCloseDiagram()) {
+                System.exit(0);
+            }
         }
     }
 
@@ -1272,6 +1279,11 @@ public class Editor implements CropEventListener, MouseListener,
     public Editor() {
         zoomFrame.setFocusableWindowState(false);
         tieLineDialog.setFocusableWindowState(false);
+        vertexInfo.setDefaultCloseOperation
+            (WindowConstants.DO_NOTHING_ON_CLOSE);
+        editFrame.setDefaultCloseOperation
+            (WindowConstants.DO_NOTHING_ON_CLOSE);
+        editFrame.addWindowListener(new CloseListener());
         clear();
         getEditPane().addMouseListener(this);
         getEditPane().addMouseMotionListener(this);
@@ -1958,21 +1970,28 @@ public class Editor implements CropEventListener, MouseListener,
         }
     }
 
+    /** @param c The usual color, or null.
 
-    /** Show the currently selected label in green. Differs from
-        ordinary Decoration handling because setColor() won't change
-        the color of a label. */
-    void paintSelectedLabel(Graphics2D g, double scale) {
-        LabelDecoration sel = getSelectedLabel();
-        Color c = sel.getColor();
-        // Calling setColor sets saveNeeded to true, but in
-        // this case nothing has changed yet, so reset it to
-        // what it was before afterwards.
-        boolean sn = saveNeeded;
-        sel.setColor(Color.GREEN);
-        sel.draw(g, scale);
-        sel.setColor(c);
-        saveNeeded = sn;
+        @return A color that contrasts with c; specifically, magenta
+        if c is null or greenish, or green otherwise. */
+    Color getHighlightColor(Color c) {
+        // Choices are magenta or green. Green is used unless the c is
+        // already greenish.
+        if (c == null) {
+            return Color.GREEN;
+        }
+
+        // These numbers are made up, but reflect that fact that green
+        // is perceived as being a brighter color than red, which is
+        // perceived as being brighter than blue (compare 0xff00 to
+        // 0xff0000 and 0xff: even the brightest pure blue, 0xff,
+        // looks a bit dark).
+        double brightness = (4 * c.getGreen() + 2 * c.getRed() + c.getBlue())
+            / 7.0 / 256;
+        double greenness = ((double) c.getGreen()) / 
+            (c.getGreen() + 2.0 * c.getRed() + c.getBlue());
+        return (brightness > 0.6 && greenness > 0.5) ? Color.MAGENTA
+            : Color.GREEN;
     }
 
     public void paintDiagram(Graphics2D g, double scale) {
@@ -2039,15 +2058,21 @@ public class Editor implements CropEventListener, MouseListener,
         }
 
         if (editing) {
-            g.setColor(Color.GREEN);
+            Decoration dec = selection.getDecoration();
+            Color oldColor = dec.getColor();
+            boolean oldSaveNeeded = saveNeeded;
+            Color highlight = getHighlightColor(oldColor);
+            g.setColor(highlight);
+            dec.setColor(highlight);
 
             if (selection instanceof VertexHandle) {
                 paintSelectedCurve(g, scale);
-            } else if (selection instanceof LabelHandle) {
-                paintSelectedLabel(g, scale);
             } else {
                 sel.draw(g, scale);
             }
+
+            dec.setColor(oldColor);
+            saveNeeded = oldSaveNeeded;
         }
     }
 
@@ -3520,7 +3545,7 @@ public class Editor implements CropEventListener, MouseListener,
 
     /** Start on a blank new diagram. */
     public void newDiagram() {
-        if (!verifyNewDiagram()) {
+        if (!verifyCloseDiagram()) {
             return;
         }
 
@@ -4042,12 +4067,12 @@ public class Editor implements CropEventListener, MouseListener,
         editFrame.setVisible(true);
     }
 
-    /** Before starting a new diagram, give the user an opportunity to
-        save the old diagram or to change their mind.
+    /** Give the user an opportunity to save the old diagram or to
+        change their mind before closing a diagram.
 
-        @return false if the user changes their mind and a new diagram
-        should not be started. */
-    boolean verifyNewDiagram() {
+        @return false if the user changes their mind and the diagram
+        should not be closed. */
+    boolean verifyCloseDiagram() {
         if (!saveNeeded) {
             return true;
         }
@@ -4219,7 +4244,7 @@ public class Editor implements CropEventListener, MouseListener,
 
     /** Invoked from the EditFrame menu */
     public void openDiagram() {
-        if (!verifyNewDiagram()) {
+        if (!verifyCloseDiagram()) {
             return;
         }
 
@@ -4258,7 +4283,7 @@ public class Editor implements CropEventListener, MouseListener,
 
     /** Invoked from the EditFrame menu */
     public void reloadDiagram() {
-        if (!verifyNewDiagram()) {
+        if (!verifyCloseDiagram()) {
             return;
         }
 
