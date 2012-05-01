@@ -45,6 +45,9 @@ import org.w3c.dom.DOMImplementation;
 // is between v1 and v2: "$variable = $variable + k * ($variable - v1)
 // / (v2 - v1)"
 
+// TODO (Optional) Make GRUMP font reflect sans serif PED font instead
+// of serif version.
+
 // TODO (Optional) Fix symbol alignment for GRUMP font. (It's nearly
 // correct already, but it's also easy to do.)
 
@@ -1143,7 +1146,10 @@ public class Editor implements CropEventListener, MouseListener,
     static protected double MOUSE_UNSTICK_DISTANCE = 30; /* pixels */
     static protected Image crosshairs = null;
     static protected final String defaultFontName = "DejaVu LGC Sans PED";
-    static protected final Map<String,String> fontFiles = new HashMap<String, String>() {
+    static protected final Map<String,String> fontFiles
+        = new HashMap<String, String>() {
+	private static final long serialVersionUID = -4018269657447031301L;
+
         {
             put("DejaVu LGC Sans PED", "DejaVuLGCSansPED.ttf");
             put("DejaVu LGC Serif PED", "DejaVuLGCSerifPED.ttf");
@@ -1175,7 +1181,8 @@ public class Editor implements CropEventListener, MouseListener,
     protected PolygonTransform principalToOriginal;
     @JsonProperty protected AffinePolygonTransform principalToStandardPage;
     protected Affine standardPageToPrincipal;
-    /** Bounds of the entire page in standardPage space. */
+    /** Bounds of the entire page in standardPage space. Use null to
+        compute automatically instead. */
     protected Rectangle2D.Double pageBounds;
     /** Bounds of the core diagram (the central triangle or rectangle
         only) in the principal coordinate space. */
@@ -1275,6 +1282,12 @@ public class Editor implements CropEventListener, MouseListener,
      the integer mouse position is not precise enough to express that
      location. */
     protected Point2D.Double mprin = null;
+
+    /** When the user presses 'p' or 'P' repeatedly to locate points
+        close to a starting point, this holds the initial mouse
+        location (in principal coordinates) so it is possible to
+        identify what the next-closest point may be. */
+    protected Point2D.Double principalFocus = null;
 
     public Editor() {
         zoomFrame.setFocusableWindowState(false);
@@ -2505,7 +2518,7 @@ public class Editor implements CropEventListener, MouseListener,
         @param select If true, exclude unselectable points, and select
         the point that is returned. */
     public void seekNearestPoint(boolean select) {
-        if (mouseIsStuck) {
+        if (mouseIsStuck && principalFocus == null) {
             unstickMouse();
         }
 
@@ -2517,24 +2530,47 @@ public class Editor implements CropEventListener, MouseListener,
                 return;
             }
         } else {
-            ArrayList<DecorationHandle> points = nearestSelections();
+            boolean haveFocus = (principalFocus != null);
+            ArrayList<DecorationHandle> points = nearestHandles();
             if (points.isEmpty()) {
                 return;
             }
 
             DecorationHandle sel = points.get(0);
 
-            if (selection != null) {
+            if (selection != null && haveFocus) {
                 // Check if the old selection is one of the nearest
                 // points. If so, then choose the next one after it. This
                 // is to allow users to cycle through a set of overlapping
                 // key points using the selection key. Select once for the
                 // first item; select it again and get the second one,
                 // then the third, and so on.
-                for (int i = 0; i < points.size() - 1; ++i) {
-                    if (selection instanceof LabelHandle) {
-                        LabelHandle hand = (LabelHandle) selection;
+
+                // TODO Undo
+                int matchCount = 0;
+                for (DecorationHandle handle: points) {
+                    if (handle.equals(selection)) {
+                        ++matchCount;
                     }
+                }
+
+                if (matchCount != 1) {
+                    System.out.println("Selection " + selection
+                                       + " equals " + matchCount + " decorations.");
+                    for (DecorationHandle handle: points) {
+                        System.out.println(handle);
+                    }
+                    System.out.println("===");
+                }
+
+                for (int i = 0; i < points.size() - 1; ++i) {
+                    if (selection.equals(points.get(i))) {
+                        sel = points.get(i+1);
+                        break;
+                    }
+                }
+
+                for (int i = 0; i < points.size() - 1; ++i) {
                     if (selection.equals(points.get(i))) {
                         sel = points.get(i+1);
                         break;
@@ -3080,50 +3116,70 @@ public class Editor implements CropEventListener, MouseListener,
         return nearPoint;
     }
 
-    /** @return a list of all selectable items located at the
-        selectable point closest (by page distance) to mprin. */
-    ArrayList<DecorationHandle> nearestSelections() {
-        if (mprin == null) {
-            return null;
+    static class HandleAndDistance implements Comparable<HandleAndDistance> {
+        DecorationHandle handle;
+        double distance;
+        public HandleAndDistance(DecorationHandle de, double di) {
+            handle = de;
+            distance = di;
         }
-        Point2D.Double nearPagePoint = null;
-        Point2D.Double xpoint = new Point2D.Double();
-        principalToStandardPage.transform(mprin, xpoint);
-        Point2D.Double xpoint2 = new Point2D.Double();
+        public int compareTo(HandleAndDistance other) {
+            return (distance < other.distance) ? -1
+                : (distance > other.distance) ? 1 : 0;
+        }
 
-        // Square of the minimum distance from mprin of all key points
-        // examined so far, as measured in standard page coordinates.
-        double minDistSq = 0;
+        public String toString() {
+            return "HaD[" + handle + ", " + distance + "]";
+        }
+    }
 
-        ArrayList<DecorationHandle> sels = getDecorationHandles();
-        for (DecorationHandle sel: sels) {
-            Point2D.Double point = sel.getLocation();
-            principalToStandardPage.transform(point, xpoint2);
-            double distSq = xpoint.distanceSq(xpoint2);
-            if (nearPagePoint == null || distSq < minDistSq) {
-                nearPagePoint = (Point2D.Double) xpoint2.clone();
-                minDistSq = distSq;
+    /** @return a list of DecorationHandles sorted by distance in page
+        coordinates from point p (expressed in principal coordinates).
+        Generally, only the closest DecorationHandle for each
+        Decoration is included, though perhaps an exception should be
+        made for VertexHandles. */
+    ArrayList<DecorationHandle> nearestHandles(Point2D.Double p) {
+        Point2D.Double pagePoint = principalToStandardPage.transform(p);
+
+        ArrayList<HandleAndDistance> hads = new ArrayList<>();
+        for (Decoration d: getDecorations()) {
+            double minDistSq = 0;
+            DecorationHandle nearestHandle = null;
+            for (DecorationHandle h: d.getHandles()) {
+                Point2D.Double p2 = h.getLocation();
+                p2 = principalToStandardPage.transform(p2);
+                double distSq = pagePoint.distanceSq(p2);
+                if (nearestHandle == null || distSq < minDistSq) {
+                    nearestHandle = h;
+                    minDistSq = distSq;
+                }
+            }
+            if (nearestHandle != null) {
+                hads.add(new HandleAndDistance(nearestHandle, minDistSq));
             }
         }
 
-        ArrayList<DecorationHandle> output = new ArrayList<DecorationHandle>();
-        if (nearPagePoint == null) {
-            return output;
-        }
+        Collections.sort(hads);
 
-        // Now that we know where the nearest point is, return all
-        // selections that match that point.
-
-        double tinyDistSq = 1e-12;
-
-        for (DecorationHandle sel: sels) {
-            principalToStandardPage.transform(sel.getLocation(), xpoint2);
-            if (nearPagePoint.distanceSq(xpoint2) < tinyDistSq) {
-                output.add(sel);
-            }
+        ArrayList<DecorationHandle> output = new ArrayList<>();
+        for (HandleAndDistance h: hads) {
+            output.add(h.handle);
         }
 
         return output;
+    }
+
+    /** @return a list of all DecorationHandles in order of their
+        distance from principalFocus (if not null) or mprin (otherwise). */
+    ArrayList<DecorationHandle> nearestHandles() {
+        if (mprin == null) {
+            return null;
+        }
+        if (principalFocus == null) {
+            principalFocus = mprin;
+        }
+
+        return nearestHandles(principalFocus);
     }
 
     /** @return a list of all key points in the diagram. Some
@@ -3986,6 +4042,8 @@ public class Editor implements CropEventListener, MouseListener,
                 axis = LinearAxis.createYAxis(format);
                 axis.name = "Top";
                 return axis;
+            default:
+                return null;
             }
         } else {
             switch (side) {
@@ -3993,9 +4051,10 @@ public class Editor implements CropEventListener, MouseListener,
                 return LinearAxis.createXAxis(format);
             case TOP:
                 return LinearAxis.createYAxis(format);
+            default:
+                return null;
             }
         }
-        throw new IllegalStateException("No such side " + side);
     }
 
     protected void initializeDiagram() {
@@ -4044,8 +4103,15 @@ public class Editor implements CropEventListener, MouseListener,
 
         setOriginalFilename(getOriginalFilename());
 
-        // Force the editor frame image to be initialized.
+        View em = toView("n", 0, Color.BLACK);
+        labelXMargin = em.getPreferredSpan(View.X_AXIS) / 3.0;
+        // labelYMargin = em.getPreferredSpan(View.Y_AXIS) / 5.0;
+
         zoomBy(1.0);
+    }
+
+    protected void initializeGUI() {
+        // Force the editor frame image to be initialized.
 
         editFrame.pack();
         Rectangle rect = editFrame.getBounds();
@@ -4060,9 +4126,6 @@ public class Editor implements CropEventListener, MouseListener,
         } else {
             vertexInfo.setLocation(rect.x + rect.width, rect.y);
         }
-        View em = toView("n", 0, Color.BLACK);
-        labelXMargin = em.getPreferredSpan(View.X_AXIS) / 3.0;
-        // labelYMargin = em.getPreferredSpan(View.Y_AXIS) / 5.0;
         vertexInfo.setVisible(true);
         editFrame.setVisible(true);
     }
@@ -4277,6 +4340,9 @@ public class Editor implements CropEventListener, MouseListener,
             tie.outerEdge = idToCurve(tie.outerId);
         }
         updateTitle();
+        if (pageBounds == null) {
+            computeMargins();
+        }
         saveNeeded = false;
     }
 
@@ -4297,6 +4363,9 @@ public class Editor implements CropEventListener, MouseListener,
 
 
     public Rectangle2D.Double getPageBounds() {
+        if (pageBounds == null) {
+            return null;
+        }
         return (Rectangle2D.Double) pageBounds.clone();
     }
 
@@ -4304,10 +4373,16 @@ public class Editor implements CropEventListener, MouseListener,
     public void setPageBounds(Rectangle2D rect) {
         saveNeeded = true;
         pageBounds = Duh.createRectangle2DDouble(rect);
+        getEditPane().setPreferredSize(scaledPageBounds(scale).getSize());
+        getEditPane().revalidate();
+        repaintEditFrame();
     }
 
 
     public void computeMargins() {
+        if (pageBounds == null) {
+            setPageBounds(new Rectangle2D.Double(0, 0, 1, 1));
+        }
         MeteredGraphics mg = new MeteredGraphics();
         double mscale = 10000;
         paintDiagram(mg, mscale, false, false);
@@ -4327,9 +4402,6 @@ public class Editor implements CropEventListener, MouseListener,
         bounds.x -= margin;
         bounds.y -= margin;
         setPageBounds(bounds);
-        getEditPane().setPreferredSize(scaledPageBounds(scale).getSize());
-        getEditPane().revalidate();
-        repaintEditFrame();
     }
 
 
@@ -4346,6 +4418,11 @@ public class Editor implements CropEventListener, MouseListener,
         originalFilename = other.originalFilename;
         scale = other.scale;
         arrows = other.arrows;
+
+        boolean haveBounds = (pageBounds != null);
+        if (!haveBounds) {
+            pageBounds = new Rectangle2D.Double(0,0,1,1);
+        }
         initializeDiagram();
         paths = other.paths;
         tieLines = other.tieLines;
@@ -4357,6 +4434,9 @@ public class Editor implements CropEventListener, MouseListener,
         selection = null;
         setTags(other.getTags());
         setKeyValues(other.getKeyValues());
+        if (!haveBounds) {
+            pageBounds = null;
+        }
     }
 
     /** Populate the "rulers" fields of the axes, and then return the
@@ -4816,6 +4896,7 @@ public class Editor implements CropEventListener, MouseListener,
 
     public void unstickMouse() {
         mouseIsStuck = false;
+        principalFocus = null;
         updateMousePosition();
     }
 
@@ -4872,6 +4953,7 @@ public class Editor implements CropEventListener, MouseListener,
                 || (principalToScaledPage(scale).transform(mprin)
                     .distance(mpos) >= MOUSE_UNSTICK_DISTANCE)) {
                 mouseIsStuck = false;
+                principalFocus = null;
                 mprin = getMousePosition();
             }
         }
@@ -5136,6 +5218,7 @@ public class Editor implements CropEventListener, MouseListener,
             int index = lcase.lastIndexOf(".ped");
             if (index >= 0 && index == lcase.length() - 4) {
                 openDiagram(new File(filename));
+                initializeGUI();
             } else {
                 openImage(filename);
             }
