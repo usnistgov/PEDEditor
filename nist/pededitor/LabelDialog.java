@@ -125,9 +125,12 @@ public class LabelDialog extends JDialog {
 
     public void insertText(String s) {
         String str = textField.getText();
+        int ss = textField.getSelectionStart();
         textField.setText
-            (str.substring(0, textField.getSelectionStart()) + s
+            (str.substring(0, ss) + s
              + str.substring(textField.getSelectionEnd()));
+        textField.setSelectionStart(ss + s.length());
+        textField.setSelectionEnd(ss + s.length());
     }
 
     LabelDialog(Frame owner, String title, Font font) {
