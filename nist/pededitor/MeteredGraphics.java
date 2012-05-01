@@ -19,10 +19,8 @@ import java.awt.font.FontRenderContext;
 import java.awt.font.GlyphVector;
 import java.awt.geom.AffineTransform;
 import java.awt.geom.Line2D;
-import java.awt.geom.NoninvertibleTransformException;
 import java.awt.geom.Path2D;
 import java.awt.geom.PathIterator;
-import java.awt.geom.Point2D;
 import java.awt.geom.Rectangle2D;
 import java.awt.image.BufferedImage;
 import java.awt.image.BufferedImageOp;
@@ -46,6 +44,7 @@ public class MeteredGraphics extends Graphics2D {
     /** The bounds are stored in post-transformation coordinates, but
         getBounds() converts them back to user coordinates. */
     Rectangle2D.Double bounds;
+    double accuracy = 0.1;
 
     public MeteredGraphics() {
         im = new BufferedImage(1, 1, BufferedImage.TYPE_INT_RGB);
@@ -68,16 +67,7 @@ public class MeteredGraphics extends Graphics2D {
         if (bounds == null) {
             return null;
         }
-        try {
-            AffineTransform xform = getTransform().createInverse();
-            Point2D.Double[] points =
-                { new Point2D.Double(bounds.x, bounds.y),
-                  new Point2D.Double(bounds.x + bounds.width,
-                                     bounds.y + bounds.height) };
-            return Duh.bounds(points);
-        } catch (NoninvertibleTransformException e) {
-            return null;
-        }
+        return (Rectangle2D.Double) bounds.clone();
     }
 
     @Override public void addRenderingHints(Map<?, ?> arg0) {
@@ -123,6 +113,8 @@ public class MeteredGraphics extends Graphics2D {
     }
 
     @Override public void drawString(String str, float x, float y) {
+        // Should actually draw the string rather than
+        // trusting getStringBounds() to be correct, but whatever.
         FontMetrics fm = getFontMetrics();
         Rectangle2D bounds = fm.getStringBounds(str, g);
         fill(new Rectangle2D.Double
@@ -130,9 +122,16 @@ public class MeteredGraphics extends Graphics2D {
               bounds.getWidth(), bounds.getHeight()));
     }
 
+    public double getAccuracy() {
+        return accuracy;
+    }
+
+    public void setAccuracy(double accuracy) {
+        this.accuracy = accuracy;
+    }
 
     @Override public void fill(Shape s) {
-        PathIterator pit = s.getPathIterator(getTransform(), 0.001);
+        PathIterator pit = s.getPathIterator(getTransform(), getAccuracy());
         float[] coords = new float[6];
         for (; !pit.isDone(); pit.next()) {
             int pointCount = 0;
