@@ -42,7 +42,7 @@ public class ChemicalString {
     }
 
     String[] embeddedFormulas(String s) {
-        String pattern = "("; // TODO
+        // TODO
         return null;
     }
 
