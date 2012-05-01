@@ -1,7 +1,6 @@
 package gov.nist.pededitor;
 
 import java.awt.*;
-import java.awt.geom.*;
 import java.util.*;
 
 /** It would be theoretically nice to make CompositeStroke implement
