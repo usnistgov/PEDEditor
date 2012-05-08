@@ -7,6 +7,19 @@ import java.util.Arrays;
 
 /** Utility functions for working with points and polygons. */
 public class Duh {
+    /** Divide vector by its magnitude and return the result */
+    static Point2D.Double normalize(Point2D vector) {
+        double len = length(vector);
+        if (len == 0) {
+            return null;
+        }
+        return new Point2D.Double(vector.getX() / len, vector.getY() / len);
+    }
+
+    /** normalize the vector <x,y>. */
+    static Point2D.Double normalize(double x, double y) {
+        return normalize(new Point2D.Double(x,y));
+    }
 
     static double length(Point2D point) {
         double x = point.getX();
