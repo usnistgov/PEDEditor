@@ -17,6 +17,23 @@ final public class CubicSpline2D {
         this(points, false);
     }
 
+    protected CubicSpline2D() {
+    }
+
+    /** @return a CubicSpline2D object that corresponds to the cubic
+        Bezier curve that starts at p0, ends at p3, and has the
+        control points p1 and p2 in between (but as is typical for
+        Bezier curves, does not usually pass through p1 or p2). */
+    public static CubicSpline2D getBezierInstance
+        (Point2D p0, Point2D p1, Point2D p2, Point2D p3) {
+        CubicSpline2D output = new CubicSpline2D();
+        output.xSpline = CubicSpline1D.getBezierInstance
+            (p0.getX(), p1.getX(), p2.getX(), p3.getX());
+        output.ySpline = CubicSpline1D.getBezierInstance
+            (p0.getY(), p1.getY(), p2.getY(), p3.getY());
+        return output;
+    }
+
     public <T extends Point2D> CubicSpline2D (T[] points, boolean closed) {
         int cnt = points.length;
 
