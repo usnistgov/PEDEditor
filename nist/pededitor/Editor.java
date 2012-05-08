@@ -3601,6 +3601,7 @@ public class Editor implements CropEventListener, MouseListener,
     public void cropPerformed(CropEvent e) {
         diagramType = e.getDiagramType();
         newDiagram(e.filename, Duh.toPoint2DDoubles(e.getVertices()));
+        initializeGUI();
         saveNeeded = true;
     }
 
