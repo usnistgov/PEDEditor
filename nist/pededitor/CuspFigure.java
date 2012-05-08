@@ -44,6 +44,9 @@ public abstract class GeneralPolyline {
     protected Color color = null;
     protected double lineWidth = 1.0;
 
+    /** Only closed curves can be filled. */
+    protected boolean filled = false;
+
     static private int minFreeId = 0;
     /** Used only during serialization and deserialization. */
     protected int jsonId = -1;
@@ -58,6 +61,14 @@ public abstract class GeneralPolyline {
 
     public double getLineWidth() {
         return lineWidth;
+    }
+
+    public void setFilled(boolean filled) {
+        this.filled = filled;
+    }
+
+    public boolean isFilled() {
+        return filled;
     }
 
     /** @return the bounds of this shape when drawn. Line width is
@@ -199,13 +210,21 @@ public abstract class GeneralPolyline {
     }
 
     public void draw(Graphics2D g, Path2D path) {
+        draw(g, path, lineWidth);
+    }
+
+    public void draw(Graphics2D g, Path2D path, double lineWidth) {
         Color oldColor = g.getColor();
         Color color = getColor();
         if (color != null) {
             g.setColor(color);
         }
 
-        stroke.getStroke().draw(g, path, lineWidth);
+        if (isClosed() && isFilled()) {
+            g.fill(path);
+        } else {
+            stroke.getStroke().draw(g, path, lineWidth);
+        }
 
         if (color != null) {
             g.setColor(oldColor);
@@ -225,16 +244,7 @@ public abstract class GeneralPolyline {
                      double scale) {
         AffineTransform xform = AffineTransform.getScaleInstance(scale, scale);
         xform.concatenate(originalToSquarePixel);
-        Color oldColor = g.getColor();
-        Color color = getColor();
-        if (color != null) {
-            g.setColor(color);
-        }
-        stroke.getStroke().draw(g, getPath(xform), scale * lineWidth);
-
-        if (color != null) {
-            g.setColor(oldColor);
-        }
+        draw(g, getPath(xform), scale * lineWidth);
     }
 
 
@@ -243,7 +253,7 @@ public abstract class GeneralPolyline {
     */
     public void draw(Graphics2D g, double scale) {
         AffineTransform xform = AffineTransform.getScaleInstance(scale, scale);
-        stroke.getStroke().draw(g, getPath(xform), scale * lineWidth);
+        draw(g, getPath(xform), scale * lineWidth);
     }
 
     public boolean isClosed() {

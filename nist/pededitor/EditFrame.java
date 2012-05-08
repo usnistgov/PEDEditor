@@ -593,6 +593,14 @@ public class EditFrame extends JFrame {
                     }
                 });
 
+            mnCurve.add(new Action
+                        ("Toggle fill", KeyEvent.VK_F, KeyStroke.getKeyStroke('f')) {
+                    @Override
+                        public void actionPerformed(ActionEvent e) {
+                        getParentEditor().fill();
+                    }
+                });
+
             JMenu mnLineStyle = new JMenu("Line style");
             mnLineStyle.setMnemonic(KeyEvent.VK_T);
         

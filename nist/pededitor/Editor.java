@@ -2090,6 +2090,24 @@ public class Editor implements CropEventListener, MouseListener,
     }
 
     /** Start a new curve where the old curve ends. */
+    public void fill() {
+        GeneralPolyline path = getActiveCurve();
+        if (path == null) {
+            JOptionPane.showMessageDialog
+                (editFrame, "Fill settings can only be changed when a curve is selected.");
+            return;
+        }
+
+        if (!path.isClosed()) {
+            JOptionPane.showMessageDialog
+                (editFrame, "Fill settings can only be changed for closed curves.");
+            return;
+        }
+
+        path.setFilled(!path.isFilled());
+        repaintEditFrame();
+    }
+
     public void addCusp() {
         if (mprin == null) {
             return;
