@@ -2,7 +2,6 @@ package gov.nist.pededitor;
 
 import java.awt.Color;
 import java.awt.Graphics2D;
-import java.awt.geom.*;
 
 /** Interface that permits common operations to be applied to
     different kinds of graphics objects */
