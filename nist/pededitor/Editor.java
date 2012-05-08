@@ -426,11 +426,11 @@ public class Editor implements CropEventListener, MouseListener,
             return paths.get(curveNo);
         }
 
-        @Override public Rectangle2D getBounds() {
+        public Rectangle2D getBounds() {
             return getItem().getBounds();
         }
 
-        @Override public Rectangle2D getBounds(AffineTransform xform) {
+        public Rectangle2D getBounds(AffineTransform xform) {
             return getItem().createTransformed(xform).getBounds();
         }
 
@@ -440,7 +440,15 @@ public class Editor implements CropEventListener, MouseListener,
         }
 
         @Override public void draw(Graphics2D g, double scale) {
-            getItem().draw(g, getPrincipalToAlignedPage(), scale);
+            GeneralPolyline item = getItem();
+            if (item.size() == 1
+                && item.getStroke() != StandardStroke.INVISIBLE) {
+                // Draw a dot.
+                double r = item.getLineWidth() * 2 * scale;
+                circleVertices(g, item, scale, true, r);
+            } else {
+                item.draw(g, getPrincipalToAlignedPage(), scale);
+            }
         }
 
         public int getCurveNo() {
@@ -617,11 +625,6 @@ public class Editor implements CropEventListener, MouseListener,
             return new Point2D.Double(item.getX(), item.getY());
         }
 
-        public Rectangle2D getBounds() {
-            // TODO
-            return null;
-        }
-
         @Override public void setLineWidth(double lineWidth) {
             // The capability to change box line width seems
             // unnecessary to me
@@ -656,11 +659,6 @@ public class Editor implements CropEventListener, MouseListener,
                 return new DecorationHandle[]
                     { new LabelHandle(this, LabelHandleType.ANCHOR) };
             }
-        }
-
-        @Override public Rectangle2D getBounds(AffineTransform xform) {
-            // TODO Auto-generated method stub
-            return null;
         }
     }
 
@@ -758,18 +756,6 @@ public class Editor implements CropEventListener, MouseListener,
         @Override public DecorationHandle[] getHandles() {
             return new DecorationHandle[] { this };
         }
-
-		@Override
-		public Rectangle2D getBounds() {
-			// TODO Auto-generated method stub
-			return null;
-		}
-
-		@Override
-		public Rectangle2D getBounds(AffineTransform xform) {
-			// TODO Auto-generated method stub
-			return null;
-		}
     }
 
     static enum TieLineHandleType { INNER1, INNER2, OUTER1, OUTER2 };
@@ -911,18 +897,6 @@ public class Editor implements CropEventListener, MouseListener,
             }
             return output.toArray(new TieLineHandle[0]);
         }
-
-		@Override
-		public Rectangle2D getBounds() {
-			// TODO Auto-generated method stub
-			return null;
-		}
-
-		@Override
-		public Rectangle2D getBounds(AffineTransform xform) {
-			// TODO Auto-generated method stub
-			return null;
-		}
     }
 
     static enum RulerHandleType { START, END };
@@ -1084,16 +1058,6 @@ public class Editor implements CropEventListener, MouseListener,
                 output.add(new RulerHandle(this, handle));
             }
             return output.toArray(new DecorationHandle[0]);
-        }
-
-        @Override public Rectangle2D getBounds() {
-            // TODO Auto-generated method stub
-            return null;
-        }
-
-        @Override public Rectangle2D getBounds(AffineTransform xform) {
-            // TODO Auto-generated method stub
-            return null;
         }
     }
 
@@ -1643,10 +1607,20 @@ public class Editor implements CropEventListener, MouseListener,
     public void editSelection() {
 
         if (selection == null) {
-            JOptionPane.showMessageDialog
-                (editFrame,
-                 "You must select an item before you can edit it.");
-            return;
+            // Find the nearest editable item, and edit it.
+
+            for (DecorationHandle handle: nearestHandles()) {
+                if (handle.isEditable()) {
+                    selection = handle;
+                    break;
+                }
+            }
+
+            if (selection == null) {
+                JOptionPane.showMessageDialog
+                    (editFrame, "There are no editable items.");
+                return;
+            }
         }
 
         if (!selection.isEditable()) {
@@ -2032,10 +2006,6 @@ public class Editor implements CropEventListener, MouseListener,
             return;
         }
 
-        if (selection == null) {
-            editing = false;
-        }
-
         g.setRenderingHint(RenderingHints.KEY_ANTIALIASING,
                            RenderingHints.VALUE_ANTIALIAS_ON);
         g.setRenderingHint(RenderingHints.KEY_RENDERING,
@@ -2058,6 +2028,10 @@ public class Editor implements CropEventListener, MouseListener,
                     g.fill(scaledPageBounds(scale));
                 }
             }
+        }
+
+        if (selection == null) {
+            editing = false;
         }
 
         ArrayList<Decoration> decorations = getDecorations();
@@ -2451,7 +2425,8 @@ public class Editor implements CropEventListener, MouseListener,
 
         LinearRuler ruler = new LinearRuler() {{
             fontSize = currentFontSize();
-            tickPadding = 3.0;
+            tickPadding = 0.0;
+            labelAnchor = LinearRuler.LabelAnchor.NONE;
             drawSpine = true;
         }};
 
@@ -3270,13 +3245,13 @@ public class Editor implements CropEventListener, MouseListener,
 
 
     /** Like seekNearestPoint(), but instead select the point on a
-        previously added curve that is nearest to the mouse position
-        as measured by distance on the standard page.
+        curve that is nearest to the mouse position as measured by
+        distance on the standard page.
 
         @param select If true, select the curve and the closer of the
         two control points that neighbor the selected point on the
         curve. */
-    public void seekNearestSegment(boolean select) {
+    public void seekNearestCurve(boolean select) {
         if (mouseIsStuck) {
             unstickMouse();
         }
@@ -3308,9 +3283,9 @@ public class Editor implements CropEventListener, MouseListener,
                        pagePath.get(vertexNo + 1).distanceSq(mousePage));
                 sel = new VertexHandle(curveNo, vertexNo);
 
-                // TODO Have to decide whether to use principal
-                // coordinates for gradients or not, but continue to
-                // use page coordinates for now.
+                // TODO It would be better to use principal
+                // coordinates instead of page coordinates to compute
+                // gradients.
                 gradient = pagePath.getGradient(vertexNo, dist.t);
             }
         }
@@ -3354,12 +3329,12 @@ public class Editor implements CropEventListener, MouseListener,
             selection = sel;
             if (sel instanceof VertexHandle) {
                 VertexHandle vhand = getVertexHandle();
+                GeneralPolyline path = getActiveCurve();
                 if (isCloserToNext) {
                     // pagePoint is closer to the next vertex than to this
                     // one. Incrementing the selection number, possibly
                     // cycling back to 0 for closed curves.
-                    vhand.vertexNo = (vhand.vertexNo + 1)
-                        % paths.get(vhand.getCurveNo()).size();
+                    vhand.vertexNo = (vhand.vertexNo + 1)  % path.size();
 
                     // Incrementing vertexNo introduces a new problem: if
                     // we added a new vertex at this moment, it would be
@@ -3367,6 +3342,18 @@ public class Editor implements CropEventListener, MouseListener,
                     // vertices vertex instead of between them. Reversing
                     // the vertex order fixes this.
                     reverseInsertionOrder();
+                }
+
+                if (!path.isClosed() && vhand.vertexNo == 0) {
+                    double vDist = mousePage.distance
+                        (principalToStandardPage.transform(path.get(0)));
+                    if (vDist < minDist.distance * 1.0000001) {
+                        // Apparently the closest point is at the end
+                        // of the curve, so the user *probably* wants
+                        // to extend the curve.
+                        reverseInsertionOrder();
+                        vhand.vertexNo = path.size() - 1;
+                    }
                 }
             }
         }
@@ -4110,6 +4097,8 @@ public class Editor implements CropEventListener, MouseListener,
         zoomBy(1.0);
     }
 
+    /** Elements of openDiagram() that apply only if the GUI is
+        actually meant to be visible. */
     protected void initializeGUI() {
         // Force the editor frame image to be initialized.
 
@@ -4317,6 +4306,7 @@ public class Editor implements CropEventListener, MouseListener,
         }
 
         openDiagram(file);
+        initializeGUI();
     }
 
     /** Invoked from the EditFrame menu */
