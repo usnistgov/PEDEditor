@@ -22,7 +22,10 @@ public class HTMLPalette extends StringPalette {
                 {"</u>", noPrefix + "<u>under</u>" + noSuffix},
                 null,
 
-                {"<br>", "<html>line <br> break</html>"}
+                {"<br>", "<html>line <br> break</html>"},
+                {"&lt;", "<"},
+                {"&gt;", ">"},
+                {"&amp;", "&"},
             });
     }
 }
