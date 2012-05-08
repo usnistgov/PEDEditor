@@ -299,6 +299,31 @@ final public class CubicSpline1D {
     }
 
 
+    /** Convert the set of 4 cubic Bezier control points into 4
+        coefficients of a cubic polynomial. */
+    public static void bezierToCubic(double p0, double p1, double p2, double p3,
+                                     double[] coefficients) {
+        coefficients[0] = p0;
+        coefficients[1] = 3 * (p1 - p0);
+        coefficients[2] = 3 * (p2 - 2 * p1 + p0);
+        coefficients[3] = p3 - p0 + 3 * (p1 - p2);
+    }
+
+    /** @return 
+     * @return a CubicSpline1D object that corresponds to the cubic
+        Bezier curve that starts at p0 at t = 0, ends at p3 at t = 1,
+        and has the control points p1 and p2 in between. */
+    public static CubicSpline1D getBezierInstance (double p0, double p1, double p2,
+                                     double p3) {
+        double[] coefs = new double[4];
+        bezierToCubic(p0, p1, p2, p3, coefs);
+        CubicSpline1D output = new CubicSpline1D();
+        output.coefficients = new double[][] { coefs };
+        output.xs = new double[] { 0, 1 };
+        output.ys = new double[] { p0, p3 };
+        return output;
+    }
+
     /** Convert the position of the parameterized cubic Bezier curve
         at the given t value. */
     public static double bezier(double t, double[] controlPoints) {
