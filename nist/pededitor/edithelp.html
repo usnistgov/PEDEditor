@@ -18,17 +18,17 @@ scanned image of an existing diagram, use the
 option instead.</p>
 
 <p>You are presented with a selection of diagram types. If you need to
-use one of the ternary diagram types, you probably know it. Otherwise,
-choose either the "Binary" diagram type to draw a rectangular graph
-using a Cartesian coordinate system or the "Other/Schematic" type to
-draw free-form diagrams starting with an empty page.</p>
+use one of the ternary diagram types, you can probably recognize it.
+Use the "Binary" diagram type to draw a rectangular graph using a
+Cartesian coordinate system, or the "Other/Schematic" type to draw
+free-form diagrams starting from a blank page.</p>
 
 <h3>Open diagram</h3>
 
 <p>Open a diagram that was previously saved in this program's native
 <code>PED</code> format. If the diagram was created using the "Open
 Image for Digitization" option and the original image is still
-available, then it will be loaded also.</p>
+available, then the original image will also be shown.</p>
 
 <a name="openimage"><h3>Open Image for Digitization</h3></a>
 
@@ -44,17 +44,14 @@ Selection Window's help menu option.</p>
 
 <h3>Save as PDF</h3>
 
-<p>Save the diagram as an Adobe PDF document. This is an export-only
-format; this program cannot read PDF files, even ones that it
-created.</p>
-
-<p>TODO Currently, strange characters get lost during save as PDF.</p>
+<p>Save the diagram as an Adobe PDF document. Note that this program
+can only create PDF documents; it cannot read them.</p>
 
 <h3>Save as SVG</h3>
 
-<p>TODO This doesn't work. Maybe one could get it to work, but that is
-not a priority. (Maybe it should be, though, if the "save as PDF"
-problems cannot be resolved.)</p>
+<p>Save the diagram in Scalable Vector Graphics (SVG) format. Note
+that this program can only create SVG documents; it cannot read
+them.</p>
 
 <h3>Print</h3>
 
@@ -63,20 +60,22 @@ piece of paper will yield a larger diagram).</p>
 
 <h2><a name="positioning">Position</a></h2>
 
-<p>You can position items within the diagram using just the mouse, but
-there are also a number of alternative commands for diagram
-positioning:</p>
+<p>In addition to moving the mouse pointer, the following commands are available for diagram positioning:</p>
 
 <ul>
+
+<li><p><b>Jump to selection</b> moves the mouse pointer to the
+currently selected item, if an item is selected.</p></li>
 
 <li><p>Move to ('p') or move to and select ('P') the nearest key
 point. Key points include</p>
 
 <ul>
+  <li>arrows</li>
   <li>vertices of curves</li>
-  <li>label anchors and centers</li>
+  <li>label anchor points and centers</li>
   <li>corners of tie line regions</li>
-  <li>endpoints of axes</li>
+  <li>ruler endpoints</li>
 </ul>
 
 <p>In addition, the following key points may be moved to, but cannot
@@ -89,36 +88,36 @@ be selected:</p>
   <li>corners of the diagram</li>
 </ul>
 
-<p>Often, several items will share the same precise position. Press
-'P' repeatedly to cycle among those items until the correct item is
-highlighted. This only works for items whose positions are truly
-identical, and not for items whose positions differ by even a fraction
-of a pixel.</p>
+<p>If pressing 'P' once does not highlight the item you want, you may
+press it again and again to highlight other items located nearby.</p>
 </li>
 
-<li>Move to ('l', that is, a lower-case L) or move to and select ('L')
-the closest line segment or curve.</li>
+<li>Move to ('l', a lower-case L) or move to and select ('L') the
+closest line segment or curve.</li>
 
-<li>Enter (the <code>Enter</code> key) the desired coordinates in
-terms of any two variables.</li>
+<li>Enter (the <code>Enter</code> key) coordinates in terms of any two
+variables.</li>
+
+<li>The arrow keys move the mouse pointer in one pixel in any
+direction. In addition, if the mouse is positioned on a selected item
+(highlighted in green unless the item was green to begin with, in
+which case it is highlighted in magenta), then that item and every
+other item located at the same position will move along with the mouse
+pointer.</li>
+
 </ul>
 
 <p>The mouse will temporarily act as if stuck at the chosen point even
-if vibration or a hand twich causes the mouse pointer to slip by a
-pixel or two. When the mouse is "stuck", the pointer can still move,
-but the coordinates displayed in the status bar do not change</p>
+if vibration or a hand twich causes the mouse pointer to move a couple
+pixels. When the mouse is "stuck", the pointer can move, but the
+coordinates displayed in the status bar do not change</p>
 
 <p>You may unstick the mouse pointer by moving it a longer distance or
 by pressing 'u'. In addition, the mouse may automatically become
-unstuck if you request an operation that might otherwise be redundant,
+unstuck if you request an operation that would otherwise be redundant,
 such as adding a second vertex to a curve in a row.</p>
 
 <h2>Edit</h2>
-
-<p>The arrow keys move the mouse pointer in one pixel in any
-direction. In addition, if an item is selected in green <b>and</b> the
-mouse is positioned on that selection, then that item and every other
-item located at the same position will be moved.</p>
 
 <p>The following editing commands may be applied to any selected item.
 An item must be selected (highlighted in <font
@@ -128,79 +127,57 @@ color="green">green</font>) before these commands have any effect.</p>
 
 <li>Press <code>Delete</code> to delete the selection.</li>
 
+<li>Press <code>End</code> to deselect the item.</li>
+
+<li>Press <code>r</code> to change the selection's color. Since
+selected items are usually highlighted in green, the color change will
+not be visible until you deselect the item.</li>
+
 <li>Press 'c' to create a copy to the selection at the current mouse
 position.</li>
 
+<li>Press 'e' to edit the selected item. Only labels, rulers, and sets
+of tie lines may be edited this way. If no item is selected, you may
+press <code>e</code> to edit the editable item closest to the current
+mouse position.</li>
+
+<li>If the selected item is a label, ruler, or set of lie lines, you
+can press <code>e</code> to edit it. If no item is selected, 'e' will
+edit the label, ruler, or set of tie lines that is closest to the
+current mouse position.</li>
+
 <li>Press 'm' to move the selection point, including all other items
 that share that point. Press capital 'M' to move only the item in
-green while leaving all other items at that point unchanged.</li>
-
-<li>Press 'e' to edit the selection. Items that support editing
-include labels, tie lines, and rulers.</li>
-
-<li>Press 'r' or <code><u>E</u>dit/Colo<u>r</u></code> to change the
-color of the selection. Because selected items are highlighted in
-green, you will not see the change until you deselect the item.</li>
-
-<li>Pressing an arrow key moves the mouse position one pixel in the
-corresponding direction. If the mouse is positioned at the selection,
-then the selection and every other item that shares its position moves
-with it.</li>
+green while leaving all other items at that point unchanged. If a
+curve is selected, then the entire curve, and not just a single vertex
+is moved; to move a single vertex, press <code>Delete</code> to delete
+it, and press the left mouse button at the new location.</li>
 
 </ul>
 
 <h2>Curves and Vertices</h2>
 
- Most vertices (control points) of the
-currently selected curve are indicated by empty green circles, while
-the currently selected point is indicated by a solid green circle.</p>
+<p>If a vertex (curve control point) is currently selected, then it is
+marked by a green disc. Other control points on the same curve are
+indicated by green circles.</p>
 
 <h3>Starting a new curve</h3>
 
-<p>To start a new curve, first deselect the current curve if one is
-highlighted. Press the <code>End</code> key or choose main menu item
-<code><u>C</u>urve/<u>D</u>eselect</code>) to do this. Then press the
-left mouse button at the appropriate position to insert the first
-endpoint of the new curve.</p>
+<p>If a curve is already highlighted, press <code>End</code> to
+deselect it. Then position the mouse at the desired location and press
+the left mouse button to place the curve's first endpoint.</p>
 
 <h3>Selecting an existing curve</h3>
 
-<p>Move the mouse pointer over one of the vertices of that curve and
-press '?'. If multiple curves pass through that vertex, then the first
-curve selected might not be the one you want; continue pressing '?'
-until the correct curve is highlighted in green.</p>
-
-<h3>Deleting a vertex</h3>
-
-<p>Select the vertex and then press the <code>Delete</code> key.</p>
-
-<h3>Moving a vertex</h3>
-
-<p>Move the selected vertex one pixel in any directions by using the
-arrow keys.</p>
-
-<p>You can move all vertices at a single position by selecting that
-position with '?', positioning the mouse at the desired destination,
-and pressing 'm'.</p>
-
-<p>There is no specific 'move a vertex' operation, but once a vertex
-is selected, it is straightfoward to delete it and then insert a new
-vertex in its place.</p>
+<p>Move the mouse pointer next to the curve and press 'L'. The nearest
+vertex of the nearest curve will be highlighted.</p>
 
 <h3>Adding to an existing curve</h3>
 
-<p>To add a vertex to a curve, press the left mouse button. The new
-vertex will be inserted after the previously selected vertex (so if
-you want to add to the end of the curve, you will first have to select
-the last vertex of that curve). The <font color="red">red</font>
-outline, if any, displays the curve that will be result if you do
-this.</p>
-
-<p>To add a new vertex before (instead of after) the currently
-selected point, select the menu item <code><u>C</u>urve/<u>S</u>elect
-previous vertex</code> and then press the mouse button. This step is
-necessary if you wish to add a point before the first vertex of the
-curve.</p>
+<p>Press the left mouse button to insert a new vertex after the
+previously selected vertex. The <font color="red">red</font> outline,
+if any, displays the curve that will be result from this
+operation.</p>
 
 <h3>Curve smoothing and closure</h3>
 
@@ -218,9 +195,9 @@ results than just repeating the starting vertex does.</p>
 <p>Use the <code><u>C</u>urve/Line style</code> menu item and select
 your preferred line style to change the style of the currently
 selected item (if any) and the initial style of any subsequently added
-items. The spacing of dots, dashes, and railroad ties is proportional
-to the line width: if you reduce the width of a dashed line by half,
-then the length of the dashes is also reduced by half.</p>
+items. The spacing of dots and dashes is proportional to the line
+width: if you reduce the width of a dashed line by half, then the
+length of the dashes is also reduced by half.</p>
 
 <h3>Line widths</h3>
 
@@ -231,9 +208,9 @@ initial line width of any subsequently created items.</p>
 <h3>Adding a cusp</h3>
 
 <p>Press ',' to create a cusp (a location where a path is connected
-but not smooth). This is just shorthand for adding a vertex at the
-current mouse position and then starting a separate curve from the
-same vertex.</p>
+but not smooth). This is equivalent to adding a vertex to the
+currently selected curve at the current mouse position and then
+starting a separate curve from the same vertex.</p>
 
 <h2>Decorations</h2>
 
@@ -243,16 +220,16 @@ same vertex.</p>
 position. A window will open, permitting you to choose the text, font
 size, angle, and anchor orientation for the label.</p>
 
-<p>Some HTML tags and Unicode notations are allowed. To avoid
-confusion with HTML tags, less than signs ('&lt;') should be entered
-as <code>&amp;lt;</code> (or press the '&lt;' key in the character
-palette), and greater than signs ('&gt;') should be entered as
-<code>&amp;gt;</code> (or press the '&gt;' key in the character
-palette).</p>
-
 <p>The standard font size has characters whose height is about 2% of
 the height of binary diagrams and 2% of the length of the longest side
 of ternary diagrams. </p>
+
+<p>Use the <code>H2SO4-&gt;H<sub>2</sub>SO<sub>4</sub></code> button
+to automatically add subscripts to chemical formulas.</p>
+
+<p>The circle with the green arrow illustrates angle values but is not
+a usable control. Edit the number in the text box to change the text
+angle.</p>
 
 <p>Press one of the nine anchor buttons when you are finished entering
 the other fields (text and font size) for this label. The anchor
@@ -263,53 +240,113 @@ label whose text reads "Label", the portion of the text closest to the
 anchor will be the portion that is closest to the green circle on the
 button, regardless of the text angle.</p>
 
-<p>The circle with the green arrow is just an illustration of angle
-values, not a usable control. Edit the number in the text box to
-change the text angle.</p>
-
-<p>Press <code>e</code> to edit the currently selected label, if there
-is one, or to select and edit the label whose center is closest to the
-current mouse position.</p>
-
-<h3>Symbols</h3>
+<p>The copy command ('c') can be used to easily duplicate a symbol in
+many locations, such as when marking data points.</p>
 
 <h4>Dots</h4>
 
-<p>A dot is just a curve with only one vertex, so the rules for
-creating dots are covered by the rules for creating curves. You may
-use the 'd' key as a short-cut to create a dot at the current mouse
-position. To change the dot size, adjust the line width: the dot
-radius equals twice the line width.</p>
+<p>You can create solid circular dots like other symbols, but a curve
+with only one vertex is also shown as a dot. To change the dot size,
+adjust the line width: the dot radius equals twice the line width.</p>
 
 <h4>Arrowheads</h4>
 
 <p>To draw an arrowhead that points at the angle indicated in the
 "Tangent" window, press '&gt;'. To draw an arrowhead that points in
-the opposite direction, press '&lt;'. The size of the arrowhead is a
-fixed multiple of the line width indicated in the "Tangent"
-window.</p>
+the opposite direction, press '&lt;'. The size of the arrowhead is
+determined by the line width indicated in the "Tangent" window.</p>
+
+<h4>Rulers</h4>
+
+<p>To create a ruler, first create a two-vertex line to mark the
+ruler's endpoints, then select <code><u>D</u>ecorations/Add
+r<u>u</u>ler</code>. A ruler edit window will open. Unfortunately, the
+current ruler setup is rather severely constrained because you can
+only show values of the standard variables.</p>
+
+<h4>Tie Lines</h4>
+
+<p>To create a set of tie lines, select <code><u>D</u>ecorations/Add
+<u>t</u>ie lines</code> and follow the instructions in the window that
+opens. </p>
+
+<p>Tie lines may start or end on non-straight curves, but tie lines
+that start or end on closed curves may not behave as expected.</p>
+
+<h2>Properties</h2>
+
+<ul>
+
+<li><b>Aspect Ratio</b>: change the ratio of the diagram's width to
+its height by uniformly rescaling its horizontal dimension. This may
+cause existing curve intersections to shift (so lines that used to
+intersect may not quite do so anymore, or they may intersect at a
+slightly different location), so it is best to set the aspect ratio as
+early as possible.</li>
+
+<li><b>Components</b>: Identify the diagram components for binary and
+ternary diagrams. Binary diagrams whose X-axis is measured on a scale
+from (100% of substance A, 0% of B) have a left and right diagram
+component, while ternary diagrams have a left, right, and top
+component. A side effect of defining components is that axes will
+change to display percentage values.</li>
+
+<li><p><b>Font</b>: The program uses variants of the DejaVu LGC Serif and
+Sans Serif font families. <code>Serif (widely spaced lines)</code>
+exists for backwards compatibility; it is not recommended for use in
+new diagrams.</p>
+
+<p>This menu selection allows you to globally change the font
+selection among one of three choices. (Changing fonts for individual
+items is possible, but as yet there has been no demand for that
+feature.) The "Serif (Widely space lines)" font is not recommended for
+new diagrams; it exists solely to provide backwards compatibility with
+the previous version of the PED Editor.</p></li>
+
+<li><b>Key/Value Pairs</b>: Allows the user to store data that
+consists of a string key and a string value. The only key that is
+treated specially by the program is "title"; the value associated with
+the "title" key is shown in the diagram's title bar. Since a value of
+the empty string is taken to mean "delete this key", the empty string
+cannot be stored as a value.</li>
+
+<li><b>Margins</b>: If you need to align your diagram in a specific
+way, or if you need to extend a diagram in any direction, you may set
+the left, right, top, and bottom margins using these menu options. The
+<code><u>C</u>ompute</code> option eliminates excess white space on
+all sides. It is a good idea to allow generous margins while you are
+editing the diagram, and then select <code>Compute</code> when
+finished.</li>
+
+<li><b>Scale</b>: This option allows you to change the units of the X
+and Y axis, while the positions of items on the screen remains the
+same. This option is most often used to change the axes' initial
+ranges (0 to 1) to the values you really want, but it can also be used
+to change a diagram's range from Celsius to Kelvin, for example.</li>
+
+<li><b>Tags</b>: allow the user to store free-form string data. Apart
+from permitting the user to add, delete, and display tags, the program
+does nothing with these.</li>
+
+</ul>
 
 <h2>View Menu</h2>
 
 <p>Press '-' to zoom out, '+' to zoom in, and <code>Control-B</code>
 to obtain the best fit of the diagram to the edit window's current
-size. Press <code>Control-></code> to center the screen at the current
+size. Press <code>Control-L</code> to center the screen at the current
 mouse position.</p>
 
-<p>Resizing the scanned image or moving around an image at a high zoom
-level may take some time, so be patient. You may turn off display of the
-background image with <code><u>V</u>iew/<u>B</u>ackground
-Image/<u>N</u>one</code> to eliminate this delay.</p>
+<p>If an image is displayed in the background, then resizing the
+scanned image or moving around at high zoom level may take some time,
+so be patient. If the delay becomes excessive, you can turn the
+background image off with <code><u>V</u>iew/<u>B</u>ackground
+Image/<u>N</u>one</code>.</p>
 
 <p>Use the <code>Background Image</code> submenu to select how to
 display the original image (if any) in the background of the new
-diagram: in light, faded colors (the default); blinking on and off; or not at all.</p>
-
-<h3>Fonts</h3>
-
-<p>The serif font is DejaVu Serif LGC with some symbols modified or
-added. <code>Serif (widely spaced lines)</code> exists for backwards
-compatibility; it is not recommended for use in new diagrams.</p>
+diagram: in light, faded colors (the default); blinking on and off; or
+not at all.</p>
 
 </body>
 </html>
