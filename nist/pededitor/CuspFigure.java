@@ -73,7 +73,7 @@ public abstract class GeneralPolyline {
 
     /** @return the bounds of this shape when drawn. Line width is
         accounted for in the returned value. */
-    abstract public Rectangle2D getBounds();
+    @JsonIgnore abstract public Rectangle2D getBounds();
 
     @JsonProperty("id") int getJSONId() {
         if (jsonId == -1) {

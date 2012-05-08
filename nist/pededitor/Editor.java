@@ -3638,10 +3638,12 @@ public class Editor implements CropEventListener, MouseListener,
         clear();
         setOriginalFilename(originalFilename);
 
-        double leftMargin = 0.10;
-        double rightMargin = 0.10;
-        double topMargin = 0.10;
-        double bottomMargin = 0.10;
+        // It's easier to shrink than to enlarge a diagram, so start
+        // with fairly generous margins.
+        double leftMargin = 0.15;
+        double rightMargin = 0.15;
+        double topMargin = 0.15;
+        double bottomMargin = 0.15;
         double maxDiagramHeight = 1.0;
         double maxDiagramWidth = 1.0;
 
