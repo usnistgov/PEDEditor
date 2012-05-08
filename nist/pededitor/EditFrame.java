@@ -412,40 +412,12 @@ public class EditFrame extends JFrame {
         if (editable) {
 
             mnEdit.add(new Action
-                        ("Edit selection...",
-                         KeyEvent.VK_E,
-                         KeyStroke.getKeyStroke('e')) {
-                    @Override
-                        public void actionPerformed(ActionEvent e) {
-                        getParentEditor().editSelection();
-                    }
-                });
-
-            mnEdit.add(new Action
                         ("Color...",
                          KeyEvent.VK_R,
                          KeyStroke.getKeyStroke('r')) {
                     @Override
                         public void actionPerformed(ActionEvent e) {
                         getParentEditor().colorSelection();
-                    }
-                });
-
-            mnEdit.add(new Action("Move",
-                                             KeyEvent.VK_M,
-                                             KeyStroke.getKeyStroke('m')) {
-                    @Override
-                        public void actionPerformed(ActionEvent e) {
-                        getParentEditor().moveSelection(true);
-                    }
-                });
-
-            mnEdit.add(new Action("Move green item only",
-                                             KeyEvent.VK_V,
-                                             KeyStroke.getKeyStroke('M')) {
-                    @Override
-                        public void actionPerformed(ActionEvent e) {
-                        getParentEditor().moveSelection(false);
                     }
                 });
 
@@ -472,6 +444,34 @@ public class EditFrame extends JFrame {
                     @Override
                         public void actionPerformed(ActionEvent e) {
                         getParentEditor().deselectCurve();
+                    }
+                });
+
+            mnEdit.add(new Action
+                        ("Edit selection...",
+                         KeyEvent.VK_E,
+                         KeyStroke.getKeyStroke('e')) {
+                    @Override
+                        public void actionPerformed(ActionEvent e) {
+                        getParentEditor().editSelection();
+                    }
+                });
+
+            mnEdit.add(new Action("Move",
+                                             KeyEvent.VK_M,
+                                             KeyStroke.getKeyStroke('m')) {
+                    @Override
+                        public void actionPerformed(ActionEvent e) {
+                        getParentEditor().moveSelection(true);
+                    }
+                });
+
+            mnEdit.add(new Action("Move green item only",
+                                             KeyEvent.VK_V,
+                                             KeyStroke.getKeyStroke('M')) {
+                    @Override
+                        public void actionPerformed(ActionEvent e) {
+                        getParentEditor().moveSelection(false);
                     }
                 });
         }
@@ -529,7 +529,7 @@ public class EditFrame extends JFrame {
                     KeyStroke.getKeyStroke('l')) {
                 @Override
                     public void actionPerformed(ActionEvent e) {
-                    getParentEditor().seekNearestSegment(false);
+                    getParentEditor().seekNearestCurve(false);
                 }
             });
 
@@ -540,7 +540,7 @@ public class EditFrame extends JFrame {
                          KeyStroke.getKeyStroke('L')) {
                     @Override
                         public void actionPerformed(ActionEvent e) {
-                        getParentEditor().seekNearestSegment(true);
+                        getParentEditor().seekNearestCurve(true);
                     }
                 });
         }
@@ -762,6 +762,8 @@ public class EditFrame extends JFrame {
                         ("Compute Chemical Label Coordinates", KeyEvent.VK_C) {
                     @Override
                         public void actionPerformed(ActionEvent e) {
+                        JOptionPane.showMessageDialog
+                            (EditFrame.this, "Sorry, this feature doesn't work yet.");
                         // TODO not defined yet...
                         // getParentEditor().computeLabelCoordinates();
                     }
