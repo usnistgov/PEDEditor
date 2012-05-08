@@ -414,9 +414,10 @@ public abstract class GeneralPolyline {
     abstract public Point2D.Double getLocation(double t);
 
     /* Return the index of the control point that neighbors
-       getLocation(t) on the t' <= t side of the curve. The index of
-       the adjacent control point on the t' > t size of the curve
-       would be one greater than the returned value. */
+       getLocation(t) on the t' <= t side of the curve, or the
+       second-to-last vertex if t>=1 and isClosed() == false. The
+       index of the adjacent control point on the t' > t size of the
+       curve would be one greater than the returned value. */
     public int firstControlPointIndex(double t) {
         int segCnt = getSegmentCnt();
 
@@ -426,6 +427,10 @@ public abstract class GeneralPolyline {
 
         if (segCnt == 0) {
             return 0;
+        }
+
+        if (t >= 1.0 && !isClosed()) {
+            return segCnt - 1;
         }
 
         return ((int) Math.floor(t * segCnt)) % segCnt;
