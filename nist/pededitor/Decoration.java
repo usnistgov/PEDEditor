@@ -17,7 +17,5 @@ public interface Decoration {
     void setLineStyle(StandardStroke lineStyle);
     Color getColor();
     void setColor(Color color);
-    Rectangle2D getBounds();
-    Rectangle2D getBounds(AffineTransform xform);
     DecorationHandle[] getHandles();
 }
