@@ -6,7 +6,7 @@ import java.util.Collections;
 
 /** Simple object to store information about a single point on a
     parameterized curve and its distance from something. */
-public class CurveDistance {
+public class CurveDistance implements Comparable<CurveDistance> {
     public CurveDistance(double t, Point2D point, double distance) {
         this.t = t;
         this.point = new Point2D.Double(point.getX(), point.getY());
@@ -24,6 +24,25 @@ public class CurveDistance {
     public Point2D.Double point;
     /** Distance at closest approach. */
     public double distance;
+
+    public int compareTo(CurveDistance other) {
+        return (distance < other.distance) ? -1
+            : (distance > other.distance) ? 1 : 0;
+    }
+
+    /** @return other if other is not null and its distance is less
+        than this, or this otherwise. */
+    public CurveDistance minWith(CurveDistance other) {
+        return (other == null) ? this
+            : (distance <= other.distance) ? this : other;
+    }
+
+    /** @return other if other is not null and its distance is greater
+        than this, or this otherwise. */
+    public CurveDistance maxWith(CurveDistance other) {
+        return (other == null) ? this
+            : (distance >= other.distance) ? this : other;
+    }
 
     public static CurveDistance pointSegmentDistance 
         (Point2D p, Point2D l1, Point2D l2) {
