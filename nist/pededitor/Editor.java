@@ -390,6 +390,8 @@ public class Editor implements CropEventListener, MouseListener,
         }
     }
 
+    
+
     class CurveDecoration implements Decoration {
         int curveNo;
 
@@ -420,6 +422,10 @@ public class Editor implements CropEventListener, MouseListener,
 
         @Override public Color getColor() {
             return getItem().getColor();
+        }
+
+        public Path2D.Double getShape() {
+            return getItem().getPath(principalToStandardPage);
         }
 
         GeneralPolyline getItem() {
@@ -477,6 +483,13 @@ public class Editor implements CropEventListener, MouseListener,
             return output.toArray(new DecorationHandle[0]);
         }
 
+        /** Return the VertexHandle closest to path(t). */
+        public VertexHandle getHandle(double t) {
+            GeneralPolyline path = getItem()
+                .createTransformed(principalToStandardPage);
+            double ct = CurveParameterizations.getNearestControlPoint(path, t);
+            return new VertexHandle(this, (int) ct);
+        }
     }
 
     static enum LabelHandleType { CENTER, ANCHOR };
@@ -672,6 +685,18 @@ public class Editor implements CropEventListener, MouseListener,
 
         Arrow getItem() { return arrows.get(index); }
 
+        /*
+        // Problem is, nobody really cares to follow the outline
+        // of an arrow.
+
+        public void getShape() {
+
+            Point2D.Double p = principalToStandardPage.transform(arrow.x, arrow.y);
+            return new Arrow
+                (p.x, p.y, arrow.size, principalToPageAngle(arrow.theta));
+        }
+        */
+
         @Override public void draw(Graphics2D g, double scale) {
             Arrow arrow = getItem();
             Affine xform = principalToScaledPage(scale);
@@ -851,6 +876,16 @@ public class Editor implements CropEventListener, MouseListener,
             getItem().draw(g, getPrincipalToAlignedPage(), scale);
         }
 
+        // I could return the tie line's outline, but nobody
+        // cares. The inner and outer edges are already part of
+        // the diagram, while the sides would be added if anyone
+        // wants them.
+        /*        @Override public void getShape() {
+
+            return null;
+            }
+         */
+
         @Override public void setLineWidth(double lineWidth) {
             saveNeeded = true;
             getItem().lineWidth = lineWidth;
@@ -1011,6 +1046,13 @@ public class Editor implements CropEventListener, MouseListener,
             getItem().draw(g, getPrincipalToAlignedPage(), scale);
         }
 
+        public Shape getShape() {
+            LinearRuler item = getItem();
+            Point2D.Double s = principalToStandardPage.transform(item.startPoint);
+            Point2D.Double e = principalToStandardPage.transform(item.endPoint);
+            return new Line2D.Double(s, e);
+        }
+
         @Override public void setLineWidth(double lineWidth) {
             saveNeeded = true;
             LinearRuler item = getItem();
@@ -1058,6 +1100,13 @@ public class Editor implements CropEventListener, MouseListener,
                 output.add(new RulerHandle(this, handle));
             }
             return output.toArray(new DecorationHandle[0]);
+        }
+
+        /** Return the VertexHandle closest to path(t). */
+        public RulerHandle getHandle(double t) {
+            return new RulerHandle
+                (this,
+                 (t <= 0.5) ? RulerHandleType.START : RulerHandleType.END);
         }
     }
 
@@ -2135,9 +2184,7 @@ public class Editor implements CropEventListener, MouseListener,
 
         Point2D.Double g = null;
 
-        g = (vertexNo + 1 == vertexCnt)
-            ? path.getGradient(vertexNo - 1, 1.0)
-            : path.getGradient(vertexNo, 0.0);
+        g = path.getGradient(vertexNo);
         if (g != null) {
             principalToStandardPage.deltaTransform(g, g);
         }
@@ -2837,6 +2884,7 @@ public class Editor implements CropEventListener, MouseListener,
         newLabel.setY(mprin.y);
         add(newLabel);
         selection = new LabelHandle(labels.size() - 1, LabelHandleType.ANCHOR);
+        mouseIsStuck = true;
     }
 
     public void add(AnchoredLabel label) {
@@ -3262,12 +3310,65 @@ public class Editor implements CropEventListener, MouseListener,
     }
 
 
-    /** Like seekNearestPoint(), but instead select the point on a
-        curve that is nearest to the mouse position as measured by
-        distance on the standard page.
+    static class DecorationDistance implements Comparable<DecorationDistance> {
+        Decoration decoration;
+        CurveDistance distance;
 
-        @param select If true, select the curve and the closer of the
-        two control points that neighbor the selected point on the
+        public DecorationDistance(Decoration de, CurveDistance di) {
+            decoration = de;
+            distance = di;
+        }
+
+        public int compareTo(DecorationDistance other) {
+            return (distance.distance < other.distance.distance) ? -1
+                : (distance.distance > other.distance.distance) ? 1 : 0;
+        }
+
+        public String toString() {
+            return "DecorationDistance[" + decoration + ", " + distance + "]";
+        }
+    }
+
+
+    /* Return the DecorationDistance for the curve or ruler whose
+       outline comes closest to pagePoint. All coordinates used for
+       this determination are in standard page space. */
+    DecorationDistance nearestCurve(Point2D pagePoint) {
+        DecorationDistance output = null;
+
+        for (Decoration dec: getDecorations()) {
+            CurveParameterization param;
+            Shape outline;
+
+            if (dec instanceof CurveDecoration) {
+                CurveDecoration sdec = (CurveDecoration) dec;
+                param = sdec.getItem();
+                shape = sdec.getShape();
+            } else if (dec instanceof RulerDecoration) {
+                RulerDecoration rdec = (RulerDecoration) dec;
+                param = sdec.getItem();
+                shape = sdec.getShape();
+            } else {
+                continue;
+            }
+
+            CurveDistance dist = Shapes.distance(shape, pagePoint, null,
+                                                 1e-6, 50);
+            if (output == null || output.distance.distance > dist.distance) {
+                output = new DecorationDistance(dec, dist);
+            }
+        }
+
+        return output;
+    }
+
+
+    /** Like seekNearestPoint(), but locate the nearest decoration
+        outline (as measured by distance on the standard page) instead
+        of the nearest key point.
+
+        @param select If true, select the nearer of the two
+        DecorationHandles that neighbor the selected point on the
         curve. */
     public void seekNearestCurve(boolean select) {
         if (mouseIsStuck) {
@@ -3278,7 +3379,42 @@ public class Editor implements CropEventListener, MouseListener,
             return;
         }
 
+
         Point2D.Double mousePage = principalToStandardPage.transform(mprin);
+        DecorationDistance dist = nearestCurve(mousePage);
+
+        if (dist == null) {
+            return;
+        }
+
+        Point2D.Double gradient = null;
+        DecorationHandle handle = null;
+
+        Decoration dec = dist.decoration;
+        if (dec instanceof CurveDecoration) {
+            CurveDecoration sdec = (CurveDecoration) dec;
+            handle = sdec.getHandle(dist.distance.t);
+            gradient = sdec.getItem().getShape().
+                
+                param = sdec.getItem();
+                shape = sdec.getShape();
+            } else if (dec instanceof RulerDecoration) {
+                RulerDecoration rdec = (RulerDecoration) dec;
+                param = sdec.getItem();
+                shape = sdec.getShape();
+            } else {
+                continue;
+            }
+
+
+            selection = (dist.decoration instanceof CurveDecoration)
+                ? ((CurveDecoration) selection).getHandle(dist.distance.t)
+                : ((RulerDecoration) selection).getHandle(dist.distance.t);
+        }
+
+        
+
+
         DecorationHandle sel = null;
         Point2D.Double gradient = null;
 
@@ -5340,6 +5476,10 @@ public class Editor implements CropEventListener, MouseListener,
        and position by scale. */
     public void drawLabel(Graphics g, int labelNo, double scale) {
         AnchoredLabel label = labels.get(labelNo);
+        if (label.getFontSize() == 0) {
+            return;
+        }
+
         View view = labelViews.get(labelNo);
         Affine toPage = getPrincipalToAlignedPage();
         Point2D.Double point = toPage.transform(label.getX(), label.getY());

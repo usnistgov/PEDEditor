@@ -38,7 +38,7 @@ import org.codehaus.jackson.map.SerializationConfig;
 @JsonSubTypes({
         @Type(value=Polyline.class, name = "polyline"),
             @Type(value=SplinePolyline.class, name = "cubic spline") })
-public abstract class GeneralPolyline {
+public abstract class GeneralPolyline implements CurveParameterization {
     protected ArrayList<Point2D.Double> points;
     protected StandardStroke stroke = null;
     protected Color color = null;
@@ -69,6 +69,14 @@ public abstract class GeneralPolyline {
 
     public boolean isFilled() {
         return filled;
+    }
+
+    @Override public double getLastControlPoint(double t) {
+        return Math.max(0, getNextControlPoint(t) - 1);
+    }
+
+    @Override public double getNextControlPoint(double t) {
+        return Math.min(Math.floor(t) + 1, getMaxT());
     }
 
     /** @return the bounds of this shape when drawn. Line width is
@@ -398,6 +406,36 @@ public abstract class GeneralPolyline {
         return (size >= 2 && isClosed()) ? size : (size - 1);
     }
 
+    @JsonIgnore @Override public int getControlPointCnt() {
+        return getSegmentCnt() + 1;
+    }
+
+    /** Return the point where this polyline starts. */
+    @JsonIgnore public Point2D.Double getStartPoint() {
+        return (points.size() == 0) ? null
+            : (Point2D.Double) points.get(0).clone();
+    }
+
+    /** Return the point where this polyline ends. Closed curves
+        end where they start. */
+    @JsonIgnore public Point2D.Double getEndPoint() {
+        if (isClosed()) {
+            return getStartPoint();
+        }
+
+        if (points.size() == 0) {
+            return null;
+        }
+
+        return (Point2D.Double) points.get(points.size() - 1).clone();
+    }
+
+    @Override public double getMinT() { return 0; }
+    @Override public double getMaxT() { return getSegmentCnt(); }
+
+    /* Return the location corresponding to the given t value in the parameterized curve */
+    @Override abstract public Point2D.Double getLocation(double t);
+
     @Override
     public String toString() {
         try {
@@ -409,19 +447,7 @@ public abstract class GeneralPolyline {
         }
     }
 
-    /** @return the location of this curve at parameterized point t of
-        segment segmentNo (where segment 0 connects vertices 0 and 1,
-        segment 1 connects vertices 1 and 2, and so forth) */
-    abstract public Point2D.Double getLocation(int segmentNo, double t);
-
-    /** @return the gradient of this curve at parameterized point t of
-        segment segmentNo (where segment 0 connects vertices 0 and 1,
-        segment 1 connects vertices 1 and 2, and so forth) */
-    abstract public Point2D.Double getGradient(int segmentNo, double t);
-
-    /* Parameterize the entire curve as t in [0,1] and return the
-       location corresponding to the given t value */
-    abstract public Point2D.Double getLocation(double t);
+    @Override abstract public Point2D.Double getGradient(double t);
 
     /* Return the index of the control point that neighbors
        getLocation(t) on the t' <= t side of the curve, or the

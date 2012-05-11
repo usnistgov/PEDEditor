@@ -45,7 +45,7 @@ public class Polyline extends GeneralPolyline {
         }
 
         if (isClosed() && size > 1) {
-            output.lineTo(p0.x, p0.y);
+            output.closePath();
         }
         return output;
     }
@@ -69,7 +69,7 @@ public class Polyline extends GeneralPolyline {
         }
 
         if (isClosed() && size > 1) {
-            output.lineTo(p0.x, p0.y);
+            output.closePath();
         }
         return output;
     }
@@ -104,30 +104,42 @@ public class Polyline extends GeneralPolyline {
              xMax - xMin + lw, yMax - yMin + lw);
     }
 
-    @Override
-    public int getSmoothingType() {
+    @Override public int getSmoothingType() {
         return GeneralPolyline.LINEAR;
     }
 
-    @Override
-    public Point2D.Double getGradient(int segmentNo, double t) {
+    @Override public Point2D.Double getGradient(double t) {
         if (points.size() < 2) {
             return null;
         }
 
-        Point2D.Double p1 = points.get(segmentNo);
-        Point2D.Double p2 = get(segmentNo + 1);
-        return new Point2D.Double(p2.x - p1.x, p2.y - p1.y);
-    }
-
-    @Override
-    public Point2D.Double getLocation(int segmentNo, double t) {
-        if (points.size() == 0) {
-            return null;
+        int it = (int) t;
+        int imax = (int) getMaxT();
+        if (imax >= it) {
+            it = imax - 1;
         }
 
-        Point2D.Double p1 = points.get(segmentNo);
-        Point2D.Double p2 = points.get((segmentNo + 1) % size());
+        Point2D.Double p1 = getLocation(it);
+        Point2D.Double p2 = getLocation(it + 1);
+        return new Point2D.Double(p2.x - p1.x, p2.y - p1.y);
+    }
+        
+
+    @Override public Point2D.Double getLocation(double t) {
+        if (t <= 0) {
+            return getStartPoint();
+        }
+
+        int segCnt = getSegmentCnt();
+        if (t >= segCnt) {
+            return getEndPoint();
+        }
+
+        int segNo = (int) Math.floor(t);
+        t -= segNo;
+
+        Point2D.Double p1 = points.get(segNo);
+        Point2D.Double p2 = points.get((segNo + 1) % size());
         return new Point2D.Double(p1.x + (p2.x - p1.x) * t,
                                   p1.y + (p2.y - p1.y) * t);
     }
@@ -192,28 +204,7 @@ public class Polyline extends GeneralPolyline {
         return o;
     }
 
-    /* Parameterize the entire curve as t in [0,1] and return the
-       location corresponding to the given t value */
-    @Override public Point2D.Double getLocation(double t) {
-        int segCnt = getSegmentCnt();
-
-        if (t < 0 || segCnt <= 0) {
-            return (Point2D.Double) points.get(0).clone();
-        }
-
-        if (t >= 1) {
-            return (Point2D.Double)
-                points.get(isClosed() ? 0 : points.size() - 1).clone();
-        }
-
-        t *= segCnt;
-        double segment = Math.floor(t);
-
-        return getLocation((int) segment, t - segment);
-    }
-
-    @Override
-    public CurveDistance distance(Point2D p) {
+    @Override public CurveDistance distance(Point2D p) {
         // For closed polylines, don't forget the segment
         // connecting the last vertex to the first one.
         int segCnt = getSegmentCnt();

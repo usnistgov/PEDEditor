@@ -137,23 +137,23 @@ public class SplinePolyline extends GeneralPolyline {
         return GeneralPolyline.CUBIC_SPLINE;
     }
 
-    @Override
-    public Point2D.Double getGradient(int segmentNo, double t) {
-        return getSpline().gradient(segmentNo, t);
+    @Override public Point2D.Double getGradient(double t) {
+        int segNo = (int) Math.floor(t);
+        return getSpline().gradient(segNo, t - segNo);
     }
 
-    @Override
-    public Point2D.Double getLocation(int segmentNo, double t) {
-        if (points.size() == 0) {
-            return null;
+    @Override public Point2D.Double getLocation(double t) {
+        if (t <= 0) {
+            return getStartPoint();
         }
 
-        return getSpline().value(segmentNo, t);
-    }
+        int segCnt = getSegmentCnt();
+        if (t >= segCnt) {
+            return getEndPoint();
+        }
 
-    @Override
-    public Point2D.Double getLocation(double t) {
-        return getSpline().value(t);
+        int segNo = (int) Math.floor(t);
+        return getSpline().value(segNo, t - segNo);
     }
 
     @Override
