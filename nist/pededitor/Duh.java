@@ -437,12 +437,12 @@ public class Duh {
     }
 
     /** @return a deep copy of the given array. */
-    public static Point2D.Double[] deepCopy(Point2D.Double[] original) {
+    public static Point2D.Double[] deepCopy(Point2D[] original) {
         int length = original.length;
         Point2D.Double[] output = new Point2D.Double[length];
         for (int i = 0; i < length; ++i) {
-            Point2D.Double p = original[i];
-            output[i] = new Point2D.Double(p.x, p.y);
+            Point2D p = original[i];
+            output[i] = new Point2D.Double(p.getX(), p.getY());
         }
         return output;
     }
@@ -913,6 +913,20 @@ public class Duh {
                 }
             }
         }
+    }
+
+    /** Merge the list of x and y values to create an array of
+        Point2D.Doubles. */
+    public static Point2D.Double[] merge(double[] xs, double[] ys) {
+        int cnt = xs.length;
+        if (ys.length != cnt) {
+            throw new IllegalArgumentException("Array sizes do not match");
+        }
+        Point2D.Double[] res = new Point2D.Double[cnt];
+        for (int i = 0; i < cnt; ++i) {
+            res[i] = new Point2D.Double(xs[i], ys[i]);
+        }
+        return res;
     }
 
     public static void main(String[] args) {
