@@ -71,7 +71,7 @@ abstract public class BezierParam2D
              Polynomial.evaluate(t, yCoefficients));
     }
         
-    @Override public Point2D.Double getGradient(double t) {
+    @Override public Point2D.Double getDerivative(double t) {
         return new Point2D.Double
             (Polynomial.evaluateDerivative(t, xCoefficients),
              Polynomial.evaluateDerivative(t, yCoefficients));
@@ -264,7 +264,7 @@ abstract public class BezierParam2D
         }
 
         for (double t: Polynomial.solve(poly)) {
-            if (!inRange(t)) {
+            if (!inDomain(t)) {
                 continue;
             }
 

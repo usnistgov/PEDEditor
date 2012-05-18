@@ -26,7 +26,7 @@ public class SegmentParam2D
     }
         
     @Override public SegmentParam2D derivative() {
-        Point2D.Double g = getGradient(0);
+        Point2D.Double g = getDerivative(0);
         return new SegmentParam2D(g, g, t0, t1);
     }
 
@@ -51,7 +51,7 @@ public class SegmentParam2D
                                       r.getWidth(), r.getHeight());
     }
         
-    @Override public Point2D.Double getGradient(double t) {
+    @Override public Point2D.Double getDerivative(double t) {
         return new Point2D.Double(pEnd.x - p0.x, pEnd.y - p0.y);
     }
 
@@ -63,7 +63,7 @@ public class SegmentParam2D
     @Override public double[] segIntersections(Line2D segment) {
         double t = Duh.segmentIntersectionT
             (p0, pEnd, segment.getP1(), segment.getP2());
-        if (inRange(t)) {
+        if (inDomain(t)) {
             return new double[] { t };
         } else {
             return new double[0];
@@ -73,7 +73,7 @@ public class SegmentParam2D
     @Override public double[] lineIntersections(Line2D segment) {
         double t = Duh.lineIntersectionT
             (p0, pEnd, segment.getP1(), segment.getP2());
-        if (inRange(t)) {
+        if (inDomain(t)) {
             return new double[] { t };
         } else {
             return new double[0];

@@ -103,7 +103,7 @@ public class QuadParam2D extends BezierParam2D {
             double dot = -xCusp * ax - yCusp * ay;
             if (dot <= 0) {
                 // The point of nearest approach is the cusp.
-                if (inRange(tCusp)) {
+                if (inDomain(tCusp)) {
                     return distance(p, tCusp);
                 } else {
                     return nearest;
@@ -117,7 +117,7 @@ public class QuadParam2D extends BezierParam2D {
 
                 double deltaT = dot / (ax * ax + ay * ay);
                 double t = tCusp + (tCusp > rangeMid ? -1 : 1) * deltaT;
-                if (inRange(t)) {
+                if (inDomain(t)) {
                     return distance(p, t);
                 } else {
                     return nearest;
@@ -173,7 +173,7 @@ public class QuadParam2D extends BezierParam2D {
             // transformed into x = sweepLen.
             double t = tCusp + x / sweepLen;
 
-            if (inRange(t)) {
+            if (inDomain(t)) {
                 nearest = CurveDistance.min(nearest, distance(p, t));
             }
         }
