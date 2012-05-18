@@ -8,6 +8,10 @@ import java.util.*;
     the 3rd edition of _Numerical Recipes_.
 
     Declared final for speed.
+
+    TODO: BezierParam2D already contains a lot of this functionality.
+    Remove duplication. (Also, its t domain, [0, (#vertexes -1)],
+    differs from the parameterization used here, [0, 1].)
  */
 final public class CubicSpline1D {
 
@@ -172,9 +176,8 @@ final public class CubicSpline1D {
         return value((int) segment, t - segment);
     }
 
-    /* Parameterize the entire curve as t in [0,1] and return the
-       slope of x(t) at the given t value */
-    public double slope(double t) {
+    /* Return (dx/dt) at t. */
+    public double derivative(double t) {
         int cnt = coefficients.length;
 
         if (cnt == 0) {
@@ -182,7 +185,7 @@ final public class CubicSpline1D {
         }
 
         if (t < 0) {
-            return slope(0);
+            return derivative(0);
         }
 
         t *= cnt;
