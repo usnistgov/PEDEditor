@@ -52,12 +52,12 @@ public abstract class Parameterization2DAdapter
         return CurveDistance.min(distance(p, 0), distance(p, 1));
     }
 
-    public boolean inRange(double t) { return t >= t0 && t <= t1; }
+    public boolean inDomain(double t) { return t >= t0 && t <= t1; }
 
     @Override abstract public Parameterization2D derivative();
     @Override abstract public CurveDistance distance(Point2D p);
     @Override abstract public Rectangle2D.Double getBounds();
-    @Override abstract public Point2D.Double getGradient(double t);
+    @Override abstract public Point2D.Double getDerivative(double t);
     @Override abstract public Point2D.Double getLocation(double t);
     @Override abstract public Parameterization2DAdapter clone();
 }

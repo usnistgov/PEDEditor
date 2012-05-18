@@ -27,7 +27,7 @@ public interface Parameterization2D {
     double getLastVertex(double t);
 
     Point2D.Double getLocation(double t);
-    Point2D.Double getGradient(double t);
+    Point2D.Double getDerivative(double t);
 
     Point2D.Double getStart();
     Point2D.Double getEnd();

@@ -6,6 +6,15 @@ import java.awt.geom.Rectangle2D;
 import java.util.ArrayList;
 
 public class Parameterization2Ds {
+    /** Return the t value that is closest to t that is also in the
+        domain of c. */
+    public static double constrainToDomain(Parameterization2D c, double t) {
+        double minT = c.getMinT();
+        double maxT = c.getMinT();
+        return (t < minT) ? minT
+            : (t > maxT) ? maxT : t;
+    }
+        
     public static double getNearestVertex(Parameterization2D c, double t) {
         Point2D p = c.getLocation(t);
         if (p == null) {
@@ -14,8 +23,10 @@ public class Parameterization2Ds {
 
         double t1 = c.getLastVertex(t);
         double t2 = c.getNextVertex(t);
-        return (p.distanceSq(c.getLocation(t1))
-                <= p.distanceSq(c.getLocation(t2))) ? t1 : t2;
+        return
+            (t2 > c.getMaxT()
+             || p.distanceSq(c.getLocation(t1)) <= p.distanceSq(c.getLocation(t2)))
+            ? t1 : t2;
     }
 
     /** If either the derivative() function is not reliable or its
