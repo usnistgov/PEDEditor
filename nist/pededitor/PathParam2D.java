@@ -208,8 +208,8 @@ public class PathParam2D
         return getSegment(t).distance(p, t);
     }
 
-    public Point2D.Double getGradient(double t) {
-        return getSegment(t).getGradient(t);
+    public Point2D.Double getDerivative(double t) {
+        return getSegment(t).getDerivative(t);
     }
 
     @Override public double getNextVertex(double t) {

@@ -36,11 +36,11 @@ public class VertexInfoDialog extends JDialog {
         gb.addEast(new JLabel("Line width:"));
         gb.endRowWith(lineWidth);
         pack();
-        setGradient(null);
+        setDerivative(null);
         setLineWidth(0.0);
     }
 
-    public void setGradient(Point2D point) {
+    public void setDerivative(Point2D point) {
         double x = (point == null) ? 0 : point.getX();
         double y = (point == null) ? 0 : point.getY();
         if (x == 0 && y == 0) {

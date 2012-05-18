@@ -36,8 +36,8 @@ public class OffsetParam2D implements Parameterization2D {
     @Override public Point2D.Double getLocation(double t) {
         return c.getLocation(t - offset);
     }
-    @Override public Point2D.Double getGradient(double t) {
-        return c.getGradient(t - offset);
+    @Override public Point2D.Double getDerivative(double t) {
+        return c.getDerivative(t - offset);
     }
     @Override public Point2D.Double getStart() { return c.getStart(); }
     @Override public Point2D.Double getEnd() { return c.getEnd(); }
@@ -95,7 +95,7 @@ public class OffsetParam2D implements Parameterization2D {
     @Override public String toString() {
         StringBuilder s = new StringBuilder(getClass().getSimpleName() + "[" + c);
         if (offset != 0) {
-            s.append(" t += " + offset);
+            s.append(" t+" + offset);
         }
         s.append("]");
         return s.toString();
