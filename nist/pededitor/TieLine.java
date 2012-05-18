@@ -28,6 +28,7 @@ public class TieLine {
     @JsonProperty("innerT1") public double it1 = -1.0;
     @JsonProperty("innerT2") public double it2 = -1.0;
     @JsonIgnore public GeneralPolyline innerEdge;
+
     /** Used only during JSON deserialization. Later, use getInnerID()
         instead. */
     int innerId = -1;
@@ -35,6 +36,7 @@ public class TieLine {
     @JsonProperty("outerT1") public double ot1 = -1.0;
     @JsonProperty("outerT2") public double ot2 = -1.0;
     @JsonIgnore public GeneralPolyline outerEdge;
+
     /** Used only during JSON deserialization. Later, use getOuterID()
         instead. */
     int outerId = -1;
@@ -163,6 +165,8 @@ public class TieLine {
 
     @JsonIgnore public Path2D.Double getPath() {
         Path2D.Double output = new Path2D.Double();
+        Parameterization2D innerParam = innerEdge.getParameterization();
+        Parameterization2D outerParam = outerEdge.getParameterization();
 
         if (isTwisted()) {
             // Swap ot1 <=> ot2 to untwist.
@@ -237,9 +241,9 @@ public class TieLine {
 
             Point2D.Double innerPoint = i1;
             if (!i1.equals(i2)) {
-                for (double t: innerEdge.lineIntersectionTs(line)) {
+                for (double t: innerParam.lineIntersections(line)) {
                     if ((it1 < t) == (t < it2)) {
-                        innerPoint = innerEdge.getLocation(t);
+                        innerPoint = innerParam.getLocation(t);
                         break;
                     }
                 }
@@ -247,9 +251,9 @@ public class TieLine {
 
             Point2D.Double outerPoint = o1;
             if (!o1.equals(o2)) {
-                for (double t: outerEdge.lineIntersectionTs(line)) {
+                for (double t: outerParam.lineIntersections(line)) {
                     if ((ot1 < t) == (t < ot2)) {
-                        outerPoint = outerEdge.getLocation(t);
+                        outerPoint = outerParam.getLocation(t);
                         break;
                     }
                 }
