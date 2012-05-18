@@ -1,10 +1,8 @@
 package gov.nist.pededitor;
 
 import java.awt.geom.AffineTransform;
-import java.awt.geom.Line2D;
 import java.awt.geom.Path2D;
 import java.awt.geom.Point2D;
-import java.awt.geom.Rectangle2D;
 import java.util.Collection;
 
 import org.codehaus.jackson.annotate.JsonIgnore;
@@ -13,8 +11,12 @@ import org.codehaus.jackson.annotate.JsonIgnore;
 public class SplinePolyline extends GeneralPolyline {
     private boolean closed = false;
 
-    /** Reset spline to null whenever modifying this. */
-    protected CubicSpline2D spline = null;
+    /** The spline is cached for efficiency. This class and its
+        subclasses should reset spline to null whenever a change
+        invalidates the cached version. */
+    protected transient CubicSpline2D spline = null;
+    /** Param is also cached. */
+    protected transient Parameterization2D param = null;
 
     public SplinePolyline() {
     }
@@ -26,41 +28,48 @@ public class SplinePolyline extends GeneralPolyline {
     }
 
     @Override public void set(int vertexNo, Point2D point) {
+        param = null;
         spline = null;
-        points.set(vertexNo, new Point2D.Double(point.getX(), point.getY()));
+        super.set(vertexNo, point);
     }
 
     @Override public void add(Point2D.Double point) {
+        param = null;
         spline = null;
         super.add(point);
     }
 
     /** Add the point to the polyline in the given position. */
     @Override public void add(int index, Point2D.Double point) {
+        param = null;
         spline = null;
         super.add(index, point);
     }
 
     /** Remove the last point added. */
     @Override public void remove() {
+        param = null;
         spline = null;
         super.remove();
     }
 
     /** Remove the given vertex. */
     @Override public void remove(int vertexNo) {
+        param = null;
         spline = null;
         super.remove(vertexNo);
     }
 
     @Override public void setPoints(Collection<Point2D.Double> points) {
-        super.setPoints(points);
+        param = null;
         spline = null;
+        super.setPoints(points);
     }
 
     @Override public void setClosed(boolean closed) {
         if (closed != this.closed) {
             this.closed = closed;
+            param = null;
             spline = null;
         }
     }
@@ -69,8 +78,7 @@ public class SplinePolyline extends GeneralPolyline {
         return closed;
     }
 
-    @Override
-    public Path2D.Double getPath() {
+    @Override public Path2D.Double getPath() {
         return getSpline().path();
     }
 
@@ -78,8 +86,16 @@ public class SplinePolyline extends GeneralPolyline {
         if (spline == null) {
             spline = new CubicSpline2D(points.toArray(new Point2D.Double[0]),
                                        isClosed());
+            param = null;
         }
         return spline;
+    }
+
+    @Override public Parameterization2D getParameterization() {
+        if (param == null) {
+            param = super.getParameterization();
+        }
+        return param;
     }
 
     public CubicSpline2D getSpline(AffineTransform at) {
@@ -93,71 +109,11 @@ public class SplinePolyline extends GeneralPolyline {
         return new CubicSpline2D(xpoints, isClosed());
     }
 
-    @Override public Rectangle2D getBounds() {
-        Rectangle2D r = getSpline().getBounds();
-        if (r == null) {
-            return null;
-        }
-
-        // Extend the bounds to account for the line width.
-        double lw = getLineWidth();
-        double lw2 = getLineWidth() / 2.0;
-        return new Rectangle2D.Double
-            (r.getX() - lw2, r.getY() - lw2, 
-             r.getWidth() + lw, r.getHeight() + lw);
-    }
-
-    @Override public double[] segmentIntersectionTs(Line2D segment) {
-        return getSpline().intersectionTs(segment);
-    }
-
-    /** @return an array of all intersections between segment and
-        this. */
-    @Override public Point2D.Double[] segmentIntersections(Line2D segment) {
-        return getSpline().intersections(segment);
-    }
-
-    @Override public double[] lineIntersectionTs(Line2D line) {
-        return getSpline().lineIntersectionTs(line);
-    }
-
-    /** @return an array of all intersections between line and
-        this. */
-    @Override public Point2D.Double[] lineIntersections(Line2D line) {
-        return getSpline().lineIntersections(line);
-    }
-
-    @Override
-    public Path2D.Double getPath(AffineTransform at) {
+    @Override public Path2D.Double getPath(AffineTransform at) {
         return getSpline(at).path();
     }
 
-    @Override
-    public int getSmoothingType() {
+    @Override public int getSmoothingType() {
         return GeneralPolyline.CUBIC_SPLINE;
-    }
-
-    @Override public Point2D.Double getGradient(double t) {
-        int segNo = (int) Math.floor(t);
-        return getSpline().gradient(segNo, t - segNo);
-    }
-
-    @Override public Point2D.Double getLocation(double t) {
-        if (t <= 0) {
-            return getStartPoint();
-        }
-
-        int segCnt = getSegmentCnt();
-        if (t >= segCnt) {
-            return getEndPoint();
-        }
-
-        int segNo = (int) Math.floor(t);
-        return getSpline().value(segNo, t - segNo);
-    }
-
-    @Override
-    public CurveDistance distance(Point2D p) {
-        return getSpline().curveDistance(p, 1e-9, 200);
     }
 }

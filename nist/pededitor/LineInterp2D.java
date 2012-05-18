@@ -1,15 +1,18 @@
 package gov.nist.pededitor;
 
 import java.awt.geom.AffineTransform;
-import java.awt.geom.Line2D;
 import java.awt.geom.Path2D;
 import java.awt.geom.Point2D;
-import java.awt.geom.Rectangle2D;
-import java.util.ArrayList;
+import java.util.Collection;
 
 /** Specialization of GeneralPolyline for vanilla polylines. */
 public class Polyline extends GeneralPolyline {
     private boolean closed = false;
+
+    /** The parameterization is cached for efficiency. This class and
+        its subclasses should reset param to null whenever a change
+        invalidates the cached version. */
+    protected transient Parameterization2D param = null;
 
     public Polyline() {
     }
@@ -20,16 +23,51 @@ public class Polyline extends GeneralPolyline {
         super(points, stroke, lineWidth);
     }
 
-    @Override public void setClosed(boolean value) {
-        closed = value;
+    @Override public void set(int vertexNo, Point2D point) {
+        param = null;
+        super.set(vertexNo, point);
+    }
+
+    @Override public void add(Point2D.Double point) {
+        param = null;
+        super.add(point);
+    }
+
+    /** Add the point to the polyline in the given position. */
+    @Override public void add(int index, Point2D.Double point) {
+        param = null;
+        super.add(index, point);
+    }
+
+    /** Remove the last point added. */
+    @Override public void remove() {
+        param = null;
+        super.remove();
+    }
+
+    /** Remove the given vertex. */
+    @Override public void remove(int vertexNo) {
+        param = null;
+        super.remove(vertexNo);
+    }
+
+    @Override public void setPoints(Collection<Point2D.Double> points) {
+        super.setPoints(points);
+        param = null;
+    }
+
+    @Override public void setClosed(boolean closed) {
+        if (closed != this.closed) {
+            this.closed = closed;
+            param = null;
+        }
     }
 
     @Override public boolean isClosed() {
         return closed;
     }
 
-    @Override
-    public Path2D.Double getPath() {
+    @Override public Path2D.Double getPath() {
         int size = points.size();
         Path2D.Double output = new Path2D.Double();
         if (size == 0) {
@@ -50,8 +88,7 @@ public class Polyline extends GeneralPolyline {
         return output;
     }
 
-    @Override
-    public Path2D.Double getPath(AffineTransform at) {
+    @Override public Path2D.Double getPath(AffineTransform at) {
         int size = points.size();
         Path2D.Double output = new Path2D.Double();
         if (size == 0) {
@@ -74,159 +111,15 @@ public class Polyline extends GeneralPolyline {
         return output;
     }
 
-    @Override public Rectangle2D.Double getBounds() {
-        int cnt = points.size();
-        if (cnt == 0) {
-            return null;
+    @Override public Parameterization2D getParameterization() {
+        if (param == null) {
+            param = super.getParameterization();
         }
-
-        Point2D.Double p = points.get(0);
-        double xMin = p.getX();
-        double xMax = xMin;
-        double yMin = p.getY();
-        double yMax = yMin;
-
-        for (int i = 1; i < cnt; ++i) {
-            p = points.get(0);
-            double x = p.getX();
-            double y = p.getY();
-            if (x < xMin) xMin = x;
-            if (x > xMax) xMax = x;
-            if (y < yMin) yMin = y;
-            if (y > yMax) yMax = y;
-        }
-
-        // Extend the bounds to account for the line width.
-        double lw = getLineWidth();
-        double lw2 = getLineWidth() / 2.0;
-        return new Rectangle2D.Double
-            (xMin - lw2, yMin - lw2, 
-             xMax - xMin + lw, yMax - yMin + lw);
+        return param;
     }
 
     @Override public int getSmoothingType() {
         return GeneralPolyline.LINEAR;
-    }
-
-    @Override public Point2D.Double getGradient(double t) {
-        if (points.size() < 2) {
-            return null;
-        }
-
-        int it = (int) t;
-        int imax = (int) getMaxT();
-        if (imax >= it) {
-            it = imax - 1;
-        }
-
-        Point2D.Double p1 = getLocation(it);
-        Point2D.Double p2 = getLocation(it + 1);
-        return new Point2D.Double(p2.x - p1.x, p2.y - p1.y);
-    }
-        
-
-    @Override public Point2D.Double getLocation(double t) {
-        if (t <= 0) {
-            return getStartPoint();
-        }
-
-        int segCnt = getSegmentCnt();
-        if (t >= segCnt) {
-            return getEndPoint();
-        }
-
-        int segNo = (int) Math.floor(t);
-        t -= segNo;
-
-        Point2D.Double p1 = points.get(segNo);
-        Point2D.Double p2 = points.get((segNo + 1) % size());
-        return new Point2D.Double(p1.x + (p2.x - p1.x) * t,
-                                  p1.y + (p2.y - p1.y) * t);
-    }
-
-    @Override public double[] segmentIntersectionTs(Line2D segment) {
-        ArrayList<Double> output = new ArrayList<Double>();
-        Point2D s1 = segment.getP1();
-        Point2D s2 = segment.getP2();
-        int segCnt = getSegmentCnt();
-        Point2D.Double p1 = get(0);
-
-        double oldT2 = -1.0;
-
-        for (int i = 0; i < segCnt; ++i) {
-            Point2D.Double p2 = get(i+1);
-            double t = Duh.segmentIntersectionT(p1, p2, s1, s2);
-            p1 = p2;
-            // Convert t value within segment to t value within
-            // whole curve.
-            double t2 = (t + i) / segCnt;
-            if (t < 0 /* No intersection */ || t2 <= oldT2 /* Repeat */) {
-                continue;
-            }
-            oldT2 = t2;
-            output.add(t2);
-        }
-
-        double[] o = new double[output.size()];
-        for (int i = 0; i < o.length; ++i) {
-            o[i] = output.get(i);
-        }
-        return o;
-    }
-
-    @Override public double[] lineIntersectionTs(Line2D line) {
-        ArrayList<Double> output = new ArrayList<Double>();
-        Point2D s1 = line.getP1();
-        Point2D s2 = line.getP2();
-        int segCnt = getSegmentCnt();
-        Point2D.Double p1 = get(0);
-
-        double oldT2 = -1.0;
-
-        for (int i = 0; i < segCnt; ++i) {
-            Point2D.Double p2 = get(i+1);
-            double t = Duh.lineIntersectionT(p1, p2, s1, s2);
-            p1 = p2;
-            // Convert t value within segment to t value within
-            // whole curve.
-            double t2 = (t + i) / segCnt;
-            if ((t < 0 || t > 1 /* No intersection */) || t2 <= oldT2 /* Repeat */) {
-                continue;
-            }
-            oldT2 = t2;
-            output.add(t2);
-        }
-
-        double[] o = new double[output.size()];
-        for (int i = 0; i < o.length; ++i) {
-            o[i] = output.get(i);
-        }
-        return o;
-    }
-
-    @Override public CurveDistance distance(Point2D p) {
-        // For closed polylines, don't forget the segment
-        // connecting the last vertex to the first one.
-        int segCnt = getSegmentCnt();
-        CurveDistance minDist = null;
-
-        if (segCnt == 0) {
-            return CurveDistance.distance(p, points.get(0));
-        }
-
-        for (int i = 0; i < segCnt; ++i) {
-            CurveDistance dist = CurveDistance.pointSegmentDistance
-                (p, points.get(i), points.get((i+1) % points.size()));
-            if (minDist == null || dist.distance < minDist.distance) {
-                // Convert the parameterized t-value within the
-                // segment to a parameterized t-value for the entire
-                // polyline.
-                dist.t = segmentToT(i, dist.t);
-                minDist = dist;
-            }
-        }
-
-        return minDist;
     }
 
     public String toString(AffineTransform at) {
