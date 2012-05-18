@@ -28,7 +28,7 @@ public class PointParam2D implements Parameterization2D {
     @Override public double getNextVertex(double t) { return 0; }
     @Override public double getLastVertex(double t) { return 0; }
         
-    @Override public Point2D.Double getGradient(double t) {
+    @Override public Point2D.Double getDerivative(double t) {
         return null;
     }
 
