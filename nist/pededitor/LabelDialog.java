@@ -43,7 +43,7 @@ public class LabelDialog extends JDialog {
 
     JCheckBox mIsOpaque = new JCheckBox("Opaque background");
     JCheckBox mIsBoxed = new JCheckBox("Box label");
-    JTextField fontSize = new JTextField("100%", 10);
+    JTextField fontSize = new JTextField("1", 10);
     JTextField codePoint = new JTextField(10);
 
     /** Text angle in degrees, where 0 = left-to-right and 90 =
@@ -112,7 +112,7 @@ public class LabelDialog extends JDialog {
     }
 
     public void setFontSize(double scale) {
-        fontSize.setText(ContinuedFraction.toString(scale, true));
+        fontSize.setText(ContinuedFraction.toString(scale, false));
     }
 
     public double getFontSize() {
@@ -315,7 +315,7 @@ public class LabelDialog extends JDialog {
                            RenderingHints.VALUE_ANTIALIAS_ON);
         g.setFont(new Font(null, Font.BOLD, 12));
         c.drawTickedCircle(g);
-        g.setColor(Color.GREEN);
+        g.setColor(new Color(0x707000));
         c.drawHand(g, getAngleDegrees());
 
         // TODO Change as you change the value...
