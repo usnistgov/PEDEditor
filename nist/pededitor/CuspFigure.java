@@ -7,7 +7,6 @@ import java.awt.geom.AffineTransform;
 import java.awt.geom.Line2D;
 import java.awt.geom.Path2D;
 import java.awt.geom.Point2D;
-import java.awt.geom.Rectangle2D;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -38,7 +37,7 @@ import org.codehaus.jackson.map.SerializationConfig;
 @JsonSubTypes({
         @Type(value=Polyline.class, name = "polyline"),
             @Type(value=SplinePolyline.class, name = "cubic spline") })
-public abstract class GeneralPolyline implements CurveParameterization {
+public abstract class GeneralPolyline implements Parameterizable2D {
     protected ArrayList<Point2D.Double> points;
     protected StandardStroke stroke = null;
     protected Color color = null;
@@ -70,18 +69,6 @@ public abstract class GeneralPolyline implements CurveParameterization {
     public boolean isFilled() {
         return filled;
     }
-
-    @Override public double getLastControlPoint(double t) {
-        return Math.max(0, getNextControlPoint(t) - 1);
-    }
-
-    @Override public double getNextControlPoint(double t) {
-        return Math.min(Math.floor(t) + 1, getMaxT());
-    }
-
-    /** @return the bounds of this shape when drawn. Line width is
-        accounted for in the returned value. */
-    @JsonIgnore abstract public Rectangle2D getBounds();
 
     @JsonProperty("id") int getJSONId() {
         if (jsonId == -1) {
@@ -176,42 +163,33 @@ public abstract class GeneralPolyline implements CurveParameterization {
         the transformed space. */
     abstract public Path2D.Double getPath(AffineTransform at);
 
-    /** @return the t values of all intersections between segment and
-        this. The t values can be used with getLocation() and
-        getGradient(). */
-    abstract public double[] segmentIntersectionTs(Line2D segment);
-
-    /** @return the t values of all intersections between segment and
-        this. The t values can be used with getLocation() and
-        getGradient(). */
-    abstract public double[] lineIntersectionTs(Line2D segment);
-
     /** @return an array of all intersections between segment and
         this. */
-    public Point2D.Double[] segmentIntersections(Line2D segment) {
-        double[] ts = segmentIntersectionTs(segment);
+    public Point2D.Double[] segIntersections(Line2D segment) {
+        Parameterization2D c = getParameterization();
+        double[] ts = c.segIntersections(segment);
         Point2D.Double[] output = new Point2D.Double[ts.length];
         for (int i = 0; i < ts.length; ++i) {
-            output[i] = getLocation(ts[i]);
+            output[i] = c.getLocation(ts[i]);
         }
         return output;
     }
 
-    /** @return an array of all intersections between line and
+    /** @return an array of all intersections between segment and
         this. */
-    public Point2D.Double[] lineIntersections(Line2D line) {
-        double[] ts = lineIntersectionTs(line);
+    public Point2D.Double[] lineIntersections(Line2D segment) {
+        Parameterization2D c = getParameterization();
+        double[] ts = c.lineIntersections(segment);
         Point2D.Double[] output = new Point2D.Double[ts.length];
         for (int i = 0; i < ts.length; ++i) {
-            output[i] = getLocation(ts[i]);
+            output[i] = c.getLocation(ts[i]);
         }
         return output;
     }
 
     /** @return either GeneralPolyline.LINEAR or
         GeneralPolyline.CUBIC_SPLINE. */
-    @JsonIgnore
-    abstract public int getSmoothingType();
+    @JsonIgnore abstract public int getSmoothingType();
 
     public void draw(Graphics2D g) {
         draw(g, getPath());
@@ -239,7 +217,16 @@ public abstract class GeneralPolyline implements CurveParameterization {
         }
     }
 
-    abstract public CurveDistance distance(Point2D p);
+    /* Do not alter the object returned by this method. Clone it if
+       you need to make changes to a copy. */
+    @Override @JsonIgnore
+        public Parameterization2D getParameterization() {
+        return new PathParam2D(getPath());
+    }
+
+    public Point2D.Double getLocation(double d) {
+        return getParameterization().getLocation(d);
+    }
 
     /** Draw the path of this GeneralPolyline. The coordinates for
         this path should be defined in the "Original" coordinate
@@ -385,11 +372,6 @@ public abstract class GeneralPolyline implements CurveParameterization {
         points.set(vertexNo, new Point2D.Double(point.getX(), point.getY()));
     }
 
-    public Point2D.Double tail() {
-        int size = points.size();
-        return (size == 0) ? null : points.get(size-1);
-    }
-
     /* Return the number of control points without duplication (so for
        closed curves, the return trip to point #0 does not count). */
     public int size() {
@@ -404,10 +386,6 @@ public abstract class GeneralPolyline implements CurveParameterization {
     public int getSegmentCnt() {
         int size = points.size();
         return (size >= 2 && isClosed()) ? size : (size - 1);
-    }
-
-    @JsonIgnore @Override public int getControlPointCnt() {
-        return getSegmentCnt() + 1;
     }
 
     /** Return the point where this polyline starts. */
@@ -430,11 +408,10 @@ public abstract class GeneralPolyline implements CurveParameterization {
         return (Point2D.Double) points.get(points.size() - 1).clone();
     }
 
-    @Override public double getMinT() { return 0; }
-    @Override public double getMaxT() { return getSegmentCnt(); }
+    public Point2D.Double getLocation(int i) {
+        return points.get(i % points.size());
+    }
 
-    /* Return the location corresponding to the given t value in the parameterized curve */
-    @Override abstract public Point2D.Double getLocation(double t);
 
     @Override
     public String toString() {
@@ -445,31 +422,6 @@ public abstract class GeneralPolyline implements CurveParameterization {
             System.err.println(e);
             return getClass().getCanonicalName() + "[ERROR]";
         }
-    }
-
-    @Override abstract public Point2D.Double getGradient(double t);
-
-    /* Return the index of the control point that neighbors
-       getLocation(t) on the t' <= t side of the curve, or the
-       second-to-last vertex if t>=1 and isClosed() == false. The
-       index of the adjacent control point on the t' > t size of the
-       curve would be one greater than the returned value. */
-    public int firstControlPointIndex(double t) {
-        int segCnt = getSegmentCnt();
-
-        if (segCnt < 0) {
-            throw new IllegalArgumentException("No control points exist");
-        }
-
-        if (segCnt == 0) {
-            return 0;
-        }
-
-        if (t >= 1.0 && !isClosed()) {
-            return segCnt - 1;
-        }
-
-        return ((int) Math.floor(t * segCnt)) % segCnt;
     }
 
     public static final int LINEAR = 0;
