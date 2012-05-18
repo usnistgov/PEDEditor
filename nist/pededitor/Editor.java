@@ -37,6 +37,13 @@ import org.w3c.dom.DOMImplementation;
 
 // TODO Investigate whether JavaFX is really a plausible alternative.
 
+// TODO (bug) What's up with clicking the 'opaque background' button?
+
+// TODO (optional) Auto-save the diagram at regular intervals.
+
+// TODO (optional) Copy a curve or set of points with the same label
+// into a comma-separated values table.
+
 // TODO (optional) Eutectic and peritectic points.
 
 // TODO (mandatory?, preexisting) Apply a gradient to all control
@@ -345,7 +352,7 @@ public class Editor implements CropEventListener, MouseListener,
         }
 
         @Override public String toString() {
-            return getClass().getName() + "[" + getCurveNo() + ", " + vertexNo + "]";
+            return getClass().getSimpleName() + "[" + getCurveNo() + ", " + vertexNo + "]";
         }
 
         @Override
@@ -391,8 +398,7 @@ public class Editor implements CropEventListener, MouseListener,
     }
 
     
-
-    class CurveDecoration implements Decoration {
+    class CurveDecoration implements Decoration, Parameterizable2D {
         int curveNo;
 
         CurveDecoration(int curveNo) {
@@ -432,14 +438,6 @@ public class Editor implements CropEventListener, MouseListener,
             return paths.get(curveNo);
         }
 
-        public Rectangle2D getBounds() {
-            return getItem().getBounds();
-        }
-
-        public Rectangle2D getBounds(AffineTransform xform) {
-            return getItem().createTransformed(xform).getBounds();
-        }
-
         @Override public DecorationHandle remove() {
             removeCurve(curveNo);
             return null;
@@ -457,12 +455,16 @@ public class Editor implements CropEventListener, MouseListener,
             }
         }
 
+        @Override public PathParam2D getParameterization() {
+            return new PathParam2D(getShape());
+        }
+
         public int getCurveNo() {
             return curveNo;
         }
 
         @Override public String toString() {
-            return getClass().getName() + "[" + getCurveNo() + "]";
+            return getClass().getSimpleName() + "[" + getCurveNo() + "]";
         }
 
         @Override public boolean equals(Object other) {
@@ -485,9 +487,10 @@ public class Editor implements CropEventListener, MouseListener,
 
         /** Return the VertexHandle closest to path(t). */
         public VertexHandle getHandle(double t) {
-            GeneralPolyline path = getItem()
-                .createTransformed(principalToStandardPage);
-            double ct = CurveParameterizations.getNearestControlPoint(path, t);
+            Parameterization2D c = getItem()
+                .createTransformed(principalToStandardPage)
+                .getParameterization();
+            double ct = Parameterization2Ds.getNearestVertex(c, t);
             return new VertexHandle(this, (int) ct);
         }
     }
@@ -1032,7 +1035,7 @@ public class Editor implements CropEventListener, MouseListener,
         }
     }
 
-    class RulerDecoration implements Decoration {
+    class RulerDecoration implements Decoration, Parameterizable2D {
         /** Index into rulers list. */
         int index;
 
@@ -1051,6 +1054,10 @@ public class Editor implements CropEventListener, MouseListener,
             Point2D.Double s = principalToStandardPage.transform(item.startPoint);
             Point2D.Double e = principalToStandardPage.transform(item.endPoint);
             return new Line2D.Double(s, e);
+        }
+
+        @Override public PathParam2D getParameterization() {
+            return new PathParam2D(getShape());
         }
 
         @Override public void setLineWidth(double lineWidth) {
@@ -1193,18 +1200,18 @@ public class Editor implements CropEventListener, MouseListener,
     @JsonProperty protected PolygonTransform originalToPrincipal;
     protected PolygonTransform principalToOriginal;
     @JsonProperty protected AffinePolygonTransform principalToStandardPage;
-    protected Affine standardPageToPrincipal;
+    protected transient Affine standardPageToPrincipal;
     /** Bounds of the entire page in standardPage space. Use null to
         compute automatically instead. */
     protected Rectangle2D.Double pageBounds;
     /** Bounds of the core diagram (the central triangle or rectangle
         only) in the principal coordinate space. */
     protected DiagramType diagramType = null;
-    protected double scale;
+    protected transient double scale;
     protected ArrayList<GeneralPolyline> paths;
     protected ArrayList<AnchoredLabel> labels;
-    protected ArrayList<Point2D.Double> labelCenters;
-    protected ArrayList<View> labelViews;
+    protected transient ArrayList<Point2D.Double> labelCenters;
+    protected transient ArrayList<View> labelViews;
     @JsonProperty protected ArrayList<Arrow> arrows;
     protected ArrayList<TieLine> tieLines;
     @JsonProperty protected String[] diagramComponents = null;
@@ -1214,10 +1221,10 @@ public class Editor implements CropEventListener, MouseListener,
     protected DecorationHandle selection;
     /** If the timer exists, the original image (if any) upon which
         the new diagram is overlaid will blink. */
-    Timer imageBlinker = null;
+    transient Timer imageBlinker = null;
     /** True if imageBlinker is enabled and the original image should
         be displayed in the background at this time. */
-    boolean backgroundImageEnabled;
+    transient boolean backgroundImageEnabled;
 
     protected ArrayList<LinearAxis> axes;
     /** principal coordinates are used to define rulers' startPoints
@@ -1225,15 +1232,19 @@ public class Editor implements CropEventListener, MouseListener,
     protected ArrayList<LinearRuler> rulers;
     protected LinearAxis pageXAxis = null;
     protected LinearAxis pageYAxis = null;
-    protected boolean preserveMprin = false;
-    protected boolean showRoughFractions = false;
-    protected int paintSuppressionRequestCnt;
+    protected transient boolean preserveMprin = false;
+
+    /** True unless selection instanceof VertexHandle and the next
+        vertex to be inserted should be added to the curve before the
+        currently selected vertex . */
+    protected transient boolean insertBeforeSelection = false;
+    protected transient int paintSuppressionRequestCnt;
 
     /** mouseIsStuck is true if the user recently performed a
         point-selection operatiorn such as "nearest vertex" or
         "nearest point on curve" and the mouse has not yet been moved
         far enough to un-stick the mouse from that location. */
-    protected boolean mouseIsStuck;
+    protected transient boolean mouseIsStuck;
     protected ArrayList<ScaledCroppedImage> scaledOriginalImages;
     /** This is the darkened version of the original image, or null if
         no darkened version exists. At most one dark image is kept in
@@ -1245,7 +1256,7 @@ public class Editor implements CropEventListener, MouseListener,
     static final double STANDARD_LINE_WIDTH = 0.0024;
     static final int STANDARD_FONT_SIZE = 15;
     protected double lineWidth = STANDARD_LINE_WIDTH;
-    protected StandardStroke lineStyle = StandardStroke.SOLID;
+    protected transient StandardStroke lineStyle = StandardStroke.SOLID;
 
     static String[] tieLineStepStrings =
     { "<html><div width=\"200 px\"><p>"
@@ -1756,10 +1767,11 @@ public class Editor implements CropEventListener, MouseListener,
         @param delta if 1, then cycle forwards; if -1, then cycle
         backwards. */
     public void cycleActiveCurve(int delta) {
-        if (paths.size() == 0) {
+        if (paths.size() < 2) {
             return; // Nothing to do.
         }
 
+        insertBeforeSelection = false;
         VertexHandle sel = getVertexHandle();
 
         if (sel == null) {
@@ -1792,13 +1804,10 @@ public class Editor implements CropEventListener, MouseListener,
             sel.vertexNo += delta;
             if (sel.vertexNo > cnt - 1) {
                 sel.vertexNo = cnt - 1;
+                insertBeforeSelection = false;
             } else if (sel.vertexNo < 0) {
-                // We can't go back before the zeroth vertex, but we
-                // can reverse the insertion order to make it possible
-                // to insert vertices before it.
                 sel.vertexNo = 0;
-                reverseInsertionOrder();
-                return;
+                insertBeforeSelection = true;
             }
         }
 
@@ -1972,10 +1981,10 @@ public class Editor implements CropEventListener, MouseListener,
 
 
         if (extraVertex != null && !isDuplicate(extraVertex)) {
-            // Add the current mouse position to the path
-            // immediately after the currently selected vertex,
-            // and draw the curve that results from this addition
-            // in red. Then remove the extra vertex.
+            // Add the current mouse position to the path next to the
+            // currently selected vertex, and draw the curve that
+            // results from this addition in red. Then remove the
+            // extra vertex.
 
             // TODO TOFIX Will this start an infinite loop of repaints?
 
@@ -1983,10 +1992,11 @@ public class Editor implements CropEventListener, MouseListener,
             Color oldColor = csel.getColor();
             csel.setColor(Color.RED);
 
-            int vertexNo = getVertexHandle().vertexNo;
-            path.add(vertexNo + 1, extraVertex);
+            int vertexNo = getVertexHandle().vertexNo
+                + (insertBeforeSelection ? 0 : 1);
+            path.add(vertexNo, extraVertex);
             csel.draw(g, scale);
-            path.remove(vertexNo + 1);
+            path.remove(vertexNo);
             csel.setColor(oldColor);
             saveNeeded = oldSaveNeeded;
         }
@@ -2130,6 +2140,7 @@ public class Editor implements CropEventListener, MouseListener,
                   (GeneralPolyline.LINEAR,
                    new Point2D.Double[0], lineStyle, lineWidth));
         selection = new VertexHandle(paths.size() - 1, -1);
+        insertBeforeSelection = false;
         return getActiveCurve();
     }
 
@@ -2168,11 +2179,7 @@ public class Editor implements CropEventListener, MouseListener,
     }
 
     /** Update the tangency information to display the slope at the
-        given vertex. For polylines, the slope will generally be
-        undefined (having different values when coming from the left
-        than when coming from the right) at interior vertices, but
-        arbitarily choose the slope of the segment following the
-        vertex if possible. */
+        given vertex. */
     public void showTangent(VertexHandle vhand) {
         int vertexNo = vhand.vertexNo;
         CurveDecoration csel = vhand.getDecoration();
@@ -2184,12 +2191,23 @@ public class Editor implements CropEventListener, MouseListener,
 
         Point2D.Double g = null;
 
-        g = path.getGradient(vertexNo);
+        Parameterization2D param = path.getParameterization();
+
+        double t = vertexNo;
+        if (path instanceof Polyline) {
+            // For polylines, insertBeforeSelection gives a hint which
+            // of the two segments adjoining a vertex is the one whose
+            // derivative we want.
+            t = Parameterization2Ds.constrainToDomain
+                (param, t + (insertBeforeSelection ? -0.5 : 0.5));
+        }
+
+        g = param.getDerivative(t);
         if (g != null) {
             principalToStandardPage.deltaTransform(g, g);
         }
 
-        vertexInfo.setGradient(g);
+        vertexInfo.setDerivative(g);
         vertexInfo.setLineWidth(csel.getLineWidth());
     }
 
@@ -2219,8 +2237,11 @@ public class Editor implements CropEventListener, MouseListener,
         VertexHandle vhand = getVertexHandle();
         CurveDecoration csel = vhand.getDecoration();
 
-        add(csel.getItem(), vhand.vertexNo, point);
-        ++vhand.vertexNo;
+        int addPos = vhand.vertexNo + (insertBeforeSelection ? -1 : 0 );
+        add(csel.getItem(), addPos, point);
+        if (!insertBeforeSelection) {
+            ++vhand.vertexNo;
+        }
         showTangent(vhand);
         repaintEditFrame();
     }
@@ -2595,12 +2616,14 @@ public class Editor implements CropEventListener, MouseListener,
                 }
 
                 if (matchCount != 1) {
-                    System.out.println("Selection " + selection
-                                       + " equals " + matchCount + " decorations.");
+                    // This should never happen.
+                    System.err.println("Selection does not match exactly once.");
                     for (DecorationHandle handle: points) {
-                        System.out.println(handle);
+                        System.err.println(handle);
                     }
-                    System.out.println("===");
+                    throw new IllegalStateException
+                        ("Selection " + selection + " equals "
+                         + matchCount + " decorations.");
                 }
 
                 for (int i = 0; i < points.size() - 1; ++i) {
@@ -2629,62 +2652,6 @@ public class Editor implements CropEventListener, MouseListener,
 
         moveMouse(point);
         mouseIsStuck = true;
-    }
-
-    /** In order to insert vertices "backwards", just reverse the
-        existing set of vertices and insert the points in the normal
-        forwards order. */
-    public void reverseInsertionOrder() {
-        VertexHandle vhand = getVertexHandle();
-        if (vhand == null) {
-            return;
-        }
-
-        CurveDecoration csel = vhand.getDecoration();
-        GeneralPolyline path = csel.getItem();
-        ArrayList<Point2D.Double> points = new ArrayList<>();
-
-        if (path.isClosed()) {
-            // Leave vertex #0 in place, but reverse the order of the
-            // others.
-            points.add(path.get(0));
-
-            for (int i = path.size() - 1; i >= 1; --i) {
-                points.add(path.get(i));
-            }
-
-            if (vhand.vertexNo > 0) {
-                vhand.vertexNo = path.size() - vhand.vertexNo;
-            }
-        } else {
-            // Reverse the order of all vertices.
-
-            for (int i = path.size() - 1; i >= 0; --i) {
-                points.add(path.get(i));
-            }
-
-            vhand.vertexNo = path.size() - 1 - vhand.vertexNo;
-        }
-
-        for (TieLine tie: tieLines) {
-            if (tie.innerEdge == path) {
-                tie.it1 = 1.0 - tie.it1;
-                tie.it2 = 1.0 - tie.it2;
-            }
-            if (tie.outerEdge == path) {
-                tie.ot1 = 1.0 - tie.ot1;
-                tie.ot2 = 1.0 - tie.ot2;
-            }
-        }
-
-        for (PathAndT pat: tieLineCorners) {
-            if (pat.path == path) {
-                pat.t = 1.0 - pat.t;
-            }
-        }
-        
-        path.setPoints(points);
-        repaintEditFrame();
     }
 
     public void scaleXUnits() {
@@ -3299,7 +3266,7 @@ public class Editor implements CropEventListener, MouseListener,
 
             for (Line2D segment: pageSegments) {
                 for (Point2D.Double point:
-                         pagePath.segmentIntersections(segment)) {
+                         pagePath.segIntersections(segment)) {
                     standardPageToPrincipal.transform(point, point);
                     output.add(point);
                 }
@@ -3325,7 +3292,8 @@ public class Editor implements CropEventListener, MouseListener,
         }
 
         public String toString() {
-            return "DecorationDistance[" + decoration + ", " + distance + "]";
+            return getClass().getSimpleName() + "[" + decoration + ", "
+                + distance + "]";
         }
     }
 
@@ -3334,32 +3302,36 @@ public class Editor implements CropEventListener, MouseListener,
        outline comes closest to pagePoint. All coordinates used for
        this determination are in standard page space. */
     DecorationDistance nearestCurve(Point2D pagePoint) {
-        DecorationDistance output = null;
+        DecorationDistance res = null;
 
+        // TODO For efficiency, roll all the decorations together and
+        // search them simultaneously for the nearest point. That
+        // requires creating a new delegator class that implements
+        // Parameterization2D and remembers which decoration each
+        // section is associated with. That's not hard, though.
+
+        // Measuring the distance from all decorations separately
+        // would answer the question, "To within maxError, what is the
+        // distance from pagePoint to every decoration that exists?"
+        // That's more information than necessary. A combined search
+        // answers only the most pertinent question, "To within
+        // maxError, what is the distance from pagePoint to the
+        // nearest decoration?"
         for (Decoration dec: getDecorations()) {
-            CurveParameterization param;
-            Shape outline;
-
-            if (dec instanceof CurveDecoration) {
-                CurveDecoration sdec = (CurveDecoration) dec;
-                param = sdec.getItem();
-                shape = sdec.getShape();
-            } else if (dec instanceof RulerDecoration) {
-                RulerDecoration rdec = (RulerDecoration) dec;
-                param = sdec.getItem();
-                shape = sdec.getShape();
-            } else {
+            if (!(dec instanceof Parameterizable2D)) {
                 continue;
             }
 
-            CurveDistance dist = Shapes.distance(shape, pagePoint, null,
-                                                 1e-6, 50);
-            if (output == null || output.distance.distance > dist.distance) {
-                output = new DecorationDistance(dec, dist);
+            Parameterization2D c
+                = ((Parameterizable2D) dec).getParameterization();
+            CurveDistance dist = c.distance(pagePoint, 1e-6, 2000);
+            
+            if (res == null || res.distance.distance > dist.distance) {
+                res = new DecorationDistance(dec, dist);
             }
         }
 
-        return output;
+        return res;
     }
 
 
@@ -3379,7 +3351,6 @@ public class Editor implements CropEventListener, MouseListener,
             return;
         }
 
-
         Point2D.Double mousePage = principalToStandardPage.transform(mprin);
         DecorationDistance dist = nearestCurve(mousePage);
 
@@ -3387,134 +3358,41 @@ public class Editor implements CropEventListener, MouseListener,
             return;
         }
 
-        Point2D.Double gradient = null;
+        Point2D.Double derivative = null;
         DecorationHandle handle = null;
 
         Decoration dec = dist.decoration;
+        Parameterization2D c
+            = ((Parameterizable2D) dec).getParameterization();
+        CurveDistance minDist = dist.distance;
+        double t = minDist.t;
+        int vertex = (int) Parameterization2Ds.getNearestVertex(c, t);
+        boolean closerToNext = (t < vertex);
+        derivative = c.getDerivative(t);
+
         if (dec instanceof CurveDecoration) {
-            CurveDecoration sdec = (CurveDecoration) dec;
-            handle = sdec.getHandle(dist.distance.t);
-            gradient = sdec.getItem().getShape().
-                
-                param = sdec.getItem();
-                shape = sdec.getShape();
-            } else if (dec instanceof RulerDecoration) {
-                RulerDecoration rdec = (RulerDecoration) dec;
-                param = sdec.getItem();
-                shape = sdec.getShape();
-            } else {
-                continue;
-            }
-
-
-            selection = (dist.decoration instanceof CurveDecoration)
-                ? ((CurveDecoration) selection).getHandle(dist.distance.t)
-                : ((RulerDecoration) selection).getHandle(dist.distance.t);
-        }
-
-        
-
-
-        DecorationHandle sel = null;
-        Point2D.Double gradient = null;
-
-        CurveDistance minDist = null;
-        boolean isCloserToNext = false;
-
-        int curveNo = -1;
-        for (GeneralPolyline path : paths) {
-            ++curveNo;
-            GeneralPolyline pagePath
-                = path.createTransformed(principalToStandardPage);
-            CurveDistance dist = pagePath.distance(mousePage);
-
-            if (minDist == null || dist.distance < minDist.distance) {
-                minDist = dist;
-
-                int vertexNo = pagePath.firstControlPointIndex(dist.t);
-                isCloserToNext
-                    = (pagePath.get(vertexNo).distanceSq(mousePage) >
-                       pagePath.get(vertexNo + 1).distanceSq(mousePage));
-                sel = new VertexHandle(curveNo, vertexNo);
-
-                // TODO It would be better to use principal
-                // coordinates instead of page coordinates to compute
-                // gradients.
-                gradient = pagePath.getGradient(vertexNo, dist.t);
-            }
-        }
-
-        // It feels weird if you can't use the 'L' command to select a
-        // ruler, so let people do that.
-
-        int rulerNo = -1;
-        for (LinearRuler ruler: rulers) {
-            GeneralPolyline path = ruler.spinePolyline();
-            ++rulerNo;
-            GeneralPolyline pagePath
-                = path.createTransformed(principalToStandardPage);
-            CurveDistance dist = pagePath.distance(mousePage);
-
-            if (minDist == null || dist.distance < minDist.distance) {
-                minDist = dist;
-
-                int vertexNo = pagePath.firstControlPointIndex(dist.t);
-                isCloserToNext
-                    = (pagePath.get(vertexNo).distanceSq(mousePage) >
-                       pagePath.get(vertexNo + 1).distanceSq(mousePage));
-                sel = new RulerHandle
-                    (rulerNo,
-                     isCloserToNext
-                     ? RulerHandleType.END
-                     : RulerHandleType.START);
-
-                // TODO Have to decide whether to use principal
-                // coordinates for gradients or not, but continue to
-                // use page coordinates for now.
-                gradient = pagePath.getGradient(vertexNo, dist.t);
-            }
-        }
-
-        if (minDist == null) {
-            return;
+            CurveDecoration cdec = (CurveDecoration) dec;
+            handle = cdec.getHandle(t);
+        } else if (dec instanceof RulerDecoration) {
+            RulerDecoration rdec = (RulerDecoration) dec;
+            handle = rdec.getHandle(t);
+        } else {
+            throw new IllegalStateException("Huh? " + dec);
         }
 
         if (select) {
-            selection = sel;
-            if (sel instanceof VertexHandle) {
+            selection = handle;
+            if (selection instanceof VertexHandle) {
                 VertexHandle vhand = getVertexHandle();
                 GeneralPolyline path = getActiveCurve();
-                if (isCloserToNext) {
-                    // pagePoint is closer to the next vertex than to this
-                    // one. Incrementing the selection number, possibly
-                    // cycling back to 0 for closed curves.
-                    vhand.vertexNo = (vhand.vertexNo + 1)  % path.size();
-
-                    // Incrementing vertexNo introduces a new problem: if
-                    // we added a new vertex at this moment, it would be
-                    // inserted after the second off the two neighboring
-                    // vertices vertex instead of between them. Reversing
-                    // the vertex order fixes this.
-                    reverseInsertionOrder();
-                }
-
-                if (!path.isClosed() && vhand.vertexNo == 0) {
-                    double vDist = mousePage.distance
-                        (principalToStandardPage.transform(path.get(0)));
-                    if (vDist < minDist.distance * 1.0000001) {
-                        // Apparently the closest point is at the end
-                        // of the curve, so the user *probably* wants
-                        // to extend the curve.
-                        reverseInsertionOrder();
-                        vhand.vertexNo = path.size() - 1;
-                    }
-                }
+                insertBeforeSelection = closerToNext
+                    || (path.size() >= 2 && t == 0);
             }
         }
         moveMouse(standardPageToPrincipal.transform(minDist.point));
         mouseIsStuck = true;
-        vertexInfo.setGradient(gradient);
-        vertexInfo.setLineWidth(sel.getDecoration().getLineWidth());
+        vertexInfo.setDerivative(derivative);
+        vertexInfo.setLineWidth(handle.getDecoration().getLineWidth());
     }
 
     public void toggleSmoothing() {
@@ -5151,10 +5029,6 @@ public class Editor implements CropEventListener, MouseListener,
 
         if (f != null) {
             return f;
-        }
-
-        if (showRoughFractions) {
-            f = ContinuedFraction.create(d, 0.1, 0, 15);
         }
 
         return f;
