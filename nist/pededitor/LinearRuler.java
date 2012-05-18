@@ -16,7 +16,7 @@ import org.codehaus.jackson.annotate.JsonProperty;
 
 /** Class describing a ruler whose tick marks describe values from a
     LinearAxis. */
-class LinearRuler implements CurveParameterization {
+class LinearRuler implements Parameterizable2D {
     public static enum LabelAnchor { NONE, LEFT, RIGHT };
 
     /** Most applications use straight tick marks, but ternary
@@ -147,20 +147,8 @@ class LinearRuler implements CurveParameterization {
     }
 
     /** Functions required for the CurveParameterization interface. */
-    @Override public double getMinT() { return 0; }
-    @Override public double getMaxT() { return 1; }
-    @Override public Point2D.Double getLocation(double t) {
-        return toPhysical(t, startPoint, endPoint);
-    }
-    @Override public Point2D.Double getGradient(double t) {
-        return new Point2D.Double
-            (endPoint.x - startPoint.x, endPoint.y - startPoint.y);
-    }
-    @Override public double getNextControlPoint(double t) {
-        return 1;
-    }
-    @Override public double getLastControlPoint(double t) {
-        return 0;
+    @Override public Parameterization2D getParameterization() {
+        return new SegmentParam2D(startPoint, endPoint, 0, 1);
     }
 
     /** @return null unless this polyline has been assigned a
@@ -581,6 +569,4 @@ class LinearRuler implements CurveParameterization {
 
         return minT;
     }
-
-    @Override public int getControlPointCnt() { return 2; }
 }
