@@ -82,7 +82,7 @@ public class RulerDialog extends JDialog {
         });
 
     RulerDialog(Frame owner, String title, LinearRuler ruler) {
-        super(owner, "Edit Text", true);
+        super(owner, "Edit Ruler", true);
         JPanel contentPane = (JPanel) getContentPane();
         GridBagUtil cpgb = new GridBagUtil(contentPane);
 
