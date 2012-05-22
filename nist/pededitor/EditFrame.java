@@ -492,6 +492,16 @@ public class EditFrame extends JFrame {
             });
 
         mnPosition.add(new Action
+                       ("Auto-position",
+                        KeyEvent.VK_A,
+                        KeyStroke.getKeyStroke('a')) {
+                @Override
+                    public void actionPerformed(ActionEvent e) {
+                    getParentEditor().autoPosition();
+                }
+            });
+
+        mnPosition.add(new Action
                        ("Enter coordinates",
                         KeyEvent.VK_T,
                         KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0)) {
