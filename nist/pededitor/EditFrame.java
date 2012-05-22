@@ -683,6 +683,23 @@ public class EditFrame extends JFrame {
             mnCurve.add(mnLineWidth);
 
             mnCurve.add(new Action
+                        ("Add vertex", KeyEvent.VK_X,
+                         KeyStroke.getKeyStroke('x')) {
+                    @Override public void actionPerformed(ActionEvent e) {
+                        getParentEditor().addVertex();
+                    }
+                });
+
+            mnCurve.add(new Action
+                        ("Add auto-positioned vertex", KeyEvent.VK_A,
+                         KeyStroke.getKeyStroke('X')) {
+                    @Override public void actionPerformed(ActionEvent e) {
+                        getParentEditor().autoPosition();
+                        getParentEditor().addVertex();
+                    }
+                });
+
+            mnCurve.add(new Action
                         ("Add cusp", KeyEvent.VK_C, "typed ,") {
                     @Override
                         public void actionPerformed(ActionEvent e) {
