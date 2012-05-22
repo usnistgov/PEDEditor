@@ -178,6 +178,9 @@ public class QuadParam2D extends BezierParam2D {
             }
         }
 
+        // TODO UNDO
+        System.out.println(this + ".distance" + Duh.toString(p) + " = " + nearest);
+
         return nearest;
     }
 
@@ -211,6 +214,12 @@ public class QuadParam2D extends BezierParam2D {
         return Arrays.copyOf(roots, rootCnt);
     }
 
+    private static void expect(double a, double b) {
+        if (Math.abs(a - b) > 1e-6) {
+            System.err.println("Expected " + b + ", got " + a);
+        }
+    }
+
     public static void main(String[] args) {
         Point2D.Double[] q =
         { new Point2D.Double(0, 5),
@@ -228,9 +237,22 @@ public class QuadParam2D extends BezierParam2D {
               new Point2D.Double(0.999, 5.49), // a bit more than t = 0
               new Point2D.Double(1.001, 5.49) // a bit less than t = 1
             };
-        for (Point2D p : ps) {
+            
+        double[] ds =
+            { 0.5,
+              0.25,
+              0.172035,
+              1,
+              0.4396933,
+              0.0023800,
+              0.9976199
+            };
+        for (int i = 0; i < ps.length; ++i) {
+            Point2D p = ps[i];
+            double expectedT = ds[i];
             CurveDistance cd = param.distance(p);
             System.out.println(p + " -> " + cd);
+            expect(cd.t, expectedT);
         }
     }
 }
