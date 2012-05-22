@@ -37,12 +37,15 @@ import org.w3c.dom.DOMImplementation;
 
 // TODO Investigate whether JavaFX is really a plausible alternative.
 
-// TODO (bug) What's up with clicking the 'opaque background' button?
+// TODO (bug) The decorations are messed up in the label dialog in XP.
+// Check whether the same problem exists in Windows 7.
 
 // TODO (optional) Auto-save the diagram at regular intervals.
 
 // TODO (optional) Copy a curve or set of points with the same label
 // into a comma-separated values table.
+
+// TODO (optional) Fill styles. (Right now the only fill style is "solid".)
 
 // TODO (optional) Eutectic and peritectic points.
 
@@ -52,41 +55,47 @@ import org.w3c.dom.DOMImplementation;
 // is between v1 and v2: "$variable = $variable + k * ($variable - v1)
 // / (v2 - v1)"
 
-// TODO (Optional) Make GRUMP font reflect sans serif PED font instead
-// of serif version.
+// TODO (Optional) Make the GRUMP conversion font sans serif instead of serif.
 
-// TODO (Optional) Fix symbol alignment for GRUMP font. (It's nearly
-// correct already, but it's also easy to do.)
+// TODO (Optional) Fix symbol alignment for GRUMP font. (Symbols are
+// almost centered already, but getting them exactly right would be
+// easy. They are already correct in the PED font.)
 
 // TODO (Optional) Make regular open symbols look as nice as the
-// GRUMP-converted open symbols do.
+// GRUMP-converted open symbols do. (JavaFX might fix this issue.)
 
 // TODO (Optional) Better support for new double subscripts and
-// changing font sizes within a single label.
+// changing font sizes within a single label. (JavaFX might fix this
+// issue.)
 
-// TODO (Optional) Add font hints (Probably a bad idea: it would
-// increase margin errors in the image the digitizers look at)
+// TODO (Optional) Add font hints to make labels look better on screen
+// (Probably a bad idea: it would increase margin errors in the image
+// the digitizers look at)
 
-// TODO (optional) Fix issues with tie lines and closed curves.
+// TODO (optional) You can't make tie lines that cross the "endpoint"
+// of a closed curve. Fix this somehow.
 
-// TODO (optional) LinearRulers with explicitly assigned logical
-// values instead of an Axis dependence? A lot of schematics could
-// benefit. Click two endpoints of a segment, specify the range, and
-// you're good.
+// TODO (optional) The existing rulers only show the values of defined
+// variables (such as the temperature or the mole percentage of a
+// component). Some diagrams, especially schematics, could benefit
+// from rulers whose ranges are defined in terms of concrete numbers
+// instead of in terms of other variables -- click two points to
+// define the endpoints, then specify the min and max values. This one
+// isn't hard to do, either.
 
-// TODO (optional) Explicit assignment of label margins.
+// TODO (optional) For opaque and boxed labels, allow users to decide
+// how much extra white space to include on each side.
 
-// TODO (optional) Vector-based label or symbol scaling. In other
-// words, you select a point, then move the mouse, and the vector
-// determines the scale and angle of the resulting symbol. Ideally the
-// changes would be visible in real time. Why not do it?
+// TODO (optional) Set of commonly used shapes (equilateral triangle,
+// square, circle) whose scale and orientation are defined by
+// selecting two points. Ideally the changes would be visible in real
+// time as you move the mouse around.
 
-// TODO (optional) Conversion from GRUMP to PED fonts is arguably more
-// jarring than necessary. Can I change the claimed point size of the
-// fonts?
-
-// TODO (optional) Support of GRUMP-style explicit assignment of label
-// skip, label density, and so on in new diagrams.
+// TODO (optional) Support of GRUMP-style explicit assignment of ruler
+// limits such as label skip, label density, and so on. The downside
+// of this is that it would make the interface even more complicated,
+// and people might get in the habit of doing explicit assignments
+// even though the automatic ones are pretty good.
 
 // TODO (optional) Allow the diagram domain and range to be expanded.
 // Right now, you can expand the margins, change the aspect ratio, or
@@ -99,22 +108,20 @@ import org.w3c.dom.DOMImplementation;
 // principalToStandardPage and pageBounds. For example, when reducing
 // minX, also reduce every coordinate less than minX.
 
+// TODO (optional) Resize all labels at once by a given factor. This
+// is more useful during conversion from GRUMP to PED fonts.
+
 // TODO (optional) Curve tags, such as temperature, liquidus, solidus, and
 // presumably user-defined tags too.
 
 // TODO (optional) Point tags: pen-up, pen-down, temperature
 
-// TODO (optional) Right-click popup menus. The program works just
-// fine with using keyboard shortcuts instead of right-click menus,
-// and I'd probably just go on using the keyboard shortcuts even if an
-// alternative were provided, but forcing the users to remember
-// shortcuts isn't very friendly, and you can't use the mouse to click
-// on an ordinary menu if you're already using the mouse to identify
-// the location the operation should apply to. A two-step process
-// (select action, then selection location) is possible but would be
-// slow at best and awkward to implement as well.
-
-// TODO (optional) More compact representation for symbol sets.
+// TODO (optional) Right-click popup menus. I don't think experienced
+// users (the digitizers) would make much use of them, but occasional
+// users might. Forcing the users to remember shortcuts isn't very
+// friendly, and you can't use the mouse to click on an ordinary menu
+// if you're already using the mouse to identify the location the
+// operation should apply to.
 
 // TODO (major time-saver) Automatically infer diagram location from
 // composition where equation balancing is possible.
@@ -153,10 +160,12 @@ import org.w3c.dom.DOMImplementation;
 // degrees of freedom does, so the perfect ellipse is a good choice.)
 
 // TODO "Undo" option. Any good drawing program has that feature, but
-// making everything undoable would take work.
+// making everything undoable would take a couple weeks. (Every time
+// an operation that changes the diagram is completed, push the
+// inverse operation onto a stack.)
 
-// TODO (enhancement) Region identification and filling. As old
-// diagrams show, such a feature would get use.
+// TODO (optional) More compact representation for symbol sets in the
+// PED format.
 
 // TODO (preexisting in viewer) Periodic table integration and
 // automatic conversion of diagrams from mole percent to weight
@@ -1986,8 +1995,6 @@ public class Editor implements CropEventListener, MouseListener,
             // results from this addition in red. Then remove the
             // extra vertex.
 
-            // TODO TOFIX Will this start an infinite loop of repaints?
-
             boolean oldSaveNeeded = saveNeeded;
             Color oldColor = csel.getColor();
             csel.setColor(Color.RED);
@@ -3141,6 +3148,26 @@ public class Editor implements CropEventListener, MouseListener,
         }
     }
 
+    static class DecorationDistance implements Comparable<DecorationDistance> {
+        Decoration decoration;
+        CurveDistance distance;
+
+        public DecorationDistance(Decoration de, CurveDistance di) {
+            decoration = de;
+            distance = di;
+        }
+
+        public int compareTo(DecorationDistance other) {
+            return (distance.distance < other.distance.distance) ? -1
+                : (distance.distance > other.distance.distance) ? 1 : 0;
+        }
+
+        public String toString() {
+            return getClass().getSimpleName() + "[" + decoration + ", "
+                + distance + "]";
+        }
+    }
+
     /** @return a list of DecorationHandles sorted by distance in page
         coordinates from point p (expressed in principal coordinates).
         Generally, only the closest DecorationHandle for each
@@ -3276,62 +3303,31 @@ public class Editor implements CropEventListener, MouseListener,
         return output;
     }
 
-
-    static class DecorationDistance implements Comparable<DecorationDistance> {
-        Decoration decoration;
-        CurveDistance distance;
-
-        public DecorationDistance(Decoration de, CurveDistance di) {
-            decoration = de;
-            distance = di;
-        }
-
-        public int compareTo(DecorationDistance other) {
-            return (distance.distance < other.distance.distance) ? -1
-                : (distance.distance > other.distance.distance) ? 1 : 0;
-        }
-
-        public String toString() {
-            return getClass().getSimpleName() + "[" + decoration + ", "
-                + distance + "]";
-        }
-    }
-
-
     /* Return the DecorationDistance for the curve or ruler whose
        outline comes closest to pagePoint. All coordinates used for
        this determination are in standard page space. */
     DecorationDistance nearestCurve(Point2D pagePoint) {
         DecorationDistance res = null;
 
-        // TODO For efficiency, roll all the decorations together and
-        // search them simultaneously for the nearest point. That
-        // requires creating a new delegator class that implements
-        // Parameterization2D and remembers which decoration each
-        // section is associated with. That's not hard, though.
-
-        // Measuring the distance from all decorations separately
-        // would answer the question, "To within maxError, what is the
-        // distance from pagePoint to every decoration that exists?"
-        // That's more information than necessary. A combined search
-        // answers only the most pertinent question, "To within
-        // maxError, what is the distance from pagePoint to the
-        // nearest decoration?"
+        ArrayList<Decoration> decs = new ArrayList<>();
+        ArrayList<Parameterization2D> params = new ArrayList<>();
         for (Decoration dec: getDecorations()) {
-            if (!(dec instanceof Parameterizable2D)) {
-                continue;
-            }
-
-            Parameterization2D c
-                = ((Parameterizable2D) dec).getParameterization();
-            CurveDistance dist = c.distance(pagePoint, 1e-6, 2000);
-            
-            if (res == null || res.distance.distance > dist.distance) {
-                res = new DecorationDistance(dec, dist);
+            if (dec instanceof Parameterizable2D) {
+                Parameterization2D param
+                    = ((Parameterizable2D) dec).getParameterization();
+                if (param.getMinT() == param.getMaxT()) {
+                    // That's a point, not a curve. If the user wanted
+                    // a point, they would have pressed 'p' instead.
+                    continue;
+                }
+                decs.add(dec);
+                params.add(param);
             }
         }
 
-        return res;
+        OffsetParam2D.DistanceIndex di
+            = OffsetParam2D.distance(params, pagePoint, 1e-6, 2000);
+        return new DecorationDistance(decs.get(di.index), di.distance);
     }
 
 
@@ -4726,6 +4722,69 @@ public class Editor implements CropEventListener, MouseListener,
     }
 
     /** Invoked from the EditFrame menu */
+    public void autoPosition() {
+        if (mouseIsStuck) {
+            unstickMouse();
+        }
+
+        if (selection != null && mprin != null) {
+            Point2D.Double selPoint = selection.getLocation();
+            Point2D.Double delta = Duh.aMinusB(mprin, selPoint);
+            Point2D.Double selPage
+                = principalToStandardPage.transform(selPoint);
+            principalToStandardPage.deltaTransform(delta, delta);
+            double length = Duh.length(principalToStandardPage.transform(delta));
+
+            // delta is the vector on the page from
+            // selection.getLocation() to mprin, and length is the
+            // length of vector. Tolerance is the maximum ratio on the
+            // standard page of distance between the mouse and the
+            // projection to the distance between the mouse and the
+            // selection. TODO A smarter approach might allow for both
+            // absolute and relative errors.
+            double tolerance = 0.05;
+
+            // Closest projection of the mouse onto a line that goes
+            // through the selection and is parallel to one of the
+            // diagram axes.
+            Point2D.Double pageProjection = null;
+            double minDist = length * tolerance;
+            double minDistSq = minDist * minDist;
+
+            for (LinearAxis axis: axes) {
+                Point2D.Double z = axis.gradient();
+                double gx = z.x;
+                // The line normal to the gradient is the zero line.
+                z.x = -z.y;
+                z.y = gx;
+                
+                principalToStandardPage.deltaTransform(z, z);
+                Point2D.Double projection = Duh.nearestPointOnLine
+                    (delta, new Point2D.Double(0,0), z);
+                double distSq = delta.distanceSq(projection);
+                if (distSq < minDistSq) {
+                    pageProjection = projection;
+                    pageProjection.x += selPage.x;
+                    pageProjection.y += selPage.y;
+                    minDistSq = distSq;
+                }
+            }
+
+            if (pageProjection != null) {
+                moveMouse(standardPageToPrincipal.transform(pageProjection));
+                return;
+            }
+        }
+
+        // TODO Part 2
+
+        // 2. If the mouse is within 0.01 page units of a key point,
+        // or if the distance to the nearest key point is less than
+        // three times the distance to the nearest curve, then move to
+        // the key point. Otherwise, move to the nearest curve.
+    }
+
+    /** Invoked from the EditFrame menu */
     public void enterPosition() {
         String[] labels = new String[axes.size()];
         String[] oldValues = new String[axes.size()];
@@ -5243,8 +5302,9 @@ public class Editor implements CropEventListener, MouseListener,
             } else {
                 openImage(filename);
             }
+        } else {
+            initializeGUI();
         }
-        editFrame.setVisible(true);
     }
 
     public static void initializeCrosshairs() {
