@@ -65,4 +65,6 @@ public interface Parameterization2D {
     double[] lineIntersections(Line2D segment);
 
     Parameterization2D clone();
+
+    Parameterization2D[] subdivide();
 }

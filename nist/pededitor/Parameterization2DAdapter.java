@@ -52,6 +52,10 @@ public abstract class Parameterization2DAdapter
         return CurveDistance.min(distance(p, 0), distance(p, 1));
     }
 
+    @Override public Parameterization2D[] subdivide() {
+        return Parameterization2Ds.subdivide(this);
+    }
+
     public boolean inDomain(double t) { return t >= t0 && t <= t1; }
 
     @Override abstract public Parameterization2D derivative();

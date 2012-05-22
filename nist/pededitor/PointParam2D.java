@@ -75,14 +75,12 @@ public class PointParam2D implements Parameterization2D {
             ? (new double[] { 0 }) : (new double[0]);
     }
 
+    @Override public PointParam2D[] subdivide() {
+        // Can't subdivide a point.
+        return new PointParam2D[] { this };
+    }
+
     @Override public String toString() {
-        StringBuilder s = new StringBuilder
-            (getClass().getSimpleName() + "[" + Duh.toString(getStart()) + ", "
-             + getEnd());
-        if (getMinT() != 0 || getMaxT() != 1) {
-            s.append(" t in [" + getMinT() + ", " + getMaxT() + "]");
-        }
-        s.append("]");
-        return s.toString();
+        return getClass().getSimpleName() + Duh.toString(getStart());
     }
 }

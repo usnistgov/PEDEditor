@@ -113,8 +113,6 @@ public class PathParam2D
         }
 
         t1 = segments.get(segments.size() - 1).getMaxT();
-
-        System.out.println(this);
     }
 
     public PathParam2D(Shape shape) {
@@ -136,7 +134,7 @@ public class PathParam2D
         }
 
         @Override public boolean hasNext() {
-            return segNo + 1 <= t1;
+            return segNo < segments.size();
         }
 
         @Override public void remove() {
@@ -334,5 +332,13 @@ public class PathParam2D
         }
         s.append("]");
         return s.toString();
+    }
+
+    @Override public Parameterization2D[] subdivide() {
+        if (segments.size() == 1) {
+            return segments.get(0).subdivide();
+        } else {
+            return segments.toArray(new OffsetParam2D[0]);
+        }
     }
 }

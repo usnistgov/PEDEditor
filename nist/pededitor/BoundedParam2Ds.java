@@ -6,6 +6,7 @@ import java.awt.geom.Rectangle2D;
 import java.util.ArrayList;
 
 public class Parameterization2Ds {
+    static final boolean debug = false;
     /** Return the t value that is closest to t that is also in the
         domain of c. */
     public static double constrainToDomain(Parameterization2D c, double t) {
@@ -31,16 +32,34 @@ public class Parameterization2Ds {
 
     /** If either the derivative() function is not reliable or its
         getBounds() can return values with large relative error, then
-        don't use this, use distanceLowerBound0() instead. */
+        use distanceLowerBound0() instead. */
     public static double distanceLowerBound
         (Parameterization2D c, Point2D p) {
+        if (debug) {
+            double d = Math.max(distanceLowerBound0(c, p),
+                                distanceLowerBound1(c, p));
+            System.out.println("distanceLowerBound(" + c + ", " + p
+                               + ") = " + d);
+        }
         return Math.max(distanceLowerBound0(c, p),
                         distanceLowerBound1(c, p));
     }
 
-    public static CurveDistance distance
-        (ArrayList<Parameterization2D> cps, Point2D p,
+    static <T extends Parameterization2D> CurveDistance distance
+        (Iterable<T> ocps, Point2D p,
          double maxError, double maxIterations) {
+    	ArrayList<Parameterization2D> cps = new ArrayList<>();
+    	for (Parameterization2D cp: ocps) {
+    		cps.add(cp);
+    	}
+
+        if (debug) {
+            System.err.println("Sections are: ");
+            for (Parameterization2D cp: cps) {
+                System.err.println(cp);
+            }
+            System.err.println();
+        }
 
         if (cps.size() == 0) {
             return null;
@@ -51,7 +70,7 @@ public class Parameterization2Ds {
         Parameterization2D c0 = cps.get(0);
         CurveDistance minDist = c0.distance(p, c0.getMinT());
 
-        for (;;) {
+        for (int step = 0;; ++step) {
             // Determine the new upper bound on distances, and discard
             // every curve that exceeds that upper bound.
 
@@ -64,6 +83,11 @@ public class Parameterization2Ds {
             }
 
             double cutoffDistance = minDist.distance - maxError;
+
+            if (debug) {
+                System.err.println("Step " + step + ": dist = " + minDist
+                                   + ", cutoff = " + cutoffDistance);
+            }
 
             // Create a list of curves whose distance from p may be
             // less than cutoffDistance. Bisect those curves to
@@ -90,19 +114,15 @@ public class Parameterization2Ds {
                     continue;
                 }
 
-                // Bisect this curve to improve approxmation accuracy.
-                double middle = (cp.getMinT() + cp.getMaxT()) / 2;
-
-                {
-                    Parameterization2D ncp = cp.clone();
-                    ncp.setMaxT(middle);
-                    ncps.add(ncp);
+                if (debug) {
+                    System.err.println("Bisecting [" + cp.getMinT() + ", "
+                                       + cp.getMaxT() + "]");
                 }
 
-                {
-                    Parameterization2D ncp = cp.clone();
-                    ncp.setMinT(middle);
-                    ncps.add(ncp);
+                // Subdivide this curve to improve approximation accuracy.
+                Parameterization2D[] divisions = cp.subdivide();
+                for (Parameterization2D param: divisions) {
+                    ncps.add(param);
                 }
             }
 
@@ -239,7 +259,12 @@ public class Parameterization2Ds {
     /** Compute the distance from p to this curve to within maxError
         of the correct value, unless it takes more than maxIterations
         to compute. In that case, just return the best estimate known
-        at that time. */
+        at that time.
+
+        See OffsetParam2D.distance(ArrayList<Parameterization2D,
+        Point2D, double, double) for a more efficient way to measure
+        the distance to the nearest of several curves.
+    */
     public static CurveDistance distance
         (Parameterization2D c, Point2D p,
          double maxError, double maxIterations) {
@@ -265,4 +290,11 @@ public class Parameterization2Ds {
         return minDist;
     }
 
+    public static Parameterization2D[] subdivide(Parameterization2D param) {
+        double middle = (param.getMinT() + param.getMaxT()) / 2;
+        Parameterization2D[] res = { param.clone(), param.clone() };
+        res[0].setMaxT(middle);
+        res[1].setMinT(middle);
+        return res;
+    }
 }
