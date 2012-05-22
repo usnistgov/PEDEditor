@@ -235,7 +235,7 @@ public class LabelDialog extends JDialog {
 
             gb.addWest(fontSizeLabel);
             gb.addWest(fontSize);
-            gb.endRowWith(new JLabel("of standard"));
+            gb.endRowWith(new JLabel("times standard"));
             mgb.endRowWith(panel);
         }
 
