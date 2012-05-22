@@ -75,6 +75,9 @@ public class LinearAxis extends Axis {
         c = newC;
     }
 
+    public Point2D.Double gradient() {
+        return new Point2D.Double(a, b);
+    }
 
     static NumberFormat getDefaultFormat() {
         return new DecimalFormat("##0.0");
