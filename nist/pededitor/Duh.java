@@ -604,6 +604,24 @@ public class Duh {
     }
     
 
+    /** @return the point on line p1p2 that is nearest to p0. */
+    public static Point2D.Double nearestPointOnLine
+        (Point2D p0, Point2D p1, Point2D p2) {
+        double dx = p2.getX() - p1.getX();
+        double dy = p2.getY() - p1.getY();
+        double p1p2LengthSq = dx * dx + dy * dy;
+        if (p1p2LengthSq == 0) {
+            return new Point2D.Double(p1.getX(), p1.getY());
+        }
+
+        double dx2 = p0.getX() - p1.getX();
+        double dy2 = p0.getY() - p1.getY();
+        double dot = dx * dx2 + dy * dy2;
+        dot /= p1p2LengthSq;
+        return new Point2D.Double(p1.getX() + dx * dot, p1.getY() + dy * dot);
+    }
+    
+
     /** @return the point on segment p1p2 that is nearest to p0. */
     public static Point2D.Double nearestPointOnSegment
         (Point2D p0, Point2D p1, Point2D p2) {
