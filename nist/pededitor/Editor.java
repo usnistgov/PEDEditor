@@ -6,7 +6,25 @@ import javax.print.attribute.standard.*;
 import javax.swing.*;
 import javax.swing.filechooser.*;
 import javax.swing.text.*;
-import java.awt.*;
+
+import java.awt.AWTException;
+import java.awt.BasicStroke;
+import java.awt.Color;
+import java.awt.Cursor;
+import java.awt.Dimension;
+import java.awt.EventQueue;
+import java.awt.Font;
+import java.awt.FontFormatException;
+import java.awt.Graphics;
+import java.awt.Graphics2D;
+import java.awt.GraphicsEnvironment;
+import java.awt.Image;
+import java.awt.Point;
+import java.awt.Rectangle;
+import java.awt.RenderingHints;
+import java.awt.Robot;
+import java.awt.Shape;
+import java.awt.Stroke;
 import java.awt.event.*;
 import java.awt.image.*;
 import java.awt.geom.*;
@@ -1266,6 +1284,7 @@ public class Editor implements CropEventListener, MouseListener,
     static final int STANDARD_FONT_SIZE = 15;
     protected double lineWidth = STANDARD_LINE_WIDTH;
     protected transient StandardStroke lineStyle = StandardStroke.SOLID;
+    protected transient double fontSize = 1;
 
     static String[] tieLineStepStrings =
     { "<html><div width=\"200 px\"><p>"
@@ -2023,6 +2042,22 @@ public class Editor implements CropEventListener, MouseListener,
         }
     }
 
+
+    /** Special label highlighting rules: show the label box, and if
+        the anchor is not at the center, show the anchor as either a
+        hollow circle (if not selected) or as a solid circle (if
+        selected). */
+    void paintSelectedLabel(Graphics2D g, double scale) {
+        LabelHandle hand = getLabelHandle();
+        LabelDecoration ldec = hand.getDecoration();
+        AnchoredLabel label = ldec.getItem();
+
+        boolean isBoxed = label.isBoxed();
+        label.setBoxed(true);
+        drawLabel(g, ldec.index, scale, true);
+        label.setBoxed(isBoxed);
+    }
+
     /** @param c The usual color, or null.
 
         @return A color that contrasts with c; specifically, magenta
@@ -2120,6 +2155,8 @@ public class Editor implements CropEventListener, MouseListener,
 
             if (selection instanceof VertexHandle) {
                 paintSelectedCurve(g, scale);
+            } else if (selection instanceof LabelHandle) {
+                paintSelectedLabel(g, scale);
             } else {
                 sel.draw(g, scale);
             }
@@ -2848,6 +2885,7 @@ public class Editor implements CropEventListener, MouseListener,
 
         LabelDialog dog = new LabelDialog
             (editFrame, "Add Label", getFont().deriveFont(16.0f));
+        dog.setFontSize(fontSize);
         AnchoredLabel newLabel = dog.showModal();
         if (newLabel == null) {
             return;
@@ -2857,6 +2895,7 @@ public class Editor implements CropEventListener, MouseListener,
         newLabel.setX(mprin.x);
         newLabel.setY(mprin.y);
         add(newLabel);
+        fontSize = newLabel.getFontSize();
         selection = new LabelHandle(labels.size() - 1, LabelHandleType.ANCHOR);
         mouseIsStuck = true;
     }
@@ -2881,6 +2920,7 @@ public class Editor implements CropEventListener, MouseListener,
         }
 
         saveNeeded = true;
+        fontSize = label.getFontSize();
         newLabel.setAngle(pageToPrincipalAngle(newLabel.getAngle()));
         newLabel.setX(label.getX());
         newLabel.setY(label.getY());
@@ -3304,11 +3344,10 @@ public class Editor implements CropEventListener, MouseListener,
     }
 
     /* Return the DecorationDistance for the curve or ruler whose
-       outline comes closest to pagePoint. All coordinates used for
-       this determination are in standard page space. */
+       outline comes closest to pagePoint. This routine operates
+       entirely in standard page space, both internally and in terms
+       of the input and output values. */
     DecorationDistance nearestCurve(Point2D pagePoint) {
-        DecorationDistance res = null;
-
         ArrayList<Decoration> decs = new ArrayList<>();
         ArrayList<Parameterization2D> params = new ArrayList<>();
         for (Decoration dec: getDecorations()) {
@@ -3379,7 +3418,6 @@ public class Editor implements CropEventListener, MouseListener,
         if (select) {
             selection = handle;
             if (selection instanceof VertexHandle) {
-                VertexHandle vhand = getVertexHandle();
                 GeneralPolyline path = getActiveCurve();
                 insertBeforeSelection = closerToNext
                     || (path.size() >= 2 && t == 0);
@@ -4727,61 +4765,80 @@ public class Editor implements CropEventListener, MouseListener,
             unstickMouse();
         }
 
+        // Location to move to. If null, no good candidate has been found yet.
+        Point2D.Double newPage = null;
+
         if (selection != null && mprin != null) {
             Point2D.Double selPoint = selection.getLocation();
-            Point2D.Double delta = Duh.aMinusB(mprin, selPoint);
+            Point2D.Double pageDelta = Duh.aMinusB(mprin, selPoint);
             Point2D.Double selPage
                 = principalToStandardPage.transform(selPoint);
-            principalToStandardPage.deltaTransform(delta, delta);
-            double length = Duh.length(principalToStandardPage.transform(delta));
+            principalToStandardPage.deltaTransform(pageDelta, pageDelta);
+            double deltaLength = Duh.length(pageDelta);
 
-            // delta is the vector on the page from
-            // selection.getLocation() to mprin, and length is the
-            // length of vector. Tolerance is the maximum ratio on the
-            // standard page of distance between the mouse and the
-            // projection to the distance between the mouse and the
-            // selection. TODO A smarter approach might allow for both
-            // absolute and relative errors.
+            // pageDelta is the vector on the page from
+            // selection.getLocation() to mprin. Tolerance is the
+            // maximum ratio on the standard page of the distance
+            // between the mouse and the projection to deltaLength.
+            // TODO A smarter approach might allow for both absolute
+            // and relative errors.
             double tolerance = 0.05;
 
-            // Closest projection of the mouse onto a line that goes
-            // through the selection and is parallel to one of the
-            // diagram axes.
-            Point2D.Double pageProjection = null;
-            double minDist = length * tolerance;
-            double minDistSq = minDist * minDist;
+            double maxDist = deltaLength * tolerance;
+            double maxDistSq = maxDist * maxDist;
 
+            ArrayList<Point2D.Double> vectors = new ArrayList<>();
             for (LinearAxis axis: axes) {
-                Point2D.Double z = axis.gradient();
-                double gx = z.x;
-                // The line normal to the gradient is the zero line.
-                z.x = -z.y;
-                z.y = gx;
-                
-                principalToStandardPage.deltaTransform(z, z);
-                Point2D.Double projection = Duh.nearestPointOnLine
-                    (delta, new Point2D.Double(0,0), z);
-                double distSq = delta.distanceSq(projection);
-                if (distSq < minDistSq) {
-                    pageProjection = projection;
-                    pageProjection.x += selPage.x;
-                    pageProjection.y += selPage.y;
-                    minDistSq = distSq;
-                }
+                // Add the line of no change for this axis. The line
+                // of no change is perpendicular to the gradient.
+                Point2D.Double g = axis.gradient();
+                vectors.add(new Point2D.Double(g.y, -g.x));
             }
 
-            if (pageProjection != null) {
-                moveMouse(standardPageToPrincipal.transform(pageProjection));
-                return;
+            for (Point2D.Double v: vectors) {
+                principalToStandardPage.deltaTransform(v, v);
+                Point2D.Double projection = Duh.nearestPointOnLine
+                    (pageDelta, new Point2D.Double(0,0), v);
+                double distSq = pageDelta.distanceSq(projection);
+                if (distSq < maxDistSq) {
+                    newPage = projection;
+                    newPage.x += selPage.x;
+                    newPage.y += selPage.y;
+                    maxDistSq = distSq;
+                }
             }
         }
 
-        // TODO Part 2
+        if (newPage == null) {
+            Point2D.Double mousePage = principalToStandardPage.transform(mprin);
+            Point2D.Double point = nearestPoint();
+            double keyPointDist = 0;
+            if (point != null) {
+                newPage = principalToStandardPage.transform(point);
+                keyPointDist = newPage.distance(mousePage);
+            }
 
-        // 2. If the mouse is within 0.01 page units of a key point,
-        // or if the distance to the nearest key point is less than
-        // three times the distance to the nearest curve, then move to
-        // the key point. Otherwise, move to the nearest curve.
+            // If the mouse is within pixelDist pixels of a key point, then go to it.
+            double keyPointPixelDist = 10;
+
+            // Only jump to the nearest curve if it is at least three
+            // times closer than the nearest key point, AND the
+            // nearest key point is at least keyPointPixelDist pixels
+            // away.
+            DecorationDistance nc = nearestCurve(mousePage);
+            if (nc != null
+                && ((point == null)
+                    || (keyPointDist * scale > keyPointPixelDist
+                        && keyPointDist > 3 * nc.distance.distance))) {
+                newPage = nc.distance.point;
+            }
+        }
+
+        if (newPage != null) {
+            moveMouse(standardPageToPrincipal.transform(newPage));
+            mouseIsStuck = true;
+            repaintEditFrame();
+        }
     }
 
     /** Invoked from the EditFrame menu */
@@ -4985,6 +5042,9 @@ public class Editor implements CropEventListener, MouseListener,
     }
 
     @Override public void mousePressed(MouseEvent e) {
+        if (e.isShiftDown()) {
+            autoPosition();
+        }
         addVertex();
     }
 
@@ -5404,38 +5464,65 @@ public class Editor implements CropEventListener, MouseListener,
         repaintEditFrame();
     }
 
-
     /* Draw the label defined by the given label and view combination
        to the given graphics context while mulitplying the font size
        and position by scale. */
     public void drawLabel(Graphics g, int labelNo, double scale) {
+        drawLabel(g, labelNo, scale, false);
+    }
+
+    /* @param Draw the label defined by the given label and view combination
+       to the given graphics context while mulitplying the font size
+       and position by scale. */
+    void drawLabel(Graphics g0, int labelNo, double scale,
+                          boolean circleAnchor) {
         AnchoredLabel label = labels.get(labelNo);
         if (label.getFontSize() == 0) {
             return;
         }
 
+        Graphics2D g = (Graphics2D) g0;
         View view = labelViews.get(labelNo);
         Affine toPage = getPrincipalToAlignedPage();
         Point2D.Double point = toPage.transform(label.getX(), label.getY());
         double angle = principalToPageAngle(label.getAngle());
 
+        AffineTransform l2s = labelToScaledPage
+            (view, scale * label.getFontSize(), angle,
+             point.x * scale, point.y * scale,
+             label.getXWeight(), label.getYWeight(),
+             label.getBaselineXOffset(), label.getBaselineYOffset());
+
+        Path2D.Double path = htmlBox(l2s);
+
         if (label.isOpaque()) {
             Color oldColor = g.getColor();
             g.setColor(Color.WHITE);
-            htmlBox(g, view, scale * label.getFontSize(),
-                    angle, point.x * scale, point.y * scale,
-                    label.getXWeight(), label.getYWeight(),
-                    label.getBaselineXOffset(), label.getBaselineYOffset(),
-                    true);
+            g.fill(path);
             g.setColor(oldColor);
         }
 
         if (label.isBoxed()) {
-            htmlBox(g, view, scale * label.getFontSize(),
-                    angle, point.x * scale, point.y * scale,
-                    label.getXWeight(), label.getYWeight(),
-                    label.getBaselineXOffset(), label.getBaselineYOffset(),
-                    false);
+            g.draw(path);
+        }
+
+        if (circleAnchor
+            && (label.getXWeight() != 0.5 || label.getYWeight() != 0.5)) {
+            // Mark the anchor with a circle -- either a solid circle
+            // if the selection handle is the anchor, or a hollow
+            // circle if the selection handle is the label's center.
+
+            double r = Math.max(scale * 2.0 / BASE_SCALE, 4.0);
+            Point2D.Double p = new Point2D.Double
+                (label.getXWeight(), label.getYWeight());
+            l2s.transform(p, p);
+            Ellipse2D circle = new Ellipse2D.Double
+                (p.x - r, p.y - r, r * 2, r * 2);
+            if (getLabelHandle().handle == LabelHandleType.CENTER) {
+                g.draw(circle);
+            } else {
+                g.fill(circle);
+            }
         }
 
         Point2D.Double centerPage = new Point2D.Double();
@@ -5452,7 +5539,6 @@ public class Editor implements CropEventListener, MouseListener,
             throw new IllegalStateException(toPage + " is not invertible");
         }
     }
-
 
     /**
        @param view The view.paint() method is used to perform the
@@ -5576,78 +5662,42 @@ public class Editor implements CropEventListener, MouseListener,
         g2d.setTransform(oldxform);
     }
 
-    /** @return an array of 4 points that form a box that contains the
-        given view after the various modifications are applied. */
-    ArrayList<Point2D.Double> htmlBoundary
+    /** @return a transformation that maps the unit square to the
+        outline of this label in scaled page space. */
+    AffineTransform labelToScaledPage
         (View view, double scale, double angle,
          double ax, double ay, double xWeight, double yWeight,
          double baselineXOffset, double baselineYOffset) {
-        scale /= VIEW_MAGNIFICATION;
         double width = view.getPreferredSpan(View.X_AXIS) + labelXMargin * 2;
         double height = view.getPreferredSpan(View.Y_AXIS) + labelYMargin * 2;
-        double textScale = scale / BASE_SCALE;
+        double textScale = scale / BASE_SCALE / VIEW_MAGNIFICATION;
 
-        ArrayList<Point2D.Double> output = new ArrayList<>();
-
-        AffineTransform baselineToPage = AffineTransform.getRotateInstance(angle);
-        baselineToPage.scale(textScale, textScale);
-        Point2D.Double xpoint = new Point2D.Double();
-        baselineToPage.transform
-            (new Point2D.Double(width * xWeight, height * yWeight), xpoint);
-
-        ax -= xpoint.x;
-        ay -= xpoint.y;
-
-        Point2D.Double baselineOffset = new Point2D.Double
-            (baselineXOffset, baselineYOffset);
-        baselineToPage.transform
-            (baselineOffset, baselineOffset);
-
-        ax += baselineOffset.x;
-        ay += baselineOffset.y;
-
-        // Now (ax, ay) represents the (in baseline coordinates) upper
-        // left corner of the text block expanded by the x- and
-        // y-margins.
-        output.add(new Point2D.Double(ax, ay));
-        baselineToPage.transform(new Point2D.Double(width, 0), xpoint);
-        output.add(new Point2D.Double(ax + xpoint.x, ay + xpoint.y));
-        baselineToPage.transform(new Point2D.Double(width, height), xpoint);
-        output.add(new Point2D.Double(ax + xpoint.x, ay + xpoint.y));
-        baselineToPage.transform(new Point2D.Double(0, height), xpoint);
-        output.add(new Point2D.Double(ax + xpoint.x, ay + xpoint.y));
-        return output;
+        AffineTransform res = AffineTransform.getTranslateInstance(ax, ay);
+        res.rotate(angle);
+        res.scale(textScale, textScale);
+        res.translate(baselineXOffset, baselineYOffset);
+        res.scale(width, height);
+        res.translate(-xWeight, -yWeight);
+        return res;
     }
 
 
-    /** Create a box in the space that the given view would enclose.
-
-        @param fill If true, make a solid box. If false, draw a box outline. */
-    void htmlBox(Graphics g, View view, double scale, double angle,
-                 double ax, double ay,
-                 double xWeight, double yWeight,
-                 double baselineXOffset, double baselineYOffset, boolean fill) {
-        ArrayList<Point2D.Double> boundary = htmlBoundary
-            (view, scale, angle, ax, ay, xWeight, yWeight, baselineXOffset, baselineYOffset);
-
-        Path2D.Double path = new Path2D.Double();
-        boolean firstPoint = true;
-        for (Point2D.Double point: boundary) {
-            if (firstPoint) {
-                path.moveTo(point.getX(), point.getY());
-                firstPoint = false;
-            } else {
-                path.lineTo(point.getX(), point.getY());
-            }
+    /** Create a box in the space that the transform of the unit
+        square would enclose. */
+    Path2D.Double htmlBox(AffineTransform xform) {
+        Point2D.Double[] corners =
+            { new Point2D.Double(0,0),
+              new Point2D.Double(1,0),
+              new Point2D.Double(1,1),
+              new Point2D.Double(0,1) };
+        xform.transform(corners, 0, corners, 0, corners.length);
+        Path2D.Double res = new Path2D.Double();
+        res.moveTo(corners[0].x, corners[0].y);
+        for (int i = 1; i < corners.length; ++i) {
+            res.lineTo(corners[i].x, corners[i].y);
         }
-        path.closePath();
-
-        Graphics2D g2d = (Graphics2D) g;
-        if (fill) {
-            g2d.fill(path);
-        } else {
-            g2d.draw(path);
-        }
+        res.closePath();
+        return res;
     }
 
     static ObjectMapper getObjectMapper() {
@@ -5903,6 +5953,19 @@ public class Editor implements CropEventListener, MouseListener,
             labelAnchor = LinearRuler.LabelAnchor.LEFT;
         }};
 
+        // Usual PED Data Center style leaves out the tick labels on the left unless this is a top or left
+        // partial ternary diagram.
+        boolean showLabels = diagramType == DiagramType.TERNARY_LEFT
+
+            || diagramType == DiagramType.TERNARY_TOP;
+        if (showLabels) {
+            r.labelAnchor = LinearRuler.LabelAnchor.RIGHT;
+            r.suppressEndLabel = diagramType != DiagramType.TERNARY_RIGHT;
+        } else {
+            r.labelAnchor = LinearRuler.LabelAnchor.NONE;
+        }
+
+
         r.startPoint = new Point2D.Double(0.0, start);
         r.endPoint = new Point2D.Double(0.0, end);
         r.startArrow = Math.abs(start) > 1e-8;
@@ -5913,6 +5976,7 @@ public class Editor implements CropEventListener, MouseListener,
         // diagram.
         r.suppressStartLabel = (diagramType != DiagramType.TERNARY_TOP);
         r.suppressStartTick = (diagramType != DiagramType.TERNARY_TOP);
+        r.suppressEndLabel = (diagramType != DiagramType.TERNARY_TOP);
         r.suppressEndTick = (diagramType != DiagramType.TERNARY_LEFT);
         rulers.add(r);
     }
@@ -5925,7 +5989,7 @@ public class Editor implements CropEventListener, MouseListener,
                 }};
 
         // The tick labels for the right ruler are redundant with the
-        // tick labels for the left ruler unless this is a top or left
+        // tick labels for the left ruler unless this is a top or right
         // partial ternary diagram.
         boolean showLabels = diagramType == DiagramType.TERNARY_RIGHT
             || diagramType == DiagramType.TERNARY_TOP;
