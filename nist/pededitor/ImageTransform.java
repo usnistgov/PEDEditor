@@ -151,6 +151,60 @@ public class ImageTransform {
         return output;
     }
 
+    /**  This is the quick and dirty version of run(). */
+    public static BufferedImage runFast(PolygonTransform xform,
+                                    BufferedImage input,
+                                    Color background,
+                                    Dimension size) {
+        // Forget about alpha channel for now.
+
+        int width = size.width;
+        int height = size.height;
+
+        StopWatch s = new StopWatch();
+        s.start();
+
+        BufferedImage output = new BufferedImage(width, height,
+                                                 BufferedImage.TYPE_INT_RGB);
+        Transform2D xformi;
+
+        try {
+            // We actually want the inverse transformation, to measure the
+            // color of the input image at each pixel of the output image.
+            xformi = xform.createInverse();
+        } catch (NoninvertibleTransformException e) {
+            throw new RuntimeException(e);
+        }
+
+        double inWidth = input.getWidth();
+        double inHeight = input.getHeight();
+        int backRGB = background.getRGB();
+
+        Point2D.Double p = new Point2D.Double(0,0);
+
+        for (int x = 0; x < width; ++x) {
+            for (int y = 0; y < height; ++y) {
+                int rgb;
+                p.x = x + 0.5;
+                p.y = y + 0.5;
+
+                try {
+                    p = xformi.transform(p);
+                    double xd = p.x;
+                    double yd = p.y;
+                    rgb = (xd >= 0 && xd < inWidth && yd >= 0 && yd < inHeight)
+                        ? input.getRGB((int) xd, (int) yd) : backRGB;
+                } catch (UnsolvableException e) {
+                    rgb = backRGB;
+                }
+                output.setRGB(x, y, rgb);
+            }
+        }
+        s.ping();
+
+        return output;
+    }
+
     /** Just a test harness. */
     public static void main(String[] args) {
         BufferedImage input;
