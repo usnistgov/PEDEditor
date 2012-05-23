@@ -314,7 +314,7 @@ public class Editor implements CropEventListener, MouseListener,
             saveNeeded = true;
 
             if (oldVertexCnt >= 2) {
-                ArrayList<SegmentAndT> segments = getPathSegments(path);
+                ArrayList<Double> segments = getPathSegments(path);
 
                 // While deleting this vertex, adjust t values that
                 // reference this segment. Previous segments that
@@ -325,9 +325,8 @@ public class Editor implements CropEventListener, MouseListener,
                 // number newSeg. What a pain in the neck!
 
                 if (oldVertexCnt == 2) {
-                    for (SegmentAndT segment: segments) {
-                        segment.segment = 0;
-                        segment.t = 0;
+                    for (int i = 0; i < segments.size(); ++i) {
+                        segments.set(i, (double) 0);
                     }
                 } else {
                     int segCnt = path.getSegmentCnt();
@@ -351,16 +350,18 @@ public class Editor implements CropEventListener, MouseListener,
                     double dist2 = point.distance(next);
                     double splitT = dist1 / (dist1 + dist2);
 
-                    for (SegmentAndT segment: segments) {
-                        if (segment.segment == prevSeg) {
-                            segment.segment = newSeg;
-                            segment.t *= splitT;
-                        } else if (segment.segment == nextSeg) {
-                            segment.segment = newSeg;
-                            segment.t = splitT + segment.t * (1 - splitT);
-                        } else if (segment.segment > vertexNo) {
-                            segment.segment--;
+                    for (int i = 0; i < segments.size(); ++i) {
+                        double t = segments.get(i);
+                        int segment = (int) Math.floor(t);
+                        double frac = t - segment;
+                        if (segment == prevSeg) {
+                            t = newSeg + frac * splitT;
+                        } else if (segment == nextSeg) {
+                            t = newSeg + splitT + frac * (1 - splitT);
+                        } else if (segment > vertexNo) {
+                            --t;
                         }
+                        segments.set(i, t);
                     }
                 }
 
@@ -1175,6 +1176,11 @@ public class Editor implements CropEventListener, MouseListener,
     class PathAndT {
         GeneralPolyline path;
         double t;
+
+        PathAndT(GeneralPolyline path, double t) {
+            this.path = path;
+            this.t = t;
+        }
 
         public String toString() {
             return "PathAndT[" + path + ", " + t + "]";
@@ -2295,15 +2301,16 @@ public class Editor implements CropEventListener, MouseListener,
     public void add(GeneralPolyline path, int vertexNo,
                     Point2D.Double point) {
         saveNeeded = true;
-        if (vertexNo == -1) {
-            path.add(vertexNo + 1, point);
+        if (path.size() == 0) {
+            path.add(0, point);
             return;
         }
 
-        ArrayList<SegmentAndT> segments = getPathSegments(path);
+        ArrayList<Double> segments = getPathSegments(path);
         int segCnt = path.getSegmentCnt();
 
-        double dist1 = point.distance(path.get(vertexNo));
+        double dist1 = (vertexNo == -1) ? 0
+            : point.distance(path.get(vertexNo));
         double dist2 = (vertexNo == segCnt) ? 0
             : point.distance(path.get(vertexNo + 1));
 
@@ -2314,17 +2321,20 @@ public class Editor implements CropEventListener, MouseListener,
         // before, so it doesn't matter what splitT value we use.
         double splitT = dist1 / (dist1 + dist2);
 
-        for (SegmentAndT segment: segments) {
-            if (segment.segment > vertexNo) {
-                segment.segment++;
-            } else if (segment.segment == vertexNo) {
-                if (segment.t <= splitT) {
-                    segment.t /= splitT;
+        for (int i = 0; i < segments.size(); ++i) {
+            double t = segments.get(i);
+            int segment = (int) Math.floor(t);
+            double frac = t - segment;
+            if (segment > vertexNo) {
+                ++t;
+            } else if (segment == vertexNo) {
+                if (frac <= splitT) {
+                    t = segment + frac / splitT;
                 } else {
-                    segment.segment++;
-                    segment.t = (segment.t - splitT) / (1.0 - splitT);
+                    t = (segment + 1) + (frac - splitT) / (1.0 - splitT);
                 }
             }
+            segments.set(i, t);
         }
 
         path.add(vertexNo + 1, point);
@@ -2357,20 +2367,24 @@ public class Editor implements CropEventListener, MouseListener,
         paths.remove(curveNo);
     }
 
-    /** Make a list of SegmentAndT values that appear in this Editor
+    /** Make a list of t values that appear in this Editor
         object and that refer to locations on the given path. */
-    ArrayList<SegmentAndT> getPathSegments(GeneralPolyline path) {
-        ArrayList<SegmentAndT> output = new ArrayList<SegmentAndT>();
+    ArrayList<Double> getPathSegments(GeneralPolyline path) {
+        ArrayList<Double> output = new ArrayList<>();
+
+        System.out.println("Path = " + path);
 
         // Tie Lines' limits are defined by t values.
         for (TieLine tie: tieLines) {
+            System.out.println("inner = " + tie.innerEdge);
             if (tie.innerEdge == path) {
-                output.add(path.getSegment(tie.it1));
-                output.add(path.getSegment(tie.it2));
+                output.add(tie.it1);
+                output.add(tie.it2);
             }
+            System.out.println("outer = " + tie.innerEdge);
             if (tie.outerEdge == path) {
-                output.add(path.getSegment(tie.ot1));
-                output.add(path.getSegment(tie.ot2));
+                output.add(tie.ot1);
+                output.add(tie.ot2);
             }
         }
 
@@ -2380,23 +2394,16 @@ public class Editor implements CropEventListener, MouseListener,
     /** You can change the segments returned by getPathSegments() and
         call setPathSegments() to make corresponding updates to the
         fields from which they came. */
-    void setPathSegments(GeneralPolyline path,
-                         ArrayList<SegmentAndT> segments) {
-
-        ArrayList<Double> ts = new ArrayList<Double>();
-        for (SegmentAndT segment: segments) {
-            ts.add(path.segmentToT(segment.segment, segment.t));
-        }
-
+    void setPathSegments(GeneralPolyline path, ArrayList<Double> segments) {
         int index = 0;
         for (TieLine tie: tieLines) {
             if (tie.innerEdge == path) {
-                tie.it1 = ts.get(index++);
-                tie.it2 = ts.get(index++);
+                tie.it1 = segments.get(index++);
+                tie.it2 = segments.get(index++);
             }
             if (tie.outerEdge == path) {
-                tie.ot1 = ts.get(index++);
-                tie.ot2 = ts.get(index++);
+                tie.ot1 = segments.get(index++);
+                tie.ot2 = segments.get(index++);
             }
         }
     }
@@ -2431,9 +2438,7 @@ public class Editor implements CropEventListener, MouseListener,
         }
 
         CurveDecoration csel = vhand.getDecoration();
-        PathAndT pat = new PathAndT();
-        pat.path = csel.getItem();
-        pat.t = pat.path.segmentToT(vhand.vertexNo, 0.0);
+        PathAndT pat = new PathAndT(csel.getItem(), vhand.vertexNo);
 
         int oldCnt = tieLineCorners.size();
 
@@ -4813,23 +4818,26 @@ public class Editor implements CropEventListener, MouseListener,
             Point2D.Double mousePage = principalToStandardPage.transform(mprin);
             Point2D.Double point = nearestPoint();
             double keyPointDist = 0;
+
             if (point != null) {
                 newPage = principalToStandardPage.transform(point);
-                keyPointDist = newPage.distance(mousePage);
+
+                // Subtract keyPointPixelDist (converted to page
+                // coordinates) from keyPointDist before comparing
+                // with curves, in order to express the preference for
+                // key points over curves when the mouse is close to
+                // both.
+                double keyPointPixelDist = 10;
+                keyPointDist = newPage.distance(mousePage)
+                    - keyPointPixelDist / scale;
             }
 
-            // If the mouse is within pixelDist pixels of a key point, then go to it.
-            double keyPointPixelDist = 10;
-
             // Only jump to the nearest curve if it is at least three
-            // times closer than the nearest key point, AND the
-            // nearest key point is at least keyPointPixelDist pixels
-            // away.
+            // times closer than the nearest key point.
             DecorationDistance nc = nearestCurve(mousePage);
             if (nc != null
                 && ((point == null)
-                    || (keyPointDist * scale > keyPointPixelDist
-                        && keyPointDist > 3 * nc.distance.distance))) {
+                    || (keyPointDist > 3 * nc.distance.distance))) {
                 newPage = nc.distance.point;
             }
         }
@@ -5918,9 +5926,16 @@ public class Editor implements CropEventListener, MouseListener,
         ++paintSuppressionRequestCnt;
         editFrame.setCursor(new Cursor(Cursor.WAIT_CURSOR));
         System.out.println("Resizing original image; please wait...");
-        im.croppedImage = ImageTransform.run
-            (originalToCrop, getOriginalImage(), Color.WHITE,
-             new Dimension(cropBounds.width, cropBounds.height));
+        if (imageBounds.getWidth() * imageBounds.getHeight()
+            > 1500 * 1500) {
+            im.croppedImage = ImageTransform.runFast
+                (originalToCrop, getOriginalImage(), Color.WHITE,
+                 new Dimension(cropBounds.width, cropBounds.height));
+        } else {
+            im.croppedImage = ImageTransform.run
+                (originalToCrop, getOriginalImage(), Color.WHITE,
+                 new Dimension(cropBounds.width, cropBounds.height));
+        }
         fade(im.croppedImage);
         scaledOriginalImages.add(im);
         --paintSuppressionRequestCnt;
