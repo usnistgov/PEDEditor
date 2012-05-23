@@ -199,8 +199,9 @@ public class Duh {
         return Math.atan2(ray.y, ray.x);
     }
 
-    public static Point2D.Double aMinusB(Point2D.Double a, Point2D.Double b) {
-        return new Point2D.Double(a.x - b.x, a.y - b.y);
+    public static Point2D.Double aMinusB(Point2D a, Point2D b) {
+        return new Point2D.Double(a.getX() - b.getX(),
+                                  a.getY() - b.getY());
     }
 
     public static Point2D.Double sum(Point2D a, Point2D b) {
@@ -838,50 +839,80 @@ public class Duh {
             return null;
         }
     }
-    
 
-    /** Return -1 if the two segments do not intersect. Otherwise,
-        imagine a ruler with the 0 mark at a1 and the 1 mark at a2,
-        and return the ruler's value (in [0,1]) at the segments'
-        intersection. */
-    public static double segmentIntersectionT
-        (Point2D a1, Point2D a2, Point2D b1, Point2D b2) {
-        Point2D.Double intersection = segmentIntersection(a1, a2, b1, b2);
-
-        if (intersection == null) {
-            return -1;
-        }
-
-        if (a1.equals(a2)) {
-            return 0.5;
-        }
-
-        double output =
-            (Math.abs(intersection.getX() - a1.getX()) + Math.abs(intersection.getY() - a1.getY())) /
-            (Math.abs(a2.getX() - a1.getX()) + Math.abs(a2.getY() - a1.getY()));
-
-        return (output > 1.0) ? 1.0 : (output < 0.0) ? 0.0 : output;
+    public static Point2D.Double transpose(Point p) {
+        return new Point2D.Double(p.getY(), p.getX());
     }
-    
 
-    /** Return Double.NaN if the two lines are parallel. Otherwise,
-        imagine a ruler with the 0 mark at a1 and the 1 mark at a2,
-        and return the ruler's value at the lines' intersection. */
+    /** Return Double.NaN if line a1a2 is parallel to line b1b2.
+        Otherwise, imagine a ruler with the 0 mark at a1 and the 1
+        mark at a2, and return the ruler's value at the two shapes'
+        intersection. */
     public static double lineIntersectionT
         (Point2D a1, Point2D a2, Point2D b1, Point2D b2) {
-        Point2D.Double intersection = lineIntersection(a1, a2, b1, b2);
+        Point2D.Double i = lineIntersection(a1, a2, b1, b2);
 
-        if (intersection == null) {
+        if (i == null) {
             return Double.NaN;
         }
 
-        if (a1.equals(a2)) {
+        double x1 = a1.getX();
+        double y1 = a1.getY();
+        double dx = a2.getX() - x1;
+        double dy = a2.getY() - y1;
+
+        if (dx == 0 && dy == 0) {
             return 0.5;
         }
 
-        return
-            (Math.abs(intersection.getX() - a1.getX()) + Math.abs(intersection.getY() - a1.getY())) /
-            (Math.abs(a2.getX() - a1.getX()) + Math.abs(a2.getY() - a1.getY()));
+        double dot = ((i.x - x1) * dx + (i.y - y1) * dy)
+            / (dx * dx + dy * dy);
+        
+        return dot;
+    }
+
+    /** Return Double.NaN if segments a1a2 and b1b2 do not intersect.
+        Otherwise, imagine a ruler with the 0 mark at a1 and the 1
+        mark at a2, and return the ruler's value at the two shapes'
+        intersection. */
+    public static double segmentIntersectionT
+        (Point2D a1, Point2D a2, Point2D b1, Point2D b2) {
+        Point2D.Double i = segmentIntersection(a1, a2, b1, b2);
+
+        if (i == null) {
+            return Double.NaN;
+        }
+
+        double x1 = a1.getX();
+        double y1 = a1.getY();
+        double dx = a2.getX() - x1;
+        double dy = a2.getY() - y1;
+
+        if (dx == 0 && dy == 0) {
+            return 0.5;
+        }
+
+        double dot = ((i.x - x1) * dx + (i.y - y1) * dy)
+            / (dx * dx + dy * dy);
+        
+        return dot;
+    }
+
+    /** Return Double.NaN if line a1a2 does not intersect segment
+        b1b2. Otherwise, imagine a ruler with the 0 mark at a1 and the
+        1 mark at a2, and return the ruler's value at the two shapes'
+        intersection. */
+    public static double lineSegmentIntersectionT
+        (Point2D a1, Point2D a2, Point2D b1, Point2D b2) {
+        double tother = lineIntersectionT(b1, b2, a1, a2);
+        if (Double.isNaN(tother) || tother < 0 || tother > 1) {
+            // The segment does not intersect the line.
+            return Double.NaN;
+        }
+
+        // If the segment does intersect the line, then the t value is
+        // the same as in lineIntersectionT().
+        return lineIntersectionT(a1, a2, b1, b2);
     }
 
     public static double toAngle(Line2D ray) {
