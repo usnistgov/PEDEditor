@@ -1266,6 +1266,7 @@ public class Editor implements CropEventListener, MouseListener,
     protected LinearAxis pageXAxis = null;
     protected LinearAxis pageYAxis = null;
     protected transient boolean preserveMprin = false;
+    protected transient boolean isShiftDown = false;
 
     /** True unless selection instanceof VertexHandle and the next
         vertex to be inserted should be added to the curve before the
@@ -1358,6 +1359,8 @@ public class Editor implements CropEventListener, MouseListener,
         clear();
         getEditPane().addMouseListener(this);
         getEditPane().addMouseMotionListener(this);
+        cropFrame.setDefaultCloseOperation
+            (WindowConstants.HIDE_ON_CLOSE);
         cropFrame.addCropEventListener(this);
     }
 
@@ -2006,13 +2009,12 @@ public class Editor implements CropEventListener, MouseListener,
         g.setRenderingHint(RenderingHints.KEY_ANTIALIASING,
                            RenderingHints.VALUE_ANTIALIAS_OFF);
 
-        Point2D.Double extraVertex = mprin;
-        if (mouseIsStuckAtSelection()) {
-            // Show the point that would be added if the mouse
-            // became unstuck.
-            extraVertex = getMousePosition();
-        }
-
+        Point2D.Double extraVertex
+            = isShiftDown ? getAutoPosition()
+            : mouseIsStuckAtSelection()
+            ? getMousePosition() // Show the point that would be added
+                                 // if the mouse became unstuck.
+            : mprin;
 
         if (extraVertex != null && !isDuplicate(extraVertex)) {
             // Add the current mouse position to the path next to the
@@ -2371,8 +2373,6 @@ public class Editor implements CropEventListener, MouseListener,
         object and that refer to locations on the given path. */
     ArrayList<Double> getPathSegments(GeneralPolyline path) {
         ArrayList<Double> output = new ArrayList<>();
-
-        System.out.println("Path = " + path);
 
         // Tie Lines' limits are defined by t values.
         for (TieLine tie: tieLines) {
@@ -3155,9 +3155,17 @@ public class Editor implements CropEventListener, MouseListener,
         if (mprin == null) {
             return null;
         }
+        return nearestPoint(principalToStandardPage.transform(mprin));
+    }
+
+    /** @return the location in principal coordinates of the key point
+        closest (by page distance) to pagePoint, where pagePoint is
+        expressed in standard page coordinates. */
+    Point2D.Double nearestPoint(Point2D pagePoint) {
+        if (pagePoint == null) {
+            return null;
+        }
         Point2D.Double nearPoint = null;
-        Point2D.Double xpoint = new Point2D.Double();
-        principalToStandardPage.transform(mprin, xpoint);
         Point2D.Double xpoint2 = new Point2D.Double();
 
         // Square of the minimum distance from mprin of all key points
@@ -3166,7 +3174,7 @@ public class Editor implements CropEventListener, MouseListener,
 
         for (Point2D.Double point: keyPoints()) {
             principalToStandardPage.transform(point, xpoint2);
-            double distSq = xpoint.distanceSq(xpoint2);
+            double distSq = pagePoint.distanceSq(xpoint2);
             if (nearPoint == null || distSq < minDistSq) {
                 nearPoint = point;
                 minDistSq = distSq;
@@ -4550,7 +4558,12 @@ public class Editor implements CropEventListener, MouseListener,
         if (filename == null) {
             cropFrame.showOpenDialog();
         } else {
-            cropFrame.setFilename(filename);
+            try {
+                cropFrame.setFilename(filename);
+            } catch (IOException e) {
+                JOptionPane.showMessageDialog
+                    (editFrame, "Could not load file '" + filename + "': " + e);
+            }
         }
 
         cropFrame.pack();
@@ -4764,21 +4777,26 @@ public class Editor implements CropEventListener, MouseListener,
         return Printable.PAGE_EXISTS;
     }
 
-    /** Invoked from the EditFrame menu */
-    public void autoPosition() {
-        if (mouseIsStuck) {
-            unstickMouse();
+    /** Return the position that auto-positioning would move the mouse
+        to. */
+    @JsonIgnore public Point2D.Double getAutoPosition() {
+        Point2D.Double mprin2 = getMousePosition();
+        if (mprin2 == null) {
+            return mprin;
         }
+        Point2D.Double mousePage = principalToStandardPage.transform(mprin2);
 
         // Location to move to. If null, no good candidate has been found yet.
         Point2D.Double newPage = null;
 
-        if (selection != null && mprin != null) {
+        boolean addedGridLine = false;
+        boolean oldSaveNeeded = saveNeeded;
+
+        if (selection != null) {
             Point2D.Double selPoint = selection.getLocation();
-            Point2D.Double pageDelta = Duh.aMinusB(mprin, selPoint);
             Point2D.Double selPage
                 = principalToStandardPage.transform(selPoint);
-            principalToStandardPage.deltaTransform(pageDelta, pageDelta);
+            Point2D.Double pageDelta = Duh.aMinusB(mousePage, selPage);
             double deltaLength = Duh.length(pageDelta);
 
             // pageDelta is the vector on the page from
@@ -4800,24 +4818,67 @@ public class Editor implements CropEventListener, MouseListener,
                 vectors.add(new Point2D.Double(g.y, -g.x));
             }
 
+            Line2D.Double gridLine = null;
             for (Point2D.Double v: vectors) {
                 principalToStandardPage.deltaTransform(v, v);
                 Point2D.Double projection = Duh.nearestPointOnLine
                     (pageDelta, new Point2D.Double(0,0), v);
                 double distSq = pageDelta.distanceSq(projection);
                 if (distSq < maxDistSq) {
-                    newPage = projection;
-                    newPage.x += selPage.x;
-                    newPage.y += selPage.y;
+                    projection.x += selPage.x;
+                    projection.y += selPage.y;
                     maxDistSq = distSq;
+                    gridLine = new Line2D.Double(selPage, projection);
+                }
+            }
+
+            if (gridLine != null) {
+                Rectangle2D b = pageBounds;
+
+                // Extend gridLine to the limits of pageBounds.
+                Point2D.Double[] vertexes =
+                    { new Point2D.Double(b.getMinX(), b.getMinY()),
+                      new Point2D.Double(b.getMaxX(), b.getMinY()),
+                      new Point2D.Double(b.getMaxX(), b.getMaxY()),
+                      new Point2D.Double(b.getMinX(), b.getMaxY()) };
+                double minT = Double.NaN;
+                double maxT = Double.NaN;
+
+                for (int i = 0; i < 4; ++i) {
+                    double t = Duh.lineSegmentIntersectionT
+                        (gridLine.getP1(), gridLine.getP2(),
+                         vertexes[i], vertexes[(i+1) % 4]);
+                    if (Double.isNaN(t)) {
+                        continue;
+                    }
+                    if (Double.isNaN(minT)) {
+                        minT = t;
+                        maxT = t;
+                    } else {
+                        minT = Math.min(minT, t);
+                        maxT = Math.max(maxT, t);
+                    }
+                }
+
+                if (!Double.isNaN(minT)) {
+                    double x1 = gridLine.getX1();
+                    double y1 = gridLine.getY1();
+                    double dx = gridLine.getX2() - x1;
+                    double dy = gridLine.getY2() - y1;
+                    Point2D.Double[] points =
+                        { new Point2D.Double(x1 + minT * dx, y1 + minT * dy),
+                          new Point2D.Double(x1 + maxT * dx, y1 + maxT * dy) };
+                    standardPageToPrincipal.transform(points, 0, points, 0, 2);
+                    paths.add
+                        (new Polyline(points, StandardStroke.INVISIBLE, 0));
+                    addedGridLine = true;
                 }
             }
         }
 
-        if (newPage == null) {
-            Point2D.Double mousePage = principalToStandardPage.transform(mprin);
-            Point2D.Double point = nearestPoint();
-            double keyPointDist = 0;
+        {
+            Point2D.Double point = nearestPoint(mousePage);
+            double keyPointDist = 1e6;
 
             if (point != null) {
                 newPage = principalToStandardPage.transform(point);
@@ -4834,16 +4895,38 @@ public class Editor implements CropEventListener, MouseListener,
 
             // Only jump to the nearest curve if it is at least three
             // times closer than the nearest key point.
-            DecorationDistance nc = nearestCurve(mousePage);
-            if (nc != null
-                && ((point == null)
-                    || (keyPointDist > 3 * nc.distance.distance))) {
+            DecorationDistance nc;
+            if (keyPointDist > 0
+                && (nc = nearestCurve(mousePage)) != null
+                && keyPointDist > 3 * nc.distance.distance) {
                 newPage = nc.distance.point;
             }
         }
 
-        if (newPage != null) {
-            moveMouse(standardPageToPrincipal.transform(newPage));
+        double maxMovePixels = 50; // Maximum number of pixels to
+                                        // move the mouse
+        if (newPage == null
+            || newPage.distance(mousePage) * scale > maxMovePixels) {
+            newPage = mousePage; // Leave the mouse where it is.
+        }
+
+        if (addedGridLine) {
+            paths.remove(paths.size() - 1);
+        }
+        saveNeeded = oldSaveNeeded;
+
+        return standardPageToPrincipal.transform(newPage);
+    }
+
+    /** Invoked from the EditFrame menu */
+    public void autoPosition() {
+        if (mouseIsStuck) {
+            unstickMouse();
+        }
+
+        mprin = getAutoPosition();
+        if (mprin != null) {
+            moveMouse(mprin);
             mouseIsStuck = true;
             repaintEditFrame();
         }
@@ -5083,8 +5166,8 @@ public class Editor implements CropEventListener, MouseListener,
     /** The mouse was moved in the edit window. Update the coordinates
         in the edit window status bar, repaint the diagram, and update
         the position in the zoom window,. */
-    @Override
-        public void mouseMoved(MouseEvent e) {
+    @Override public void mouseMoved(MouseEvent e) {
+        isShiftDown = e.isShiftDown();
         repaintEditFrame();
     }
 
