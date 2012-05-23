@@ -48,17 +48,13 @@ public class ImageScrollFrame extends JFrame {
         return scrollPane;
     }
 
-    void setFilename(String filename) {
-        try {
-            BufferedImage im = ImageIO.read(new File(filename));
-            if (im == null) {
-                throw new IOException(filename + ": unknown image format");
-            }
-            setTitle(filename);
-            setImage(im);
-        } catch (IOException e) {
-            throw new RuntimeException(e);
+    void setFilename(String filename) throws IOException {
+        BufferedImage im = ImageIO.read(new File(filename));
+        if (im == null) {
+            throw new IOException(filename + ": unknown image format");
         }
+        setTitle(filename);
+        setImage(im);
     }
 
     public void setImage(BufferedImage im) {

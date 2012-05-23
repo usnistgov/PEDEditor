@@ -194,7 +194,12 @@ public class CropFrame extends ImageScrollFrame {
             JFileChooser.APPROVE_OPTION) {
             File file = chooser.getSelectedFile();
             prefs.put(PREF_DIR, file.getParent());
-            setFilename(file.getAbsolutePath());
+            try {
+                setFilename(file.getAbsolutePath());
+            } catch (IOException e) {
+                JOptionPane.showMessageDialog
+                    (this, "Could not load file: " + e);
+            }
         }
     }
 
@@ -215,8 +220,8 @@ public class CropFrame extends ImageScrollFrame {
         cropAction.setEnabled(ready);
     }
 
-    @Override
-        public void setFilename(String filename) {
+    @Override public void setFilename(String filename)
+        throws IOException {
         super.setFilename(filename);
         this.filename = filename;
         setTitle("Select Diagram in " + filename);
