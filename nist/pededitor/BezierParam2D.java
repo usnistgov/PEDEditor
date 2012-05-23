@@ -176,16 +176,15 @@ abstract public class BezierParam2D
         return create(Duh.merge(xd, yd), getMinT(), getMaxT());
     }
 
-    /** @return the distance between p and the quadratic Bezier curve
-        defined by the given control points. */
+    /** @return the distance between p and this Bezier curve. */
     @Override abstract public CurveDistance distance(Point2D p);
 
-    /** Return the t values for all intersections of this spline with segment. */
+    /** Return the t values for all intersections of this curve with segment. */
     @Override public double[] segIntersections(Line2D segment) {
         return segIntersections(segment, false);
     }
 
-    /** Return the t values for all intersections of this spline with segment. */
+    /** Return the t values for all intersections of this curve with segment. */
     @Override public double[] lineIntersections(Line2D segment) {
         return segIntersections(segment, true);
     }
@@ -195,7 +194,7 @@ abstract public class BezierParam2D
         double sdy = segment.getY2() - segment.getY1();
         if (sdx == 0 && sdy == 0) {
             // The segment is a point, so the claim that segment
-            // doesn't intersect the spline is either true or within
+            // doesn't intersect the curve is either true or within
             // an infinitesimal distance of being true, and we don't
             // guarantee infinite precision, so just return nothing.
             return new double[0];
@@ -234,34 +233,14 @@ abstract public class BezierParam2D
             ycs = temp;
         }
 
-        // Let poly = ycs, equate poly(t) = mx + b, and
-        // solve for x(t).
+        // Solve y(t) = m x(t) + b, which is equivalent to the
+        // polynomial m x(t) - y(t) + b = 0, for t.
 
-        // Equate ycs(t) = mx + b  and solve for x(t).
-
-        double poly[] = (double[]) ycs.clone();
-
-        poly[0] -= b;
-
-        // Divide poly by m.
-        for (int i = 0; i < poly.length; ++i) {
-            poly[i] /= m;
+        double poly[] = new double[xcs.length];
+        for (int i = 0; i < xcs.length; ++i) {
+            poly[i] = m * xcs[i] - ycs[i];
         }
-
-        // Now we have
-
-        // xcs(t) = x
-        // poly(t) = x
-
-        // therefore
-
-        // (poly - xcs) = 0
-
-        // and with that we can solve for t.
-
-        for (int i = 0; i < poly.length; ++i) {
-            poly[i] -= xcs[i];
-        }
+        poly[0] += b;
 
         for (double t: Polynomial.solve(poly)) {
             if (!inDomain(t)) {
