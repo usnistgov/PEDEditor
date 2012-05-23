@@ -340,14 +340,6 @@ public abstract class GeneralPolyline implements Parameterizable2D {
         points.remove(vertexNo);
     }
 
-    /** Convert the segment number and t-value parameterized over
-        [0,1] over the length of that segment into a t-value
-        parameterized over the entire curve. */
-    public double segmentToT(int segNo, double t) {
-        int segCnt = getSegmentCnt();
-        return (segCnt == 0) ? 0.0 : ((segNo + t) / segCnt);
-    }
-
     /* Parameterize the entire curve as t in [0,1] and return the
        SegmentAndT corresponding to the given t value */
     public SegmentAndT getSegment(double t) {
