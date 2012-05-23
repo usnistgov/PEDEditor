@@ -12,6 +12,7 @@ import java.awt.geom.Point2D;
 import java.awt.geom.Rectangle2D;
 
 import org.codehaus.jackson.annotate.JsonBackReference;
+import org.codehaus.jackson.annotate.JsonIgnore;
 import org.codehaus.jackson.annotate.JsonProperty;
 
 /** Class describing a ruler whose tick marks describe values from a
@@ -147,7 +148,7 @@ class LinearRuler implements Parameterizable2D {
     }
 
     /** Functions required for the CurveParameterization interface. */
-    @Override public Parameterization2D getParameterization() {
+    @JsonIgnore @Override public Parameterization2D getParameterization() {
         return new SegmentParam2D(startPoint, endPoint, 0, 1);
     }
 
