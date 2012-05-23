@@ -178,9 +178,6 @@ public class QuadParam2D extends BezierParam2D {
             }
         }
 
-        // TODO UNDO
-        System.out.println(this + ".distance" + Duh.toString(p) + " = " + nearest);
-
         return nearest;
     }
 
