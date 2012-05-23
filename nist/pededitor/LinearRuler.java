@@ -391,7 +391,7 @@ class LinearRuler implements Parameterizable2D {
         boolean set = endArrow || suppressEndTick;
 
         if (Math.abs(tickD) >= minTickDelta && Math.abs(tickD) > 0
-            && tickDelta != 0 && (tickDelta > 0) == (tickEnd > tickStart)) {
+            && tickD != 0 && (tickD > 0) == (tickEnd > tickStart)) {
             double smallTickEnd = tickEnd
                 + 1e-6 * (tickEnd - tickStart) / Math.abs(tickD);
 
