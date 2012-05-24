@@ -44,7 +44,7 @@ public class QuadParam2D extends BezierParam2D {
 
     /** @return the distance between p and the quadratic Bezier curve
         defined by the given control points. */
-    @Override public CurveDistance distance(Point2D p) {
+    @Override public CurveDistanceRange distance(Point2D p) {
         // The formula for a quadratic Bezier is (1-t)^2 p0 + 2t(1-t)
         // p1 + t^2 pEnd, or
 
@@ -104,9 +104,9 @@ public class QuadParam2D extends BezierParam2D {
             if (dot <= 0) {
                 // The point of nearest approach is the cusp.
                 if (inDomain(tCusp)) {
-                    return distance(p, tCusp);
+                    return new CurveDistanceRange(distance(p, tCusp));
                 } else {
-                    return nearest;
+                    return new CurveDistanceRange(nearest);
                 }
             } else {
                 double rangeMid = (t0 + t1)/2;
@@ -118,9 +118,9 @@ public class QuadParam2D extends BezierParam2D {
                 double deltaT = dot / (ax * ax + ay * ay);
                 double t = tCusp + (tCusp > rangeMid ? -1 : 1) * deltaT;
                 if (inDomain(t)) {
-                    return distance(p, t);
+                    return new CurveDistanceRange(distance(p, t));
                 } else {
-                    return nearest;
+                    return new CurveDistanceRange(nearest);
                 }
             }
         }
@@ -152,6 +152,9 @@ public class QuadParam2D extends BezierParam2D {
         try {
             parabolaBasisXform = inverseParabolaBasisXform.createInverse();
         } catch (NoninvertibleTransformException e) {
+            System.err.println("(" + sweepBasisVector.x + ", " + axisBasisVector.x
+                               + ", " + sweepBasisVector.y + ", " + axisBasisVector.y
+                               + ", " + xCusp + ", " + yCusp + ")");
             throw new IllegalStateException("Normal coordinates aren't really");
         }
 
@@ -178,7 +181,7 @@ public class QuadParam2D extends BezierParam2D {
             }
         }
 
-        return nearest;
+        return new CurveDistanceRange(nearest);
     }
 
     /** Given

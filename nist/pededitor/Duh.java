@@ -195,6 +195,11 @@ public class Duh {
         return toString(line.getP1()) + " - " + toString(line.getP2());
     }
 
+    public static String toString(Rectangle2D r) {
+        return "Rect[" + r.getX() + " + " + r.getWidth() + ", "
+            + r.getY() + " + " + r.getHeight() + "]";
+    }
+
     public static double toAngle(Point2D.Double ray) {
         return Math.atan2(ray.y, ray.x);
     }
