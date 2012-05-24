@@ -43,7 +43,7 @@ public class OffsetParam2D implements Parameterization2D {
     @Override public Point2D.Double getStart() { return c.getStart(); }
     @Override public Point2D.Double getEnd() { return c.getEnd(); }
 
-    @Override public CurveDistance distance(Point2D p) {
+    @Override public CurveDistanceRange distance(Point2D p) {
         return addOffset(c.distance(p));
     }
 
@@ -51,7 +51,7 @@ public class OffsetParam2D implements Parameterization2D {
         return addOffset(c.distance(p, t - offset));
     }
 
-    @Override public CurveDistance distance(Point2D p, double maxError,
+    @Override public CurveDistanceRange distance(Point2D p, double maxError,
                                             double maxIterations) {
         return addOffset(c.distance(p, maxError, maxIterations));
     }
@@ -98,6 +98,14 @@ public class OffsetParam2D implements Parameterization2D {
     }
 
     CurveDistance addOffset(CurveDistance cd) {
+        if (cd == null) {
+            return null;
+        }
+        cd.t += offset;
+        return cd;
+    }
+
+    CurveDistanceRange addOffset(CurveDistanceRange cd) {
         if (cd == null) {
             return null;
         }
