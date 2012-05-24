@@ -99,9 +99,13 @@ abstract public class BezierParam2D
             poly[0] = bezs[0];
             return;
         case 2:
-            poly[0] = bezs[0];
-            poly[1] = bezs[1] - bezs[0];
-            return;
+            {
+                double b0 = bezs[0];
+                double b1 = bezs[1];
+                poly[0] = b0;
+                poly[1] = b1 - b0;
+                return;
+            }
         case 3:
             {
                 double b0 = bezs[0];
@@ -142,6 +146,14 @@ abstract public class BezierParam2D
             bezs[0] = poly[0];
             return;
         case 2:
+            {
+                double k = poly[0];
+                double kt = poly[1];
+                bezs[0] = k;
+                bezs[1] = k + kt;
+                return;
+            }
+        case 3:
             { // Inverse of quad bezierToPoly matrix
                 double k = poly[0];
                 double kt = poly[1];
@@ -151,7 +163,7 @@ abstract public class BezierParam2D
                 bezs[2] = k + kt + kt2;
                 return;
             }
-        case 3:
+        case 4:
             { // Inverse of cubic bezierToPoly matrix
                 double k = poly[0];
                 double kt = poly[1];
@@ -172,12 +184,14 @@ abstract public class BezierParam2D
 
     @Override public Parameterization2D derivative() {
         double[] xd = Polynomial.derivative(xCoefficients);
+        polyToBezier(xd, xd);
         double[] yd = Polynomial.derivative(yCoefficients);
+        polyToBezier(yd, yd);
         return create(Duh.merge(xd, yd), getMinT(), getMaxT());
     }
 
     /** @return the distance between p and this Bezier curve. */
-    @Override abstract public CurveDistance distance(Point2D p);
+    @Override abstract public CurveDistanceRange distance(Point2D p);
 
     /** Return the t values for all intersections of this curve with segment. */
     @Override public double[] segIntersections(Line2D segment) {
