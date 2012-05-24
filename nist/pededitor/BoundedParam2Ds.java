@@ -36,16 +36,16 @@ public class Parameterization2Ds {
     public static double distanceLowerBound
         (Parameterization2D c, Point2D p) {
         if (debug) {
-            double d = Math.max(distanceLowerBound0(c, p),
-                                distanceLowerBound1(c, p));
-            System.out.println("distanceLowerBound(" + c + ", " + p
-                               + ") = " + d);
+            double d0 = distanceLowerBound0(c, p);
+            double d1 = distanceLowerBound1(c, p);
+            System.out.println("distanceLowerBound((" + c.getMinT() + ", " + c.getMaxT() + ") , " + p
+                               + ") = max(" + d0 + ", " + d1 + ")");
         }
         return Math.max(distanceLowerBound0(c, p),
                         distanceLowerBound1(c, p));
     }
 
-    static <T extends Parameterization2D> CurveDistance distance
+    static <T extends Parameterization2D> CurveDistanceRange distance
         (Iterable<T> ocps, Point2D p,
          double maxError, double maxIterations) {
     	ArrayList<Parameterization2D> cps = new ArrayList<>();
@@ -65,23 +65,37 @@ public class Parameterization2Ds {
             return null;
         }
 
-        // Initialize minDist with the distance from an arbitrary
-        // point.
-        Parameterization2D c0 = cps.get(0);
-        CurveDistance minDist = c0.distance(p, c0.getMinT());
-
+        CurveDistanceRange minDist = null;
         for (int step = 0;; ++step) {
-            // Determine the new upper bound on distances, and discard
-            // every curve that exceeds that upper bound.
-
-            // Compute the proper minDist value for this stage.
-            ArrayList<CurveDistance> cds = new ArrayList<>();
-            for (Parameterization2D cp: cps) {
-                CurveDistance dist = cp.distance(p);
-                cds.add(dist);
-                minDist = CurveDistance.min(minDist, dist);
+            if (debug) {
+                System.err.println("Step " + step);
             }
 
+            if (minDist != null) {
+                // Initialize minDistance to an exact lower bound. The
+                // lower bound might no longer be exact after the
+                // following loop finishes).
+                minDist.minDistance = minDist.distance;
+            }
+
+            // Compute the proper minDist value for this stage.
+            ArrayList<CurveDistanceRange> cds = new ArrayList<>();
+            for (Parameterization2D cp: cps) {
+                CurveDistanceRange dist = cp.distance(p);
+                cds.add(dist);
+
+                if (debug) {
+                    System.err.println("[" + cp.getMinT() + ", " + cp.getMaxT()
+                                       + "]: " + dist);
+                }
+                minDist = CurveDistanceRange.min(minDist, dist);
+            }
+
+            // CurveDistanceRanges whose minDist values exceed
+            // cutoffDistance do not require further investigation --
+            // either they're not nearest, or they are nearest but
+            // represent an improvement of no more than maxError in
+            // distance compared to the current best estimate.
             double cutoffDistance = minDist.distance - maxError;
 
             if (debug) {
@@ -95,22 +109,12 @@ public class Parameterization2Ds {
             // upper and lower bounds on the minimum distance from p
             // to the curves.
 
-            double dlb = minDist.distance; // distance lower bound
-
             ArrayList<Parameterization2D> ncps = new ArrayList<>();
             for (int segNo = 0; segNo < cps.size(); ++segNo) {
                 Parameterization2D cp = cps.get(segNo);
-                CurveDistance dist = cp.distance(p);
+                CurveDistanceRange dist = cds.get(segNo);
 
-                // this distance lower bound
-                double thisdlb = dist.distance;
-
-                if (dist instanceof CurveDistanceRange) {
-                    thisdlb = ((CurveDistanceRange) dist).minDistance;
-                }
-
-                dlb = Math.min(dlb, thisdlb);
-                if (thisdlb >= cutoffDistance) {
+                if (dist.minDistance >= cutoffDistance) {
                     continue;
                 }
 
@@ -129,8 +133,7 @@ public class Parameterization2Ds {
             maxIterations -= cps.size();
             if (ncps.size() == 0 /* Error <= maxError */
                 || maxIterations < 0 /* Too many iterations */) {
-                return new CurveDistanceRange
-                    (minDist.t, minDist.point, minDist.distance, dlb);
+                return minDist;
             }
 
             cps = ncps;
@@ -146,8 +149,7 @@ public class Parameterization2Ds {
         using the bounds on the first derivative. 
      * @return */
     public static double distanceLowerBound1
-        (Point2D p, Point2D f0, double deltaT,
-         Rectangle2D dfdtBounds) {
+        (Point2D p, Point2D f0, double deltaT, Rectangle2D dfdtBounds) {
         if (deltaT == 0) {
             return p.distance(f0);
         }
@@ -157,12 +159,8 @@ public class Parameterization2Ds {
         Rectangle2D.Double b = new Rectangle2D.Double
             (dfdtBounds.getX() * deltaT,
              dfdtBounds.getY() * deltaT,
-             dfdtBounds.getMaxX() * deltaT,
-             dfdtBounds.getMaxY() * deltaT);
-
-        if (b.contains(pn)) {
-            return 0;
-        }
+             dfdtBounds.getWidth() * deltaT,
+             dfdtBounds.getHeight() * deltaT);
 
         // Create a list of the segments connecting (-v) to (v) where
         // v is one of the four vertexes of b.
@@ -177,9 +175,9 @@ public class Parameterization2Ds {
                 (new Line2D.Double(v, new Point2D.Double(-v.x, -v.y)));
         }
 
-        // Figure out whether pn might equal to f(t) for some t. That
-        // is possible if at least one of the segments passes above
-        // pn, and at least one of the segments passes below pn.
+        // Figure out whether pn might equal f(t) for some t. That is
+        // possible if at least one of the segments passes above pn,
+        // and at least one of the segments passes below pn.
 
         boolean segmentAbove = false;
         boolean segmentBelow = false;
@@ -238,7 +236,7 @@ public class Parameterization2Ds {
         (The '1' in the name indicates that this lower bound is based
         on the first derivative of c.)
     */
-    public static double distanceLowerBound1
+   public static double distanceLowerBound1
         (Parameterization2D c, Point2D p) {
         double centerT = (c.getMinT() + c.getMaxT()) / 2;
         Point2D.Double f0 = c.getLocation(centerT);
@@ -265,7 +263,7 @@ public class Parameterization2Ds {
         Point2D, double, double) for a more efficient way to measure
         the distance to the nearest of several curves.
     */
-    public static CurveDistance distance
+    public static CurveDistanceRange distance
         (Parameterization2D c, Point2D p,
          double maxError, double maxIterations) {
         ArrayList<Parameterization2D> cps = new ArrayList<>();
