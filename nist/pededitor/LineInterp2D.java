@@ -17,7 +17,7 @@ public class Polyline extends GeneralPolyline {
     public Polyline() {
     }
 
-    public Polyline(Point2D.Double[] points,
+    public Polyline(Point2D[] points,
                     StandardStroke stroke,
                     double lineWidth) {
         super(points, stroke, lineWidth);
@@ -28,13 +28,13 @@ public class Polyline extends GeneralPolyline {
         super.set(vertexNo, point);
     }
 
-    @Override public void add(Point2D.Double point) {
+    @Override public void add(Point2D point) {
         param = null;
         super.add(point);
     }
 
     /** Add the point to the polyline in the given position. */
-    @Override public void add(int index, Point2D.Double point) {
+    @Override public void add(int index, Point2D point) {
         param = null;
         super.add(index, point);
     }

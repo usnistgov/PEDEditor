@@ -33,14 +33,14 @@ public class SplinePolyline extends GeneralPolyline {
         super.set(vertexNo, point);
     }
 
-    @Override public void add(Point2D.Double point) {
+    @Override public void add(Point2D point) {
         param = null;
         spline = null;
         super.add(point);
     }
 
     /** Add the point to the polyline in the given position. */
-    @Override public void add(int index, Point2D.Double point) {
+    @Override public void add(int index, Point2D point) {
         param = null;
         spline = null;
         super.add(index, point);

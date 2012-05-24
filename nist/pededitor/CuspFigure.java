@@ -90,10 +90,13 @@ public abstract class GeneralPolyline implements Parameterizable2D {
         points = new ArrayList<Point2D.Double>();
     }
 
-    public GeneralPolyline(Point2D.Double[] points,
+    public GeneralPolyline(Point2D[] points,
                            StandardStroke stroke,
                            double lineWidth) {
-        this.points = new ArrayList<Point2D.Double>(Arrays.asList(points));
+        this.points = new ArrayList<Point2D.Double>(points.length);
+        for (Point2D p: points) {
+            this.points.add(new Point2D.Double(p.getX(), p.getY()));
+        }
         this.stroke = stroke;
         this.lineWidth = lineWidth;
     }
@@ -319,13 +322,13 @@ public abstract class GeneralPolyline implements Parameterizable2D {
     }
 
     /** Add the point to the end of the polyline. */
-    public void add(Point2D.Double point) {
-        points.add(point);
+    public void add(Point2D point) {
+        add(points.size() - 1, point);
     }
 
     /** Add the point to the polyline in the given position. */
-    public void add(int index, Point2D.Double point) {
-        points.add(index, point);
+    public void add(int index, Point2D point) {
+        points.add(index, new Point2D.Double(point.getX(), point.getY()));
     }
 
     /** Remove the last point added. */
@@ -381,16 +384,16 @@ public abstract class GeneralPolyline implements Parameterizable2D {
     }
 
     /** Return the point where this polyline starts. */
-    @JsonIgnore public Point2D.Double getStartPoint() {
+    @JsonIgnore public Point2D.Double getStart() {
         return (points.size() == 0) ? null
             : (Point2D.Double) points.get(0).clone();
     }
 
     /** Return the point where this polyline ends. Closed curves
         end where they start. */
-    @JsonIgnore public Point2D.Double getEndPoint() {
+    @JsonIgnore public Point2D.Double getEnd() {
         if (isClosed()) {
-            return getStartPoint();
+            return getStart();
         }
 
         if (points.size() == 0) {
