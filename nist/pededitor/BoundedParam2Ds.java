@@ -114,6 +114,11 @@ public class Parameterization2Ds {
                 Parameterization2D cp = cps.get(segNo);
                 CurveDistanceRange dist = cds.get(segNo);
 
+                if (debug) {
+                    System.err.println("Seg#" + segNo + "[" + cp.getMinT() + ", " + cp.getMaxT()
+                                       + "]: " + dist);
+                }
+
                 if (dist.minDistance >= cutoffDistance) {
                     continue;
                 }
@@ -211,16 +216,27 @@ public class Parameterization2Ds {
             return 0;
         }
 
-        // Find the minimum distance from pn to any segments.
-        double minDist = -1;
+        // Find the minimum distance from pn to b and -b.
+        double minDist = Math.min
+            (Duh.distance(pn, b),
+             Duh.distance(pn,
+                          new Rectangle2D.Double(-b.getMaxX(), -b.getMaxY(),
+                                                 b.getWidth(), b.getHeight())));
 
+        // Find the minimum distance from pn to any segment.
         for (Line2D segment: segments) {
             double d = segment.ptSegDist(pn);
-            if (minDist == -1 || d < minDist) {
+            if (d < minDist) {
                 minDist = d;
             }
         }
 
+        
+
+        if (debug) {
+            System.out.println("dlb1(" + Duh.toString(pn) + ", "
+                               + Duh.toString(b) + ") = " + minDist);
+        }
         return minDist;
     }
 
