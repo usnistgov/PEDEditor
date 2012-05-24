@@ -43,7 +43,9 @@ public abstract class Parameterization2DAdapter
         return new CurveDistance(t, pt, pt.distance(p));
     }
 
-    @Override public CurveDistance distance
+    /** If your distance() method is exact, you should override this
+        method to point to that one instead. */
+    @Override public CurveDistanceRange distance
         (Point2D p, double maxError, double maxIterations) {
         return Parameterization2Ds.distance(this, p, maxError, maxIterations);
     }
@@ -59,7 +61,7 @@ public abstract class Parameterization2DAdapter
     public boolean inDomain(double t) { return t >= t0 && t <= t1; }
 
     @Override abstract public Parameterization2D derivative();
-    @Override abstract public CurveDistance distance(Point2D p);
+    @Override abstract public CurveDistanceRange distance(Point2D p);
     @Override abstract public Rectangle2D.Double getBounds();
     @Override abstract public Point2D.Double getDerivative(double t);
     @Override abstract public Point2D.Double getLocation(double t);

@@ -23,19 +23,17 @@ public class CubicParam2D extends BezierParam2D {
         return new CubicParam2D(points, t0, t1);
     }
 
-    /** distances from points to cubic Bezier curves cannot be solved
-        analytically. Instead, compute the distance to the quadratic
-        approximation of this Bezier curve and return a
-        CurveDistanceRange. */
-    @Override public CurveDistance distance(Point2D p) {
+    /** Distances from points to cubic Bezier curves cannot be solved
+        analytically. */
+    @Override public CurveDistanceRange distance(Point2D p) {
         double mid = (getMinT() + getMaxT()) / 2;
-        double guessT
-            = (new QuadParam2D(points[0],
-                                          getLocation(mid), points[3], t0, t1))
-            .distance(p).t;
+        /* Choose a candidate t value using the quadratic
+           approximation of this Bezier curve. */
+        QuadParam2D quadApprox = new QuadParam2D
+            (points[0], getLocation(mid), points[3], t0, t1);
+        double guessT = quadApprox.distance(p).t;
         CurveDistance dist = distance(p, guessT);
         double distlb = Parameterization2Ds.distanceLowerBound(this, p);
-        return new CurveDistanceRange(dist.t, dist.point, dist.distance,
-                                      distlb);
+        return new CurveDistanceRange(dist, distlb);
     }
 }

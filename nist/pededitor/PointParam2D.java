@@ -32,12 +32,13 @@ public class PointParam2D implements Parameterization2D {
         return null;
     }
 
-    @Override public CurveDistance distance(Point2D p) {
-        return new CurveDistance(0, p0, p0.distance(p));
+    @Override public CurveDistanceRange distance(Point2D p) {
+        double d = p0.distance(p);
+        return new CurveDistanceRange(0, p0, d, d);
     }
 
     @Override public CurveDistance vertexDistance(Point2D p) {
-        return new CurveDistance(0, p0, p0.distance(p));
+        return distance(p);
     }
 
     @Override public Point2D.Double getStart() {
@@ -52,7 +53,7 @@ public class PointParam2D implements Parameterization2D {
         return distance(p);
     }
 
-    @Override public CurveDistance distance
+    @Override public CurveDistanceRange distance
         (Point2D p, double maxError, double maxIterations) {
         return distance(p);
     }

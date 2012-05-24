@@ -32,17 +32,21 @@ public interface Parameterization2D {
     Point2D.Double getStart();
     Point2D.Double getEnd();
 
-    /** Return the distance between p and this curve. If the distance
-        may not be the true minimum, then a CurveDistanceRange is
-        returned whose minDistance field will be less than the
-        distance value. */
-    CurveDistance distance(Point2D p);
+    /** Return the distance between p and this curve. The "point"
+        field holds an estimate of the closest point, and the
+        "distance" and "t" fields holds the distance and
+        parameterization t value for that point, respectively. The
+        "minDistance" field holds a lower bound on the distance to the
+        true closest point, which may be anywhere from 0 to (if the
+        distance computation is exact) "distance".
+    */
+    CurveDistanceRange distance(Point2D p);
 
     /** Compute the distance from p to this curve to within maxError
         of the correct value, unless it takes more than maxIterations
         to compute. In that case, just return the best estimate known
         at that time. */
-    CurveDistance distance(Point2D p, double maxError, double maxIterations);
+    CurveDistanceRange distance(Point2D p, double maxError, double maxIterations);
 
     /** Return the distance between p and getLocation(t). */
     CurveDistance distance(Point2D p, double t);

@@ -30,16 +30,18 @@ public class SegmentParam2D
         return new SegmentParam2D(g, g, t0, t1);
     }
 
-    @Override public CurveDistance distance(Point2D p) {
-        CurveDistance output =
+    @Override public CurveDistanceRange distance(Point2D p) {
+        CurveDistance res =
             CurveDistance.pointSegmentDistance(p, getStart(), getEnd());
         if (t1 > t0) {
-            output.t = t0 + output.t / (t1 - t0);
+            res.t = t0 + res.t / (t1 - t0);
+        } else {
+            res.t = t0;
         }
-        return output;
+        return new CurveDistanceRange(res);
     }
 
-    @Override public CurveDistance distance
+    @Override public CurveDistanceRange distance
         (Point2D p, double maxError, double maxIterations) {
         return distance(p);
     }

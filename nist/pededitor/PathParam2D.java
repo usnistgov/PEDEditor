@@ -218,11 +218,11 @@ public class PathParam2D
         return Math.floor(t);
     }
 
-    @Override public CurveDistance distance(Point2D p) {
-        CurveDistance minDist = null;
+    @Override public CurveDistanceRange distance(Point2D p) {
+        CurveDistanceRange minDist = null;
         for (Parameterization2D segment: this) {
-            CurveDistance dist = segment.distance(p);
-            minDist = CurveDistance.min(minDist, dist);
+            CurveDistanceRange dist = segment.distance(p);
+            minDist = CurveDistanceRange.min(minDist, dist);
         }
 
         return minDist;
@@ -275,7 +275,7 @@ public class PathParam2D
         of the correct value, unless it takes more than maxIterations
         to compute. In that case, just return the best estimate known
         at that time. */
-    public CurveDistance distance(Point2D p, double maxError,
+    public CurveDistanceRange distance(Point2D p, double maxError,
                                   double maxIterations) {
         ArrayList<Parameterization2D> segs = new ArrayList<>();
         for (Parameterization2D segment: this) {
