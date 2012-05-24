@@ -188,16 +188,28 @@ public class Duh {
     }
 
     public static String toString(Point2D point) {
-        return "(" + point.getX() + ", " + point.getY() + ")";
+        if (point == null) {
+            return "null point";
+        } else {
+            return "(" + point.getX() + ", " + point.getY() + ")";
+        }
     }
 
     public static String toString(Line2D line) {
-        return toString(line.getP1()) + " - " + toString(line.getP2());
+        if (line == null) {
+            return "null line";
+        } else {
+            return toString(line.getP1()) + " - " + toString(line.getP2());
+        }
     }
 
     public static String toString(Rectangle2D r) {
-        return "Rect[" + r.getX() + " + " + r.getWidth() + ", "
-            + r.getY() + " + " + r.getHeight() + "]";
+        if (r == null) {
+            return "null rect";
+        } else {
+            return "Rect[" + r.getX() + " + " + r.getWidth() + ", "
+                + r.getY() + " + " + r.getHeight() + "]";
+        }
     }
 
     public static double toAngle(Point2D.Double ray) {
@@ -457,7 +469,7 @@ public class Duh {
         positive if v2 is between 0 and 180 degrees counterclockwise
         from v1. */
     static double crossProduct(Point2D v1, Point2D v2) {
-        return v1.getX() * v2.getY() - v1.getY() - v2.getX();
+        return v1.getX() * v2.getY() - v1.getY() * v2.getX();
     }
 
     /** @return the cross product a1a2 x b1b2. The returned value will be
@@ -729,6 +741,17 @@ public class Duh {
         double y = (m * r + b) / denom;
         double x = q * y + r;
         return new Point2D.Double(x,y);
+    }
+
+    public static Line2D.Double transform(AffineTransform at, Line2D.Double line) {
+        if (line == null) {
+            return null;
+        }
+        Point2D p1 = line.getP1();
+        at.transform(p1, p1);
+        Point2D p2 = line.getP2();
+        at.transform(p2, p2);
+        return new Line2D.Double(p1, p2);
     }
     
 
