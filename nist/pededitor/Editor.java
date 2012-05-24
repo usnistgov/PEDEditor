@@ -1272,6 +1272,7 @@ public class Editor implements CropEventListener, MouseListener,
         vertex to be inserted should be added to the curve before the
         currently selected vertex . */
     protected transient boolean insertBeforeSelection = false;
+
     protected transient int paintSuppressionRequestCnt;
 
     /** mouseIsStuck is true if the user recently performed a
@@ -1388,6 +1389,7 @@ public class Editor implements CropEventListener, MouseListener,
         labelViews = new ArrayList<View>();
         labelCenters = new ArrayList<Point2D.Double>();
         selection = null;
+        fontSize = 1;
         axes = new ArrayList<LinearAxis>();
         rulers = new ArrayList<LinearRuler>();
         diagramComponents = new String[Side.values().length];
@@ -2139,13 +2141,11 @@ public class Editor implements CropEventListener, MouseListener,
             }
         }
 
-        if (selection == null) {
-            editing = false;
-        }
+        boolean showSel = (selection != null) && editing;
 
         ArrayList<Decoration> decorations = getDecorations();
 
-        Decoration sel = editing ? selection.getDecoration() : null;
+        Decoration sel = showSel ? selection.getDecoration() : null;
         for (Decoration decoration: decorations) {
             if (!decoration.equals(sel)) {
                 g.setColor(thisOrBlack(decoration.getColor()));
@@ -2154,23 +2154,41 @@ public class Editor implements CropEventListener, MouseListener,
         }
 
         if (editing) {
-            Decoration dec = selection.getDecoration();
-            Color oldColor = dec.getColor();
-            boolean oldSaveNeeded = saveNeeded;
-            Color highlight = getHighlightColor(oldColor);
-            g.setColor(highlight);
-            dec.setColor(highlight);
+            if (selection != null) {
+                Decoration dec = selection.getDecoration();
+                Color oldColor = dec.getColor();
+                boolean oldSaveNeeded = saveNeeded;
+                Color highlight = getHighlightColor(oldColor);
 
-            if (selection instanceof VertexHandle) {
-                paintSelectedCurve(g, scale);
-            } else if (selection instanceof LabelHandle) {
-                paintSelectedLabel(g, scale);
-            } else {
-                sel.draw(g, scale);
+                g.setColor(highlight);
+                dec.setColor(highlight);
+                if (selection instanceof VertexHandle) {
+                    paintSelectedCurve(g, scale);
+                } else {
+                    if (selection instanceof LabelHandle) {
+                        paintSelectedLabel(g, scale);
+                    } else {
+                        sel.draw(g, scale);
+                    }
+                }
+                dec.setColor(oldColor);
+                saveNeeded = oldSaveNeeded;
             }
 
-            dec.setColor(oldColor);
-            saveNeeded = oldSaveNeeded;
+            if (getVertexHandle() == null && isShiftDown) {
+                Point2D.Double autop = getAutoPosition();
+                if (autop != null && !autop.equals(getMousePosition())) {
+                    // Paint a red cross at autop.
+                    Point2D.Double vPage = principalToScaledPage(scale)
+                        .transform(autop);
+                    int r = 7;
+                    g.setColor(Color.RED);
+                    int ix = (int) vPage.x;
+                    int iy = (int) vPage.y;
+                    g.drawLine(ix, iy - r, ix, iy + r);
+                    g.drawLine(ix -r, iy, ix+r, iy);
+                }
+            }
         }
     }
 
@@ -3273,40 +3291,58 @@ public class Editor implements CropEventListener, MouseListener,
     /** @return a list of all key points in the diagram. Some
         duplication is likely. */
     public ArrayList<Point2D.Double> keyPoints() {
-        ArrayList<Point2D.Double> output = intersections();
+        ArrayList<Point2D.Double> res = intersections();
 
         for (Point2D.Double p: principalToStandardPage.getInputVertices()) {
-            output.add(p);
+            res.add(p);
         }
 
         for (DecorationHandle m: getDecorationHandles()) {
-            output.add(m.getLocation());
+            res.add(m.getLocation());
         }
 
-        return output;
+        // Add all segment midpoints.
+        for (Line2D.Double s: getAllLineSegments()) {
+            res.add(new Point2D.Double((s.getX1() + s.getX2()) / 2,
+                                       (s.getY1() + s.getY2()) / 2));
+        }
+
+        if (selection != null) {
+            Point2D.Double p1 = selection.getLocation();
+            Point2D.Double p2 = secondarySelectionLocation();
+            if (p2 != null) {
+                // Add the doublings of segment p1p2.
+                res.add(new Point2D.Double(p1.getX() + (p1.getX() - p2.getX()),
+                                           p1.getY() + (p1.getY() - p2.getY())));
+                res.add(new Point2D.Double(p2.getX() + (p2.getX() - p1.getX()),
+                                           p2.getY() + (p2.getY() - p1.getY())));
+            }
+        }
+
+        return res;
     }
 
     /** @return a list of all possible selections. */
     @JsonIgnore ArrayList<Decoration> getDecorations() {
-        ArrayList<Decoration> output = new ArrayList<>();
+        ArrayList<Decoration> res = new ArrayList<>();
 
         for (int i = 0; i < paths.size(); ++i) {
-            output.add(new CurveDecoration(i));
+            res.add(new CurveDecoration(i));
         }
         for (int i = 0; i < arrows.size(); ++i) {
-            output.add(new ArrowDecoration(i));
+            res.add(new ArrowDecoration(i));
         }
         for (int i = 0; i < tieLines.size(); ++i) {
-            output.add(new TieLineDecoration(i));
+            res.add(new TieLineDecoration(i));
         }
         for (int i = 0; i < rulers.size(); ++i) {
-            output.add(new RulerDecoration(i));
+            res.add(new RulerDecoration(i));
         }
         for (int i = 0; i < labels.size(); ++i) {
-            output.add(new LabelDecoration(i));
+            res.add(new LabelDecoration(i));
         }
 
-        return output;
+        return res;
     }
 
 
@@ -3375,6 +3411,10 @@ public class Editor implements CropEventListener, MouseListener,
                 decs.add(dec);
                 params.add(param);
             }
+        }
+
+        if (params.size() == 0) {
+            return null;
         }
 
         OffsetParam2D.DistanceIndex di
@@ -4777,8 +4817,131 @@ public class Editor implements CropEventListener, MouseListener,
         return Printable.PAGE_EXISTS;
     }
 
-    /** Return the position that auto-positioning would move the mouse
-        to. */
+    /** @param segment A line on the standard page
+
+        Return a grid line (also on the standard page) that passes
+        through segment.getP1() and that is roughly parallel to
+        segment, or null if no such line is close enough to parallel.
+        A grid line is a line of zero change for a defined axis (from
+        the "axes" variable). */
+    Line2D.Double nearestGridLine(Line2D.Double segment) {
+        Point2D source = segment.getP1();
+        Point2D dest = segment.getP2();
+        Point2D.Double pageDelta = Duh.aMinusB(dest, source);
+        double deltaLength = Duh.length(pageDelta);
+
+        // Tolerance is the maximum ratio of the distance between dest
+        // and the projection to deltaLength. TODO A smarter approach
+        // might allow for both absolute and relative errors.
+        double tolerance = 0.06;
+
+        double maxDist = deltaLength * tolerance;
+        double maxDistSq = maxDist * maxDist;
+
+        ArrayList<Point2D.Double> vectors = new ArrayList<>();
+        for (LinearAxis axis: axes) {
+            // Add the line of no change for this axis. The line
+            // of no change is perpendicular to the gradient.
+            Point2D.Double g = axis.gradient();
+            vectors.add(new Point2D.Double(g.y, -g.x));
+        }
+
+        Line2D.Double res = null;
+        
+        for (Point2D.Double v: vectors) {
+            principalToStandardPage.deltaTransform(v, v);
+            Point2D.Double projection = Duh.nearestPointOnLine
+                (pageDelta, new Point2D.Double(0,0), v);
+            double distSq = pageDelta.distanceSq(projection);
+            if (distSq < maxDistSq) {
+                projection.x += source.getX();
+                projection.y += source.getY();
+                maxDistSq = distSq;
+                res = new Line2D.Double(source, projection);
+            }
+        }
+
+        if (res == null) {
+            return null;
+        }
+
+        // Extend res to the limits of pageBounds.
+        Rectangle2D b = pageBounds;
+
+        Point2D.Double[] vertexes =
+            { new Point2D.Double(b.getMinX(), b.getMinY()),
+              new Point2D.Double(b.getMaxX(), b.getMinY()),
+              new Point2D.Double(b.getMaxX(), b.getMaxY()),
+              new Point2D.Double(b.getMinX(), b.getMaxY()) };
+        double minT = Double.NaN;
+        double maxT = Double.NaN;
+
+        for (int i = 0; i < 4; ++i) {
+            double t = Duh.lineSegmentIntersectionT
+                (res.getP1(), res.getP2(),
+                 vertexes[i], vertexes[(i+1) % 4]);
+            if (Double.isNaN(t)) {
+                continue;
+            }
+            if (Double.isNaN(minT)) {
+                minT = t;
+                maxT = t;
+            } else {
+                minT = Math.min(minT, t);
+                maxT = Math.max(maxT, t);
+            }
+        }
+
+        if (Double.isNaN(minT)) {
+            // Apparently the line of the segment doesn't even
+            // intersect the page. Weird.
+            return null;
+        }
+
+        double x1 = res.getX1();
+        double y1 = res.getY1();
+        double dx = res.getX2() - x1;
+        double dy = res.getY2() - y1;
+        return new Line2D.Double
+            (x1 + minT * dx, y1 + minT * dy,
+             x1 + maxT * dx, y1 + maxT * dy);
+    }
+
+    public DecorationHandle secondarySelection() {
+        VertexHandle vh = getVertexHandle();
+        if (vh != null) {
+            GeneralPolyline path = vh.getItem();
+            int size = path.size();
+            if (size < 2) {
+                return null;
+            }
+            int vertexNo = vh.vertexNo + (insertBeforeSelection ? -1 : 1);
+            if (path.isClosed()) {
+                vertexNo = (vertexNo + size) % size;
+            } else if (vertexNo < 0) {
+                vertexNo = 1;
+            } else if (vertexNo >= size) {
+                vertexNo = size - 2;
+            }
+            return new VertexHandle(vh.decoration, vertexNo);
+        }
+        RulerHandle rh = getRulerHandle();
+        if (rh != null) {
+            return new RulerHandle
+                (rh.decoration,
+                 (rh.handle == RulerHandleType.START) ? RulerHandleType.END
+                 : RulerHandleType.START);
+        }
+        return null;
+    }
+
+    public Point2D.Double secondarySelectionLocation() {
+        DecorationHandle h = secondarySelection();
+        return (h == null) ? null : h.getLocation();
+    }
+
+    /** Return the point in principal coordinates that
+        auto-positioning would move the mouse to. */
     @JsonIgnore public Point2D.Double getAutoPosition() {
         Point2D.Double mprin2 = getMousePosition();
         if (mprin2 == null) {
@@ -4789,91 +4952,28 @@ public class Editor implements CropEventListener, MouseListener,
         // Location to move to. If null, no good candidate has been found yet.
         Point2D.Double newPage = null;
 
-        boolean addedGridLine = false;
         boolean oldSaveNeeded = saveNeeded;
+        ArrayList<Point2D.Double> selections = new ArrayList<>();
+        int oldSize = paths.size();
 
         if (selection != null) {
-            Point2D.Double selPoint = selection.getLocation();
-            Point2D.Double selPage
-                = principalToStandardPage.transform(selPoint);
-            Point2D.Double pageDelta = Duh.aMinusB(mousePage, selPage);
-            double deltaLength = Duh.length(pageDelta);
+            selections.add(selection.getLocation());
+        }
+        Point2D.Double point2 = secondarySelectionLocation();
+        if (point2 != null) {
+            selections.add(point2);
+        }
 
-            // pageDelta is the vector on the page from
-            // selection.getLocation() to mprin. Tolerance is the
-            // maximum ratio on the standard page of the distance
-            // between the mouse and the projection to deltaLength.
-            // TODO A smarter approach might allow for both absolute
-            // and relative errors.
-            double tolerance = 0.05;
-
-            double maxDist = deltaLength * tolerance;
-            double maxDistSq = maxDist * maxDist;
-
-            ArrayList<Point2D.Double> vectors = new ArrayList<>();
-            for (LinearAxis axis: axes) {
-                // Add the line of no change for this axis. The line
-                // of no change is perpendicular to the gradient.
-                Point2D.Double g = axis.gradient();
-                vectors.add(new Point2D.Double(g.y, -g.x));
+        for (Point2D.Double p: selections) {
+            principalToStandardPage.transform(p, p);
+            Line2D.Double gridLine = nearestGridLine
+                (new Line2D.Double(p, mousePage));
+            if (gridLine == null) {
+                continue;
             }
-
-            Line2D.Double gridLine = null;
-            for (Point2D.Double v: vectors) {
-                principalToStandardPage.deltaTransform(v, v);
-                Point2D.Double projection = Duh.nearestPointOnLine
-                    (pageDelta, new Point2D.Double(0,0), v);
-                double distSq = pageDelta.distanceSq(projection);
-                if (distSq < maxDistSq) {
-                    projection.x += selPage.x;
-                    projection.y += selPage.y;
-                    maxDistSq = distSq;
-                    gridLine = new Line2D.Double(selPage, projection);
-                }
-            }
-
-            if (gridLine != null) {
-                Rectangle2D b = pageBounds;
-
-                // Extend gridLine to the limits of pageBounds.
-                Point2D.Double[] vertexes =
-                    { new Point2D.Double(b.getMinX(), b.getMinY()),
-                      new Point2D.Double(b.getMaxX(), b.getMinY()),
-                      new Point2D.Double(b.getMaxX(), b.getMaxY()),
-                      new Point2D.Double(b.getMinX(), b.getMaxY()) };
-                double minT = Double.NaN;
-                double maxT = Double.NaN;
-
-                for (int i = 0; i < 4; ++i) {
-                    double t = Duh.lineSegmentIntersectionT
-                        (gridLine.getP1(), gridLine.getP2(),
-                         vertexes[i], vertexes[(i+1) % 4]);
-                    if (Double.isNaN(t)) {
-                        continue;
-                    }
-                    if (Double.isNaN(minT)) {
-                        minT = t;
-                        maxT = t;
-                    } else {
-                        minT = Math.min(minT, t);
-                        maxT = Math.max(maxT, t);
-                    }
-                }
-
-                if (!Double.isNaN(minT)) {
-                    double x1 = gridLine.getX1();
-                    double y1 = gridLine.getY1();
-                    double dx = gridLine.getX2() - x1;
-                    double dy = gridLine.getY2() - y1;
-                    Point2D.Double[] points =
-                        { new Point2D.Double(x1 + minT * dx, y1 + minT * dy),
-                          new Point2D.Double(x1 + maxT * dx, y1 + maxT * dy) };
-                    standardPageToPrincipal.transform(points, 0, points, 0, 2);
-                    paths.add
-                        (new Polyline(points, StandardStroke.INVISIBLE, 0));
-                    addedGridLine = true;
-                }
-            }
+            gridLine = Duh.transform(standardPageToPrincipal, gridLine);
+            paths.add(new Polyline(new Point2D[] { gridLine.getP1(), gridLine.getP2() },
+                                   StandardStroke.INVISIBLE, 0));
         }
 
         {
@@ -4910,7 +5010,7 @@ public class Editor implements CropEventListener, MouseListener,
             newPage = mousePage; // Leave the mouse where it is.
         }
 
-        if (addedGridLine) {
+        while (paths.size() > oldSize) {
             paths.remove(paths.size() - 1);
         }
         saveNeeded = oldSaveNeeded;
@@ -5004,7 +5104,7 @@ public class Editor implements CropEventListener, MouseListener,
             Point2D.Double newMprin = xformi.transform(vs.get(0), vs.get(1));
             Point2D.Double newMousePage = principalToStandardPage
                 .transform(newMprin);
-            if (!pageBounds.contains(newMousePage.x, newMousePage.y)) {
+            if (Duh.distance(newMousePage, pageBounds) > 1e-6) {
                 JOptionPane.showMessageDialog
                     (editFrame,
                      "<html><body width = \"300 px\""
@@ -5490,6 +5590,10 @@ public class Editor implements CropEventListener, MouseListener,
     @Override
         public void mouseEntered(MouseEvent e) {
         // Auto-generated method stub
+    }
+
+    boolean isStraight(GeneralPolyline path) {
+        return path.size() < 2 || path.getSmoothingType() == GeneralPolyline.LINEAR;
     }
 
     /** @return an array of all straight line segments defined for
