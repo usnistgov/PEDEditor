@@ -38,6 +38,8 @@ import java.util.prefs.Preferences;
 import java.io.*;
 import java.awt.print.*;
 
+import Jama.Matrix;
+
 import com.itextpdf.text.Document;
 import com.itextpdf.text.PageSize;
 import com.itextpdf.text.pdf.*;
@@ -1991,6 +1993,13 @@ public class Editor implements CropEventListener, MouseListener,
         g.drawImage(im.croppedImage, im.cropBounds.x, im.cropBounds.y, null);
     }
 
+    static Color toColor(AutoPositionType ap) {
+        return ap == AutoPositionType.NONE ? Color.RED
+            : ap == AutoPositionType.CURVE
+            ? new Color(0xd87000) // Orange
+            : new Color(0xb0c000); // Yellow
+    }
+
 
     /** Show the result if the mouse point were added to the currently
         selected curve in red, and show the currently selected curve in
@@ -2011,8 +2020,9 @@ public class Editor implements CropEventListener, MouseListener,
         g.setRenderingHint(RenderingHints.KEY_ANTIALIASING,
                            RenderingHints.VALUE_ANTIALIAS_OFF);
 
+        AutoPositionHolder ap = new AutoPositionHolder();
         Point2D.Double extraVertex
-            = isShiftDown ? getAutoPosition()
+            = isShiftDown ? getAutoPosition(ap)
             : mouseIsStuckAtSelection()
             ? getMousePosition() // Show the point that would be added
                                  // if the mouse became unstuck.
@@ -2026,7 +2036,7 @@ public class Editor implements CropEventListener, MouseListener,
 
             boolean oldSaveNeeded = saveNeeded;
             Color oldColor = csel.getColor();
-            csel.setColor(Color.RED);
+            csel.setColor(toColor(ap.position));
 
             int vertexNo = getVertexHandle().vertexNo
                 + (insertBeforeSelection ? 0 : 1);
@@ -2176,13 +2186,15 @@ public class Editor implements CropEventListener, MouseListener,
             }
 
             if (getVertexHandle() == null && isShiftDown) {
-                Point2D.Double autop = getAutoPosition();
-                if (autop != null && !autop.equals(getMousePosition())) {
-                    // Paint a red cross at autop.
+                AutoPositionHolder ap = new AutoPositionHolder();
+                Point2D.Double autop = getAutoPosition(ap);
+                if (autop != null
+                    && !principalCoordinatesMatch(autop, getMousePosition())) {
+                    // Paint a cross at autop.
                     Point2D.Double vPage = principalToScaledPage(scale)
                         .transform(autop);
                     int r = 7;
-                    g.setColor(Color.RED);
+                    g.setColor(toColor(ap.position));
                     int ix = (int) vPage.x;
                     int iy = (int) vPage.y;
                     g.drawLine(ix, iy - r, ix, iy + r);
@@ -2605,6 +2617,85 @@ public class Editor implements CropEventListener, MouseListener,
 
         selection = new RulerHandle(rulers.size() - 1, RulerHandleType.END);
         repaintEditFrame();
+    }
+
+    public void addVariable() {
+        GeneralPolyline path = getActiveCurve();
+        if (path == null || path.size() != 3) {
+            JOptionPane.showMessageDialog
+                (editFrame,
+                 "Before you create a new axis,\n"
+                 + "you must select a curve\n"
+                 + "consisting of exactly three points.\n");
+            return;
+        }
+
+        String[] values = { "Rupert", "0", "0", "1" };
+
+        while (true) {
+            StringArrayDialog dog = new StringArrayDialog
+                (editFrame,
+                 new String[] { "Variable name",
+                                "Value at point #1",
+                                "Value at point #2",
+                                "Value at point #3" },
+                 values,
+                 "<html><body width=\"200 px\"><p>"
+                 + "Enter the name of the new variable and its values "
+                 + "at three different points. The variable must be a "
+                 + "linear function (affine transformation) of the principal "
+                 + "coordinates. Fractions and percentages are allowed."
+                 + "</p></body></html>");
+            dog.setTitle("Create new axis");
+            values = dog.showModal();
+            if (values == null) {
+                return;
+            }
+
+            if ("".equals(values[0])) {
+                JOptionPane.showMessageDialog
+                    (null, "Please enter a variable name.");
+                continue;
+            }
+
+            double[] dvs = new double[3];
+            for (int i = 0; i < dvs.length; ++i) {
+                try {
+                    dvs[i] = ContinuedFraction.parseDouble(values[i+1]);
+                } catch (NumberFormatException e) {
+                    JOptionPane.showMessageDialog
+                        (null, "Invalid number format '" + values[i+1] + "'");
+                    continue;
+                }
+            }
+
+            Point2D.Double p0 = path.get(0);
+            Point2D.Double p1 = path.get(1);
+            Point2D.Double p2 = path.get(2);
+
+            Matrix xform = new Matrix
+                (new double[][] {{p0.x, p0.y, 1},
+                                 {p1.x, p1.y, 1},
+                                 {p2.x, p2.y, 1}});
+            xform.print(8,2);
+            try {
+                Matrix m = xform.solve(new Matrix(dvs, 3));
+                LinearAxis axis = new LinearAxis
+                    (new DecimalFormat("0.0000"),
+                     m.get(0,0), m.get(1,0), m.get(2,0));
+                axis.name = values[0];
+                axes.add(axis);
+                repaintEditFrame();
+                return;
+            } catch (RuntimeException e) {
+                JOptionPane.showMessageDialog
+                    (editFrame,
+                     "These points are colinear and cannot be used to define an axis."
+                     + e + ", " + xform);
+                return;
+            }
+        }
+
     }
 
     public void addTieLine() {
@@ -4934,15 +5025,38 @@ public class Editor implements CropEventListener, MouseListener,
         }
         return null;
     }
-
+    
     public Point2D.Double secondarySelectionLocation() {
         DecorationHandle h = secondarySelection();
         return (h == null) ? null : h.getLocation();
     }
 
+    static enum AutoPositionType { NONE, CURVE, POINT };
+    static class AutoPositionHolder {
+        AutoPositionType position = AutoPositionType.NONE;
+    }
+
     /** Return the point in principal coordinates that
         auto-positioning would move the mouse to. */
     @JsonIgnore public Point2D.Double getAutoPosition() {
+        return getAutoPosition(null);
+    }
+
+    /** Return the point in principal coordinates that
+        auto-positioning would move the mouse to.
+
+        @param ap If not null, ap.position will be set to
+        AutoPositionType.NONE, AutoPositionType.CURVE, or
+        AutoPositionType.POINT to reflect whether the autoposition is
+        the regular mouse position, the nearest curve, or the nearest
+        key point.
+    */
+    @JsonIgnore public Point2D.Double getAutoPosition(AutoPositionHolder ap) {
+        if (ap == null) {
+            ap = new AutoPositionHolder();
+        }
+        ap.position = AutoPositionType.NONE;
+
         Point2D.Double mprin2 = getMousePosition();
         if (mprin2 == null) {
             return mprin;
@@ -4991,6 +5105,7 @@ public class Editor implements CropEventListener, MouseListener,
                 double keyPointPixelDist = 10;
                 keyPointDist = newPage.distance(mousePage)
                     - keyPointPixelDist / scale;
+                ap.position = AutoPositionType.POINT;
             }
 
             // Only jump to the nearest curve if it is at least three
@@ -4999,6 +5114,7 @@ public class Editor implements CropEventListener, MouseListener,
             if (keyPointDist > 0
                 && (nc = nearestCurve(mousePage)) != null
                 && keyPointDist > 3 * nc.distance.distance) {
+                ap.position = AutoPositionType.CURVE;
                 newPage = nc.distance.point;
             }
         }
@@ -5007,6 +5123,7 @@ public class Editor implements CropEventListener, MouseListener,
                                         // move the mouse
         if (newPage == null
             || newPage.distance(mousePage) * scale > maxMovePixels) {
+            ap.position = AutoPositionType.NONE;
             newPage = mousePage; // Leave the mouse where it is.
         }
 
