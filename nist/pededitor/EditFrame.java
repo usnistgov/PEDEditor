@@ -786,6 +786,14 @@ public class EditFrame extends JFrame {
                 });
 
             mnDecorations.add(new Action
+                        ("Add variable", KeyEvent.VK_V) {
+                    @Override
+                        public void actionPerformed(ActionEvent e) {
+                        getParentEditor().addVariable();
+                    }
+                });
+
+            mnDecorations.add(new Action
                         ("Add tie lines", KeyEvent.VK_I) {
                     @Override
                         public void actionPerformed(ActionEvent e) {
