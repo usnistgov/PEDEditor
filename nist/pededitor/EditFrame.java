@@ -399,9 +399,13 @@ public class EditFrame extends JFrame {
 
         mnFile.addSeparator();
 
-        JMenuItem mnExit = new JMenuItem("Exit");
-        mnFile.add(mnExit);
-        mnExit.setEnabled(false);
+        // "Exit" menu item
+        mnFile.add(new Action("Exit", KeyEvent.VK_X) {
+                @Override
+                    public void actionPerformed(ActionEvent e) {
+                    getParentEditor().close();
+                }
+            });
 
 
         // "Edit" top-level menu
@@ -498,6 +502,14 @@ public class EditFrame extends JFrame {
                 @Override
                     public void actionPerformed(ActionEvent e) {
                     getParentEditor().autoPosition();
+                }
+            });
+
+        mnPosition.add(new Action
+                       ("Compute mole percent", KeyEvent.VK_C,
+                        KeyStroke.getKeyStroke('%')) {
+                @Override public void actionPerformed(ActionEvent e) {
+                    getParentEditor().computeMolePercent();
                 }
             });
 
@@ -798,17 +810,6 @@ public class EditFrame extends JFrame {
                     @Override
                         public void actionPerformed(ActionEvent e) {
                         getParentEditor().addTieLine();
-                    }
-                });
-
-            mnDecorations.add(new Action
-                        ("Compute Chemical Label Coordinates", KeyEvent.VK_C) {
-                    @Override
-                        public void actionPerformed(ActionEvent e) {
-                        JOptionPane.showMessageDialog
-                            (EditFrame.this, "Sorry, this feature doesn't work yet.");
-                        // TODO not defined yet...
-                        // getParentEditor().computeLabelCoordinates();
                     }
                 });
         }
