@@ -16,6 +16,44 @@ public class ContinuedFraction {
         this.denominator = denominator;
     }
 
+    public static long gcf(long a, long b) {
+        a = Math.abs(a);
+        b = Math.abs(b);
+        // Euclid's algorithm
+        while (b > 0) {
+            long temp = b;
+            b = a % b;
+            a = temp;
+        }
+        return a;
+    }
+
+    public static long lcm(long a, long b) throws OverflowException {
+        a = Math.abs(a);
+        b = Math.abs(b);
+        long gc = gcf(a,b);
+        if (gc == 0) {
+            return 0;
+        }
+        if (((double) a) * (b / gc) > Long.MAX_VALUE) {
+            throw new OverflowException();
+        }
+        return a * (b/gc);
+    }
+
+    /* Return the least common (nonnegative) multiple of values, or
+       (somewhat arbitrarily) 1 if no values are present. */
+    public static long lcm(long[] values) throws OverflowException {
+        if (values == null || values.length == 0) {
+            return 1;
+        }
+        long lc = values[0];
+        for (int i = 1; i < values.length; ++i) {
+            lc = lcm(lc, values[i]);
+        }
+        return lc;
+    }
+
     /** Internal-use class to keep track of the fraction plus the
         extra field lastFrac. */
     static class Extra {
