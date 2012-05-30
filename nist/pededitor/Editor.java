@@ -18,6 +18,7 @@ import java.awt.FontFormatException;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.GraphicsEnvironment;
+import java.awt.HeadlessException;
 import java.awt.Image;
 import java.awt.Point;
 import java.awt.Rectangle;
@@ -25,6 +26,8 @@ import java.awt.RenderingHints;
 import java.awt.Robot;
 import java.awt.Shape;
 import java.awt.Stroke;
+import java.awt.Toolkit;
+import java.awt.datatransfer.StringSelection;
 import java.awt.event.*;
 import java.awt.image.*;
 import java.awt.geom.*;
@@ -60,12 +63,22 @@ import org.w3c.dom.DOMImplementation;
 // TODO (bug) The decorations are messed up in the label dialog in XP.
 // Check whether the same problem exists in Windows 7.
 
+// TODO (mandatory, but not clear whose end -- mine or Prometheus' --
+// where it should happen) HTML-to-plaintext conversion. Users who
+// search for "H2SO4" find "H<sub>2</sub>SO<sub>4</sub>". An extra
+// bonus, if done within the PED Editor, is that it makes the mole
+// percent compound entry more flexible; you can take an existing
+// label and compute its proper location without retyping. This is
+// both (1) already solved by a number of different libraries and (2)
+// not too hard to do from scratch in a somewhat slipshod way.
+
 // TODO (optional) Auto-save the diagram at regular intervals.
 
 // TODO (optional) Copy a curve or set of points with the same label
 // into a comma-separated values table.
 
-// TODO (optional) Fill styles. (Right now the only fill style is "solid".)
+// TODO (optional) Fill styles. (Right now the only fill style is
+// "solid".) This is pretty easy.
 
 // TODO (optional) Eutectic and peritectic points.
 
@@ -95,13 +108,10 @@ import org.w3c.dom.DOMImplementation;
 // TODO (optional) You can't make tie lines that cross the "endpoint"
 // of a closed curve. Fix this somehow.
 
-// TODO (optional) The existing rulers only show the values of defined
-// variables (such as the temperature or the mole percentage of a
-// component). Some diagrams, especially schematics, could benefit
-// from rulers whose ranges are defined in terms of concrete numbers
-// instead of in terms of other variables -- click two points to
-// define the endpoints, then specify the min and max values. This one
-// isn't hard to do, either.
+// TODO: At this point, the rule that tie lines have to end at
+// vertexes of the diagram is no longer needed and not difficult to
+// eliminate. Tie lines ending on rulers without extra steps could
+// also be enabled (and the extra steps are unintuitive).
 
 // TODO (optional) For opaque and boxed labels, allow users to decide
 // how much extra white space to include on each side.
@@ -109,7 +119,9 @@ import org.w3c.dom.DOMImplementation;
 // TODO (optional) Set of commonly used shapes (equilateral triangle,
 // square, circle) whose scale and orientation are defined by
 // selecting two points. Ideally the changes would be visible in real
-// time as you move the mouse around.
+// time as you move the mouse around. (Auto-positioning has made this
+// slightly less important than before; rectangles and equilateral
+// triangles -- though not squares -- are easy to do now.)
 
 // TODO (optional) Support of GRUMP-style explicit assignment of ruler
 // limits such as label skip, label density, and so on. The downside
@@ -143,24 +155,20 @@ import org.w3c.dom.DOMImplementation;
 // if you're already using the mouse to identify the location the
 // operation should apply to.
 
-// TODO (major time-saver) Automatically infer diagram location from
-// composition where equation balancing is possible.
-
-// TODO (feature, harder) Allow detection of the intersections of two
-// splines. (What makes this feature more desirable than it would be
-// otherwise is that it would create consistency. As long as some
-// kinds of intersections are detectable, people will sometimes forget
-// that other kinds are not detectable and be confused when that does
-// not work. (I did that myself at least once, even though I wrote the
-// program.)
+// TODO (feature, a day or two) Allow detection of the intersections
+// of two splines. (What makes this feature more desirable than it
+// would be otherwise is that it would create consistency. As long as
+// some kinds of intersections are detectable, people will sometimes
+// forget that other kinds are not detectable and be confused when
+// that does not work. (I did that myself at least once, even though I
+// wrote the program.)
 
 // TODO (optional) Better curve fitting. As I believe Don mentioned,
 // following the control points too slavishly can yield over-fitting
 // in which you end up mapping noise (experimental error, scanner
 // noise, twitches in the hand of the digitizer or the person who drew
-// the image in the first place, or whatever). Peter's program already
-// does fitting, but forcing arbitrary curves onto a cubic Bezier is
-// too restrictive.
+// the image in the first place, or whatever). Peter's program's
+// fitting is simple but not great.
 
 // Heuristics may be used to identify good cutoffs for fit quality. At
 // the over-fitting end of the spectrum, if you find the sum of the
@@ -189,18 +197,20 @@ import org.w3c.dom.DOMImplementation;
 
 // TODO (preexisting in viewer) Periodic table integration and
 // automatic conversion of diagrams from mole percent to weight
-// percent
+// percent. Simply transforming all coordinates to weight percent is
+// pretty close to there, but bending straight lines into curves would
+// take more thought.
 
-// TODO (preexisting but not mandatory) Smart line dash lengths.
-// Peter Schenk's PED Editor adjusts the segment length for dashed
-// lines to insure that the dashes in dashed curves are always enough
-// shorter than the curves themselves that at least two dashes are
-// visible. It's a nice feature, but is it worth it to reproduce? The
-// lengths of the dashes in dashed lines is proportional to their
-// thickness, so you can especially short dashes by using especially
-// thin lines already. (Using the sum of the chord lengths as a lower
-// bound on the length of the whole would achieve the goal of insuring
-// at least two dashes are visible, but would not guarantee that the
+// TODO (preexisting but not mandatory) Smart line dash lengths. Peter
+// Schenk's PED Editor adjusts the segment length for dashed lines to
+// insure that the dashes in dashed curves are always enough shorter
+// than the curves themselves that at least two dashes are visible.
+// It's a nice feature, but is it worth it to reproduce? The lengths
+// of the dashes in dashed lines is proportional to their thickness,
+// so you can make especially short dashes by using especially thin
+// lines already. (Using the sum of the chord lengths as a lower bound
+// on the length of the whole would achieve the goal of insuring at
+// least two dashes are visible, but would not guarantee that the
 // dashes end neatly at both endpoints. (Java2D already has its own
 // estimate of the path length -- and it would actually be better to
 // use its estimate than to do a better but different estimate of
@@ -218,7 +228,8 @@ import org.w3c.dom.DOMImplementation;
 // edge while transforming the interior point to its new location.
 // (The result of such a transformation might not be pretty; any line
 // passing through the warped region could end up with sharp bends in
-// it.)
+// it. However, if the line is defined by its endpoints only to begin
+// with, you'll never see that.)
 
 // TODO (major) Visual location of nearest point on scanned diagram. (The
 // mouse can already be attracted to the nearest feature in the final
@@ -269,9 +280,7 @@ public class Editor implements CropEventListener, MouseListener,
                                 implements WindowListener
     {
         public void windowClosing(WindowEvent e) {
-            if (verifyCloseDiagram()) {
-                System.exit(0);
-            }
+            close();
         }
     }
 
@@ -625,6 +634,11 @@ public class Editor implements CropEventListener, MouseListener,
             double dy = anchor.y - center.y;
             return new Point2D.Double(dest.getX() + dx, dest.getY() + dy);
         }
+
+        @Override public String toString() {
+            return getClass().getSimpleName() + "[" + getDecoration() + ", "
+                + handle + "]";
+        }
     }
 
 
@@ -663,7 +677,7 @@ public class Editor implements CropEventListener, MouseListener,
         }
 
         public Point2D.Double getCenterLocation() {
-            return labelCenters.get(index);
+            return (Point2D.Double) labelCenters.get(index).clone();
         }
 
         public Point2D.Double getAnchorLocation() {
@@ -705,6 +719,11 @@ public class Editor implements CropEventListener, MouseListener,
                 return new DecorationHandle[]
                     { new LabelHandle(this, LabelHandleType.ANCHOR) };
             }
+        }
+
+        @Override public String toString() {
+            return getClass().getSimpleName() + "[" + index
+                + " (" + getItem().getText() + ")]";
         }
     }
 
@@ -1222,7 +1241,7 @@ public class Editor implements CropEventListener, MouseListener,
     protected JColorChooser colorChooser = null;
     protected JDialog colorDialog = null;
     protected Map<String,String> keyValues = null;
-    protected Set<String> tags = new HashSet<String>();
+    protected Set<String> tags = new HashSet<>();
 
     /** Transform from original coordinates to principal coordinates.
         Original coordinates are (x,y) positions within a scanned
@@ -1239,8 +1258,6 @@ public class Editor implements CropEventListener, MouseListener,
     /** Bounds of the entire page in standardPage space. Use null to
         compute automatically instead. */
     protected Rectangle2D.Double pageBounds;
-    /** Bounds of the core diagram (the central triangle or rectangle
-        only) in the principal coordinate space. */
     protected DiagramType diagramType = null;
     protected transient double scale;
     protected ArrayList<GeneralPolyline> paths;
@@ -1249,8 +1266,18 @@ public class Editor implements CropEventListener, MouseListener,
     protected transient ArrayList<View> labelViews;
     @JsonProperty protected ArrayList<Arrow> arrows;
     protected ArrayList<TieLine> tieLines;
-    @JsonProperty protected String[] diagramComponents = null;
-    protected BufferedImage originalImage;
+    @JsonProperty protected String[/* Side */] diagramComponents = null;
+
+    /** All elements contained in diagram components, sorted into Hill
+        order. Only trustworthy if componentElements != null. */
+    protected transient String[] diagramElements = null;
+    /** Diagram components expressed as vectors of element quantities.
+        The element quantities are parallel to the diagramElements[]
+        array. Set this to null whenever diagramComponents changes. */
+    protected transient double[/* Side */][/* elementNo */]
+        componentElements;
+
+    protected transient BufferedImage originalImage;
     protected String originalFilename;
     /** The item (vertex, label, etc.) that is selected, or null if nothing is. */
     protected DecorationHandle selection;
@@ -1384,17 +1411,18 @@ public class Editor implements CropEventListener, MouseListener,
         standardPageToPrincipal = null;
         pageBounds = null;
         scale = BASE_SCALE;
-        paths = new ArrayList<GeneralPolyline>();
-        arrows = new ArrayList<Arrow>();
-        tieLines = new ArrayList<TieLine>();
-        labels = new ArrayList<AnchoredLabel>();
-        labelViews = new ArrayList<View>();
-        labelCenters = new ArrayList<Point2D.Double>();
+        paths = new ArrayList<>();
+        arrows = new ArrayList<>();
+        tieLines = new ArrayList<>();
+        labels = new ArrayList<>();
+        labelViews = new ArrayList<>();
+        labelCenters = new ArrayList<>();
         selection = null;
         fontSize = 1;
-        axes = new ArrayList<LinearAxis>();
-        rulers = new ArrayList<LinearRuler>();
+        axes = new ArrayList<>();
+        rulers = new ArrayList<>();
         diagramComponents = new String[Side.values().length];
+        componentElements = null;
         mprin = null;
         filename = null;
         saveNeeded = false;
@@ -1406,9 +1434,9 @@ public class Editor implements CropEventListener, MouseListener,
         paintSuppressionRequestCnt = 0;
         setBackground(EditFrame.BackgroundImage.GRAY);
         tieLineDialog.setVisible(false);
-        tieLineCorners = new ArrayList<PathAndT>();
+        tieLineCorners = new ArrayList<>();
         embeddedFont = null;
-        keyValues = new TreeMap<String,String>();
+        keyValues = new TreeMap<>();
         if (tags != null) {
             for (String tag: tags) {
                 removeTag(tag);
@@ -1419,6 +1447,12 @@ public class Editor implements CropEventListener, MouseListener,
     @JsonProperty("curves")
     ArrayList<GeneralPolyline> getPaths() {
         return paths;
+    }
+
+    public void close() {
+        if (verifyCloseDiagram()) {
+            System.exit(0);
+        }
     }
 
     @JsonProperty("curves")
@@ -2698,6 +2732,303 @@ public class Editor implements CropEventListener, MouseListener,
 
     }
 
+    static class StringComposition {
+        /** Decomposition of s into (element name, number of atoms)
+            pairs. */
+        Map<String,Double> c;
+        /** The side (or corner, for ternary diagrams) of the diagram
+            that this diagram component belongs to. */
+        Side side;
+    };
+
+    @JsonIgnore double[][] getComponentElements() {
+        if (componentElements != null) {
+            return componentElements;
+        }
+
+        ArrayList<StringComposition> scs = new ArrayList<>();
+
+        for (Side side: Side.values()) {
+            String dc = diagramComponents[side.ordinal()];
+            if (dc == null) {
+                continue;
+            }
+            ChemicalString.Match m = ChemicalString.composition(dc);
+            if (m == null) {
+                System.out.println("Diagram component '" + dc + "' does not start\n"
+                                   + "with a simple chemical formula.");
+                continue;
+            }
+            StringComposition sc = new StringComposition();
+            // sc.s = dc.substring(0, m.length);
+            sc.c = m.composition;
+            sc.side = side;
+            scs.add(sc);
+        }
+
+        Map<String,Integer> elementIndexes = new HashMap<>();
+        ArrayList<String> elements = new ArrayList<>();
+        for (StringComposition sc: scs) {
+            for (String element: sc.c.keySet()) {
+                if (elementIndexes.containsKey(element)) {
+                    continue;
+                }
+                // Don't worry about the value for now.
+                elementIndexes.put(element, 0);
+                elements.add(element);
+            }
+        }
+
+
+        // Now we know which elements are present, in some order.
+        // Rearrange to obtain Hill order.
+        diagramElements = elements.toArray(new String[0]);
+        ChemicalString.hillSort(diagramElements);
+        for (int i = 0; i < diagramElements.length; ++i) {
+            elementIndexes.put(diagramElements[i], i);
+        }
+
+        componentElements = new double[Side.values().length][];
+        for (StringComposition sc: scs) {
+            double[] compEls = new double[diagramElements.length];
+            componentElements[sc.side.ordinal()] = compEls;
+            for (Map.Entry<String, Double> pair: sc.c.entrySet()) {
+                compEls[elementIndexes.get(pair.getKey())] = pair.getValue();
+            }
+        }
+        return componentElements;
+    }
+
+    static class SideDouble {
+        Side s;
+        double d;
+
+        SideDouble(Side s, double d) {
+            this.s = s;
+            this.d = d;
+        }
+    }
+
+    protected SideDouble[] componentProportions(Point2D.Double prin) {
+        if (prin == null || diagramType == null) {
+            return null;
+        }
+
+        if (diagramType.isTernary()) {
+            return new SideDouble[] {
+                new SideDouble(Side.LEFT, 1 - prin.x - prin.y),
+                new SideDouble(Side.RIGHT, prin.x),
+                new SideDouble(Side.TOP, prin.y) };
+        } else {
+            return new SideDouble[] {
+                new SideDouble(Side.LEFT, 1 - prin.x),
+                new SideDouble(Side.RIGHT, prin.x) };
+        }
+    }
+
+    /* Have the user enter a string; parse the string as a compound;
+       and set the mouse position to the principal coordinates that
+       correspond to that compound, if the compound can be expressed
+       as a product of the diagram components. For binary diagrams,
+       the Y coordinate will be left unchanged from its original
+       value. */
+    public void computeMolePercent() {
+        double[][] componentElements = getComponentElements();
+
+        ArrayList<Side> sides = new ArrayList<>();
+        ArrayList<Side> badSides = new ArrayList<>();
+        for (SideDouble sd: componentProportions(new Point2D.Double(0,0))) {
+            Side side = sd.s;
+            // The point value is a dummy; componentProportions() is
+            // just called to generate a list of all sides for which
+            // diagram components can be defined.
+            if (diagramComponents[side.ordinal()] == null) {
+                JOptionPane.showMessageDialog
+                    (editFrame,
+                     "The " + side + " diagram component is not defined.\n"
+                     + "Define it with the \"Properties/Components/Set "
+                     + side.toString().toLowerCase() + " component\" menu item.");
+                return;
+            }
+            if (componentElements[side.ordinal()] == null) {
+                badSides.add(side);
+            }
+            sides.add(side);
+        }
+
+        if (sides.size() < 2) {
+            StringBuilder message = new StringBuilder
+                ("The following diagram component(s) could not be parsed as compounds:\n");
+            int sideNo = 0;
+            for (Side side: badSides) {
+                if (sideNo > 0) {
+                    message.append(", ");
+                }
+                message.append(side.toString());
+            }
+            JOptionPane.showMessageDialog(editFrame, message.toString());
+            return;
+        }
+
+        ChemicalString.Match m = null;
+        String compound = null;
+        for (;;) { // Keep trying until user aborts or enters valid input
+            compound = JOptionPane.showInputDialog
+                (editFrame,
+                 "The string you enter will be placed in the clipboard.\n"
+                 + "In Windows, you may press Control-V later to paste\n"
+                 + "the text into a label's text box.\n"
+                 + "Chemical formula:",
+                 "Compute mole percent", JOptionPane.PLAIN_MESSAGE);
+            if (compound == null) {
+                return;
+            }
+            compound = compound.trim();
+            if ("".equals(compound)) {
+                return;
+            }
+            m = ChemicalString.composition(compound);
+            if (m == null) {
+                JOptionPane.showMessageDialog
+                    (editFrame, "Parse error at start of formula");
+                continue;
+            } else if (m.length < compound.length()) {
+                JOptionPane.showMessageDialog
+                    (editFrame, "Parse error at <<HERE in '"
+                     + compound.substring(0, m.length)
+                     + "<<HERE" + compound.substring(m.length) + "'");
+                continue;
+            } else {
+                break;
+            }
+        }
+
+        try {
+            StringSelection sel = new StringSelection(compound);
+            Toolkit.getDefaultToolkit().getSystemClipboard().setContents
+                (sel, sel);
+        } catch (HeadlessException e) {
+            // Can't set the clipboard? Don't worry about it.
+        }
+
+        // Map from elements to indexes into diagramElements.
+        String[] diagramElements = getDiagramElements();
+        int eltCnt = diagramElements.length;
+        Map<String,Integer> elementIndexes = new HashMap<>();
+        for (int i = 0; i < eltCnt; ++i) {
+            elementIndexes.put(diagramElements[i], i);
+        }
+
+        double[][] quantities = new double[diagramElements.length]
+            [sides.size()];
+
+        for (int cn = 0; cn < sides.size(); ++cn) {
+            Side side = sides.get(cn);
+            double[] elts = componentElements[side.ordinal()];
+            for (int j = 0; j < eltCnt; ++j) {
+                quantities[j][cn] = elts[j];
+            }
+        }
+
+        double[] coefs = new double[eltCnt];
+        for (Map.Entry<String, Double> pair: m.composition.entrySet()) {
+            String element = pair.getKey();
+            Integer i = elementIndexes.get(element);
+            if (i == null) {
+                JOptionPane.showMessageDialog
+                    (editFrame, "No parseable diagram component contains "
+                     + element + ".");
+                return;
+            }
+            coefs[i] = pair.getValue();
+        }
+
+        // Matrix that transforms a vector of quantities of each
+        // component into a vector of quantities of each element.
+        Matrix c2e = new Matrix(quantities);
+        Matrix e = new Matrix(coefs, coefs.length);
+        Matrix c = c2e.solve(e); // Vector of quantities of each diagram coefficient.
+
+        double totalQuantity = 0;
+        for (int compNo = 0; compNo < sides.size(); ++compNo) {
+            double d = c.get(compNo, 0);
+            if (d < 0) {
+                // Round negative values up to zero.
+                d = 0;
+                c.set(compNo, 0, d);
+            }
+            totalQuantity += d;
+        }
+
+        Matrix compE = c2e.times(c); // computed element counts
+        double totalError = 0; // total difference between computed
+                               // and actual element counts
+        double totalAtoms = 0;
+        for (int i = 0; i < coefs.length; ++i) {
+            double computed = compE.get(i,0);
+            double wanted = e.get(i,0);
+            totalError += Math.abs(computed - wanted);
+            totalAtoms += Math.abs(wanted);
+        }
+
+        double maxRelativeError = 1e-4; // maximum ratio between total
+                                        // error in element counts and
+                                        // the total number of atoms
+        if (totalError > totalAtoms * maxRelativeError) {
+                JOptionPane.showMessageDialog
+                    (editFrame,
+                     "Showing the best fit, which has a relative error of "
+                     + String.format("%.2f%%",
+                                     100 * totalError / totalAtoms));
+        }
+
+        Point2D.Double proportions;
+
+        if (diagramType.isTernary()) {
+            proportions = new Point2D.Double(0,0);
+        } else if (mprin != null) {
+            proportions = new Point2D.Double(0,mprin.y);
+        } else {
+            Rectangle2D b = principalToStandardPage.outputBounds();
+            proportions = new Point2D.Double(0, b.getMaxY());
+        }
+
+        for (int compNo = 0; compNo < sides.size(); ++compNo) {
+            double proportion = c.get(compNo, 0) / totalQuantity;
+            Side side = sides.get(compNo);
+
+            switch (side) {
+            case RIGHT:
+                proportions.x = proportion;
+                break;
+            case TOP:
+                proportions.y = proportion;
+                break;
+            case LEFT:
+                // There's nothing to do here. If all 3
+                // proportions are defined, then the RIGHT and TOP
+                // values already define the coordinate. If only 2
+                // proportions are defined, then the undefined
+                // coordinate has already been set to the correct
+                // value, which is zero (so if LEFT + RIGHT are
+                // defined then TOP = 0, and if LEFT + TOP are
+                // defined then RIGHT = 0).
+                break;
+            default:
+                throw new IllegalStateException("Side " + side + " should not have an " +
+                                                "associated component.");
+            }
+        }
+
+        mouseIsStuck = true;
+        moveMouse(proportions);
+    }
+
+    @JsonIgnore String[] getDiagramElements() {
+        getComponentElements();
+        return diagramElements;
+    }
+
     public void addTieLine() {
         tieLineCorners = new ArrayList<PathAndT>();
         tieLineDialog.getLabel().setText(tieLineStepStrings[0]);
@@ -2765,7 +3096,6 @@ public class Editor implements CropEventListener, MouseListener,
                 // first item; select it again and get the second one,
                 // then the third, and so on.
 
-                // TODO Undo
                 int matchCount = 0;
                 for (DecorationHandle handle: points) {
                     if (handle.equals(selection)) {
@@ -2773,28 +3103,28 @@ public class Editor implements CropEventListener, MouseListener,
                     }
                 }
 
+                // matchCount == 0 is actually possible, because only
+                // the nearest handle is returned, and the selection
+                // might be a further one.
+
                 if (matchCount != 1) {
+                    // TODO fix
                     // This should never happen.
-                    System.err.println("Selection does not match exactly once.");
+                    String error = "Selection " + selection + " equals "
+                        + matchCount + " decorations.";
+                    System.err.println(error);
                     for (DecorationHandle handle: points) {
-                        System.err.println(handle);
+                        if (matchCount == 0 || handle.equals(selection)) {
+                            System.err.println(handle);
+                        }
                     }
-                    throw new IllegalStateException
-                        ("Selection " + selection + " equals "
-                         + matchCount + " decorations.");
-                }
-
-                for (int i = 0; i < points.size() - 1; ++i) {
-                    if (selection.equals(points.get(i))) {
-                        sel = points.get(i+1);
-                        break;
-                    }
-                }
-
-                for (int i = 0; i < points.size() - 1; ++i) {
-                    if (selection.equals(points.get(i))) {
-                        sel = points.get(i+1);
-                        break;
+                    throw new IllegalStateException(error);
+                } else if (matchCount == 1) {
+                    for (int i = 0; i < points.size() - 1; ++i) {
+                        if (selection.equals(points.get(i))) {
+                            sel = points.get(i+1);
+                            break;
+                        }
                     }
                 }
             }
@@ -2895,6 +3225,7 @@ public class Editor implements CropEventListener, MouseListener,
             return;
         }
         saveNeeded = true;
+        componentElements = null;
 
         // When updating a diagram component, you may also have to
         // update the corresponding axis name and format (since xx.x%
@@ -4635,6 +4966,7 @@ public class Editor implements CropEventListener, MouseListener,
         labels = other.labels;
         initializeLabelViews();
         selection = null;
+        componentElements = null;
         setTags(other.getTags());
         setKeyValues(other.getKeyValues());
         if (!haveBounds) {
@@ -5461,12 +5793,98 @@ public class Editor implements CropEventListener, MouseListener,
         return f;
     }
 
+    /** If the diagram has a full set of diagram components defined as
+        compounds with integer subscripts, and point "prin" nearly
+        equals a round fraction, then return the compound that "prin"
+        represents. */
+    public String molePercentToCompound(Point2D.Double prin) {
+        double[][] componentElements = getComponentElements();
+        if (componentElements == null) {
+            return null;
+        }
+
+        String[] diagramElements = getDiagramElements();
+
+        SideDouble[] sds = componentProportions(prin);
+        for (SideDouble sd: sds) {
+            if (componentElements[sd.s.ordinal()] == null) {
+                // Can't do it without a complete set of diagram
+                // components that can be parsed to compounds.
+                return null;
+            }
+        }
+
+        int eltCnt = diagramElements.length;
+        double[] quantities = new double[eltCnt];
+        for (SideDouble sd: sds) {
+            // Vector of element quantities for this component
+            double[] compel = componentElements[sd.s.ordinal()];
+            // Quantity of this component
+            double d = sd.d;
+            // If d is slightly out of bounds, move it in-bounds. If d
+            // is very small, then reduce it to zero.
+
+            if (d > 1 - 1e-4) {
+                if (d > 1 + 1e-4) {
+                    return null;
+                } else {
+                    d = 1;
+                }
+            } else if (d < 1e-4) {
+                if (d < -1e-4) {
+                    return null;
+                } else {
+                    d = 0;
+                }
+            }
+
+            for (int i = 0; i < eltCnt; ++i) {
+                quantities[i] += d * compel[i];
+            }
+        }
+
+        ArrayList<ContinuedFraction> fracs = new ArrayList<>(eltCnt);
+
+        long lcd = 1;
+        for (double d: quantities) {
+            ContinuedFraction f = approximateFraction(d);
+            if (f == null) {
+                return null;
+            }
+            fracs.add(f);
+            try {
+                lcd = ContinuedFraction.lcm(lcd, f.denominator);
+            } catch (OverflowException e) {
+                return null;
+            }
+        }
+
+        StringBuilder res = new StringBuilder();
+        for (int i = 0; i < eltCnt; ++i) {
+            ContinuedFraction f = fracs.get(i);
+            long num = f.numerator * (lcd / f.denominator);
+            if (num == 0) {
+                continue;
+            }
+            res.append(diagramElements[i]);
+            if (num > 1) {
+                res.append(num);
+            }
+        }
+        return res.toString();
+    }
+
     void updateStatusBar() {
         if (mprin == null) {
             return;
         }
 
         StringBuilder status = new StringBuilder("");
+
+        String compound = molePercentToCompound(mprin);
+        if (compound != null) {
+            status.append(ChemicalString.autoSubscript(compound) + ": ");
+        }
 
         boolean first = true;
         for (LinearAxis axis : axes) {
@@ -5475,7 +5893,7 @@ public class Editor implements CropEventListener, MouseListener,
             } else {
                 status.append(",  ");
             }
-            status.append(axis.name.toString());
+            status.append(ChemicalString.autoSubscript(axis.name.toString()));
             status.append(" = ");
             status.append(axis.valueAsString(mprin.x, mprin.y));
 
