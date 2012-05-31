@@ -2911,7 +2911,7 @@ public class Editor implements CropEventListener, MouseListener,
         if (diagramType.isTernary()) {
             return new Point2D.Double(sds[1].d, sds[2].d);
         } else {
-            return new Point2D.Double(sds[0].d, mole.getY());
+            return new Point2D.Double(sds[1].d, mole.getY());
         }
     }
 
