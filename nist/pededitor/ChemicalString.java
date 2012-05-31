@@ -14,24 +14,39 @@ import java.util.regex.PatternSyntaxException;
     that label. */
 public class ChemicalString {
     final static String[] elements =
-    { null, "H", "He", "Li", "Be", "B", "C", "N", "O", "F", "Ne", "Na", "Mg", "Al", "Si", "P", "S", "Cl", "Ar", "K", "Ca", "Sc", "Ti", "V", "Cr", "Mn", "Fe", "Co", "Ni", "Cu", "Zn", "Ga", "Ge", "As", "Se", "Br", "Kr", "Rb", "Sr", "Y", "Zr", "Nb", "Mo", "Tc", "Ru", "Rh", "Pd", "Ag", "Cd", "In", "Sn", "Sb", "Te", "I", "Xe", "Cs", "Ba", "La", "Ce", "Pr", "Nd", "Pm", "Sm", "Eu", "Gd", "Tb", "Dy", "Ho", "Er", "Tm", "Yb", "Lu", "Hf", "Ta", "W", "Re", "Os", "Ir", "Pt", "Au", "Hg", "Tl", "Pb", "Bi", "Po", "At", "Rn", "Fr", "Ra", "Ac", "Th", "Pa", "U", "Np", "Pu", "Am", "Cm", "Bk", "Cf", "Es", "Fm", "Md", "No", "Lr", "Rf", "Db", "Sg", "Bh", "Hs", "Mt", "Ds", "Rg", "Cn", "Uun", "Uuu", "Uub", "Uut", "Uuq", "Uup", "Uuh" };
+    { null, "H", "He", "Li", "Be", "B", "C", "N", "O", "F", "Ne", "Na", "Mg", "Al", "Si", "P", "S", "Cl", "Ar", "K", "Ca", "Sc", "Ti", "V", "Cr", "Mn", "Fe", "Co", "Ni", "Cu", "Zn", "Ga", "Ge", "As", "Se", "Br", "Kr", "Rb", "Sr", "Y", "Zr", "Nb", "Mo", "Tc", "Ru", "Rh", "Pd", "Ag", "Cd", "In", "Sn", "Sb", "Te", "I", "Xe", "Cs", "Ba", "La", "Ce", "Pr", "Nd", "Pm", "Sm", "Eu", "Gd", "Tb", "Dy", "Ho", "Er", "Tm", "Yb", "Lu", "Hf", "Ta", "W", "Re", "Os", "Ir", "Pt", "Au", "Hg", "Tl", "Pb", "Bi", "Po", "At", "Rn", "Fr", "Ra", "Ac", "Th", "Pa", "U", "Np", "Pu", "Am", "Cm", "Bk", "Cf", "Es", "Fm", "Md", "No", "Lr", "Rf", "Db", "Sg", "Bh", "Hs", "Mt", "Ds", "Rg", "Cn", "Uut", "Uuq", "Uup", "Uuh", "Uus", "Uuo" };
+
+    static Map<String,Integer> symbolToNumberMap = new HashMap<>();
+
+    static {
+        for (int i = 1; i < elements.length; ++i) {
+            String s = elements[i];
+            if (s != null) {
+                symbolToNumberMap.put(s, i);
+            }
+        }
+        // Temporary symbols names that may still be in use
+        symbolToNumberMap.put("Uun", 110);
+        symbolToNumberMap.put("Uuu", 111);
+        symbolToNumberMap.put("Uub", 112);
+    }
 
     /** These standard atomic weight values come from the NIST "Atomic
         Weights and Isotopic Composition" table (retrieved 30 May
         2012). */
     final static double[] weights =
-    { Double.NaN, 1.007947, 4.0026022, 6.9412, 9.0121823, 10.8117, 12.01078, 14.00672, 
+    { 0, 1.007947, 4.0026022, 6.9412, 9.0121823, 10.8117, 12.01078, 14.00672, 
       15.99943, 18.99840325, 20.17976, 22.989769282, 24.30506, 26.98153868, 28.08553, 30.9737622, 
       32.0655, 35.4532, 39.9481, 39.09831, 40.0784, 44.9559126, 47.8671, 50.94151, 
       51.99616, 54.9380455, 55.8452, 58.9331955, 58.69344, 63.5463, 65.382, 69.7231, 
       72.641, 74.921602, 78.963, 79.9041, 83.7982, 85.46783, 87.621, 88.905852, 
-      91.2242, 92.906382, 95.962, Double.NaN, 101.072, 102.905502, 106.421, 107.86822, 
+      91.2242, 92.906382, 95.962, 0, 101.072, 102.905502, 106.421, 107.86822, 
       112.4118, 114.8183, 118.7107, 121.7601, 127.603, 126.904473, 131.2936, 132.90545192, 
-      137.3277, 138.905477, 140.1161, 140.907652, 144.2423, Double.NaN, 150.362, 151.9641, 
+      137.3277, 138.905477, 140.1161, 140.907652, 144.2423, 0, 150.362, 151.9641, 
       157.253, 158.925352, 162.5001, 164.930322, 167.2593, 168.934212, 173.0545, 174.96681, 
       178.492, 180.947882, 183.841, 186.2071, 190.233, 192.2173, 195.0849, 196.9665694, 
-      200.592, 204.38332, 207.21, 208.980401, Double.NaN, Double.NaN, Double.NaN, Double.NaN, 
-      Double.NaN, Double.NaN, 232.038062, 231.035882, 238.028913 };
+      200.592, 204.38332, 207.21, 208.980401, 0, 0, 0, 0, 
+      0, 0, 232.038062, 231.035882, 238.028913 };
 
     final static String element =
         "(?:(?:H|He|Li|Be|B|C|N|O|F|Ne|Na|Mg|Al|Si|P|S|Cl|Ar|K|Ca|Sc|Ti|V|Cr|Mn|Fe|Co|Ni|Cu|Zn|Ga|Ge|As|Se|Br|Kr|Rb|Sr|Y|Zr|Nb|Mo|Tc|Ru|Rh|Pd|Ag|Cd|In|Sn|Sb|Te|I|Xe|Cs|Ba|La|Ce|Pr|Nd|Pm|Sm|Eu|Gd|Tb|Dy|Ho|Er|Tm|Yb|Lu|Hf|Ta|W|Re|Os|Ir|Pt|Au|Hg|Tl|Pb|Bi|Po|At|Rn|Fr|Ra|Ac|Th|Pa|U|Np|Pu|Am|Cm|Bk|Cf|Es|Fm|Md|No|Lr|Rf|Db|Sg|Bh|Hs|Mt|Ds|Rg|Cn|Uun|Uuu|Uub|Uuq|Uuh)"
@@ -54,6 +69,27 @@ public class ChemicalString {
     final static String elementWithCount = "(" + element + ")" + ion + "*"
         + "(<sub>" + subscript + "</sub>)?" + ion + "*";
     final static String simpleCompound = "(?<![A-Za-z]>("+ elementWithCount + ")+";
+
+    /** Return the element number corresponding to the given element
+        symbol, or 0 if the symbol is not defined. */
+    public static int symbolToNumber(String symbol) {
+        Integer i = symbolToNumberMap.get(symbol);
+        return (i == null) ? 0 : i;
+    }
+
+    /** Return the standard atomic weight for the given element
+        number, or 0 if no standard weight is defined for that
+        element. */
+    public static double elementWeight(int i) {
+        return (i > weights.length) ? 0 : weights[i];
+    }
+
+    /** Return the standard atomic weight for the given element
+        symbol, or 0 if no standard weight is defined for that
+        element. */
+    public static double elementWeight(String symbol) {
+        return elementWeight(symbolToNumber(symbol));
+    }
 
     public static Pattern getSubscriptPattern() {
         if (subscriptPattern == null) {
@@ -147,7 +183,6 @@ public class ChemicalString {
         of elements of each type. Return null if no leading sequence
         resembles a compound name. Note that spaces are not
         ignored. */
-
     public static Match composition(CharSequence s) {
         Match res = new Match();
         HashMap<String,Double> compo = new HashMap<>();
