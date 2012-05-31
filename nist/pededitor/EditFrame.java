@@ -506,7 +506,7 @@ public class EditFrame extends JFrame {
             });
 
         mnPosition.add(new Action
-                       ("Compute mole percent", KeyEvent.VK_C,
+                       ("Compound to mole percent", KeyEvent.VK_M,
                         KeyStroke.getKeyStroke('%')) {
                 @Override public void actionPerformed(ActionEvent e) {
                     getParentEditor().computeMolePercent();
@@ -819,8 +819,8 @@ public class EditFrame extends JFrame {
         }
 
         // "Properties" top-level menu
-        JMenu mnLayout = new JMenu("Properties");
-        mnLayout.setMnemonic(KeyEvent.VK_R);
+        JMenu mnProperties = new JMenu("Properties");
+        mnProperties.setMnemonic(KeyEvent.VK_R);
 
         if (editable) {
             setAspectRatio = new Action
@@ -830,7 +830,7 @@ public class EditFrame extends JFrame {
                     }
                 };
             setAspectRatio.setEnabled(false);
-            mnLayout.add(setAspectRatio);
+            mnProperties.add(setAspectRatio);
 
             JMenu mnComponents = new JMenu("Components");
             mnComponents.setMnemonic(KeyEvent.VK_C);
@@ -838,7 +838,7 @@ public class EditFrame extends JFrame {
             mnComponents.add(setLeftComponent);
             mnComponents.add(setRightComponent);
             mnComponents.add(setTopComponent);
-            mnLayout.add(mnComponents);
+            mnProperties.add(mnComponents);
 
             JMenu mnFont = new JMenu("Font");
             mnFont.setMnemonic(KeyEvent.VK_F);
@@ -847,7 +847,7 @@ public class EditFrame extends JFrame {
             mnFont.add(new FontMenuItem("Serif (Widely-spaced lines)",
                                         "DejaVu LGC Serif GRUMP"));
 
-            mnLayout.add(mnFont);
+            mnProperties.add(mnFont);
         }
 
         JMenu mnKeys = new JMenu("Key/value pairs");
@@ -866,7 +866,7 @@ public class EditFrame extends JFrame {
                     getParentEditor().listKeyValues();
                 }
             });
-        mnLayout.add(mnKeys);
+        mnProperties.add(mnKeys);
 
         if (editable) {
             JMenu mnMargins = new JMenu("Margins");
@@ -880,17 +880,28 @@ public class EditFrame extends JFrame {
                     }
                 });
 
-            mnLayout.add(mnMargins);
+            mnProperties.add(mnMargins);
+        }
 
+        mnProperties.add(new Action("Mole to Weight Fraction", KeyEvent.VK_W) {
+                @Override public void actionPerformed(ActionEvent e) {
+                    if (!getParentEditor().moleToWeightFraction()) {
+                        JOptionPane.showMessageDialog
+                            (EditFrame.this, "The conversion could not be performed.");
+                    }
+                }
+            });
+
+        if (editable) {
             JMenu mnScale = new JMenu("Scale");
             mnScale.setMnemonic(KeyEvent.VK_S);
-            mnLayout.add(mnScale);
+            mnProperties.add(mnScale);
             mnScale.add(scaleXUnits);
             mnScale.add(scaleYUnits);
         }
 
         mnTags.setMnemonic(KeyEvent.VK_T);
-        mnLayout.add(mnTags);
+        mnProperties.add(mnTags);
 
         if (editable) {
             mnTags.add(new Action("Add", KeyEvent.VK_A) {
@@ -908,8 +919,8 @@ public class EditFrame extends JFrame {
             mnTags.setEnabled(false);
         }
 
-        if (mnLayout.getItemCount() > 0) {
-            menuBar.add(mnLayout);
+        if (mnProperties.getItemCount() > 0) {
+            menuBar.add(mnProperties);
         }
 
         // "View" top-level menu
