@@ -172,7 +172,7 @@ import org.w3c.dom.DOMImplementation;
 
 // Heuristics may be used to identify good cutoffs for fit quality. At
 // the over-fitting end of the spectrum, if you find the sum of the
-// squares of the fit error terms dropping only in roughly proportion
+// squares of the fit error terms dropping only in rough proportion
 // to the difference of the number of data points and the number of
 // degrees of freedom in the fit, then that indicates that your fit
 // method cannot detect any kind of pattern in the data at that degree
@@ -524,6 +524,10 @@ public class Editor implements CropEventListener, MouseListener,
             return output.toArray(new DecorationHandle[0]);
         }
 
+        @Override public DecorationHandle[] getMovementHandles() {
+            return getHandles();
+        }
+
         /** Return the VertexHandle closest to path(t). */
         public VertexHandle getHandle(double t) {
             Parameterization2D c = getItem()
@@ -713,12 +717,17 @@ public class Editor implements CropEventListener, MouseListener,
             AnchoredLabel label = getItem();
             if (label.getXWeight() != 0.5 || label.getYWeight() != 0.5) {
                 return new DecorationHandle[]
-                    { new LabelHandle(this, LabelHandleType.CENTER),
-                      new LabelHandle(this, LabelHandleType.ANCHOR) };
+                    { new LabelHandle(this, LabelHandleType.ANCHOR),
+                      new LabelHandle(this, LabelHandleType.CENTER) };
             } else {
                 return new DecorationHandle[]
                     { new LabelHandle(this, LabelHandleType.ANCHOR) };
             }
+        }
+
+        /* Moving the anchor will move the center as well. */
+        @Override public DecorationHandle[] getMovementHandles() {
+            return new DecorationHandle[] { getHandles()[0] };
         }
 
         @Override public String toString() {
@@ -832,6 +841,10 @@ public class Editor implements CropEventListener, MouseListener,
 
         @Override public DecorationHandle[] getHandles() {
             return new DecorationHandle[] { this };
+        }
+
+        @Override public DecorationHandle[] getMovementHandles() {
+            return getHandles();
         }
     }
 
@@ -983,6 +996,12 @@ public class Editor implements CropEventListener, MouseListener,
                 output.add(new TieLineHandle(this, handle));
             }
             return output.toArray(new TieLineHandle[0]);
+        }
+
+        /* Moving the curves these tie lines attach to will move the
+           tie lines also, so return an empty array. */
+        @Override public DecorationHandle[] getMovementHandles() {
+            return new DecorationHandle[0];
         }
     }
 
@@ -1158,6 +1177,10 @@ public class Editor implements CropEventListener, MouseListener,
             return output.toArray(new DecorationHandle[0]);
         }
 
+        @Override public DecorationHandle[] getMovementHandles() {
+            return getHandles();
+        }
+
         /** Return the VertexHandle closest to path(t). */
         public RulerHandle getHandle(double t) {
             return new RulerHandle
@@ -1248,7 +1271,7 @@ public class Editor implements CropEventListener, MouseListener,
         image. Principal coordinates are either the natural (x,y)
         coordinates of a Cartesian graph or binary diagram (for
         example, y may equal a temperature while x equals the atomic
-        fraction of the second diagram component), or the proportion
+        fraction of the second diagram component), or the fraction
         of the right and top components respectively for a ternary
         diagram. */
     @JsonProperty protected PolygonTransform originalToPrincipal;
@@ -2807,23 +2830,131 @@ public class Editor implements CropEventListener, MouseListener,
             this.s = s;
             this.d = d;
         }
+
+        public String toString() {
+            return getClass().getSimpleName() + "[" + s + ", " + d + "]";
+        }
     }
 
-    protected SideDouble[] componentProportions(Point2D.Double prin) {
+    /** Assuming that the principal coordinates are defined as mole
+        percents, return the mole fractions of the various diagram
+        components at point prin, or null if the fractions could not
+        be determined. */
+    protected SideDouble[] componentFractions(Point2D prin) {
         if (prin == null || diagramType == null) {
             return null;
         }
+        double x = prin.getX();
+        double y = prin.getY();
 
         if (diagramType.isTernary()) {
             return new SideDouble[] {
-                new SideDouble(Side.LEFT, 1 - prin.x - prin.y),
-                new SideDouble(Side.RIGHT, prin.x),
-                new SideDouble(Side.TOP, prin.y) };
-        } else {
+                new SideDouble(Side.LEFT, 1 - x - y),
+                new SideDouble(Side.RIGHT, x),
+                new SideDouble(Side.TOP, y) };
+        } else if (diagramComponents[Side.LEFT.ordinal()] != null
+                   || diagramComponents[Side.RIGHT.ordinal()] != null) {
             return new SideDouble[] {
-                new SideDouble(Side.LEFT, 1 - prin.x),
-                new SideDouble(Side.RIGHT, prin.x) };
+                new SideDouble(Side.LEFT, 1 - x),
+                new SideDouble(Side.RIGHT, x) };
+        } else {
+            return null;
         }
+    }
+
+    protected Side[] sidesThatCanHaveComponents() {
+        if (diagramType.isTernary()) {
+            return new Side[] { Side.LEFT, Side.RIGHT, Side.TOP };
+        } else {
+            return new Side[] { Side.LEFT, Side.RIGHT };
+        }
+    }
+
+    /** Assuming that diagram's principal coordinates are mole
+        fractions, return the weight fractions of the various diagram
+        components at point prin, or null if the fractions could not
+        be determined. */
+    protected SideDouble[] componentWeightFractions(Point2D prin) {
+        SideDouble[] res = componentFractions(prin);
+        if (res == null) {
+            return null;
+        }
+        double totWeight = 0;
+        for (SideDouble sd: res) {
+            double cw = componentWeight(sd.s);
+            if (cw == 0) {
+                return null;
+            }
+            // Multiply the mole fraction by the compound's weight.
+            // Later, dividing by the sum of all of these terms will
+            // yield the weight fraction.
+            cw *= sd.d;
+            sd.d = cw;
+            totWeight += cw;
+        }
+        for (SideDouble sd: res) {
+            sd.d /= totWeight;
+        }
+        return res;
+    }
+
+    /** Convert the given point from mole fraction to weight fraction.
+        If this is a binary diagram, then the Y component of the
+        return value will equal the Y component of the input value. If
+        the conversion cannot be performed for some reason, then
+        return null. */
+    public Point2D.Double moleToWeightFraction(Point2D mole) {
+        SideDouble[] sds = componentWeightFractions(mole);
+        if (sds == null) {
+            return null;
+        }
+        if (diagramType.isTernary()) {
+            return new Point2D.Double(sds[1].d, sds[2].d);
+        } else {
+            return new Point2D.Double(sds[0].d, mole.getY());
+        }
+    }
+
+    /** Globally convert all coordinates from mole fraction to weight
+        fraction, if the information necessary to do so is available.
+        Return true if the conversion was carried out.
+
+        IMPORTANT BUGS:
+
+        1. In ternary diagrams, the conversion from mole percent to
+        weight percent should distort many straight lines into curves.
+        What this routine actually (and incorrectly) does is to
+        convert the endpoints only, incorrectly drawing a straight
+        line between them.
+
+        2. Angle values are not converted. This is also wrong.
+    */
+    protected boolean moleToWeightFraction() {
+        if (!haveComponentCompositions()) {
+            return false;
+        }
+
+        for (DecorationHandle hand: movementHandles()) {
+            hand.move(moleToWeightFraction(hand.getLocation()));
+        }
+
+        if (mprin != null) {
+            moveMouse(moleToWeightFraction(mprin));
+        }
+        return true;
+    }
+
+    /* Return true if all sides that could have components do have
+       them, and those components' composiitions are known. */
+    boolean haveComponentCompositions() {
+        double[][] componentElements = getComponentElements();
+        for (Side side: sidesThatCanHaveComponents()) {
+            if (componentElements[side.ordinal()] == null) {
+                return false;
+            }
+        }
+
+        return true;
     }
 
     /* Have the user enter a string; parse the string as a compound;
@@ -2837,11 +2968,7 @@ public class Editor implements CropEventListener, MouseListener,
 
         ArrayList<Side> sides = new ArrayList<>();
         ArrayList<Side> badSides = new ArrayList<>();
-        for (SideDouble sd: componentProportions(new Point2D.Double(0,0))) {
-            Side side = sd.s;
-            // The point value is a dummy; componentProportions() is
-            // just called to generate a list of all sides for which
-            // diagram components can be defined.
+        for (Side side: sidesThatCanHaveComponents()) {
             if (diagramComponents[side.ordinal()] == null) {
                 JOptionPane.showMessageDialog
                     (editFrame,
@@ -2852,13 +2979,15 @@ public class Editor implements CropEventListener, MouseListener,
             }
             if (componentElements[side.ordinal()] == null) {
                 badSides.add(side);
+            } else {
+                sides.add(side);
             }
-            sides.add(side);
         }
 
         if (sides.size() < 2) {
             StringBuilder message = new StringBuilder
-                ("The following diagram component(s) could not be parsed as compounds:\n");
+                ("The following diagram component(s) could not be parsed as "
+                 + "compounds:\n");
             int sideNo = 0;
             for (Side side: badSides) {
                 if (sideNo > 0) {
@@ -2982,33 +3111,33 @@ public class Editor implements CropEventListener, MouseListener,
                                      100 * totalError / totalAtoms));
         }
 
-        Point2D.Double proportions;
+        Point2D.Double fractions;
 
         if (diagramType.isTernary()) {
-            proportions = new Point2D.Double(0,0);
+            fractions = new Point2D.Double(0,0);
         } else if (mprin != null) {
-            proportions = new Point2D.Double(0,mprin.y);
+            fractions = new Point2D.Double(0,mprin.y);
         } else {
             Rectangle2D b = principalToStandardPage.outputBounds();
-            proportions = new Point2D.Double(0, b.getMaxY());
+            fractions = new Point2D.Double(0, b.getMaxY());
         }
 
         for (int compNo = 0; compNo < sides.size(); ++compNo) {
-            double proportion = c.get(compNo, 0) / totalQuantity;
+            double fraction = c.get(compNo, 0) / totalQuantity;
             Side side = sides.get(compNo);
 
             switch (side) {
             case RIGHT:
-                proportions.x = proportion;
+                fractions.x = fraction;
                 break;
             case TOP:
-                proportions.y = proportion;
+                fractions.y = fraction;
                 break;
             case LEFT:
                 // There's nothing to do here. If all 3
-                // proportions are defined, then the RIGHT and TOP
+                // fractions are defined, then the RIGHT and TOP
                 // values already define the coordinate. If only 2
-                // proportions are defined, then the undefined
+                // fractions are defined, then the undefined
                 // coordinate has already been set to the correct
                 // value, which is zero (so if LEFT + RIGHT are
                 // defined then TOP = 0, and if LEFT + TOP are
@@ -3021,7 +3150,7 @@ public class Editor implements CropEventListener, MouseListener,
         }
 
         mouseIsStuck = true;
-        moveMouse(proportions);
+        moveMouse(fractions);
     }
 
     @JsonIgnore String[] getDiagramElements() {
@@ -3659,6 +3788,18 @@ public class Editor implements CropEventListener, MouseListener,
             return getClass().getSimpleName() + "[" + decoration + ", "
                 + distance + "]";
         }
+    }
+
+    /** @return a list of DecorationHandles such that moving all of
+        those handles will move every decoration in the diagram. */
+    ArrayList<DecorationHandle> movementHandles() {
+        ArrayList<DecorationHandle> res = new ArrayList<>();
+        for (Decoration d: getDecorations()) {
+            for (DecorationHandle h: d.getMovementHandles()) {
+                res.add(h);
+            }
+        }
+        return res;
     }
 
     /** @return a list of DecorationHandles sorted by distance in page
@@ -4363,9 +4504,9 @@ public class Editor implements CropEventListener, MouseListener,
                 // trianglePoints is to be set to a set of coordinates
                 // of the 3 vertices of the ternary diagram expressed
                 // in principal coordinates. The first principal
-                // coordinate represents the proportion of the
+                // coordinate represents the fraction of the
                 // lower-right principal component, and the second
-                // principal coordinate represents the proportion of
+                // principal coordinate represents the fraction of
                 // the top principal component.
 
                 // At this point, principal component lengths should
@@ -5805,7 +5946,7 @@ public class Editor implements CropEventListener, MouseListener,
 
         String[] diagramElements = getDiagramElements();
 
-        SideDouble[] sds = componentProportions(prin);
+        SideDouble[] sds = componentFractions(prin);
         for (SideDouble sd: sds) {
             if (componentElements[sd.s.ordinal()] == null) {
                 // Can't do it without a complete set of diagram
@@ -6792,6 +6933,34 @@ public class Editor implements CropEventListener, MouseListener,
             startPoint = new Point2D.Double(1.0, 0.0);
             endPoint = new Point2D.Double(1.0, 1.0);
         }});
+    }
+
+    /** Return the weight of the given component computed as a product
+        of the quantities and standard weights of its individual
+        elements, or 0 if the weight could not be computed, either
+        because the component is not known, it could not be converted
+        to a compound, or the compound includes elements for which no
+        standard weight is defined. */
+    public double componentWeight(Side side) {
+        double[][] componentElements = getComponentElements();
+        double[] ces = componentElements[side.ordinal()];
+        if (ces == null) {
+            return 0;
+        }
+        String[] elements = getDiagramElements();
+        double total = 0;
+        for (int i = 0; i < elements.length; ++i) {
+            double q = ces[i];
+            if (q == 0) {
+                continue;
+            }
+            double w = ChemicalString.elementWeight(elements[i]);
+            if (w == 0) {
+                return 0;
+            }
+            total += q * w;
+        }
+        return total;
     }
 
     static Color thisOrBlack(Color c) {
