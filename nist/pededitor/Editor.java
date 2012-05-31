@@ -2245,8 +2245,9 @@ public class Editor implements CropEventListener, MouseListener,
             if (getVertexHandle() == null && isShiftDown) {
                 AutoPositionHolder ap = new AutoPositionHolder();
                 Point2D.Double autop = getAutoPosition(ap);
-                if (autop != null
-                    && !principalCoordinatesMatch(autop, getMousePosition())) {
+                Point2D.Double gmp = getMousePosition();
+                if (autop != null && gmp != null
+                    && !principalCoordinatesMatch(autop, gmp)) {
                     // Paint a cross at autop.
                     Point2D.Double vPage = principalToScaledPage(scale)
                         .transform(autop);
@@ -2898,6 +2899,34 @@ public class Editor implements CropEventListener, MouseListener,
         return res;
     }
 
+    /** Assuming that diagram's principal coordinates are weight
+        fractions, return the weight fractions of the various diagram
+        components at point prin, or null if the fractions could not
+        be determined. */
+    protected SideDouble[] componentMoleFractions(Point2D prin) {
+        SideDouble[] res = componentFractions(prin);
+        if (res == null) {
+            return null;
+        }
+        double totMole = 0;
+        for (SideDouble sd: res) {
+            double cw = componentWeight(sd.s);
+            if (cw == 0) {
+                return null;
+            }
+            // Divide the weight fraction by the compound's weight.
+            // Later, dividing by the sum of all of these terms will
+            // yield the mole fraction.
+            double mf = sd.d / cw;
+            sd.d = mf;
+            totMole += mf;
+        }
+        for (SideDouble sd: res) {
+            sd.d /= totMole;
+        }
+        return res;
+    }
+
     /** Convert the given point from mole fraction to weight fraction.
         If this is a binary diagram, then the Y component of the
         return value will equal the Y component of the input value. If
@@ -2912,6 +2941,23 @@ public class Editor implements CropEventListener, MouseListener,
             return new Point2D.Double(sds[1].d, sds[2].d);
         } else {
             return new Point2D.Double(sds[1].d, mole.getY());
+        }
+    }
+
+    /** Convert the given point from mole fraction to weight fraction.
+        If this is a binary diagram, then the Y component of the
+        return value will equal the Y component of the input value. If
+        the conversion cannot be performed for some reason, then
+        return null. */
+    public Point2D.Double weightToMoleFraction(Point2D weight) {
+        SideDouble[] sds = componentMoleFractions(weight);
+        if (sds == null) {
+            return null;
+        }
+        if (diagramType.isTernary()) {
+            return new Point2D.Double(sds[1].d, sds[2].d);
+        } else {
+            return new Point2D.Double(sds[1].d, weight.getY());
         }
     }
 
@@ -2940,6 +2986,29 @@ public class Editor implements CropEventListener, MouseListener,
 
         if (mprin != null) {
             moveMouse(moleToWeightFraction(mprin));
+        }
+        return true;
+    }
+
+    /** Globally convert all coordinates from weight fraction to mole
+        fraction, if the information necessary to do so is available.
+        Return true if the conversion was carried out.
+
+        IMPORTANT BUGS:
+
+        1. Angle values are not converted.
+    */
+    protected boolean weightToMoleFraction() {
+        if (!haveComponentCompositions()) {
+            return false;
+        }
+
+        for (DecorationHandle hand: movementHandles()) {
+            hand.move(weightToMoleFraction(hand.getLocation()));
+        }
+
+        if (mprin != null) {
+            moveMouse(weightToMoleFraction(mprin));
         }
         return true;
     }

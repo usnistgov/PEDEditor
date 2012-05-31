@@ -892,6 +892,15 @@ public class EditFrame extends JFrame {
                 }
             });
 
+        mnProperties.add(new Action("Weight to Mole Fraction", KeyEvent.VK_O) {
+                @Override public void actionPerformed(ActionEvent e) {
+                    if (!getParentEditor().weightToMoleFraction()) {
+                        JOptionPane.showMessageDialog
+                            (EditFrame.this, "The conversion could not be performed.");
+                    }
+                }
+            });
+
         if (editable) {
             JMenu mnScale = new JMenu("Scale");
             mnScale.setMnemonic(KeyEvent.VK_S);
