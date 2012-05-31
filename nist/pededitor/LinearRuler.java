@@ -391,13 +391,12 @@ class LinearRuler implements Parameterizable2D {
         boolean sst = startArrow || suppressStartTick;
         boolean set = endArrow || suppressEndTick;
 
-        if (Math.abs(tickD) >= minTickDelta && Math.abs(tickD) > 0
-            && tickD != 0 && (tickD > 0) == (tickEnd > tickStart)) {
+        if (Math.abs(tickD) >= minTickDelta && tickD != 0 && tickStart != tickEnd) {
             double smallTickEnd = tickEnd
                 + 1e-6 * (tickEnd - tickStart) / Math.abs(tickD);
 
             for (double logical = actualTickStart;
-                 (logical <= smallTickEnd) == (tickStart <= smallTickEnd);
+                 (logical < smallTickEnd) == (tickD > 0);
                  logical += tickD) {
                 if ((sst && Math.abs(logical - astart) < clearDistance)
                     || (set && Math.abs(logical -aend) < clearDistance)) {
@@ -444,7 +443,7 @@ class LinearRuler implements Parameterizable2D {
 
         String formatString = RulerTick.formatString(start, end, bigTickD);
 
-        if (bigTickDelta != 0) {
+        if (bigTickD != 0 && tickStart != tickEnd) {
 
             actualTickStart = (tickStartD != null) ? tickStartD
                 : (bigTickD * Math.ceil((tickStart - 1e-6 * (aend - astart)) / bigTickD));
@@ -462,7 +461,7 @@ class LinearRuler implements Parameterizable2D {
             double bigTickEnd = tickEnd
                 + 1e-6 * (tickEnd - tickStart) / Math.abs(bigTickD);
             for (double logical = actualTickStart;
-                 (logical <= bigTickEnd) == (actualTickStart <= bigTickEnd);
+                 (logical < bigTickEnd) == (bigTickD > 0);
                  logical += bigTickD) {
                 Point2D.Double location
                     = toPhysical(logical, pageStartPoint, pageEndPoint);
