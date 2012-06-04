@@ -13,6 +13,8 @@ import javax.swing.JButton;
 import javax.swing.JPanel;
 
 
+/** A JPanel filled with JButtons that generate StringEvents when
+    pressed. */
 public class StringPalettePanel extends JPanel {
     private static final long serialVersionUID = 4572788761165949707L;
 
@@ -97,7 +99,7 @@ public class StringPalettePanel extends JPanel {
                 if (font != null) {
                     b.setFont(font);
                 }
-                b.setRequestFocusEnabled(false);
+                b.setFocusable(false);
                 gb.add(b);
             }
         }
