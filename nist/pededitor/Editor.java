@@ -74,9 +74,6 @@ import org.w3c.dom.DOMImplementation;
 
 // TODO (optional) Auto-save the diagram at regular intervals.
 
-// TODO (optional) Copy a curve or set of points with the same label
-// into a comma-separated values table.
-
 // TODO (optional) Fill styles. (Right now the only fill style is
 // "solid".) This is pretty easy.
 
@@ -115,6 +112,18 @@ import org.w3c.dom.DOMImplementation;
 
 // TODO (optional) For opaque and boxed labels, allow users to decide
 // how much extra white space to include on each side.
+
+// TODO (optional) As Chris suggested, allow input images to be
+// rotated (currently images must be within about 45 degrees of the
+// correct orientation). (MS-Paint can be used to resolve this kind of
+// issue, and Chris said it works well.)
+
+// TODO (optional) change the text dialog tab order to exclude the
+// buttons, or at least to insure that font size and text angle are
+// easy to get to. Also, maybe move "unicode code point" down to the
+// bottom of the left column with all the funny symbols.
+
+// TODO (optional) Make it easier to edit multiple-line labels.
 
 // TODO (optional) Set of commonly used shapes (equilateral triangle,
 // square, circle) whose scale and orientation are defined by
@@ -195,11 +204,14 @@ import org.w3c.dom.DOMImplementation;
 // TODO (optional) More compact representation for symbol sets in the
 // PED format.
 
-// TODO (preexisting in viewer) Periodic table integration and
-// automatic conversion of diagrams from mole percent to weight
-// percent. Simply transforming all coordinates to weight percent is
-// pretty close to there, but bending straight lines into curves would
-// take more thought.
+// TODO (preexisting in viewer) Periodic table integration.
+
+// TODO (optional) weight vs mole percent enhancements. If anybody
+// actually wants to convert mole percent ternary diagrams to weight
+// percent, then straight lines will have to be bent into curves. A
+// ruler that shows weight percent would also be a nice feature, and
+// so would the corresponding variables. Finally, text at an angle
+// gets distorted, and that should really be fixed.
 
 // TODO (preexisting but not mandatory) Smart line dash lengths. Peter
 // Schenk's PED Editor adjusts the segment length for dashed lines to
@@ -1261,10 +1273,18 @@ public class Editor implements CropEventListener, MouseListener,
     protected EditFrame editFrame = new EditFrame(this);
     protected ImageZoomFrame zoomFrame = new ImageZoomFrame();
     protected VertexInfoDialog vertexInfo = new VertexInfoDialog(editFrame);
+    protected LabelDialog labelDialog = null;
     protected JColorChooser colorChooser = null;
     protected JDialog colorDialog = null;
     protected Map<String,String> keyValues = null;
     protected Set<String> tags = new HashSet<>();
+
+    LabelDialog getLabelDialog() {
+        if (labelDialog == null) {
+            labelDialog = new LabelDialog(editFrame, "Add label", getFont().deriveFont(16.0f));
+        }
+        return labelDialog;
+    }
 
     /** Transform from original coordinates to principal coordinates.
         Original coordinates are (x,y) positions within a scanned
@@ -1298,7 +1318,7 @@ public class Editor implements CropEventListener, MouseListener,
         The element quantities are parallel to the diagramElements[]
         array. Set this to null whenever diagramComponents changes. */
     protected transient double[/* Side */][/* elementNo */]
-        componentElements;
+        componentElements = null;
 
     protected transient BufferedImage originalImage;
     protected String originalFilename;
@@ -1344,7 +1364,6 @@ public class Editor implements CropEventListener, MouseListener,
     static final int STANDARD_FONT_SIZE = 15;
     protected double lineWidth = STANDARD_LINE_WIDTH;
     protected transient StandardStroke lineStyle = StandardStroke.SOLID;
-    protected transient double fontSize = 1;
 
     static String[] tieLineStepStrings =
     { "<html><div width=\"200 px\"><p>"
@@ -1441,7 +1460,6 @@ public class Editor implements CropEventListener, MouseListener,
         labelViews = new ArrayList<>();
         labelCenters = new ArrayList<>();
         selection = null;
-        fontSize = 1;
         axes = new ArrayList<>();
         rulers = new ArrayList<>();
         diagramComponents = new String[Side.values().length];
@@ -2360,6 +2378,9 @@ public class Editor implements CropEventListener, MouseListener,
         if (vhand == null) {
             return false;
         }
+        if (vhand.vertexNo == -1 || vhand.vertexNo > vhand.getItem().size()) {
+            System.out.println("vhand = " + vhand);
+        }
         if (vhand.getLocation().equals(p)) {
             return true;
         }
@@ -2766,7 +2787,7 @@ public class Editor implements CropEventListener, MouseListener,
     };
 
     @JsonIgnore double[][] getComponentElements() {
-        if (componentElements != null) {
+        if (componentElements != null || diagramType == null) {
             return componentElements;
         }
 
@@ -2840,7 +2861,8 @@ public class Editor implements CropEventListener, MouseListener,
     /** Assuming that the principal coordinates are defined as mole
         percents, return the mole fractions of the various diagram
         components at point prin, or null if the fractions could not
-        be determined. */
+        be determined.
+    */
     protected SideDouble[] componentFractions(Point2D prin) {
         if (prin == null || diagramType == null) {
             return null;
@@ -2850,14 +2872,14 @@ public class Editor implements CropEventListener, MouseListener,
 
         if (diagramType.isTernary()) {
             return new SideDouble[] {
-                new SideDouble(Side.LEFT, 1 - x - y),
                 new SideDouble(Side.RIGHT, x),
-                new SideDouble(Side.TOP, y) };
+                new SideDouble(Side.TOP, y),
+                new SideDouble(Side.LEFT, 1 - x - y) };
         } else if (diagramComponents[Side.LEFT.ordinal()] != null
                    || diagramComponents[Side.RIGHT.ordinal()] != null) {
             return new SideDouble[] {
-                new SideDouble(Side.LEFT, 1 - x),
-                new SideDouble(Side.RIGHT, x) };
+                new SideDouble(Side.RIGHT, x),
+                new SideDouble(Side.LEFT, 1 - x) };
         } else {
             return null;
         }
@@ -2938,9 +2960,9 @@ public class Editor implements CropEventListener, MouseListener,
             return null;
         }
         if (diagramType.isTernary()) {
-            return new Point2D.Double(sds[1].d, sds[2].d);
+            return new Point2D.Double(sds[0].d, sds[1].d);
         } else {
-            return new Point2D.Double(sds[1].d, mole.getY());
+            return new Point2D.Double(sds[0].d, mole.getY());
         }
     }
 
@@ -2955,9 +2977,9 @@ public class Editor implements CropEventListener, MouseListener,
             return null;
         }
         if (diagramType.isTernary()) {
-            return new Point2D.Double(sds[1].d, sds[2].d);
+            return new Point2D.Double(sds[0].d, sds[1].d);
         } else {
-            return new Point2D.Double(sds[1].d, weight.getY());
+            return new Point2D.Double(sds[0].d, weight.getY());
         }
     }
 
@@ -3220,6 +3242,54 @@ public class Editor implements CropEventListener, MouseListener,
 
         mouseIsStuck = true;
         moveMouse(fractions);
+    }
+
+    static class OrderByXY implements Comparator<Point2D.Double> {
+        public int compare(Point2D.Double a, Point2D.Double b) {
+            double ax = a.x;
+            double bx = b.x;
+            return (ax < bx) ? -1 : (ax > bx) ? 1
+                : (a.y < b.y) ? -1 : (a.y > b.y) ? 1 : 0;
+        }
+    }
+
+    public void copyCoordinatesToClipboard() {
+        ArrayList<Point2D.Double> points = new ArrayList<>();
+        GeneralPolyline path = getActiveCurve();
+        if (path != null) {
+            points.addAll(Arrays.asList(path.getPoints()));
+        } else {
+            LabelDecoration ldec = getSelectedLabel();
+            if (ldec != null) {
+                String text = ldec.getItem().getText();
+                for (AnchoredLabel label: labels) {
+                    if (text.equals(label.getText())) {
+                        points.add(new Point2D.Double(label.getX(), label.getY()));
+                    }
+                }
+                Collections.sort(points, new OrderByXY());
+            } else {
+            	JOptionPane.showMessageDialog
+                	(editFrame, "You need to select a curve or label before using this function.");
+            	return;
+            }
+        }
+
+        StringBuilder sb = new StringBuilder();
+        for (Point2D.Double point: points) {
+            sb.append(point.x + ", " + point.y + "\n");
+        }
+
+        String res = sb.toString();
+        
+        try {
+            StringSelection sel = new StringSelection(res);
+            Toolkit.getDefaultToolkit().getSystemClipboard().setContents
+                (sel, sel);
+        } catch (HeadlessException e) {
+            throw new IllegalArgumentException
+                ("Can't call coordinatesToClipboard() in a headless environment:" + e);
+        }
     }
 
     @JsonIgnore String[] getDiagramElements() {
@@ -3526,11 +3596,13 @@ public class Editor implements CropEventListener, MouseListener,
             unstickMouse();
         }
 
-        LabelDialog dog = new LabelDialog
-            (editFrame, "Add Label", getFont().deriveFont(16.0f));
+        LabelDialog dog = getLabelDialog();
+        double fontSize = dog.getFontSize();
+        dog.reset();
+        dog.setTitle("Add Label");
         dog.setFontSize(fontSize);
         AnchoredLabel newLabel = dog.showModal();
-        if (newLabel == null) {
+        if (newLabel == null || "".equals(newLabel.getText())) {
             return;
         }
 
@@ -3538,7 +3610,6 @@ public class Editor implements CropEventListener, MouseListener,
         newLabel.setX(mprin.x);
         newLabel.setY(mprin.y);
         add(newLabel);
-        fontSize = newLabel.getFontSize();
         selection = new LabelHandle(labels.size() - 1, LabelHandleType.ANCHOR);
         mouseIsStuck = true;
     }
@@ -3554,16 +3625,15 @@ public class Editor implements CropEventListener, MouseListener,
     public void editLabel(int index) {
         AnchoredLabel label = (AnchoredLabel) labels.get(index).clone();
         label.setAngle(principalToPageAngle(label.getAngle()));
-        LabelDialog dog = new LabelDialog
-            (editFrame, "Edit Label", label, getFont().deriveFont(16.0f));
-        dog.setFont(getFont());
+        LabelDialog dog = getLabelDialog();
+        dog.setTitle("Edit Label");
+        dog.set(label);
         AnchoredLabel newLabel = dog.showModal();
         if (newLabel == null) {
             return;
         }
 
         saveNeeded = true;
-        fontSize = label.getFontSize();
         newLabel.setAngle(pageToPrincipalAngle(newLabel.getAngle()));
         newLabel.setX(label.getX());
         newLabel.setY(label.getY());
@@ -4474,7 +4544,7 @@ public class Editor implements CropEventListener, MouseListener,
         case OTHER:
             {
                 if (diagramType == DiagramType.OTHER) {
-                    leftMargin = rightMargin = topMargin = bottomMargin = 0.0;
+                    leftMargin = rightMargin = topMargin = bottomMargin = 0.05;
                 }
                 Rectangle2D.Double principalBounds
                     = new Rectangle2D.Double(0.0, 0.0, 1.0, 1.0);
@@ -6016,6 +6086,9 @@ public class Editor implements CropEventListener, MouseListener,
         String[] diagramElements = getDiagramElements();
 
         SideDouble[] sds = componentFractions(prin);
+        if (sds == null || sds.length == 0) {
+       		return null;
+        }
         for (SideDouble sd: sds) {
             if (componentElements[sd.s.ordinal()] == null) {
                 // Can't do it without a complete set of diagram
