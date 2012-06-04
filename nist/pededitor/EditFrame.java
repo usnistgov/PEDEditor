@@ -480,6 +480,15 @@ public class EditFrame extends JFrame {
                 });
         }
 
+        mnEdit.add(new Action("Copy coordinates to clipboard",
+                              KeyEvent.VK_P,
+                              KeyStroke.getKeyStroke("control C")) {
+                @Override
+                    public void actionPerformed(ActionEvent e) {
+                    getParentEditor().copyCoordinatesToClipboard();
+                }
+            });
+
         // "Vertex" top-level menu
         JMenu mnPosition = new JMenu("Position");
         mnPosition.setMnemonic(KeyEvent.VK_P);
@@ -498,7 +507,7 @@ public class EditFrame extends JFrame {
         mnPosition.add(new Action
                        ("Auto-position",
                         KeyEvent.VK_A,
-                        KeyStroke.getKeyStroke('a')) {
+                        KeyStroke.getKeyStroke('A')) {
                 @Override
                     public void actionPerformed(ActionEvent e) {
                     getParentEditor().autoPosition();
