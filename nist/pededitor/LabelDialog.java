@@ -36,20 +36,21 @@ public class LabelDialog extends JDialog {
     private static final long serialVersionUID = 7836636038916887920L;
 
     /** See AnchoredLabel.xWeight for the definition of this field. */
-    double xWeight = 0;
+    double xWeight;
     /** See AnchoredLabel.yWeight for the definition of this field. */
-    double yWeight = 0;
+    double yWeight;
     JTextField textField = new JTextField(55);
 
     JCheckBox mIsOpaque = new JCheckBox("Opaque background");
     JCheckBox mIsBoxed = new JCheckBox("Box label");
-    JTextField fontSize = new JTextField("1", 10);
+    JTextField fontSize = new JTextField(10);
     JTextField codePoint = new JTextField(10);
 
     /** Text angle in degrees, where 0 = left-to-right and 90 =
         bottom-to-top. */
-    JTextField angleField = new JTextField("0", 7);
-    boolean pressedOK = false;
+    JTextField angleField = new JTextField(7);
+    transient boolean pressedOK = false;
+    transient boolean packed = false;
     ImagePane compassPane;
 
     JButton[][] anchorButtons = new JButton[3][3];
@@ -168,15 +169,6 @@ public class LabelDialog extends JDialog {
             pal = new StringPalettePanel(new PedPalette(), 8, font);
             pal.addListener(listen);
             gb.endRowWith(pal);
-            cpgb.addNorthwest(panel);
-        }
-
-        JPanel miscPane = new JPanel();
-        GridBagUtil mgb = new GridBagUtil(miscPane);
-
-        {
-            JPanel panel = new JPanel();
-            GridBagUtil gb = new GridBagUtil(panel);
 
             JLabel codePointLabel = new JLabel("Unicode code point (hex):");
             codePointLabel.setLabelFor(codePoint);
@@ -206,6 +198,16 @@ public class LabelDialog extends JDialog {
                             }
                         }
                     }));
+
+            cpgb.addNorthwest(panel);
+        }
+
+        JPanel miscPane = new JPanel();
+        GridBagUtil mgb = new GridBagUtil(miscPane);
+
+        {
+            JPanel panel = new JPanel();
+            GridBagUtil gb = new GridBagUtil(panel);
 
             gb.endRowWith
                 (new JButton(new AbstractAction("H2SO4 \u2192 H\u2082SO\u2084") {
@@ -283,12 +285,27 @@ public class LabelDialog extends JDialog {
         mgb.endRowWith(anchorPane);
         cpgb.endRowWith(miscPane);
 
-        setXWeight(0.5);
-        setYWeight(0.5);
+        reset();
     }
 
     LabelDialog(Frame owner, String title, AnchoredLabel label, Font font) {
         this(owner, title, font);
+        set(label);
+    }
+
+    /** Make this dialog look newly constructed, except that the font won't change. */
+    public void reset() {
+        setText("");
+        setXWeight(0.5);
+        setYWeight(0.5);
+        setFontSize(1);
+        setAngle(0);
+        setOpaque(false);
+        setBoxed(false);
+    }
+
+    /** Make the settings of this dialog reflect those of the given label. */
+    public void set(AnchoredLabel label) {
         setText(label.getText());
         setXWeight(label.getXWeight());
         setYWeight(label.getYWeight());
@@ -389,7 +406,11 @@ public class LabelDialog extends JDialog {
         AnchoredLabel selected. Return null if the dialog was closed
         abnormally. */
     public AnchoredLabel showModal() {
-        pack();
+        if (!packed) {
+            pack();
+            packed = true;
+        }
+        textField.requestFocusInWindow();
         setModalityType(Dialog.ModalityType.DOCUMENT_MODAL);
         setVisible(true);
         if (!pressedOK) {
@@ -420,7 +441,9 @@ public class LabelDialog extends JDialog {
 
     public void setAngle(double theta) {
         double deg = Compass.thetaToDegrees(theta);
-        angleField.setText(String.format("%.1f", deg));
+        // Avoid the stupid behavior where negative zero is displayed
+        // as -0.0
+        angleField.setText(String.format("%.1f", (deg == 0 ? 0 : deg)));
         compassPane.setImage(createCompassImage());
     }
 
