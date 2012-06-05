@@ -55,14 +55,21 @@ public class QuadParam2D extends BezierParam2D {
 
         double px = p.getX();
         double py = p.getY();
+        double oneMinusZero;
 
-        double ax = p0.getX() - 2 * p1.getX() + pEnd.getX();
-        double bx = 2 * (p1.getX() - p0.getX());
-        double cx = p0.getX() - px;
+        double p1x = p1.getX();
+        double p0x = p0.getX();
+        oneMinusZero = p1x - p0x;
+        double ax = -oneMinusZero + (pEnd.getX() - p1x);
+        double bx = 2 * oneMinusZero;
+        double cx = p0x - px;
 
-        double ay = p0.getY() - 2 * p1.getY() + pEnd.getY();
-        double by = 2 * (p1.getY() - p0.getY());
-        double cy = p0.getY() - py;
+        double p1y = p1.getY();
+        double p0y = p0.getY();
+        oneMinusZero = p1y - p0y;
+        double ay = -oneMinusZero + (pEnd.getY() - p1y);
+        double by = 2 * oneMinusZero;
+        double cy = p0y - py;
 
         if (ax == 0 && ay == 0) {
             // This is a straight segment from p0 to pEnd.
@@ -125,10 +132,34 @@ public class QuadParam2D extends BezierParam2D {
             }
         }
 
-        // The usual case: this is a true parabola. Perform a change
-        // of basis so that the parabola's axis becomes the Y axis
-        // (and the parabola points upwards), and the sweep direction
-        // becomes the X axis (sweeping to the right).
+        Point2D.Double axis = new Point2D.Double(ax, ay);
+        Point2D.Double sweep = new Point2D.Double(xSweep, ySweep);
+
+        // The usual case: this is a true parabola or something else
+        // that only looks like a parabola because of numerical
+        // instability. Perform a change of basis so that the
+        // parabola's axis becomes the Y axis (and the parabola points
+        // upwards), and the sweep direction becomes the X axis
+        // (sweeping to the right).
+
+        // Due to precision limits, the calculated sweep may not
+        // actually be perpendicular to the axis, but the bases should
+        // be perpendicular to each other anyway. I will add the sweep
+        // rotated by 90 degrees to the axis to determine the new Y
+        // axis, and the new X axis is perpendicular to that.
+        // Hopefully this will cut down on numerical instability.
+
+        double cross = ax * ySweep - ay * xSweep;
+        double stabilizedXAxis = ax + ySweep * ((cross >= 0) ? 1 : -1);
+        double stabilizedYAxis = ay - xSweep * ((cross >= 0) ? 1 : -1);
+        Point2D.Double axisBasisVector
+            = Duh.normalize(new Point2D.Double(stabilizedXAxis, stabilizedYAxis));
+        Point2D.Double sweepBasisVector = new Point2D.Double
+            (-axisBasisVector.y, axisBasisVector.x);
+        if (cross < 0) {
+            sweepBasisVector.x = -sweepBasisVector.x;
+            sweepBasisVector.y = -sweepBasisVector.y;
+        }
 
         // (xCusp, yCusp) -> (0,0)
 
@@ -140,13 +171,13 @@ public class QuadParam2D extends BezierParam2D {
 
         // [[xSweep / sweepLength, ax/axisLength], [ySweep / sweepLength, ay/axisLength], [xCusp, yCusp]]
 
-        Point2D.Double axis = new Point2D.Double(ax, ay);
-        Point2D.Double axisBasisVector = Duh.normalize(axis);
-        Point2D.Double sweep = new Point2D.Double(xSweep, ySweep);
-        Point2D.Double sweepBasisVector = Duh.normalize(sweep);
+        /* Point2D.Double axis = new Point2D.Double(ax, ay);
+           Point2D.Double sweep = new Point2D.Double(xSweep, ySweep); */
 
         AffineTransform inverseParabolaBasisXform = new AffineTransform
-            (sweepBasisVector.x, axisBasisVector.x, sweepBasisVector.y, axisBasisVector.y, xCusp, yCusp);
+            (sweepBasisVector.x, axisBasisVector.x,
+             sweepBasisVector.y, axisBasisVector.y,
+             xCusp, yCusp);
         AffineTransform parabolaBasisXform;
         
         try {
@@ -155,7 +186,9 @@ public class QuadParam2D extends BezierParam2D {
             System.err.println("(" + sweepBasisVector.x + ", " + axisBasisVector.x
                                + ", " + sweepBasisVector.y + ", " + axisBasisVector.y
                                + ", " + xCusp + ", " + yCusp + ")");
-            throw new IllegalStateException("Normal coordinates aren't really");
+            throw new IllegalStateException(toString() + ".distance" 
+                                            + Duh.toString(p)
+                                            + ": normal coordinates aren't really");
         }
 
         Point2D.Double transformedPoint = new Point2D.Double(0,0);
@@ -194,7 +227,7 @@ public class QuadParam2D extends BezierParam2D {
     static double[] parabolaNearests(Point2D p, double xSqCoef) {
         // The distance is minimized when the square of the distance
         // is minimized. The square of the distance is locally
-        // minimized at all point where the derivative of the distance
+        // minimized at all points where the derivative of the distance
         // with respect to x equals 0.
 
         // distance^2(p, C(x)) = (x - p.x)^2 + (xSqCoef * x^2 - p.y)^2
@@ -253,6 +286,19 @@ public class QuadParam2D extends BezierParam2D {
             CurveDistance cd = param.distance(p);
             System.out.println(p + " -> " + cd);
             expect(cd.t, expectedT);
+        }
+
+        {
+            Point2D.Double[] colinear =
+                { new Point2D.Double(1.32, 0.7875000000000001),
+                  new Point2D.Double(1.2085425, 0.7875000000000001),
+                  new Point2D.Double(0.81048, 0.7875000000000001) };
+            QuadParam2D param2 = new QuadParam2D
+                (colinear[0], colinear[1], colinear[2], 0.1875, 0.25);
+            Point2D.Double p = new Point2D.Double
+                (1.2006555395189615, 0.7809566687535915);
+            CurveDistance cd = param2.distance(p);
+            System.out.println(p + " -> " + cd);
         }
     }
 }
