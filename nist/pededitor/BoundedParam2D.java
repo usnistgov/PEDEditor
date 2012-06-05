@@ -4,17 +4,21 @@ import java.awt.geom.Line2D;
 import java.awt.geom.Point2D;
 import java.awt.geom.Rectangle2D;
 
+/* Interface for curves in two dimensions parameterized by t over the
+   domain [getMinT(), getMaxT()]. */
 public interface Parameterization2D {
+    /** Return the maximum valid t value for this curve. */
     double getMinT();
+    /** Return the minimum valid t value for this curve. */
     double getMaxT();
 
-    /** It may or may not be allowed to increase the maximum t value,
-        but it should always be allowed to reduce the maximum t value
-        (as long as it is not less than the minimum). */
+    /** Increasing the maximum t value may be prohibited, but
+        decreasing the maximum t value to a value no less than the
+        minimum is always allowed. */
     void setMaxT(double t);
-    /** It may or may not be allowed to reduce the minimum t value,
-        but it should always be allowed to increase the minimum t value
-        (as long as it does not exceed the maximum). */
+    /** Decreasing the minimum t value may be prohibited, but
+        increasing the minimum t value to a value no greater than
+        the maximum is always allowed. */
     void setMinT(double t);
 
     /* Return the t value of the vertex whose t value is least among
@@ -29,7 +33,9 @@ public interface Parameterization2D {
     Point2D.Double getLocation(double t);
     Point2D.Double getDerivative(double t);
 
+    /** Return getLocation(getMinT()). */
     Point2D.Double getStart();
+    /** Return getLocation(getMaxT()). */
     Point2D.Double getEnd();
 
     /** Return the distance between p and this curve. The "point"
@@ -37,8 +43,11 @@ public interface Parameterization2D {
         "distance" and "t" fields holds the distance and
         parameterization t value for that point, respectively. The
         "minDistance" field holds a lower bound on the distance to the
-        true closest point, which may be anywhere from 0 to (if the
-        distance computation is exact) "distance".
+        true closest point, which may be anywhere between 0 and
+        "distance" (if "minDistance" = "distance" then the distance
+        computation is exact to within precision limits). This
+        computation should be fast; for high accuracy, a user should
+        select distance(p, maxError, maxIterations) instead.
     */
     CurveDistanceRange distance(Point2D p);
 
@@ -55,10 +64,13 @@ public interface Parameterization2D {
         curve. */
     CurveDistance vertexDistance(Point2D p);
 
-    /** Return the derivative of this curve with respect to t. */
+    /** Return the derivative of this curve with respect to t, or null
+        if the derivative is undefined. */
     Parameterization2D derivative();
 
-    /** Return conservative bounds for this curve for t in [minT, maxT]. */
+    /** Return bounds for this curve for t in [minT, maxT]. If the
+        bounds cannot be computed exactly, then they should be wider
+        than necessary instead of too narrow. */
     Rectangle2D.Double getBounds();
 
     /** @return an array of t values where segment intersects this. */
@@ -70,5 +82,10 @@ public interface Parameterization2D {
 
     Parameterization2D clone();
 
+    /** Divide this object into a union of parts that are disjoint
+        except possibly at their endpoints. Bisection is one obvious
+        way to subdivide the object, but it might not be most
+        efficient. Unless this is a single point, at least two objects
+        should be returned. */
     Parameterization2D[] subdivide();
 }
