@@ -470,12 +470,21 @@ public class EditFrame extends JFrame {
                     }
                 });
 
-            mnEdit.add(new Action("Move green item only",
+            mnEdit.add(new Action("Move selection only",
                                              KeyEvent.VK_V,
                                              KeyStroke.getKeyStroke('M')) {
                     @Override
                         public void actionPerformed(ActionEvent e) {
                         getParentEditor().moveSelection(false);
+                    }
+                });
+
+            mnEdit.add(new Action("Move region",
+                                             KeyEvent.VK_V,
+                                             KeyStroke.getKeyStroke('R')) {
+                    @Override
+                        public void actionPerformed(ActionEvent e) {
+                        getParentEditor().moveRegion();
                     }
                 });
         }
