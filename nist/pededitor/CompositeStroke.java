@@ -64,6 +64,11 @@ public class CompositeStroke {
                 dashes[i] *= scale;
             }
         }
+
+        if (scale == 0) {
+            throw new IllegalStateException("Zero scale");
+        }
+
         return new BasicStroke(stroke.getLineWidth() * scale,
                                stroke.getEndCap(), stroke.getLineJoin(),
                                stroke.getMiterLimit(), dashes,

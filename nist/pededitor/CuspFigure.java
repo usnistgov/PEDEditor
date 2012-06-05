@@ -212,6 +212,9 @@ public abstract class GeneralPolyline implements Parameterizable2D {
         if (isClosed() && isFilled()) {
             g.fill(path);
         } else {
+            if (lineWidth == 0) {
+                throw new IllegalStateException("Zero line width");
+            }
             stroke.getStroke().draw(g, path, lineWidth);
         }
 

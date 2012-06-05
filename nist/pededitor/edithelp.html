@@ -72,10 +72,11 @@ point. Key points include</p>
 
 <ul>
   <li>arrows</li>
-  <li>vertices of curves</li>
+  <li>vertexes of curves</li>
   <li>label anchor points and centers</li>
   <li>corners of tie line regions</li>
   <li>ruler endpoints</li>
+  <li>segment midpoints</li>
 </ul>
 
 <p>In addition, the following key points may be moved to, but cannot
@@ -87,6 +88,12 @@ be selected:</p>
   detected.)</li>
   <li>corners of the diagram</li>
 </ul>
+
+<p>If an item is selected, then the point on the curve nearest the
+mouse that is nearest to the selection is also considered to be a key
+point. (In other words, first identify the curve closest to the mouse.
+The point on that curve that is closest to the selection is a key
+point.)</p>
 
 <p>If pressing 'P' once does not highlight the item you want, you may
 press it again and again to highlight other items located nearby.</p>
@@ -105,6 +112,40 @@ which case it is highlighted in magenta), then that item and every
 other item located at the same position will move along with the mouse
 pointer.</li>
 
+<li><p>Auto-position the mouse ('A') or auto-position the mouse and add
+the mouse's new location (shift+left-click).</p>
+
+<p>Holding the shift key down while moving the mouse will reveal the
+auto-position location. The rules for auto-positioning get a bit
+complicated, but the program will look for any of the following that
+are close to the mouse position:</p>
+
+<ul>
+<li><b>Key points</b>: if a key point is nearby, then it is selected in yellow.</li>
+
+<li><b>Curves and rulers</b>: If no key point is nearby but a curve or
+ruler is, then the nearest point on it is selected in orange.</li>
+
+<li><p><b>Grid lines</b>: If an item is selected, then for purposes of
+identifying key points and curves, the program behaves as if the
+diagram contains grid lines through the selection location (and
+through the secondary selection, if there is one). This makes it easy
+to use shift-left-button to draw vertical and horizontal segments.</p>
+
+<p>The following items are grid lines: vertical and horizontal lines;
+60- and 120-degree lines in ternary diagrams; and the lines of zero
+change of user-defined variables created using
+<code>P<u>r</u>operties/<u>V</u>ariables/<u>A</u>dd</code>. That means
+that you can define your own grid lines at arbitrary angles by
+defining dummy variables whose value equals 0 at two points offset
+from each other along that angle.</p>
+
+<p>Sometimes the auto-positioning is attracted by a key point that
+prevents you from clicking on a curve or grid line instead. You may
+avoid this problem by pressing using '+' to zoom in until the screen
+distance to the key point becomes large enough that it no longer
+attracts the mouse pointer.</p>
+</li>
 </ul>
 
 <p>The mouse will temporarily act as if stuck at the chosen point even
@@ -155,7 +196,7 @@ it, and press the left mouse button at the new location.</li>
 
 </ul>
 
-<h2>Curves and Vertices</h2>
+<h2>Curves and Vertexes</h2>
 
 <p>If a vertex (curve control point) is currently selected, then it is
 marked by a green disc. Other control points on the same curve are
