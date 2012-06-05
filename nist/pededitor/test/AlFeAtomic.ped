@@ -1473,8 +1473,6 @@
     "b" : 0.0,
     "c" : 0.0,
     "name" : "X",
-    "startName" : null,
-    "endName" : null,
     "rulers" : [ {
       "startPoint" : {
         "x" : 0.0,
@@ -1547,8 +1545,6 @@
     "b" : 1.0,
     "c" : 0.0,
     "name" : "Y",
-    "startName" : null,
-    "endName" : null,
     "rulers" : [ {
       "startPoint" : {
         "x" : 0.0,
@@ -1621,8 +1617,6 @@
     "b" : 0.0,
     "c" : 0.15,
     "name" : "page X",
-    "startName" : null,
-    "endName" : null,
     "rulers" : [ ]
   }, {
     "format" : {
@@ -1633,8 +1627,6 @@
     "b" : -5.833333333333333E-4,
     "c" : 1.0833333333333333,
     "name" : "page Y",
-    "startName" : null,
-    "endName" : null,
     "rulers" : [ ]
   } ]
 }

@@ -5052,8 +5052,6 @@
     "b" : 0.0,
     "c" : 0.0,
     "name" : "CdO",
-    "startName" : null,
-    "endName" : null,
     "rulers" : [ {
       "startPoint" : {
         "x" : 0.0,
@@ -5095,8 +5093,6 @@
     "b" : 1.0,
     "c" : 0.0,
     "name" : "B2O3",
-    "startName" : null,
-    "endName" : null,
     "rulers" : [ {
       "startPoint" : {
         "x" : 0.0,
@@ -5169,8 +5165,6 @@
     "b" : -1.0,
     "c" : 1.0,
     "name" : "Na2O",
-    "startName" : null,
-    "endName" : null,
     "rulers" : [ ]
   }, {
     "format" : {
@@ -5181,8 +5175,6 @@
     "b" : 0.5,
     "c" : 0.0,
     "name" : "page X",
-    "startName" : null,
-    "endName" : null,
     "rulers" : [ ]
   }, {
     "format" : {
@@ -5193,8 +5185,6 @@
     "b" : -0.866025403784439,
     "c" : 0.866025403784439,
     "name" : "page Y",
-    "startName" : null,
-    "endName" : null,
     "rulers" : [ ]
   } ]
 }

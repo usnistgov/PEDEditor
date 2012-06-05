@@ -586,8 +586,6 @@
     "b" : -1.0,
     "c" : 1.0,
     "name" : "A",
-    "startName" : null,
-    "endName" : null,
     "rulers" : [ ]
   }, {
     "format" : {
@@ -598,8 +596,6 @@
     "b" : 0.0,
     "c" : 0.0,
     "name" : "B",
-    "startName" : null,
-    "endName" : null,
     "rulers" : [ {
       "startPoint" : {
         "x" : 0.0,
@@ -641,8 +637,6 @@
     "b" : 1.0,
     "c" : 0.0,
     "name" : "Solvent",
-    "startName" : null,
-    "endName" : null,
     "rulers" : [ {
       "startPoint" : {
         "x" : 0.0,
@@ -715,8 +709,6 @@
     "b" : 0.5,
     "c" : 0.0,
     "name" : "page X",
-    "startName" : null,
-    "endName" : null,
     "rulers" : [ ]
   }, {
     "format" : {
@@ -727,8 +719,6 @@
     "b" : -0.8660254037844386,
     "c" : 0.8660254037844386,
     "name" : "page Y",
-    "startName" : null,
-    "endName" : null,
     "rulers" : [ ]
   } ]
 }

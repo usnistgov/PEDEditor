@@ -493,8 +493,6 @@
     "b" : 0.0,
     "c" : 0.0,
     "name" : "X",
-    "startName" : null,
-    "endName" : null,
     "rulers" : [ ]
   }, {
     "format" : {
@@ -505,8 +503,6 @@
     "b" : 1.0,
     "c" : 0.0,
     "name" : "Y",
-    "startName" : null,
-    "endName" : null,
     "rulers" : [ ]
   }, {
     "format" : {
@@ -517,8 +513,6 @@
     "b" : 0.0,
     "c" : 0.0,
     "name" : "page X",
-    "startName" : null,
-    "endName" : null,
     "rulers" : [ ]
   }, {
     "format" : {
@@ -529,8 +523,6 @@
     "b" : -1.0,
     "c" : 1.0,
     "name" : "page Y",
-    "startName" : null,
-    "endName" : null,
     "rulers" : [ ]
   }, {
     "format" : {
@@ -541,8 +533,6 @@
     "b" : 1.0,
     "c" : -1.0,
     "name" : "Diag1",
-    "startName" : null,
-    "endName" : null,
     "rulers" : [ ]
   }, {
     "format" : {
@@ -553,8 +543,6 @@
     "b" : 1.0,
     "c" : 0.0,
     "name" : "Diag2",
-    "startName" : null,
-    "endName" : null,
     "rulers" : [ ]
   } ]
 }
