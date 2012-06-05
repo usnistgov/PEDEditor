@@ -1,0 +1,666 @@
+{
+  "tags" : [ ],
+  "originalToPrincipal" : null,
+  "principalToStandardPage" : {
+    "transform" : "RectangleTransform",
+    "input" : {
+      "x" : 0.0,
+      "y" : 0.0,
+      "width" : 1.0,
+      "height" : 1.0
+    },
+    "output" : {
+      "x" : 0.0,
+      "y" : 1.0,
+      "width" : 1.0,
+      "height" : -1.0
+    }
+  },
+  "pageBounds" : {
+    "x" : -0.019044730937957763,
+    "y" : -0.03230309099960327,
+    "width" : 0.7445754317245484,
+    "height" : 0.9417694876632691
+  },
+  "diagramType" : "OTHER",
+  "labels" : [ {
+    "xWeight" : 0.5,
+    "yWeight" : 0.5,
+    "x" : 0.21177766327065675,
+    "y" : 0.5699839025656419,
+    "baselineXOffset" : 0.0,
+    "baselineYOffset" : 0.0,
+    "text" : "θ - φ",
+    "angle" : 0.0,
+    "fontSize" : 0.75,
+    "color" : null,
+    "boxed" : false,
+    "opaque" : false
+  }, {
+    "xWeight" : 0.5,
+    "yWeight" : 1.0,
+    "x" : 0.4300160974343582,
+    "y" : 0.4750550769428661,
+    "baselineXOffset" : 0.0,
+    "baselineYOffset" : 0.0,
+    "text" : "f",
+    "angle" : 1.5707963267948966,
+    "fontSize" : 0.75,
+    "color" : null,
+    "boxed" : false,
+    "opaque" : false
+  }, {
+    "xWeight" : 0.5,
+    "yWeight" : 1.0,
+    "x" : 0.2581970712111775,
+    "y" : 0.604111241433717,
+    "baselineXOffset" : 0.0,
+    "baselineYOffset" : 0.0,
+    "text" : "f<sub>c</sub>",
+    "angle" : 0.3665191429188092,
+    "fontSize" : 1.0,
+    "color" : null,
+    "boxed" : false,
+    "opaque" : false
+  }, {
+    "xWeight" : 0.0,
+    "yWeight" : 0.5,
+    "x" : 0.38083604292193646,
+    "y" : 0.8445158130746684,
+    "baselineXOffset" : 0.0,
+    "baselineYOffset" : 0.0,
+    "text" : "θ: camming angle<br>f: fall force<br>φ: crack flare angle<br>μ: coefficient of friction<br>f<sub>c</sub>: cam force (per crack side)",
+    "angle" : 0.0,
+    "fontSize" : 1.0,
+    "color" : null,
+    "boxed" : false,
+    "opaque" : false
+  }, {
+    "xWeight" : 0.5,
+    "yWeight" : 0.0,
+    "x" : 0.22547873088631543,
+    "y" : 0.8488984933129728,
+    "baselineXOffset" : 0.0,
+    "baselineYOffset" : 0.0,
+    "text" : "φ",
+    "angle" : 0.0,
+    "fontSize" : 1.0,
+    "color" : null,
+    "boxed" : false,
+    "opaque" : false
+  }, {
+    "xWeight" : 0.5,
+    "yWeight" : 0.5,
+    "x" : 0.20541998429194452,
+    "y" : 0.5518753893735358,
+    "baselineXOffset" : 0.0,
+    "baselineYOffset" : 0.0,
+    "text" : "φ",
+    "angle" : 0.0,
+    "fontSize" : 0.8,
+    "color" : null,
+    "boxed" : false,
+    "opaque" : false
+  }, {
+    "xWeight" : 0.5,
+    "yWeight" : 1.0,
+    "x" : 0.1548198199748154,
+    "y" : 0.623770050304178,
+    "baselineXOffset" : 0.0,
+    "baselineYOffset" : 0.0,
+    "text" : "f<sub>c</sub> sin θ",
+    "angle" : 1.3264502315156903,
+    "fontSize" : 0.75,
+    "color" : null,
+    "boxed" : false,
+    "opaque" : false
+  }, {
+    "xWeight" : 0.5,
+    "yWeight" : 1.0,
+    "x" : 0.26954421112223836,
+    "y" : 0.6710226926490099,
+    "baselineXOffset" : 0.0,
+    "baselineYOffset" : 0.0,
+    "text" : "f<sub>c</sub> cos θ",
+    "angle" : -0.24434609527920617,
+    "fontSize" : 0.75,
+    "color" : null,
+    "boxed" : false,
+    "opaque" : false
+  }, {
+    "xWeight" : 0.0,
+    "yWeight" : 0.5,
+    "x" : 0.4679128137063406,
+    "y" : 0.6509268932092471,
+    "baselineXOffset" : 0.0,
+    "baselineYOffset" : 0.0,
+    "text" : "f<sub>c</sub> sin θ ≤ μ f<sub>c</sub> cos θ<br>μ ≥ tan θ*<br>2 f<sub>c</sub> sin(θ-φ) = f<br>f<sub>c</sub> = f / (2 sin (θ-φ))",
+    "angle" : 0.0,
+    "fontSize" : 1.0,
+    "color" : null,
+    "boxed" : false,
+    "opaque" : false
+  }, {
+    "xWeight" : 0.5,
+    "yWeight" : 0.5,
+    "x" : 0.3240384754006995,
+    "y" : 0.6438503687954438,
+    "baselineXOffset" : 0.0,
+    "baselineYOffset" : 0.0,
+    "text" : "θ",
+    "angle" : 0.0,
+    "fontSize" : 0.75,
+    "color" : null,
+    "boxed" : false,
+    "opaque" : false
+  }, {
+    "xWeight" : 0.5,
+    "yWeight" : 1.0,
+    "x" : 0.4300160974343582,
+    "y" : 0.5939393367669741,
+    "baselineXOffset" : 0.0,
+    "baselineYOffset" : 0.0,
+    "text" : "f<sub>c</sub> sin (θ-φ)",
+    "angle" : 1.5707963267948966,
+    "fontSize" : 0.6,
+    "color" : null,
+    "boxed" : false,
+    "opaque" : false
+  }, {
+    "xWeight" : 0.5,
+    "yWeight" : 0.5,
+    "x" : 0.37155301971435556,
+    "y" : 1.0002923248669464,
+    "baselineXOffset" : 0.0,
+    "baselineYOffset" : 0.0,
+    "text" : "Force diagram for a cam in a<br>symmetrical vertically flaring crack",
+    "angle" : 0.0,
+    "fontSize" : 1.0,
+    "color" : null,
+    "boxed" : false,
+    "opaque" : false
+  }, {
+    "xWeight" : 0.0,
+    "yWeight" : 0.0,
+    "x" : 0.4679128137063406,
+    "y" : 0.5741761569056152,
+    "baselineXOffset" : 0.0,
+    "baselineYOffset" : 0.0,
+    "text" : "<p style=\"width: 1250 px;\">* Minimum coefficient of friction for cam to hold. Caveats from cam manufacturers: cam may grind soft rock surfaces into dust and skate out on that dust layer. Also, in a flare, if the cam is pulled out fast enough, it may lose contact with the rock and never reestablish contact.</p>",
+    "angle" : 0.0,
+    "fontSize" : 0.6666666666666666,
+    "color" : null,
+    "boxed" : false,
+    "opaque" : false
+  } ],
+  "arrows" : [ {
+    "x" : 0.4300160974343582,
+    "y" : 0.3913592655925968,
+    "size" : 0.0032,
+    "angle" : -1.5707963267948966,
+    "color" : null
+  }, {
+    "x" : 0.4300160974343582,
+    "y" : 0.6463184221385955,
+    "size" : 0.0032,
+    "angle" : 1.5707963267948966,
+    "color" : null
+  } ],
+  "tieLines" : [ ],
+  "diagramComponents" : [ null, null, null, null ],
+  "originalFilename" : null,
+  "fontName" : "DejaVu LGC Sans PED",
+  "keys" : {
+  },
+  "curves" : [ {
+    "shape" : "polyline",
+    "points" : [ {
+      "x" : 0.0,
+      "y" : 0.1
+    }, {
+      "x" : 0.21716483773557374,
+      "y" : 0.9686593509422952
+    }, {
+      "x" : 0.0,
+      "y" : 0.9686593509422952
+    }, {
+      "x" : 0.02779189814610185,
+      "y" : 0.9017454684019407
+    }, {
+      "x" : 1.3877787807814457E-17,
+      "y" : 0.7905778758175334
+    }, {
+      "x" : 0.045407556509091174,
+      "y" : 0.71580240790372
+    }, {
+      "x" : 0.015069478217276222,
+      "y" : 0.6492543651990936
+    }, {
+      "x" : -0.010778334217306118,
+      "y" : 0.4910588449981308
+    }, {
+      "x" : 0.015069478217276222,
+      "y" : 0.44080240790372005
+    } ],
+    "color" : {
+      "rgb" : -10066330
+    },
+    "lineWidth" : 0.0024,
+    "filled" : true,
+    "closed" : true,
+    "lineStyle" : "SOLID",
+    "id" : 0
+  }, {
+    "shape" : "polyline",
+    "points" : [ {
+      "x" : 0.2410421451343447,
+      "y" : 0.9686593509422952
+    }, {
+      "x" : 0.02387730739877089,
+      "y" : 0.09999999999999998
+    } ],
+    "color" : null,
+    "lineWidth" : 0.0024,
+    "filled" : false,
+    "closed" : true,
+    "lineStyle" : "SOLID",
+    "id" : 1
+  }, {
+    "shape" : "cubic spline",
+    "points" : [ {
+      "x" : 0.16773851736318368,
+      "y" : 0.28911201644464535
+    }, {
+      "x" : 0.13446449601087057,
+      "y" : 0.4349305217827236
+    }, {
+      "x" : 0.13843391331959604,
+      "y" : 0.5582264236833006
+    }, {
+      "x" : 0.1814395849788421,
+      "y" : 0.6570835466937557
+    } ],
+    "color" : null,
+    "lineWidth" : 0.0024,
+    "filled" : false,
+    "closed" : false,
+    "lineStyle" : "SOLID",
+    "id" : 2
+  }, {
+    "shape" : "polyline",
+    "points" : [ {
+      "x" : 0.13843391331959604,
+      "y" : 0.5582264236833006
+    }, {
+      "x" : 0.36836129316389554,
+      "y" : 0.6463184221385956
+    } ],
+    "color" : null,
+    "lineWidth" : 0.0024,
+    "filled" : false,
+    "closed" : false,
+    "lineStyle" : "SOLID",
+    "id" : 3
+  }, {
+    "shape" : "polyline",
+    "points" : [ {
+      "x" : 0.36836129316389554,
+      "y" : 0.6463184221385956
+    }, {
+      "x" : 0.4016353145162087,
+      "y" : 0.6463184221385955
+    }, {
+      "x" : 0.4016353145162087,
+      "y" : 0.09999999999999998
+    }, {
+      "x" : 0.36836129316389554,
+      "y" : 0.09999999999999998
+    } ],
+    "color" : null,
+    "lineWidth" : 0.0024,
+    "filled" : false,
+    "closed" : true,
+    "lineStyle" : "SOLID",
+    "id" : 4
+  }, {
+    "shape" : "polyline",
+    "points" : [ {
+      "x" : 0.36836129316389554,
+      "y" : 0.5582264236833008
+    }, {
+      "x" : 0.1384339133195961,
+      "y" : 0.5582264236833008
+    } ],
+    "color" : null,
+    "lineWidth" : 0.0024,
+    "filled" : false,
+    "closed" : false,
+    "lineStyle" : "SOLID",
+    "id" : 5
+  }, {
+    "shape" : "polyline",
+    "points" : [ {
+      "x" : 0.4300160974343582,
+      "y" : 0.6463184221385955
+    }, {
+      "x" : 0.4300160974343582,
+      "y" : 0.5559882090523782
+    }, {
+      "x" : 0.4300160974343582,
+      "y" : 0.3913592655925968
+    } ],
+    "color" : null,
+    "lineWidth" : 0.0032,
+    "filled" : false,
+    "closed" : false,
+    "lineStyle" : "SOLID",
+    "id" : 6
+  }, {
+    "shape" : "polyline",
+    "points" : [ {
+      "x" : 0.4300160974343582,
+      "y" : 0.5559882090523782
+    } ],
+    "color" : null,
+    "lineWidth" : 0.0024,
+    "filled" : false,
+    "closed" : false,
+    "lineStyle" : "SOLID",
+    "id" : 7
+  }, {
+    "shape" : "polyline",
+    "points" : [ {
+      "x" : 0.1384339133195948,
+      "y" : 0.5582264236832957
+    }, {
+      "x" : 0.36836129316389554,
+      "y" : 0.49395157214164764
+    } ],
+    "color" : null,
+    "lineWidth" : 0.0024,
+    "filled" : false,
+    "closed" : false,
+    "lineStyle" : "SOLID",
+    "id" : 8
+  }, {
+    "shape" : "polyline",
+    "points" : [ {
+      "x" : 0.2410421451343447,
+      "y" : 0.9686593509422952
+    }, {
+      "x" : 0.2410421451343447,
+      "y" : 0.7182454961351017
+    } ],
+    "color" : null,
+    "lineWidth" : 0.0024,
+    "filled" : false,
+    "closed" : false,
+    "lineStyle" : "DASH",
+    "id" : 10
+  }, {
+    "shape" : "polyline",
+    "points" : [ {
+      "x" : 0.36836129316389554,
+      "y" : 0.6463184221385956
+    }, {
+      "x" : 0.1726865823587419,
+      "y" : 0.695237099839884
+    } ],
+    "color" : null,
+    "lineWidth" : 0.0024,
+    "filled" : false,
+    "closed" : false,
+    "lineStyle" : "SOLID",
+    "id" : 12
+  }, {
+    "shape" : "polyline",
+    "points" : [ {
+      "x" : 0.17497911524968537,
+      "y" : 0.7044072314036579
+    }, {
+      "x" : 0.18574239350064722,
+      "y" : 0.7013984200470005
+    }, {
+      "x" : 0.18130168410512598,
+      "y" : 0.6836355824649156
+    }, {
+      "x" : 0.1705384058541642,
+      "y" : 0.6866443938215732
+    } ],
+    "color" : null,
+    "lineWidth" : 0.0024,
+    "filled" : false,
+    "closed" : false,
+    "lineStyle" : "SOLID",
+    "id" : 13
+  }, {
+    "shape" : "polyline",
+    "points" : [ {
+      "x" : 0.149144806399749,
+      "y" : 0.5552322562941332
+    }, {
+      "x" : 0.1459483096812201,
+      "y" : 0.5424462694200175
+    }, {
+      "x" : 0.13516295916127202,
+      "y" : 0.5451426070500045
+    } ],
+    "color" : null,
+    "lineWidth" : 0.0024,
+    "filled" : false,
+    "closed" : false,
+    "lineStyle" : "SOLID",
+    "id" : 14
+  }, {
+    "shape" : "polyline",
+    "points" : [ {
+      "x" : 0.36836129316389554,
+      "y" : 0.5703369366679296
+    }, {
+      "x" : 0.3559503262046992,
+      "y" : 0.5703369366679296
+    }, {
+      "x" : 0.3559503262046992,
+      "y" : 0.5582264236833008
+    }, {
+      "x" : 0.3559503262046992,
+      "y" : 0.5461159106986719
+    }, {
+      "x" : 0.36836129316389554,
+      "y" : 0.5461159106986719
+    } ],
+    "color" : null,
+    "lineWidth" : 0.0024,
+    "filled" : false,
+    "closed" : false,
+    "lineStyle" : "SOLID",
+    "id" : 15
+  }, {
+    "shape" : "polyline",
+    "points" : [ {
+      "x" : 0.25092357074396665,
+      "y" : 0.16482376021688727
+    }, {
+      "x" : 0.36836129316389554,
+      "y" : 0.16482376021688727
+    } ],
+    "color" : null,
+    "lineWidth" : 0.0064,
+    "filled" : false,
+    "closed" : false,
+    "lineStyle" : "SOLID",
+    "id" : 16
+  }, {
+    "shape" : "polyline",
+    "points" : [ {
+      "x" : 0.4016353145162087,
+      "y" : 0.16482376021688727
+    }, {
+      "x" : 0.5190730369361376,
+      "y" : 0.16482376021688727
+    } ],
+    "color" : null,
+    "lineWidth" : 0.0064,
+    "filled" : false,
+    "closed" : false,
+    "lineStyle" : "SOLID",
+    "id" : 17
+  }, {
+    "shape" : "cubic spline",
+    "points" : [ {
+      "x" : 0.36836129316389554,
+      "y" : 0.18733265701404034
+    }, {
+      "x" : 0.3262794426300876,
+      "y" : 0.1834180662667093
+    }, {
+      "x" : 0.28321894440944706,
+      "y" : 0.1726529417115492
+    }, {
+      "x" : 0.25190221843079935,
+      "y" : 0.17167429402471646
+    } ],
+    "color" : null,
+    "lineWidth" : 0.0064,
+    "filled" : false,
+    "closed" : false,
+    "lineStyle" : "SOLID",
+    "id" : 18
+  }, {
+    "shape" : "polyline",
+    "points" : [ {
+      "x" : 0.25190221843079935,
+      "y" : 0.17167429402471646
+    }, {
+      "x" : 0.25190221843079935,
+      "y" : 0.16482376021688727
+    } ],
+    "color" : null,
+    "lineWidth" : 0.0064,
+    "filled" : false,
+    "closed" : false,
+    "lineStyle" : "SOLID",
+    "id" : 19
+  }, {
+    "shape" : "cubic spline",
+    "points" : [ {
+      "x" : 0.40163531451620865,
+      "y" : 0.18733265701404034
+    }, {
+      "x" : 0.4437171650500165,
+      "y" : 0.1834180662667093
+    }, {
+      "x" : 0.4867776632706572,
+      "y" : 0.1726529417115492
+    }, {
+      "x" : 0.5180943892493048,
+      "y" : 0.17167429402471646
+    } ],
+    "color" : null,
+    "lineWidth" : 0.0064,
+    "filled" : false,
+    "closed" : false,
+    "lineStyle" : "SOLID",
+    "id" : 20
+  }, {
+    "shape" : "polyline",
+    "points" : [ {
+      "x" : 0.5180943892493048,
+      "y" : 0.17167429402471646
+    }, {
+      "x" : 0.5180943892493048,
+      "y" : 0.16482376021688727
+    } ],
+    "color" : null,
+    "lineWidth" : 0.0064,
+    "filled" : false,
+    "closed" : false,
+    "lineStyle" : "SOLID",
+    "id" : 21
+  } ],
+  "axes" : [ {
+    "format" : {
+      "type" : "DecimalFormat",
+      "pattern" : "#0.0000"
+    },
+    "a" : 1.0,
+    "b" : 0.0,
+    "c" : 0.0,
+    "name" : "X",
+    "startName" : null,
+    "endName" : null,
+    "rulers" : [ ]
+  }, {
+    "format" : {
+      "type" : "DecimalFormat",
+      "pattern" : "#0.0000"
+    },
+    "a" : 0.0,
+    "b" : 1.0,
+    "c" : 0.0,
+    "name" : "Y",
+    "startName" : null,
+    "endName" : null,
+    "rulers" : [ ]
+  }, {
+    "format" : {
+      "type" : "DecimalFormat",
+      "pattern" : "#0.0000"
+    },
+    "a" : 1.0,
+    "b" : 0.0,
+    "c" : 0.0,
+    "name" : "page X",
+    "startName" : null,
+    "endName" : null,
+    "rulers" : [ ]
+  }, {
+    "format" : {
+      "type" : "DecimalFormat",
+      "pattern" : "#0.0000"
+    },
+    "a" : 0.0,
+    "b" : -1.0,
+    "c" : 1.0,
+    "name" : "page Y",
+    "startName" : null,
+    "endName" : null,
+    "rulers" : [ ]
+  }, {
+    "format" : {
+      "type" : "DecimalFormat",
+      "pattern" : "#0.0000"
+    },
+    "a" : 2.3529411764705883,
+    "b" : -0.5882352941176471,
+    "c" : -0.17647058823529413,
+    "name" : "dr",
+    "startName" : null,
+    "endName" : null,
+    "rulers" : [ ]
+  }, {
+    "format" : {
+      "type" : "DecimalFormat",
+      "pattern" : "#0.0000"
+    },
+    "a" : 2.3529411764705883,
+    "b" : -0.5882352941176471,
+    "c" : -0.17647058823529413,
+    "name" : "ur",
+    "startName" : null,
+    "endName" : null,
+    "rulers" : [ ]
+  }, {
+    "format" : {
+      "type" : "DecimalFormat",
+      "pattern" : "#0.0000"
+    },
+    "a" : 0.6187854261867186,
+    "b" : 2.2135517751723026,
+    "c" : -1.2785560624865444,
+    "name" : "dr2",
+    "startName" : null,
+    "endName" : null,
+    "rulers" : [ ]
+  } ]
+}

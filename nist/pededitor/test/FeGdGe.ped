@@ -1,0 +1,962 @@
+{
+  "originalToPrincipal" : {
+    "transform" : "TriangleTransform",
+    "input" : [ {
+      "x" : 209.0,
+      "y" : 1173.0
+    }, {
+      "x" : 765.0,
+      "y" : 158.0
+    }, {
+      "x" : 1340.0,
+      "y" : 1169.0
+    } ],
+    "output" : [ {
+      "x" : 0.0,
+      "y" : 0.0
+    }, {
+      "x" : 0.0,
+      "y" : 1.0
+    }, {
+      "x" : 1.0,
+      "y" : 0.0
+    } ]
+  },
+  "principalToStandardPage" : {
+    "transform" : "TriangleTransform",
+    "input" : [ {
+      "x" : 0.0,
+      "y" : 0.0
+    }, {
+      "x" : 0.0,
+      "y" : 1.0
+    }, {
+      "x" : 1.0,
+      "y" : 0.0
+    } ],
+    "output" : [ {
+      "x" : 0.0,
+      "y" : 0.8660254037844386
+    }, {
+      "x" : 0.5,
+      "y" : 0.0
+    }, {
+      "x" : 1.0,
+      "y" : 0.8660254037844386
+    } ]
+  },
+  "pageBounds" : {
+    "x" : -0.08,
+    "y" : -0.06,
+    "width" : 1.1600000000000001,
+    "height" : 1.0360254037844387
+  },
+  "diagramType" : "TERNARY",
+  "labels" : [ {
+    "xWeight" : 0.0,
+    "yWeight" : 0.5,
+    "x" : 0.4,
+    "y" : 0.2,
+    "text" : "C",
+    "angle" : -0.0,
+    "fontSize" : 1.5,
+    "color" : null,
+    "boxed" : false,
+    "opaque" : false
+  }, {
+    "xWeight" : 0.0,
+    "yWeight" : 0.5,
+    "x" : 0.2,
+    "y" : 0.4,
+    "text" : "B",
+    "angle" : -0.0,
+    "fontSize" : 1.5,
+    "color" : null,
+    "boxed" : false,
+    "opaque" : false
+  }, {
+    "xWeight" : 1.0,
+    "yWeight" : 0.5,
+    "x" : 0.0,
+    "y" : 0.3333333333333333,
+    "text" : "FeGe<sub>2</sub>",
+    "angle" : -0.0,
+    "fontSize" : 1.25,
+    "color" : null,
+    "boxed" : false,
+    "opaque" : false
+  }, {
+    "xWeight" : 1.0,
+    "yWeight" : 0.5,
+    "x" : 0.0,
+    "y" : 0.5,
+    "text" : "FeGe",
+    "angle" : -0.0,
+    "fontSize" : 1.2,
+    "color" : null,
+    "boxed" : false,
+    "opaque" : false
+  }, {
+    "xWeight" : 1.0,
+    "yWeight" : 0.5,
+    "x" : 0.0,
+    "y" : 0.5454545454545455,
+    "text" : "Fe<sub>6</sub>Ge<sub>5</sub>",
+    "angle" : -0.0,
+    "fontSize" : 1.2,
+    "color" : null,
+    "boxed" : false,
+    "opaque" : false
+  }, {
+    "xWeight" : 1.0,
+    "yWeight" : 0.5,
+    "x" : 0.0,
+    "y" : 0.75,
+    "text" : "Fe<sub>3</sub>Ge",
+    "angle" : -0.0,
+    "fontSize" : 1.2,
+    "color" : null,
+    "boxed" : false,
+    "opaque" : false
+  }, {
+    "xWeight" : 1.0,
+    "yWeight" : 0.0,
+    "x" : 0.020209734210057066,
+    "y" : -0.11525141663528501,
+    "text" : "",
+    "angle" : -0.0,
+    "fontSize" : 1.5,
+    "color" : null,
+    "boxed" : false,
+    "opaque" : false
+  }, {
+    "xWeight" : 1.0,
+    "yWeight" : 0.0,
+    "x" : 0.0,
+    "y" : 0.0,
+    "text" : "Ge",
+    "angle" : -0.0,
+    "fontSize" : 2.0,
+    "color" : null,
+    "boxed" : false,
+    "opaque" : false
+  }, {
+    "xWeight" : 0.5,
+    "yWeight" : 1.0,
+    "x" : 0.0,
+    "y" : 1.0,
+    "text" : "Fe",
+    "angle" : -0.0,
+    "fontSize" : 2.0,
+    "color" : null,
+    "boxed" : false,
+    "opaque" : false
+  }, {
+    "xWeight" : 0.0,
+    "yWeight" : 0.0,
+    "x" : 1.0,
+    "y" : 0.0,
+    "text" : "Gd",
+    "angle" : -0.0,
+    "fontSize" : 2.0,
+    "color" : null,
+    "boxed" : false,
+    "opaque" : false
+  }, {
+    "xWeight" : 0.0,
+    "yWeight" : 0.5,
+    "x" : 0.3333333333333334,
+    "y" : 0.6666666666666666,
+    "text" : "GdFe<sub>2</sub>",
+    "angle" : -0.0,
+    "fontSize" : 1.2,
+    "color" : null,
+    "boxed" : false,
+    "opaque" : false
+  }, {
+    "xWeight" : 0.0,
+    "yWeight" : 0.5,
+    "x" : 0.25,
+    "y" : 0.75,
+    "text" : "GdFe<sub>3</sub>",
+    "angle" : -0.0,
+    "fontSize" : 1.2,
+    "color" : null,
+    "boxed" : false,
+    "opaque" : false
+  }, {
+    "xWeight" : 0.0,
+    "yWeight" : 0.5,
+    "x" : 0.2619544195578174,
+    "y" : 0.781096611043178,
+    "text" : "Gd<sub>6</sub>Fe<sub>23</sub>",
+    "angle" : -0.0,
+    "fontSize" : 1.2,
+    "color" : null,
+    "boxed" : false,
+    "opaque" : false
+  }, {
+    "xWeight" : 0.0,
+    "yWeight" : 0.5,
+    "x" : 0.10526315789473692,
+    "y" : 0.8947368421052632,
+    "text" : "Gd<sub>2</sub>Fe<sub>17</sub>",
+    "angle" : -0.0,
+    "fontSize" : 1.2,
+    "color" : null,
+    "boxed" : false,
+    "opaque" : false
+  }, {
+    "xWeight" : 0.5,
+    "yWeight" : 1.0,
+    "x" : -0.004964973547812168,
+    "y" : 0.6190004379048439,
+    "text" : "SS<sub>2</sub>",
+    "angle" : 1.5707963267948966,
+    "fontSize" : 1.2,
+    "color" : null,
+    "boxed" : false,
+    "opaque" : true
+  }, {
+    "xWeight" : 0.5,
+    "yWeight" : 1.0,
+    "x" : 0.0,
+    "y" : 0.8776102748945678,
+    "text" : "SS<sub>1</sub>",
+    "angle" : 1.5707963267948966,
+    "fontSize" : 1.2,
+    "color" : null,
+    "boxed" : false,
+    "opaque" : false
+  }, {
+    "xWeight" : 0.0,
+    "yWeight" : 1.0,
+    "x" : 0.07692307692307687,
+    "y" : 0.46153846153846156,
+    "text" : "A",
+    "angle" : -0.0,
+    "fontSize" : 1.5,
+    "color" : null,
+    "boxed" : false,
+    "opaque" : false
+  }, {
+    "xWeight" : 1.0,
+    "yWeight" : 0.5,
+    "x" : 0.2992591974617629,
+    "y" : 0.10222240761471124,
+    "text" : "D",
+    "angle" : -0.0,
+    "fontSize" : 1.5,
+    "color" : null,
+    "boxed" : false,
+    "opaque" : false
+  }, {
+    "xWeight" : 1.0,
+    "yWeight" : 1.0,
+    "x" : 0.3748279772079339,
+    "y" : 0.0,
+    "text" : "GdGe<sub>2-x</sub>",
+    "angle" : 2.0344439357957027,
+    "fontSize" : 1.2,
+    "color" : null,
+    "boxed" : false,
+    "opaque" : false
+  }, {
+    "xWeight" : 1.0,
+    "yWeight" : 0.5,
+    "x" : 0.4023058893442715,
+    "y" : -0.004586612984182503,
+    "text" : "Gd<sub>2</sub>Ge<sub>3</sub>",
+    "angle" : 2.0344439357957027,
+    "fontSize" : 1.2,
+    "color" : null,
+    "boxed" : false,
+    "opaque" : true
+  }, {
+    "xWeight" : 1.0,
+    "yWeight" : 0.5,
+    "x" : 0.5,
+    "y" : 0.0,
+    "text" : "GdGe",
+    "angle" : 2.0344439357957027,
+    "fontSize" : 1.2,
+    "color" : null,
+    "boxed" : false,
+    "opaque" : false
+  }, {
+    "xWeight" : 1.0,
+    "yWeight" : 0.5,
+    "x" : 0.5555555555555556,
+    "y" : 0.0,
+    "text" : "Gd<sub>5</sub>Ge<sub>4</sub>",
+    "angle" : 2.0344439357957027,
+    "fontSize" : 1.2,
+    "color" : null,
+    "boxed" : false,
+    "opaque" : false
+  }, {
+    "xWeight" : 1.0,
+    "yWeight" : 0.5,
+    "x" : 0.6249999999999862,
+    "y" : 2.375877272697835E-14,
+    "text" : "Gd<sub>5</sub>Ge<sub>3</sub>",
+    "angle" : 2.0344439357957027,
+    "fontSize" : 1.2,
+    "color" : null,
+    "boxed" : false,
+    "opaque" : false
+  } ],
+  "arrows" : [ {
+    "x" : 0.23543506821349447,
+    "y" : 0.7886068584472707,
+    "size" : 0.0016,
+    "angle" : 3.2587042463986124,
+    "theta" : 3.2587042463986124,
+    "color" : null
+  } ],
+  "tieLines" : [ ],
+  "diagramComponents" : [ "Fe", null, "Ge", "Gd" ],
+  "originalFilename" : "C:\\eb\\workspace\\PEDEditor\\gov\\nist\\pededitor\\test\\PED_TERNARY.PNG",
+  "curves" : [ {
+    "shape" : "polyline",
+    "points" : [ {
+      "x" : 0.0,
+      "y" : 0.0
+    }, {
+      "x" : 0.0,
+      "y" : 1.0
+    }, {
+      "x" : 1.0,
+      "y" : 0.0
+    } ],
+    "color" : null,
+    "lineWidth" : 0.0016,
+    "closed" : true,
+    "lineStyle" : "SOLID",
+    "id" : 0
+  }, {
+    "shape" : "polyline",
+    "points" : [ {
+      "x" : 0.4,
+      "y" : 0.2
+    }, {
+      "x" : 0.2,
+      "y" : 0.4
+    }, {
+      "x" : 0.0,
+      "y" : 0.5
+    } ],
+    "color" : null,
+    "lineWidth" : 0.0016,
+    "closed" : false,
+    "lineStyle" : "SOLID",
+    "id" : 1
+  }, {
+    "shape" : "polyline",
+    "points" : [ {
+      "x" : 0.5,
+      "y" : 0.0
+    }, {
+      "x" : 0.0,
+      "y" : 1.0
+    } ],
+    "color" : null,
+    "lineWidth" : 0.0016,
+    "closed" : false,
+    "lineStyle" : "SOLID",
+    "id" : 2
+  }, {
+    "shape" : "polyline",
+    "points" : [ {
+      "x" : 0.10526315789473685,
+      "y" : 0.8947368421052632
+    }, {
+      "x" : 0.625,
+      "y" : 0.0
+    }, {
+      "x" : 0.20689655172413793,
+      "y" : 0.7931034482758621
+    } ],
+    "color" : null,
+    "lineWidth" : 0.0016,
+    "closed" : false,
+    "lineStyle" : "SOLID",
+    "id" : 3
+  }, {
+    "shape" : "polyline",
+    "points" : [ {
+      "x" : 0.25,
+      "y" : 0.75
+    }, {
+      "x" : 0.6249999999999991,
+      "y" : 1.4210854715202005E-15
+    }, {
+      "x" : 0.33333333333333337,
+      "y" : 0.6666666666666666
+    } ],
+    "color" : null,
+    "lineWidth" : 0.0016,
+    "closed" : false,
+    "lineStyle" : "SOLID",
+    "id" : 4
+  }, {
+    "shape" : "polyline",
+    "points" : [ {
+      "x" : 0.6249999999999952,
+      "y" : 9.379164112033323E-15
+    }, {
+      "x" : 0.0,
+      "y" : 1.0
+    }, {
+      "x" : 0.5555555555555556,
+      "y" : 0.0
+    }, {
+      "x" : 0.4,
+      "y" : 0.2
+    } ],
+    "color" : null,
+    "lineWidth" : 0.0016,
+    "closed" : false,
+    "lineStyle" : "SOLID",
+    "id" : 5
+  }, {
+    "shape" : "polyline",
+    "points" : [ {
+      "x" : 0.5,
+      "y" : 0.0
+    }, {
+      "x" : 0.2,
+      "y" : 0.4
+    }, {
+      "x" : 0.3999999999999999,
+      "y" : 0.0
+    } ],
+    "color" : null,
+    "lineWidth" : 0.0016,
+    "closed" : false,
+    "lineStyle" : "SOLID",
+    "id" : 6
+  }, {
+    "shape" : "polyline",
+    "points" : [ {
+      "x" : 0.0,
+      "y" : 0.75
+    }, {
+      "x" : 0.2,
+      "y" : 0.4
+    }, {
+      "x" : 0.0,
+      "y" : 1.0
+    } ],
+    "color" : null,
+    "lineWidth" : 0.0016,
+    "closed" : false,
+    "lineStyle" : "SOLID",
+    "id" : 7
+  }, {
+    "shape" : "polyline",
+    "points" : [ {
+      "x" : 0.0,
+      "y" : 0.3333333333333333
+    } ],
+    "color" : null,
+    "lineWidth" : 0.0016,
+    "closed" : false,
+    "lineStyle" : "SOLID",
+    "id" : 8
+  }, {
+    "shape" : "polyline",
+    "points" : [ {
+      "x" : 0.0,
+      "y" : 0.5454545454545455
+    } ],
+    "color" : null,
+    "lineWidth" : 0.0016,
+    "closed" : false,
+    "lineStyle" : "SOLID",
+    "id" : 9
+  }, {
+    "shape" : "polyline",
+    "points" : [ {
+      "x" : 0.0,
+      "y" : 0.8
+    }, {
+      "x" : 0.19999999999999987,
+      "y" : 0.4000000000000003
+    } ],
+    "color" : null,
+    "lineWidth" : 0.0016,
+    "closed" : false,
+    "lineStyle" : "SOLID",
+    "id" : 12
+  }, {
+    "shape" : "polyline",
+    "points" : [ {
+      "x" : 0.0,
+      "y" : 1.0
+    }, {
+      "x" : 0.0,
+      "y" : 0.8
+    } ],
+    "color" : null,
+    "lineWidth" : 0.0048,
+    "closed" : false,
+    "lineStyle" : "SOLID",
+    "id" : 13
+  }, {
+    "shape" : "polyline",
+    "points" : [ {
+      "x" : 0.19999999999999973,
+      "y" : 0.40000000000000036
+    } ],
+    "color" : null,
+    "lineWidth" : 0.0016,
+    "closed" : false,
+    "lineStyle" : "SOLID",
+    "id" : 14
+  }, {
+    "shape" : "polyline",
+    "points" : [ {
+      "x" : 0.4,
+      "y" : 0.2
+    } ],
+    "color" : null,
+    "lineWidth" : 0.0016,
+    "closed" : false,
+    "lineStyle" : "SOLID",
+    "id" : 15
+  }, {
+    "shape" : "polyline",
+    "points" : [ {
+      "x" : 0.10526315789473695,
+      "y" : 0.8947368421052629
+    } ],
+    "color" : null,
+    "lineWidth" : 0.0016,
+    "closed" : false,
+    "lineStyle" : "SOLID",
+    "id" : 16
+  }, {
+    "shape" : "polyline",
+    "points" : [ {
+      "x" : 0.20689655172413793,
+      "y" : 0.7931034482758622
+    } ],
+    "color" : null,
+    "lineWidth" : 0.0016,
+    "closed" : false,
+    "lineStyle" : "SOLID",
+    "id" : 17
+  }, {
+    "shape" : "polyline",
+    "points" : [ {
+      "x" : 0.25,
+      "y" : 0.75
+    } ],
+    "color" : null,
+    "lineWidth" : 0.0016,
+    "closed" : false,
+    "lineStyle" : "SOLID",
+    "id" : 18
+  }, {
+    "shape" : "polyline",
+    "points" : [ {
+      "x" : 0.33333333333333337,
+      "y" : 0.6666666666666666
+    } ],
+    "color" : null,
+    "lineWidth" : 0.0016,
+    "closed" : false,
+    "lineStyle" : "SOLID",
+    "id" : 19
+  }, {
+    "shape" : "polyline",
+    "points" : [ {
+      "x" : 0.6249999999999862,
+      "y" : 2.375877272697835E-14
+    } ],
+    "color" : null,
+    "lineWidth" : 0.0016,
+    "closed" : false,
+    "lineStyle" : "SOLID",
+    "id" : 20
+  }, {
+    "shape" : "polyline",
+    "points" : [ {
+      "x" : 0.5555555555555556,
+      "y" : 0.0
+    } ],
+    "color" : null,
+    "lineWidth" : 0.0016,
+    "closed" : false,
+    "lineStyle" : "SOLID",
+    "id" : 21
+  }, {
+    "shape" : "polyline",
+    "points" : [ {
+      "x" : 0.5,
+      "y" : 0.0
+    } ],
+    "color" : null,
+    "lineWidth" : 0.0016,
+    "closed" : false,
+    "lineStyle" : "SOLID",
+    "id" : 22
+  }, {
+    "shape" : "polyline",
+    "points" : [ {
+      "x" : 0.3999999999999999,
+      "y" : 0.0
+    } ],
+    "color" : null,
+    "lineWidth" : 0.0016,
+    "closed" : false,
+    "lineStyle" : "SOLID",
+    "id" : 23
+  }, {
+    "shape" : "polyline",
+    "points" : [ {
+      "x" : 0.0,
+      "y" : 0.5999999999999999
+    }, {
+      "x" : 0.0,
+      "y" : 0.6363636363636364
+    } ],
+    "color" : null,
+    "lineWidth" : 0.0048,
+    "closed" : false,
+    "lineStyle" : "SOLID",
+    "id" : 24
+  }, {
+    "shape" : "polyline",
+    "points" : [ {
+      "x" : 0.0,
+      "y" : 0.5999999999999999
+    }, {
+      "x" : 0.07692307692307693,
+      "y" : 0.46153846153846145
+    }, {
+      "x" : 0.0,
+      "y" : 0.3333333333333333
+    } ],
+    "color" : null,
+    "lineWidth" : 0.0016,
+    "closed" : false,
+    "lineStyle" : "SOLID",
+    "id" : 25
+  }, {
+    "shape" : "polyline",
+    "points" : [ {
+      "x" : 0.0,
+      "y" : 0.0
+    }, {
+      "x" : 0.07692307692307698,
+      "y" : 0.46153846153846134
+    }, {
+      "x" : 0.0,
+      "y" : 0.6363636363636362
+    } ],
+    "color" : null,
+    "lineWidth" : 0.0016,
+    "closed" : false,
+    "lineStyle" : "SOLID",
+    "id" : 26
+  }, {
+    "shape" : "polyline",
+    "points" : [ {
+      "x" : 0.07692307692307687,
+      "y" : 0.46153846153846156
+    } ],
+    "color" : null,
+    "lineWidth" : 0.0016,
+    "closed" : false,
+    "lineStyle" : "SOLID",
+    "id" : 27
+  }, {
+    "shape" : "polyline",
+    "points" : [ {
+      "x" : 0.0,
+      "y" : 0.5454545454545455
+    }, {
+      "x" : 0.07692307692307698,
+      "y" : 0.46153846153846134
+    }, {
+      "x" : 0.2857142857142857,
+      "y" : 0.1428571428571429
+    }, {
+      "x" : 0.3999999999999999,
+      "y" : 0.0
+    }, {
+      "x" : 0.3076923076923077,
+      "y" : 0.07692307692307693
+    }, {
+      "x" : 1.1102230246251565E-16,
+      "y" : 3.3306690738754696E-16
+    } ],
+    "color" : null,
+    "lineWidth" : 0.0016,
+    "closed" : false,
+    "lineStyle" : "SOLID",
+    "id" : 29
+  }, {
+    "shape" : "polyline",
+    "points" : [ {
+      "x" : 0.3076923076923077,
+      "y" : 0.07692307692307693
+    }, {
+      "x" : 0.2857142857142858,
+      "y" : 0.14285714285714268
+    } ],
+    "color" : null,
+    "lineWidth" : 0.0048,
+    "closed" : false,
+    "lineStyle" : "SOLID",
+    "id" : 30
+  }, {
+    "shape" : "polyline",
+    "points" : [ {
+      "x" : 0.0,
+      "y" : 0.6363636363636362
+    }, {
+      "x" : 0.19999999999999973,
+      "y" : 0.40000000000000036
+    }, {
+      "x" : 0.2857142857142857,
+      "y" : 0.1428571428571429
+    } ],
+    "color" : null,
+    "lineWidth" : 0.0016,
+    "closed" : false,
+    "lineStyle" : "SOLID",
+    "id" : 31
+  }, {
+    "shape" : "polyline",
+    "points" : [ {
+      "x" : 0.0,
+      "y" : 0.75
+    } ],
+    "color" : null,
+    "lineWidth" : 0.0016,
+    "closed" : false,
+    "lineStyle" : "SOLID",
+    "id" : 32
+  }, {
+    "shape" : "polyline",
+    "points" : [ {
+      "x" : 0.2857142857142857,
+      "y" : 0.1428571428571429
+    }, {
+      "x" : 2.3314683517128287E-15,
+      "y" : 7.771561172376096E-16
+    } ],
+    "color" : null,
+    "lineWidth" : 0.0016,
+    "closed" : false,
+    "lineStyle" : "SOLID",
+    "id" : 33
+  }, {
+    "shape" : "polyline",
+    "points" : [ {
+      "x" : 0.3748279772079339,
+      "y" : 0.0
+    }, {
+      "x" : 0.3076923076923077,
+      "y" : 0.07692307692307676
+    } ],
+    "color" : null,
+    "lineWidth" : 0.0016,
+    "closed" : false,
+    "lineStyle" : "SOLID",
+    "id" : 34
+  }, {
+    "shape" : "polyline",
+    "points" : [ {
+      "x" : 0.3748279772079339,
+      "y" : 0.0
+    } ],
+    "color" : null,
+    "lineWidth" : 0.0016,
+    "closed" : false,
+    "lineStyle" : "SOLID",
+    "id" : 35
+  }, {
+    "shape" : "polyline",
+    "points" : [ {
+      "x" : 0.0,
+      "y" : 0.5
+    } ],
+    "color" : null,
+    "lineWidth" : 0.0016,
+    "closed" : false,
+    "lineStyle" : "SOLID",
+    "id" : 36
+  }, {
+    "shape" : "polyline",
+    "points" : [ {
+      "x" : 0.26495490648728204,
+      "y" : 0.7848517347452242
+    }, {
+      "x" : 0.23543506821349447,
+      "y" : 0.7886068584472707
+    } ],
+    "color" : null,
+    "lineWidth" : 0.0016,
+    "closed" : false,
+    "lineStyle" : "SOLID",
+    "id" : 50
+  } ],
+  "axes" : [ {
+    "format" : {
+      "type" : "DecimalFormat",
+      "pattern" : "#0.0%"
+    },
+    "a" : -1.0,
+    "b" : -1.0,
+    "c" : 1.0,
+    "name" : "Ge",
+    "startName" : null,
+    "endName" : null,
+    "rulers" : [ ]
+  }, {
+    "format" : {
+      "type" : "DecimalFormat",
+      "pattern" : "#0.0%"
+    },
+    "a" : 1.0,
+    "b" : 0.0,
+    "c" : 0.0,
+    "name" : "Gd",
+    "startName" : null,
+    "endName" : null,
+    "rulers" : [ {
+      "startPoint" : {
+        "x" : 0.0,
+        "y" : 0.0
+      },
+      "endPoint" : {
+        "x" : 1.0,
+        "y" : 0.0
+      },
+      "fontSize" : 0.01951219512195122,
+      "lineWidth" : 0.0016,
+      "color" : null,
+      "labelAnchor" : "RIGHT",
+      "multiplier" : 100.0,
+      "textAngle" : 0.0,
+      "tickRight" : false,
+      "tickLeft" : true,
+      "maxBigTicks" : -1,
+      "tickPadding" : 3.0,
+      "bigTickDelta" : -1.0,
+      "tickDelta" : -1.0,
+      "startArrow" : false,
+      "endArrow" : false,
+      "suppressStartTick" : true,
+      "suppressStartLabel" : true,
+      "suppressEndTick" : true,
+      "suppressEndLabel" : true,
+      "tickType" : "V",
+      "drawSpine" : false,
+      "tickStart" : null,
+      "tickEnd" : null
+    } ]
+  }, {
+    "format" : {
+      "type" : "DecimalFormat",
+      "pattern" : "#0.0%"
+    },
+    "a" : 0.0,
+    "b" : 1.0,
+    "c" : 0.0,
+    "name" : "Fe",
+    "startName" : null,
+    "endName" : null,
+    "rulers" : [ {
+      "startPoint" : {
+        "x" : 0.0,
+        "y" : 0.0
+      },
+      "endPoint" : {
+        "x" : 0.0,
+        "y" : 1.0
+      },
+      "fontSize" : 0.01951219512195122,
+      "lineWidth" : 0.0016,
+      "color" : null,
+      "labelAnchor" : "LEFT",
+      "multiplier" : 100.0,
+      "textAngle" : 1.0471975511965976,
+      "tickRight" : true,
+      "tickLeft" : false,
+      "maxBigTicks" : -1,
+      "tickPadding" : 3.0,
+      "bigTickDelta" : -1.0,
+      "tickDelta" : -1.0,
+      "startArrow" : false,
+      "endArrow" : false,
+      "suppressStartTick" : true,
+      "suppressStartLabel" : true,
+      "suppressEndTick" : true,
+      "suppressEndLabel" : true,
+      "tickType" : "V",
+      "drawSpine" : false,
+      "tickStart" : null,
+      "tickEnd" : null
+    }, {
+      "startPoint" : {
+        "x" : 1.0,
+        "y" : 0.0
+      },
+      "endPoint" : {
+        "x" : 0.0,
+        "y" : 1.0
+      },
+      "fontSize" : 0.01951219512195122,
+      "lineWidth" : 0.0016,
+      "color" : null,
+      "labelAnchor" : "RIGHT",
+      "multiplier" : 100.0,
+      "textAngle" : 2.0943951023931953,
+      "tickRight" : false,
+      "tickLeft" : true,
+      "maxBigTicks" : -1,
+      "tickPadding" : 3.0,
+      "bigTickDelta" : -1.0,
+      "tickDelta" : -1.0,
+      "startArrow" : false,
+      "endArrow" : false,
+      "suppressStartTick" : true,
+      "suppressStartLabel" : true,
+      "suppressEndTick" : true,
+      "suppressEndLabel" : true,
+      "tickType" : "V",
+      "drawSpine" : false,
+      "tickStart" : null,
+      "tickEnd" : null
+    } ]
+  }, {
+    "format" : {
+      "type" : "DecimalFormat",
+      "pattern" : "#0.000"
+    },
+    "a" : 1.0,
+    "b" : 0.5,
+    "c" : 0.0,
+    "name" : "page X",
+    "startName" : null,
+    "endName" : null,
+    "rulers" : [ ]
+  }, {
+    "format" : {
+      "type" : "DecimalFormat",
+      "pattern" : "#0.000"
+    },
+    "a" : 0.0,
+    "b" : -0.8660254037844386,
+    "c" : 0.8660254037844386,
+    "name" : "page Y",
+    "startName" : null,
+    "endName" : null,
+    "rulers" : [ ]
+  } ]
+}

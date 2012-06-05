@@ -1,0 +1,1652 @@
+{
+  "tags" : [ ],
+  "originalToPrincipal" : null,
+  "principalToStandardPage" : {
+    "transform" : "RectangleTransform",
+    "input" : {
+      "x" : 0.0,
+      "y" : 400.00000000000006,
+      "width" : 1.0,
+      "height" : 1200.0
+    },
+    "output" : {
+      "x" : 0.0,
+      "y" : 1.0,
+      "width" : 1.32,
+      "height" : -1.0
+    }
+  },
+  "pageBounds" : {
+    "x" : -0.15,
+    "y" : -0.09,
+    "width" : 1.6199999999999999,
+    "height" : 1.1900000000000002
+  },
+  "diagramType" : "BINARY",
+  "labels" : [ {
+    "xWeight" : 0.0,
+    "yWeight" : 1.0,
+    "x" : 0.34700000000000003,
+    "y" : 1310.0,
+    "baselineXOffset" : 0.0,
+    "baselineYOffset" : 0.0,
+    "text" : "1310°C",
+    "angle" : 0.0,
+    "fontSize" : 1.25,
+    "color" : null,
+    "boxed" : false,
+    "opaque" : false
+  }, {
+    "xWeight" : 0.5,
+    "yWeight" : 0.5,
+    "x" : 0.0638888888888888,
+    "y" : 762.3809523809524,
+    "baselineXOffset" : 0.0,
+    "baselineYOffset" : 0.0,
+    "text" : "T<sub>e</sub>",
+    "angle" : 0.0,
+    "fontSize" : 1.25,
+    "color" : null,
+    "boxed" : false,
+    "opaque" : false
+  }, {
+    "xWeight" : 1.0,
+    "yWeight" : 0.5,
+    "x" : 0.0,
+    "y" : 1538.0,
+    "baselineXOffset" : 0.0,
+    "baselineYOffset" : 0.0,
+    "text" : "1538&deg;C ",
+    "angle" : 0.0,
+    "fontSize" : 1.25,
+    "color" : null,
+    "boxed" : false,
+    "opaque" : false
+  }, {
+    "xWeight" : 0.5,
+    "yWeight" : 0.5,
+    "x" : 0.667857142857143,
+    "y" : 1416.6666666666665,
+    "baselineXOffset" : 0.0,
+    "baselineYOffset" : 0.0,
+    "text" : "L",
+    "angle" : 0.0,
+    "fontSize" : 1.8,
+    "color" : null,
+    "boxed" : false,
+    "opaque" : false
+  }, {
+    "xWeight" : 0.5,
+    "yWeight" : 1.0,
+    "x" : 0.3644068442848932,
+    "y" : 1229.047619047619,
+    "baselineXOffset" : 0.0,
+    "baselineYOffset" : 0.0,
+    "text" : "1232",
+    "angle" : 0.0,
+    "fontSize" : 1.25,
+    "color" : null,
+    "boxed" : false,
+    "opaque" : false
+  }, {
+    "xWeight" : 0.5,
+    "yWeight" : 0.5,
+    "x" : 0.24563492063492098,
+    "y" : 888.0952380952384,
+    "baselineXOffset" : 0.0,
+    "baselineYOffset" : 0.0,
+    "text" : "FeAl",
+    "angle" : 0.0,
+    "fontSize" : 1.5,
+    "color" : null,
+    "boxed" : false,
+    "opaque" : false
+  }, {
+    "xWeight" : 0.5,
+    "yWeight" : 0.5,
+    "x" : 0.43928571428571406,
+    "y" : 1160.4761904761908,
+    "baselineXOffset" : 0.0,
+    "baselineYOffset" : 0.0,
+    "text" : "ε",
+    "angle" : 0.0,
+    "fontSize" : 1.5,
+    "color" : null,
+    "boxed" : false,
+    "opaque" : false
+  }, {
+    "xWeight" : 0.0,
+    "yWeight" : 0.5,
+    "x" : 0.039851475418464295,
+    "y" : 1100.4761904761906,
+    "baselineXOffset" : 0.0,
+    "baselineYOffset" : 0.0,
+    "text" : "(γFe)",
+    "angle" : 0.0,
+    "fontSize" : 1.5,
+    "color" : null,
+    "boxed" : false,
+    "opaque" : false
+  }, {
+    "xWeight" : 0.5,
+    "yWeight" : 0.5,
+    "x" : 0.495634920634921,
+    "y" : 320.4761904761904,
+    "baselineXOffset" : 0.0,
+    "baselineYOffset" : 0.0,
+    "text" : "Weight Percent Aluminum",
+    "angle" : 0.0,
+    "fontSize" : 1.8,
+    "color" : null,
+    "boxed" : false,
+    "opaque" : false
+  }, {
+    "xWeight" : 0.0,
+    "yWeight" : 0.0,
+    "x" : -0.018725198412697708,
+    "y" : 358.36309523809814,
+    "baselineXOffset" : 0.0,
+    "baselineYOffset" : 0.0,
+    "text" : "Fe",
+    "angle" : 0.0,
+    "fontSize" : 1.8,
+    "color" : null,
+    "boxed" : false,
+    "opaque" : false
+  }, {
+    "xWeight" : 0.5,
+    "yWeight" : 0.0,
+    "x" : 0.42700000000000005,
+    "y" : 1102.0,
+    "baselineXOffset" : 0.0,
+    "baselineYOffset" : 0.0,
+    "text" : "1102&deg;C",
+    "angle" : 0.0,
+    "fontSize" : 1.25,
+    "color" : null,
+    "boxed" : false,
+    "opaque" : false
+  }, {
+    "xWeight" : 0.5,
+    "yWeight" : 1.0,
+    "x" : 0.7891534391534389,
+    "y" : 655.5555555555557,
+    "baselineXOffset" : 0.0,
+    "baselineYOffset" : 0.0,
+    "text" : "655&deg;C",
+    "angle" : 0.0,
+    "fontSize" : 1.25,
+    "color" : null,
+    "boxed" : false,
+    "opaque" : false
+  }, {
+    "xWeight" : 0.0,
+    "yWeight" : 0.5,
+    "x" : 1.0,
+    "y" : 660.452,
+    "baselineXOffset" : 0.0,
+    "baselineYOffset" : 0.0,
+    "text" : "660.452&deg;C",
+    "angle" : 0.0,
+    "fontSize" : 1.25,
+    "color" : null,
+    "boxed" : false,
+    "opaque" : false
+  }, {
+    "xWeight" : 0.5,
+    "yWeight" : 1.0,
+    "x" : 0.49763083054989377,
+    "y" : 1657.7222748504848,
+    "baselineXOffset" : 0.0,
+    "baselineYOffset" : 0.0,
+    "text" : "Atomic Percent Aluminum",
+    "angle" : 0.0,
+    "fontSize" : 1.8,
+    "color" : null,
+    "boxed" : false,
+    "opaque" : false
+  }, {
+    "xWeight" : 0.0,
+    "yWeight" : 1.0,
+    "x" : 0.594,
+    "y" : 1160.0,
+    "baselineXOffset" : 0.0,
+    "baselineYOffset" : 0.0,
+    "text" : "~1160&deg;C",
+    "angle" : 0.0,
+    "fontSize" : 1.25,
+    "color" : null,
+    "boxed" : false,
+    "opaque" : false
+  }, {
+    "xWeight" : 0.5,
+    "yWeight" : 1.0,
+    "x" : 0.545,
+    "y" : 1169.0,
+    "baselineXOffset" : 0.0,
+    "baselineYOffset" : 0.0,
+    "text" : "1169&deg;C",
+    "angle" : 0.0,
+    "fontSize" : 1.25,
+    "color" : null,
+    "boxed" : false,
+    "opaque" : false
+  }, {
+    "xWeight" : 1.0,
+    "yWeight" : 0.0,
+    "x" : 0.0,
+    "y" : 1394.0,
+    "baselineXOffset" : 0.0,
+    "baselineYOffset" : 0.0,
+    "text" : "1394&deg;C",
+    "angle" : 0.0,
+    "fontSize" : 1.25,
+    "color" : null,
+    "boxed" : false,
+    "opaque" : false
+  }, {
+    "xWeight" : 0.5,
+    "yWeight" : 0.5,
+    "x" : 0.10654761904761902,
+    "y" : 1272.8125000000007,
+    "baselineXOffset" : 0.0,
+    "baselineYOffset" : 0.0,
+    "text" : "(αFe)",
+    "angle" : 0.0,
+    "fontSize" : 1.5,
+    "color" : null,
+    "boxed" : false,
+    "opaque" : false
+  }, {
+    "xWeight" : 1.0,
+    "yWeight" : 0.5,
+    "x" : -0.0012318305001231822,
+    "y" : 911.9999999999999,
+    "baselineXOffset" : 0.0,
+    "baselineYOffset" : 0.0,
+    "text" : "912&deg;C",
+    "angle" : 0.0,
+    "fontSize" : 1.25,
+    "color" : null,
+    "boxed" : false,
+    "opaque" : true
+  }, {
+    "xWeight" : 1.0,
+    "yWeight" : 0.5,
+    "x" : 0.958,
+    "y" : 500.0,
+    "baselineXOffset" : 0.0,
+    "baselineYOffset" : 0.0,
+    "text" : "(Al)",
+    "angle" : 0.0,
+    "fontSize" : 1.3333333333333333,
+    "color" : null,
+    "boxed" : false,
+    "opaque" : false
+  }, {
+    "xWeight" : 0.5,
+    "yWeight" : 0.0,
+    "x" : 0.632323897300856,
+    "y" : 749.5720868992756,
+    "baselineXOffset" : 0.0,
+    "baselineYOffset" : 0.0,
+    "text" : "FeAl<sub>3</sub>",
+    "angle" : 1.5707963267948966,
+    "fontSize" : 1.5,
+    "color" : null,
+    "boxed" : false,
+    "opaque" : false
+  }, {
+    "xWeight" : 0.5,
+    "yWeight" : 0.5,
+    "x" : 0.5500579951043854,
+    "y" : 765.3719552337061,
+    "baselineXOffset" : 0.0,
+    "baselineYOffset" : 0.0,
+    "text" : "Fe<sub>2</sub>Al<sub>5</sub>",
+    "angle" : 1.5707963267948966,
+    "fontSize" : 1.5,
+    "color" : null,
+    "boxed" : false,
+    "opaque" : false
+  }, {
+    "xWeight" : 0.5,
+    "yWeight" : 1.0,
+    "x" : 0.4673431583195798,
+    "y" : 749.572086899273,
+    "baselineXOffset" : 0.0,
+    "baselineYOffset" : 0.0,
+    "text" : "FeAl<sub>2</sub>",
+    "angle" : 1.5707963267948966,
+    "fontSize" : 1.5,
+    "color" : null,
+    "boxed" : false,
+    "opaque" : false
+  }, {
+    "xWeight" : 0.0,
+    "yWeight" : 0.5,
+    "x" : 0.197023809523809,
+    "y" : 485.0000000000001,
+    "baselineXOffset" : 0.0,
+    "baselineYOffset" : 0.0,
+    "text" : "Fe<sub>3</sub>Al",
+    "angle" : 0.0,
+    "fontSize" : 1.5,
+    "color" : null,
+    "boxed" : false,
+    "opaque" : false
+  }, {
+    "xWeight" : 1.0,
+    "yWeight" : 0.5,
+    "x" : -0.0,
+    "y" : 770.0,
+    "baselineXOffset" : 0.0,
+    "baselineYOffset" : 0.0,
+    "text" : "770&deg;C",
+    "angle" : 0.0,
+    "fontSize" : 1.25,
+    "color" : null,
+    "boxed" : false,
+    "opaque" : false
+  }, {
+    "xWeight" : 0.5,
+    "yWeight" : 1.0,
+    "x" : 0.49629127350320723,
+    "y" : 1220.714285714286,
+    "baselineXOffset" : 0.0,
+    "baselineYOffset" : 0.0,
+    "text" : "1165&deg;C",
+    "angle" : 0.0,
+    "fontSize" : 1.25,
+    "color" : null,
+    "boxed" : false,
+    "opaque" : false
+  }, {
+    "xWeight" : 0.5,
+    "yWeight" : 1.0,
+    "x" : -0.0798177339204041,
+    "y" : 999.5238095238092,
+    "baselineXOffset" : 0.0,
+    "baselineYOffset" : 0.0,
+    "text" : "Temperature °C",
+    "angle" : 1.5707963267948966,
+    "fontSize" : 1.8,
+    "color" : null,
+    "boxed" : false,
+    "opaque" : false
+  }, {
+    "xWeight" : 0.5,
+    "yWeight" : 0.5,
+    "x" : 1.01339285714286,
+    "y" : 311.07142857142867,
+    "baselineXOffset" : 0.0,
+    "baselineYOffset" : 0.0,
+    "text" : "Al",
+    "angle" : 0.0,
+    "fontSize" : 1.8,
+    "color" : null,
+    "boxed" : false,
+    "opaque" : false
+  } ],
+  "arrows" : [ {
+    "x" : 0.1601190476190476,
+    "y" : 485.0,
+    "size" : 0.0012,
+    "angle" : 3.141592653589793,
+    "color" : null
+  }, {
+    "x" : 1.0,
+    "y" : 500.0,
+    "size" : 0.0016,
+    "angle" : 0.008726646259971648,
+    "color" : null
+  }, {
+    "x" : 0.0038070288171369224,
+    "y" : 1100.278884078547,
+    "size" : 0.0016,
+    "angle" : 3.1682961911453065,
+    "color" : null
+  }, {
+    "x" : 0.6009413506135245,
+    "y" : 749.5720868992736,
+    "size" : 0.0012,
+    "angle" : 3.141592653589793,
+    "color" : null
+  }, {
+    "x" : 0.4909832940320736,
+    "y" : 749.5720868992722,
+    "size" : 0.0012,
+    "angle" : -0.0,
+    "color" : null
+  }, {
+    "x" : 0.4962956195481933,
+    "y" : 1165.0,
+    "size" : 0.0012,
+    "angle" : -1.570796216609968,
+    "color" : null
+  } ],
+  "tieLines" : [ ],
+  "diagramComponents" : [ null, null, "Fe", "Al" ],
+  "originalFilename" : null,
+  "fontName" : "DejaVu LGC Serif PED",
+  "keys" : {
+  },
+  "curves" : [ {
+    "shape" : "polyline",
+    "points" : [ {
+      "x" : 0.34700000000000003,
+      "y" : 1310.0
+    }, {
+      "x" : 0.28300000000000003,
+      "y" : 1310.0
+    } ],
+    "color" : null,
+    "lineWidth" : 0.0012,
+    "filled" : false,
+    "closed" : false,
+    "lineStyle" : "DASH",
+    "id" : 1
+  }, {
+    "shape" : "cubic spline",
+    "points" : [ {
+      "x" : 0.28300000000000003,
+      "y" : 1310.0
+    }, {
+      "x" : 0.2562499999999999,
+      "y" : 1290.3571428571431
+    }, {
+      "x" : 0.2260974702380953,
+      "y" : 1238.28125
+    }, {
+      "x" : 0.20803571428571432,
+      "y" : 1191.7857142857144
+    }, {
+      "x" : 0.1669642857142857,
+      "y" : 1026.7857142857144
+    }, {
+      "x" : 0.14017857142857146,
+      "y" : 827.5000000000002
+    }, {
+      "x" : 0.1294642857142857,
+      "y" : 673.2142857142858
+    }, {
+      "x" : 0.12946428571428562,
+      "y" : 664.6428571428573
+    } ],
+    "color" : null,
+    "lineWidth" : 0.0012,
+    "filled" : false,
+    "closed" : false,
+    "lineStyle" : "DASH",
+    "id" : 2
+  }, {
+    "shape" : "cubic spline",
+    "points" : [ {
+      "x" : 0.12946428571428556,
+      "y" : 664.6428571428573
+    }, {
+      "x" : 0.12658730158730158,
+      "y" : 610.0000000000002
+    }, {
+      "x" : 0.1226190476190476,
+      "y" : 548.0952380952382
+    }, {
+      "x" : 0.1186507936507936,
+      "y" : 470.0000000000001
+    }, {
+      "x" : 0.1151785714285714,
+      "y" : 400.00000000000017
+    } ],
+    "color" : null,
+    "lineWidth" : 0.0012,
+    "filled" : false,
+    "closed" : false,
+    "lineStyle" : "SOLID",
+    "id" : 3
+  }, {
+    "shape" : "polyline",
+    "points" : [ {
+      "x" : 0.14468005952380947,
+      "y" : 611.0714285714287
+    }, {
+      "x" : 0.1264544105816649,
+      "y" : 608.8849203110608
+    } ],
+    "color" : null,
+    "lineWidth" : 0.0012,
+    "filled" : false,
+    "closed" : false,
+    "lineStyle" : "DASH",
+    "id" : 50
+  }, {
+    "shape" : "cubic spline",
+    "points" : [ {
+      "x" : 0.1264544105816649,
+      "y" : 608.8849203110608
+    }, {
+      "x" : 0.11610863095238091,
+      "y" : 645.3571428571431
+    }, {
+      "x" : 0.09561011904761901,
+      "y" : 692.5000000000005
+    }, {
+      "x" : 0.07232142857142854,
+      "y" : 733.2142857142858
+    }, {
+      "x" : 0.03039434523809522,
+      "y" : 764.3303571428576
+    }, {
+      "x" : 0.013392857142857118,
+      "y" : 769.6428571428573
+    }, {
+      "x" : -0.0,
+      "y" : 770.0
+    } ],
+    "color" : null,
+    "lineWidth" : 0.0012,
+    "filled" : false,
+    "closed" : false,
+    "lineStyle" : "DASH",
+    "id" : 5
+  }, {
+    "shape" : "cubic spline",
+    "points" : [ {
+      "x" : 0.12946428571428562,
+      "y" : 664.6428571428573
+    }, {
+      "x" : 0.13924851190476192,
+      "y" : 636.7857142857144
+    }, {
+      "x" : 0.1446800595238094,
+      "y" : 611.0714285714284
+    }, {
+      "x" : 0.14693515866661191,
+      "y" : 576.6666666666674
+    }, {
+      "x" : 0.14642857142857138,
+      "y" : 548.0952380952382
+    }, {
+      "x" : 0.14302380527092723,
+      "y" : 509.81161718167846
+    }, {
+      "x" : 0.13849206349206347,
+      "y" : 470.0000000000001
+    }, {
+      "x" : 0.13624751984126984,
+      "y" : 434.76190476190504
+    }, {
+      "x" : 0.1345238095238095,
+      "y" : 400.00000000000017
+    } ],
+    "color" : null,
+    "lineWidth" : 0.0012,
+    "filled" : false,
+    "closed" : false,
+    "lineStyle" : "SOLID",
+    "id" : 7
+  }, {
+    "shape" : "cubic spline",
+    "points" : [ {
+      "x" : 0.13849206349206347,
+      "y" : 470.0000000000001
+    }, {
+      "x" : 0.1186507936507936,
+      "y" : 470.0000000000001
+    } ],
+    "color" : null,
+    "lineWidth" : 0.0012,
+    "filled" : false,
+    "closed" : false,
+    "lineStyle" : "DASH",
+    "id" : 8
+  }, {
+    "shape" : "cubic spline",
+    "points" : [ {
+      "x" : 0.1226190476190476,
+      "y" : 548.0952380952382
+    }, {
+      "x" : 0.14642857142857138,
+      "y" : 548.0952380952382
+    } ],
+    "color" : null,
+    "lineWidth" : 0.0012,
+    "filled" : false,
+    "closed" : false,
+    "lineStyle" : "DASH",
+    "id" : 9
+  }, {
+    "shape" : "cubic spline",
+    "points" : [ {
+      "x" : 0.14642857142857138,
+      "y" : 548.0952380952382
+    }, {
+      "x" : 0.15674603174603177,
+      "y" : 541.4285714285717
+    }, {
+      "x" : 0.17023809523809527,
+      "y" : 512.8571428571429
+    }, {
+      "x" : 0.178968253968254,
+      "y" : 484.28571428571456
+    }, {
+      "x" : 0.19246031746031747,
+      "y" : 426.1904761904764
+    }, {
+      "x" : 0.1980158730158729,
+      "y" : 400.00000000000017
+    } ],
+    "color" : null,
+    "lineWidth" : 0.0012,
+    "filled" : false,
+    "closed" : false,
+    "lineStyle" : "DASH",
+    "id" : 10
+  }, {
+    "shape" : "cubic spline",
+    "points" : [ {
+      "x" : 0.13849206349206347,
+      "y" : 470.0000000000001
+    }, {
+      "x" : 0.14960317460317454,
+      "y" : 400.00000000000017
+    } ],
+    "color" : null,
+    "lineWidth" : 0.0012,
+    "filled" : false,
+    "closed" : false,
+    "lineStyle" : "DOT_DASH",
+    "id" : 11
+  }, {
+    "shape" : "cubic spline",
+    "points" : [ {
+      "x" : 0.0,
+      "y" : 1538.0
+    }, {
+      "x" : 0.02341269841269842,
+      "y" : 1534.761904761905
+    }, {
+      "x" : 0.06468253968253965,
+      "y" : 1524.2857142857144
+    }, {
+      "x" : 0.1186507936507936,
+      "y" : 1502.3809523809525
+    }, {
+      "x" : 0.19563492063492063,
+      "y" : 1451.9047619047622
+    }, {
+      "x" : 0.27579365079365076,
+      "y" : 1384.2857142857147
+    }, {
+      "x" : 0.30595238095238103,
+      "y" : 1352.8571428571431
+    }, {
+      "x" : 0.3281746031746032,
+      "y" : 1330.0000000000002
+    }, {
+      "x" : 0.34700000000000003,
+      "y" : 1310.0
+    } ],
+    "color" : null,
+    "lineWidth" : 0.0012,
+    "filled" : false,
+    "closed" : false,
+    "lineStyle" : "SOLID",
+    "id" : 12
+  }, {
+    "shape" : "cubic spline",
+    "points" : [ {
+      "x" : 0.34700000000000003,
+      "y" : 1310.0
+    }, {
+      "x" : 0.37738095238095243,
+      "y" : 1277.6190476190477
+    }, {
+      "x" : 0.42700000000000005,
+      "y" : 1232.0
+    } ],
+    "color" : null,
+    "lineWidth" : 0.0012,
+    "filled" : false,
+    "closed" : false,
+    "lineStyle" : "SOLID",
+    "id" : 13
+  }, {
+    "shape" : "cubic spline",
+    "points" : [ {
+      "x" : 0.42700000000000005,
+      "y" : 1232.0
+    }, {
+      "x" : 0.4623015873015874,
+      "y" : 1203.3333333333335
+    }, {
+      "x" : 0.515,
+      "y" : 1165.0
+    } ],
+    "color" : null,
+    "lineWidth" : 0.0012,
+    "filled" : false,
+    "closed" : false,
+    "lineStyle" : "SOLID",
+    "id" : 14
+  }, {
+    "shape" : "cubic spline",
+    "points" : [ {
+      "x" : 0.42700000000000005,
+      "y" : 1232.0
+    }, {
+      "x" : 0.34600000000000003,
+      "y" : 1232.0
+    } ],
+    "color" : null,
+    "lineWidth" : 0.0012,
+    "filled" : false,
+    "closed" : false,
+    "lineStyle" : "SOLID",
+    "id" : 15
+  }, {
+    "shape" : "cubic spline",
+    "points" : [ {
+      "x" : 0.34600000000000003,
+      "y" : 1232.0
+    }, {
+      "x" : 0.3154761904761905,
+      "y" : 1269.0476190476193
+    }, {
+      "x" : 0.28300000000000003,
+      "y" : 1310.0
+    } ],
+    "color" : null,
+    "lineWidth" : 0.0012,
+    "filled" : false,
+    "closed" : false,
+    "lineStyle" : "SOLID",
+    "id" : 16
+  }, {
+    "shape" : "cubic spline",
+    "points" : [ {
+      "x" : 0.28300000000000003,
+      "y" : 1310.0
+    }, {
+      "x" : 0.2448412698412698,
+      "y" : 1355.714285714286
+    }, {
+      "x" : 0.20436507936507936,
+      "y" : 1403.3333333333335
+    }, {
+      "x" : 0.1527777777777777,
+      "y" : 1454.761904761905
+    }, {
+      "x" : 0.10357142857142854,
+      "y" : 1495.7142857142858
+    }, {
+      "x" : 0.06547619047619048,
+      "y" : 1520.4761904761906
+    }, {
+      "x" : 0.03214285714285712,
+      "y" : 1532.8571428571431
+    }, {
+      "x" : 0.012301587301587312,
+      "y" : 1533.809523809524
+    }, {
+      "x" : 0.0,
+      "y" : 1538.0
+    } ],
+    "color" : null,
+    "lineWidth" : 0.0012,
+    "filled" : false,
+    "closed" : false,
+    "lineStyle" : "SOLID",
+    "id" : 17
+  }, {
+    "shape" : "cubic spline",
+    "points" : [ {
+      "x" : 0.34600000000000003,
+      "y" : 1232.0
+    }, {
+      "x" : 0.374,
+      "y" : 1102.0
+    } ],
+    "color" : null,
+    "lineWidth" : 0.0012,
+    "filled" : false,
+    "closed" : false,
+    "lineStyle" : "DASH",
+    "id" : 18
+  }, {
+    "shape" : "cubic spline",
+    "points" : [ {
+      "x" : 0.374,
+      "y" : 1102.0
+    }, {
+      "x" : 0.36626984126984125,
+      "y" : 1052.857142857143
+    }, {
+      "x" : 0.3583333333333333,
+      "y" : 997.6190476190478
+    } ],
+    "color" : null,
+    "lineWidth" : 0.0012,
+    "filled" : false,
+    "closed" : false,
+    "lineStyle" : "DASH",
+    "id" : 19
+  }, {
+    "shape" : "cubic spline",
+    "points" : [ {
+      "x" : 0.3583333333333333,
+      "y" : 997.6190476190478
+    }, {
+      "x" : 0.351984126984127,
+      "y" : 950.0000000000001
+    }, {
+      "x" : 0.34325396825396826,
+      "y" : 872.8571428571429
+    }, {
+      "x" : 0.3289682539682539,
+      "y" : 709.0476190476193
+    }, {
+      "x" : 0.3202380952380952,
+      "y" : 549.047619047619
+    }, {
+      "x" : 0.3170634920634921,
+      "y" : 479.5238095238095
+    }, {
+      "x" : 0.3154761904761905,
+      "y" : 431.90476190476215
+    }, {
+      "x" : 0.3146825396825397,
+      "y" : 400.00000000000017
+    } ],
+    "color" : null,
+    "lineWidth" : 0.0012,
+    "filled" : false,
+    "closed" : false,
+    "lineStyle" : "SOLID",
+    "id" : 20
+  }, {
+    "shape" : "cubic spline",
+    "points" : [ {
+      "x" : 0.402,
+      "y" : 1232.0
+    }, {
+      "x" : 0.434,
+      "y" : 1102.0
+    } ],
+    "color" : null,
+    "lineWidth" : 0.0012,
+    "filled" : false,
+    "closed" : false,
+    "lineStyle" : "SOLID",
+    "id" : 21
+  }, {
+    "shape" : "cubic spline",
+    "points" : [ {
+      "x" : 0.47700000000000004,
+      "y" : 1165.0
+    }, {
+      "x" : 0.402,
+      "y" : 1232.0
+    } ],
+    "color" : null,
+    "lineWidth" : 0.0012,
+    "filled" : false,
+    "closed" : false,
+    "lineStyle" : "SOLID",
+    "id" : 22
+  }, {
+    "shape" : "cubic spline",
+    "points" : [ {
+      "x" : 0.47700000000000004,
+      "y" : 1165.0
+    }, {
+      "x" : 0.533,
+      "y" : 1165.0
+    } ],
+    "color" : null,
+    "lineWidth" : 0.0032,
+    "filled" : false,
+    "closed" : false,
+    "lineStyle" : "SOLID",
+    "id" : 23
+  }, {
+    "shape" : "polyline",
+    "points" : [ {
+      "x" : 0.49,
+      "y" : 1165.0
+    }, {
+      "x" : 0.486111111111111,
+      "y" : 1129.0476190476193
+    }, {
+      "x" : 0.485,
+      "y" : 1102.0
+    }, {
+      "x" : 0.48611111111111116,
+      "y" : 978.5714285714289
+    }, {
+      "x" : 0.4876984126984127,
+      "y" : 750.0
+    }, {
+      "x" : 0.4876984126984127,
+      "y" : 461.42857142857144
+    }, {
+      "x" : 0.4876984126984125,
+      "y" : 400.00000000000017
+    } ],
+    "color" : null,
+    "lineWidth" : 0.0012,
+    "filled" : false,
+    "closed" : false,
+    "lineStyle" : "DASH",
+    "id" : 24
+  }, {
+    "shape" : "polyline",
+    "points" : [ {
+      "x" : 0.4956349206349205,
+      "y" : 400.00000000000017
+    }, {
+      "x" : 0.49563492063492065,
+      "y" : 445.2380952380955
+    }, {
+      "x" : 0.49563492063492065,
+      "y" : 579.5238095238096
+    }, {
+      "x" : 0.4948412698412699,
+      "y" : 798.5714285714287
+    }, {
+      "x" : 0.4948412698412699,
+      "y" : 985.2380952380954
+    }, {
+      "x" : 0.4924603174603175,
+      "y" : 1106.1904761904764
+    }, {
+      "x" : 0.4916666666666666,
+      "y" : 1142.3809523809525
+    }, {
+      "x" : 0.49,
+      "y" : 1165.0
+    } ],
+    "color" : null,
+    "lineWidth" : 0.0012,
+    "filled" : false,
+    "closed" : false,
+    "lineStyle" : "DASH",
+    "id" : 25
+  }, {
+    "shape" : "polyline",
+    "points" : [ {
+      "x" : 0.485,
+      "y" : 1102.0
+    }, {
+      "x" : 0.374,
+      "y" : 1102.0
+    } ],
+    "color" : null,
+    "lineWidth" : 0.0012,
+    "filled" : false,
+    "closed" : false,
+    "lineStyle" : "SOLID",
+    "id" : 26
+  }, {
+    "shape" : "polyline",
+    "points" : [ {
+      "x" : 0.434,
+      "y" : 1102.0
+    }, {
+      "x" : 0.47700000000000004,
+      "y" : 1165.0
+    } ],
+    "color" : null,
+    "lineWidth" : 0.0012,
+    "filled" : false,
+    "closed" : false,
+    "lineStyle" : "SOLID",
+    "id" : 27
+  }, {
+    "shape" : "polyline",
+    "points" : [ {
+      "x" : 0.5337301587301586,
+      "y" : 400.00000000000017
+    }, {
+      "x" : 0.532936507936508,
+      "y" : 651.9047619047622
+    }, {
+      "x" : 0.5321428571428571,
+      "y" : 873.8095238095241
+    } ],
+    "color" : null,
+    "lineWidth" : 0.0012,
+    "filled" : false,
+    "closed" : false,
+    "lineStyle" : "DASH",
+    "id" : 28
+  }, {
+    "shape" : "polyline",
+    "points" : [ {
+      "x" : 0.533,
+      "y" : 1165.0
+    }, {
+      "x" : 0.532936507936508,
+      "y" : 1024.2857142857144
+    }, {
+      "x" : 0.5321428571428571,
+      "y" : 873.8095238095241
+    } ],
+    "color" : null,
+    "lineWidth" : 0.0012,
+    "filled" : false,
+    "closed" : false,
+    "lineStyle" : "SOLID",
+    "id" : 29
+  }, {
+    "shape" : "cubic spline",
+    "points" : [ {
+      "x" : 0.557,
+      "y" : 1160.0
+    }, {
+      "x" : 0.5567460317460318,
+      "y" : 1137.6190476190477
+    }, {
+      "x" : 0.5599206349206349,
+      "y" : 1055.7142857142858
+    }, {
+      "x" : 0.5646825396825397,
+      "y" : 941.4285714285716
+    }, {
+      "x" : 0.5654761904761904,
+      "y" : 877.6190476190478
+    } ],
+    "color" : null,
+    "lineWidth" : 0.0012,
+    "filled" : false,
+    "closed" : false,
+    "lineStyle" : "SOLID",
+    "id" : 30
+  }, {
+    "shape" : "cubic spline",
+    "points" : [ {
+      "x" : 0.5654761904761904,
+      "y" : 877.6190476190478
+    }, {
+      "x" : 0.567063492063492,
+      "y" : 832.857142857143
+    }, {
+      "x" : 0.5678571428571428,
+      "y" : 743.3333333333335
+    }, {
+      "x" : 0.5678571428571428,
+      "y" : 596.6666666666667
+    }, {
+      "x" : 0.5654761904761904,
+      "y" : 494.7619047619049
+    }, {
+      "x" : 0.5630952380952381,
+      "y" : 433.80952380952397
+    }, {
+      "x" : 0.5615079365079365,
+      "y" : 400.00000000000017
+    } ],
+    "color" : null,
+    "lineWidth" : 0.0012,
+    "filled" : false,
+    "closed" : false,
+    "lineStyle" : "DASH",
+    "id" : 31
+  }, {
+    "shape" : "cubic spline",
+    "points" : [ {
+      "x" : 0.557,
+      "y" : 1160.0
+    }, {
+      "x" : 0.544,
+      "y" : 1169.0
+    }, {
+      "x" : 0.5376984126984127,
+      "y" : 1166.1904761904764
+    }, {
+      "x" : 0.533,
+      "y" : 1165.0
+    } ],
+    "color" : null,
+    "lineWidth" : 0.0012,
+    "filled" : false,
+    "closed" : false,
+    "lineStyle" : "SOLID",
+    "id" : 32
+  }, {
+    "shape" : "cubic spline",
+    "points" : [ {
+      "x" : 0.594,
+      "y" : 1160.0
+    }, {
+      "x" : 0.6281746031746032,
+      "y" : 1155.7142857142858
+    }, {
+      "x" : 0.6654761904761906,
+      "y" : 1146.1904761904764
+    }, {
+      "x" : 0.7202380952380952,
+      "y" : 1119.5238095238096
+    }, {
+      "x" : 0.790079365079365,
+      "y" : 1055.7142857142858
+    }, {
+      "x" : 0.859920634920635,
+      "y" : 957.6190476190479
+    }, {
+      "x" : 0.9289682539682539,
+      "y" : 813.8095238095241
+    }, {
+      "x" : 0.9670634920634922,
+      "y" : 698.5714285714289
+    }, {
+      "x" : 0.978968253968254,
+      "y" : 655.7142857142862
+    } ],
+    "color" : null,
+    "lineWidth" : 0.0012,
+    "filled" : false,
+    "closed" : false,
+    "lineStyle" : "SOLID",
+    "id" : 33
+  }, {
+    "shape" : "cubic spline",
+    "points" : [ {
+      "x" : 1.0,
+      "y" : 655.0
+    }, {
+      "x" : 0.614,
+      "y" : 655.0
+    } ],
+    "color" : null,
+    "lineWidth" : 0.0032,
+    "filled" : false,
+    "closed" : false,
+    "lineStyle" : "SOLID",
+    "id" : 34
+  }, {
+    "shape" : "cubic spline",
+    "points" : [ {
+      "x" : 0.978968253968254,
+      "y" : 655.7142857142862
+    }, {
+      "x" : 0.9923280423280423,
+      "y" : 658.7301587301588
+    }, {
+      "x" : 1.0,
+      "y" : 660.452
+    } ],
+    "color" : null,
+    "lineWidth" : 0.0012,
+    "filled" : false,
+    "closed" : false,
+    "lineStyle" : "SOLID",
+    "id" : 35
+  }, {
+    "shape" : "cubic spline",
+    "points" : [ {
+      "x" : 0.594,
+      "y" : 1160.0
+    }, {
+      "x" : 0.5928571428571427,
+      "y" : 1141.9047619047622
+    }, {
+      "x" : 0.5902116402116403,
+      "y" : 1079.0476190476193
+    }, {
+      "x" : 0.5859788359788362,
+      "y" : 952.6984126984128
+    }, {
+      "x" : 0.5854497354497354,
+      "y" : 879.047619047619
+    } ],
+    "color" : null,
+    "lineWidth" : 0.0012,
+    "filled" : false,
+    "closed" : false,
+    "lineStyle" : "SOLID",
+    "id" : 36
+  }, {
+    "shape" : "cubic spline",
+    "points" : [ {
+      "x" : 0.5854497354497354,
+      "y" : 879.047619047619
+    }, {
+      "x" : 0.584920634920635,
+      "y" : 826.984126984127
+    }, {
+      "x" : 0.5843915343915345,
+      "y" : 722.2222222222224
+    }, {
+      "x" : 0.5854497354497354,
+      "y" : 566.6666666666667
+    }, {
+      "x" : 0.5859788359788362,
+      "y" : 449.84126984127
+    }, {
+      "x" : 0.5870370370370371,
+      "y" : 400.00000000000017
+    } ],
+    "color" : null,
+    "lineWidth" : 0.0012,
+    "filled" : false,
+    "closed" : false,
+    "lineStyle" : "DASH",
+    "id" : 37
+  }, {
+    "shape" : "cubic spline",
+    "points" : [ {
+      "x" : 0.594,
+      "y" : 1160.0
+    }, {
+      "x" : 0.5976190476190476,
+      "y" : 1138.7301587301588
+    }, {
+      "x" : 0.6023809523809525,
+      "y" : 1070.793650793651
+    }, {
+      "x" : 0.6060846560846561,
+      "y" : 1011.7460317460318
+    }, {
+      "x" : 0.6071428571428571,
+      "y" : 978.7301587301589
+    } ],
+    "color" : null,
+    "lineWidth" : 0.0012,
+    "filled" : false,
+    "closed" : false,
+    "lineStyle" : "SOLID",
+    "id" : 38
+  }, {
+    "shape" : "cubic spline",
+    "points" : [ {
+      "x" : 0.6082010582010581,
+      "y" : 400.00000000000017
+    }, {
+      "x" : 0.6092592592592593,
+      "y" : 437.1428571428572
+    }, {
+      "x" : 0.6108465608465607,
+      "y" : 507.6190476190477
+    }, {
+      "x" : 0.6121785020159001,
+      "y" : 572.1331784746321
+    }, {
+      "x" : 0.614,
+      "y" : 655.0
+    }, {
+      "x" : 0.6140395437143403,
+      "y" : 715.8730158730158
+    }, {
+      "x" : 0.6124522421270386,
+      "y" : 793.3333333333333
+    }, {
+      "x" : 0.6116763767213312,
+      "y" : 838.6407888919746
+    }, {
+      "x" : 0.6103174603174603,
+      "y" : 886.0317460317463
+    }, {
+      "x" : 0.6092592592592593,
+      "y" : 952.6984126984128
+    }, {
+      "x" : 0.6071428571428571,
+      "y" : 978.7301587301589
+    } ],
+    "color" : null,
+    "lineWidth" : 0.0012,
+    "filled" : false,
+    "closed" : false,
+    "lineStyle" : "DASH",
+    "id" : 39
+  }, {
+    "shape" : "cubic spline",
+    "points" : [ {
+      "x" : 0.0,
+      "y" : 912.0
+    }, {
+      "x" : 0.007738095238095219,
+      "y" : 969.2857142857144
+    }, {
+      "x" : 0.011309523809523795,
+      "y" : 1022.1428571428573
+    }, {
+      "x" : 0.0125,
+      "y" : 1105.0000000000002
+    }, {
+      "x" : 0.0125,
+      "y" : 1147.8571428571431
+    }, {
+      "x" : 0.011309523809523795,
+      "y" : 1240.7142857142858
+    }, {
+      "x" : 0.005357142857142847,
+      "y" : 1352.1428571428573
+    }, {
+      "x" : 0.0,
+      "y" : 1394.0
+    } ],
+    "color" : null,
+    "lineWidth" : 0.0032,
+    "filled" : false,
+    "closed" : false,
+    "lineStyle" : "SOLID",
+    "id" : 40
+  }, {
+    "shape" : "polyline",
+    "points" : [ {
+      "x" : 0.958,
+      "y" : 500.0
+    }, {
+      "x" : 1.0,
+      "y" : 500.0
+    } ],
+    "color" : null,
+    "lineWidth" : 0.0012,
+    "filled" : false,
+    "closed" : false,
+    "lineStyle" : "SOLID",
+    "id" : 41
+  }, {
+    "shape" : "polyline",
+    "points" : [ {
+      "x" : 0.6323238973008559,
+      "y" : 749.5720868992761
+    }, {
+      "x" : 0.6009413506135245,
+      "y" : 749.5720868992736
+    } ],
+    "color" : null,
+    "lineWidth" : 0.0012,
+    "filled" : false,
+    "closed" : false,
+    "lineStyle" : "SOLID",
+    "id" : 42
+  }, {
+    "shape" : "polyline",
+    "points" : [ {
+      "x" : 0.4909832940320736,
+      "y" : 749.5720868992722
+    }, {
+      "x" : 0.4591141907051375,
+      "y" : 749.5720868992742
+    } ],
+    "color" : null,
+    "lineWidth" : 0.0012,
+    "filled" : false,
+    "closed" : false,
+    "lineStyle" : "SOLID",
+    "id" : 43
+  }, {
+    "shape" : "polyline",
+    "points" : [ {
+      "x" : 0.1970238095238095,
+      "y" : 485.0000000000001
+    }, {
+      "x" : 0.1601190476190476,
+      "y" : 485.0000000000001
+    } ],
+    "color" : null,
+    "lineWidth" : 0.0012,
+    "filled" : false,
+    "closed" : false,
+    "lineStyle" : "SOLID",
+    "id" : 44
+  }, {
+    "shape" : "polyline",
+    "points" : [ {
+      "x" : 0.49629127350320723,
+      "y" : 1220.714285714286
+    }, {
+      "x" : 0.4962956195481933,
+      "y" : 1165.0
+    } ],
+    "color" : null,
+    "lineWidth" : 0.0012,
+    "filled" : false,
+    "closed" : false,
+    "lineStyle" : "SOLID",
+    "id" : 45
+  }, {
+    "shape" : "polyline",
+    "points" : [ {
+      "x" : 0.0038070288171369224,
+      "y" : 1100.278884078547
+    }, {
+      "x" : 0.039851475418464295,
+      "y" : 1100.4761904761906
+    } ],
+    "color" : null,
+    "lineWidth" : 0.0012,
+    "filled" : false,
+    "closed" : false,
+    "lineStyle" : "SOLID",
+    "id" : 46
+  }, {
+    "shape" : "polyline",
+    "points" : [ {
+      "x" : 1.0,
+      "y" : 660.452
+    }, {
+      "x" : 1.0,
+      "y" : 400.0
+    } ],
+    "color" : null,
+    "lineWidth" : 0.0032,
+    "filled" : false,
+    "closed" : false,
+    "lineStyle" : "SOLID",
+    "id" : 47
+  }, {
+    "shape" : "cubic spline",
+    "points" : [ {
+      "x" : 0.515,
+      "y" : 1165.0
+    }, {
+      "x" : 0.5271005747040244,
+      "y" : 1166.8188096221793
+    }, {
+      "x" : 0.544,
+      "y" : 1169.0
+    }, {
+      "x" : 0.5627610809530478,
+      "y" : 1166.9508560653767
+    }, {
+      "x" : 0.594,
+      "y" : 1160.0
+    } ],
+    "color" : null,
+    "lineWidth" : 0.0012,
+    "filled" : false,
+    "closed" : false,
+    "lineStyle" : "SOLID",
+    "id" : 48
+  }, {
+    "shape" : "polyline",
+    "points" : [ {
+      "x" : 0.557,
+      "y" : 1160.0
+    }, {
+      "x" : 0.594,
+      "y" : 1160.0
+    } ],
+    "color" : null,
+    "lineWidth" : 0.0032,
+    "filled" : false,
+    "closed" : false,
+    "lineStyle" : "SOLID",
+    "id" : 49
+  } ],
+  "axes" : [ {
+    "format" : {
+      "type" : "DecimalFormat",
+      "pattern" : "#0.0%"
+    },
+    "a" : 1.0,
+    "b" : 0.0,
+    "c" : 0.0,
+    "name" : "X",
+    "startName" : null,
+    "endName" : null,
+    "rulers" : [ {
+      "startPoint" : {
+        "x" : 0.0,
+        "y" : 400.0
+      },
+      "endPoint" : {
+        "x" : 1.0,
+        "y" : 400.0
+      },
+      "fontSize" : 0.02,
+      "lineWidth" : 0.0016,
+      "color" : null,
+      "labelAnchor" : "RIGHT",
+      "multiplier" : 100.0,
+      "textAngle" : 0.0,
+      "tickRight" : true,
+      "tickLeft" : false,
+      "maxBigTicks" : -1,
+      "tickPadding" : 3.0,
+      "bigTickDelta" : "NaN",
+      "tickDelta" : "NaN",
+      "startArrow" : false,
+      "endArrow" : false,
+      "suppressStartTick" : false,
+      "suppressStartLabel" : false,
+      "suppressEndTick" : false,
+      "suppressEndLabel" : false,
+      "tickType" : "NORMAL",
+      "drawSpine" : true,
+      "tickStart" : null,
+      "tickEnd" : null
+    }, {
+      "startPoint" : {
+        "x" : 0.0,
+        "y" : 1600.0
+      },
+      "endPoint" : {
+        "x" : 1.0,
+        "y" : 1600.0
+      },
+      "fontSize" : 0.02,
+      "lineWidth" : 0.0016,
+      "color" : null,
+      "labelAnchor" : "NONE",
+      "multiplier" : 100.0,
+      "textAngle" : 0.0,
+      "tickRight" : true,
+      "tickLeft" : false,
+      "maxBigTicks" : -1,
+      "tickPadding" : 3.0,
+      "bigTickDelta" : "NaN",
+      "tickDelta" : "NaN",
+      "startArrow" : false,
+      "endArrow" : false,
+      "suppressStartTick" : false,
+      "suppressStartLabel" : false,
+      "suppressEndTick" : false,
+      "suppressEndLabel" : false,
+      "tickType" : "NORMAL",
+      "drawSpine" : true,
+      "tickStart" : null,
+      "tickEnd" : null
+    } ]
+  }, {
+    "format" : {
+      "type" : "DecimalFormat",
+      "pattern" : "#0.0"
+    },
+    "a" : 0.0,
+    "b" : 1.0,
+    "c" : 0.0,
+    "name" : "Y",
+    "startName" : null,
+    "endName" : null,
+    "rulers" : [ {
+      "startPoint" : {
+        "x" : 0.0,
+        "y" : 400.0
+      },
+      "endPoint" : {
+        "x" : 0.0,
+        "y" : 1600.0
+      },
+      "fontSize" : 0.02,
+      "lineWidth" : 0.0016,
+      "color" : null,
+      "labelAnchor" : "LEFT",
+      "multiplier" : 1.0,
+      "textAngle" : 1.5707963267948966,
+      "tickRight" : false,
+      "tickLeft" : true,
+      "maxBigTicks" : -1,
+      "tickPadding" : 3.0,
+      "bigTickDelta" : "NaN",
+      "tickDelta" : "NaN",
+      "startArrow" : false,
+      "endArrow" : false,
+      "suppressStartTick" : false,
+      "suppressStartLabel" : false,
+      "suppressEndTick" : false,
+      "suppressEndLabel" : false,
+      "tickType" : "NORMAL",
+      "drawSpine" : true,
+      "tickStart" : null,
+      "tickEnd" : null
+    }, {
+      "startPoint" : {
+        "x" : 1.0,
+        "y" : 400.0
+      },
+      "endPoint" : {
+        "x" : 1.0,
+        "y" : 1600.0
+      },
+      "fontSize" : 0.02,
+      "lineWidth" : 0.0016,
+      "color" : null,
+      "labelAnchor" : "NONE",
+      "multiplier" : 1.0,
+      "textAngle" : 1.5707963267948966,
+      "tickRight" : true,
+      "tickLeft" : false,
+      "maxBigTicks" : -1,
+      "tickPadding" : 3.0,
+      "bigTickDelta" : "NaN",
+      "tickDelta" : "NaN",
+      "startArrow" : false,
+      "endArrow" : false,
+      "suppressStartTick" : false,
+      "suppressStartLabel" : false,
+      "suppressEndTick" : false,
+      "suppressEndLabel" : false,
+      "tickType" : "NORMAL",
+      "drawSpine" : true,
+      "tickStart" : null,
+      "tickEnd" : null
+    } ]
+  }, {
+    "format" : {
+      "type" : "DecimalFormat",
+      "pattern" : "#0.000"
+    },
+    "a" : 0.7,
+    "b" : 0.0,
+    "c" : 0.15,
+    "name" : "page X",
+    "startName" : null,
+    "endName" : null,
+    "rulers" : [ ]
+  }, {
+    "format" : {
+      "type" : "DecimalFormat",
+      "pattern" : "#0.000"
+    },
+    "a" : 0.0,
+    "b" : -5.833333333333333E-4,
+    "c" : 1.0833333333333333,
+    "name" : "page Y",
+    "startName" : null,
+    "endName" : null,
+    "rulers" : [ ]
+  } ]
+}

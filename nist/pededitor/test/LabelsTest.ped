@@ -1,0 +1,619 @@
+{
+  "tags" : [ ],
+  "originalToPrincipal" : null,
+  "principalToStandardPage" : {
+    "transform" : "RectangleTransform",
+    "input" : {
+      "x" : 0.0,
+      "y" : 0.0,
+      "width" : 1.0,
+      "height" : 1.0
+    },
+    "output" : {
+      "x" : 0.0,
+      "y" : 1.0,
+      "width" : 1.0,
+      "height" : -1.0
+    }
+  },
+  "pageBounds" : {
+    "x" : -0.0,
+    "y" : -0.0,
+    "width" : 1.0,
+    "height" : 1.0
+  },
+  "diagramType" : "OTHER",
+  "labels" : [ {
+    "xWeight" : 0.5,
+    "yWeight" : 0.0,
+    "x" : 0.5,
+    "y" : 1.0,
+    "baselineXOffset" : 0.0,
+    "baselineYOffset" : 0.0,
+    "text" : "Labels Test",
+    "angle" : -0.0,
+    "fontSize" : 2.0,
+    "color" : null,
+    "boxed" : true,
+    "opaque" : false
+  }, {
+    "xWeight" : 0.5,
+    "yWeight" : 0.0,
+    "x" : 0.4967303673558292,
+    "y" : 0.6951395513433578,
+    "baselineXOffset" : 0.0,
+    "baselineYOffset" : 0.0,
+    "text" : "Upside down",
+    "angle" : -3.141592653589793,
+    "fontSize" : 1.0,
+    "color" : null,
+    "boxed" : true,
+    "opaque" : false
+  }, {
+    "xWeight" : 0.0,
+    "yWeight" : 0.0,
+    "x" : 0.477218172233878,
+    "y" : 0.4593671936197805,
+    "baselineXOffset" : 0.0,
+    "baselineYOffset" : 0.0,
+    "text" : "Northwest",
+    "angle" : -0.0,
+    "fontSize" : 2.0,
+    "color" : null,
+    "boxed" : true,
+    "opaque" : false
+  }, {
+    "xWeight" : 1.0,
+    "yWeight" : 1.0,
+    "x" : 0.260958009632252,
+    "y" : 0.3813184131319757,
+    "baselineXOffset" : 0.0,
+    "baselineYOffset" : 0.0,
+    "text" : "Southeast",
+    "angle" : -1.5707963267948966,
+    "fontSize" : 2.5,
+    "color" : null,
+    "boxed" : true,
+    "opaque" : false
+  }, {
+    "xWeight" : 0.5,
+    "yWeight" : 0.5,
+    "x" : 0.6606381258554028,
+    "y" : 0.5819544667371899,
+    "baselineXOffset" : 0.0,
+    "baselineYOffset" : 0.0,
+    "text" : "C⁺C⁻C<sub>2</sub>C<sub>3</sub>C<sub>4</sub>C<sub>5</sub>C<sub>6</sub>Ã○●◉□■△▲✕⇌∇",
+    "angle" : -0.0,
+    "fontSize" : 1.6,
+    "color" : null,
+    "boxed" : true,
+    "opaque" : false
+  }, {
+    "xWeight" : 0.5,
+    "yWeight" : 0.0,
+    "x" : 0.5520149202013577,
+    "y" : 0.32928589280677234,
+    "baselineXOffset" : 0.0,
+    "baselineYOffset" : 0.0,
+    "text" : "St. Paul,<br>Fall.<br>thing<br>spring<br>fall",
+    "angle" : -0.0,
+    "fontSize" : 1.5,
+    "color" : null,
+    "boxed" : true,
+    "opaque" : false
+  }, {
+    "xWeight" : 0.5,
+    "yWeight" : 0.5,
+    "x" : 0.5064864649168048,
+    "y" : 0.8593671936197805,
+    "baselineXOffset" : 0.0,
+    "baselineYOffset" : 0.0,
+    "text" : "The cat in the hat said, \"Run, Spot, run!\" See Spot run.",
+    "angle" : -0.0,
+    "fontSize" : 1.6,
+    "color" : null,
+    "boxed" : true,
+    "opaque" : false
+  }, {
+    "xWeight" : 1.0,
+    "yWeight" : 1.0,
+    "x" : 0.8544539445916016,
+    "y" : 0.26587125866043093,
+    "baselineXOffset" : 0.0,
+    "baselineYOffset" : 0.0,
+    "text" : "Southeast",
+    "angle" : 0.7853981633974483,
+    "fontSize" : 3.0,
+    "color" : null,
+    "boxed" : true,
+    "opaque" : false
+  }, {
+    "xWeight" : 1.0,
+    "yWeight" : 1.0,
+    "x" : 0.23006370068916257,
+    "y" : 0.7016436163840082,
+    "baselineXOffset" : 0.0,
+    "baselineYOffset" : 0.0,
+    "text" : "m",
+    "angle" : -0.0,
+    "fontSize" : 3.0,
+    "color" : null,
+    "boxed" : true,
+    "opaque" : false
+  }, {
+    "xWeight" : 1.0,
+    "yWeight" : 1.0,
+    "x" : 0.6185116851476343,
+    "y" : 0.6559604837583157,
+    "baselineXOffset" : 0.0,
+    "baselineYOffset" : 0.0,
+    "text" : "p",
+    "angle" : -0.0,
+    "fontSize" : 4.0,
+    "color" : null,
+    "boxed" : true,
+    "opaque" : false
+  }, {
+    "xWeight" : 0.5,
+    "yWeight" : 0.5,
+    "x" : 0.5018503962082186,
+    "y" : 0.06373099914061853,
+    "baselineXOffset" : 0.0,
+    "baselineYOffset" : 0.0,
+    "text" : "E=Mc<sup>2</sup>",
+    "angle" : 0.0,
+    "fontSize" : 2.0,
+    "color" : null,
+    "boxed" : true,
+    "opaque" : false
+  }, {
+    "xWeight" : 0.5,
+    "yWeight" : 0.5,
+    "x" : 0.40417597760356744,
+    "y" : 0.1753589061173627,
+    "baselineXOffset" : 0.0,
+    "baselineYOffset" : 0.0,
+    "text" : "H<sub>2</sub>O",
+    "angle" : 0.0,
+    "fontSize" : 2.0,
+    "color" : null,
+    "boxed" : true,
+    "opaque" : false
+  }, {
+    "xWeight" : 0.5,
+    "yWeight" : 0.5,
+    "x" : 0.6560799608517642,
+    "y" : 0.3748143480913252,
+    "baselineXOffset" : 0.0,
+    "baselineYOffset" : 0.0,
+    "text" : "○",
+    "angle" : 0.0,
+    "fontSize" : 2.0,
+    "color" : null,
+    "boxed" : false,
+    "opaque" : false
+  }, {
+    "xWeight" : 0.5,
+    "yWeight" : 0.5,
+    "x" : 0.7048604486566422,
+    "y" : 0.3748143480913252,
+    "baselineXOffset" : 0.0,
+    "baselineYOffset" : 0.0,
+    "text" : "◉",
+    "angle" : 0.0,
+    "fontSize" : 2.0,
+    "color" : null,
+    "boxed" : false,
+    "opaque" : false
+  }, {
+    "xWeight" : 0.5,
+    "yWeight" : 0.5,
+    "x" : 0.7503889039411951,
+    "y" : 0.3748143480913252,
+    "baselineXOffset" : 0.0,
+    "baselineYOffset" : 0.0,
+    "text" : "□",
+    "angle" : 0.0,
+    "fontSize" : 2.0,
+    "color" : null,
+    "boxed" : false,
+    "opaque" : false
+  }, {
+    "xWeight" : 0.5,
+    "yWeight" : 0.5,
+    "x" : 0.787787277924935,
+    "y" : 0.3748143480913252,
+    "baselineXOffset" : 0.0,
+    "baselineYOffset" : 0.0,
+    "text" : "△",
+    "angle" : 0.0,
+    "fontSize" : 2.0,
+    "color" : null,
+    "boxed" : false,
+    "opaque" : false
+  }, {
+    "xWeight" : 1.0,
+    "yWeight" : 0.5,
+    "x" : 0.42780662611935494,
+    "y" : 0.2925682084429442,
+    "baselineXOffset" : 0.0,
+    "baselineYOffset" : 0.0,
+    "text" : "There once was a man from St. Paul<br>who fell in a spring in the Fall<br>'Twould have been a sad thing<br>had he died in the spring,<br>but he didn't; he died in the fall.",
+    "angle" : 0.0,
+    "fontSize" : 1.0,
+    "color" : null,
+    "boxed" : true,
+    "opaque" : false
+  }, {
+    "xWeight" : 0.0,
+    "yWeight" : 0.0,
+    "x" : 0.6330671249678674,
+    "y" : 0.805273776675314,
+    "baselineXOffset" : 0.0,
+    "baselineYOffset" : 0.0,
+    "text" : "Two",
+    "angle" : 0.0,
+    "fontSize" : 1.5,
+    "color" : null,
+    "boxed" : true,
+    "opaque" : false
+  }, {
+    "xWeight" : 0.0,
+    "yWeight" : 0.0,
+    "x" : 0.6329070786217226,
+    "y" : 0.769204245754477,
+    "baselineXOffset" : 0.0,
+    "baselineYOffset" : 0.0,
+    "text" : "Lines",
+    "angle" : 0.0,
+    "fontSize" : 1.5,
+    "color" : null,
+    "boxed" : true,
+    "opaque" : false
+  }, {
+    "xWeight" : 0.0,
+    "yWeight" : 0.0,
+    "x" : 0.7240779039576151,
+    "y" : 0.805672575888834,
+    "baselineXOffset" : 0.0,
+    "baselineYOffset" : 0.0,
+    "text" : "Two<br>Lines",
+    "angle" : 0.0,
+    "fontSize" : 1.5,
+    "color" : null,
+    "boxed" : true,
+    "opaque" : false
+  }, {
+    "xWeight" : 0.5,
+    "yWeight" : 0.5,
+    "x" : 0.33193442215169905,
+    "y" : 0.7912137259964491,
+    "baselineXOffset" : 0.0,
+    "baselineYOffset" : 0.0,
+    "text" : "<i>italic</i>",
+    "angle" : 0.0,
+    "fontSize" : 1.4000000000000001,
+    "color" : null,
+    "boxed" : true,
+    "opaque" : false
+  }, {
+    "xWeight" : 0.5,
+    "yWeight" : 0.5,
+    "x" : 0.3263788665961435,
+    "y" : 0.7486211334038565,
+    "baselineXOffset" : 0.0,
+    "baselineYOffset" : 0.0,
+    "text" : "<b>bold</b>",
+    "angle" : 0.0,
+    "fontSize" : 1.0,
+    "color" : null,
+    "boxed" : true,
+    "opaque" : false
+  }, {
+    "xWeight" : 0.5,
+    "yWeight" : 0.5,
+    "x" : 0.4365640517813287,
+    "y" : 0.7865840963668195,
+    "baselineXOffset" : 0.0,
+    "baselineYOffset" : 0.0,
+    "text" : "<u>under</u>",
+    "angle" : 0.0,
+    "fontSize" : 1.0,
+    "color" : null,
+    "boxed" : true,
+    "opaque" : false
+  }, {
+    "xWeight" : 0.5,
+    "yWeight" : 0.5,
+    "x" : 0.8206572529414596,
+    "y" : 0.3748143480913252,
+    "baselineXOffset" : 0.0,
+    "baselineYOffset" : 0.0,
+    "text" : "◇",
+    "angle" : 0.0,
+    "fontSize" : 2.0,
+    "color" : null,
+    "boxed" : false,
+    "opaque" : false
+  }, {
+    "xWeight" : 0.5,
+    "yWeight" : 0.5,
+    "x" : 0.8540214790767702,
+    "y" : 0.3748143480913252,
+    "baselineXOffset" : 0.0,
+    "baselineYOffset" : 0.0,
+    "text" : "◆",
+    "angle" : 0.0,
+    "fontSize" : 2.0,
+    "color" : null,
+    "boxed" : false,
+    "opaque" : false
+  }, {
+    "xWeight" : 0.5,
+    "yWeight" : 0.5,
+    "x" : 0.8864589211527665,
+    "y" : 0.3748143480913252,
+    "baselineXOffset" : 0.0,
+    "baselineYOffset" : 0.0,
+    "text" : "▽",
+    "angle" : 0.0,
+    "fontSize" : 2.0,
+    "color" : null,
+    "boxed" : false,
+    "opaque" : false
+  }, {
+    "xWeight" : 0.5,
+    "yWeight" : 0.5,
+    "x" : 0.9188963632287628,
+    "y" : 0.3748143480913252,
+    "baselineXOffset" : 0.0,
+    "baselineYOffset" : 0.0,
+    "text" : "◓",
+    "angle" : 0.0,
+    "fontSize" : 2.0,
+    "color" : null,
+    "boxed" : false,
+    "opaque" : false
+  }, {
+    "xWeight" : 0.5,
+    "yWeight" : 0.5,
+    "x" : 0.1617710177623333,
+    "y" : 0.5471720716685611,
+    "baselineXOffset" : 0.0,
+    "baselineYOffset" : 0.0,
+    "text" : "a|b<br>c|d",
+    "angle" : 0.0,
+    "fontSize" : 2.0,
+    "color" : null,
+    "boxed" : false,
+    "opaque" : false
+  } ],
+  "arrows" : [ ],
+  "tieLines" : [ ],
+  "diagramComponents" : [ null, null, null, null ],
+  "originalFilename" : null,
+  "fontName" : "DejaVu LGC Serif PED",
+  "keys" : {
+  },
+  "curves" : [ {
+    "shape" : "polyline",
+    "points" : [ {
+      "x" : 0.4983563836159918,
+      "y" : 0.6967655676035204
+    } ],
+    "color" : null,
+    "lineWidth" : 0.0016,
+    "filled" : false,
+    "closed" : false,
+    "lineStyle" : "SOLID",
+    "id" : 15
+  }, {
+    "shape" : "polyline",
+    "points" : [ {
+      "x" : 0.477218172233878,
+      "y" : 0.4593671936197805
+    } ],
+    "color" : null,
+    "lineWidth" : 0.0016,
+    "filled" : false,
+    "closed" : false,
+    "lineStyle" : "SOLID",
+    "id" : 16
+  }, {
+    "shape" : "polyline",
+    "points" : [ {
+      "x" : 0.260958009632252,
+      "y" : 0.3813184131319757
+    } ],
+    "color" : null,
+    "lineWidth" : 0.0016,
+    "filled" : false,
+    "closed" : false,
+    "lineStyle" : "SOLID",
+    "id" : 17
+  }, {
+    "shape" : "polyline",
+    "points" : [ {
+      "x" : 0.5,
+      "y" : 1.0
+    } ],
+    "color" : null,
+    "lineWidth" : 0.0016,
+    "filled" : false,
+    "closed" : false,
+    "lineStyle" : "SOLID",
+    "id" : 18
+  }, {
+    "shape" : "polyline",
+    "points" : [ {
+      "x" : 0.8544539445916016,
+      "y" : 0.26587125866043093
+    } ],
+    "color" : null,
+    "lineWidth" : 0.0032,
+    "filled" : false,
+    "closed" : false,
+    "lineStyle" : "SOLID",
+    "id" : 19
+  }, {
+    "shape" : "polyline",
+    "points" : [ {
+      "x" : 0.23006370068916257,
+      "y" : 0.7016436163840082
+    } ],
+    "color" : null,
+    "lineWidth" : 0.0032,
+    "filled" : false,
+    "closed" : false,
+    "lineStyle" : "SOLID",
+    "id" : 20
+  }, {
+    "shape" : "polyline",
+    "points" : [ {
+      "x" : 0.6185116851476343,
+      "y" : 0.6559604837583157
+    } ],
+    "color" : null,
+    "lineWidth" : 0.0032,
+    "filled" : false,
+    "closed" : false,
+    "lineStyle" : "SOLID",
+    "id" : 21
+  }, {
+    "shape" : "polyline",
+    "points" : [ {
+      "x" : 0.6105515055672114,
+      "y" : 0.3748143480913252
+    }, {
+      "x" : 0.9650230502826584,
+      "y" : 0.3748143480913252
+    } ],
+    "color" : null,
+    "lineWidth" : 0.0024,
+    "filled" : false,
+    "closed" : false,
+    "lineStyle" : "SOLID",
+    "id" : 22
+  }, {
+    "shape" : "polyline",
+    "points" : [ {
+      "x" : 0.42780662611935494,
+      "y" : 0.2925682084429442
+    } ],
+    "color" : null,
+    "lineWidth" : 0.0024,
+    "filled" : false,
+    "closed" : false,
+    "lineStyle" : "SOLID",
+    "id" : 23
+  }, {
+    "shape" : "polyline",
+    "points" : [ {
+      "x" : 0.787787277924935,
+      "y" : 0.3748143480913252
+    }, {
+      "x" : 0.7883620241151953,
+      "y" : 0.48512634797782794
+    } ],
+    "color" : null,
+    "lineWidth" : 0.0024,
+    "filled" : false,
+    "closed" : false,
+    "lineStyle" : "SOLID",
+    "id" : 24
+  }, {
+    "shape" : "polyline",
+    "points" : [ {
+      "x" : 0.7503889039411951,
+      "y" : 0.3748143480913252
+    }, {
+      "x" : 0.7502224892314744,
+      "y" : 0.4916379758848046
+    } ],
+    "color" : null,
+    "lineWidth" : 0.0024,
+    "filled" : false,
+    "closed" : false,
+    "lineStyle" : "SOLID",
+    "id" : 25
+  }, {
+    "shape" : "polyline",
+    "points" : [ {
+      "x" : 0.7048604486566422,
+      "y" : 0.3748143480913252
+    }, {
+      "x" : 0.7046410938826372,
+      "y" : 0.3083821619313163
+    } ],
+    "color" : null,
+    "lineWidth" : 0.0024,
+    "filled" : false,
+    "closed" : false,
+    "lineStyle" : "SOLID",
+    "id" : 26
+  }, {
+    "shape" : "polyline",
+    "points" : [ {
+      "x" : 0.6560799608517642,
+      "y" : 0.3748143480913252
+    }, {
+      "x" : 0.6562690008593814,
+      "y" : 0.3083821619313163
+    } ],
+    "color" : null,
+    "lineWidth" : 0.0024,
+    "filled" : false,
+    "closed" : false,
+    "lineStyle" : "SOLID",
+    "id" : 27
+  } ],
+  "axes" : [ {
+    "format" : {
+      "type" : "DecimalFormat",
+      "pattern" : "#0.000"
+    },
+    "a" : 1.0,
+    "b" : 0.0,
+    "c" : 0.0,
+    "name" : "X",
+    "startName" : null,
+    "endName" : null,
+    "rulers" : [ ]
+  }, {
+    "format" : {
+      "type" : "DecimalFormat",
+      "pattern" : "#0.000"
+    },
+    "a" : 0.0,
+    "b" : 1.0,
+    "c" : 0.0,
+    "name" : "Y",
+    "startName" : null,
+    "endName" : null,
+    "rulers" : [ ]
+  }, {
+    "format" : {
+      "type" : "DecimalFormat",
+      "pattern" : "#0.000"
+    },
+    "a" : 1.0,
+    "b" : 0.0,
+    "c" : 0.0,
+    "name" : "page X",
+    "startName" : null,
+    "endName" : null,
+    "rulers" : [ ]
+  }, {
+    "format" : {
+      "type" : "DecimalFormat",
+      "pattern" : "#0.000"
+    },
+    "a" : 0.0,
+    "b" : -1.0,
+    "c" : 1.0,
+    "name" : "page Y",
+    "startName" : null,
+    "endName" : null,
+    "rulers" : [ ]
+  } ]
+}
