@@ -21,15 +21,6 @@ abstract public class Axis {
         always. */
     public Object name = null;
 
-    /** Name of the axis starting point, if it has one. For example,
-        this could be the formula for the pure compound at the extreme
-        end of a phase equilibria diagram. */
-    public Object startName = null;
-    /** Name of the axis ending point, if it has one. For example,
-        this could be the formula for the pure compound at the extreme
-        end of a phase equilibria diagram. */
-    public Object endName = null;
-
     /** @param px the x value in principal coordinates
 
         @param py the y value in principal coordiantes
