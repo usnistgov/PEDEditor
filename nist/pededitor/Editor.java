@@ -98,10 +98,6 @@ import org.w3c.dom.DOMImplementation;
 // changing font sizes within a single label. (JavaFX might fix this
 // issue.)
 
-// TODO (Optional) Add font hints to make labels look better on screen
-// (Probably a bad idea: it would increase margin errors in the image
-// the digitizers look at)
-
 // TODO (optional) You can't make tie lines that cross the "endpoint"
 // of a closed curve. Fix this somehow.
 
@@ -113,17 +109,11 @@ import org.w3c.dom.DOMImplementation;
 // TODO (optional) For opaque and boxed labels, allow users to decide
 // how much extra white space to include on each side.
 
-// TODO (optional) As Chris suggested, allow input images to be
-// rotated (currently images must be within about 45 degrees of the
-// correct orientation). (MS-Paint can be used to resolve this kind of
-// issue, and Chris said it works well.)
-
-// TODO (optional) change the text dialog tab order to exclude the
-// buttons, or at least to insure that font size and text angle are
-// easy to get to. Also, maybe move "unicode code point" down to the
-// bottom of the left column with all the funny symbols.
-
 // TODO (optional) Make it easier to edit multiple-line labels.
+
+// TODO (Optional) Add font hints to make labels look better on screen
+// (Probably a bad idea: it would increase margin errors in the image
+// the digitizers look at)
 
 // TODO (optional) Set of commonly used shapes (equilateral triangle,
 // square, circle) whose scale and orientation are defined by
@@ -156,6 +146,12 @@ import org.w3c.dom.DOMImplementation;
 // presumably user-defined tags too.
 
 // TODO (optional) Point tags: pen-up, pen-down, temperature
+
+// TODO (optional) As Chris suggested, allow input images to be
+// rotated (currently images must be within about 45 degrees of the
+// correct orientation). This is hardly a show-stopper; you can load
+// the image in MS-Paint and rotate it in a minute, and Chris said
+// that was a good solution.
 
 // TODO (optional) Right-click popup menus. I don't think experienced
 // users (the digitizers) would make much use of them, but occasional
@@ -301,9 +297,17 @@ public class Editor implements CropEventListener, MouseListener,
         decorations, such as curves and labels, can be manipulated the
         same way. */
 
-    class VertexHandle implements DecorationHandle {
+    class VertexHandle implements ParameterizableHandle {
         CurveDecoration decoration;
         int vertexNo;
+
+        @Override public Parameterization2D getParameterization() {
+            return getDecoration().getParameterization();
+        }
+
+        @Override public double getT() {
+            return vertexNo;
+        }
 
         public CurveDecoration getDecoration() {
             return decoration;
@@ -1019,7 +1023,7 @@ public class Editor implements CropEventListener, MouseListener,
 
     static enum RulerHandleType { START, END };
 
-    class RulerHandle implements DecorationHandle {
+    class RulerHandle implements ParameterizableHandle {
         RulerDecoration decoration;
         /** Either end of the ruler may be used as a handle. */
         RulerHandleType handle; 
@@ -1034,6 +1038,14 @@ public class Editor implements CropEventListener, MouseListener,
         }
 
         LinearRuler getItem() { return getDecoration().getItem(); }
+
+        @Override public Parameterization2D getParameterization() {
+            return getDecoration().getParameterization();
+        }
+
+        @Override public double getT() {
+            return (handle == RulerHandleType.START) ? 0 : 1;
+        }
 
         @Override public boolean isEditable() { return true; }
 
@@ -1403,7 +1415,7 @@ public class Editor implements CropEventListener, MouseListener,
     // added, but whatever, this works.)
     ArrayList<PathAndT> tieLineCorners;
 
-    @JsonProperty protected String filename;
+    protected String filename;
 
     boolean saveNeeded = false;
 
@@ -1437,9 +1449,8 @@ public class Editor implements CropEventListener, MouseListener,
     }
 
     /** @return the filename that has been assigned to the PED format
-     * diagram output. */
-    @JsonIgnore
-    public String getFilename() {
+        diagram output. */
+    @JsonIgnore public String getFilename() {
         return filename;
     }
 
@@ -1720,6 +1731,63 @@ public class Editor implements CropEventListener, MouseListener,
 
         // The rest is handed in paintDiagram().
 
+        repaintEditFrame();
+    }
+
+    /** Reset the location of all vertices and labels that have the
+        same location as the selection to mprin.
+        
+        @param moveAll If true, all items located at the selected
+        point will move moved. If false, only the selected item itself
+        will be moved.
+    */
+    public void moveRegion() {
+        VertexHandle vhand = getVertexHandle();
+
+        if (vhand == null) {
+            JOptionPane.showMessageDialog
+                (editFrame,
+                 "Draw a curve to identify the boundary of the region to be moved.");
+            return;
+        }
+
+        if (mprin == null) {
+            JOptionPane.showMessageDialog
+                (editFrame,
+                 "<html><p>Move the mouse to the target location. "
+                 + "Use the 'R' shortcut key or keyboard menu controls "
+                 + "instead of selecting the menu item using the mouse."
+                 + "</p></html>"
+                 );
+            return;
+        }
+
+        if (mouseIsStuckAtSelection()) {
+            // Unstick the mouse so we're not just moving the mouse
+            // onto itself.
+            unstickMouse();
+        }
+
+        Shape region = vhand.getDecoration().getShape();
+        PathParam2D param = new PathParam2D(region);
+
+        Point2D.Double delta = Duh.aMinusB(mprin, selection.getLocation());
+
+        for (DecorationHandle hand: movementHandles()) {
+            Point2D prin = hand.getLocation();
+            Point2D page = principalToStandardPage.transform(prin);
+            if (!region.contains(page)) {
+                // Maybe the point is really close or on the border.
+                CurveDistanceRange cdr = param.distance(page, 1e-6, 1000);
+                if (cdr == null || cdr.distance > 1e-6) {
+                    continue; // No, it really is outside the region.
+                }
+            }
+
+            hand.move(new Point2D.Double(prin.getX() + delta.x, prin.getY() + delta.y));
+        }
+
+        saveNeeded = true;
         repaintEditFrame();
     }
 
@@ -2338,35 +2406,34 @@ public class Editor implements CropEventListener, MouseListener,
 
     /** Update the tangency information to display the slope at the
         given vertex. */
-    public void showTangent(VertexHandle vhand) {
-        int vertexNo = vhand.vertexNo;
-        CurveDecoration csel = vhand.getDecoration();
-        GeneralPolyline path = csel.getItem();
-        int vertexCnt = path.size();
-        if (vertexCnt == 1) {
-            return;
+    public void showTangent(ParameterizableHandle hand) {
+        Parameterization2D param = hand.getParameterization();
+        double t = hand.getT();
+
+        if (hand instanceof VertexHandle) {
+            VertexHandle vhand = (VertexHandle) hand;
+            CurveDecoration cdec = vhand.getDecoration();
+            GeneralPolyline path = cdec.getItem();
+            if (path instanceof Polyline) {
+
+                // For polylines, insertBeforeSelection gives a hint which
+                // of the two segments adjoining a vertex is the one whose
+                // derivative we want.
+                t = Parameterization2Ds.constrainToDomain
+                    (param, t + (insertBeforeSelection ? -0.5 : 0.5));
+            }
         }
 
-        Point2D.Double g = null;
-
-        Parameterization2D param = path.getParameterization();
-
-        double t = vertexNo;
-        if (path instanceof Polyline) {
-            // For polylines, insertBeforeSelection gives a hint which
-            // of the two segments adjoining a vertex is the one whose
-            // derivative we want.
-            t = Parameterization2Ds.constrainToDomain
-                (param, t + (insertBeforeSelection ? -0.5 : 0.5));
-        }
-
-        g = param.getDerivative(t);
+        Point2D.Double g = param.getDerivative(t);
         if (g != null) {
             principalToStandardPage.deltaTransform(g, g);
+            vertexInfo.setDerivative(g);
         }
 
-        vertexInfo.setDerivative(g);
-        vertexInfo.setLineWidth(csel.getLineWidth());
+        double w = hand.getDecoration().getLineWidth();
+        if (w != 0) {
+            vertexInfo.setLineWidth(w);
+        }
     }
 
     /** Return true if point p is the same as either the currently
@@ -3371,13 +3438,14 @@ public class Editor implements CropEventListener, MouseListener,
                     }
                 }
 
-                // matchCount == 0 is actually possible, because only
-                // the nearest handle is returned, and the selection
-                // might be a further one.
-
                 if (matchCount != 1) {
-                    // TODO fix
-                    // This should never happen.
+                    // I don't think this should ever happen.
+                    // nearestHandles() does not return everything (it
+                    // only returns the nearest handle for any given
+                    // decoration), but if the nearest handle on any
+                    // given decoration has changed, then
+                    // principalFocus should probably have been set to
+                    // null.
                     String error = "Selection " + selection + " equals "
                         + matchCount + " decorations.";
                     System.err.println(error);
@@ -3399,8 +3467,8 @@ public class Editor implements CropEventListener, MouseListener,
 
             selection = sel;
 
-            if (sel instanceof VertexHandle) {
-                showTangent((VertexHandle) sel);
+            if (sel instanceof ParameterizableHandle) {
+                showTangent((ParameterizableHandle) sel);
             }
 
             point = sel.getLocation();
@@ -3880,7 +3948,30 @@ public class Editor implements CropEventListener, MouseListener,
         // examined so far, as measured in standard page coordinates.
         double minDistSq = 0;
 
-        for (Point2D.Double point: keyPoints()) {
+        ArrayList<Point2D.Double> points = keyPoints();
+        if (selection != null && !mouseIsStuckAtSelection()) {
+            // Add the point on (the curve closest to pagePoint) that
+            // is closest to selection.
+
+            // In this case, we don't really need the precision that
+            // nearestCurve() provides -- all we need is a good guess
+            // for what the closest curve is -- but whatever...
+            DecorationDistance nc = nearestCurve(pagePoint);
+            if (nc != null) {
+                if (nc.decoration instanceof Parameterizable2D) {
+                    Parameterization2D param = ((Parameterizable2D) nc.decoration)
+                        .getParameterization();
+                    Point2D.Double selPage = principalToStandardPage
+                        .transform(selection.getLocation());
+                    CurveDistanceRange cdr = param.distance(selPage, 1e-6, 1000);
+                    if (cdr != null) {
+                        points.add(standardPageToPrincipal.transform(cdr.point));
+                    }
+                }
+            }
+        }
+        
+        for (Point2D.Double point: points) {
             principalToStandardPage.transform(point, xpoint2);
             double distSq = pagePoint.distanceSq(xpoint2);
             if (nearPoint == null || distSq < minDistSq) {
