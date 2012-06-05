@@ -36,6 +36,9 @@ public class EditFrame extends JFrame {
     protected JSeparator mnTagsSeparator = new JSeparator();
     protected JMenuItem mnRemoveTag = new JMenuItem("Delete");
     protected JMenu mnTags = new JMenu("Tags");
+    protected JSeparator mnVariablesSeparator = new JSeparator();
+    protected JMenuItem mnRemoveVariable = new JMenuItem("Delete");
+    protected JMenu mnVariables = new JMenu("Variables");
 
     // How to show the original scanned image in the background of
     // the new diagram:
@@ -274,6 +277,17 @@ public class EditFrame extends JFrame {
         @Override
             public void actionPerformed(ActionEvent e) {
             getParentEditor().removeTag(e.getActionCommand());
+        }
+    }
+
+    class RemoveVariableAction extends Action {
+        RemoveVariableAction(String variable) {
+            super(variable);
+        }
+
+        @Override
+            public void actionPerformed(ActionEvent e) {
+            getParentEditor().removeVariable(e.getActionCommand());
         }
     }
 
@@ -816,14 +830,6 @@ public class EditFrame extends JFrame {
                 });
 
             mnDecorations.add(new Action
-                        ("Add variable", KeyEvent.VK_V) {
-                    @Override
-                        public void actionPerformed(ActionEvent e) {
-                        getParentEditor().addVariable();
-                    }
-                });
-
-            mnDecorations.add(new Action
                         ("Add tie lines", KeyEvent.VK_I) {
                     @Override
                         public void actionPerformed(ActionEvent e) {
@@ -944,6 +950,23 @@ public class EditFrame extends JFrame {
             mnRemoveTag.setVisible(false);
         } else {
             mnTags.setEnabled(false);
+        }
+
+        if (editable) {
+            mnVariables.setMnemonic(KeyEvent.VK_V);
+            mnProperties.add(mnVariables);
+            mnVariables.add(new Action("Add", KeyEvent.VK_A) {
+                    @Override
+                        public void actionPerformed(ActionEvent e) {
+                        getParentEditor().addVariable();
+                    }
+                });
+            mnVariables.add(mnVariablesSeparator);
+            mnRemoveVariable.setEnabled(false);
+            mnVariables.add(mnRemoveVariable);
+
+            mnVariablesSeparator.setVisible(false);
+            mnRemoveVariable.setVisible(false);
         }
 
         if (mnProperties.getItemCount() > 0) {
@@ -1128,6 +1151,58 @@ public class EditFrame extends JFrame {
                     // Hide the separator and the list of tags.
                     mnTagsSeparator.setVisible(false);
                     mnRemoveTag.setVisible(false);
+                }
+                break;
+            }
+        }
+    }
+
+    /** This is not a public interface. It is an interface that Editor
+        uses to perform UI operations in support of an addVariable()
+        request. */
+    void addVariable(String variable) {
+        mnVariablesSeparator.setVisible(true);
+        int itemCount = mnVariables.getItemCount();
+        int itemsStart = itemCount;
+        for (int i = 0; i < itemCount; ++i) {
+            if (mnVariables.getItem(i) == mnRemoveVariable) {
+                itemsStart = i + 1;
+                break;
+            }
+        }
+
+        mnVariablesSeparator.setVisible(true);
+        mnRemoveVariable.setVisible(true);
+        for (int i = itemsStart; i <= itemCount; ++i) {
+            if (i == itemCount
+                || mnVariables.getItem(i).getText().compareToIgnoreCase(variable) > 0) {
+                mnVariables.insert(new RemoveVariableAction(variable), i);
+                break;
+            }
+        }
+    }
+
+    /** This is not a public interface. It is an interface that Editor
+        uses to perform UI operations in support of an addVariable()
+        request. */
+    void removeVariable(String variable) {
+        int itemCount = mnVariables.getItemCount();
+        int itemsStart = itemCount;
+        for (int i = 0; i < itemCount; ++i) {
+            if (mnVariables.getItem(i) == mnRemoveVariable) {
+                itemsStart = i + 1;
+                break;
+            }
+        }
+
+        for (int i = itemsStart; i <= itemCount; ++i) {
+            if (mnVariables.getItem(i).getText().equals(variable)) {
+                mnVariables.remove(i);
+
+                if (itemCount <= itemsStart + 1) {
+                    // Hide the separator and the list of variables.
+                    mnVariablesSeparator.setVisible(false);
+                    mnRemoveVariable.setVisible(false);
                 }
                 break;
             }

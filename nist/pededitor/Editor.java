@@ -63,6 +63,10 @@ import org.w3c.dom.DOMImplementation;
 // TODO (bug) The decorations are messed up in the label dialog in XP.
 // Check whether the same problem exists in Windows 7.
 
+// TODO (bug) List user-defined variables loaded from files in the
+// "delete" list (actually list everything except page X/page Y and
+// the ternary diagram variables).
+
 // TODO (mandatory, but not clear whose end -- mine or Prometheus' --
 // where it should happen) HTML-to-plaintext conversion. Users who
 // search for "H2SO4" find "H<sub>2</sub>SO<sub>4</sub>". An extra
@@ -130,14 +134,13 @@ import org.w3c.dom.DOMImplementation;
 
 // TODO (optional) Allow the diagram domain and range to be expanded.
 // Right now, you can expand the margins, change the aspect ratio, or
-// rescale the axes, but it is awkward to extend the temperature
-// scale, for example. The idea is that the four corners of the
-// diagram would be moved, while everything else would remain in
-// place, or perhaps point not within the diagram interior get
-// translated. But how do you handle the original image? Not a
-// problem; you leave it untouched. Instead, you change
-// principalToStandardPage and pageBounds. For example, when reducing
-// minX, also reduce every coordinate less than minX.
+// rescale the axes, but it is awkward to extend a partial ternary to
+// create a full ternary, for example. The 'move region' command is an
+// OK work-around, at least for binary diagrams.
+
+// TODO (optional) It should be easy to enable 'copy region' that is
+// analogous to 'move region'. Maybe the user should just be asked
+// whether to move a region or just a single curve.
 
 // TODO (optional) Resize all labels at once by a given factor. This
 // is more useful during conversion from GRUMP to PED fonts.
@@ -1629,6 +1632,26 @@ public class Editor implements CropEventListener, MouseListener,
         editFrame.removeTag(tag);
     }
 
+    public void removeVariable(String name) {
+        for (Axis axis: axes) {
+            if (axis.name.equals(name)) {
+                axes.remove(axis);
+                editFrame.removeVariable(name);
+                for (int i = 0; i < rulers.size(); ) {
+                    if (rulers.get(i).axis == axis) {
+                        rulers.remove(i);
+                    } else {
+                        ++i;
+                    }
+                }
+                repaintEditFrame();
+                saveNeeded = true;
+                return;
+            }
+        }
+        throw new IllegalStateException("Variable '" + name + "' + not found.");
+    }
+
     @JsonIgnore public void setSaveNeeded(boolean saveNeeded) {
         this.saveNeeded = saveNeeded;
     }
@@ -1768,6 +1791,7 @@ public class Editor implements CropEventListener, MouseListener,
             unstickMouse();
         }
 
+        GeneralPolyline path = vhand.getDecoration().getItem();
         Shape region = vhand.getDecoration().getShape();
         PathParam2D param = new PathParam2D(region);
 
@@ -1776,18 +1800,21 @@ public class Editor implements CropEventListener, MouseListener,
         for (DecorationHandle hand: movementHandles()) {
             Point2D prin = hand.getLocation();
             Point2D page = principalToStandardPage.transform(prin);
-            if (!region.contains(page)) {
-                // Maybe the point is really close or on the border.
+            boolean inside = path.isClosed() && region.contains(page);
+            if (!inside) {
+                // Check if the point is very close to the path
+                // border.
                 CurveDistanceRange cdr = param.distance(page, 1e-6, 1000);
-                if (cdr == null || cdr.distance > 1e-6) {
-                    continue; // No, it really is outside the region.
-                }
+                inside = cdr != null && cdr.distance <= 1e-6;
             }
 
-            hand.move(new Point2D.Double(prin.getX() + delta.x, prin.getY() + delta.y));
+            if (inside) {
+                hand.move(new Point2D.Double(prin.getX() + delta.x,
+                                             prin.getY() + delta.y));
+                saveNeeded = true;
+            }
         }
 
-        saveNeeded = true;
         repaintEditFrame();
     }
 
@@ -2770,9 +2797,9 @@ public class Editor implements CropEventListener, MouseListener,
         if (path == null || path.size() != 3) {
             JOptionPane.showMessageDialog
                 (editFrame,
-                 "Before you create a new axis,\n"
-                 + "you must select a curve\n"
-                 + "consisting of exactly three points.\n");
+                 "<html><p>To create a new variable, you must "
+                 + "first select a curve consisting of exactly three "
+                 + "points.</p></html>");
             return;
         }
 
@@ -2831,6 +2858,7 @@ public class Editor implements CropEventListener, MouseListener,
                      m.get(0,0), m.get(1,0), m.get(2,0));
                 axis.name = values[0];
                 axes.add(axis);
+                editFrame.addVariable((String) axis.name);
                 repaintEditFrame();
                 return;
             } catch (RuntimeException e) {
@@ -5781,6 +5809,7 @@ public class Editor implements CropEventListener, MouseListener,
             selections.add(point2);
         }
 
+        try {
         for (Point2D.Double p: selections) {
             principalToStandardPage.transform(p, p);
             Line2D.Double gridLine = nearestGridLine
@@ -5820,6 +5849,10 @@ public class Editor implements CropEventListener, MouseListener,
                 ap.position = AutoPositionType.CURVE;
                 newPage = nc.distance.point;
             }
+        }
+        } catch (Exception e) {
+            System.err.println(e);
+            System.exit(1);
         }
 
         double maxMovePixels = 50; // Maximum number of pixels to
