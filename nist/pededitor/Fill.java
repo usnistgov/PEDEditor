@@ -25,12 +25,14 @@ public class Fill {
     */
 
 
-    public static TexturePaint createHatch(double theta, double lineWidth, double density, boolean crosshatch) {
-        return createHatch(theta, lineWidth, density, crosshatch, CompositeStroke.getSolidLine());
+    public static TexturePaint createHatch(double theta, double lineWidth,
+                                           double density, boolean crosshatch) {
+        return createHatch(theta, density, crosshatch,
+                           new BasicStroke((float) lineWidth));
     }
 
-    public static TexturePaint createHatch(double theta, double lineWidth, double density, boolean crosshatch,
-                                           CompositeStroke stroke) {
+    public static TexturePaint createHatch(double theta, double density,
+                                           boolean crosshatch, BasicStroke stroke) {
         theta = normalizeTheta(theta);
         boolean invertY = (theta < 0);
         if (invertY) {
@@ -41,15 +43,25 @@ public class Fill {
             theta = Math.PI/2 - theta;
         }
 
-        Spec spec = createSpec(theta, lineWidth / density);
+        double dashLength = 0;
+        float[] dashArray = stroke.getDashArray();
+        if (dashArray != null) {
+            for (float segment: dashArray) {
+                dashLength += segment;
+            }
+        }
+
+        double lineWidth = stroke.getLineWidth();
+        Spec spec = createSpec(theta, lineWidth / density, dashLength);
         BufferedImage im = toBlank(spec, transposeXY);
         Graphics2D g = createGraphics(im);
+        g.setStroke(stroke);
 
         if (crosshatch) {
-            hatch(g, spec, stroke, lineWidth, transposeXY, false);
-            hatch(g, spec, stroke, lineWidth, transposeXY, true);
+            hatch(g, spec, transposeXY, false);
+            hatch(g, spec, transposeXY, true);
         } else {
-            hatch(g, spec, stroke, lineWidth, transposeXY, invertY);
+            hatch(g, spec, transposeXY, invertY);
         }
 
         return new TexturePaint(im, new Rectangle(0, 0, im.getWidth(), im.getHeight()));
@@ -83,57 +95,83 @@ public class Fill {
        radians. */
 
     static double normalizeTheta(double theta) {
-        theta -= Math.PI * Math.floor(0.5 + theta / Math.PI);
+        theta -= Math.PI * Math.round(theta / Math.PI);
         double piOver2 = Math.PI / 2;
         return (theta < -piOver2 || theta >= piOver2) ? -piOver2 : theta;
     }
 
-    /** @param theta Line angle. 0 means horizontal; PI/4 means a 45 degree descending angle.
+    /** Generate information about a suitable tile shape and line
+        pattern for this fill pattern.
 
-        @param lineWidth Line width in pixels.
+        @param theta Line angle. 0 means horizontal; PI/4 means a 45 degree descending angle.
+
+        @param dashLength The total length of the dash pattern in a
+        BasicStroke, or 0 for a solid line.
 
         @param distance Approximate distance in pixels between lines' centers.
     */
-    static Spec createSpec(double theta, double distance) {
+    static Spec createSpec(double theta, double distance, double dashLength) {
         /* Height approximately equals the distance between
            intersections of the hatch lines with the Y-axis. */
-        int height = (int) Math.floor(0.5 + distance / Math.cos(theta));
+        int height = (int) Math.round(distance / Math.cos(theta));
 
-        int maxWidth = (int) (100 + distance * 20);
+        int maxWidth = (int) (100 + distance * 20 + dashLength * 3);
 
         double slope = Math.tan(theta);
 
         if (slope * maxWidth < height / 2) {
             // Line is nearly horizontal; treat it as completely
             // horizontal
+            int len = Math.max(1, (int) Math.round(3 * dashLength));
             return new Spec
-                (new Dimension(1, height), 
-                 new Line2D.Double(0, 0.5, 1, 0.5),
+                (new Dimension(1, len), 
+                 new Line2D.Double(0, 0.5, len + dashLength/2, 0.5),
                  height);
         } else if (slope * maxWidth < height) {
             slope = height / maxWidth;
         }
 
-        int width = (int) (0.5 + height / slope);
+        int width = (int) Math.round(height / slope);
 
-        ContinuedFraction frac = ContinuedFraction.create(slope, 0.001, 0, maxWidth / 5);
-        if (frac != null) {
-            /* It's possible to arrange the dimensions so the hatch
-               lines tessellate nearly perfectly if the width is a
-               multiple of denominator. */
-            int den = (int) frac.denominator;
-            // Round width to the nearest whole multiple of den.
-            width = ((width + den/2) / den) * den;
+        /* It's really important to make the unit tile contain a
+         * roughly integral number of complete dash cycles. If
+         * dashLength is 0, then that isn't an issue, and it's nice to
+         * make the rise over the length of a unit tile be an integer,
+         * if possible. */
+        do {
+            if (dashLength > 0) {
+                // Adjust width to yield an even number of dash cycles.
+                double dashX = dashLength * Math.cos(theta);
+                double roundDash = dashX * Math.round(width / dashX);
+                if (roundDash >= 1 ) {
+                    width = (int) Math.round(roundDash);
+                    height = (int) Math.round(width * Math.tan(theta));
+                    break;
+                }
+            }
+            
+            ContinuedFraction frac = ContinuedFraction.create(slope, 0.001, 0, maxWidth / 5);
+            if (frac != null) {
+                /* It's possible to arrange the dimensions so the hatch
+                   lines tessellate nearly perfectly if the width is a
+                   multiple of denominator. */
+                int den = (int) frac.denominator;
+                // Round width to the nearest whole multiple of den.
+                width = ((width + den/2) / den) * den;
 
-            // Adjust height to correspond to width
-            height = (int) (slope * width + 0.5);
-        } else {
+                // Adjust height to correspond to width
+                height = (int) (slope * width + 0.5);
+                break;
+            }
+
             slope = (double) height / width;
-        }
-        
+        } while (false);
+
+        double overflow = width / 2;
         return new Spec
             (new Dimension(width, height),
-             new Line2D.Double(0, 0.5 - 0.5 * slope, width, 0.5 + (width - 0.5) * slope),
+             new Line2D.Double(-overflow, 0.5 - (0.5 + overflow) * slope,
+                               width + overflow, 0.5 + (width + overflow - 0.5) * slope),
              height);
     }
 
@@ -157,8 +195,8 @@ public class Fill {
         return g;
     }
 
-    static void hatch(Graphics2D g, Spec spec, CompositeStroke stroke,
-                      double lineWidth, boolean transpose, boolean invertY) {
+    static void hatch(Graphics2D g, Spec spec,
+    		boolean transpose, boolean invertY) {
         Line2D.Double bl = spec.line;
         int height = transpose ? spec.box.width : spec.box.height;
         for (int offset = -1; offset <= 1; ++offset) {
@@ -173,7 +211,7 @@ public class Fill {
                 line.y1 = height - line.y1;
                 line.y2 = height - line.y2;
             }
-            stroke.draw(g, line, lineWidth);
+            g.draw(line);
         }
     }
 }
