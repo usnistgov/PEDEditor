@@ -213,7 +213,7 @@ public abstract class GeneralPolyline implements Parameterizable2D {
             g.fill(path);
         } else {
             if (lineWidth == 0) {
-                throw new IllegalStateException("Zero line width");
+                return;
             }
             stroke.getStroke().draw(g, path, lineWidth);
         }
