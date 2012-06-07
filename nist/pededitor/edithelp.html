@@ -112,16 +112,15 @@ which case it is highlighted in magenta), then that item and every
 other item located at the same position will move along with the mouse
 pointer.</li>
 
-<li><p>Auto-position the mouse ('A') or auto-position the mouse and add
-the mouse's new location (shift+left-click).</p>
+<li><p>Auto-position the mouse ('A') or auto-position the mouse and
+add the mouse's new location (shift+left-click).</p>
 
 <p>Holding the shift key down while moving the mouse will reveal the
-auto-position location. The rules for auto-positioning get a bit
-complicated, but the program will look for any of the following that
-are close to the mouse position:</p>
+auto-position location. All of the following are candidates for
+auto-positioning:</p>
 
 <ul>
-<li><b>Key points</b>: if a key point is nearby, then it is selected in yellow.</li>
+<li><b>Key points</b>: Key points are highlighted in yellow.</li>
 
 <li><b>Curves and rulers</b>: If no key point is nearby but a curve or
 ruler is, then the nearest point on it is selected in orange.</li>
@@ -129,16 +128,13 @@ ruler is, then the nearest point on it is selected in orange.</li>
 <li><p><b>Grid lines</b>: If an item is selected, then for purposes of
 identifying key points and curves, the program behaves as if the
 diagram contains grid lines through the selection location (and
-through the secondary selection, if there is one). This makes it easy
-to use shift-left-button to draw vertical and horizontal segments.</p>
+through the secondary selection, if there is one).</p>
 
-<p>The following items are grid lines: vertical and horizontal lines;
-60- and 120-degree lines in ternary diagrams; and the lines of zero
-change of user-defined variables created using
-<code>P<u>r</u>operties/<u>V</u>ariables/<u>A</u>dd</code>. That means
-that you can define your own grid lines at arbitrary angles by
-defining dummy variables whose value equals 0 at two points offset
-from each other along that angle.</p>
+<p>Grid line orientations include the following: horizontal and
+vertical lines; the angle value indicated in the "Tangent" window; in
+ternary diagrams, lines that are at 60 and 120 degrees; and lines of
+zero change of user-defined variables created using
+<code>P<u>r</u>operties/<u>V</u>ariables/<u>A</u>dd</code>.</p>
 
 <p>Sometimes the auto-positioning is attracted by a key point that
 prevents you from clicking on a curve or grid line instead. You may
