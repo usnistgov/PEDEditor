@@ -11,7 +11,7 @@ public class Parameterization2Ds {
         domain of c. */
     public static double constrainToDomain(Parameterization2D c, double t) {
         double minT = c.getMinT();
-        double maxT = c.getMinT();
+        double maxT = c.getMaxT();
         return (t < minT) ? minT
             : (t > maxT) ? maxT : t;
     }
