@@ -219,11 +219,22 @@ public class TieLine {
         double thetaMidMinus1 = thetaMid - theta1;
         thetaMidMinus1 -= twoPi * Math.floor(thetaMidMinus1 / twoPi);
 
-        if (thetaMidMinus1 > theta2Minus1) {
+        double oldit = it1;
+        double oldot = ot1;
+
+        /* oneToTwo is true if the tie lines should be starting next
+           to inner1outer1 and ending next to inner2outer2, and false
+           if the tie lines should be drawn in the reverse order. */
+        boolean oneToTwo = theta2Minus1 >= thetaMidMinus1;
+
+        if (!oneToTwo) {
             // Theta1 and theta2 are out of order. Swap them.
             double tmp = theta1;
             theta1 = theta2;
             theta2 = tmp;
+
+            oldit = it2;
+            oldot = ot2;
 
             // Force theta2 >= theta1.
             theta2Minus1 = theta2 - theta1;
@@ -241,22 +252,42 @@ public class TieLine {
 
             Point2D.Double innerPoint = i1;
             if (!i1.equals(i2)) {
+                double minDeltaT = -1;
+                double newit = 0;
+
                 for (double t: innerParam.lineIntersections(line)) {
-                    if ((it1 < t) == (t < it2)) {
-                        innerPoint = innerParam.getLocation(t);
-                        break;
+                    if ((it1 < t) == (t < it2) && t != oldit
+                        && ((t > oldit) == (it2 > it1)) == oneToTwo) {
+                        // Look for the t value closest to the previous t value.
+                        double deltaT = Math.abs(t - oldit);
+                        if (minDeltaT < 0 || deltaT < minDeltaT) {
+                            innerPoint = innerParam.getLocation(t);
+                            minDeltaT = deltaT;
+                            newit = t;
+                        }
                     }
                 }
+                oldit = newit;
             }
 
             Point2D.Double outerPoint = o1;
             if (!o1.equals(o2)) {
+                double minDeltaT = -1;
+                double newot = 0;
+
                 for (double t: outerParam.lineIntersections(line)) {
-                    if ((ot1 < t) == (t < ot2)) {
-                        outerPoint = outerParam.getLocation(t);
-                        break;
+                    if ((ot1 < t) == (t < ot2) && t != oldot
+                        && ((t > oldot) == (ot2 > ot1)) == oneToTwo) {
+                        // Look for the t value closest to the previous t value.
+                        double deltaT = Math.abs(t - oldot);
+                        if (minDeltaT < 0 || deltaT < minDeltaT) {
+                            outerPoint = outerParam.getLocation(t);
+                            minDeltaT = deltaT;
+                            newot = t;
+                        }
                     }
                 }
+                oldot = newot;
             }
 
             output.moveTo(innerPoint.x, innerPoint.y);
@@ -278,7 +309,7 @@ public class TieLine {
     }
 
 
-    /** Draw the path of this GeneralPolyline. The coordinates for
+    /** Draw the path of this TieLine. The coordinates for
         this path should be defined in the "Original" coordinate
         system, but line widths are defined with respect to the
         "SquarePixel" coordinate system. Also, the output is scaled by
