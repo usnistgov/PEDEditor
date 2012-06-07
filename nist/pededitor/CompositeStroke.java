@@ -3,13 +3,19 @@ package gov.nist.pededitor;
 import java.awt.*;
 import java.util.*;
 
-/** It would be theoretically nice to make CompositeStroke implement
-    Stroke, but the amount of use that CompositeStroke gets would not
-    justify writing the amount of code that would be required to do
-    that. */
+/** Compositions of multiple BasicStrokes. It would be theoretically
+    nice to make CompositeStroke implement Stroke, but the amount of
+    use that CompositeStroke gets would not justify writing the amount
+    of code that would be required to do that. */
 public class CompositeStroke {
     protected ArrayList<BasicStroke> strokes
         = new ArrayList<BasicStroke>();
+
+    public CompositeStroke() {}
+
+    public CompositeStroke(BasicStroke stroke) {
+        strokes.add(stroke);
+    }
 
     /** Add a new BasicStroke element to this CompositeStroke.
 
@@ -33,7 +39,7 @@ public class CompositeStroke {
         Stroke oldStroke = g.getStroke();
 
         for (BasicStroke s: strokes) {
-            g.setStroke(scaledStroke(s, scale));
+            g.setStroke(BasicStrokes.scaledStroke(s, scale));
             g.draw(shape);
         }
 
@@ -48,76 +54,28 @@ public class CompositeStroke {
         return strokes.get(strokeNum);
     }
 
-    /** @return a copy of "stroke" with its line width and dash
-        pattern lengths scaled by a factor of "scaled". */
-    public static BasicStroke scaledStroke(BasicStroke stroke, double scaled) {
-        if (scaled == 1.0) {
-            return stroke;
-        }
-
-        float scale = (float) scaled;
-        float[] dashes = stroke.getDashArray();
-
-        if (dashes != null) {
-            dashes = (float[]) dashes.clone();
-            for (int i = 0; i < dashes.length; ++i) {
-                dashes[i] *= scale;
-            }
-        }
-
-        if (scale == 0) {
-            throw new IllegalStateException("Zero scale");
-        }
-
-        return new BasicStroke(stroke.getLineWidth() * scale,
-                               stroke.getEndCap(), stroke.getLineJoin(),
-                               stroke.getMiterLimit(), dashes,
-                               stroke.getDashPhase() * scale);
-    }
-
     public static CompositeStroke getSolidLine() {
-        CompositeStroke output = new CompositeStroke();
-        output.add(new BasicStroke
-                   (1.0f,
-                    BasicStroke.CAP_ROUND,
-                    BasicStroke.JOIN_ROUND));
-        return output;
+        return new CompositeStroke(BasicStrokes.getSolidLine());
     }
 
     public static CompositeStroke getDottedLine() {
-        CompositeStroke output = new CompositeStroke();
-        output.add(new BasicStroke
-                   (1.8f,
-                    BasicStroke.CAP_ROUND,
-                    BasicStroke.JOIN_ROUND,
-                    3.0f,
-                    new float[] { 0, 5.4f },
-                    0.0f));
-        return output;
+        return new CompositeStroke(BasicStrokes.getDottedLine());
     }
 
     public static CompositeStroke getDashedLine() {
-        CompositeStroke output = new CompositeStroke();
-        output.add(new BasicStroke
-                   (1.0f,
-                    BasicStroke.CAP_ROUND,
-                    BasicStroke.JOIN_ROUND,
-                    3.0f,
-                    new float[] { 5, 4 },
-                    0.0f));
-        return output;
+        return new CompositeStroke(BasicStrokes.getDashedLine());
     }
 
     public static CompositeStroke getBlankFirstDashedLine() {
-        CompositeStroke output = new CompositeStroke();
-        output.add(new BasicStroke
-                   (1.0f,
-                    BasicStroke.CAP_ROUND,
-                    BasicStroke.JOIN_ROUND,
-                    3.0f,
-                    new float[] { 5, 4 },
-                    7.0f));
-        return output;
+        return new CompositeStroke(BasicStrokes.getBlankFirstDashedLine());
+    }
+
+    public static CompositeStroke getInvisibleLine() {
+        return new CompositeStroke(BasicStrokes.getInvisibleLine());
+    }
+
+    public static CompositeStroke getStartingDot() {
+        return new CompositeStroke(BasicStrokes.getStartingDot());
     }
 
     public static CompositeStroke getDotDashLine() {
@@ -189,32 +147,6 @@ public class CompositeStroke {
                     3.0f,
                     new float[] { 0, 5.4f },
                     0.0f));
-        return output;
-    }
-
-    /** Put a dot at the starting point and that's all. */
-    public static CompositeStroke getStartingDot() {
-        CompositeStroke output = new CompositeStroke();
-        output.add(new BasicStroke
-                   (2.0f,
-                    BasicStroke.CAP_ROUND,
-                    BasicStroke.JOIN_ROUND,
-                    3.0f,
-                    new float[] { 0, 1e6f },
-                    0.0f));
-        return output;
-    }
-
-    /** Plot nothing. */
-    public static CompositeStroke getInvisibleLine() {
-        CompositeStroke output = new CompositeStroke();
-        output.add(new BasicStroke
-                   (1.0f,
-                    BasicStroke.CAP_ROUND,
-                    BasicStroke.JOIN_ROUND,
-                    3.0f,
-                    new float[] { 0, 1e6f },
-                    2.0f));
         return output;
     }
 }
