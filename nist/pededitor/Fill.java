@@ -119,12 +119,12 @@ public class Fill {
 
         double slope = Math.tan(theta);
 
-        if (slope * maxWidth < height / 2) {
+        if (slope * maxWidth <= height / 2) {
             // Line is nearly horizontal; treat it as completely
             // horizontal
             int len = Math.max(1, (int) Math.round(3 * dashLength));
             return new Spec
-                (new Dimension(1, len), 
+                (new Dimension(len, height), 
                  new Line2D.Double(0, 0.5, len + dashLength/2, 0.5),
                  height);
         } else if (slope * maxWidth < height) {
