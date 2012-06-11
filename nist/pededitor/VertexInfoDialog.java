@@ -18,8 +18,15 @@ public class VertexInfoDialog extends JDialog {
 
     // TODO Use diagram components to determine slope.
 
-    public JTextField angle = new JTextField("180.00", 9);
-    public JTextField slope = new JTextField("9999.99", 12);
+    protected JTextField angle = new JTextField(9);
+    protected JTextField slope = new JTextField(12);
+
+    /** These values provide greater precision than angle.getText()
+     * and slope.getText() do. */
+
+    protected double angled = 0;
+    protected double sloped = 0;
+    protected double lineWidthd = 0;
 
     public boolean selfModifying = false;
     JLabel slopeLabel;
@@ -27,6 +34,8 @@ public class VertexInfoDialog extends JDialog {
 
     public VertexInfoDialog(Frame owner) {
         super(owner, "Tangent", false);
+        setAngleDegrees(0);
+        setSlope(0);
 
         slope.getDocument().addDocumentListener
             (new DocumentListener() {
@@ -38,8 +47,8 @@ public class VertexInfoDialog extends JDialog {
                         }
                         try {
                             selfModifying = true;
-                            double s = ContinuedFraction.parseDouble(slope.getText());
-                            setAngle(slopeToTheta(s));
+                            sloped = ContinuedFraction.parseDouble(slope.getText());
+                            setAngle(slopeToTheta(sloped));
                         } catch (NumberFormatException ex) {
                             return;
                         } finally {
@@ -66,8 +75,8 @@ public class VertexInfoDialog extends JDialog {
                         }
                         try {
                             selfModifying = true;
-                            double deg = ContinuedFraction.parseDouble(angle.getText());
-                            setSlope(thetaToSlope(degreesToTheta(deg)));
+                            angled = ContinuedFraction.parseDouble(angle.getText());
+                            setSlope(thetaToSlope(degreesToTheta(angled)));
                         } catch (NumberFormatException ex) {
                             return;
                         } finally {
@@ -106,10 +115,13 @@ public class VertexInfoDialog extends JDialog {
         if (x == 0 && y == 0) {
             angle.setText("");
             slope.setText("");
+            angled = Double.NaN;
+            sloped = Double.NaN;
             return;
         }
 
         if (x == 0) {
+            sloped = (y > 0) ? Double.POSITIVE_INFINITY : Double.NEGATIVE_INFINITY;
             slope.setText("");
         } else {
             setSlope(y/x);
@@ -145,24 +157,21 @@ public class VertexInfoDialog extends JDialog {
     }
 
     public void setAngleDegrees(double deg) {
+        angled = deg;
         angle.setText(String.format("%.2f", deg));
         repaint();
     }
 
-    @JsonIgnore
-    public double getAngleDegrees() {
-        try {
-            return ContinuedFraction.parseDouble(angle.getText());
-        } catch (NumberFormatException e) {
-            return 0;
-        }
+    @JsonIgnore public double getAngleDegrees() {
+        return angled;
     }
 
     public double getAngle() {
-        return Compass.degreesToTheta(getAngleDegrees());
+        return Compass.degreesToTheta(angled);
     }
 
     public void setSlope(double m) {
+        sloped = -m;
         slope.setText(String.format("%.4f", -m));
         repaint();
     }
@@ -172,19 +181,17 @@ public class VertexInfoDialog extends JDialog {
         repaint();
     }
 
-    // TODO Kind of lame -- use full precision slope instead of using
-    // the displayed approximation.
     public double getSlope() {
-        try {
-            return ContinuedFraction.parseDouble(slope.getText());
-        } catch (NumberFormatException e) {
-            return 0;
-        }
+        return sloped;
     }
 
     public void setLineWidth(double w) {
+        lineWidthd = w;
         lineWidth.setText(String.format("%.5f", w));
         repaint();
     }
-    
+
+    public double getLineWidth() {
+        return lineWidthd;
+    }
 }
