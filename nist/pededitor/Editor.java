@@ -1,11 +1,12 @@
 package gov.nist.pededitor;
 
-import javax.imageio.*;
-import javax.print.attribute.*;
-import javax.print.attribute.standard.*;
+import javax.imageio.ImageIO;
+import javax.print.attribute.HashPrintRequestAttributeSet;
+import javax.print.attribute.PrintRequestAttributeSet;
+import javax.print.attribute.standard.OrientationRequested;
 import javax.swing.*;
-import javax.swing.filechooser.*;
-import javax.swing.text.*;
+import javax.swing.filechooser.FileNameExtensionFilter;
+import javax.swing.text.View;
 
 import java.awt.AWTException;
 import java.awt.BasicStroke;
@@ -28,29 +29,69 @@ import java.awt.Shape;
 import java.awt.Stroke;
 import java.awt.Toolkit;
 import java.awt.datatransfer.StringSelection;
-import java.awt.event.*;
-import java.awt.image.*;
-import java.awt.geom.*;
-import java.net.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.awt.event.MouseEvent;
+import java.awt.event.MouseListener;
+import java.awt.event.MouseMotionListener;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
+import java.awt.event.WindowListener;
+import java.awt.geom.AffineTransform;
+import java.awt.geom.Ellipse2D;
+import java.awt.geom.Line2D;
+import java.awt.geom.NoninvertibleTransformException;
+import java.awt.geom.Path2D;
+import java.awt.geom.Point2D;
+import java.awt.geom.Rectangle2D;
+import java.awt.image.BufferedImage;
+import java.awt.print.PageFormat;
+import java.awt.print.Printable;
+import java.awt.print.PrinterException;
+import java.awt.print.PrinterJob;
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.Writer;
+import java.net.URL;
 import java.nio.file.Files;
-// Java7 import java.nio.file.Files;
-import java.text.*;
-import java.util.*;
+import java.text.DecimalFormat;
+import java.text.NumberFormat;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.Formatter;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
 import java.util.Timer;
+import java.util.TimerTask;
+import java.util.TreeMap;
 import java.util.prefs.Preferences;
-import java.io.*;
-import java.awt.print.*;
-
 import Jama.Matrix;
 
 import com.itextpdf.text.Document;
 import com.itextpdf.text.PageSize;
-import com.itextpdf.text.pdf.*;
+import com.itextpdf.text.pdf.DefaultFontMapper;
+import com.itextpdf.text.pdf.PdfContentByte;
+import com.itextpdf.text.pdf.PdfTemplate;
+import com.itextpdf.text.pdf.PdfWriter;
 
-import org.codehaus.jackson.annotate.*;
+import org.codehaus.jackson.annotate.JsonIgnore;
+import org.codehaus.jackson.annotate.JsonIgnoreProperties;
+import org.codehaus.jackson.annotate.JsonProperty;
+import org.codehaus.jackson.annotate.JsonSubTypes;
 import org.codehaus.jackson.annotate.JsonSubTypes.Type;
-import org.codehaus.jackson.map.*;
-import org.codehaus.jackson.map.annotate.*;
+import org.codehaus.jackson.annotate.JsonTypeInfo;
+import org.codehaus.jackson.map.DeserializationConfig;
+import org.codehaus.jackson.map.ObjectMapper;
+import org.codehaus.jackson.map.SerializationConfig;
+import org.codehaus.jackson.map.annotate.JsonDeserialize;
 
 import org.apache.batik.svggen.SVGGeneratorContext;
 import org.apache.batik.svggen.SVGGraphics2D;
@@ -67,6 +108,8 @@ import org.w3c.dom.DOMImplementation;
 // "delete" list (actually list everything except page X/page Y and
 // the ternary diagram variables).
 
+// TODO Allow users to adjust the text angle in the ruler edit dialog.
+
 // TODO (mandatory, but not clear whose end -- mine or Prometheus' --
 // where it should happen) HTML-to-plaintext conversion. Users who
 // search for "H2SO4" find "H<sub>2</sub>SO<sub>4</sub>". An extra
@@ -77,6 +120,10 @@ import org.w3c.dom.DOMImplementation;
 // not too hard to do from scratch in a somewhat slipshod way.
 
 // TODO (optional) Auto-save the diagram at regular intervals.
+
+// TODO Allow users to redefine the third component of a ternary, for
+// situations where the ternary is actually a slice of a 4-component
+// system and the three components do not actually sum to 100%.
 
 // TODO (optional) Fill styles. (Right now the only fill style is
 // "solid".) This is pretty easy.
@@ -1367,11 +1414,16 @@ public class Editor implements CropEventListener, MouseListener,
         "nearest point on curve" and the mouse has not yet been moved
         far enough to un-stick the mouse from that location. */
     protected transient boolean mouseIsStuck;
+
+    /** Because rescaling an image is slow, keep a cache of locations
+        and sizes that have been rescaled. */
     protected ArrayList<ScaledCroppedImage> scaledOriginalImages;
     /** This is the darkened version of the original image, or null if
         no darkened version exists. At most one dark image is kept in
         memory at a time. */
-    protected ScaledCroppedImage darkImage;
+    protected transient ScaledCroppedImage darkImage;
+    /** Darkness value of darkImage. */
+    protected transient double darkImageDarkness = 0;
     protected double labelXMargin = 0;
     protected double labelYMargin = 0;
 
@@ -1487,16 +1539,14 @@ public class Editor implements CropEventListener, MouseListener,
         vertexInfo.setLineWidth(lineWidth);
         mouseIsStuck = false;
         paintSuppressionRequestCnt = 0;
-        setBackground(EditFrame.BackgroundImage.GRAY);
+        setBackground(EditFrame.BackgroundImage.LIGHT_GRAY);
         tieLineDialog.setVisible(false);
         tieLineCorners = new ArrayList<>();
         embeddedFont = null;
         keyValues = new TreeMap<>();
-        if (tags != null) {
-            for (String tag: tags) {
-                removeTag(tag);
-            }
-        }
+        tags.clear();
+        editFrame.removeAllTags();
+        editFrame.removeAllVariables();
     }
 
     @JsonProperty("curves")
@@ -1603,11 +1653,27 @@ public class Editor implements CropEventListener, MouseListener,
         return tags.toArray(new String[0]);
     }
 
+    public void removeAllTags() {
+        tags.clear();
+        editFrame.removeAllTags();
+    }
+
+    public void removeAllVariables() {
+        axes.clear();
+        editFrame.removeAllVariables();
+    }
+
     public void setTags(String[] newTags) {
         saveNeeded = true;
-        for (String tag: tags) {
-            removeTag(tag);
+        removeAllTags();
+        for (String tag: newTags) {
+            addTag(tag);
         }
+    }
+
+    public void setVariables(String[] newTags) {
+        saveNeeded = true;
+        removeAllTags();
         for (String tag: newTags) {
             addTag(tag);
         }
@@ -2139,13 +2205,31 @@ public class Editor implements CropEventListener, MouseListener,
         return deviceScale(g.getTransform(), deviceBounds);
     }
 
+    static final double DEFAULT_BACKGROUND_IMAGE_DARKNESS = 1.0/3;
+
+    double getBackgroundImageDarkness() {
+        switch (editFrame.getBackgroundImage()) {
+        case LIGHT_GRAY:
+            return DEFAULT_BACKGROUND_IMAGE_DARKNESS;
+        case DARK_GRAY:
+            return 0.577; // Geometric mean of 1/3 and 1
+        case BLACK:
+            return 1.0;
+        case BLINK:
+            return 1.0;
+        default:
+            return Double.NaN;
+        }
+    }
 
     void paintBackgroundImage(Graphics2D g, double scale) {
         ScaledCroppedImage im = getScaledOriginalImage();
-        if (imageBlinker != null) {
+        double darkness = getBackgroundImageDarkness();
+        if (darkness != DEFAULT_BACKGROUND_IMAGE_DARKNESS) {
             if (darkImage != null
                 && im.imageBounds.equals(darkImage.imageBounds)
-                && im.cropBounds.equals(darkImage.cropBounds)) {
+                && im.cropBounds.equals(darkImage.cropBounds)
+                && darkImageDarkness == darkness) {
                 // The cached image darkImage can be used.
                 im = darkImage;
             } else {
@@ -2156,7 +2240,8 @@ public class Editor implements CropEventListener, MouseListener,
                 BufferedImage src = im.croppedImage;
                 darkImage.croppedImage = new BufferedImage
                     (src.getWidth(), src.getHeight(), BufferedImage.TYPE_INT_RGB);
-                unfade(src, darkImage.croppedImage);
+                fade(src, darkImage.croppedImage, darkness / DEFAULT_BACKGROUND_IMAGE_DARKNESS);
+                darkImageDarkness = darkness;
                 im = darkImage;
             }
         }
@@ -2306,7 +2391,7 @@ public class Editor implements CropEventListener, MouseListener,
             EditFrame.BackgroundImage back = editFrame.getBackgroundImage();
             boolean showBackgroundImage = editing && tracingImage()
                 && back != EditFrame.BackgroundImage.NONE
-                && (back == EditFrame.BackgroundImage.GRAY
+                && (back != EditFrame.BackgroundImage.BLINK
                     || backgroundImageEnabled);
 
             if (showBackgroundImage) {
@@ -2434,14 +2519,15 @@ public class Editor implements CropEventListener, MouseListener,
     /** Update the tangency information to display the slope at the
         given vertex. */
     public void showTangent(ParameterizableHandle hand) {
-        Parameterization2D param = hand.getParameterization();
-        double t = hand.getT();
+        showTangent(hand.getDecoration(), hand.getT());
+    }
 
-        if (hand instanceof VertexHandle) {
-            VertexHandle vhand = (VertexHandle) hand;
-            CurveDecoration cdec = vhand.getDecoration();
+    public void showTangent(Decoration dec, double t) {
+    	Parameterization2D param = ((Parameterizable2D) dec).getParameterization();
+        if (dec instanceof CurveDecoration) {
+            CurveDecoration cdec = (CurveDecoration) dec;
             GeneralPolyline path = cdec.getItem();
-            if (path instanceof Polyline) {
+            if (path instanceof Polyline && t == Math.floor(t)) {
 
                 // For polylines, insertBeforeSelection gives a hint which
                 // of the two segments adjoining a vertex is the one whose
@@ -2453,11 +2539,10 @@ public class Editor implements CropEventListener, MouseListener,
 
         Point2D.Double g = param.getDerivative(t);
         if (g != null) {
-            principalToStandardPage.deltaTransform(g, g);
             vertexInfo.setDerivative(g);
         }
 
-        double w = hand.getDecoration().getLineWidth();
+        double w = ((Decoration) dec).getLineWidth();
         if (w != 0) {
             vertexInfo.setLineWidth(w);
         }
@@ -2680,13 +2765,13 @@ public class Editor implements CropEventListener, MouseListener,
         TieLine tie = new TieLine(lineCnt, lineStyle);
         tie.lineWidth = lineWidth;
 
-        tie.innerEdge = tieLineCorners.get(0).path;
-        tie.it1 = tieLineCorners.get(0).t;
-        tie.it2 = tieLineCorners.get(1).t;
+        tie.innerEdge = tieLineCorners.get(2).path;
+        tie.it1 = tieLineCorners.get(2).t;
+        tie.it2 = tieLineCorners.get(3).t;
 
-        tie.outerEdge = tieLineCorners.get(2).path;
-        tie.ot1 = tieLineCorners.get(2).t;
-        tie.ot2 = tieLineCorners.get(3).t;
+        tie.outerEdge = tieLineCorners.get(0).path;
+        tie.ot1 = tieLineCorners.get(0).t;
+        tie.ot2 = tieLineCorners.get(1).t;
 
         selection = new TieLineHandle(tieLines.size(), TieLineHandleType.OUTER2);
         tieLines.add(tie);
@@ -2792,6 +2877,12 @@ public class Editor implements CropEventListener, MouseListener,
         repaintEditFrame();
     }
 
+    public void addVariable(LinearAxis axis) {
+        axes.add(axis);
+        editFrame.addVariable((String) axis.name);
+        repaintEditFrame();
+    }
+
     public void addVariable() {
         GeneralPolyline path = getActiveCurve();
         if (path == null || path.size() != 3) {
@@ -2857,9 +2948,7 @@ public class Editor implements CropEventListener, MouseListener,
                     (new DecimalFormat("0.0000"),
                      m.get(0,0), m.get(1,0), m.get(2,0));
                 axis.name = values[0];
-                axes.add(axis);
-                editFrame.addVariable((String) axis.name);
-                repaintEditFrame();
+                addVariable(axis);
                 return;
             } catch (RuntimeException e) {
                 JOptionPane.showMessageDialog
@@ -2869,7 +2958,6 @@ public class Editor implements CropEventListener, MouseListener,
                 return;
             }
         }
-
     }
 
     static class StringComposition {
@@ -3650,9 +3738,33 @@ public class Editor implements CropEventListener, MouseListener,
         return null;
     }
 
+    /*
     static boolean isZAxis(LinearAxis axis) {
+        String name = axis.name;
+        return name != null
+            && name.equals(diagramComponents[Side.LEFT]);
+    }
+    */
+            
+    static boolean isZAxis(LinearAxis axis) {
+        // TODO This approach doesn't work with ternary diagrams that
+        // are sliced of more complex systems.
         return axis.getA() == -1.0 && axis.getB() == -1.0
             && axis.getC() == 1.0;
+    }
+
+    static boolean isPrimaryAxis(LinearAxis axis) {
+        return (axis.isXAxis() || axis.isYAxis() || isZAxis(axis));
+    }
+
+    // Smells kludgy...
+    static boolean isStandardAxis(LinearAxis axis) {
+        if (isPrimaryAxis(axis)) {
+            return true;
+        }
+
+        String name = (String) axis.name;
+        return name.equals("page X") || name.equals("page Y");
     }
 
     @JsonIgnore public LinearAxis getZAxis() {
@@ -4139,7 +4251,6 @@ public class Editor implements CropEventListener, MouseListener,
                                            p2.getY() + (p2.getY() - p1.getY())));
             }
         }
-
         return res;
     }
 
@@ -4267,17 +4378,15 @@ public class Editor implements CropEventListener, MouseListener,
             return;
         }
 
-        Point2D.Double derivative = null;
         DecorationHandle handle = null;
 
         Decoration dec = dist.decoration;
-        Parameterization2D c
-            = ((Parameterizable2D) dec).getParameterization();
         CurveDistance minDist = dist.distance;
         double t = minDist.t;
+        Parameterization2D c
+          = ((Parameterizable2D) dec).getParameterization();
         int vertex = (int) Parameterization2Ds.getNearestVertex(c, t);
         boolean closerToNext = (t < vertex);
-        derivative = c.getDerivative(t);
 
         if (dec instanceof CurveDecoration) {
             CurveDecoration cdec = (CurveDecoration) dec;
@@ -4299,8 +4408,7 @@ public class Editor implements CropEventListener, MouseListener,
         }
         moveMouse(standardPageToPrincipal.transform(minDist.point));
         mouseIsStuck = true;
-        vertexInfo.setDerivative(derivative);
-        vertexInfo.setLineWidth(handle.getDecoration().getLineWidth());
+        showTangent(dec, t);
     }
 
     public void toggleSmoothing() {
@@ -5361,6 +5469,13 @@ public class Editor implements CropEventListener, MouseListener,
         tieLines = other.tieLines;
         setFontName(other.getFontName());
         axes = other.axes;
+        editFrame.removeAllVariables();
+        for (LinearAxis axis: axes) {
+            String name = (String) axis.name;
+            if (!isStandardAxis(axis)) {
+                editFrame.addVariable((String) axis.name);
+            }
+        }
         rulers = other.rulers;
         labels = other.labels;
         initializeLabelViews();
@@ -5394,10 +5509,10 @@ public class Editor implements CropEventListener, MouseListener,
         "rulers" fields to null. */
     @JsonProperty("axes") void
     setAxesFromSerialization(ArrayList<LinearAxis> axes) {
-        this.axes = axes;
         rulers = new ArrayList<LinearRuler>();
 
         for (LinearAxis axis: axes) {
+            addVariable(axis);
             rulers.addAll(axis.rulers);
             axis.rulers = null;
         }
@@ -5668,6 +5783,14 @@ public class Editor implements CropEventListener, MouseListener,
             vectors.add(new Point2D.Double(g.y, -g.x));
         }
 
+        if (vertexInfo != null) {
+            // Add the line at the angle given in vertexInfo.
+            double theta = vertexInfo.getAngle();
+            Point2D.Double p = new Point2D.Double(Math.cos(theta), Math.sin(theta));
+            standardPageToPrincipal.deltaTransform(p, p);
+            vectors.add(p);
+        }
+
         Line2D.Double res = null;
         
         for (Point2D.Double v: vectors) {
@@ -5724,9 +5847,17 @@ public class Editor implements CropEventListener, MouseListener,
         double y1 = res.getY1();
         double dx = res.getX2() - x1;
         double dy = res.getY2() - y1;
+
+        // Midpoints of segments are key points, but the midpoint of
+        // the grid line is not really interesting. Double the
+        // difference of minT and maxT to put the grid line's midpoint
+        // on the edge of the diagram.
+
+        double pastMax = maxT + (maxT - minT);
+
         return new Line2D.Double
             (x1 + minT * dx, y1 + minT * dy,
-             x1 + maxT * dx, y1 + maxT * dy);
+             x1 + pastMax * dx, y1 + pastMax * dy);
     }
 
     public DecorationHandle secondarySelection() {
@@ -5928,8 +6059,21 @@ public class Editor implements CropEventListener, MouseListener,
                 if (str.equals("")) {
                     continue;
                 }
-                vs.add(ContinuedFraction.parseDouble(str));
-                axs.add(axes.get(i));
+                LinearAxis axis = axes.get(i);
+                if (str.equals(oldValues[i])) {
+                    // Never mind the sig figs in the displayed value;
+                    // assume the user meant the value to remain
+                    // exactly as it was, down to the last bit. (This
+                    // assumption, of course, may be wrong, but it's
+                    // more likely to be right, and if it is right, it
+                    // may prevent a situation where a vertex that was
+                    // supposed to be right on a line ends up being
+                    // not quite there.)
+                    vs.add(axis.value(mprin));
+                } else {
+                    vs.add(ContinuedFraction.parseDouble(str));
+                }
+                axs.add(axis);
             }
         } catch (NumberFormatException e) {
             JOptionPane.showMessageDialog(editFrame, e.getMessage());
@@ -6444,40 +6588,22 @@ public class Editor implements CropEventListener, MouseListener,
         return f.toString();
     }
 
-    /** Compress the brightness into the upper third of the range
+    /** Compress the brightness into the upper "frac" portion of the range
         0..255. */
-    static int fade(int i) {
-        return 255 - (255 - i)/3;
+    static int fade(int i, double frac) {
+        int res = (int) (255 - (255 - i)*frac);
+        return (res < 0) ? 0 : res;
     }
 
-    /** Reverse the fade() transformation (as best one can). */
-    static int unfade(int i) {
-        return 255 - (255 - i)*3;
-    }
-
-    static void fade(BufferedImage image) { 
-        int width = image.getWidth();
-        int height = image.getHeight();
-        for (int x = 0; x < width; ++x) {
-            for (int y = 0; y < height; ++y) {
-                Color c = new Color(image.getRGB(x,y));
-                c = new Color(fade(c.getRed()),
-                              fade(c.getGreen()),
-                              fade(c.getBlue()));
-                image.setRGB(x,y,c.getRGB());
-            }
-        }
-    }
-
-    static void unfade(BufferedImage src, BufferedImage dest) { 
+    static void fade(BufferedImage src, BufferedImage dest, double frac) { 
         int width = src.getWidth();
         int height = src.getHeight();
         for (int x = 0; x < width; ++x) {
             for (int y = 0; y < height; ++y) {
                 Color c = new Color(src.getRGB(x,y));
-                c = new Color(unfade(c.getRed()),
-                              unfade(c.getGreen()),
-                              unfade(c.getBlue()));
+                c = new Color(fade(c.getRed(), frac),
+                              fade(c.getGreen(), frac),
+                              fade(c.getBlue(), frac));
                 dest.setRGB(x,y,c.getRGB());
             }
         }
@@ -7065,7 +7191,7 @@ public class Editor implements CropEventListener, MouseListener,
                 (originalToCrop, getOriginalImage(), Color.WHITE,
                  new Dimension(cropBounds.width, cropBounds.height));
         }
-        fade(im.croppedImage);
+        fade(im.croppedImage, im.croppedImage, DEFAULT_BACKGROUND_IMAGE_DARKNESS);
         scaledOriginalImages.add(im);
         --paintSuppressionRequestCnt;
         editFrame.setCursor(oldCursor);
@@ -7284,6 +7410,10 @@ public class Editor implements CropEventListener, MouseListener,
         }
         return embeddedFont;
     }
+
+	public void setFillStyle(StandardFill fill) {
+		// TODO Auto-generated method stub
+	}
 }
 
 // Annotations that are serialization hints for the Jackson JSON
