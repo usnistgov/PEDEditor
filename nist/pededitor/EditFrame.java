@@ -24,12 +24,15 @@ public class EditFrame extends JFrame {
     protected JPanel statusBar;
     protected JLabel statusLabel;
     protected Editor parentEditor;
+    protected ButtonGroup fillStyleGroup = new ButtonGroup();
     protected ButtonGroup lineStyleGroup = new ButtonGroup();
     protected ButtonGroup lineWidthGroup = new ButtonGroup();
     protected ButtonGroup backgroundImageGroup = new ButtonGroup();
     protected ButtonGroup fontGroup = new ButtonGroup();
     protected JMenu mnBackgroundImage = new JMenu("Background Image");
-    protected JRadioButtonMenuItem grayBackgroundImage;
+    protected JRadioButtonMenuItem lightGrayBackgroundImage;
+    protected JRadioButtonMenuItem darkGrayBackgroundImage;
+    protected JRadioButtonMenuItem blackBackgroundImage;
     protected JRadioButtonMenuItem blinkBackgroundImage;
     protected JRadioButtonMenuItem noBackgroundImage;
     protected Action setAspectRatio;
@@ -43,15 +46,19 @@ public class EditFrame extends JFrame {
     // How to show the original scanned image in the background of
     // the new diagram:
     enum BackgroundImage
-    { GRAY, // White parts look white, black parts appear gray
+    { LIGHT_GRAY, // White parts look white, black parts appear light gray
+      DARK_GRAY, // Halfway between light gray and black
+      BLACK, // Original appearance
       BLINK, // Blinks on and off
       NONE // Not shown
     };
 
     public BackgroundImage getBackgroundImage() {
         return !mnBackgroundImage.isEnabled() ? BackgroundImage.NONE
+            : lightGrayBackgroundImage.isSelected() ? BackgroundImage.LIGHT_GRAY
             : blinkBackgroundImage.isSelected() ? BackgroundImage.BLINK
-            : grayBackgroundImage.isSelected() ? BackgroundImage.GRAY
+            : darkGrayBackgroundImage.isSelected() ? BackgroundImage.DARK_GRAY
+            : blackBackgroundImage.isSelected() ? BackgroundImage.BLACK
             : BackgroundImage.NONE;
     }
 
@@ -60,8 +67,14 @@ public class EditFrame extends JFrame {
         case NONE:
             noBackgroundImage.setSelected(true);
             break;
-        case GRAY:
-            grayBackgroundImage.setSelected(true);
+        case LIGHT_GRAY:
+            lightGrayBackgroundImage.setSelected(true);
+            break;
+        case DARK_GRAY:
+            lightGrayBackgroundImage.setSelected(true);
+            break;
+        case BLACK:
+            blackBackgroundImage.setSelected(true);
             break;
         case BLINK:
             blinkBackgroundImage.setSelected(true);
@@ -216,6 +229,19 @@ public class EditFrame extends JFrame {
         }
     }
 
+    class FillStyleAction extends AbstractAction {
+    	StandardFill fill;
+    	
+        FillStyleAction(StandardFill fill) {
+            super(null, icon(fill));
+            this.fill = fill;
+        }
+
+        @Override public void actionPerformed(ActionEvent e) {
+            getParentEditor().setFillStyle(fill);
+        }
+    }
+
     class LineStyleMenuItem extends JRadioButtonMenuItem {
         LineStyleMenuItem(String imagePath, StandardStroke lineStyle) {
             super(new LineStyleAction(imagePath, lineStyle));
@@ -225,6 +251,13 @@ public class EditFrame extends JFrame {
         LineStyleMenuItem(Icon icon, StandardStroke lineStyle) {
             super(new LineStyleAction(icon, lineStyle));
             lineStyleGroup.add(this);
+        }
+    }
+
+    class FillStyleMenuItem extends JRadioButtonMenuItem {
+        FillStyleMenuItem(StandardFill fill) {
+            super(new FillStyleAction(fill));
+            fillStyleGroup.add(this);
         }
     }
 
@@ -726,6 +759,8 @@ public class EditFrame extends JFrame {
                                 }));
             mnCurve.add(mnLineWidth);
 
+            // TODO Re-enable mnCurve.add(createFillMenu());
+
             mnCurve.add(new Action
                         ("Add vertex", KeyEvent.VK_X,
                          KeyStroke.getKeyStroke('x')) {
@@ -1006,16 +1041,23 @@ public class EditFrame extends JFrame {
         if (editable) {
             mnBackgroundImage.setMnemonic(KeyEvent.VK_B);
             mnBackgroundImage.setEnabled(false);
-            grayBackgroundImage = new BackgroundImageMenuItem
-                ("Gray", BackgroundImage.GRAY, KeyEvent.VK_G);
-            grayBackgroundImage.setSelected(true);
+            lightGrayBackgroundImage = new BackgroundImageMenuItem
+                ("Light gray", BackgroundImage.LIGHT_GRAY, KeyEvent.VK_G);
+            mnBackgroundImage.add(lightGrayBackgroundImage);
+            darkGrayBackgroundImage = new BackgroundImageMenuItem
+                ("Dark gray", BackgroundImage.DARK_GRAY, KeyEvent.VK_D);
+            mnBackgroundImage.add(darkGrayBackgroundImage);
+            blackBackgroundImage = new BackgroundImageMenuItem
+                ("Black", BackgroundImage.BLACK, KeyEvent.VK_K);
+            mnBackgroundImage.add(blackBackgroundImage);
             blinkBackgroundImage = new BackgroundImageMenuItem
                 ("Blink", BackgroundImage.BLINK, KeyEvent.VK_B);
+            mnBackgroundImage.add(blinkBackgroundImage);
             noBackgroundImage = new BackgroundImageMenuItem
                 ("Hide", BackgroundImage.NONE, KeyEvent.VK_N);
-            mnBackgroundImage.add(grayBackgroundImage);
-            mnBackgroundImage.add(blinkBackgroundImage);
             mnBackgroundImage.add(noBackgroundImage);
+
+            lightGrayBackgroundImage.setSelected(true);
             mnView.add(mnBackgroundImage);
         }
 
@@ -1180,6 +1222,77 @@ public class EditFrame extends JFrame {
                 break;
             }
         }
+    }
+
+    static class FillCategory {
+        StandardFill example;
+        EnumSet<StandardFill> choices;
+
+        FillCategory(StandardFill example, EnumSet<StandardFill> choices) {
+            this.example = example;
+            this.choices = choices;
+        }
+    }
+
+    JMenu createFillMenu() {
+        JMenu mnFillStyle = new JMenu("Fill style");
+        mnFillStyle.setMnemonic(KeyEvent.VK_F);
+
+        for (FillCategory cat: new FillCategory[]
+            { new FillCategory
+              (StandardFill.ALPHA50,
+               EnumSet.range(StandardFill.SOLID,
+                             StandardFill.ALPHA10)),
+              new FillCategory
+              (StandardFill.V2_25,
+               EnumSet.range(StandardFill.V1_25,
+                             StandardFill.V4_25)),
+              new FillCategory
+              (StandardFill.H2_25,
+               EnumSet.range(StandardFill.H1_25,
+                             StandardFill.H4_25)),
+              new FillCategory
+              (StandardFill.DU2_25,
+               EnumSet.range(StandardFill.DU1_25,
+                             StandardFill.DU4_25)),
+              new FillCategory
+              (StandardFill.DD2_25,
+               EnumSet.range(StandardFill.DD1_25,
+                             StandardFill.DD4_25)),
+              new FillCategory
+              (StandardFill.X1_10,
+               EnumSet.range(StandardFill.X1_10,
+                             StandardFill.X4_10)),
+              new FillCategory
+              (StandardFill.PD2_25,
+               EnumSet.range(StandardFill.PD2_25,
+                             StandardFill.PD8_25))
+            }) {
+            JMenu mnCat = new JMenu();
+            mnCat.setIcon(icon(cat.example));
+            for (StandardFill fill: cat.choices) {
+                mnCat.add(new FillStyleMenuItem(fill));
+            }
+            mnFillStyle.add(mnCat);
+        }
+
+        return mnFillStyle;
+    }
+
+    ImageIcon icon(StandardFill fill) {
+        int width = 70;
+        int height = 40;
+
+        BufferedImage im = new BufferedImage
+            (width, height, BufferedImage.TYPE_INT_ARGB);
+        Graphics2D g = im.createGraphics();
+        g.setBackground(new Color(255, 255, 255, 0));
+        g.clearRect(0, 0, im.getWidth(), im.getHeight());
+        g.setColor(Color.BLACK);
+        g.drawRect(0, 0, im.getWidth() - 1, im.getHeight() - 1);
+        g.setPaint(fill.getFill());
+        g.fill(new Rectangle(0, 0, im.getWidth(), im.getHeight()));
+        return new ImageIcon(im);
     }
 
     /** This is not a public interface. It is an interface that Editor
