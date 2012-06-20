@@ -5,8 +5,6 @@ import java.awt.geom.*;
 import java.awt.image.*;
 import java.io.*;
 import java.util.concurrent.ForkJoinPool;
-import java.util.concurrent.RecursiveAction;
-
 import javax.imageio.ImageIO;
 
 /** This module provides a method to transform an input image to an
@@ -15,6 +13,8 @@ import javax.imageio.ImageIO;
     #max_output_y. */
 public class ImageTransform {
     static final ForkJoinPool mainPool = new ForkJoinPool();
+
+    enum DithererType { FAST, GOOD };
 
     /** run() with default size and black background. */
     public static BufferedImage run(PolygonTransform xform,
@@ -30,170 +30,198 @@ public class ImageTransform {
         Rectangle2D.Double b = xform.outputBounds();
         int width = (int) Math.ceil(b.x + b.width);
         int height = (int) Math.ceil(b.y + b.height);
-        return run(xform, imageIn, background, new Dimension(width, height));
+        return run(xform, imageIn, background, new Dimension(width, height),
+                   DithererType.GOOD);
     }
 
-    static class RecursiveTransformer extends RecursiveAction {
-        /**
-		 * 
-		 */
-        private static final long serialVersionUID = -2489117155798819683L;
+    /** This ditherer divides each pixel into sampleCnt x sampleCnt
+        subpixels, chooses a random location within each subpixel, and
+        averages the colors of the original image at the inverse
+        transform of those locations. */
+    static class GoodDitherer implements RectangleProcessor {
+        BufferedImage input;
+        int[] output;
+        int outputWidth;
+        Transform2D inverseTransform;
+        Color background;
+        int sampleCnt;
 
-        final public BufferedImage input;
-        final public Rectangle outputBounds;
-        final public BufferedImage output;
-        final public Color background;
-        final int sampleCnt;
-        /** Inverse transformation, to measure the color of the input
-            image at each pixel of the output image. */
-        final Transform2D inverseTransform;
-
-        RecursiveTransformer(BufferedImage input,
-                             BufferedImage output, Rectangle outputBounds,
-                             Transform2D inverseTransform, Color background,
-                             int sampleCnt) {
+        /** @param sampleCnt number of samples to take per pixel */
+        GoodDitherer(BufferedImage input, int[] output, int outputWidth,
+                        Transform2D inverseTransform, Color background,
+                        int sampleCnt) {
             this.input = input;
-            this.inverseTransform = inverseTransform;
             this.output = output;
-            this.outputBounds = outputBounds;
+            this.outputWidth = outputWidth;
+            this.inverseTransform = inverseTransform;
             this.background = background;
             this.sampleCnt = sampleCnt;
         }
 
-        protected void compute() {
-            if (outputBounds.width >= 2
-            		&& outputBounds.width * outputBounds.height > 300 * 300) {
-                RecursiveTransformer leftHalf
-                    = new RecursiveTransformer
-                    (input, output,
-                     new Rectangle(outputBounds.x, outputBounds.y,
-                                   outputBounds.width/2, outputBounds.height),
-                     inverseTransform, background, sampleCnt);
-                RecursiveTransformer rightHalf
-                    = new RecursiveTransformer
-                    (input, output,
-                     new Rectangle(outputBounds.x + outputBounds.width/2,
-                                   outputBounds.y,
-                                   (outputBounds.width + 1)/2,
-                                   outputBounds.height),
-                     inverseTransform, background, sampleCnt);
-                invokeAll(leftHalf, rightHalf);
-            } else {
-                run(input, output, outputBounds, inverseTransform,
-                    background, sampleCnt);
-            }
+        public double estimatedRunTime(Rectangle outputBounds) {
+            return 1 + (outputBounds.width * outputBounds.height
+                        * (1 + sampleCnt * sampleCnt));
         }
-    }
 
-    static double[] randCache = null;
+        public void run(Rectangle outputBounds) {
+            /** Use stack variables for speed. Not sure how much this matters... */
+            BufferedImage input = this.input;
+            int[] output = this.output;
+            int outputWidth = this.outputWidth;
+            Transform2D inverseTransform = this.inverseTransform;
+            int sampleCnt = this.sampleCnt;
+            int backRGB = background.getRGB();
+            
+            int samplesPerPixel = sampleCnt * sampleCnt;
+            double inWidth = input.getWidth();
+            double inHeight = input.getHeight();
 
-    static void initializeRandCache() {
-        // random() turns out to slow things down considerably, so reuse
-        // old random values -- we don't need perfection here.
-
-        if (randCache == null) {
-            randCache = new double[0x1000];
-            for (int i = 0; i < randCache.length; ++i) {
-                randCache[i] = Math.random();
-            }
-        }
-    }
-
-
-    static boolean requiresThreading(Rectangle rect) {
-        return rect.width * rect.height > 100 * 100;
-    }
-
-    /** @param sampleCnt number of samples to take per pixel */
-    static void run(BufferedImage input,
-             BufferedImage output, Rectangle outputBounds,
-             Transform2D inverseTransform, Color background,
-             int sampleCnt) {
-        int samplesPerPixel = sampleCnt * sampleCnt;
-        double inWidth = input.getWidth();
-        double inHeight = input.getHeight();
-
-        // Transform a pixel's worth of points at once for better
-        // speed. (This wouldn't be necessary in C++, which has stack
-        // objects with zero allocation overhead. The color
-        // manipulation, too, could be done much nicer in C++ as
-        // zero-overhead four-byte objects.)
-        double points[] = new double[samplesPerPixel * 2];
-        int backRGB = background.getRGB();
+            // Transform a pixel's worth of points at once for better
+            // speed. (This wouldn't be necessary in C++, which has stack
+            // objects with zero allocation overhead. The color
+            // manipulation, too, could be done much nicer in C++ as
+            // zero-overhead four-byte objects.)
+            double points[] = new double[samplesPerPixel * 2];
         
+            initializeRandCache();
+            int randCachePos = 0;
 
-        if (randCache == null) {
-            randCache = new double[0x1000];
-            for (int i = 0; i < randCache.length; ++i) {
-                randCache[i] = Math.random();
-            }
-        }
+            int xMax = outputBounds.x + outputBounds.width;
+            int yMax = outputBounds.y + outputBounds.height;
 
-        initializeRandCache();
-        int randCachePos = 0;
+            for (int x = outputBounds.x; x < xMax; ++x) {
+                for (int y = outputBounds.y; y < yMax; ++y) {
+                    // The image is over-sampled (with respect to the size
+                    // of an output pixel) to reduce aliasing: output
+                    // pixels are divided into sampleCnt x sampleCnt
+                    // sub-pixels, and the colors of those sub-pixels are
+                    // averaged to obtain the color of the output pixel.
+                    // (The value of sampleCnt setting is pretty
+                    // arbitrary: up to 11 times smaller than an output
+                    // pixel if the output image is much smaller than the
+                    // input one, and as little as 3 times smaller than
+                    // the output pixel if the output image is as big or
+                    // bigger than the input image.)
 
-        int xMax = outputBounds.x + outputBounds.width;
-        int yMax = outputBounds.y + outputBounds.height;
-
-        for (int x = outputBounds.x; x < xMax; ++x) {
-            for (int y = outputBounds.y; y < yMax; ++y) {
-                // The image is over-sampled (with respect to the size
-                // of an output pixel) to reduce aliasing: output
-                // pixels are divided into sampleCnt x sampleCnt
-                // sub-pixels, and the colors of those sub-pixels are
-                // averaged to obtain the color of the output pixel.
-                // (The value of sampleCnt setting is pretty
-                // arbitrary: up to 11 times smaller than an output
-                // pixel if the output image is much smaller than the
-                // input one, and as little as 3 times smaller than
-                // the output pixel if the output image is as big or
-                // bigger than the input image.)
-
-                // Each sub-pixel is sampled not in its center, but in
-                // a uniformly random location; this randomization
-                // should reduce systematic aliasing artifacts.
-                {
-                    int pos = 0;
-                    for (int xsub = 0; xsub < sampleCnt; ++xsub) {
-                        for (int ysub = 0; ysub < sampleCnt; ++ysub) {
-                            points[pos++] = x +
-                                (xsub + randCache[(++randCachePos) & 0xfff]) / sampleCnt;
-                            points[pos++] = y +
-                                (ysub + randCache[(++randCachePos) & 0xfff]) / sampleCnt;
+                    // Each sub-pixel is sampled not in its center, but in
+                    // a uniformly random location; this randomization
+                    // should reduce systematic aliasing artifacts.
+                    {
+                        int pos = 0;
+                        for (int xsub = 0; xsub < sampleCnt; ++xsub) {
+                            for (int ysub = 0; ysub < sampleCnt; ++ysub) {
+                                points[pos++] = x +
+                                    (xsub + randCache[(++randCachePos) & 0xfff]) / sampleCnt;
+                                points[pos++] = y +
+                                    (ysub + randCache[(++randCachePos) & 0xfff]) / sampleCnt;
+                            }
                         }
                     }
-                }
 
-                try {
-                    inverseTransform.transform(points, 0, points, 0,
-                                               samplesPerPixel);
-                    // Now points[] contains the (x,y) coordinates of
-                    // points in the input image whose colors should
-                    // be averaged to set the color for this pixel in
-                    // the output image.
-                    int r = 0;
-                    int g = 0;
-                    int b = 0;
-                    for (int pos = 0; pos < points.length; pos += 2) {
-                        double xd = points[pos];
-                        double yd = points[pos+1];
-                        int rgb = (xd >= 0. && xd < inWidth && yd >= 0. && yd < inHeight)
-                            ? input.getRGB((int) xd, (int) yd) : backRGB;
-                        r += (rgb >> 16) & 255;
-                        g += (rgb >> 8) & 255;
-                        b += rgb & 255;
+                    int rgb;
+
+                    try {
+                        inverseTransform.transform(points, 0, points, 0,
+                                                   samplesPerPixel);
+                        // Now points[] contains the (x,y) coordinates of
+                        // points in the input image whose colors should
+                        // be averaged to set the color for this pixel in
+                        // the output image.
+                        int r = 0;
+                        int g = 0;
+                        int b = 0;
+                        for (int pos = 0; pos < points.length; pos += 2) {
+                            double xd = points[pos];
+                            double yd = points[pos+1];
+                            int prgb = (xd >= 0. && xd < inWidth && yd >= 0. && yd < inHeight)
+                                ? input.getRGB((int) xd, (int) yd) : backRGB;
+                            r += (prgb >> 16) & 255;
+                            g += (prgb >> 8) & 255;
+                            b += prgb & 255;
+                        }
+
+                        // Round values over 1/2 up in the integer
+                        // division
+                        int half = samplesPerPixel / 2;
+                        r = (r + half) / samplesPerPixel;
+                        g = (g + half) / samplesPerPixel;
+                        b = (b + half) / samplesPerPixel;
+
+                        rgb =  (r << 16) + (g << 8) + b;
+                    } catch (UnsolvableException e) {
+                        rgb = backRGB;
                     }
 
-                    // Round values over 1/2 up in the integer
-                    // division
-                    int half = samplesPerPixel / 2;
-                    r = (r + half) / samplesPerPixel;
-                    g = (g + half) / samplesPerPixel;
-                    b = (b + half) / samplesPerPixel;
+                    output[y * outputWidth + x] = rgb;
+                    // System.out.println(String.format("output[%d * %d + %d] = %x", y, outputWidth, x, output[index]));
+                }
+            }
+        }
 
-                    output.setRGB(x, y, (r << 16) + (g << 8) + b);
-                } catch (UnsolvableException e) {
-                    output.setRGB(x, y, backRGB);
+        static double[] randCache = null;
+
+        static void initializeRandCache() {
+            // random() turns out to slow things down considerably, so reuse
+            // old random values -- we don't need perfection here.
+
+            if (randCache == null) {
+                randCache = new double[0x1000];
+                for (int i = 0; i < randCache.length; ++i) {
+                    randCache[i] = Math.random();
+                }
+            }
+        }
+    }
+
+    /** This ditherer does only a single sample of the inverse
+        transform of the center of each pixel. */
+    static class FastDitherer implements RectangleProcessor {
+        BufferedImage input;
+        int[] output;
+        int outputWidth;
+        Transform2D inverseTransform;
+        Color background;
+
+        FastDitherer(BufferedImage input, int[] output, int outputWidth,
+                     Transform2D inverseTransform, Color background) {
+            this.input = input;
+            this.output = output;
+            this.outputWidth = outputWidth;
+            this.inverseTransform = inverseTransform;
+            this.background = background;
+        }
+
+        public double estimatedRunTime(Rectangle outputBounds) {
+            return 1 + outputBounds.width * outputBounds.height;
+        }
+
+        public void run(Rectangle outputBounds) {
+            /** Use stack variables for speed. Not sure how much this matters... */
+            BufferedImage input = this.input;
+            int[] output = this.output;
+            int outputWidth = this.outputWidth;
+            Transform2D inverseTransform = this.inverseTransform;
+            int backRGB = background.getRGB();
+            int inWidth = input.getWidth();
+            int inHeight = input.getHeight();
+
+            int xMax = outputBounds.x + outputBounds.width;
+            int yMax = outputBounds.y + outputBounds.height;
+
+            for (int x = outputBounds.x; x < xMax; ++x) {
+                for (int y = outputBounds.y; y < yMax; ++y) {
+                    int rgb;
+
+                    try {
+                        Point2D.Double p = inverseTransform.transform(x + 0.5, y + 0.5);
+                        double xd = p.x;
+                        double yd = p.y;
+                        rgb = (xd >= 0 && xd < inWidth && yd >= 0 && yd < inHeight)
+                            ? input.getRGB((int) xd, (int) yd) : backRGB;
+                    } catch (UnsolvableException e) {
+                        rgb = backRGB;
+                    }
+                    output[y * outputWidth + x] = rgb;
                 }
             }
         }
@@ -201,13 +229,15 @@ public class ImageTransform {
 
     /**  The scale of the output is 1 pixel = 1 unit. The minimum x and
          y values are 0 and 0. If those values are not suitable, then
-         preConcatenate xform with an affine transformation as needed. */
+         preConcatenate xform with an affine transformation as needed.
+
+         @param dithererType Either DithererType.GOOD or
+         DithererType.FAST. */
     public static BufferedImage run(PolygonTransform xform,
                                     BufferedImage input,
                                     Color background,
-                                    Dimension size) {
-        // Forget about alpha channel for now.
-
+                                    Dimension size,
+                                    DithererType dithererType) {
         int width = size.width;
         int height = size.height;
 
@@ -215,79 +245,35 @@ public class ImageTransform {
         s.start();
 
         BufferedImage output = new BufferedImage(width, height,
-                                                 BufferedImage.TYPE_INT_RGB);
-        Transform2D xformi;
+                                                 BufferedImage.TYPE_INT_ARGB);
+        Transform2D inverseTransform;
 
         try {
             // We actually want the inverse transformation, to measure the
             // color of the input image at each pixel of the output image.
-            xformi = xform.createInverse();
+            inverseTransform = xform.createInverse();
         } catch (NoninvertibleTransformException e) {
             throw new RuntimeException(e);
         }
 
-        Rectangle2D.Double ib = xform.inputBounds();
-        double ipixels = (ib.width+1) * (ib.height+1);
-        int sampleCnt = (int) Math.round
-            (Math.max(2, Math.min(11, 2 * Math.sqrt(ipixels / (width * height)))));
         Rectangle outputBounds = new Rectangle(0, 0, size.width, size.height);
-        mainPool.invoke(new RecursiveTransformer(input, output, outputBounds,
-                                                 xformi, background, sampleCnt));
-        s.ping();
-        return output;
-    }
+        int[] outputRGB = new int[width * height];
 
-    /**  This is the quick and dirty version of run(). */
-    public static BufferedImage runFast(PolygonTransform xform,
-                                    BufferedImage input,
-                                    Color background,
-                                    Dimension size) {
-        // Forget about alpha channel for now.
-
-        int width = size.width;
-        int height = size.height;
-
-        StopWatch s = new StopWatch();
-        s.start();
-
-        BufferedImage output = new BufferedImage(width, height,
-                                                 BufferedImage.TYPE_INT_RGB);
-        Transform2D xformi;
-
-        try {
-            // We actually want the inverse transformation, to measure the
-            // color of the input image at each pixel of the output image.
-            xformi = xform.createInverse();
-        } catch (NoninvertibleTransformException e) {
-            throw new RuntimeException(e);
+        RectangleProcessor ditherer;
+        if (dithererType == DithererType.GOOD) {
+            Rectangle2D.Double ib = xform.inputBounds();
+            double ipixels = (ib.width+1) * (ib.height+1);
+            int sampleCnt = (int) Math.round
+                (Math.max(2, Math.min(11, 2 * Math.sqrt(ipixels / (width * height)))));
+            ditherer = new GoodDitherer(input, outputRGB, width,
+                                           inverseTransform, background, sampleCnt);
+        } else {
+            ditherer = new FastDitherer(input, outputRGB, width,
+                                           inverseTransform, background);
         }
-
-        double inWidth = input.getWidth();
-        double inHeight = input.getHeight();
-        int backRGB = background.getRGB();
-
-        Point2D.Double p = new Point2D.Double(0,0);
-
-        for (int x = 0; x < width; ++x) {
-            for (int y = 0; y < height; ++y) {
-                int rgb;
-                p.x = x + 0.5;
-                p.y = y + 0.5;
-
-                try {
-                    p = xformi.transform(p);
-                    double xd = p.x;
-                    double yd = p.y;
-                    rgb = (xd >= 0 && xd < inWidth && yd >= 0 && yd < inHeight)
-                        ? input.getRGB((int) xd, (int) yd) : backRGB;
-                } catch (UnsolvableException e) {
-                    rgb = backRGB;
-                }
-                output.setRGB(x, y, rgb);
-            }
-        }
+        mainPool.invoke(new RecursiveRectangleAction(ditherer, outputBounds, 10000));
+        output.setRGB(0, 0, width, height, outputRGB, 0, width);
         s.ping();
-
         return output;
     }
 
@@ -347,8 +333,10 @@ public class ImageTransform {
         xform.check();
 
         BufferedImage output = run(xform, input);
+        String type = "png";
+
         try {
-            ImageIO.write(output, "jpg", new File("test-out.jpg"));
+            ImageIO.write(output, type, new File("test-out." + type));
         } catch (IOException e) {
             throw new RuntimeException(e);
         }

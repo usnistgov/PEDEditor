@@ -5471,7 +5471,6 @@ public class Editor implements CropEventListener, MouseListener,
         axes = other.axes;
         editFrame.removeAllVariables();
         for (LinearAxis axis: axes) {
-            String name = (String) axis.name;
             if (!isStandardAxis(axis)) {
                 editFrame.addVariable((String) axis.name);
             }
@@ -7180,17 +7179,14 @@ public class Editor implements CropEventListener, MouseListener,
         Cursor oldCursor = editFrame.getCursor();
         ++paintSuppressionRequestCnt;
         editFrame.setCursor(new Cursor(Cursor.WAIT_CURSOR));
-        System.out.println("Resizing original image; please wait...");
-        if (imageBounds.getWidth() * imageBounds.getHeight()
-            > 1500 * 1500) {
-            im.croppedImage = ImageTransform.runFast
-                (originalToCrop, getOriginalImage(), Color.WHITE,
-                 new Dimension(cropBounds.width, cropBounds.height));
-        } else {
-            im.croppedImage = ImageTransform.run
-                (originalToCrop, getOriginalImage(), Color.WHITE,
-                 new Dimension(cropBounds.width, cropBounds.height));
-        }
+        ImageTransform.DithererType dither
+            = (cropBounds.getWidth() * cropBounds.getHeight() > 3000000)
+            ? ImageTransform.DithererType.FAST
+            : ImageTransform.DithererType.GOOD;
+        System.out.println("Resizing original image (" + dither + ")...");
+        im.croppedImage = ImageTransform.run
+            (originalToCrop, getOriginalImage(), Color.WHITE,
+             new Dimension(cropBounds.width, cropBounds.height), dither);
         fade(im.croppedImage, im.croppedImage, DEFAULT_BACKGROUND_IMAGE_DARKNESS);
         scaledOriginalImages.add(im);
         --paintSuppressionRequestCnt;
