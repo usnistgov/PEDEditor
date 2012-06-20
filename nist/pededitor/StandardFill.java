@@ -2,7 +2,6 @@ package gov.nist.pededitor;
 
 import java.awt.Color;
 import java.awt.Paint;
-import java.awt.TexturePaint;
 
 /** Enum for standard fill styles. Having so many standard types is a
     bit ugly. */

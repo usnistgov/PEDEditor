@@ -2664,12 +2664,10 @@ public class Editor implements CropEventListener, MouseListener,
 
         // Tie Lines' limits are defined by t values.
         for (TieLine tie: tieLines) {
-            System.out.println("inner = " + tie.innerEdge);
             if (tie.innerEdge == path) {
                 output.add(tie.it1);
                 output.add(tie.it2);
             }
-            System.out.println("outer = " + tie.innerEdge);
             if (tie.outerEdge == path) {
                 output.add(tie.ot1);
                 output.add(tie.ot2);
