@@ -56,6 +56,7 @@ import Jama.Matrix;
 import com.itextpdf.text.Document;
 import com.itextpdf.text.DocumentException;
 import com.itextpdf.text.PageSize;
+import com.itextpdf.text.Paragraph;
 import com.itextpdf.text.pdf.DefaultFontMapper;
 import com.itextpdf.text.pdf.PdfContentByte;
 import com.itextpdf.text.pdf.PdfTemplate;
@@ -2882,10 +2883,16 @@ public class Diagram extends Observable implements Printable {
     }
 
     public void appendToPDF(Document doc, PdfWriter writer) {
-        writer.newPage();
+        try {
+            doc.add(new Paragraph(getProvisionalTitle()));
+        } catch (DocumentException e) {
+            e.printStackTrace();
+        }
 
+        float topMargin = (float) (72 * 0.5);
         Rectangle2D.Double bounds = new Rectangle2D.Double
-            (doc.left(), doc.bottom(), doc.right() - doc.left(), doc.top() - doc.bottom());
+            (doc.left(), doc.bottom(), doc.right() - doc.left(),
+             doc.top() - doc.bottom() - topMargin);
 
         PdfContentByte cb = writer.getDirectContent();
         PdfTemplate tp = cb.createTemplate((float) bounds.width, (float) bounds.height);
