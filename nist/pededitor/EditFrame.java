@@ -7,11 +7,15 @@ import java.awt.image.BufferedImage;
 import java.net.URL;
 import java.util.EnumSet;
 import java.util.Enumeration;
+import java.util.Observable;
+import java.util.Observer;
 
 import javax.swing.*;
 
 @SuppressWarnings("serial")
-public class EditFrame extends JFrame {
+public class EditFrame extends JFrame
+                               implements Observer
+ {
     static JDialog helpDialog = null;
     static JDialog aboutDialog = null;
 
@@ -338,6 +342,7 @@ public class EditFrame extends JFrame {
      */
     public EditFrame(Editor parentEditor) {
         this.parentEditor = parentEditor;
+        parentEditor.addObserver(this);
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setLocation(0, 0);
         contentPane = new JPanel(new BorderLayout());
@@ -1078,6 +1083,10 @@ public class EditFrame extends JFrame {
                 }
             });
     }
+
+     public void update(Observable o, Object arg) {
+         repaint();
+     }
 
     /** This method is assumed to be a passive receiver of information
         that the font name has changed, to reflect the change in the
