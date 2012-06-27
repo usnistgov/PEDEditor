@@ -15,7 +15,9 @@ import javax.swing.JOptionPane;
 
 import com.itextpdf.text.Document;
 import com.itextpdf.text.PageSize;
-import com.itextpdf.text.pdf.PdfWriter;
+import com.itextpdf.text.pdf.BadPdfFormatException;
+import com.itextpdf.text.pdf.PdfCopy;
+import com.itextpdf.text.pdf.PdfReader;
 
 /** Wrapper class for conversion of PED files to PDF files. */
 public class PEDToPDF {
@@ -50,16 +52,16 @@ public class PEDToPDF {
             Diagram d = new Diagram();
 
             Document doc = new Document(PageSize.LETTER);
-            PdfWriter writer = null;
+            PdfCopy copy = null;
             try {
-                writer = PdfWriter.getInstance(doc, new FileOutputStream("/eb/pdf/combined.pdf"));
+                copy = new PdfCopy(doc, new FileOutputStream("/eb/pdf/combined.pdf"));
             } catch (Exception e) {
                 System.err.println(e);
                 return;
             }
             System.out.println("Opening...");
-            doc.open();
 
+            doc.open();
             try  (DirectoryStream<Path> stream
             		= Files.newDirectoryStream(Paths.get(defaultDir))) {
                     int cnt = 0;
@@ -70,13 +72,15 @@ public class PEDToPDF {
                         try {
                             d.openDiagram(file.toFile());
                             String ofn = removeExtension(file.toString()) + ".pdf";
-                            d.appendToPDF(doc, writer);
+                            byte[] pagePDF = d.toPDFByteArray();
+                            copy.addPage(copy.getImportedPage
+                                         (new PdfReader(pagePDF), 1));
                             System.out.println(file + " -> " + ofn + " OK");
                             ++cnt;
                             if (cnt == 20) {
                                 break;
                             }
-                        } catch (IOException | DirectoryIteratorException x) {
+                        } catch (IOException | DirectoryIteratorException | BadPdfFormatException x) {
                             // IOException can never be thrown by the iteration.
                             // In this snippet, it can only be thrown by newDirectoryStream.
                             System.err.println(file + ": " + x);
