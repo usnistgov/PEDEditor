@@ -22,16 +22,34 @@ public class ImageTransform {
         return run(xform, imageIn, Color.BLACK);
     }
 
+    /** run() with default size and black background. */
+    public static BufferedImage run(PolygonTransform xform,
+                                    BufferedImage imageIn,
+                                    DithererType ditherer) {
+        return run(xform, imageIn, Color.BLACK, ditherer);
+    }
+
+    protected static Dimension defaultSize(PolygonTransform xform) {
+        Rectangle2D.Double b = xform.outputBounds();
+        return new Dimension((int) Math.ceil(b.x + b.width),
+                             (int) Math.ceil(b.y + b.height));
+    }
+
     /** run() with output image size just large enough to hold
         xform.outputBounds(). */
     public static BufferedImage run(PolygonTransform xform,
                                     BufferedImage imageIn,
                                     Color background) {
-        Rectangle2D.Double b = xform.outputBounds();
-        int width = (int) Math.ceil(b.x + b.width);
-        int height = (int) Math.ceil(b.y + b.height);
-        return run(xform, imageIn, background, new Dimension(width, height),
-                   DithererType.GOOD);
+        return run(xform, imageIn, background, DithererType.GOOD);
+    }
+
+    /** run() with output image size just large enough to hold
+        xform.outputBounds(). */
+    public static BufferedImage run(PolygonTransform xform,
+                                    BufferedImage imageIn,
+                                    Color background,
+                                    DithererType ditherer) {
+        return run(xform, imageIn, background, defaultSize(xform), ditherer);
     }
 
     /** This ditherer divides each pixel into sampleCnt x sampleCnt
@@ -58,12 +76,14 @@ public class ImageTransform {
             this.sampleCnt = sampleCnt;
         }
 
-        public double estimatedRunTime(Rectangle outputBounds) {
+        @Override
+		public double estimatedRunTime(Rectangle outputBounds) {
             return 1 + (outputBounds.width * outputBounds.height
-                        * (1 + sampleCnt * sampleCnt));
+                        * (4 + sampleCnt * sampleCnt));
         }
 
-        public void run(Rectangle outputBounds) {
+        @Override
+		public void run(Rectangle outputBounds) {
             /** Use stack variables for speed. Not sure how much this matters... */
             BufferedImage input = this.input;
             int[] output = this.output;
@@ -191,11 +211,13 @@ public class ImageTransform {
             this.background = background;
         }
 
-        public double estimatedRunTime(Rectangle outputBounds) {
-            return 1 + outputBounds.width * outputBounds.height;
+        @Override
+		public double estimatedRunTime(Rectangle outputBounds) {
+            return 1 + 4 * outputBounds.width * outputBounds.height;
         }
 
-        public void run(Rectangle outputBounds) {
+        @Override
+		public void run(Rectangle outputBounds) {
             /** Use stack variables for speed. Not sure how much this matters... */
             BufferedImage input = this.input;
             int[] output = this.output;
@@ -271,7 +293,7 @@ public class ImageTransform {
             ditherer = new FastDitherer(input, outputRGB, width,
                                            inverseTransform, background);
         }
-        mainPool.invoke(new RecursiveRectangleAction(ditherer, outputBounds, 10000));
+        mainPool.invoke(new RecursiveRectangleAction(ditherer, outputBounds, 500000));
         output.setRGB(0, 0, width, height, outputRGB, 0, width);
         s.ping();
         return output;
@@ -332,7 +354,8 @@ public class ImageTransform {
         System.out.println(xform);
         xform.check();
 
-        BufferedImage output = run(xform, input);
+        BufferedImage output = run(xform, input, DithererType.GOOD);
+        System.out.println("Task subdivided into " + RecursiveRectangleAction.totalJobs + " jobs.");
         String type = "png";
 
         try {
