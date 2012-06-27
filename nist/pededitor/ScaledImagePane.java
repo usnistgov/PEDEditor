@@ -20,7 +20,8 @@ public class ScaledImagePane extends JPanel {
         repaint();
     }
 
-    public void paintComponent(Graphics g) {
+    @Override
+	public void paintComponent(Graphics g) {
         Rectangle drawHere = g.getClipBounds();
         g.setColor(Color.LIGHT_GRAY);
         ((Graphics2D) g).fill(drawHere);

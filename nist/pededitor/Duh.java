@@ -40,7 +40,8 @@ public class Duh {
             this.center = center;
         }
 
-        public int compare(Point2D.Double o1, Point2D.Double o2) {
+        @Override
+		public int compare(Point2D.Double o1, Point2D.Double o2) {
             double diff = Duh.toAngle(Duh.aMinusB(o2, center)) -
                 Duh.toAngle(Duh.aMinusB(o1, center));
             return (diff > 0) ? 1 : (diff == 0) ? 0 : -1;
@@ -56,7 +57,8 @@ public class Duh {
             this.values = values;
         }
 
-        public int compare(Integer i1, Integer i2) {
+        @Override
+		public int compare(Integer i1, Integer i2) {
             double diff = values[i2] - values[i1];
             return (diff > 0) ? 1 : (diff == 0) ? 0 : -1;
         }

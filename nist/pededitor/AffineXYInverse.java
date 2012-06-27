@@ -7,15 +7,24 @@ public class AffineXYInverse extends AffineXYCommon
    implements Transform2D {
 
     protected Point2D.Double aRangePoint = null;
-    public void setxk(double xk) { this.xk = xk; preferredSolution = -1; }
-    public void setxkx(double xkx) { this.xkx = xkx; preferredSolution = -1; }
-    public void setxky(double xky) { this.xky = xky; preferredSolution = -1; }
-    public void setxkxy(double xkxy) { this.xkxy = xkxy; preferredSolution = -1; }
-    public void setyk(double yk) { this.yk = yk; preferredSolution = -1; }
-    public void setykx(double ykx) { this.ykx = ykx; preferredSolution = -1; }
-    public void setyky(double yky) { this.yky = yky; preferredSolution = -1; }
-    public void setykxy(double ykxy) { this.ykxy = ykxy; preferredSolution = -1; }
-    public void set(double xk, double xkx, double xky, double xkxy,
+    @Override
+	public void setxk(double xk) { this.xk = xk; preferredSolution = -1; }
+    @Override
+	public void setxkx(double xkx) { this.xkx = xkx; preferredSolution = -1; }
+    @Override
+	public void setxky(double xky) { this.xky = xky; preferredSolution = -1; }
+    @Override
+	public void setxkxy(double xkxy) { this.xkxy = xkxy; preferredSolution = -1; }
+    @Override
+	public void setyk(double yk) { this.yk = yk; preferredSolution = -1; }
+    @Override
+	public void setykx(double ykx) { this.ykx = ykx; preferredSolution = -1; }
+    @Override
+	public void setyky(double yky) { this.yky = yky; preferredSolution = -1; }
+    @Override
+	public void setykxy(double ykxy) { this.ykxy = ykxy; preferredSolution = -1; }
+    @Override
+	public void set(double xk, double xkx, double xky, double xkxy,
                     double yk, double ykx, double yky, double ykxy) {
         super.set(xk, xkx, xky, xkxy, yk, ykx, yky, ykxy);
         preferredSolution = -1;
@@ -28,7 +37,8 @@ public class AffineXYInverse extends AffineXYCommon
      * since the coefficients were changed.. */
     protected int preferredSolution = -1;
 
-    public AffineXY createInverse() {
+    @Override
+	public AffineXY createInverse() {
         AffineXY inv = new AffineXY();
         inv.copyFieldsFrom(this);
         return inv;
@@ -49,7 +59,8 @@ public class AffineXYInverse extends AffineXYCommon
         preferredSolution = -1;
     }
 
-    public Point2D.Double transform(double x, double y)
+    @Override
+	public Point2D.Double transform(double x, double y)
         throws UnsolvableException {
         if (preferredSolution == -1) {
             // Initialize preferredSolution value.

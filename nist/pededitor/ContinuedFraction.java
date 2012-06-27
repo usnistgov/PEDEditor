@@ -205,7 +205,8 @@ public class ContinuedFraction {
         return (deno == 1 && fives >= 1 && fives * 2 >= twos);
     }
 
-    public String toString() {
+    @Override
+	public String toString() {
         return numerator + "/" + denominator;
     }
 

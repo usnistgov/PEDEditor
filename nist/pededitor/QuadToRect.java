@@ -34,18 +34,21 @@ public class QuadToRect extends RectToQuadCommon
     }
 
     /** @return the inverse transformation as a RectToQuad. */
-    public QuadrilateralTransform createInverse() {
+    @Override
+	public QuadrilateralTransform createInverse() {
         RectToQuad inv = new RectToQuad();
         inv.copyFieldsFrom(this);
         inv.xform = xform.createInverse();
         return inv;
     }
 
-    @JsonIgnore public Point2D.Double[] getOutputVertices() {
+    @Override
+	@JsonIgnore public Point2D.Double[] getOutputVertices() {
         return rectVertices();
     }
 
-    @JsonProperty("input") public Point2D.Double[] getInputVertices() {
+    @Override
+	@JsonProperty("input") public Point2D.Double[] getInputVertices() {
         return quadVertices();
     }
 
@@ -56,13 +59,15 @@ public class QuadToRect extends RectToQuadCommon
 
     /** @return a transformation from the unit square to the input
      * quadrilateral */
-    public RectToQuad squareToDomain() {
+    @Override
+	public RectToQuad squareToDomain() {
         RectToQuad output = new RectToQuad();
         output.setVertices(getInputVertices());
         return output;
     }
 
-    protected void update() {
+    @Override
+	protected void update() {
         super.update();
         ((AffineXYInverse) xform).includeInRange(x + w/2, y + h/2);
         // This could be turned off if speed becomes critical, but
@@ -70,11 +75,13 @@ public class QuadToRect extends RectToQuadCommon
         check();
     }
 
-    public void preConcatenate(Transform2D other) {
+    @Override
+	public void preConcatenate(Transform2D other) {
         transformRect(other);
     }
 
-    public void concatenate(Transform2D other) {
+    @Override
+	public void concatenate(Transform2D other) {
         try {
             transformQuad(other.createInverse());
         } catch (NoninvertibleTransformException e) {

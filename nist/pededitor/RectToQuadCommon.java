@@ -7,18 +7,25 @@ import java.awt.geom.*;
 abstract public class RectToQuadCommon
     extends PolygonTransformAdapter
     implements QuadrilateralTransform {
-    abstract public Transform2D createInverse();
-    abstract public void preConcatenate(Transform2D other);
-    abstract public void concatenate(Transform2D other);
-    abstract public Transform2D squareToDomain();
-    abstract public RectToQuadCommon clone();
+    @Override
+	abstract public Transform2D createInverse();
+    @Override
+	abstract public void preConcatenate(Transform2D other);
+    @Override
+	abstract public void concatenate(Transform2D other);
+    @Override
+	abstract public Transform2D squareToDomain();
+    @Override
+	abstract public RectToQuadCommon clone();
 
-    public Point2D.Double transform(double x, double y)
+    @Override
+	public Point2D.Double transform(double x, double y)
         throws UnsolvableException {
         return xform.transform(x,y);
     }
 
-    public void transform(double[] srcPts, int srcOff,
+    @Override
+	public void transform(double[] srcPts, int srcOff,
                           double[] dstPts, int dstOff, int numPts)
         throws UnsolvableException {
         xform.transform(srcPts, srcOff, dstPts, dstOff, numPts);

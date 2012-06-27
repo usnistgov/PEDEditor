@@ -12,10 +12,14 @@ public abstract class AffinePolygonTransform extends Affine
     private static final long serialVersionUID = 7329000844756906085L;
 
     /** The polygon's input vertices. */
-    public abstract Point2D.Double[] getInputVertices();
+    @Override
+	public abstract Point2D.Double[] getInputVertices();
     /** The polygon's output vertices. */
-    public abstract Point2D.Double[] getOutputVertices();
-    public abstract Rectangle2D.Double inputBounds();
-    public abstract Rectangle2D.Double outputBounds();
+    @Override
+	public abstract Point2D.Double[] getOutputVertices();
+    @Override
+	public abstract Rectangle2D.Double inputBounds();
+    @Override
+	public abstract Rectangle2D.Double outputBounds();
     @Override public abstract AffinePolygonTransform clone();
 }

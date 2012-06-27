@@ -121,7 +121,8 @@ public class AnchoredLabel {
     /** If true, erase the label's background before drawing. */
     public boolean isOpaque() { return opaque; }
 
-    public String toString() {
+    @Override
+	public String toString() {
         return "'" + text + "' x: " + x  + " y: " + y + " wx: " + xWeight
             + " wy: " + yWeight + " angle: " + angle + " fontSize: " + fontSize
             + " boxed: " + boxed + " opaque: " + opaque;

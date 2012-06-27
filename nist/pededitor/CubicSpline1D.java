@@ -340,7 +340,8 @@ final public class CubicSpline1D {
             + t * tSq * controlPoints[3];
     }
     
-    public String toString() {
+    @Override
+	public String toString() {
         StringBuilder out = new StringBuilder(super.toString() + "\n"); 
         for (int segment = 0; segment < segmentCnt(); ++segment) {
             out.append(segment + ": ");

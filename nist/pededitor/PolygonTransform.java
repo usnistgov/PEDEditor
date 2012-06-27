@@ -24,5 +24,6 @@ interface PolygonTransform extends Transform2D {
     @JsonProperty("output") Point2D.Double[] getOutputVertices();
     Rectangle2D.Double inputBounds();
     Rectangle2D.Double outputBounds();
-    PolygonTransform clone();
+    @Override
+	PolygonTransform clone();
 }

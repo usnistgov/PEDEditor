@@ -44,7 +44,8 @@ public class TriangleTransform extends AffinePolygonTransform {
         setOutputVertices(outpts);
     }
 
-    public TriangleTransform clone() {
+    @Override
+	public TriangleTransform clone() {
         return new TriangleTransform(this);
     }
 
@@ -68,15 +69,18 @@ public class TriangleTransform extends AffinePolygonTransform {
                      m.get(2,0), m.get(2,1));
     }
 
-    public TriangleTransform createInverse() {
+    @Override
+	public TriangleTransform createInverse() {
         return new TriangleTransform(outputVerts, inputVerts);
     }
 
-    public Point2D.Double[] getInputVertices() {
+    @Override
+	public Point2D.Double[] getInputVertices() {
         return Duh.deepCopy(inputVerts);
     }
 
-    public Point2D.Double[] getOutputVertices() {
+    @Override
+	public Point2D.Double[] getOutputVertices() {
         return Duh.deepCopy(outputVerts);
     }
 
@@ -118,11 +122,13 @@ public class TriangleTransform extends AffinePolygonTransform {
         update();
     }
 
-    public void preConcatenate(Transform2D other) {
+    @Override
+	public void preConcatenate(Transform2D other) {
         concatSub(other, outputVerts);
     }
 
-    public void concatenate(Transform2D other) {
+    @Override
+	public void concatenate(Transform2D other) {
         try {
             concatSub(other.createInverse(), inputVerts);
         } catch (NoninvertibleTransformException e) {
@@ -130,11 +136,13 @@ public class TriangleTransform extends AffinePolygonTransform {
         }
     }
 
-    public void preConcatenate(AffineTransform other) {
+    @Override
+	public void preConcatenate(AffineTransform other) {
         concatSub(other, outputVerts);
     }
 
-    public void concatenate(AffineTransform other) {
+    @Override
+	public void concatenate(AffineTransform other) {
         try {
             concatSub(other.createInverse(), inputVerts);
         } catch (NoninvertibleTransformException e) {
@@ -142,15 +150,18 @@ public class TriangleTransform extends AffinePolygonTransform {
         }
     }
 
-    public Rectangle2D.Double inputBounds() {
+    @Override
+	public Rectangle2D.Double inputBounds() {
         return Duh.bounds(inputVerts);
     }
 
-    public Rectangle2D.Double outputBounds() {
+    @Override
+	public Rectangle2D.Double outputBounds() {
         return Duh.bounds(outputVerts);
     }
 
-    public String toString() {
+    @Override
+	public String toString() {
         return PolygonTransformAdapter.toString(this) + "(" + super.toString() + ")";
     }
 

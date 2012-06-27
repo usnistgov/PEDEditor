@@ -216,7 +216,8 @@ final public class CubicSpline2D implements Parameterizable2D {
         return path;
     }
 
-    public Parameterization2D getParameterization() {
+    @Override
+	public Parameterization2D getParameterization() {
         return new PathParam2D(path());
     }
 
@@ -234,7 +235,8 @@ final public class CubicSpline2D implements Parameterizable2D {
               new Point2D.Double(bezx[3], bezy[3]) };
     }
 
-    public String toString() {
+    @Override
+	public String toString() {
         return super.toString() + "\n" + "x: " + xSpline + "y: " + ySpline;
     }
 

@@ -90,7 +90,8 @@ public class DiagramDialog extends JDialog
         return pressedOK ? getSelectedDiagram() : null;
     }
 
-    public void actionPerformed(ActionEvent e) {
+    @Override
+	public void actionPerformed(ActionEvent e) {
         String what = e.getActionCommand();
         for (DiagramType diagram: DiagramType.values()) {
             if (diagram.toString() == what) {

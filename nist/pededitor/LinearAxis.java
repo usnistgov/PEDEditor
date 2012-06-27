@@ -39,7 +39,8 @@ public class LinearAxis extends Axis {
         this(0.0, 0.0, 0.0);
     }
 
-    public double value(double px, double py) {
+    @Override
+	public double value(double px, double py) {
         return a * px + b * py + c;
     }
 

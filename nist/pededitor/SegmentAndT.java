@@ -6,7 +6,8 @@ public class SegmentAndT {
         this.t = t;
     }
 
-    public String toString() {
+    @Override
+	public String toString() {
         return "SegmentAndT[" + segment + ", " + t + "]";
     }
 

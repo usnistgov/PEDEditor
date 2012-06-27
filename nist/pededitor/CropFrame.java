@@ -241,7 +241,8 @@ public class CropFrame extends ImageScrollFrame {
         return filename;
     }
 
-    public BufferedImage getImage() {
+    @Override
+	public BufferedImage getImage() {
         return getImagePane().getImage();
     }
 
@@ -257,7 +258,8 @@ public class CropFrame extends ImageScrollFrame {
 
     public static void main(String[] args) {
         EventQueue.invokeLater(new ArgsRunnable(args) {
-                public void run() {
+                @Override
+				public void run() {
                     if (args.length != 1) {
                         printHelp();
                         System.exit(2);

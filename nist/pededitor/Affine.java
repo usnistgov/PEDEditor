@@ -45,21 +45,25 @@ public class Affine extends AffineTransform implements Transform2D {
         super(m00,  m10, m01, m11, m02, m12);
     }
 
-    public Point2D.Double transform(double x, double y) {
+    @Override
+	public Point2D.Double transform(double x, double y) {
         Point2D.Double point = new Point2D.Double(x,y);
         transform(point, point);
         return point;
     }
 
-    public Point2D.Double transform(Point2D.Double p) {
+    @Override
+	public Point2D.Double transform(Point2D.Double p) {
         return transform(p.x, p.y);
     }
 
-    public Point2D.Double transform(Point2D p) {
+    @Override
+	public Point2D.Double transform(Point2D p) {
         return transform(p.getX(), p.getY());
     }
 
-    public Affine createInverse() throws NoninvertibleTransformException {
+    @Override
+	public Affine createInverse() throws NoninvertibleTransformException {
         return new Affine(super.createInverse());
     }
 
@@ -69,12 +73,14 @@ public class Affine extends AffineTransform implements Transform2D {
                               getTranslateX(), getTranslateY() };
     }
 
-    public void preConcatenate(Transform2D other) {
+    @Override
+	public void preConcatenate(Transform2D other) {
         AffineTransform at = (AffineTransform) other;
         super.preConcatenate(at);
     }
 
-    public void concatenate(Transform2D other) {
+    @Override
+	public void concatenate(Transform2D other) {
         super.concatenate((AffineTransform) other);
     }
 
@@ -93,7 +99,8 @@ public class Affine extends AffineTransform implements Transform2D {
     }
 
     /** This transformation never throws an UnsolvableException. */
-    public boolean transformNeverThrows() {
+    @Override
+	public boolean transformNeverThrows() {
         return true;
     }
 

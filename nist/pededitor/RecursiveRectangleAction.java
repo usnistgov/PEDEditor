@@ -12,6 +12,8 @@ public class RecursiveRectangleAction extends RecursiveAction {
     final public Rectangle rect;
     final public double multithreadingCostThreshold;
 
+    public static int totalJobs = 0;
+
     /** @param rect The region to be processed
 
         @param processor The RectangleProcessor to apply to rect
@@ -24,9 +26,10 @@ public class RecursiveRectangleAction extends RecursiveAction {
         this.processor = processor;
         this.rect = rect;
         this.multithreadingCostThreshold = multithreadingCostThreshold;
+        ++totalJobs;
     }
 
-    protected void compute() {
+    @Override protected void compute() {
         if (rect.width >= 2
             && (processor.estimatedRunTime(rect)
                 >= multithreadingCostThreshold)) {

@@ -198,7 +198,8 @@ public class PathParam2D
         return segments.get((t == 0) ? 0 : ((int) Math.ceil(t) - 1));
     }
 
-    public Point2D.Double getLocation(double t) {
+    @Override
+	public Point2D.Double getLocation(double t) {
         return getSegment(t).getLocation(t);
     }
 
@@ -206,7 +207,8 @@ public class PathParam2D
         return getSegment(t).distance(p, t);
     }
 
-    public Point2D.Double getDerivative(double t) {
+    @Override
+	public Point2D.Double getDerivative(double t) {
         return getSegment(t).getDerivative(t);
     }
 
@@ -275,7 +277,8 @@ public class PathParam2D
         of the correct value, unless it takes more than maxIterations
         to compute. In that case, just return the best estimate known
         at that time. */
-    public CurveDistanceRange distance(Point2D p, double maxError,
+    @Override
+	public CurveDistanceRange distance(Point2D p, double maxError,
                                   double maxIterations) {
         ArrayList<Parameterization2D> segs = new ArrayList<>();
         for (Parameterization2D segment: this) {

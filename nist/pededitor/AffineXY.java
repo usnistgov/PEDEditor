@@ -9,18 +9,21 @@ stand for different constants.
 */
 public class AffineXY extends AffineXYCommon implements Transform2D {
 
-    public Point2D.Double transform(double x, double y) {
+    @Override
+	public Point2D.Double transform(double x, double y) {
         return new Point2D.Double
             (xk + x * (xkx + y * xkxy) + y * xky,
              yk + x * (ykx + y * ykxy) + y * yky);
     }
 
-    public Point2D.Double transform(Point2D.Double p) {
+    @Override
+	public Point2D.Double transform(Point2D.Double p) {
         return transform(p.x, p.y);
     }
 
     /** Transform many points at once */
-    public void transform(double[] srcPts, int srcOff,
+    @Override
+	public void transform(double[] srcPts, int srcOff,
                           double[] dstPts, int dstOff, int numPts) {
         int twice = numPts * 2;
         for (int i = 0; i < twice; i += 2) {
@@ -31,7 +34,8 @@ public class AffineXY extends AffineXYCommon implements Transform2D {
         }
     }
 
-    public AffineXYCommon createInverse() {
+    @Override
+	public AffineXYCommon createInverse() {
         AffineXYInverse inv = new AffineXYInverse();
         inv.copyFieldsFrom(this);
         return inv;
@@ -39,7 +43,8 @@ public class AffineXY extends AffineXYCommon implements Transform2D {
 
     /** Always return true: this transformation never throws an
         UnsolvableException. */
-    public boolean transformNeverThrows() {
+    @Override
+	public boolean transformNeverThrows() {
         return true;
     }
 

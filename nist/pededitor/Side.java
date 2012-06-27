@@ -20,7 +20,8 @@ public enum Side {
         return isX() ? "width" : "height";
     }
 
-    public String toString() {
+    @Override
+	public String toString() {
         return name;
     }
  };

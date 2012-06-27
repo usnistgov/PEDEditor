@@ -6,10 +6,13 @@ import java.awt.geom.*;
 abstract public class AffineXYCommon extends Transform2DAdapter
     implements Transform2D {
 
-    abstract public Point2D.Double transform(double x, double y)
+    @Override
+	abstract public Point2D.Double transform(double x, double y)
         throws UnsolvableException;
-    abstract public AffineXYCommon createInverse();
-    abstract public AffineXYCommon clone();
+    @Override
+	abstract public AffineXYCommon createInverse();
+    @Override
+	abstract public AffineXYCommon clone();
 
     protected double xk = 0;
     protected double xkx = 0;
@@ -75,18 +78,21 @@ abstract public class AffineXYCommon extends Transform2DAdapter
         }
     }
 
-    public String toString() {
+    @Override
+	public String toString() {
         return getClass().getCanonicalName() + "(" +
             xk + plus(xkx) + " x" + plus(xky) + " y" + plus(xkxy) + " xy, " +
             yk + plus(ykx) + " x" + plus(yky) + " y" + plus(ykxy) + " xy)";
     }
 
-    public void preConcatenate(Transform2D other) {
+    @Override
+	public void preConcatenate(Transform2D other) {
         throw new UnsupportedOperationException
             ("preConcatenate() implementation delayed pending need");
     }
 
-    public void concatenate(Transform2D other) {
+    @Override
+	public void concatenate(Transform2D other) {
         throw new UnsupportedOperationException
             ("concatenate() implementation delayed pending need");
     }

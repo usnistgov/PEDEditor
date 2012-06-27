@@ -37,7 +37,8 @@ public class RectangleTransform extends AffinePolygonTransform {
         update();
     }
 
-    public RectangleTransform clone() {
+    @Override
+	public RectangleTransform clone() {
         return new RectangleTransform(this);
     }
 
@@ -54,15 +55,18 @@ public class RectangleTransform extends AffinePolygonTransform {
         setTransform(mx, 0.0, 0.0, my, bx, by);
     }
 
-    public RectangleTransform createInverse() {
+    @Override
+	public RectangleTransform createInverse() {
         return new RectangleTransform(output, input);
     }
 
-    @JsonIgnore public Point2D.Double[] getInputVertices() {
+    @Override
+	@JsonIgnore public Point2D.Double[] getInputVertices() {
         return Duh.toPoint2DDoubles(input);
     }
 
-    @JsonIgnore public Point2D.Double[] getOutputVertices() {
+    @Override
+	@JsonIgnore public Point2D.Double[] getOutputVertices() {
         return Duh.toPoint2DDoubles(output);
     }
 
@@ -82,11 +86,13 @@ public class RectangleTransform extends AffinePolygonTransform {
         update();
     }
 
-    public void preConcatenate(Transform2D other) {
+    @Override
+	public void preConcatenate(Transform2D other) {
         concatSub(other, output);
     }
 
-    public void concatenate(Transform2D other) {
+    @Override
+	public void concatenate(Transform2D other) {
         try {
             concatSub(other.createInverse(), input);
         } catch (NoninvertibleTransformException e) {
@@ -94,11 +100,13 @@ public class RectangleTransform extends AffinePolygonTransform {
         }
     }
 
-    public void preConcatenate(AffineTransform other) {
+    @Override
+	public void preConcatenate(AffineTransform other) {
         concatSub(other, output);
     }
 
-    public void concatenate(AffineTransform other) {
+    @Override
+	public void concatenate(AffineTransform other) {
         try {
             concatSub(other.createInverse(), input);
         } catch (NoninvertibleTransformException e) {
@@ -121,11 +129,13 @@ public class RectangleTransform extends AffinePolygonTransform {
         return (Rectangle2D.Double) output.clone();
     }
 
-    public Rectangle2D.Double inputBounds() {
+    @Override
+	public Rectangle2D.Double inputBounds() {
         return normalize(input);
     }
 
-    public Rectangle2D.Double outputBounds() {
+    @Override
+	public Rectangle2D.Double outputBounds() {
         return normalize(output);
     }
 
@@ -139,7 +149,8 @@ public class RectangleTransform extends AffinePolygonTransform {
         update();
     }
 
-    public String toString() {
+    @Override
+	public String toString() {
         return PolygonTransformAdapter.toString(this) + "(" + super.toString() + ")";
     }
 

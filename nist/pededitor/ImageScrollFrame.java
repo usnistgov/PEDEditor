@@ -87,7 +87,8 @@ public class ImageScrollFrame extends JFrame {
     /** Test code. */
     public static void main(String[] args) {
         EventQueue.invokeLater(new ArgsRunnable(args) {
-                public void run() {
+                @Override
+				public void run() {
                     if (args.length != 1) {
                         printHelp();
                         System.exit(2);

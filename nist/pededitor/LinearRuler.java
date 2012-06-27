@@ -123,7 +123,8 @@ class LinearRuler implements Parameterizable2D {
     /** clone() copies but does not clone the axis field, because the
         axis is considered a relation of the ruler instead of an owned
         field. */
-    public LinearRuler clone() {
+    @Override
+	public LinearRuler clone() {
         LinearRuler o = new LinearRuler();
         o.startPoint = (Point2D.Double) startPoint.clone();
         o.endPoint = (Point2D.Double) endPoint.clone();

@@ -41,42 +41,51 @@ public class QuadToQuad
         r2q.setVertices(outs); 
     }
 
-    public Transform2D createInverse() {
+    @Override
+	public Transform2D createInverse() {
         return new QuadToQuad(getOutputVertices(), getInputVertices());
     }
 
-    public Point2D.Double[] getInputVertices() {
+    @Override
+	public Point2D.Double[] getInputVertices() {
         return q2r.getInputVertices();
     }
 
-    public Point2D.Double[] getOutputVertices() {
+    @Override
+	public Point2D.Double[] getOutputVertices() {
         return r2q.getOutputVertices();
     }
 
-    public void preConcatenate(Transform2D other) {
+    @Override
+	public void preConcatenate(Transform2D other) {
         // This is a little sketchy, in that there is no guarantee
         // that the resulting transform will behave identically to
         // transforming by this and then transforming by other.
         r2q.preConcatenate(other);
     }
-    public void concatenate(Transform2D other) {
+    @Override
+	public void concatenate(Transform2D other) {
         q2r.concatenate(other);
     }
 
-    public Transform2D squareToDomain() {
+    @Override
+	public Transform2D squareToDomain() {
         return q2r.createInverse();
     }
 
-    public QuadToQuad clone() {
+    @Override
+	public QuadToQuad clone() {
         return new QuadToQuad(getInputVertices(), getOutputVertices());
     }
 
-    public Point2D.Double transform(double x, double y)
+    @Override
+	public Point2D.Double transform(double x, double y)
         throws UnsolvableException {
         return r2q.transform(q2r.transform(x,y));
     }
 
-    public void transform(double[] srcPts, int srcOff,
+    @Override
+	public void transform(double[] srcPts, int srcOff,
                           double[] dstPts, int dstOff, int numPts)
         throws UnsolvableException {
         q2r.transform(srcPts, srcOff, dstPts, dstOff, numPts);

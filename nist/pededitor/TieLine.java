@@ -67,7 +67,8 @@ public class TieLine {
         this.ot2 = ot2;
     }
 
-    public TieLine clone() {
+    @Override
+	public TieLine clone() {
         TieLine output = new TieLine(lineCnt, stroke);
         output.it1 = it1;
         output.it2 = it2;
@@ -327,7 +328,8 @@ public class TieLine {
         stroke.getStroke().draw(g, getPath(), scale * lineWidth);
     }
 
-    public String toString() {
+    @Override
+	public String toString() {
         return "TieLines[lineCnt=" + lineCnt + ", stroke = " + stroke
             + ", lineWidth = " + lineWidth
             + ", inner = " + innerEdge + ",  outer = " + outerEdge

@@ -17,7 +17,5 @@ public interface DecorationHandle {
         SelectionHandle object that represents the copy. */
     DecorationHandle copy(Point2D dest);
     Point2D.Double getLocation();
-    boolean isEditable();
-    void edit();
     Decoration getDecoration();
 }

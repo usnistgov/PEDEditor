@@ -39,7 +39,8 @@ public class CurveDistanceRange extends CurveDistance {
                                      Math.min(c1.minDistance, c2.minDistance));
     }
 
-    public String toString() {
+    @Override
+	public String toString() {
         if (minDistance == distance)  {
             return getClass().getSimpleName() + "[t = " + t + ", p = " + point + ", "
                 + " d = " + distance + "]";

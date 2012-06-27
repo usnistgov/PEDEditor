@@ -88,7 +88,8 @@ class TestPanel extends JPanel {
       }
    }
 
-   public void paintComponent(Graphics g) {
+   @Override
+public void paintComponent(Graphics g) {
       Rectangle drawHere = g.getClipBounds();
       g.setColor(Color.BLACK);
       ((Graphics2D) g).fill(drawHere);

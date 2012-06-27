@@ -28,7 +28,8 @@ public class ImageZoomPane extends ImagePane {
         setPreferredSize(new Dimension(preferredWidth, preferredHeight));
     }
 
-    public void setImage(BufferedImage image) {
+    @Override
+	public void setImage(BufferedImage image) {
         this.image = image;
         int w = image.getWidth(null);
         int h = image.getHeight(null);
@@ -39,7 +40,8 @@ public class ImageZoomPane extends ImagePane {
         repaint();
     }
 
-    public void paintComponent(Graphics g) {
+    @Override
+	public void paintComponent(Graphics g) {
         Rectangle drawHere = g.getClipBounds();
         g.setColor(Color.WHITE);
         ((Graphics2D) g).fill(drawHere);

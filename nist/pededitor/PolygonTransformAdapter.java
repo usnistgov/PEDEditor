@@ -7,18 +7,25 @@ import java.awt.geom.*;
 abstract public class PolygonTransformAdapter
     extends Transform2DAdapter
     implements PolygonTransform {
-    abstract public Point2D.Double transform(double x, double y)
+    @Override
+	abstract public Point2D.Double transform(double x, double y)
         throws UnsolvableException;
-    abstract public Transform2D createInverse()
+    @Override
+	abstract public Transform2D createInverse()
         throws NoninvertibleTransformException;
-    abstract public void preConcatenate(Transform2D other);
-    abstract public void concatenate(Transform2D other);
-    abstract public PolygonTransformAdapter clone();
+    @Override
+	abstract public void preConcatenate(Transform2D other);
+    @Override
+	abstract public void concatenate(Transform2D other);
+    @Override
+	abstract public PolygonTransformAdapter clone();
 
-    public Rectangle2D.Double inputBounds() {
+    @Override
+	public Rectangle2D.Double inputBounds() {
         return Duh.bounds(getInputVertices());
     }
-    public Rectangle2D.Double outputBounds() {
+    @Override
+	public Rectangle2D.Double outputBounds() {
         return Duh.bounds(getOutputVertices());
     }
 
@@ -66,7 +73,8 @@ abstract public class PolygonTransformAdapter
             < 1e-12;
     }
 
-    public String toString() {
+    @Override
+	public String toString() {
         return toString(this);
     }
 

@@ -127,7 +127,8 @@ public abstract class GeneralPolyline implements Parameterizable2D {
         return output;
     }
 
-    public GeneralPolyline clone() {
+    @Override
+	public GeneralPolyline clone() {
         GeneralPolyline output
             = create(getSmoothingType(), getPoints(),
                      getStroke(), getLineWidth());

@@ -28,15 +28,18 @@ public class EditPane extends JPanel {
     }
 
     class EditMouseAdapter extends MouseAdapter {
-        public void mouseMoved(MouseEvent e) {
+        @Override
+		public void mouseMoved(MouseEvent e) {
             repaintMaybe();
         }
 
-        public void mouseDragged(MouseEvent e) {
+        @Override
+		public void mouseDragged(MouseEvent e) {
             repaintMaybe();
         }
 
-        public void mouseExited(MouseEvent e) {
+        @Override
+		public void mouseExited(MouseEvent e) {
             repaintMaybe();
         }
 
@@ -45,7 +48,8 @@ public class EditPane extends JPanel {
         }
     }
 
-    public void paintComponent(Graphics g) {
+    @Override
+	public void paintComponent(Graphics g) {
         super.paintComponent(g);
         getParentFrame().getParentEditor().paintEditPane(g);
     }
