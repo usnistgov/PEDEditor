@@ -130,8 +130,8 @@
   }, {
     "xWeight" : 0.0,
     "yWeight" : 0.5,
-    "x" : 0.4679128137063406,
-    "y" : 0.6509268932092471,
+    "x" : 0.4669858752342311,
+    "y" : 0.697273816814723,
     "baselineXOffset" : 0.0,
     "baselineYOffset" : 0.0,
     "text" : "f<sub>c</sub> sin θ ≤ μ f<sub>c</sub> cos θ<br>μ ≥ tan θ*<br>2 f<sub>c</sub> sin(θ-φ) = f<br>f<sub>c</sub> = f / (2 sin (θ-φ))",
@@ -182,13 +182,39 @@
   }, {
     "xWeight" : 0.0,
     "yWeight" : 0.0,
-    "x" : 0.4679128137063406,
-    "y" : 0.5741761569056152,
+    "x" : 0.4669858752342311,
+    "y" : 0.5183257414674984,
     "baselineXOffset" : 0.0,
     "baselineYOffset" : 0.0,
-    "text" : "<p style=\"width: 1250 px;\">* Minimum coefficient of friction for cam to hold. Caveats from cam manufacturers: cam may grind soft rock surfaces into dust and skate out on that dust layer. Also, in a flare, if the cam is pulled out fast enough, it may lose contact with the rock and never reestablish contact.</p>",
+    "text" : "<div style=\"width: 1250 px;\"><p>* Minimum coefficient of friction for cam to hold.</p><p>As I believe a cam manufacturer warns, the cam may grind soft rock surfaces into dust and skate out on that dust layer. This has happened to me under body weight (I even heard the grinding noise), and there are videos of it happening several times in a single fall. That is why Fat Cams exist (though finding a better fit or a wider crack also works to reduce PSIs).</p><p>Also, in a flare, if the cam loses contact with the rock even momentarily and it is pulled out fast enough, it may never reestablish contact.</p></div>",
     "angle" : 0.0,
     "fontSize" : 0.6666666666666666,
+    "color" : null,
+    "boxed" : false,
+    "opaque" : false
+  }, {
+    "xWeight" : 0.0,
+    "yWeight" : 0.0,
+    "x" : 0.47083221831929956,
+    "y" : 0.6063848963179026,
+    "baselineXOffset" : 0.0,
+    "baselineYOffset" : 0.0,
+    "text" : "<p style=\"width: 1250 px;\">For typical camming angles, about twice the supported force is exerted on the sides of a parallel crack.</p>",
+    "angle" : 0.0,
+    "fontSize" : 0.6666666666666666,
+    "color" : null,
+    "boxed" : false,
+    "opaque" : false
+  }, {
+    "xWeight" : 1.0,
+    "yWeight" : 1.0,
+    "x" : 0.6970052055140217,
+    "y" : 0.10305730596243479,
+    "baselineXOffset" : 0.0,
+    "baselineYOffset" : 0.0,
+    "text" : "E. Boesch",
+    "angle" : 0.0,
+    "fontSize" : 0.4,
     "color" : null,
     "boxed" : false,
     "opaque" : false
@@ -205,12 +231,19 @@
     "size" : 0.0032,
     "angle" : 1.5707963267948966,
     "color" : null
+  }, {
+    "x" : 0.5561105577533751,
+    "y" : 0.6364018294686598,
+    "size" : 0.0024,
+    "angle" : 1.5707963267948966,
+    "color" : null
   } ],
   "tieLines" : [ ],
   "diagramComponents" : [ null, null, null, null ],
   "originalFilename" : null,
   "fontName" : "DejaVu LGC Sans PED",
   "keys" : {
+    "title" : "Cam Force Diagram"
   },
   "curves" : [ {
     "shape" : "polyline",
@@ -577,6 +610,21 @@
     "closed" : false,
     "lineStyle" : "SOLID",
     "id" : 21
+  }, {
+    "shape" : "polyline",
+    "points" : [ {
+      "x" : 0.5561105577533751,
+      "y" : 0.6128734656226692
+    }, {
+      "x" : 0.5561105577533751,
+      "y" : 0.6364018294686598
+    } ],
+    "color" : null,
+    "lineWidth" : 0.0024,
+    "filled" : false,
+    "closed" : false,
+    "lineStyle" : "SOLID",
+    "id" : 116
   } ],
   "axes" : [ {
     "format" : {
