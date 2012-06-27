@@ -10,6 +10,8 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.PathMatcher;
 import java.nio.file.Paths;
+import java.util.ArrayList;
+import java.util.Collections;
 
 import javax.swing.JOptionPane;
 
@@ -35,12 +37,11 @@ public class PEDToPDF {
 
     public static void main(String[] args) {
         if (args.length == 2) {
-            Diagram d = new Diagram();
             String ifn = args[0];
             String ofn = args[1];
             try {
-                d.openDiagram(new File(ifn));
-                d.saveAsPDF(new File(ofn));
+                Diagram.loadFrom(new File(ifn))
+                    .saveAsPDF(new File(ofn));
             } catch (IOException e) {
                 JOptionPane.showMessageDialog(null, e.toString());
             }
@@ -49,51 +50,60 @@ public class PEDToPDF {
 
             PathMatcher m = FileSystems.getDefault().getPathMatcher
                 ("glob:**.ped");
-            Diagram d = new Diagram();
+            ArrayList<String> matches = new ArrayList<>();
 
-            Document doc = new Document(PageSize.LETTER);
-            PdfCopy copy = null;
-            try {
-                copy = new PdfCopy(doc, new FileOutputStream("/eb/pdf/combined.pdf"));
-            } catch (Exception e) {
-                System.err.println(e);
-                return;
-            }
-            System.out.println("Opening...");
-
-            doc.open();
             try  (DirectoryStream<Path> stream
-            		= Files.newDirectoryStream(Paths.get(defaultDir))) {
-                    int cnt = 0;
+                  = Files.newDirectoryStream(Paths.get(defaultDir))) {
                     for (Path file: stream) {
-                        if (!m.matches(file)) {
-                            continue;
-                        }
-                        try {
-                            d.openDiagram(file.toFile());
-                            String ofn = removeExtension(file.toString()) + ".pdf";
-                            byte[] pagePDF = d.toPDFByteArray();
-                            copy.addPage(copy.getImportedPage
-                                         (new PdfReader(pagePDF), 1));
-                            System.out.println(file + " -> " + ofn + " OK");
-                            ++cnt;
-                            if (cnt == 20) {
-                                break;
-                            }
-                        } catch (IOException | DirectoryIteratorException | BadPdfFormatException x) {
-                            // IOException can never be thrown by the iteration.
-                            // In this snippet, it can only be thrown by newDirectoryStream.
-                            System.err.println(file + ": " + x);
+                        if (m.matches(file)) {
+                            matches.add(file.toString());
                         }
                     }
-
-                    System.out.println("Closing.");
-                    doc.close();
                 } catch (IOException | DirectoryIteratorException x) {
                 // IOException can never be thrown by the iteration.
                 // In this snippet, it can only be thrown by newDirectoryStream.
                 System.err.println(x);
             }
+            Collections.sort(matches, new MixedIntegerStringComparator());
+
+            int diagramsPerDocument = 100;
+            Document doc = null;
+            PdfCopy copy = null;
+            int inFileNo = -1;
+            int outFileCnt = 0;
+            String ofn = null;
+
+            for (String filename: matches) {
+                System.out.println("Reading " + filename);
+                ++inFileNo;
+                if (inFileNo % diagramsPerDocument == 0) {
+                    ++outFileCnt;
+                    if (doc != null) {
+                        doc.close();
+                    }
+                    ofn = String.format("/eb/pdf/combined%04d.pdf", outFileCnt);
+                    System.out.println("Starting " + ofn);
+                    doc = new Document(PageSize.LETTER);
+                    try {
+                        copy = new PdfCopy(doc, new FileOutputStream(ofn));
+                    } catch (Exception e) {
+                        System.err.println(e);
+                        return;
+                    }
+                    doc.open();
+                }
+
+                try {
+                    Diagram d = Diagram.loadFrom(new File(filename));
+                    copy.addPage(copy.getImportedPage
+                                 (new PdfReader(d.toPDFByteArray()),
+                                  1));
+                    System.out.println(filename + " -> " + ofn);
+                } catch (IOException | BadPdfFormatException x) {
+                    System.err.println(filename + ": " + x);
+                }
+            }
+            doc.close();
         } else {
             System.err.println("Expected 0 or 2 arguments");
         }
