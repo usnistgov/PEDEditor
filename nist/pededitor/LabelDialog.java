@@ -74,9 +74,10 @@ public class LabelDialog extends JDialog {
         }
     }
 
-    public boolean isOpaque() { return mIsOpaque.isSelected(); }
+	/** The funny method name is because isOpaque() is already taken by JDialog. */
+    public boolean isOpaqueLabel() { return mIsOpaque.isSelected(); }
     public boolean isBoxed() { return mIsBoxed.isSelected(); }
-    public void setOpaque(boolean v) {
+    public void setOpaqueLabel(boolean v) {
         mIsOpaque.setSelected(v);
     }
     public void setBoxed(boolean v) {
@@ -300,7 +301,7 @@ public class LabelDialog extends JDialog {
         setYWeight(0.5);
         setFontSize(1);
         setAngle(0);
-        setOpaque(false);
+        setOpaqueLabel(false);
         setBoxed(false);
     }
 
@@ -311,7 +312,7 @@ public class LabelDialog extends JDialog {
         setYWeight(label.getYWeight());
         setFontSize(label.getFontSize());
         setAngle(label.getAngle());
-        setOpaque(label.isOpaque());
+        setOpaqueLabel(label.isOpaque());
         setBoxed(label.isBoxed());
     }
 
@@ -421,7 +422,7 @@ public class LabelDialog extends JDialog {
             new AnchoredLabel(textField.getText(), xWeight, yWeight);
         al.setFontSize(getFontSize());
         al.setAngle(getAngle());
-        al.setOpaque(mIsOpaque.isSelected());
+        al.setOpaque(isOpaqueLabel());
         al.setBoxed(mIsBoxed.isSelected());
         return al;
     }
