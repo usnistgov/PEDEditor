@@ -29,6 +29,7 @@ import java.awt.print.PageFormat;
 import java.awt.print.Printable;
 import java.awt.print.PrinterException;
 import java.awt.print.PrinterJob;
+import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.FileWriter;
@@ -53,6 +54,7 @@ import java.util.TreeMap;
 import Jama.Matrix;
 
 import com.itextpdf.text.Document;
+import com.itextpdf.text.DocumentException;
 import com.itextpdf.text.PageSize;
 import com.itextpdf.text.pdf.DefaultFontMapper;
 import com.itextpdf.text.pdf.PdfContentByte;
@@ -2860,6 +2862,23 @@ public class Diagram extends Observable implements Printable {
         doc.open();
         appendToPDF(doc, writer);
         doc.close();
+    }
+
+    public byte[] toPDFByteArray() {
+        Document doc = new Document(PageSize.LETTER);
+        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+        PdfWriter writer;
+		try {
+			writer = PdfWriter.getInstance(doc, baos);
+		} catch (DocumentException e) {
+			e.printStackTrace();
+			return null;
+		}
+
+        doc.open();
+        appendToPDF(doc, writer);
+        doc.close();
+        return baos.toByteArray();
     }
 
     public void appendToPDF(Document doc, PdfWriter writer) {
