@@ -120,6 +120,10 @@ public class ContinuedFraction {
             return new ContinuedFraction(0, 1);
         }
 
+        if (Double.isNaN(x) || Double.isInfinite(x)) {
+            return null;
+        }
+
         for (int steps = 0; ; ++steps) {
             // Starting from scratch each time is inefficient but easy to follow.
 
