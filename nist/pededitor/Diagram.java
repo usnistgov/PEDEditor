@@ -13,7 +13,6 @@ import java.awt.FontFormatException;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.GraphicsEnvironment;
-import java.awt.Image;
 import java.awt.Rectangle;
 import java.awt.RenderingHints;
 import java.awt.Shape;
@@ -43,7 +42,6 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
-import java.util.Formatter;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -51,8 +49,6 @@ import java.util.Map;
 import java.util.Observable;
 import java.util.Set;
 import java.util.TreeMap;
-import Jama.Matrix;
-
 import com.itextpdf.text.Document;
 import com.itextpdf.text.DocumentException;
 import com.itextpdf.text.PageSize;
@@ -994,7 +990,7 @@ public class Diagram extends Observable implements Printable {
         }
     }
 
-    private static final double BASE_SCALE = 615.0;
+    protected static final double BASE_SCALE = 615.0;
 
     // The label views are grid-fitted at the font size of the buttons
     // they were created from. Grid-fitting throws off the font
@@ -1002,8 +998,6 @@ public class Diagram extends Observable implements Printable {
     // grid-fitting has, and the less error it induces. So make the
     // Views big enough that grid-fitting is largely irrelevant.
     private static final int VIEW_MAGNIFICATION = 8;
-    static protected double MOUSE_UNSTICK_DISTANCE = 30; /* pixels */
-    static protected Image crosshairs = null;
     static protected final String defaultFontName = "DejaVu LGC Sans PED";
     static protected final Map<String,String> fontFiles
         = new HashMap<String, String>() {
@@ -1055,15 +1049,11 @@ public class Diagram extends Observable implements Printable {
         componentElements = null;
 
     protected String originalFilename;
-    /** The item (vertex, label, etc.) that is selected, or null if nothing is. */
-    protected DecorationHandle selection;
 
     protected ArrayList<LinearAxis> axes;
     /** principal coordinates are used to define rulers' startPoints
         and endPoints. */
     protected ArrayList<LinearRuler> rulers;
-    protected LinearAxis pageXAxis = null;
-    protected LinearAxis pageYAxis = null;
 
     protected double labelXMargin = 0;
     protected double labelYMargin = 0;
@@ -1075,7 +1065,7 @@ public class Diagram extends Observable implements Printable {
     boolean saveNeeded = false;
 
     public Diagram() {
-        clear();
+        init();
     }
 
     /** @return the filename that has been assigned to the PED format
@@ -1084,8 +1074,7 @@ public class Diagram extends Observable implements Printable {
         return filename;
     }
 
-    /** Initialize/clear almost every field except diagramType. */
-    void clear() {
+    private void init() {
         originalToPrincipal = null;
         originalFilename = null;
         principalToOriginal = null;
@@ -1098,7 +1087,6 @@ public class Diagram extends Observable implements Printable {
         labels = new ArrayList<>();
         labelViews = new ArrayList<>();
         labelCenters = new ArrayList<>();
-        selection = null;
         axes = new ArrayList<>();
         rulers = new ArrayList<>();
         diagramComponents = new String[Side.values().length];
@@ -1111,6 +1099,11 @@ public class Diagram extends Observable implements Printable {
         removeAllVariables();
     }
 
+    /** Initialize/clear almost every field except diagramType. */
+    void clear() {
+        init();
+    }
+
     @JsonProperty("curves")
     ArrayList<GeneralPolyline> getPaths() {
         return paths;
@@ -1118,7 +1111,6 @@ public class Diagram extends Observable implements Printable {
 
     @JsonProperty("curves")
     void setPaths(Collection<GeneralPolyline> paths) {
-        selection = null;
         this.paths = new ArrayList<GeneralPolyline>(paths);
     }
 
@@ -1135,74 +1127,6 @@ public class Diagram extends Observable implements Printable {
         }
         System.err.println("No curve found with id " + id + ".");
         return null;
-    }
-
-    @JsonIgnore VertexHandle getVertexHandle() {
-        return (selection instanceof VertexHandle)
-            ? ((VertexHandle) selection)
-            : null;
-    }
-
-    @JsonIgnore CurveDecoration getSelectedCurve() {
-        return (selection instanceof VertexHandle)
-            ? ((VertexHandle) selection).getDecoration()
-            : null;
-    }
-
-    @JsonIgnore LabelHandle getLabelHandle() {
-        return (selection instanceof LabelHandle)
-            ? ((LabelHandle) selection)
-            : null;
-    }
-
-    @JsonIgnore LabelDecoration getSelectedLabel() {
-        return (selection instanceof LabelHandle)
-            ? ((LabelHandle) selection).getDecoration()
-            : null;
-    }
-
-    @JsonIgnore TieLineHandle getTieLineHandle() {
-        return (selection instanceof TieLineHandle)
-            ? ((TieLineHandle) selection)
-            : null;
-    }
-
-    @JsonIgnore TieLineDecoration getSelectedTieLine() {
-        return (selection instanceof TieLineHandle)
-            ? ((TieLineHandle) selection).getDecoration()
-            : null;
-    }
-
-    @JsonIgnore RulerHandle getRulerHandle() {
-        return (selection instanceof RulerHandle)
-            ? ((RulerHandle) selection)
-            : null;
-    }
-
-    @JsonIgnore RulerDecoration getRulerSelection() {
-        return (selection instanceof RulerHandle)
-            ? ((RulerHandle) selection).getDecoration()
-            : null;
-    }
-
-    @JsonIgnore ArrowDecoration getSelectedArrow() {
-        return (selection instanceof ArrowDecoration)
-            ? ((ArrowDecoration) selection)
-            : null;
-    }
-
-    /** @return The currently selected GeneralPolyline, or null if no
-        curve is selected. */
-    @JsonIgnore public GeneralPolyline getActiveCurve() {
-        CurveDecoration sel = getSelectedCurve();
-        return (sel == null) ? null : sel.getItem();
-    }
-
-    /** @return The currently selected vertex, or null if no curve is
-        selected. */
-    @JsonIgnore public Point2D.Double getActiveVertex() {
-        VertexHandle handle = getVertexHandle();
-        return (handle == null) ? null : handle.getLocation();
     }
 
     public String[] getTags() {
@@ -1231,20 +1155,17 @@ public class Diagram extends Observable implements Printable {
     public void addTag(String tag) {
         propagateChange();
         tags.add(tag);
-        // TODO editFrame.addTag(tag);
     }
 
     public void removeTag(String tag) {
         propagateChange();
         tags.remove(tag);
-        // TODO editFrame.removeTag(tag);
     }
 
     public void removeVariable(String name) {
         for (Axis axis: axes) {
             if (axis.name.equals(name)) {
                 axes.remove(axis);
-                // TODO editFrame.removeVariable(name);
                 for (int i = 0; i < rulers.size(); ) {
                     if (rulers.get(i).axis == axis) {
                         rulers.remove(i);
@@ -1382,8 +1303,6 @@ public class Diagram extends Observable implements Printable {
         return deviceScale(g.getTransform(), deviceBounds);
     }
 
-    static final double DEFAULT_BACKGROUND_IMAGE_DARKNESS = 1.0/3;
-
     public void paintDiagram(Graphics2D g, double scale, Color backColor) {
         if (labelViews.size() != labels.size()) {
             initializeLabelViews();
@@ -1463,11 +1382,6 @@ public class Diagram extends Observable implements Printable {
             }
         }
 
-        // If an incomplete tie line selection refers to this curve,
-        // then stop selecting a tie line.
-        
-        // TODO tieLineCorners
-
         paths.remove(curveNo);
         propagateChange();
     }
@@ -1530,14 +1444,6 @@ public class Diagram extends Observable implements Printable {
     public void add(LinearAxis axis) {
         axes.add(axis);
         propagateChange();
-    }
-
-    public static class BadComponentException extends Exception {
-		private static final long serialVersionUID = 2102403786854495653L;
-
-		BadComponentException(String s) {
-            super(s);
-        }
     }
 
     static class StringComposition {
@@ -1773,7 +1679,6 @@ public class Diagram extends Observable implements Printable {
             hand.move(moleToWeightFraction(hand.getLocation()));
         }
 
-        // TODO if (mprin != null) {
         return true;
     }
 
@@ -1794,7 +1699,6 @@ public class Diagram extends Observable implements Printable {
             hand.move(weightToMoleFraction(hand.getLocation()));
         }
 
-        // TODO if (mprin != null) {
         return true;
     }
 
@@ -1814,153 +1718,6 @@ public class Diagram extends Observable implements Printable {
     static class PointAndError {
         Point2D.Double point;
         double error;
-    }
-
-    /* Have the user enter a string; parse the string as a compound;
-       and set the mouse position to the principal coordinates that
-       correspond to that compound, if the compound can be expressed
-       as a product of the diagram components. For binary diagrams,
-       the Y coordinate will be left unchanged from its original
-       value. */
-    public PointAndError computeMolePercent(ChemicalString.Match m,
-                                            Point2D.Double pIn)
-        throws BadComponentException, UnsolvableException
-    {
-        // TODO Merge
-        double[][] componentElements = getComponentElements();
-
-        ArrayList<Side> sides = new ArrayList<>();
-        ArrayList<Side> badSides = new ArrayList<>();
-        for (Side side: sidesThatCanHaveComponents()) {
-            if (diagramComponents[side.ordinal()] == null) {
-                throw new BadComponentException
-                    ("The " + side + " diagram component is not defined.");
-            }
-            if (componentElements[side.ordinal()] == null) {
-                badSides.add(side);
-            } else {
-                sides.add(side);
-            }
-        }
-
-        if (sides.size() < 2) {
-            StringBuilder message = new StringBuilder
-                ("The following diagram component(s) could not be parsed as "
-                 + "compounds:\n");
-            int sideNo = 0;
-            for (Side side: badSides) {
-                if (sideNo > 0) {
-                    message.append(", ");
-                }
-                message.append(side.toString());
-            }
-            throw new BadComponentException(message.toString());
-        }
-
-        // TODO Set the clipboard
-
-        // Map from elements to indexes into diagramElements.
-        String[] diagramElements = getDiagramElements();
-        int eltCnt = diagramElements.length;
-        Map<String,Integer> elementIndexes = new HashMap<>();
-        for (int i = 0; i < eltCnt; ++i) {
-            elementIndexes.put(diagramElements[i], i);
-        }
-
-        double[][] quantities = new double[diagramElements.length]
-            [sides.size()];
-
-        for (int cn = 0; cn < sides.size(); ++cn) {
-            Side side = sides.get(cn);
-            double[] elts = componentElements[side.ordinal()];
-            for (int j = 0; j < eltCnt; ++j) {
-                quantities[j][cn] = elts[j];
-            }
-        }
-
-        double[] coefs = new double[eltCnt];
-        for (Map.Entry<String, Double> pair: m.composition.entrySet()) {
-            String element = pair.getKey();
-            Integer i = elementIndexes.get(element);
-            if (i == null) {
-                throw new UnsolvableException
-                    ("No parseable diagram component contains "
-                     + element + ".");
-            }
-            coefs[i] = pair.getValue();
-        }
-
-        // Matrix that transforms a vector of quantities of each
-        // component into a vector of quantities of each element.
-        Matrix c2e = new Matrix(quantities);
-        Matrix e = new Matrix(coefs, coefs.length);
-        Matrix c = c2e.solve(e); // Vector of quantities of each diagram coefficient.
-
-        double totalQuantity = 0;
-        for (int compNo = 0; compNo < sides.size(); ++compNo) {
-            double d = c.get(compNo, 0);
-            if (d < 0) {
-                // Round negative values up to zero.
-                d = 0;
-                c.set(compNo, 0, d);
-            }
-            totalQuantity += d;
-        }
-
-        Matrix compE = c2e.times(c); // computed element counts
-        double totalError = 0; // total difference between computed
-                               // and actual element counts
-        double totalAtoms = 0;
-        for (int i = 0; i < coefs.length; ++i) {
-            double computed = compE.get(i,0);
-            double wanted = e.get(i,0);
-            totalError += Math.abs(computed - wanted);
-            totalAtoms += Math.abs(wanted);
-        }
-
-        PointAndError res = new PointAndError();
-        res.error = (totalAtoms == 0) ? Double.NaN : (totalError / totalAtoms);
-
-        Point2D.Double prin;
-
-        if (diagramType.isTernary()) {
-            prin = new Point2D.Double(0,0);
-        } else if (pIn != null) {
-            prin = new Point2D.Double(0,pIn.y);
-        } else {
-            prin = new Point2D.Double
-                (0, principalToStandardPage.inputBounds().y);
-        }
-
-        for (int compNo = 0; compNo < sides.size(); ++compNo) {
-            double fraction = c.get(compNo, 0) / totalQuantity;
-            Side side = sides.get(compNo);
-
-            switch (side) {
-            case RIGHT:
-                prin.x = fraction;
-                break;
-            case TOP:
-                prin.y = fraction;
-                break;
-            case LEFT:
-                // There's nothing to do here. If all 3
-                // fractions are defined, then the RIGHT and TOP
-                // values already define the coordinate. If only 2
-                // fractions are defined, then the undefined
-                // coordinate has already been set to the correct
-                // value, which is zero (so if LEFT + RIGHT are
-                // defined then TOP = 0, and if LEFT + TOP are
-                // defined then RIGHT = 0).
-                break;
-            default:
-                throw new IllegalStateException("Side " + side + " should not have an " +
-                                                "associated component.");
-            }
-        }
-
-        res.point = prin;
-        return res;
     }
 
     static class OrderByXY implements Comparator<Point2D.Double> {
@@ -2303,8 +2060,6 @@ public class Diagram extends Observable implements Printable {
                                        (s.getY1() + s.getY2()) / 2));
         }
 
-        // TODO verify that the selection-dependent part is kept
-
         return res;
     }
 
@@ -2483,11 +2238,15 @@ public class Diagram extends Observable implements Printable {
         }
 
         StringBuilder titleBuf = new StringBuilder();
-        titleBuf.append(diagramType);
+        if (diagramType != null) {
+            titleBuf.append(diagramType);
+        }
 
         String str = systemName();
         if (str != null) {
-            titleBuf.append(" ");
+            if (titleBuf.length() > 0) {
+                titleBuf.append(" ");
+            }
             titleBuf.append(str);
         }
 
@@ -2496,11 +2255,13 @@ public class Diagram extends Observable implements Printable {
             str = getFilename();
         }
         if (str != null) {
-            titleBuf.append(" ");
+            if (titleBuf.length() > 0) {
+                titleBuf.append(" ");
+            }
             titleBuf.append(str);
         }
 
-        return titleBuf.toString();
+        return titleBuf.length() > 0 ? titleBuf.toString() : "Phase Equilibria Diagram Editor";
     }
 
     /** @return the system name if known, with components sorted into
@@ -2510,6 +2271,10 @@ public class Diagram extends Observable implements Printable {
         components are not principal components, but whatever. */
     public String systemName() {
         Side[] sides = null;
+        if (diagramType == null) {
+            return null;
+        }
+
         if (diagramType.isTernary()) {
             sides = new Side[] {Side.LEFT, Side.RIGHT, Side.TOP};
         } else {
@@ -2588,8 +2353,6 @@ public class Diagram extends Observable implements Printable {
     protected void initializeDiagram() {
 
         boolean isTernary = diagramType.isTernary();
-        // TODO editFrame.setAspectRatio.setEnabled(!isTernary);
-        // TODO editFrame.setTopComponent.setEnabled(isTernary);
 
         if (isTernary) {
             axes.add(defaultAxis(Side.LEFT));
@@ -2609,10 +2372,10 @@ public class Diagram extends Observable implements Printable {
 
         {
             NumberFormat format = new DecimalFormat("0.0000");
-            pageXAxis = LinearAxis.createFromAffine
+            LinearAxis pageXAxis = LinearAxis.createFromAffine
                 (format, principalToStandardPage, false);
             pageXAxis.name = "page X";
-            pageYAxis = LinearAxis.createFromAffine
+            LinearAxis pageYAxis = LinearAxis.createFromAffine
                 (format, principalToStandardPage, true);
             pageYAxis.name = "page Y";
             axes.add(pageXAxis);
@@ -2634,8 +2397,6 @@ public class Diagram extends Observable implements Printable {
         View em = toView("n", 0, Color.BLACK);
         labelXMargin = em.getPreferredSpan(View.X_AXIS) / 3.0;
         // labelYMargin = em.getPreferredSpan(View.Y_AXIS) / 5.0;
-
-        // TODO Verify that setScale() is called
     }
 
     /** Invoked from the EditFrame menu */
@@ -2727,15 +2488,6 @@ public class Diagram extends Observable implements Printable {
         saveNeeded = false;
     }
 
-    public void reloadDiagram() throws IOException {
-        String filename = getFilename();
-        if (filename == null) {
-            return;
-        }
-
-        openDiagram(new File(filename));
-    }
-
     public Rectangle2D.Double getPageBounds() {
         if (pageBounds == null) {
             return null;
@@ -2746,7 +2498,6 @@ public class Diagram extends Observable implements Printable {
     public void setPageBounds(Rectangle2D rect) {
         pageBounds = Duh.createRectangle2DDouble(rect);
         propagateChange();
-        // TODO
     }
 
     /** Set the margins just slightly wider than necessary to fit the
@@ -2776,10 +2527,10 @@ public class Diagram extends Observable implements Printable {
         setPageBounds(bounds);
     }
 
-    /** Copy data fields from other. Afterwards, it is unsafe to
-        modify other, because the modifications may affect this as
-        well. In other words, this is a shallow copy that destroys
-        other. */
+    /** Copy non-transient data fields from other. Afterwards, it is
+        unsafe to modify other, because the modifications may affect
+        this as well. In other words, this is a shallow copy that
+        destroys other. */
     void cannibalize(Diagram other) {
         diagramType = other.diagramType;
         diagramComponents = other.diagramComponents;
@@ -2788,7 +2539,6 @@ public class Diagram extends Observable implements Printable {
         pageBounds = other.pageBounds;
         originalFilename = other.originalFilename;
         filename = other.filename;
-        // TODO scale = other.scale;
         arrows = other.arrows;
 
         boolean haveBounds = (pageBounds != null);
@@ -2800,8 +2550,6 @@ public class Diagram extends Observable implements Printable {
         tieLines = other.tieLines;
         setFontName(other.getFontName());
         axes = other.axes;
-        // TODO editFrame.removeAllVariables();
-        // TODO for (LinearAxis axis: axes) {
         rulers = other.rulers;
         labels = other.labels;
         labelViews = other.labelViews;
@@ -2897,7 +2645,8 @@ public class Diagram extends Observable implements Printable {
         PdfContentByte cb = writer.getDirectContent();
         PdfTemplate tp = cb.createTemplate((float) bounds.width, (float) bounds.height);
         
-        Graphics2D g2 = false
+        @SuppressWarnings("unused")
+		Graphics2D g2 = false
             ? tp.createGraphics((float) bounds.width, (float) bounds.height,
                                 new DefaultFontMapper())
             : tp.createGraphicsShapes((float) bounds.width, (float) bounds.height);
@@ -2923,19 +2672,19 @@ public class Diagram extends Observable implements Printable {
     }
 
     public void saveAsPED(File file) throws IOException {
-    	filename = file.getAbsolutePath();
-    	getObjectMapper().writeValue(file, this);
-    	saveNeeded = false;
+        filename = file.getAbsolutePath();
+        getObjectMapper().writeValue(file, this);
+        saveNeeded = false;
     }
 
     /** Invoked from the EditFrame menu */
     public void print(PrinterJob job) throws PrinterException {
-    	PrintRequestAttributeSet aset
-    		= new HashPrintRequestAttributeSet();
-    	aset.add
-    	((pageBounds.width > pageBounds.height)
-    			? OrientationRequested.LANDSCAPE
-    					: OrientationRequested.PORTRAIT);
+        PrintRequestAttributeSet aset 
+            = new HashPrintRequestAttributeSet();
+        aset.add
+            ((pageBounds.width > pageBounds.height)
+             ? OrientationRequested.LANDSCAPE
+             : OrientationRequested.PORTRAIT);
         job.print(aset);
     }
 
@@ -2965,11 +2714,11 @@ public class Diagram extends Observable implements Printable {
 
     /** @param segment A line on the standard page
 
-        Return a grid line (also on the standard page) that passes
-        through segment.getP1() and that is roughly parallel to
-        segment, or null if no such line is close enough to parallel.
-        A grid line is a line of zero change for a defined axis (from
-        the "axes" variable). */
+        Return one of the vectors (which, inconsistently, is defined in
+        principal coordinates) that passes through segment.getP1() and
+        that is roughly parallel to segment, or null if no such line
+        is close enough to parallel. A grid line is a line of zero
+        change for a defined axis (from the "axes" variable). */
     Line2D.Double nearestGridLine(Line2D.Double segment,
                                   List<Point2D.Double> vectors) {
         Point2D source = segment.getP1();
@@ -3240,12 +2989,6 @@ public class Diagram extends Observable implements Printable {
         return res.toString();
     }
 
-    static String format(double d, int decimalPoints) {
-        Formatter f = new Formatter();
-        f.format("%." + decimalPoints + "f", d);
-        return f.toString();
-    }
-
     boolean isStraight(GeneralPolyline path) {
         return path.size() < 2 || path.getSmoothingType() == GeneralPolyline.LINEAR;
     }
@@ -3306,68 +3049,49 @@ public class Diagram extends Observable implements Printable {
         }
     }
 
-    /* Draw the label defined by the given label and view combination
-       to the given graphics context while mulitplying the font size
-       and position by scale. */
-    public void drawLabel(Graphics g, int labelNo, double scale) {
-        drawLabel(g, labelNo, scale, false);
+    /** @return a transformation that maps the unit square to the
+        outline of label labelNo in scaled page space. */
+    AffineTransform labelToScaledPage(int labelNo, double scale) {
+        AnchoredLabel label = labels.get(labelNo);
+        View view = labelViews.get(labelNo);
+        Affine toPage = getPrincipalToAlignedPage();
+        Point2D.Double point = toPage.transform(label.getX(), label.getY());
+        double angle = principalToPageAngle(label.getAngle());
+
+        return labelToScaledPage
+            (view, scale * label.getFontSize(), angle,
+             point.x * scale, point.y * scale,
+             label.getXWeight(), label.getYWeight(),
+             label.getBaselineXOffset(), label.getBaselineYOffset());
     }
 
-    /* @param Draw the label defined by the given label and view combination
-       to the given graphics context while mulitplying the font size
-       and position by scale. */
-    void drawLabel(Graphics g0, int labelNo, double scale,
-                          boolean circleAnchor) {
+    void drawLabel(Graphics g0, int labelNo, double scale) {
         AnchoredLabel label = labels.get(labelNo);
         if (label.getFontSize() == 0) {
             return;
         }
 
         Graphics2D g = (Graphics2D) g0;
-        View view = labelViews.get(labelNo);
-        Affine toPage = getPrincipalToAlignedPage();
-        Point2D.Double point = toPage.transform(label.getX(), label.getY());
-        double angle = principalToPageAngle(label.getAngle());
-
-        AffineTransform l2s = labelToScaledPage
-            (view, scale * label.getFontSize(), angle,
-             point.x * scale, point.y * scale,
-             label.getXWeight(), label.getYWeight(),
-             label.getBaselineXOffset(), label.getBaselineYOffset());
-
-        Path2D.Double path = htmlBox(l2s);
+        AffineTransform l2s = labelToScaledPage(labelNo, scale);
+        Path2D.Double box = htmlBox(l2s);
 
         if (label.isOpaque()) {
             Color oldColor = g.getColor();
             g.setColor(Color.WHITE);
-            g.fill(path);
+            g.fill(box);
             g.setColor(oldColor);
         }
 
         if (label.isBoxed()) {
-            g.draw(path);
+            g.draw(box);
         }
 
-        if (circleAnchor
-            && (label.getXWeight() != 0.5 || label.getYWeight() != 0.5)) {
-            // Mark the anchor with a circle -- either a solid circle
-            // if the selection handle is the anchor, or a hollow
-            // circle if the selection handle is the label's center.
-
-            double r = Math.max(scale * 2.0 / BASE_SCALE, 4.0);
-            Point2D.Double p = new Point2D.Double
-                (label.getXWeight(), label.getYWeight());
-            l2s.transform(p, p);
-            Ellipse2D circle = new Ellipse2D.Double
-                (p.x - r, p.y - r, r * 2, r * 2);
-            if (getLabelHandle().handle == LabelHandleType.CENTER) {
-                g.draw(circle);
-            } else {
-                g.fill(circle);
-            }
-        }
-
+        // TODO: Exploit the labelToScaledPage transformation in htmlDraw.
+        View view = labelViews.get(labelNo);
+        Affine toPage = getPrincipalToAlignedPage();
         Point2D.Double centerPage = new Point2D.Double();
+        Point2D.Double point = toPage.transform(label.getX(), label.getY());
+        double angle = principalToPageAngle(label.getAngle());
         htmlDraw(g, view, scale * label.getFontSize(),
                  angle, point.x * scale, point.y * scale,
                  label.getXWeight(), label.getYWeight(),
@@ -3758,9 +3482,11 @@ public class Diagram extends Observable implements Printable {
         return getFont().getFontName();
     }
 
-    public void setFontName(String s) {
+    /** Returns false if there is no effect because it's the same font
+        as before and it was already loaded. */
+    public boolean setFontName(String s) {
         if (embeddedFont != null && s.equals(getFontName())) {
-            return; // No change
+            return false; // No change
         }
 
         String filename = fontFiles.get(s);
@@ -3768,9 +3494,8 @@ public class Diagram extends Observable implements Printable {
             throw new IllegalArgumentException("Unrecognized font name '" + s + "'");
         }
         embeddedFont = loadFont(filename, STANDARD_FONT_SIZE);
-        // TODO getEditPane().setFont(embeddedFont);
-        // TODO editFrame.setFontName(s);
         propagateChange();
+        return true;
     }
 
     public Font loadFont(String filename, float size) {
