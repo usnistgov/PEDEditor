@@ -118,7 +118,6 @@ public class Diagram extends Observable implements Printable {
         @Override public VertexHandle remove() {
             GeneralPolyline path = getItem();
             int oldVertexCnt = path.size();
-            propagateChange();
 
             if (oldVertexCnt >= 2) {
                 ArrayList<Double> segments = getPathSegments(path);
@@ -174,6 +173,7 @@ public class Diagram extends Observable implements Printable {
 
                 path.remove(vertexNo);
                 setPathSegments(path, segments);
+                propagateChange();
                 return new VertexHandle(decoration, 
                                         (vertexNo > 0) ? (vertexNo - 1) : 0);
             } else {
@@ -268,6 +268,7 @@ public class Diagram extends Observable implements Printable {
 
         @Override public DecorationHandle remove() {
             removeCurve(curveNo);
+            propagateChange();
             return null;
         }
 
@@ -3150,6 +3151,7 @@ public class Diagram extends Observable implements Printable {
                   double xWeight, double yWeight,
                   double baselineXOffset, double baselineYOffset,
                   Point2D.Double labelCenter) {
+        double originalScale = scale;
         scale /= VIEW_MAGNIFICATION;
         double baseWidth = view.getPreferredSpan(View.X_AXIS);
         double baseHeight = view.getPreferredSpan(View.Y_AXIS);
@@ -3182,8 +3184,8 @@ public class Diagram extends Observable implements Printable {
 
         if (labelCenter != null) {
             baselineToPage.transform(new Point2D.Double(width/2, height/2), xpoint);
-            labelCenter.x = (xpoint.x + ax) / scale;
-            labelCenter.y = (xpoint.y + ay) / scale;
+            labelCenter.x = (xpoint.x + ax) / originalScale;
+            labelCenter.y = (xpoint.y + ay) / originalScale;
         }
 
         {
