@@ -1,24 +1,15 @@
 package gov.nist.pededitor;
 
 import javax.imageio.ImageIO;
-import javax.print.attribute.HashPrintRequestAttributeSet;
-import javax.print.attribute.PrintRequestAttributeSet;
-import javax.print.attribute.standard.OrientationRequested;
 import javax.swing.*;
 import javax.swing.filechooser.FileNameExtensionFilter;
-import javax.swing.text.View;
-
 import java.awt.AWTException;
-import java.awt.BasicStroke;
 import java.awt.Color;
 import java.awt.Cursor;
 import java.awt.Dimension;
 import java.awt.EventQueue;
-import java.awt.Font;
-import java.awt.FontFormatException;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
-import java.awt.GraphicsEnvironment;
 import java.awt.HeadlessException;
 import java.awt.Image;
 import java.awt.Point;
@@ -26,7 +17,6 @@ import java.awt.Rectangle;
 import java.awt.RenderingHints;
 import java.awt.Robot;
 import java.awt.Shape;
-import java.awt.Stroke;
 import java.awt.Toolkit;
 import java.awt.datatransfer.StringSelection;
 import java.awt.event.ActionEvent;
@@ -41,72 +31,31 @@ import java.awt.geom.AffineTransform;
 import java.awt.geom.Ellipse2D;
 import java.awt.geom.Line2D;
 import java.awt.geom.NoninvertibleTransformException;
-import java.awt.geom.Path2D;
 import java.awt.geom.Point2D;
 import java.awt.geom.Rectangle2D;
 import java.awt.image.BufferedImage;
-import java.awt.print.PageFormat;
-import java.awt.print.Printable;
 import java.awt.print.PrinterException;
 import java.awt.print.PrinterJob;
 import java.io.File;
-import java.io.FileOutputStream;
-import java.io.FileWriter;
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.Writer;
 import java.net.URL;
 import java.nio.file.Files;
 import java.text.DecimalFormat;
-import java.text.NumberFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collection;
 import java.util.Collections;
-import java.util.Comparator;
 import java.util.Formatter;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 import java.util.Timer;
 import java.util.TimerTask;
-import java.util.TreeMap;
 import java.util.prefs.Preferences;
 import Jama.Matrix;
 
-import com.itextpdf.text.Document;
-import com.itextpdf.text.PageSize;
-import com.itextpdf.text.pdf.DefaultFontMapper;
-import com.itextpdf.text.pdf.PdfContentByte;
-import com.itextpdf.text.pdf.PdfTemplate;
-import com.itextpdf.text.pdf.PdfWriter;
-
 import org.codehaus.jackson.annotate.JsonIgnore;
-import org.codehaus.jackson.annotate.JsonIgnoreProperties;
-import org.codehaus.jackson.annotate.JsonProperty;
-import org.codehaus.jackson.annotate.JsonSubTypes;
-import org.codehaus.jackson.annotate.JsonSubTypes.Type;
-import org.codehaus.jackson.annotate.JsonTypeInfo;
-import org.codehaus.jackson.map.DeserializationConfig;
-import org.codehaus.jackson.map.ObjectMapper;
-import org.codehaus.jackson.map.SerializationConfig;
-import org.codehaus.jackson.map.annotate.JsonDeserialize;
-
-import org.apache.batik.svggen.SVGGeneratorContext;
-import org.apache.batik.svggen.SVGGraphics2D;
-import org.apache.batik.dom.GenericDOMImplementation;
-
-import org.w3c.dom.DOMImplementation;
 
 // TODO Investigate whether JavaFX is really a plausible alternative.
-
-// TODO (bug) The decorations are messed up in the label dialog in XP.
-// Check whether the same problem exists in Windows 7.
-
-// TODO (bug) List user-defined variables loaded from files in the
-// "delete" list (actually list everything except page X/page Y and
-// the ternary diagram variables).
 
 // TODO Allow users to adjust the text angle in the ruler edit dialog.
 
@@ -125,8 +74,10 @@ import org.w3c.dom.DOMImplementation;
 // situations where the ternary is actually a slice of a 4-component
 // system and the three components do not actually sum to 100%.
 
-// TODO (optional) Fill styles. (Right now the only fill style is
-// "solid".) This is pretty easy.
+// TODO (optional) Fill styles are nearly completely implemented. The
+// main issue remaining at this point is that an assumption that works
+// OK for lines -- that a single line is either completely smoothed or
+// completely not -- doesn't work so well for fill regions.
 
 // TODO (optional) Eutectic and peritectic points.
 
@@ -147,7 +98,8 @@ import org.w3c.dom.DOMImplementation;
 
 // TODO (Optional) Better support for new double subscripts and
 // changing font sizes within a single label. (JavaFX might fix this
-// issue.)
+// issue, but it's not ready yet because of difficulties drawing
+// JavaFX Nodes inside Graphics2D objects.)
 
 // TODO (optional) You can't make tie lines that cross the "endpoint"
 // of a closed curve. Fix this somehow.
@@ -166,24 +118,16 @@ import org.w3c.dom.DOMImplementation;
 // (Probably a bad idea: it would increase margin errors in the image
 // the digitizers look at)
 
-// TODO (optional) Set of commonly used shapes (equilateral triangle,
-// square, circle) whose scale and orientation are defined by
-// selecting two points. Ideally the changes would be visible in real
-// time as you move the mouse around. (Auto-positioning has made this
-// slightly less important than before; rectangles and equilateral
-// triangles -- though not squares -- are easy to do now.)
+// TODO (optional) Arbitrary circles. Right now circles are
+// implemented as symbols, so the ratio of stroke width to radius is
+// fixed and making a circle of a precise size requires trial and
+// error.
 
 // TODO (optional) Support of GRUMP-style explicit assignment of ruler
 // limits such as label skip, label density, and so on. The downside
 // of this is that it would make the interface even more complicated,
 // and people might get in the habit of doing explicit assignments
 // even though the automatic ones are pretty good.
-
-// TODO (optional) Allow the diagram domain and range to be expanded.
-// Right now, you can expand the margins, change the aspect ratio, or
-// rescale the axes, but it is awkward to extend a partial ternary to
-// create a full ternary, for example. The 'move region' command is an
-// OK work-around, at least for binary diagrams.
 
 // TODO (optional) It should be easy to enable 'copy region' that is
 // analogous to 'move region'. Maybe the user should just be asked
@@ -217,6 +161,19 @@ import org.w3c.dom.DOMImplementation;
 // forget that other kinds are not detectable and be confused when
 // that does not work. (I did that myself at least once, even though I
 // wrote the program.)
+
+// TODO (optional) Other commonly used shapes (equilateral triangle,
+// square, circle) whose scale and orientation are defined by
+// selecting two points. Ideally the changes would be visible in real
+// time as you move the mouse around. (Auto-positioning has made this
+// slightly less important than before; squares, rectangles, and
+// equilateral triangles are easy if one side is horizontal.)
+
+// TODO (optional) Allow the diagram domain and range to be expanded.
+// Right now, you can expand the margins, change the aspect ratio, or
+// rescale the axes, but it is awkward to extend a partial ternary to
+// create a full ternary, for example. The 'move region' command is an
+// OK work-around, at least for binary diagrams.
 
 // TODO (optional) Better curve fitting. As I believe Don mentioned,
 // following the control points too slavishly can yield over-fitting
@@ -315,10 +272,8 @@ import org.w3c.dom.DOMImplementation;
 // are dedicated to vision-related tasks?)
 
 /** Main driver class for Phase Equilibria Diagram digitization and creation. */
-public class Editor implements CropEventListener, MouseListener,
-                               MouseMotionListener, Printable {
-    static ObjectMapper objectMapper = null;
-
+public class Editor extends Diagram
+    implements CropEventListener, MouseListener, MouseMotionListener {
     abstract class Action extends AbstractAction {
         private static final long serialVersionUID = 1834208008403586162L;
 
@@ -328,1008 +283,79 @@ public class Editor implements CropEventListener, MouseListener,
     }
 
     class ImageBlinker extends TimerTask {
-        public void run() {
+        @Override public void run() {
             backgroundImageEnabled = !backgroundImageEnabled;
-            repaintEditFrame();
+            redraw();
         }
     }
 
     class CloseListener extends WindowAdapter
                                 implements WindowListener
     {
-        public void windowClosing(WindowEvent e) {
+        @Override 		public void windowClosing(WindowEvent e) {
             close();
         }
     }
 
-    /** Series of classes that implement the Decoration and
-        DecorationHandle interfaces so that different types of
-        decorations, such as curves and labels, can be manipulated the
-        same way. */
+    public static boolean editable(DecorationHandle hand) {
+        return hand instanceof LabelHandle
+            || hand instanceof TieLineHandle
+            || hand instanceof RulerHandle;
+    }
 
-    class VertexHandle implements ParameterizableHandle {
-        CurveDecoration decoration;
-        int vertexNo;
+    public void editSelection() {
+        if (selection == null) {
+            // Find the nearest editable item, and edit it.
 
-        @Override public Parameterization2D getParameterization() {
-            return getDecoration().getParameterization();
-        }
-
-        @Override public double getT() {
-            return vertexNo;
-        }
-
-        public CurveDecoration getDecoration() {
-            return decoration;
-        }
-
-        VertexHandle(int curveNo, int vertexNo) {
-            this.decoration = new CurveDecoration(curveNo);
-            this.vertexNo = vertexNo;
-        }
-
-        VertexHandle(CurveDecoration decoration, int vertexNo) {
-            this.decoration = decoration;
-            this.vertexNo = vertexNo;
-        }
-
-        @Override public boolean isEditable() { return false; }
-
-        @Override public void edit() {
-            throw new IllegalStateException("Can't edit " + this);
-        }
-
-        public GeneralPolyline getItem() {
-            return getDecoration().getItem();
-        }
-
-        @Override
-        public VertexHandle remove() {
-            GeneralPolyline path = getItem();
-            int oldVertexCnt = path.size();
-            repaintEditFrame();
-            saveNeeded = true;
-
-            if (oldVertexCnt >= 2) {
-                ArrayList<Double> segments = getPathSegments(path);
-
-                // While deleting this vertex, adjust t values that
-                // reference this segment. Previous segments that
-                // don't touch point are left alone; following
-                // segments that don't touch point have their
-                // segmentNo decremented; and the two segments that
-                // touch point are combined into a single segment
-                // number newSeg. What a pain in the neck!
-
-                if (oldVertexCnt == 2) {
-                    for (int i = 0; i < segments.size(); ++i) {
-                        segments.set(i, (double) 0);
-                    }
-                } else {
-                    int segCnt = path.getSegmentCnt();
-
-                    Point2D point = path.get(vertexNo);
-                    int prevSeg = (vertexNo > 0) ? (vertexNo - 1)
-                        : path.isClosed() ? (segCnt-1) : -1;
-                    Point2D previous = path.get((prevSeg >= 0) ? prevSeg : 0);
-                    int nextSeg = vertexNo;
-                    Point2D next = path.get
-                        ((!path.isClosed()  && (vertexNo == oldVertexCnt - 1))
-                         ? vertexNo
-                         : (vertexNo + 1));
-                    int newSeg = (vertexNo > 0) ? (vertexNo - 1)
-                        : path.isClosed() ? (segCnt - 2)
-                        : 0;
-                    // T values for segments prevSeg and nextSeg should be
-                    // combined into a single segment newSeg.
-
-                    double dist1 = point.distance(previous);
-                    double dist2 = point.distance(next);
-                    double splitT = dist1 / (dist1 + dist2);
-
-                    for (int i = 0; i < segments.size(); ++i) {
-                        double t = segments.get(i);
-                        int segment = (int) Math.floor(t);
-                        double frac = t - segment;
-                        if (segment == prevSeg) {
-                            t = newSeg + frac * splitT;
-                        } else if (segment == nextSeg) {
-                            t = newSeg + splitT + frac * (1 - splitT);
-                        } else if (segment > vertexNo) {
-                            --t;
-                        }
-                        segments.set(i, t);
-                    }
+            for (DecorationHandle handle: nearestHandles()) {
+                if (editable(handle)) {
+                    selection = handle;
+                    break;
                 }
+            }
 
-                path.remove(vertexNo);
-                setPathSegments(path, segments);
-                return new VertexHandle(decoration, 
-                                        (vertexNo > 0) ? (vertexNo - 1) : 0);
-            } else {
-                getDecoration().remove();
-                return null;
+            if (selection == null) {
+                JOptionPane.showMessageDialog
+                    (editFrame, "There are no editable items.");
+                return;
             }
         }
 
-        @JsonIgnore public int getCurveNo() {
-            return getDecoration().getCurveNo();
-        }
-
-        @Override public String toString() {
-            return getClass().getSimpleName() + "[" + getCurveNo() + ", " + vertexNo + "]";
-        }
-
-        @Override
-        public void move(Point2D target) {
-            GeneralPolyline path = getItem();
-            path.set(vertexNo, target);
-            saveNeeded = true;
-            repaintEditFrame();
-        }
-
-        @Override
-        public VertexHandle copy(Point2D dest) {
-            saveNeeded = true;
-            Point2D.Double delta = getLocation();
-            delta.x = dest.getX() - delta.x;
-            delta.y = dest.getY() - delta.y;
-            GeneralPolyline path = getItem().clone();
-            for (int i = 0; i < path.size(); ++i) {
-                Point2D.Double point = path.get(i);
-                point.x += delta.x;
-                point.y += delta.y;
-                path.set(i, point);
-            }
-            paths.add(path);
-            repaintEditFrame();
-            return new VertexHandle(paths.size() - 1, vertexNo);
-        }
-
-        @Override
-        public Point2D.Double getLocation() {
-            return getItem().get(vertexNo);
-        }
-
-        @Override public boolean equals(Object other) {
-            if (this == other) return true;
-            if (other == null || getClass() != other.getClass()) return false;
-            if (getClass() != VertexHandle.class) return false;
-
-            VertexHandle cast = (VertexHandle) other;
-            return vertexNo == cast.vertexNo
-                && getDecoration().equals(cast.getDecoration());
-        }
-    }
-
-    
-    class CurveDecoration implements Decoration, Parameterizable2D {
-        int curveNo;
-
-        CurveDecoration(int curveNo) {
-            this.curveNo = curveNo;
-        }
-
-        @Override public void setLineWidth(double lineWidth) {
-            getItem().setLineWidth(lineWidth);
-            saveNeeded = true;
-            repaintEditFrame();
-        }
-
-        @Override public double getLineWidth() {
-            return getItem().getLineWidth();
-        }
-
-        @Override public void setLineStyle(StandardStroke lineStyle) {
-            getItem().setStroke(lineStyle);
-            saveNeeded = true;
-            repaintEditFrame();
-        }
-
-        @Override public void setColor(Color color) {
-            saveNeeded = true;
-            getItem().setColor(color);
-        }
-
-        @Override public Color getColor() {
-            return getItem().getColor();
-        }
-
-        public Path2D.Double getShape() {
-            return getItem().getPath(principalToStandardPage);
-        }
-
-        GeneralPolyline getItem() {
-            return paths.get(curveNo);
-        }
-
-        @Override public DecorationHandle remove() {
-            removeCurve(curveNo);
-            return null;
-        }
-
-        @Override public void draw(Graphics2D g, double scale) {
-            GeneralPolyline item = getItem();
-            if (item.size() == 1
-                && item.getStroke() != StandardStroke.INVISIBLE) {
-                // Draw a dot.
-                double r = item.getLineWidth() * 2 * scale;
-                circleVertices(g, item, scale, true, r);
-            } else {
-                item.draw(g, getPrincipalToAlignedPage(), scale);
-            }
-        }
-
-        @Override public PathParam2D getParameterization() {
-            return new PathParam2D(getShape());
-        }
-
-        public int getCurveNo() {
-            return curveNo;
-        }
-
-        @Override public String toString() {
-            return getClass().getSimpleName() + "[" + getCurveNo() + "]";
-        }
-
-        @Override public boolean equals(Object other) {
-            if (this == other) return true;
-            if (other == null || getClass() != other.getClass()) return false;
-            if (getClass() != CurveDecoration.class) return false;
-
-            CurveDecoration cast = (CurveDecoration) other;
-            return this.curveNo == cast.curveNo;
-        }
-
-        @Override public DecorationHandle[] getHandles() {
-            ArrayList<DecorationHandle> output = new ArrayList<>();
-            GeneralPolyline path = getItem();
-            for (int j = 0; j < path.size(); ++j) {
-                output.add(new VertexHandle(this, j));
-            }
-            return output.toArray(new DecorationHandle[0]);
-        }
-
-        @Override public DecorationHandle[] getMovementHandles() {
-            return getHandles();
-        }
-
-        /** Return the VertexHandle closest to path(t). */
-        public VertexHandle getHandle(double t) {
-            Parameterization2D c = getItem()
-                .createTransformed(principalToStandardPage)
-                .getParameterization();
-            double ct = Parameterization2Ds.getNearestVertex(c, t);
-            return new VertexHandle(this, (int) ct);
-        }
-    }
-
-    static enum LabelHandleType { CENTER, ANCHOR };
-
-    class LabelHandle implements DecorationHandle {
-        LabelDecoration decoration;
-        /** A tie line may be selected from its anchor or its center. */
-        LabelHandleType handle;
-
-        @Override public  LabelDecoration getDecoration() {
-            return decoration;
-        }
-
-        LabelHandle(int index, LabelHandleType handle) {
-            this.decoration = new LabelDecoration(index);
-            this.handle = handle;
-        }
-
-        LabelHandle(LabelDecoration decoration, LabelHandleType handle) {
-            this.decoration = decoration;
-            this.handle = handle;
-        }
-
-        AnchoredLabel getItem() { return getDecoration().getItem(); }
-
-        @Override public LabelHandle remove() {
-            getDecoration().remove();
-            return null;
-        }
-
-        @Override public void move(Point2D dest) {
-            saveNeeded = true;
-            Point2D.Double destAnchor = getAnchorLocation(dest);
-            AnchoredLabel item = getItem();
-            item.setX(destAnchor.getX());
-            item.setY(destAnchor.getY());
-            repaintEditFrame();
-        }
-
-        @Override public LabelHandle copy(Point2D dest) {
-            saveNeeded = true;
-            AnchoredLabel output = getItem().clone();
-            Point2D.Double destAnchor = getAnchorLocation(dest);
-            output.setX(destAnchor.getX());
-            output.setY(destAnchor.getY());
-            add(output);
-            repaintEditFrame();
-            return new LabelHandle(labels.size() - 1, handle);
-        }
-
-        @Override public Point2D.Double getLocation() {
-            switch (handle) {
-            case ANCHOR:
-                return getDecoration().getAnchorLocation();
-            case CENTER:
-                return getDecoration().getCenterLocation();
-            }
-            return null;
-        }
-
-        @Override public boolean isEditable() { return true; }
-
-        @Override public void edit() {
-            editLabel(getDecoration().getIndex());
-        }
-
-        @Override public boolean equals(Object other) {
-            if (this == other) return true;
-            if (other == null || getClass() != other.getClass()) return false;
-            if (getClass() != LabelHandle.class) {
-                return false;
-            }
-
-            LabelHandle cast = (LabelHandle) other;
-            return handle == cast.handle
-                    && getDecoration().equals(cast.getDecoration());
-        }
-
-        public Point2D.Double getCenterLocation() {
-            return getDecoration().getCenterLocation();
-        }
-
-        public Point2D.Double getAnchorLocation() {
-            return getDecoration().getAnchorLocation();
-        }
-
-        /** @return the anchor location for a label whose handle is at
-            dest. */
-        public Point2D.Double getAnchorLocation(Point2D dest) {
-            if (handle == LabelHandleType.ANCHOR) {
-                return new Point2D.Double(dest.getX(), dest.getY());
-            }
-
-            // Compute the difference between the anchor
-            // location and the center, and apply the same
-            // difference to dest.
-            Point2D.Double anchor = getAnchorLocation();
-            Point2D.Double center = getCenterLocation();
-            double dx = anchor.x - center.x;
-            double dy = anchor.y - center.y;
-            return new Point2D.Double(dest.getX() + dx, dest.getY() + dy);
-        }
-
-        @Override public String toString() {
-            return getClass().getSimpleName() + "[" + getDecoration() + ", "
-                + handle + "]";
-        }
-    }
-
-
-    class LabelDecoration implements Decoration {
-        int index;
-
-        LabelDecoration(int index) {
-            this.index = index;
-        }
-
-        public int getIndex() { 
-            return index;
-        }
-
-        AnchoredLabel getItem() { return labels.get(index); }
-
-        @Override public void draw(Graphics2D g, double scale) {
-            drawLabel(g, index, scale);
-        }
-
-        @Override public DecorationHandle remove() {
-            saveNeeded = true;
-            labels.remove(index);
-            labelViews.remove(index);
-            repaintEditFrame();
-            return null;
-        }
-
-        @Override public boolean equals(Object other) {
-            if (this == other) return true;
-            if (other == null || getClass() != other.getClass()) return false;
-            if (getClass() != LabelDecoration.class) return false;
-
-            LabelDecoration cast = (LabelDecoration) other;
-            return this.index == cast.index;
-        }
-
-        public Point2D.Double getCenterLocation() {
-            return (Point2D.Double) labelCenters.get(index).clone();
-        }
-
-        public Point2D.Double getAnchorLocation() {
-            AnchoredLabel item = getItem();
-            return new Point2D.Double(item.getX(), item.getY());
-        }
-
-        @Override public void setLineWidth(double lineWidth) {
-            // The capability to change box line width seems
-            // unnecessary to me
-        }
-
-        @Override public double getLineWidth() {
-            return 0.0;
-            // What IS the line width for labels, anyhow?
-        }
-
-        @Override public void setLineStyle(StandardStroke lineStyle) {
-            // The capability to change box line style seems
-            // unnecessary to me
-        }
-
-        @Override public void setColor(Color color) {
-            saveNeeded = true;
-            AnchoredLabel item = getItem();
-            item.setColor(color);
-            labelViews.set(index, toView(item));
-        }
-
-        @Override public Color getColor() { return getItem().getColor(); }
-
-        @Override public DecorationHandle[] getHandles() {
-            AnchoredLabel label = getItem();
-            if (label.getXWeight() != 0.5 || label.getYWeight() != 0.5) {
-                return new DecorationHandle[]
-                    { new LabelHandle(this, LabelHandleType.ANCHOR),
-                      new LabelHandle(this, LabelHandleType.CENTER) };
-            } else {
-                return new DecorationHandle[]
-                    { new LabelHandle(this, LabelHandleType.ANCHOR) };
-            }
-        }
-
-        /* Moving the anchor will move the center as well. */
-        @Override public DecorationHandle[] getMovementHandles() {
-            return new DecorationHandle[] { getHandles()[0] };
-        }
-
-        @Override public String toString() {
-            return getClass().getSimpleName() + "[" + index
-                + " (" + getItem().getText() + ")]";
-        }
-    }
-
-
-    class ArrowDecoration implements Decoration, DecorationHandle {
-        int index;
-
-        ArrowDecoration(int index) {
-            this.index = index;
-        }
-
-        Arrow getItem() { return arrows.get(index); }
-
-        /*
-        // Problem is, nobody really cares to follow the outline
-        // of an arrow.
-
-        public void getShape() {
-
-            Point2D.Double p = principalToStandardPage.transform(arrow.x, arrow.y);
-            return new Arrow
-                (p.x, p.y, arrow.size, principalToPageAngle(arrow.theta));
-        }
-        */
-
-        @Override public void draw(Graphics2D g, double scale) {
-            Arrow arrow = getItem();
-            Affine xform = principalToScaledPage(scale);
-            Point2D.Double xpoint = xform.transform(arrow.x, arrow.y);
-            Arrow arr = new Arrow
-                (xpoint.x, xpoint.y, scale * arrow.size,
-                 principalToPageAngle(arrow.theta));
-            g.fill(arr);
-        }
-
-        @Override public ArrowDecoration remove() {
-            saveNeeded = true;
-            arrows.remove(index);
-            repaintEditFrame();
-            return null;
-        }
-
-        @Override public void move(Point2D dest) {
-            saveNeeded = true;
-            Arrow item = getItem();
-            item.x = dest.getX();
-            item.y = dest.getY();
-            repaintEditFrame();
-        }
-
-        @Override public ArrowDecoration copy(Point2D dest) {
-            saveNeeded = true;
-            Arrow output = getItem().clonus();
-            output.x = dest.getX();
-            output.y = dest.getY();
-            arrows.add(output);
-            repaintEditFrame();
-            return new ArrowDecoration(arrows.size() - 1);
-        }
-
-        @Override public boolean isEditable() { return false; }
-
-        @Override public void edit() {
-            throw new IllegalStateException("Can't edit " + this);
-        }
-
-        @Override public void setLineWidth(double lineWidth) {
-            saveNeeded = true;
-            getItem().size = lineWidth;
-            repaintEditFrame();
-        }
-
-        @Override public double getLineWidth() {
-            return getItem().size;
-        }
-
-        @Override public void setLineStyle(StandardStroke lineStyle) {
-            // Nothing to do here
-        }
-
-        @Override
-        public Point2D.Double getLocation() {
-            Arrow item = getItem();
-            return new Point2D.Double(item.x, item.y);
-        }
-
-        @Override public void setColor(Color color) {
-            saveNeeded = true;
-            getItem().setColor(color);
-        }
-
-        @Override public Color getColor() { return getItem().getColor(); }
-
-        @Override public boolean equals(Object other) {
-            if (this == other) return true;
-            if (other == null || getClass() != other.getClass()) return false;
-            if (getClass() != ArrowDecoration.class) return false;
-
-            ArrowDecoration cast = (ArrowDecoration) other;
-            return this.index == cast.index;
-        }
-
-        @Override public ArrowDecoration getDecoration() {
-            return this;
-        }
-
-        @Override public DecorationHandle[] getHandles() {
-            return new DecorationHandle[] { this };
-        }
-
-        @Override public DecorationHandle[] getMovementHandles() {
-            return getHandles();
-        }
-    }
-
-    static enum TieLineHandleType { INNER1, INNER2, OUTER1, OUTER2 };
-
-    class TieLineHandle implements DecorationHandle {
-        TieLineDecoration decoration;
-        /** A tie line is not a point object. It has up to four
-         corners that can be used as handles to select it. */
-        TieLineHandleType handle;
-
-        TieLineHandle(TieLineDecoration decoration, TieLineHandleType handle) {
-            this.decoration = decoration;
-            this.handle = handle;
-        }
-
-        TieLineHandle(int index, TieLineHandleType handle) {
-            this(new TieLineDecoration(index), handle);
-        }
-
-        TieLine getItem() { return getDecoration().getItem(); }
-
-        @Override public boolean isEditable() { return true; }
-
-        @Override public void edit() {
-            TieLine item = getItem();
-            int lineCnt = askNumberOfTieLines(item.lineCnt);
-            if (lineCnt >= 0) {
-                saveNeeded = true;
-                item.lineCnt = lineCnt;
-                repaintEditFrame();
-            }
-        }
-
-        @Override public DecorationHandle remove() {
-            return getDecoration().remove();
-        }
-
-        @Override public TieLineHandle copy(Point2D dest) {
+        if (selection instanceof LabelHandle) {
+            editLabel(((LabelHandle) selection).getDecoration().getIndex());
+        } else if (selection instanceof TieLineHandle) {
+            edit((TieLineHandle) selection);
+        } else if (selection instanceof RulerHandle) {
+            edit((RulerHandle) selection);
+        } else {
             JOptionPane.showMessageDialog
-                (editFrame, "Tie lines cannot be copied.");
-            return this;
-        }
-
-        @Override
-        public Point2D.Double getLocation() {
-            switch (handle) {
-            case INNER1:
-                return getItem().getInner1();
-            case INNER2:
-                return getItem().getInner2();
-            case OUTER1:
-                return getItem().getOuter1();
-            case OUTER2:
-                return getItem().getOuter2();
-            }
-
-            return null;
-        }
-
-        @Override public void move(Point2D dest) {
-            // Tie line movement happens indirectly: normally,
-            // everything at a key point moves at once, which means
-            // that the control point that delimits the tie line moves
-            // with it. No additional work is required here.
-        }
-
-        @Override public boolean equals(Object other) {
-            if (this == other) return true;
-            if (other == null || getClass() != other.getClass()) return false;
-            if (getClass() != TieLineHandle.class) return false;
-
-            TieLineHandle cast = (TieLineHandle) other;
-            return handle == cast.handle
-                && getDecoration().equals(cast.getDecoration());
-        }
-
-        @Override public TieLineDecoration getDecoration() {
-            return decoration;
+                (editFrame,
+                 "This item does not have a special edit function.");
+            return;
         }
     }
 
-    class TieLineDecoration implements Decoration {
-        /** Index into tieLines list. */
-        int index;
-
-        TieLineDecoration(int index) {
-            this.index = index;
-        }
-
-        TieLine getItem() { return tieLines.get(index); }
-
-        @Override public void draw(Graphics2D g, double scale) {
-            getItem().draw(g, getPrincipalToAlignedPage(), scale);
-        }
-
-        // I could return the tie line's outline, but nobody
-        // cares. The inner and outer edges are already part of
-        // the diagram, while the sides would be added if anyone
-        // wants them.
-        /*        @Override public void getShape() {
-
-            return null;
-            }
-         */
-
-        @Override public void setLineWidth(double lineWidth) {
-            saveNeeded = true;
-            getItem().lineWidth = lineWidth;
-            repaintEditFrame();
-        }
-
-        @Override public double getLineWidth() {
-            return getItem().lineWidth;
-        }
-
-        @Override public void setLineStyle(StandardStroke lineStyle) {
-            saveNeeded = true;
-            getItem().stroke = lineStyle;
-            repaintEditFrame();
-        }
-
-        @Override public DecorationHandle remove() {
-            saveNeeded = true;
-            tieLines.remove(index);
-            repaintEditFrame();
-            return null;
-        }
-
-        @Override public void setColor(Color color) {
-            saveNeeded = true;
-            getItem().setColor(color);
-        }
-
-        @Override public Color getColor() { return getItem().getColor(); }
-
-        @Override public boolean equals(Object other) {
-            if (this == other) return true;
-            if (other == null || getClass() != other.getClass()) return false;
-            if (getClass() != TieLineDecoration.class) return false;
-
-            TieLineDecoration cast = (TieLineDecoration) other;
-            return index == cast.index;
-        }
-
-        @Override public DecorationHandle[] getHandles() {
-            ArrayList<TieLineHandle> output = new ArrayList<>();
-            for (TieLineHandleType handle: TieLineHandleType.values()) {
-                output.add(new TieLineHandle(this, handle));
-            }
-            return output.toArray(new TieLineHandle[0]);
-        }
-
-        /* Moving the curves these tie lines attach to will move the
-           tie lines also, so return an empty array. */
-        @Override public DecorationHandle[] getMovementHandles() {
-            return new DecorationHandle[0];
+    public void edit(TieLineHandle hand) {
+        TieLine item = hand.getItem();
+        int lineCnt = askNumberOfTieLines(item.lineCnt);
+        if (lineCnt >= 0) {
+            item.lineCnt = lineCnt;
+            propagateChange();
         }
     }
 
-    static enum RulerHandleType { START, END };
-
-    class RulerHandle implements ParameterizableHandle {
-        RulerDecoration decoration;
-        /** Either end of the ruler may be used as a handle. */
-        RulerHandleType handle; 
-
-        RulerHandle(RulerDecoration decoration, RulerHandleType handle) {
-            this.decoration = decoration;
-            this.handle = handle;
-        }
-
-        RulerHandle(int index, RulerHandleType handle) {
-            this(new RulerDecoration(index), handle);
-        }
-
-        LinearRuler getItem() { return getDecoration().getItem(); }
-
-        @Override public Parameterization2D getParameterization() {
-            return getDecoration().getParameterization();
-        }
-
-        @Override public double getT() {
-            return (handle == RulerHandleType.START) ? 0 : 1;
-        }
-
-        @Override public boolean isEditable() { return true; }
-
-        @Override public void edit() {
-            LinearRuler item = getItem();
-            if ((new RulerDialog(editFrame, "Edit Ruler", item))
-                .showModal(item)) {
-                saveNeeded = true;
-                repaintEditFrame();
-            }
-        }
-
-        @Override public DecorationHandle remove() {
-            return getDecoration().remove();
-        }
-
-        @Override public void move(Point2D dest) {
-            Point2D.Double d = new Point2D.Double(dest.getX(), dest.getY());
-
-            switch (handle) {
-            case START:
-                getItem().startPoint = d;
-                break;
-            case END:
-                getItem().endPoint = d;
-                break;
-            }
-
-            saveNeeded = true;
-            repaintEditFrame();
-        }
-
-        @Override public RulerHandle copy(Point2D dest) {
-            saveNeeded = true;
-            Point2D.Double d = new Point2D.Double(dest.getX(), dest.getY());
-            LinearRuler r = getItem().clone();
-            double dx = r.endPoint.x - r.startPoint.x;
-            double dy = r.endPoint.y - r.startPoint.y;
-            
-            switch (handle) {
-            case START:
-                r.startPoint = d;
-                r.endPoint = new Point2D.Double(d.x + dx, d.y + dy);
-                break;
-            case END:
-                r.endPoint = d;
-                r.startPoint = new Point2D.Double(d.x - dx, d.y - dy);
-                break;
-            }
-
-            rulers.add(r);
-            repaintEditFrame();
-            return new RulerHandle(rulers.size() - 1, handle);
-        }
-
-        @Override public Point2D.Double getLocation() {
-            switch (handle) {
-            case START:
-                return (Point2D.Double) getItem().startPoint.clone();
-            case END:
-                return (Point2D.Double) getItem().endPoint.clone();
-            }
-
-            return null;
-        }
-
-        @Override public boolean equals(Object other) {
-            if (this == other) return true;
-            if (other == null || getClass() != other.getClass()) return false;
-            if (getClass() != RulerHandle.class) return false;
-
-            RulerHandle cast = (RulerHandle) other;
-            return handle == cast.handle
-                && getDecoration().equals(cast.getDecoration());
-        }
-
-        @Override public RulerDecoration getDecoration() {
-            return decoration;
-        }
-    }
-
-    class RulerDecoration implements Decoration, Parameterizable2D {
-        /** Index into rulers list. */
-        int index;
-
-        RulerDecoration(int index) {
-            this.index = index;
-        }
-
-        LinearRuler getItem() { return rulers.get(index); }
-
-        @Override public void draw(Graphics2D g, double scale) {
-            getItem().draw(g, getPrincipalToAlignedPage(), scale);
-        }
-
-        public Shape getShape() {
-            LinearRuler item = getItem();
-            Point2D.Double s = principalToStandardPage.transform(item.startPoint);
-            Point2D.Double e = principalToStandardPage.transform(item.endPoint);
-            return new Line2D.Double(s, e);
-        }
-
-        @Override public PathParam2D getParameterization() {
-            return new PathParam2D(getShape());
-        }
-
-        @Override public void setLineWidth(double lineWidth) {
-            saveNeeded = true;
-            LinearRuler item = getItem();
-            // Change fontSize too, to maintain a fixed ratio between
-            // lineWidth and fontSize.
-            double ratio  = lineWidth / item.lineWidth;
-            item.lineWidth = lineWidth;
-            item.fontSize *= ratio;
-            repaintEditFrame();
-        }
-
-        @Override public double getLineWidth() {
-            return getItem().lineWidth;
-        }
-
-        @Override public void setLineStyle(StandardStroke lineStyle) {
-            // Nothing to do here
-        }
-
-        @Override public DecorationHandle remove() {
-            saveNeeded = true;
-            rulers.remove(index);
-            repaintEditFrame();
-            return null;
-        }
-
-        @Override public void setColor(Color color) {
-            saveNeeded = true;
-            getItem().setColor(color);
-        }
-        @Override public Color getColor() { return getItem().getColor(); }
-
-        @Override public boolean equals(Object other) {
-            if (this == other) return true;
-            if (other == null || getClass() != other.getClass()) return false;
-            if (getClass() != RulerDecoration.class) return false;
-
-            RulerDecoration cast = (RulerDecoration) other;
-            return index == cast.index;
-        }
-
-        @Override public DecorationHandle[] getHandles() {
-            ArrayList<RulerHandle> output = new ArrayList<>();
-            for (RulerHandleType handle: RulerHandleType.values()) {
-                output.add(new RulerHandle(this, handle));
-            }
-            return output.toArray(new DecorationHandle[0]);
-        }
-
-        @Override public DecorationHandle[] getMovementHandles() {
-            return getHandles();
-        }
-
-        /** Return the VertexHandle closest to path(t). */
-        public RulerHandle getHandle(double t) {
-            return new RulerHandle
-                (this,
-                 (t <= 0.5) ? RulerHandleType.START : RulerHandleType.END);
-        }
-    }
-
-    
-    /** Apply the NIST MML PED standard binary diagram axis style. */
-    class DefaultBinaryRuler extends LinearRuler {
-        DefaultBinaryRuler() {
-            fontSize = normalFontSize();
-            lineWidth = STANDARD_LINE_WIDTH;
-            tickPadding = 3.0;
-            drawSpine = true;
-        }
-    }
-
-
-    /** Apply the NIST MML PED standard ternary diagram axis style. */
-    class DefaultTernaryRuler extends LinearRuler {
-        DefaultTernaryRuler() {
-            fontSize = normalFontSize();
-            lineWidth = STANDARD_LINE_WIDTH;
-            tickPadding = 3.0;
-            multiplier = 100.0;
-
-            tickType = LinearRuler.TickType.V;
-            suppressStartTick = true;
-            suppressEndTick = true;
-
-            drawSpine = true;
-        }
-    }
-
-    class PathAndT {
-        GeneralPolyline path;
-        double t;
-
-        PathAndT(GeneralPolyline path, double t) {
-            this.path = path;
-            this.t = t;
-        }
-
-        public String toString() {
-            return "PathAndT[" + path + ", " + t + "]";
+    public void edit(RulerHandle hand) {
+        LinearRuler item = hand.getItem();
+        if ((new RulerDialog(editFrame, "Edit Ruler", item))
+            .showModal(item)) {
+            propagateChange();
         }
     }
 
     private static final String PREF_DIR = "dir";
-    private static final double BASE_SCALE = 615.0;
 
-    // The label views are grid-fitted at the font size of the buttons
-    // they were created from. Grid-fitting throws off the font
-    // metrics, but the bigger the font size, the less effect
-    // grid-fitting has, and the less error it induces. So make the
-    // Views big enough that grid-fitting is largely irrelevant.
-    private static final int VIEW_MAGNIFICATION = 8;
-    static protected double MOUSE_UNSTICK_DISTANCE = 30; /* pixels */
+    static final protected double MOUSE_UNSTICK_DISTANCE = 30; /* pixels */
     static protected Image crosshairs = null;
-    static protected final String defaultFontName = "DejaVu LGC Sans PED";
-    static protected final Map<String,String> fontFiles
-        = new HashMap<String, String>() {
-	private static final long serialVersionUID = -4018269657447031301L;
-
-        {
-            put("DejaVu LGC Sans PED", "DejaVuLGCSansPED.ttf");
-            put("DejaVu LGC Serif PED", "DejaVuLGCSerifPED.ttf");
-            put("DejaVu LGC Serif GRUMP", "DejaVuLGCSerifGRUMP.ttf");
-        }
-    };
-
-    // embeddedFont is initialized when needed.
-    protected Font embeddedFont = null;
 
     protected CropFrame cropFrame = new CropFrame();
     protected EditFrame editFrame = new EditFrame(this);
@@ -1338,8 +364,6 @@ public class Editor implements CropEventListener, MouseListener,
     protected LabelDialog labelDialog = null;
     protected JColorChooser colorChooser = null;
     protected JDialog colorDialog = null;
-    protected Map<String,String> keyValues = null;
-    protected Set<String> tags = new HashSet<>();
 
     LabelDialog getLabelDialog() {
         if (labelDialog == null) {
@@ -1348,44 +372,11 @@ public class Editor implements CropEventListener, MouseListener,
         return labelDialog;
     }
 
-    /** Transform from original coordinates to principal coordinates.
-        Original coordinates are (x,y) positions within a scanned
-        image. Principal coordinates are either the natural (x,y)
-        coordinates of a Cartesian graph or binary diagram (for
-        example, y may equal a temperature while x equals the atomic
-        fraction of the second diagram component), or the fraction
-        of the right and top components respectively for a ternary
-        diagram. */
-    @JsonProperty protected PolygonTransform originalToPrincipal;
-    protected PolygonTransform principalToOriginal;
-    @JsonProperty protected AffinePolygonTransform principalToStandardPage;
-    protected transient Affine standardPageToPrincipal;
-    /** Bounds of the entire page in standardPage space. Use null to
-        compute automatically instead. */
-    protected Rectangle2D.Double pageBounds;
-    protected DiagramType diagramType = null;
     protected transient double scale;
-    protected ArrayList<GeneralPolyline> paths;
-    protected ArrayList<AnchoredLabel> labels;
-    protected transient ArrayList<Point2D.Double> labelCenters;
-    protected transient ArrayList<View> labelViews;
-    @JsonProperty protected ArrayList<Arrow> arrows;
-    protected ArrayList<TieLine> tieLines;
-    @JsonProperty protected String[/* Side */] diagramComponents = null;
-
-    /** All elements contained in diagram components, sorted into Hill
-        order. Only trustworthy if componentElements != null. */
-    protected transient String[] diagramElements = null;
-    /** Diagram components expressed as vectors of element quantities.
-        The element quantities are parallel to the diagramElements[]
-        array. Set this to null whenever diagramComponents changes. */
-    protected transient double[/* Side */][/* elementNo */]
-        componentElements = null;
-
     protected transient BufferedImage originalImage;
-    protected String originalFilename;
+
     /** The item (vertex, label, etc.) that is selected, or null if nothing is. */
-    protected DecorationHandle selection;
+    protected transient DecorationHandle selection;
     /** If the timer exists, the original image (if any) upon which
         the new diagram is overlaid will blink. */
     transient Timer imageBlinker = null;
@@ -1393,12 +384,6 @@ public class Editor implements CropEventListener, MouseListener,
         be displayed in the background at this time. */
     transient boolean backgroundImageEnabled;
 
-    protected ArrayList<LinearAxis> axes;
-    /** principal coordinates are used to define rulers' startPoints
-        and endPoints. */
-    protected ArrayList<LinearRuler> rulers;
-    protected LinearAxis pageXAxis = null;
-    protected LinearAxis pageYAxis = null;
     protected transient boolean preserveMprin = false;
     protected transient boolean isShiftDown = false;
 
@@ -1424,12 +409,8 @@ public class Editor implements CropEventListener, MouseListener,
     protected transient ScaledCroppedImage darkImage;
     /** Darkness value of darkImage. */
     protected transient double darkImageDarkness = 0;
-    protected double labelXMargin = 0;
-    protected double labelYMargin = 0;
 
-    static final double STANDARD_LINE_WIDTH = 0.0024;
-    static final int STANDARD_FONT_SIZE = 15;
-    protected double lineWidth = STANDARD_LINE_WIDTH;
+    protected transient double lineWidth = STANDARD_LINE_WIDTH;
     protected transient StandardStroke lineStyle = StandardStroke.SOLID;
 
     static String[] tieLineStepStrings =
@@ -1470,24 +451,23 @@ public class Editor implements CropEventListener, MouseListener,
     // added, but whatever, this works.)
     ArrayList<PathAndT> tieLineCorners;
 
-    protected String filename;
-
-    boolean saveNeeded = false;
+    protected String filename = null;
 
     /** Current mouse position expressed in principal coordinates.
      It's not always sufficient to simply read the mouse position in
      the window, because after the user jumps to a preselected point,
      the integer mouse position is not precise enough to express that
      location. */
-    protected Point2D.Double mprin = null;
+    protected transient Point2D.Double mprin = null;
 
     /** When the user presses 'p' or 'P' repeatedly to locate points
         close to a starting point, this holds the initial mouse
         location (in principal coordinates) so it is possible to
         identify what the next-closest point may be. */
-    protected Point2D.Double principalFocus = null;
+    protected transient Point2D.Double principalFocus = null;
 
     public Editor() {
+        init();
         zoomFrame.setFocusableWindowState(false);
         tieLineDialog.setFocusableWindowState(false);
         vertexInfo.setDefaultCloseOperation
@@ -1495,7 +475,6 @@ public class Editor implements CropEventListener, MouseListener,
         editFrame.setDefaultCloseOperation
             (WindowConstants.DO_NOTHING_ON_CLOSE);
         editFrame.addWindowListener(new CloseListener());
-        clear();
         getEditPane().addMouseListener(this);
         getEditPane().addMouseMotionListener(this);
         cropFrame.setDefaultCloseOperation
@@ -1503,36 +482,10 @@ public class Editor implements CropEventListener, MouseListener,
         cropFrame.addCropEventListener(this);
     }
 
-    /** @return the filename that has been assigned to the PED format
-        diagram output. */
-    @JsonIgnore public String getFilename() {
-        return filename;
-    }
-
-    /** Initialize/clear almost every field except diagramType. */
-    void clear() {
-        originalToPrincipal = null;
-        originalImage = null;
-        originalFilename = null;
-        principalToOriginal = null;
-        principalToStandardPage = null;
-        standardPageToPrincipal = null;
-        pageBounds = null;
+    private void init() {
         scale = BASE_SCALE;
-        paths = new ArrayList<>();
-        arrows = new ArrayList<>();
-        tieLines = new ArrayList<>();
-        labels = new ArrayList<>();
-        labelViews = new ArrayList<>();
-        labelCenters = new ArrayList<>();
         selection = null;
-        axes = new ArrayList<>();
-        rulers = new ArrayList<>();
-        diagramComponents = new String[Side.values().length];
-        componentElements = null;
         mprin = null;
-        filename = null;
-        saveNeeded = false;
         scaledOriginalImages = null;
         vertexInfo.setAngle(0);
         vertexInfo.setSlope(0);
@@ -1542,43 +495,17 @@ public class Editor implements CropEventListener, MouseListener,
         setBackground(EditFrame.BackgroundImage.LIGHT_GRAY);
         tieLineDialog.setVisible(false);
         tieLineCorners = new ArrayList<>();
-        embeddedFont = null;
-        keyValues = new TreeMap<>();
-        tags.clear();
-        editFrame.removeAllTags();
-        editFrame.removeAllVariables();
     }
 
-    @JsonProperty("curves")
-    ArrayList<GeneralPolyline> getPaths() {
-        return paths;
+    @Override void clear() {
+        super.clear();
+        init();
     }
 
     public void close() {
         if (verifyCloseDiagram()) {
             System.exit(0);
         }
-    }
-
-    @JsonProperty("curves")
-    void setPaths(Collection<GeneralPolyline> paths) {
-        selection = null;
-        this.paths = new ArrayList<GeneralPolyline>(paths);
-    }
-
-    @JsonProperty("tieLines")
-    ArrayList<TieLine> getTieLines() {
-        return tieLines;
-    }
-
-    GeneralPolyline idToCurve(int id) {
-        for (GeneralPolyline path: paths) {
-            if (path.getJSONId() == id) {
-                return path;
-            }
-        }
-        System.err.println("No curve found with id " + id + ".");
-        return null;
     }
 
     @JsonIgnore VertexHandle getVertexHandle() {
@@ -1649,39 +576,8 @@ public class Editor implements CropEventListener, MouseListener,
         return (handle == null) ? null : handle.getLocation();
     }
 
-    public String[] getTags() {
-        return tags.toArray(new String[0]);
-    }
-
-    public void removeAllTags() {
-        tags.clear();
-        editFrame.removeAllTags();
-    }
-
-    public void removeAllVariables() {
-        axes.clear();
-        editFrame.removeAllVariables();
-    }
-
-    public void setTags(String[] newTags) {
-        saveNeeded = true;
-        removeAllTags();
-        for (String tag: newTags) {
-            addTag(tag);
-        }
-    }
-
-    public void setVariables(String[] newTags) {
-        saveNeeded = true;
-        removeAllTags();
-        for (String tag: newTags) {
-            addTag(tag);
-        }
-    }
-
-    public void addTag(String tag) {
-        saveNeeded = true;
-        tags.add(tag);
+    @Override public void addTag(String tag) {
+        super.addTag(tag);
         editFrame.addTag(tag);
     }
 
@@ -1692,61 +588,14 @@ public class Editor implements CropEventListener, MouseListener,
         }
     }
 
-    public void removeTag(String tag) {
-        saveNeeded = true;
-        tags.remove(tag);
+    @Override public void removeTag(String tag) {
+        super.removeTag(tag);
         editFrame.removeTag(tag);
     }
 
-    public void removeVariable(String name) {
-        for (Axis axis: axes) {
-            if (axis.name.equals(name)) {
-                axes.remove(axis);
-                editFrame.removeVariable(name);
-                for (int i = 0; i < rulers.size(); ) {
-                    if (rulers.get(i).axis == axis) {
-                        rulers.remove(i);
-                    } else {
-                        ++i;
-                    }
-                }
-                repaintEditFrame();
-                saveNeeded = true;
-                return;
-            }
-        }
-        throw new IllegalStateException("Variable '" + name + "' + not found.");
-    }
-
-    @JsonIgnore public void setSaveNeeded(boolean saveNeeded) {
-        this.saveNeeded = saveNeeded;
-    }
-
-    @JsonIgnore public boolean getSaveNeeded() {
-        return saveNeeded;
-    }
-
-    /** The returned value can be used to modify the
-        internal key/value mapping. */
-    @JsonProperty("keys") Map<String,String> getKeyValues() {
-        return keyValues;
-    }
-
-    void setKeyValues(@JsonProperty("keys") Map<String, String> keyValues) {
-        saveNeeded = true;
-        this.keyValues = keyValues;
-    }
-
-    /** Return the value associated with this key in the keyValues
-        field. */
-    public String get(String key) {
-        return keyValues.get(key);
-    }
-
-    /** Put a key/value pair in the keyValues field. */
-    public void put(String key, String value) {
-        keyValues.put(key, value);
-        updateTitle();
+    @Override public void removeVariable(String name) {
+        super.removeVariable(name);
+        editFrame.removeVariable(name);
     }
 
     public void put() {
@@ -1756,7 +605,7 @@ public class Editor implements CropEventListener, MouseListener,
             (editFrame, labels, values, null);
         dog.setTitle("Add key/value pair");
         values = dog.showModal();
-        if (values == null || "".equals(values[0])) {
+        if (values == null || values[0].isEmpty()) {
             return;
         }
 
@@ -1785,22 +634,12 @@ public class Editor implements CropEventListener, MouseListener,
         }
 
         for (int i = 0; i < keyValues.size(); ++i) {
-            if ("".equals(values[i])) {
+            if (values[i].isEmpty()) {
                 removeKey(keys[i]);
             } else if (!values[i].equals(get(keys[i]))) {
                 put(keys[i], values[i]);
             }
         }
-    }
-
-
-    /** Remove the given key from the keyValues field, and return its
-        value, or null if absent. */
-    public String removeKey(String key) {
-        String output = keyValues.remove(key);
-        saveNeeded = true;
-        updateTitle();
-        return output;
     }
 
 
@@ -1820,7 +659,7 @@ public class Editor implements CropEventListener, MouseListener,
 
         // The rest is handed in paintDiagram().
 
-        repaintEditFrame();
+        redraw();
     }
 
     /** Reset the location of all vertices and labels that have the
@@ -1877,11 +716,10 @@ public class Editor implements CropEventListener, MouseListener,
             if (inside) {
                 hand.move(new Point2D.Double(prin.getX() + delta.x,
                                              prin.getY() + delta.y));
-                saveNeeded = true;
             }
         }
 
-        repaintEditFrame();
+        propagateChange();
     }
 
     /** Reset the location of all vertices and labels that have the
@@ -1940,35 +778,6 @@ public class Editor implements CropEventListener, MouseListener,
         selection = selection.copy(mprin);
     }
 
-    /** Edit the selection. */
-    public void editSelection() {
-
-        if (selection == null) {
-            // Find the nearest editable item, and edit it.
-
-            for (DecorationHandle handle: nearestHandles()) {
-                if (handle.isEditable()) {
-                    selection = handle;
-                    break;
-                }
-            }
-
-            if (selection == null) {
-                JOptionPane.showMessageDialog
-                    (editFrame, "There are no editable items.");
-                return;
-            }
-        }
-
-        if (!selection.isEditable()) {
-            JOptionPane.showMessageDialog
-                (editFrame,
-                 "This item does not have a special edit function.");
-            return;
-        }
-        selection.edit();
-    }
-
     /** Change the selection's color. */
     public void colorSelection() {
 
@@ -1986,7 +795,7 @@ public class Editor implements CropEventListener, MouseListener,
              colorChooser, new ActionListener() {
                  @Override public void actionPerformed(ActionEvent e) {
                      Editor.this.selection.getDecoration().setColor(colorChooser.getColor());
-                     repaintEditFrame();
+                     propagateChange();
                  }
              },
              null);
@@ -1996,16 +805,6 @@ public class Editor implements CropEventListener, MouseListener,
         Color c = thisOrBlack(selection.getDecoration().getColor());
         colorChooser.setColor(c);
         colorDialog.setVisible(true);
-    }
-
-    /** Return true if p1 and p2 are equal to within reasonable
-        limits, where "reasonable limits" means the distance between
-        their transformations to the standard page is less than
-        1e-6. */
-    boolean principalCoordinatesMatch(Point2D p1, Point2D p2) {
-        Point2D.Double page1 = principalToStandardPage.transform(p1);
-        Point2D.Double page2 = principalToStandardPage.transform(p2);
-        return page1.distanceSq(page2) < 1e-12;
     }
 
     boolean mouseIsStuckAtSelection() {
@@ -2058,7 +857,7 @@ public class Editor implements CropEventListener, MouseListener,
 
         csel.curveNo = (csel.curveNo + delta + paths.size()) % paths.size();
         sel.vertexNo = sel.getItem().size() - 1;
-        repaintEditFrame();
+        redraw();
     }
 
     /** Cycle the currently active vertex.
@@ -2088,40 +887,15 @@ public class Editor implements CropEventListener, MouseListener,
             }
         }
 
-        repaintEditFrame();
+        redraw();
     }
 
-    /** @param scale A multiple of standardPage coordinates
-
-        @return a transform from principal coordinates to device
-        coordinates. In additon to the scaling, the coordinates are
-        translated to make (0,0) the top left corner. */
-    Affine standardPageToDevice(double scale) {
-        Affine output = Affine.getScaleInstance(scale, scale);
-        output.translate(-pageBounds.x, -pageBounds.y);
-        return output;
-    }
-
-    /** @param scale A multiple of standardPage coordinates
-
-        @return a transform from principal coordinates to device
-        coordinates. In additon to the scaling, the coordinates are
-        translated to make (0,0) the top left corner. */
-    Affine principalToScaledPage(double scale) {
-        Affine output = standardPageToDevice(scale);
-        output.concatenate(principalToStandardPage);
-        return output;
-    }
-
-    Affine scaledPageToPrincipal(double scale) {
-        try {
-            return principalToScaledPage(scale).createInverse();
-        } catch (NoninvertibleTransformException e) {
-            System.err.println("p2sp = " + principalToStandardPage);
-            System.err.println("p2scp = " + principalToScaledPage(scale));
-            throw new IllegalStateException("Transform at scale " + scale
-                                            + " is not invertible");
-        }
+    /* The diagram has not changed, but it needs to be redrawn. The
+       mouse cursor may have been recentered, the scale may have
+       changed, an item may have been selected... */
+    public void redraw() {
+        setChanged();
+        notifyObservers(null);
     }
 
     /** Move mprin, plus the selection if the mouse is stuck at the
@@ -2154,55 +928,12 @@ public class Editor implements CropEventListener, MouseListener,
         mouseIsStuck = true;
     }
 
-
-    /** Make sure the mouse position and status bar are up to date and
-        call repaint() on the edit frame. */
-    public void repaintEditFrame() {
-        editFrame.repaint();
-    }
-
-    Rectangle scaledPageBounds(double scale) {
-        return new Rectangle((int) 0, 0,
-                             (int) Math.ceil(pageBounds.width * scale),
-                             (int) Math.ceil(pageBounds.height * scale));
-    }
-
-
     /** Most of the information required to paint the EditPane is part
         of this object, so it's simpler to do the painting from
         here. */
-    public void paintEditPane(Graphics g0) {
+    public void paintEditPane(Graphics g) {
         updateMousePosition();
-        Graphics2D g = (Graphics2D) g0;
-        paintDiagram(g, scale, true, true);
-    }
-
-
-    /** Compute the scaling factor to apply to pageBounds (and
-        standardPage coordinates) in order for xform.transform(scale *
-        pageBounds) to fill deviceBounds as much as possible without
-        going over.
-    */
-    double deviceScale(AffineTransform xform, Rectangle2D deviceBounds) {
-        AffineTransform itrans;
-        try {
-            itrans = xform.createInverse();
-        } catch (NoninvertibleTransformException e) {
-            throw new IllegalStateException("Transform " + xform
-                                            + " is not invertible");
-        }
-
-        Point2D.Double delta = new Point2D.Double();
-        itrans.deltaTransform
-            (new Point2D.Double(pageBounds.width, pageBounds.height), delta);
-
-        Rescale r = new Rescale(Math.abs(delta.x), 0.0, deviceBounds.getWidth(),
-                                Math.abs(delta.y), 0.0, deviceBounds.getHeight());
-        return r.t;
-    }
-
-    double deviceScale(Graphics2D g, Rectangle2D deviceBounds) {
-        return deviceScale(g.getTransform(), deviceBounds);
+        paintDiagramWithSelection((Graphics2D) g, scale);
     }
 
     static final double DEFAULT_BACKGROUND_IMAGE_DARKNESS = 1.0/3;
@@ -2329,7 +1060,25 @@ public class Editor implements CropEventListener, MouseListener,
 
         boolean isBoxed = label.isBoxed();
         label.setBoxed(true);
-        drawLabel(g, ldec.index, scale, true);
+        drawLabel(g, ldec.index, scale);
+
+        if (label.getXWeight() != 0.5 || label.getYWeight() != 0.5) {
+            // Mark the anchor with a circle -- either a solid circle
+            // if the selection handle is the anchor, or a hollow
+            // circle if the selection handle is the label's center.
+            double r = Math.max(scale * 2.0 / BASE_SCALE, 4.0);
+            Point2D.Double p = new Point2D.Double
+                (label.getXWeight(), label.getYWeight());
+            labelToScaledPage(ldec.index, scale).transform(p, p);
+            Ellipse2D circle = new Ellipse2D.Double
+                (p.x - r, p.y - r, r * 2, r * 2);
+            if (getLabelHandle().handle == LabelHandleType.CENTER) {
+                g.draw(circle);
+            } else {
+                g.fill(circle);
+            }
+        }
+
         label.setBoxed(isBoxed);
     }
 
@@ -2357,29 +1106,22 @@ public class Editor implements CropEventListener, MouseListener,
             : Color.GREEN;
     }
 
-    public void paintDiagram(Graphics2D g, double scale) {
-        paintDiagram(g, scale, false, true);
-    }
-
-    /** Paint the diagram to the given graphics context.
+    /** Paint the diagram to the given graphics context. Highlight the
+        selection, if any, and print the background image if
+        necessary. Also indicate the autoselect point if the shift key
+        is depressed.
 
         @param scale Scaling factor to convert standard page
         coordinates to device coordinates.
-
-        @param editing If true, then paint editing hints (highlight
-        the currently active curve in green, show the consequences of
-        adding the current mouse position in red, etc.). If false,
-        show the final form of the diagram. This parameter should be
-        false except while painting the editFrame.
-
-        @param drawBackground If false, do not draw the background.
-
- */
-    public void paintDiagram(Graphics2D g, double scale, boolean editing,
-                             boolean drawBackground) {
+    */
+    public void paintDiagramWithSelection(Graphics2D g, double scale) {
         if (principalToStandardPage == null
             || paintSuppressionRequestCnt > 0) {
             return;
+        }
+
+        if (labelViews.size() != labels.size()) {
+            initializeLabelViews();
         }
 
         g.setRenderingHint(RenderingHints.KEY_ANTIALIASING,
@@ -2387,9 +1129,9 @@ public class Editor implements CropEventListener, MouseListener,
         g.setRenderingHint(RenderingHints.KEY_RENDERING,
                             RenderingHints.VALUE_RENDER_QUALITY);
 
-        if (drawBackground) {
+        { // Draw the background
             EditFrame.BackgroundImage back = editFrame.getBackgroundImage();
-            boolean showBackgroundImage = editing && tracingImage()
+            boolean showBackgroundImage = tracingImage()
                 && back != EditFrame.BackgroundImage.NONE
                 && (back != EditFrame.BackgroundImage.BLINK
                     || backgroundImageEnabled);
@@ -2406,7 +1148,7 @@ public class Editor implements CropEventListener, MouseListener,
             }
         }
 
-        boolean showSel = (selection != null) && editing;
+        boolean showSel = selection != null;
 
         ArrayList<Decoration> decorations = getDecorations();
 
@@ -2418,44 +1160,42 @@ public class Editor implements CropEventListener, MouseListener,
             }
         }
 
-        if (editing) {
-            if (selection != null) {
-                Decoration dec = selection.getDecoration();
-                Color oldColor = dec.getColor();
-                boolean oldSaveNeeded = saveNeeded;
-                Color highlight = getHighlightColor(oldColor);
+        if (selection != null) { // Draw the selection
+            Decoration dec = selection.getDecoration();
+            Color oldColor = dec.getColor();
+            boolean oldSaveNeeded = saveNeeded;
+            Color highlight = getHighlightColor(oldColor);
 
-                g.setColor(highlight);
-                dec.setColor(highlight);
-                if (selection instanceof VertexHandle) {
-                    paintSelectedCurve(g, scale);
+            g.setColor(highlight);
+            dec.setColor(highlight);
+            if (selection instanceof VertexHandle) {
+                paintSelectedCurve(g, scale);
+            } else {
+                if (selection instanceof LabelHandle) {
+                    paintSelectedLabel(g, scale);
                 } else {
-                    if (selection instanceof LabelHandle) {
-                        paintSelectedLabel(g, scale);
-                    } else {
-                        sel.draw(g, scale);
-                    }
+                    sel.draw(g, scale);
                 }
-                dec.setColor(oldColor);
-                saveNeeded = oldSaveNeeded;
             }
+            dec.setColor(oldColor);
+            saveNeeded = oldSaveNeeded;
+        }
 
-            if (getVertexHandle() == null && isShiftDown) {
-                AutoPositionHolder ap = new AutoPositionHolder();
-                Point2D.Double autop = getAutoPosition(ap);
-                Point2D.Double gmp = getMousePosition();
-                if (autop != null && gmp != null
-                    && !principalCoordinatesMatch(autop, gmp)) {
-                    // Paint a cross at autop.
-                    Point2D.Double vPage = principalToScaledPage(scale)
-                        .transform(autop);
-                    int r = 7;
-                    g.setColor(toColor(ap.position));
-                    int ix = (int) vPage.x;
-                    int iy = (int) vPage.y;
-                    g.drawLine(ix, iy - r, ix, iy + r);
-                    g.drawLine(ix -r, iy, ix+r, iy);
-                }
+        if (getVertexHandle() == null && isShiftDown) {
+            AutoPositionHolder ap = new AutoPositionHolder();
+            Point2D.Double autop = getAutoPosition(ap);
+            Point2D.Double gmp = getMousePosition();
+            if (autop != null && gmp != null
+                && !principalCoordinatesMatch(autop, gmp)) {
+                // Paint a cross at autop.
+                Point2D.Double vPage = principalToScaledPage(scale)
+                    .transform(autop);
+                int r = 7;
+                g.setColor(toColor(ap.position));
+                int ix = (int) vPage.x;
+                int iy = (int) vPage.y;
+                g.drawLine(ix, iy - r, ix, iy + r);
+                g.drawLine(ix -r, iy, ix+r, iy);
             }
         }
     }
@@ -2484,10 +1224,9 @@ public class Editor implements CropEventListener, MouseListener,
 
     public void deselectCurve() {
         selection = null;
-        repaintEditFrame();
+        redraw();
     }
 
-    /** Start a new curve where the old curve ends. */
     public void fill() {
         GeneralPolyline path = getActiveCurve();
         if (path == null) {
@@ -2503,9 +1242,10 @@ public class Editor implements CropEventListener, MouseListener,
         }
 
         path.setFilled(!path.isFilled());
-        repaintEditFrame();
+        propagateChange();
     }
 
+    /** Start a new curve where the old curve ends. */
     public void addCusp() {
         if (mprin == null) {
             return;
@@ -2573,75 +1313,18 @@ public class Editor implements CropEventListener, MouseListener,
         if (isDuplicate(point)) {
             return; // Adding the same point twice causes problems.
         }
-        getCurveForAppend();
+        GeneralPolyline path = getCurveForAppend();
         VertexHandle vhand = getVertexHandle();
-        CurveDecoration csel = vhand.getDecoration();
-
         int addPos = vhand.vertexNo + (insertBeforeSelection ? -1 : 0 );
-        add(csel.getItem(), addPos, point);
+        add(path, addPos, point);
         if (!insertBeforeSelection) {
             ++vhand.vertexNo;
         }
         showTangent(vhand);
-        repaintEditFrame();
     }
 
-    /** Add a new vertex to path, located at point, and inserted just
-        after vertex vertexNo. */
-    public void add(GeneralPolyline path, int vertexNo,
-                    Point2D.Double point) {
-        saveNeeded = true;
-        if (path.size() == 0) {
-            path.add(0, point);
-            return;
-        }
-
-        ArrayList<Double> segments = getPathSegments(path);
-        int segCnt = path.getSegmentCnt();
-
-        double dist1 = (vertexNo == -1) ? 0
-            : point.distance(path.get(vertexNo));
-        double dist2 = (vertexNo == segCnt) ? 0
-            : point.distance(path.get(vertexNo + 1));
-
-        // For old segment vertexNo, map the t range [0, splitT] to
-        // new segment vertexNo range [0,1], and map the t range
-        // (splitT, 1] to new segment vertexNo+1 range [0,1]. If
-        // vertexNo == segCnt then segment vertexNo never existed
-        // before, so it doesn't matter what splitT value we use.
-        double splitT = dist1 / (dist1 + dist2);
-
-        for (int i = 0; i < segments.size(); ++i) {
-            double t = segments.get(i);
-            int segment = (int) Math.floor(t);
-            double frac = t - segment;
-            if (segment > vertexNo) {
-                ++t;
-            } else if (segment == vertexNo) {
-                if (frac <= splitT) {
-                    t = segment + frac / splitT;
-                } else {
-                    t = (segment + 1) + (frac - splitT) / (1.0 - splitT);
-                }
-            }
-            segments.set(i, t);
-        }
-
-        path.add(vertexNo + 1, point);
-        setPathSegments(path, segments);
-    }
-
-    void removeCurve(int curveNo) {
-        saveNeeded = true;
+    @Override void removeCurve(int curveNo) {
         GeneralPolyline path = paths.get(curveNo);
-
-        // Remove all associated tie lines.
-        for (int i = tieLines.size() - 1; i >= 0; --i) {
-            TieLine tie = tieLines.get(i);
-            if (tie.innerEdge == path || tie.outerEdge == path) {
-                tieLines.remove(i);
-            }
-        }
 
         // If an incomplete tie line selection refers to this curve,
         // then stop selecting a tie line.
@@ -2653,52 +1336,13 @@ public class Editor implements CropEventListener, MouseListener,
                 break;
             }
         }
-
-        paths.remove(curveNo);
-    }
-
-    /** Make a list of t values that appear in this Editor
-        object and that refer to locations on the given path. */
-    ArrayList<Double> getPathSegments(GeneralPolyline path) {
-        ArrayList<Double> output = new ArrayList<>();
-
-        // Tie Lines' limits are defined by t values.
-        for (TieLine tie: tieLines) {
-            if (tie.innerEdge == path) {
-                output.add(tie.it1);
-                output.add(tie.it2);
-            }
-            if (tie.outerEdge == path) {
-                output.add(tie.ot1);
-                output.add(tie.ot2);
-            }
-        }
-
-        return output;
-    }
-
-    /** You can change the segments returned by getPathSegments() and
-        call setPathSegments() to make corresponding updates to the
-        fields from which they came. */
-    void setPathSegments(GeneralPolyline path, ArrayList<Double> segments) {
-        int index = 0;
-        for (TieLine tie: tieLines) {
-            if (tie.innerEdge == path) {
-                tie.it1 = segments.get(index++);
-                tie.it2 = segments.get(index++);
-            }
-            if (tie.outerEdge == path) {
-                tie.ot1 = segments.get(index++);
-                tie.ot2 = segments.get(index++);
-            }
-        }
+        super.removeCurve(curveNo);
     }
 
     /** Print an arrow at the currently selected location that is
         tangent to the curve at that location and that points
         rightward (or downward if the curve is vertical). */
     public void addArrow(boolean rightward) {
-        saveNeeded = true;
         if (mouseIsStuckAtSelection() && getSelectedArrow() != null) {
             unstickMouse();
         }
@@ -2708,10 +1352,7 @@ public class Editor implements CropEventListener, MouseListener,
             theta += Math.PI;
         }
 
-        arrows.add
-            (new Arrow(mprin.x, mprin.y, lineWidth,
-                       pageToPrincipalAngle(theta)));
-        repaintEditFrame();
+        addArrow(mprin, lineWidth, pageToPrincipalAngle(theta));
     }
 
     void tieLineCornerSelected() {
@@ -2772,9 +1413,7 @@ public class Editor implements CropEventListener, MouseListener,
         tie.ot2 = tieLineCorners.get(1).t;
 
         selection = new TieLineHandle(tieLines.size(), TieLineHandleType.OUTER2);
-        tieLines.add(tie);
-        saveNeeded = true;
-        repaintEditFrame();
+        add(tie);
     }
 
     int askNumberOfTieLines(int oldCount) {
@@ -2868,17 +1507,13 @@ public class Editor implements CropEventListener, MouseListener,
         }
 
         removeCurve(vhand.getCurveNo());
-        rulers.add(ruler);
-        saveNeeded = true;
-
+        add(ruler);
         selection = new RulerHandle(rulers.size() - 1, RulerHandleType.END);
-        repaintEditFrame();
     }
 
-    public void addVariable(LinearAxis axis) {
-        axes.add(axis);
+    @Override public void add(LinearAxis axis) {
+        super.add(axis);
         editFrame.addVariable((String) axis.name);
-        repaintEditFrame();
     }
 
     public void addVariable() {
@@ -2946,7 +1581,7 @@ public class Editor implements CropEventListener, MouseListener,
                     (new DecimalFormat("0.0000"),
                      m.get(0,0), m.get(1,0), m.get(2,0));
                 axis.name = values[0];
-                addVariable(axis);
+                add(axis);
                 return;
             } catch (RuntimeException e) {
                 JOptionPane.showMessageDialog
@@ -2955,212 +1590,6 @@ public class Editor implements CropEventListener, MouseListener,
                      + e + ", " + xform);
                 return;
             }
-        }
-    }
-
-    static class StringComposition {
-        /** Decomposition of s into (element name, number of atoms)
-            pairs. */
-        Map<String,Double> c;
-        /** The side (or corner, for ternary diagrams) of the diagram
-            that this diagram component belongs to. */
-        Side side;
-    };
-
-    @JsonIgnore double[][] getComponentElements() {
-        if (componentElements != null || diagramType == null) {
-            return componentElements;
-        }
-
-        ArrayList<StringComposition> scs = new ArrayList<>();
-
-        for (Side side: Side.values()) {
-            String dc = diagramComponents[side.ordinal()];
-            if (dc == null) {
-                continue;
-            }
-            ChemicalString.Match m = ChemicalString.composition(dc);
-            if (m == null) {
-                System.out.println("Diagram component '" + dc + "' does not start\n"
-                                   + "with a simple chemical formula.");
-                continue;
-            }
-            StringComposition sc = new StringComposition();
-            // sc.s = dc.substring(0, m.length);
-            sc.c = m.composition;
-            sc.side = side;
-            scs.add(sc);
-        }
-
-        Map<String,Integer> elementIndexes = new HashMap<>();
-        ArrayList<String> elements = new ArrayList<>();
-        for (StringComposition sc: scs) {
-            for (String element: sc.c.keySet()) {
-                if (elementIndexes.containsKey(element)) {
-                    continue;
-                }
-                // Don't worry about the value for now.
-                elementIndexes.put(element, 0);
-                elements.add(element);
-            }
-        }
-
-
-        // Now we know which elements are present, in some order.
-        // Rearrange to obtain Hill order.
-        diagramElements = elements.toArray(new String[0]);
-        ChemicalString.hillSort(diagramElements);
-        for (int i = 0; i < diagramElements.length; ++i) {
-            elementIndexes.put(diagramElements[i], i);
-        }
-
-        componentElements = new double[Side.values().length][];
-        for (StringComposition sc: scs) {
-            double[] compEls = new double[diagramElements.length];
-            componentElements[sc.side.ordinal()] = compEls;
-            for (Map.Entry<String, Double> pair: sc.c.entrySet()) {
-                compEls[elementIndexes.get(pair.getKey())] = pair.getValue();
-            }
-        }
-        return componentElements;
-    }
-
-    static class SideDouble {
-        Side s;
-        double d;
-
-        SideDouble(Side s, double d) {
-            this.s = s;
-            this.d = d;
-        }
-
-        public String toString() {
-            return getClass().getSimpleName() + "[" + s + ", " + d + "]";
-        }
-    }
-
-    /** Assuming that the principal coordinates are defined as mole
-        percents, return the mole fractions of the various diagram
-        components at point prin, or null if the fractions could not
-        be determined.
-    */
-    protected SideDouble[] componentFractions(Point2D prin) {
-        if (prin == null || diagramType == null) {
-            return null;
-        }
-        double x = prin.getX();
-        double y = prin.getY();
-
-        if (diagramType.isTernary()) {
-            return new SideDouble[] {
-                new SideDouble(Side.RIGHT, x),
-                new SideDouble(Side.TOP, y),
-                new SideDouble(Side.LEFT, 1 - x - y) };
-        } else if (diagramComponents[Side.LEFT.ordinal()] != null
-                   || diagramComponents[Side.RIGHT.ordinal()] != null) {
-            return new SideDouble[] {
-                new SideDouble(Side.RIGHT, x),
-                new SideDouble(Side.LEFT, 1 - x) };
-        } else {
-            return null;
-        }
-    }
-
-    protected Side[] sidesThatCanHaveComponents() {
-        if (diagramType.isTernary()) {
-            return new Side[] { Side.LEFT, Side.RIGHT, Side.TOP };
-        } else {
-            return new Side[] { Side.LEFT, Side.RIGHT };
-        }
-    }
-
-    /** Assuming that diagram's principal coordinates are mole
-        fractions, return the weight fractions of the various diagram
-        components at point prin, or null if the fractions could not
-        be determined. */
-    protected SideDouble[] componentWeightFractions(Point2D prin) {
-        SideDouble[] res = componentFractions(prin);
-        if (res == null) {
-            return null;
-        }
-        double totWeight = 0;
-        for (SideDouble sd: res) {
-            double cw = componentWeight(sd.s);
-            if (cw == 0) {
-                return null;
-            }
-            // Multiply the mole fraction by the compound's weight.
-            // Later, dividing by the sum of all of these terms will
-            // yield the weight fraction.
-            cw *= sd.d;
-            sd.d = cw;
-            totWeight += cw;
-        }
-        for (SideDouble sd: res) {
-            sd.d /= totWeight;
-        }
-        return res;
-    }
-
-    /** Assuming that diagram's principal coordinates are weight
-        fractions, return the weight fractions of the various diagram
-        components at point prin, or null if the fractions could not
-        be determined. */
-    protected SideDouble[] componentMoleFractions(Point2D prin) {
-        SideDouble[] res = componentFractions(prin);
-        if (res == null) {
-            return null;
-        }
-        double totMole = 0;
-        for (SideDouble sd: res) {
-            double cw = componentWeight(sd.s);
-            if (cw == 0) {
-                return null;
-            }
-            // Divide the weight fraction by the compound's weight.
-            // Later, dividing by the sum of all of these terms will
-            // yield the mole fraction.
-            double mf = sd.d / cw;
-            sd.d = mf;
-            totMole += mf;
-        }
-        for (SideDouble sd: res) {
-            sd.d /= totMole;
-        }
-        return res;
-    }
-
-    /** Convert the given point from mole fraction to weight fraction.
-        If this is a binary diagram, then the Y component of the
-        return value will equal the Y component of the input value. If
-        the conversion cannot be performed for some reason, then
-        return null. */
-    public Point2D.Double moleToWeightFraction(Point2D mole) {
-        SideDouble[] sds = componentWeightFractions(mole);
-        if (sds == null) {
-            return null;
-        }
-        if (diagramType.isTernary()) {
-            return new Point2D.Double(sds[0].d, sds[1].d);
-        } else {
-            return new Point2D.Double(sds[0].d, mole.getY());
-        }
-    }
-
-    /** Convert the given point from mole fraction to weight fraction.
-        If this is a binary diagram, then the Y component of the
-        return value will equal the Y component of the input value. If
-        the conversion cannot be performed for some reason, then
-        return null. */
-    public Point2D.Double weightToMoleFraction(Point2D weight) {
-        SideDouble[] sds = componentMoleFractions(weight);
-        if (sds == null) {
-            return null;
-        }
-        if (diagramType.isTernary()) {
-            return new Point2D.Double(sds[0].d, sds[1].d);
-        } else {
-            return new Point2D.Double(sds[0].d, weight.getY());
         }
     }
 
@@ -3178,55 +1607,20 @@ public class Editor implements CropEventListener, MouseListener,
 
         2. Angle values are not converted. This is also wrong.
     */
-    protected boolean moleToWeightFraction() {
-        if (!haveComponentCompositions()) {
-            return false;
-        }
-
-        for (DecorationHandle hand: movementHandles()) {
-            hand.move(moleToWeightFraction(hand.getLocation()));
-        }
-
-        if (mprin != null) {
+    @Override protected boolean moleToWeightFraction() {
+        boolean res = super.moleToWeightFraction();
+        if (res && mprin != null) {
             moveMouse(moleToWeightFraction(mprin));
         }
-        return true;
+        return res;
     }
 
-    /** Globally convert all coordinates from weight fraction to mole
-        fraction, if the information necessary to do so is available.
-        Return true if the conversion was carried out.
-
-        IMPORTANT BUGS:
-
-        1. Angle values are not converted.
-    */
-    protected boolean weightToMoleFraction() {
-        if (!haveComponentCompositions()) {
-            return false;
-        }
-
-        for (DecorationHandle hand: movementHandles()) {
-            hand.move(weightToMoleFraction(hand.getLocation()));
-        }
-
-        if (mprin != null) {
+    @Override protected boolean weightToMoleFraction() {
+        boolean res = super.weightToMoleFraction();
+        if (res && mprin != null) {
             moveMouse(weightToMoleFraction(mprin));
         }
-        return true;
-    }
-
-    /* Return true if all sides that could have components do have
-       them, and those components' composiitions are known. */
-    boolean haveComponentCompositions() {
-        double[][] componentElements = getComponentElements();
-        for (Side side: sidesThatCanHaveComponents()) {
-            if (componentElements[side.ordinal()] == null) {
-                return false;
-            }
-        }
-
-        return true;
+        return res;
     }
 
     /* Have the user enter a string; parse the string as a compound;
@@ -3425,15 +1819,6 @@ public class Editor implements CropEventListener, MouseListener,
         moveMouse(fractions);
     }
 
-    static class OrderByXY implements Comparator<Point2D.Double> {
-        public int compare(Point2D.Double a, Point2D.Double b) {
-            double ax = a.x;
-            double bx = b.x;
-            return (ax < bx) ? -1 : (ax > bx) ? 1
-                : (a.y < b.y) ? -1 : (a.y > b.y) ? 1 : 0;
-        }
-    }
-
     public void copyCoordinatesToClipboard() {
         ArrayList<Point2D.Double> points = new ArrayList<>();
         GeneralPolyline path = getActiveCurve();
@@ -3473,11 +1858,6 @@ public class Editor implements CropEventListener, MouseListener,
         }
     }
 
-    @JsonIgnore String[] getDiagramElements() {
-        getComponentElements();
-        return diagramElements;
-    }
-
     public void addTieLine() {
         tieLineCorners = new ArrayList<PathAndT>();
         tieLineDialog.getLabel().setText(tieLineStepStrings[0]);
@@ -3490,26 +1870,7 @@ public class Editor implements CropEventListener, MouseListener,
         measured by distance from the center of the label to mprin on
         the standard page. */
     int nearestLabelNo() {
-        if (mprin == null) {
-            return -1;
-        }
-
-        Affine toPage = getPrincipalToAlignedPage();
-        Point2D.Double mousePage = toPage.transform(mprin);
-        Point2D.Double centerPage = new Point2D.Double();
-
-        int output = -1;
-        double minDistance = 0.0;
-        for (int i = 0; i < labels.size(); ++i) {
-            toPage.transform(labelCenters.get(i), centerPage);
-            double distance = centerPage.distance(mousePage);
-            if (output == -1 || distance < minDistance) {
-                output = i;
-                minDistance = distance;
-            }
-        }
-
-        return output;
+        return (mprin == null) ? -1 : nearestLabelNo(mprin);
     }
 
     /** Move the mouse to the nearest key point.
@@ -3660,7 +2021,7 @@ public class Editor implements CropEventListener, MouseListener,
             : new AffineTransform(1.0, 0.0, 0.0, m, 0.0, b);
 
         invisiblyTransformPrincipalCoordinates(xform);
-        repaintEditFrame();
+        propagateChange();
     }
 
     public void setDiagramComponent(Side side) {
@@ -3674,114 +2035,8 @@ public class Editor implements CropEventListener, MouseListener,
         if (str == null) {
             return;
         }
-        saveNeeded = true;
-        componentElements = null;
 
-        // When updating a diagram component, you may also have to
-        // update the corresponding axis name and format (since xx.x%
-        // format is used with component axes).
-
-        if (str.equals("")) {
-            // Reset this axis to the default.
-            diagramComponents[side.ordinal()] = null;
-            LinearAxis axis = getAxis(side);
-            if (axis != null) {
-                axes.remove(axis);
-            }
-            axes.add(defaultAxis(side));
-        } else {
-            LinearAxis axis = getAxis(side);
-            if (axis != null) {
-                axis.name = str;
-                axis.format = new DecimalFormat("##0.00%");
-                for (LinearRuler r: rulers) {
-                    if (r.axis == axis) {
-                        // Show percentages on this axis.
-                        r.multiplier = 100.0;
-                    }
-                }
-            }
-            diagramComponents[side.ordinal()] = (str.equals("") ? null : str);
-        }
-        updateTitle();
-    }
-
-    LinearAxis getAxis(Side side) {
-        switch (side) {
-        case RIGHT:
-            return getXAxis();
-        case TOP:
-            return getYAxis();
-        case LEFT:
-            return getZAxis();
-        }
-        return null;
-    }
-
-    @JsonIgnore public LinearAxis getXAxis() {
-        for (LinearAxis axis: axes) {
-            if (axis.isXAxis()) {
-                return axis;
-            }
-        }
-        return null;
-    }
-
-    @JsonIgnore public LinearAxis getYAxis() {
-        for (LinearAxis axis: axes) {
-            if (axis.isYAxis()) {
-                return axis;
-            }
-        }
-        return null;
-    }
-
-    /*
-    static boolean isZAxis(LinearAxis axis) {
-        String name = axis.name;
-        return name != null
-            && name.equals(diagramComponents[Side.LEFT]);
-    }
-    */
-            
-    static boolean isZAxis(LinearAxis axis) {
-        // TODO This approach doesn't work with ternary diagrams that
-        // are sliced of more complex systems.
-        return axis.getA() == -1.0 && axis.getB() == -1.0
-            && axis.getC() == 1.0;
-    }
-
-    static boolean isPrimaryAxis(LinearAxis axis) {
-        return (axis.isXAxis() || axis.isYAxis() || isZAxis(axis));
-    }
-
-    // Smells kludgy...
-    static boolean isStandardAxis(LinearAxis axis) {
-        if (isPrimaryAxis(axis)) {
-            return true;
-        }
-
-        String name = (String) axis.name;
-        return name.equals("page X") || name.equals("page Y");
-    }
-
-    @JsonIgnore public LinearAxis getZAxis() {
-        for (LinearAxis axis: axes) {
-            if (isZAxis(axis)) {
-                return axis;
-            }
-        }
-        return null;
-    }
-
-    public String getDiagramComponent(Side side) {
-        return diagramComponents[side.ordinal()];
-    }
-
-    public boolean axisIsFractional(LinearAxis axis) {
-        return (axis.isXAxis() && getDiagramComponent(Side.RIGHT) != null)
-            || (axis.isYAxis() && getDiagramComponent(Side.TOP) != null)
-            || (isZAxis(axis) && getDiagramComponent(Side.LEFT) != null);
+        setDiagramComponent(side, str.isEmpty() ? null : str);
     }
 
     /** Invoked from the EditFrame menu */
@@ -3820,14 +2075,6 @@ public class Editor implements CropEventListener, MouseListener,
         mouseIsStuck = true;
     }
 
-    public void add(AnchoredLabel label) {
-        saveNeeded = true;
-        labels.add(label);
-        labelViews.add(toView(label));
-        labelCenters.add(new Point2D.Double());
-        repaintEditFrame();
-    }
-
     public void editLabel(int index) {
         AnchoredLabel label = (AnchoredLabel) labels.get(index).clone();
         label.setAngle(principalToPageAngle(label.getAngle()));
@@ -3847,85 +2094,7 @@ public class Editor implements CropEventListener, MouseListener,
         newLabel.setBaselineYOffset(label.getBaselineYOffset());
         labels.set(index, newLabel);
         labelViews.set(index, toView(newLabel));
-        repaintEditFrame();
-    }
-
-    /** @param xWeight Used to determine how to justify rows of text. */
-    View toView(String str, double xWeight, Color textColor) {
-        String style
-            = "<style type=\"text/css\"><!--"
-            + " body { font-size: 100 pt; } "
-            + " sub { font-size: 75%; } "
-            + " sup { font-size: 75%; } "
-            + " --></style>";
-
-        StringBuilder sb = new StringBuilder("<html><head");
-        sb.append(style);
-        sb.append("</head><body>");
-
-        if (xWeight >= 0.67) {
-            sb.append("<div align=\"right\">");
-            sb.append(str);
-            sb.append("</div>");
-        } else if (xWeight >= 0.33) {
-            sb.append("<div align=\"center\">");
-            sb.append(str);
-            sb.append("</div>");
-        } else {
-            sb.append(str);
-        }
-        sb.append("</body></html>");
-        str = sb.toString();
-
-        JLabel bogus = new JLabel(str);
-        Font f = getFont();
-        bogus.setFont(f.deriveFont((float) (f.getSize() * VIEW_MAGNIFICATION)));
-        // bogus.setFont(f);
-        bogus.setForeground(thisOrBlack(textColor));
-        return (View) bogus.getClientProperty("html");
-    }
-
-    View toView(AnchoredLabel label) {
-        return toView(label.getText(), label.getXWeight(), label.getColor());
-    }
-
-    /** Regenerate the labelViews field from the labels field. */
-    void initializeLabelViews() {
-        labelViews = new ArrayList<View>();
-        for (AnchoredLabel label: labels) {
-            labelViews.add(toView(label));
-            labelCenters.add(new Point2D.Double());
-        }
-    }
-
-    @JsonProperty ArrayList<AnchoredLabel> getLabels() {
-        return labels;
-    }
-
-    @JsonProperty void setLabels(Collection<AnchoredLabel> labels) {
-        saveNeeded = true;
-        this.labels = new ArrayList<AnchoredLabel>(labels);
-    }
-
-    public DiagramType getDiagramType() {
-        return diagramType;
-    }
-
-    public void setDiagramType(DiagramType t) {
-        saveNeeded = true;
-        this.diagramType = t;
-    }
-
-    double principalToPageAngle(double theta) {
-        Point2D.Double p = new Point2D.Double(Math.cos(theta), Math.sin(theta));
-        principalToStandardPage.deltaTransform(p, p);
-        return Math.atan2(p.y, p.x);
-    }
-
-    double pageToPrincipalAngle(double theta) {
-        Point2D.Double p = new Point2D.Double(Math.cos(theta), Math.sin(theta));
-        standardPageToPrincipal.deltaTransform(p, p);
-        return Math.atan2(p.y, p.x);
+        propagateChange();
     }
 
     /** Invoked from the EditFrame menu */
@@ -3971,7 +2140,7 @@ public class Editor implements CropEventListener, MouseListener,
                 --paintSuppressionRequestCnt;
             }
 
-            repaintEditFrame();
+            redraw();
         } else {
             Point2D.Double mousePage = principalToStandardPage
                 .transform(mprin);
@@ -4060,7 +2229,7 @@ public class Editor implements CropEventListener, MouseListener,
         }
         preserveMprin = false;
         --paintSuppressionRequestCnt;
-        repaintEditFrame();
+        redraw();
     }
 
     /** @return the location in principal coordinates of the key
@@ -4121,91 +2290,6 @@ public class Editor implements CropEventListener, MouseListener,
         return nearPoint;
     }
 
-    static class HandleAndDistance implements Comparable<HandleAndDistance> {
-        DecorationHandle handle;
-        double distance;
-        public HandleAndDistance(DecorationHandle de, double di) {
-            handle = de;
-            distance = di;
-        }
-        public int compareTo(HandleAndDistance other) {
-            return (distance < other.distance) ? -1
-                : (distance > other.distance) ? 1 : 0;
-        }
-
-        public String toString() {
-            return "HaD[" + handle + ", " + distance + "]";
-        }
-    }
-
-    static class DecorationDistance implements Comparable<DecorationDistance> {
-        Decoration decoration;
-        CurveDistance distance;
-
-        public DecorationDistance(Decoration de, CurveDistance di) {
-            decoration = de;
-            distance = di;
-        }
-
-        public int compareTo(DecorationDistance other) {
-            return (distance.distance < other.distance.distance) ? -1
-                : (distance.distance > other.distance.distance) ? 1 : 0;
-        }
-
-        public String toString() {
-            return getClass().getSimpleName() + "[" + decoration + ", "
-                + distance + "]";
-        }
-    }
-
-    /** @return a list of DecorationHandles such that moving all of
-        those handles will move every decoration in the diagram. */
-    ArrayList<DecorationHandle> movementHandles() {
-        ArrayList<DecorationHandle> res = new ArrayList<>();
-        for (Decoration d: getDecorations()) {
-            for (DecorationHandle h: d.getMovementHandles()) {
-                res.add(h);
-            }
-        }
-        return res;
-    }
-
-    /** @return a list of DecorationHandles sorted by distance in page
-        coordinates from point p (expressed in principal coordinates).
-        Generally, only the closest DecorationHandle for each
-        Decoration is included, though perhaps an exception should be
-        made for VertexHandles. */
-    ArrayList<DecorationHandle> nearestHandles(Point2D.Double p) {
-        Point2D.Double pagePoint = principalToStandardPage.transform(p);
-
-        ArrayList<HandleAndDistance> hads = new ArrayList<>();
-        for (Decoration d: getDecorations()) {
-            double minDistSq = 0;
-            DecorationHandle nearestHandle = null;
-            for (DecorationHandle h: d.getHandles()) {
-                Point2D.Double p2 = h.getLocation();
-                p2 = principalToStandardPage.transform(p2);
-                double distSq = pagePoint.distanceSq(p2);
-                if (nearestHandle == null || distSq < minDistSq) {
-                    nearestHandle = h;
-                    minDistSq = distSq;
-                }
-            }
-            if (nearestHandle != null) {
-                hads.add(new HandleAndDistance(nearestHandle, minDistSq));
-            }
-        }
-
-        Collections.sort(hads);
-
-        ArrayList<DecorationHandle> output = new ArrayList<>();
-        for (HandleAndDistance h: hads) {
-            output.add(h.handle);
-        }
-
-        return output;
-    }
-
     /** @return a list of all DecorationHandles in order of their
         distance from principalFocus (if not null) or mprin (otherwise). */
     ArrayList<DecorationHandle> nearestHandles() {
@@ -4221,22 +2305,8 @@ public class Editor implements CropEventListener, MouseListener,
 
     /** @return a list of all key points in the diagram. Some
         duplication is likely. */
-    public ArrayList<Point2D.Double> keyPoints() {
-        ArrayList<Point2D.Double> res = intersections();
-
-        for (Point2D.Double p: principalToStandardPage.getInputVertices()) {
-            res.add(p);
-        }
-
-        for (DecorationHandle m: getDecorationHandles()) {
-            res.add(m.getLocation());
-        }
-
-        // Add all segment midpoints.
-        for (Line2D.Double s: getAllLineSegments()) {
-            res.add(new Point2D.Double((s.getX1() + s.getX2()) / 2,
-                                       (s.getY1() + s.getY2()) / 2));
-        }
+    @Override public ArrayList<Point2D.Double> keyPoints() {
+        ArrayList<Point2D.Double> res = super.keyPoints();
 
         if (selection != null) {
             Point2D.Double p1 = selection.getLocation();
@@ -4251,107 +2321,6 @@ public class Editor implements CropEventListener, MouseListener,
         }
         return res;
     }
-
-    /** @return a list of all possible selections. */
-    @JsonIgnore ArrayList<Decoration> getDecorations() {
-        ArrayList<Decoration> res = new ArrayList<>();
-
-        for (int i = 0; i < paths.size(); ++i) {
-            res.add(new CurveDecoration(i));
-        }
-        for (int i = 0; i < arrows.size(); ++i) {
-            res.add(new ArrowDecoration(i));
-        }
-        for (int i = 0; i < tieLines.size(); ++i) {
-            res.add(new TieLineDecoration(i));
-        }
-        for (int i = 0; i < rulers.size(); ++i) {
-            res.add(new RulerDecoration(i));
-        }
-        for (int i = 0; i < labels.size(); ++i) {
-            res.add(new LabelDecoration(i));
-        }
-
-        return res;
-    }
-
-
-    /** @return a list of all possible selections. */
-    @JsonIgnore ArrayList<DecorationHandle> getDecorationHandles() {
-        ArrayList<DecorationHandle> output = new ArrayList<>();
-
-        for (Decoration selectable: getDecorations()) {
-            output.addAll(Arrays.asList(selectable.getHandles()));
-        }
-        return output;
-    }
-
-
-    /** @return a list of all segment+segment and segment+curve
-        intersections. curve+curve intersections are not detected at
-        this time. */
-    ArrayList<Point2D.Double> intersections() {
-        ArrayList<Point2D.Double> output = new ArrayList<Point2D.Double>();
-        Line2D.Double[] segments = getAllLineSegments();
-
-        // Spline curves are defined in the page coordinates, and the
-        // transformation of a spline fit in principal coordinates
-        // does not equal the spline fit of the transformation, so
-        // convert the segments to page coordinates to match the
-        // splines.
-        Line2D.Double[] pageSegments = new Line2D.Double[segments.length];
-        for (int i = 0; i < segments.length; ++i) {
-            pageSegments[i] = new Line2D.Double
-                (principalToStandardPage.transform(segments[i].getP1()),
-                 principalToStandardPage.transform(segments[i].getP2()));
-        }
-
-        for (GeneralPolyline path: paths) {
-            GeneralPolyline pagePath = path.createTransformed
-                (principalToStandardPage);
-
-            for (Line2D segment: pageSegments) {
-                for (Point2D.Double point:
-                         pagePath.segIntersections(segment)) {
-                    standardPageToPrincipal.transform(point, point);
-                    output.add(point);
-                }
-            }
-        }
-
-        return output;
-    }
-
-    /* Return the DecorationDistance for the curve or ruler whose
-       outline comes closest to pagePoint. This routine operates
-       entirely in standard page space, both internally and in terms
-       of the input and output values. */
-    DecorationDistance nearestCurve(Point2D pagePoint) {
-        ArrayList<Decoration> decs = new ArrayList<>();
-        ArrayList<Parameterization2D> params = new ArrayList<>();
-        for (Decoration dec: getDecorations()) {
-            if (dec instanceof Parameterizable2D) {
-                Parameterization2D param
-                    = ((Parameterizable2D) dec).getParameterization();
-                if (param.getMinT() == param.getMaxT()) {
-                    // That's a point, not a curve. If the user wanted
-                    // a point, they would have pressed 'p' instead.
-                    continue;
-                }
-                decs.add(dec);
-                params.add(param);
-            }
-        }
-
-        if (params.size() == 0) {
-            return null;
-        }
-
-        OffsetParam2D.DistanceIndex di
-            = OffsetParam2D.distance(params, pagePoint, 1e-6, 2000);
-        return new DecorationDistance(decs.get(di.index), di.distance);
-    }
-
 
     /** Like seekNearestPoint(), but locate the nearest decoration
         outline (as measured by distance on the standard page) instead
@@ -4410,67 +2379,21 @@ public class Editor implements CropEventListener, MouseListener,
     }
 
     public void toggleSmoothing() {
-        GeneralPolyline oldPath = getActiveCurve();
-        if (oldPath == null) {
+        VertexHandle hand = getVertexHandle();
+        if (hand == null) {
             return;
         }
-
-        saveNeeded = true;
-        GeneralPolyline path = oldPath.nearClone
-            (oldPath.getSmoothingType() == GeneralPolyline.LINEAR
-             ? GeneralPolyline.CUBIC_SPLINE : GeneralPolyline.LINEAR);
-
-        // Switch over all tie lines defined using the old path to use
-        // the new one instead. T values remain unchanged.
-
-        for (TieLine tie: tieLines) {
-            if (tie.innerEdge == oldPath) {
-                tie.innerEdge = path;
-            }
-            if (tie.outerEdge == oldPath) {
-                tie.outerEdge = path;
-            }
-        }
-
-        paths.set(getVertexHandle().getCurveNo(), path);
-        repaintEditFrame();
+        toggleSmoothing(hand.getCurveNo());
     }
 
     /** Toggle the closed/open status of the currently selected
         curve. */
     public void toggleCurveClosure() {
-
-        GeneralPolyline path = getActiveCurve();
-        if (path == null) {
+        VertexHandle hand = getVertexHandle();
+        if (hand == null) {
             return;
         }
-        saveNeeded = true;
-        path.setClosed(!path.isClosed());
-        repaintEditFrame();
-    }
-
-    /** principalToStandardPage shifted to put the pageBounds corner
-        at (0,0). */
-    Affine getPrincipalToAlignedPage() {
-        Affine xform = new Affine
-            (AffineTransform.getTranslateInstance(-pageBounds.x, -pageBounds.y));
-        xform.concatenate(principalToStandardPage);
-        return xform;
-    }
-
-    void draw(Graphics2D g, GeneralPolyline path, double scale) {
-        path.draw(g, getPrincipalToAlignedPage(), scale);
-    }
-
-    void draw(Graphics2D g, TieLine tie, double scale) {
-        tie.draw(g, getPrincipalToAlignedPage(), scale);
-    }
-
-    /** @return the name of the image file that this diagram was
-        digitized from, or null if this diagram is not known to be
-        digitized from a file. */
-    public String getOriginalFilename() {
-        return originalFilename;
+        toggleCurveClosure(hand.getCurveNo());
     }
 
     /** Assert that this diagram should not be represented as the
@@ -4482,98 +2405,27 @@ public class Editor implements CropEventListener, MouseListener,
         originalToPrincipal = null;
         originalImage = null;
         zoomFrame.setVisible(false);
-        updateTitle();
         editFrame.mnBackgroundImage.setEnabled(false);
     }
 
-    public void setTitle(String title) {
-        put("title", title);
-    }
-
-    @JsonIgnore public String getTitle() {
-        return get("title");
-    }
-
-    void updateTitle() {
-        StringBuilder titleBuf = new StringBuilder(isEditable() ? "Edit " : "View ");
-
-        String titleStr = getTitle();
-        if (titleStr != null) {
-            titleBuf.append(titleStr);
-        } else {
-            titleBuf.append(diagramType);
-
-            String str = systemName();
-            if (str != null) {
-                titleBuf.append(" ");
-                titleBuf.append(str);
-            }
-
-            str = getOriginalFilename();
-            if (str == null) {
-                str = getFilename();
-            }
-            if (str != null) {
-                titleBuf.append(" ");
-                titleBuf.append(str);
-            }
+    @Override public void setOriginalFilename(String filename) {
+        if ((filename == null && originalFilename == null)
+            || (filename != null && filename.equals(originalFilename))) {
+            return;
         }
 
-        editFrame.setTitle(titleBuf.toString());
-    }
-
-    /** @return the system name if known, with components sorted into
-        alphabetical order, or null otherwise.
-
-        This might not be an actual system name if the diagram
-        components are not principal components, but whatever. */
-    public String systemName() {
-        Side[] sides = null;
-        if (diagramType.isTernary()) {
-            sides = new Side[] {Side.LEFT, Side.RIGHT, Side.TOP};
-        } else {
-            sides = new Side[] {Side.LEFT, Side.RIGHT};
-        }
-
-        ArrayList<String> comps = new ArrayList<String>();
-        for (Side side: sides) {
-            String str = getDiagramComponent(side);
-            if (str == null) {
-                return null;
-            } else {
-                comps.add(str);
-            }
-        }
-
-        if (comps != null) {
-            Collections.sort(comps);
-        }
-
-        StringBuilder str = null;
-        for (String comp: comps) {
-            if (str == null) {
-                str = new StringBuilder();
-            } else {
-                str.append("-");
-            }
-            str.append(comp);
-        }
-
-        return str.toString();
-    }
-
-    public void setOriginalFilename(String filename) {
-        saveNeeded = true;
         originalFilename = filename;
 
         if (filename == null) {
             dontTrace();
+            propagateChange();
             return;
         }
 
         if (Files.notExists(new File(filename).toPath())) {
             JOptionPane.showMessageDialog
                 (editFrame, "Warning: original file '" + filename + "' not found");
+            propagateChange();
             dontTrace();
             return;
         }
@@ -4584,7 +2436,6 @@ public class Editor implements CropEventListener, MouseListener,
                 throw new IOException(filename + ": unknown image format");
             }
             originalImage = im;
-            updateTitle();
             zoomFrame.setImage(getOriginalImage());
             initializeCrosshairs();
             zoomFrame.getImageZoomPane().crosshairs = crosshairs;
@@ -4595,6 +2446,7 @@ public class Editor implements CropEventListener, MouseListener,
                  "Original image unavailable: '" + filename + "': " +  e.toString());
             dontTrace();
         }
+        propagateChange();
     }
 
     /**
@@ -4610,7 +2462,7 @@ public class Editor implements CropEventListener, MouseListener,
             throw new Error(e);
         }
         EventQueue.invokeLater(new ArgsRunnable(args) {
-                public void run() {
+                @Override public void run() {
                     if (args.length > 1) {
                         printHelp();
                         System.exit(2);
@@ -4626,7 +2478,7 @@ public class Editor implements CropEventListener, MouseListener,
             });
     }
 
-    public void cropPerformed(CropEvent e) {
+    @Override public void cropPerformed(CropEvent e) {
         diagramType = e.getDiagramType();
         newDiagram(e.filename, Duh.toPoint2DDoubles(e.getVertices()));
         initializeGUI();
@@ -5052,97 +2904,15 @@ public class Editor implements CropEventListener, MouseListener,
         }
     }
 
-    protected double normalFontSize() {
-        return STANDARD_FONT_SIZE / BASE_SCALE;
-    }
-
     protected double currentFontSize() {
         return normalFontSize() * lineWidth / STANDARD_LINE_WIDTH;
     }
 
-    LinearAxis defaultAxis(Side side) {
-        NumberFormat format = new DecimalFormat("0.0000");
-        if (diagramType.isTernary()) {
-            LinearAxis axis;
-
-            switch (side) {
-            case RIGHT:
-                axis = LinearAxis.createXAxis(format);
-                axis.name = "Right";
-                return axis;
-            case LEFT:
-                axis = new LinearAxis(format, -1.0, -1.0, 1.0);
-                axis.name = "Left";
-                return axis;
-            case TOP:
-                axis = LinearAxis.createYAxis(format);
-                axis.name = "Top";
-                return axis;
-            default:
-                return null;
-            }
-        } else {
-            switch (side) {
-            case RIGHT:
-                return LinearAxis.createXAxis(format);
-            case TOP:
-                return LinearAxis.createYAxis(format);
-            default:
-                return null;
-            }
-        }
-    }
-
-    protected void initializeDiagram() {
-
+    @Override protected void initializeDiagram() {
+        super.initializeDiagram();
         boolean isTernary = diagramType.isTernary();
         editFrame.setAspectRatio.setEnabled(!isTernary);
         editFrame.setTopComponent.setEnabled(isTernary);
-
-        if (isTernary) {
-            axes.add(defaultAxis(Side.LEFT));
-            axes.add(defaultAxis(Side.RIGHT));
-            axes.add(defaultAxis(Side.TOP));
-        } else {
-            axes.add(defaultAxis(Side.RIGHT));
-            axes.add(defaultAxis(Side.TOP));
-        }
-
-        try {
-            standardPageToPrincipal = principalToStandardPage.createInverse();
-        } catch (NoninvertibleTransformException e) {
-            System.err.println("This transform is not invertible");
-            System.exit(2);
-        }
-
-        {
-            NumberFormat format = new DecimalFormat("0.0000");
-            pageXAxis = LinearAxis.createFromAffine
-                (format, principalToStandardPage, false);
-            pageXAxis.name = "page X";
-            pageYAxis = LinearAxis.createFromAffine
-                (format, principalToStandardPage, true);
-            pageYAxis.name = "page Y";
-            axes.add(pageXAxis);
-            axes.add(pageYAxis);
-        }
-
-        if (getOriginalFilename() != null) {
-            try {
-                principalToOriginal = (PolygonTransform)
-                    originalToPrincipal.createInverse();
-            } catch (NoninvertibleTransformException e) {
-                System.err.println("This transform is not invertible");
-                System.exit(2);
-            }
-        }
-
-        setOriginalFilename(getOriginalFilename());
-
-        View em = toView("n", 0, Color.BLACK);
-        labelXMargin = em.getPreferredSpan(View.X_AXIS) / 3.0;
-        // labelYMargin = em.getPreferredSpan(View.Y_AXIS) / 5.0;
-
         zoomBy(1.0);
     }
 
@@ -5184,7 +2954,7 @@ public class Editor implements CropEventListener, MouseListener,
         switch (JOptionPane.showOptionDialog
                 (editFrame,
                  "This file has changed. Would you like to save it?",
-                 "Confirm new diagram",
+                 "Confirm close diagram",
                  JOptionPane.YES_NO_CANCEL_OPTION,
                  JOptionPane.QUESTION_MESSAGE,
                  null,
@@ -5238,25 +3008,10 @@ public class Editor implements CropEventListener, MouseListener,
             }
         }
 
-        saveNeeded = true;
-        double stretchFactor = aspectRatio / oldValue;
-        ((RectangleTransform) principalToStandardPage).scaleOutput
-            (stretchFactor, 1.0);
-        try {
-            standardPageToPrincipal = principalToStandardPage.createInverse();
-        } catch (NoninvertibleTransformException e) {
-            System.err.println("This transform is not invertible");
-            System.exit(2);
-        }
-
-        pageBounds.x *= stretchFactor;
-        pageBounds.width *= stretchFactor;
+        super.setAspectRatio(aspectRatio);
         getEditPane().setPreferredSize(scaledPageBounds(scale).getSize());
         getEditPane().revalidate();
         scaledOriginalImages = null;
-
-
-        repaintEditFrame();
     }
 
 
@@ -5265,8 +3020,6 @@ public class Editor implements CropEventListener, MouseListener,
         if (diagramType == null) {
             return;
         }
-
-        Rectangle2D.Double bounds = principalToStandardPage.outputBounds();
 
         String standard;
         switch (diagramType) {
@@ -5278,28 +3031,13 @@ public class Editor implements CropEventListener, MouseListener,
             standard = "triangle side length";
             break;
         default:
+            Rectangle2D.Double bounds = principalToStandardPage.outputBounds();
             standard = "core diagram "
                 + ((bounds.width >= bounds.height) ? "width" : "height");
             break;
         }
 
-        double oldValue = 0.0;
-        switch (side) {
-        case LEFT:
-            oldValue = -pageBounds.x;
-            break;
-        case RIGHT:
-            oldValue = pageBounds.getMaxX() - bounds.getMaxX();
-            break;
-        case TOP:
-            oldValue = -pageBounds.y;
-            break;
-        case BOTTOM:
-            oldValue = pageBounds.getMaxY() - bounds.getMaxY();
-            break;
-        }
-
-        String oldString = ContinuedFraction.toString(oldValue, true);
+        String oldString = ContinuedFraction.toString(getMargin(side), true);
         double margin;
 
         while (true) {
@@ -5319,28 +3057,10 @@ public class Editor implements CropEventListener, MouseListener,
             }
         }
 
-        saveNeeded = true;
-        double delta = margin - oldValue;
-
-        switch (side) {
-        case LEFT:
-            pageBounds.x = -margin;
-            // Fall through
-        case RIGHT:
-            pageBounds.width += delta;
-            break;
-        case TOP:
-            pageBounds.y = -margin;
-            // Fall through
-        case BOTTOM:
-            pageBounds.height += delta;
-            break;
-        }
-
+        setMargin(side, margin);
         getEditPane().setPreferredSize(scaledPageBounds(scale).getSize());
         getEditPane().revalidate();
         scaledOriginalImages = null;
-        repaintEditFrame();
     }
 
     /** Invoked from the EditFrame menu */
@@ -5354,37 +3074,19 @@ public class Editor implements CropEventListener, MouseListener,
             return;
         }
 
-        openDiagram(file);
-        initializeGUI();
-    }
-
-    /** Invoked from the EditFrame menu */
-    public void openDiagram(File file) {
-        Editor ned;
-
         try {
-            ObjectMapper mapper = getObjectMapper();
-            ned = (Editor) mapper.readValue(file, getClass());
-        } catch (Exception e) {
+            openDiagram(file);
+        } catch (IOException e) {
             JOptionPane.showMessageDialog
                 (editFrame, "File load error: " + e);
             return;
         }
-
-        clear();
-        cannibalize(ned);
-        filename = file.getAbsolutePath();
-        for (TieLine tie: tieLines) {
-            tie.innerEdge = idToCurve(tie.innerId);
-            tie.outerEdge = idToCurve(tie.outerId);
-        }
-        updateTitle();
-        if (pageBounds == null) {
-            computeMargins();
-        }
-        saveNeeded = false;
     }
 
+    @Override public void openDiagram(File file) throws IOException {
+        super.openDiagram(file);
+        initializeGUI();
+    }
 
     /** Invoked from the EditFrame menu */
     public void reloadDiagram() {
@@ -5397,127 +3099,31 @@ public class Editor implements CropEventListener, MouseListener,
             return;
         }
 
-        openDiagram(new File(filename));
-    }
-
-
-    public Rectangle2D.Double getPageBounds() {
-        if (pageBounds == null) {
-            return null;
-        }
-        return (Rectangle2D.Double) pageBounds.clone();
-    }
-
-
-    public void setPageBounds(Rectangle2D rect) {
-        saveNeeded = true;
-        pageBounds = Duh.createRectangle2DDouble(rect);
-        getEditPane().setPreferredSize(scaledPageBounds(scale).getSize());
-        getEditPane().revalidate();
-        repaintEditFrame();
-    }
-
-
-    public void computeMargins() {
-        if (pageBounds == null) {
-            setPageBounds(new Rectangle2D.Double(0, 0, 1, 1));
-        }
-        MeteredGraphics mg = new MeteredGraphics();
-        double mscale = 10000;
-        paintDiagram(mg, mscale, false, false);
-        Rectangle2D.Double bounds = mg.getBounds();
-        if (bounds == null) {
+        try {
+            openDiagram(new File(filename));
+        } catch (IOException e) {
+            JOptionPane.showMessageDialog
+                (editFrame, "File load error: " + e);
             return;
         }
-        bounds.x /= mscale;
-        bounds.y /= mscale;
-        bounds.width /= mscale;
-        bounds.height /= mscale;
-        bounds.x += pageBounds.x;
-        bounds.y += pageBounds.y;
-        double margin = (bounds.width + bounds.height) / 200;
-        bounds.width += margin * 2;
-        bounds.height += margin * 2;
-        bounds.x -= margin;
-        bounds.y -= margin;
-        setPageBounds(bounds);
     }
 
+    @Override public void setPageBounds(Rectangle2D rect) {
+        super.setPageBounds(rect);
+        getEditPane().setPreferredSize(scaledPageBounds(scale).getSize());
+        getEditPane().revalidate();
+    }
 
-    /** Copy data fields from other. Afterwards, it is unsafe to
-        modify other, because the modifications may affect this as
-        well. In other words, this is a shallow copy that destroys
-        other. */
-    void cannibalize(Editor other) {
-        diagramType = other.diagramType;
-        diagramComponents = other.diagramComponents;
-        originalToPrincipal = other.originalToPrincipal;
-        principalToStandardPage = other.principalToStandardPage;
-        pageBounds = other.pageBounds;
-        originalFilename = other.originalFilename;
-        scale = other.scale;
-        arrows = other.arrows;
-
-        boolean haveBounds = (pageBounds != null);
-        if (!haveBounds) {
-            pageBounds = new Rectangle2D.Double(0,0,1,1);
-        }
-        initializeDiagram();
-        paths = other.paths;
-        tieLines = other.tieLines;
-        setFontName(other.getFontName());
-        axes = other.axes;
-        editFrame.removeAllVariables();
+    @Override void cannibalize(Diagram other) {
+        removeAllVariables();
+        removeAllTags();
+        super.cannibalize(other);
         for (LinearAxis axis: axes) {
             if (!isStandardAxis(axis)) {
                 editFrame.addVariable((String) axis.name);
             }
         }
-        rulers = other.rulers;
-        labels = other.labels;
-        initializeLabelViews();
         selection = null;
-        componentElements = null;
-        setTags(other.getTags());
-        setKeyValues(other.getKeyValues());
-        if (!haveBounds) {
-            pageBounds = null;
-        }
-    }
-
-    /** Populate the "rulers" fields of the axes, and then return the
-        axes. */
-    @JsonProperty("axes") ArrayList<LinearAxis>
-    getSerializationReadyAxes() {
-        for (LinearAxis axis: axes) {
-            axis.rulers = new ArrayList<LinearRuler>();
-        }
-
-        // Make each ruler a child of its respective axis.
-        for (LinearRuler r: rulers) {
-            r.axis.rulers.add(r);
-        }
-
-        return axes;
-    }
-
-    /** Populate the Editor object's "rulers" field from the
-        individual axes' "rulers" fields, and set the individual axes'
-        "rulers" fields to null. */
-    @JsonProperty("axes") void
-    setAxesFromSerialization(ArrayList<LinearAxis> axes) {
-        rulers = new ArrayList<LinearRuler>();
-
-        for (LinearAxis axis: axes) {
-            addVariable(axis);
-            rulers.addAll(axis.rulers);
-            axis.rulers = null;
-        }
-    }
-
-    @JsonProperty("tieLines")
-    void setTieLines(ArrayList<TieLine> tieLines) {
-        this.tieLines = tieLines;
     }
 
     @JsonIgnore public BufferedImage getOriginalImage() {
@@ -5563,7 +3169,7 @@ public class Editor implements CropEventListener, MouseListener,
         }
 
         File file = chooser.getSelectedFile();
-        if (getExtension(file) == null) {
+        if (getExtension(file.getName()) == null) {
             // Add the default extension
             file = new File(file.getAbsolutePath() + "." + ext);
         }
@@ -5591,7 +3197,7 @@ public class Editor implements CropEventListener, MouseListener,
         }
 
         File file = chooser.getSelectedFile();
-        if (getExtension(file) == null) {
+        if (getExtension(file.getName()) == null) {
             // Add the default extension
             file = new File(file.getAbsolutePath() + "." + ext);
         }
@@ -5600,15 +3206,15 @@ public class Editor implements CropEventListener, MouseListener,
         return file;
     }
 
-    public static String getExtension(File f) {
-        String ext = null;
-        String s = f.getName();
-        int i = s.lastIndexOf('.');
-
-        if (i > 0 &&  i < s.length() - 1) {
-            ext = s.substring(i+1).toLowerCase();
-        }
-        return ext;
+    /** If the last section of the filename contains a dot, then
+        return everything after that dot, converted to lower case.
+        Otherwise, return null. */
+    public static String getExtension(String s) {
+        String separator = System.getProperty("file.separator");
+        int lastSeparatorIndex = s.lastIndexOf(separator);
+        int extensionIndex = s.lastIndexOf(".");
+        return (extensionIndex <= lastSeparatorIndex) ? null
+            : s.substring(extensionIndex + 1).toLowerCase();
     }
 
     /** Invoked from the EditFrame menu */
@@ -5621,36 +3227,6 @@ public class Editor implements CropEventListener, MouseListener,
         saveAsPDF(file);
     }
 
-    public void saveAsPDF(File file) {
-        Document doc = new Document(PageSize.LETTER);
-        PdfWriter writer = null;
-        try {
-            writer = PdfWriter.getInstance(doc, new FileOutputStream(file));
-        } catch (Exception e) {
-            System.err.println(e);
-            return;
-        }
-
-        doc.open();
-
-        Rectangle2D.Double bounds = new Rectangle2D.Double
-            (doc.left(), doc.bottom(), doc.right() - doc.left(), doc.top() - doc.bottom());
-
-        PdfContentByte cb = writer.getDirectContent();
-        PdfTemplate tp = cb.createTemplate((float) bounds.width, (float) bounds.height);
-        
-        Graphics2D g2 = false
-            ? tp.createGraphics((float) bounds.width, (float) bounds.height,
-                                new DefaultFontMapper())
-            : tp.createGraphicsShapes((float) bounds.width, (float) bounds.height);
-
-        g2.setFont(getFont());
-        paintDiagram(g2, deviceScale(g2, bounds));
-        g2.dispose();
-        cb.addTemplate(tp, doc.left(), doc.bottom());
-        doc.close();
-    }
-
     /** Invoked from the EditFrame menu */
     public void saveAsSVG() {
         File file = showSaveDialog("svg");
@@ -5658,17 +3234,8 @@ public class Editor implements CropEventListener, MouseListener,
             return;
         }
 
-        DOMImplementation imp = GenericDOMImplementation.getDOMImplementation();
-        org.w3c.dom.Document doc = imp.createDocument("http://www.w3.org/2000/svg", "svg", null);
-        SVGGeneratorContext ctx = SVGGeneratorContext.createDefault(doc);
-        ctx.setComment("PED Document exported using Batik SVG Generator");
-        ctx.setEmbeddedFontsOn(true);
-        SVGGraphics2D svgGen = new SVGGraphics2D(ctx, true);
-        paintDiagram(svgGen, BASE_SCALE);
         try {
-            Writer wr = new FileWriter(file);
-            svgGen.stream(wr);
-            wr.close();
+            saveAsSVG(file);
             JOptionPane.showMessageDialog
                 (editFrame, "File saved.");
         } catch (IOException e) {
@@ -5676,24 +3243,19 @@ public class Editor implements CropEventListener, MouseListener,
         }
     }
 
-    /** Invoked from the EditFrame menu */
-    public void saveAsPED(String fn) {
-        File file;
-        if (fn == null) {
-            file = showSaveDialog("ped");
-            if (file == null) {
-                return;
-            }
-            filename = file.getAbsolutePath();
-        } else {
-            file = new File(fn);
+    public void saveAsPED() {
+        File file = showSaveDialog("ped");
+        if (file == null) {
+            return;
         }
+        saveAsPED(file);
+    }
 
+    @Override public void saveAsPED(File fn) {
         try {
-            getObjectMapper().writeValue(file, this);
-            saveNeeded = false;
+            super.saveAsPED(fn);
             JOptionPane.showMessageDialog(editFrame, "File saved.");
-        } catch (Exception e) {
+        } catch (IOException e) {
             JOptionPane.showMessageDialog
                 (editFrame, "File save error: " + e);
         }
@@ -5701,7 +3263,7 @@ public class Editor implements CropEventListener, MouseListener,
 
     /** Invoked from the EditFrame menu */
     public void save() {
-        saveAsPED(getFilename());
+        saveAsPED(new File(getFilename()));
     }
 
     /** Invoked from the EditFrame menu */
@@ -5710,45 +3272,15 @@ public class Editor implements CropEventListener, MouseListener,
         job.setPrintable(this);
         if (job.printDialog()) {
             try {
-                PrintRequestAttributeSet aset
-                    = new HashPrintRequestAttributeSet();
-                aset.add
-                    ((pageBounds.width > pageBounds.height)
-                     ? OrientationRequested.LANDSCAPE
-                     : OrientationRequested.PORTRAIT);
-                job.print(aset);
+                print(job);
                 JOptionPane.showMessageDialog
                     (editFrame, "Print job submitted.");
             } catch (PrinterException e) {
-                System.err.println(e);
+                JOptionPane.showMessageDialog(editFrame, e.toString());
             }
         } else {
             JOptionPane.showMessageDialog(editFrame, "Print job canceled.");
         }
-    }
-
-    public int print(Graphics g0, PageFormat pf, int pageIndex)
-         throws PrinterException {
-        if (pageIndex != 0 || principalToStandardPage == null) {
-            return Printable.NO_SUCH_PAGE;
-        }
-        Graphics2D g = (Graphics2D) g0;
-        g.setFont(getFont());
-
-        AffineTransform oldTransform = g.getTransform();
-
-        Rectangle2D.Double bounds
-            = new Rectangle2D.Double
-            (pf.getImageableX(), pf.getImageableY(),
-             pf.getImageableWidth(), pf.getImageableHeight());
-
-        g.translate(bounds.getX(), bounds.getY());
-        double scale = Math.min(bounds.height / pageBounds.height,
-                                bounds.width / pageBounds.width);
-        paintDiagram(g, scale);
-        g.setTransform(oldTransform);
-
-        return Printable.PAGE_EXISTS;
     }
 
     /** @param segment A line on the standard page
@@ -5759,19 +3291,6 @@ public class Editor implements CropEventListener, MouseListener,
         A grid line is a line of zero change for a defined axis (from
         the "axes" variable). */
     Line2D.Double nearestGridLine(Line2D.Double segment) {
-        Point2D source = segment.getP1();
-        Point2D dest = segment.getP2();
-        Point2D.Double pageDelta = Duh.aMinusB(dest, source);
-        double deltaLength = Duh.length(pageDelta);
-
-        // Tolerance is the maximum ratio of the distance between dest
-        // and the projection to deltaLength. TODO A smarter approach
-        // might allow for both absolute and relative errors.
-        double tolerance = 0.06;
-
-        double maxDist = deltaLength * tolerance;
-        double maxDistSq = maxDist * maxDist;
-
         ArrayList<Point2D.Double> vectors = new ArrayList<>();
         for (LinearAxis axis: axes) {
             // Add the line of no change for this axis. The line
@@ -5788,73 +3307,7 @@ public class Editor implements CropEventListener, MouseListener,
             vectors.add(p);
         }
 
-        Line2D.Double res = null;
-        
-        for (Point2D.Double v: vectors) {
-            principalToStandardPage.deltaTransform(v, v);
-            Point2D.Double projection = Duh.nearestPointOnLine
-                (pageDelta, new Point2D.Double(0,0), v);
-            double distSq = pageDelta.distanceSq(projection);
-            if (distSq < maxDistSq) {
-                projection.x += source.getX();
-                projection.y += source.getY();
-                maxDistSq = distSq;
-                res = new Line2D.Double(source, projection);
-            }
-        }
-
-        if (res == null) {
-            return null;
-        }
-
-        // Extend res to the limits of pageBounds.
-        Rectangle2D b = pageBounds;
-
-        Point2D.Double[] vertexes =
-            { new Point2D.Double(b.getMinX(), b.getMinY()),
-              new Point2D.Double(b.getMaxX(), b.getMinY()),
-              new Point2D.Double(b.getMaxX(), b.getMaxY()),
-              new Point2D.Double(b.getMinX(), b.getMaxY()) };
-        double minT = Double.NaN;
-        double maxT = Double.NaN;
-
-        for (int i = 0; i < 4; ++i) {
-            double t = Duh.lineSegmentIntersectionT
-                (res.getP1(), res.getP2(),
-                 vertexes[i], vertexes[(i+1) % 4]);
-            if (Double.isNaN(t)) {
-                continue;
-            }
-            if (Double.isNaN(minT)) {
-                minT = t;
-                maxT = t;
-            } else {
-                minT = Math.min(minT, t);
-                maxT = Math.max(maxT, t);
-            }
-        }
-
-        if (Double.isNaN(minT)) {
-            // Apparently the line of the segment doesn't even
-            // intersect the page. Weird.
-            return null;
-        }
-
-        double x1 = res.getX1();
-        double y1 = res.getY1();
-        double dx = res.getX2() - x1;
-        double dy = res.getY2() - y1;
-
-        // Midpoints of segments are key points, but the midpoint of
-        // the grid line is not really interesting. Double the
-        // difference of minT and maxT to put the grid line's midpoint
-        // on the edge of the diagram.
-
-        double pastMax = maxT + (maxT - minT);
-
-        return new Line2D.Double
-            (x1 + minT * dx, y1 + minT * dy,
-             x1 + pastMax * dx, y1 + pastMax * dy);
+        return nearestGridLine(segment, vectors);
     }
 
     public DecorationHandle secondarySelection() {
@@ -6009,7 +3462,7 @@ public class Editor implements CropEventListener, MouseListener,
         if (mprin != null) {
             moveMouse(mprin);
             mouseIsStuck = true;
-            repaintEditFrame();
+            redraw();
         }
     }
 
@@ -6124,99 +3577,7 @@ public class Editor implements CropEventListener, MouseListener,
         }
     }
 
-
-    /** Apply the given transform to all curve vertices, all label
-        locations, all arrow locations, and all ruler start- and
-        endpoints. */
-    public void transformPrincipalCoordinates(AffineTransform trans) {
-        saveNeeded = true;
-        for (GeneralPolyline path: paths) {
-            Point2D.Double[] points = path.getPoints();
-            trans.transform(points, 0, points, 0, points.length);
-            path.setPoints(Arrays.asList(points));
-        }
-
-        Point2D.Double tmp = new Point2D.Double();
-
-        for (AnchoredLabel label: labels) {
-            tmp.x = label.x;
-            tmp.y = label.y;
-            trans.transform(tmp, tmp);
-            label.x = tmp.x;
-            label.y = tmp.y;
-        }
-
-        for (Arrow arrow: arrows) {
-            tmp.x = arrow.x;
-            tmp.y = arrow.y;
-            trans.transform(tmp, tmp);
-            arrow.x = tmp.x;
-            arrow.y = tmp.y;
-        }
-
-        for (LinearRuler ruler: rulers) {
-            trans.transform(ruler.startPoint, ruler.startPoint);
-            trans.transform(ruler.endPoint, ruler.endPoint);
-        }
-    }
-
-    /** Apply the given transform to all coordinates defined in
-        principal coordinates, but apply corresponding and inverse
-        transformations to all transforms to and from principal
-        coordinates, with one exception: leave the x-, y-, and z-axes
-        alone. So the diagram looks the same as before except for (1)
-        principal component axis ticks and (2) principal coordinate
-        values as indicated in the status bar. For example, one might
-        use this method to convert a binary diagram's y-axis from one
-        temperature scale to another, or from the default range 0-1 to
-        the range you really want. */
-    public void invisiblyTransformPrincipalCoordinates(AffineTransform trans) {
-        transformPrincipalCoordinates(trans);
-
-        Affine atrans = new Affine(trans);
-        Affine itrans;
-        try {
-            itrans = atrans.createInverse();
-        } catch (NoninvertibleTransformException e) {
-            throw new IllegalStateException("Transform " + trans
-                                            + " is not invertible");
-        }
-
-        if (originalToPrincipal != null) {
-            originalToPrincipal.preConcatenate(atrans);
-            principalToOriginal.concatenate(itrans);
-        }
-
-        // Convert all angles from principal to page coordinates.
-        for (Arrow item: arrows) {
-            item.setAngle(principalToPageAngle(item.getAngle()));
-        }
-        for (AnchoredLabel item: labels) {
-            item.setAngle(principalToPageAngle(item.getAngle()));
-        }
-
-        principalToStandardPage.concatenate(itrans);
-        standardPageToPrincipal.preConcatenate(atrans);
-
-        // Convert all angles from page to the new principal coordinates.
-        for (LinearAxis axis: axes) {
-            if (axis.isXAxis() || axis.isYAxis() || isZAxis(axis)) {
-                continue;
-            }
-            axis.concatenate(itrans);
-        }
-
-        for (Arrow item: arrows) {
-            item.setAngle(pageToPrincipalAngle(item.getAngle()));
-        }
-        for (AnchoredLabel item: labels) {
-            item.setAngle(pageToPrincipalAngle(item.getAngle()));
-        }
-
-    }
-
-    @Override
-        public void mouseDragged(MouseEvent e) {
+    @Override public void mouseDragged(MouseEvent e) {
         mouseMoved(e);
     }
 
@@ -6246,8 +3607,7 @@ public class Editor implements CropEventListener, MouseListener,
 
     /** @return true if diagram editing is enabled, or false if the
         diagram is read-only. */
-    @JsonIgnore
-    public boolean isEditable() {
+    @JsonIgnore public boolean isEditable() {
         return true;
     }
 
@@ -6262,7 +3622,7 @@ public class Editor implements CropEventListener, MouseListener,
         the position in the zoom window,. */
     @Override public void mouseMoved(MouseEvent e) {
         isShiftDown = e.isShiftDown();
-        repaintEditFrame();
+        redraw();
     }
 
     /** Update mprin to reflect the mouse's current position unless
@@ -6287,7 +3647,21 @@ public class Editor implements CropEventListener, MouseListener,
             }
         }
 
-        updateStatusBar();
+        if (mprin != null) {
+            editFrame.setStatus(statusBarString());
+            
+            if (tracingImage()) {
+                try {
+                    // Update image zoom frame.
+
+                    Point2D.Double orig = principalToOriginal.transform(mprin);
+                    zoomFrame.setImageFocus((int) Math.floor(orig.x),
+                                            (int) Math.floor(orig.y));
+                } catch (UnsolvableException ex) {
+                    // Ignore the exception
+                }
+            }
+        }
     }
 
     /** Return the actual mouse position in principal coordinates. For
@@ -6326,108 +3700,12 @@ public class Editor implements CropEventListener, MouseListener,
         return scaledPageToPrincipal(scale).transform(sx,sy);
     }
 
-    ContinuedFraction approximateFraction(double d) {
-        // Digitization isn't precise enough to justify guessing
-        // ratios. Only show fractions that are almost exact.
-        ContinuedFraction f = ContinuedFraction.create(d, 0.000001, 0, 90);
-
-        if (f != null) {
-            return f;
-        }
-
-        return f;
-    }
-
-    /** If the diagram has a full set of diagram components defined as
-        compounds with integer subscripts, and point "prin" nearly
-        equals a round fraction, then return the compound that "prin"
-        represents. */
-    public String molePercentToCompound(Point2D.Double prin) {
-        double[][] componentElements = getComponentElements();
-        if (componentElements == null) {
+    @JsonIgnore String statusBarString() {
+        if (mprin == null) {
             return null;
         }
 
-        String[] diagramElements = getDiagramElements();
-
-        SideDouble[] sds = componentFractions(prin);
-        if (sds == null || sds.length == 0) {
-       		return null;
-        }
-        for (SideDouble sd: sds) {
-            if (componentElements[sd.s.ordinal()] == null) {
-                // Can't do it without a complete set of diagram
-                // components that can be parsed to compounds.
-                return null;
-            }
-        }
-
-        int eltCnt = diagramElements.length;
-        double[] quantities = new double[eltCnt];
-        for (SideDouble sd: sds) {
-            // Vector of element quantities for this component
-            double[] compel = componentElements[sd.s.ordinal()];
-            // Quantity of this component
-            double d = sd.d;
-            // If d is slightly out of bounds, move it in-bounds. If d
-            // is very small, then reduce it to zero.
-
-            if (d > 1 - 1e-4) {
-                if (d > 1 + 1e-4) {
-                    return null;
-                } else {
-                    d = 1;
-                }
-            } else if (d < 1e-4) {
-                if (d < -1e-4) {
-                    return null;
-                } else {
-                    d = 0;
-                }
-            }
-
-            for (int i = 0; i < eltCnt; ++i) {
-                quantities[i] += d * compel[i];
-            }
-        }
-
-        ArrayList<ContinuedFraction> fracs = new ArrayList<>(eltCnt);
-
-        long lcd = 1;
-        for (double d: quantities) {
-            ContinuedFraction f = approximateFraction(d);
-            if (f == null) {
-                return null;
-            }
-            fracs.add(f);
-            try {
-                lcd = ContinuedFraction.lcm(lcd, f.denominator);
-            } catch (OverflowException e) {
-                return null;
-            }
-        }
-
-        StringBuilder res = new StringBuilder();
-        for (int i = 0; i < eltCnt; ++i) {
-            ContinuedFraction f = fracs.get(i);
-            long num = f.numerator * (lcd / f.denominator);
-            if (num == 0) {
-                continue;
-            }
-            res.append(diagramElements[i]);
-            if (num > 1) {
-                res.append(num);
-            }
-        }
-        return res.toString();
-    }
-
-    void updateStatusBar() {
-        if (mprin == null) {
-            return;
-        }
-
-        StringBuilder status = new StringBuilder("");
+        StringBuilder status = new StringBuilder();
 
         String compound = molePercentToCompound(mprin);
         if (compound != null) {
@@ -6455,19 +3733,8 @@ public class Editor implements CropEventListener, MouseListener,
                 }
             }
         }
-        editFrame.setStatus(status.toString());
-            
-        if (tracingImage() && mprin != null) {
-            try {
-                // Update image zoom frame.
 
-                Point2D.Double orig = principalToOriginal.transform(mprin);
-                zoomFrame.setImageFocus((int) Math.floor(orig.x),
-                                        (int) Math.floor(orig.y));
-            } catch (UnsolvableException ex) {
-                // Ignore the exception
-            }
-        }
+        return status.toString();
     }
 
     /** Set the default line width for lines added in the future.
@@ -6607,14 +3874,19 @@ public class Editor implements CropEventListener, MouseListener,
     }
 
     public void run(String filename) {
-        editFrame.setTitle("Phase Equilibria Diagram Editor");
-        editFrame.pack();
         if (filename != null) {
             String lcase = filename.toLowerCase();
             int index = lcase.lastIndexOf(".ped");
             if (index >= 0 && index == lcase.length() - 4) {
-                openDiagram(new File(filename));
-                initializeGUI();
+                try {
+                    openDiagram(new File(filename));
+                    initializeGUI();
+                } catch (IOException e) {
+                    JOptionPane.showMessageDialog
+                        (null, filename + ": " + e,
+                         "File load error", JOptionPane.ERROR_MESSAGE);
+                    return;
+                }
             } else {
                 openImage(filename);
             }
@@ -6642,376 +3914,13 @@ public class Editor implements CropEventListener, MouseListener,
         System.err.println("Usage: java Editor [<filename>]");
     }
 
-    @Override
-        public void mouseClicked(MouseEvent e) {
-        // Auto-generated method stub
-    }
+    @Override public void mouseClicked(MouseEvent e) {}
+    @Override public void mouseReleased(MouseEvent e) {}
+    @Override public void mouseEntered(MouseEvent e) {}
 
-    @Override
-        public void mouseReleased(MouseEvent e) {
-        // Auto-generated method stub
-    }
-
-    @Override
-        public void mouseEntered(MouseEvent e) {
-        // Auto-generated method stub
-    }
-
-    boolean isStraight(GeneralPolyline path) {
-        return path.size() < 2 || path.getSmoothingType() == GeneralPolyline.LINEAR;
-    }
-
-    /** @return an array of all straight line segments defined for
-        this diagram. */
-    @JsonIgnore
-    public Line2D.Double[] getAllLineSegments() {
-        ArrayList<Line2D.Double> output
-            = new ArrayList<Line2D.Double>();
-         
-        for (GeneralPolyline path : paths) {
-            if (path.getSmoothingType() == GeneralPolyline.LINEAR) {
-                Point2D.Double[] points = path.getPoints();
-                for (int i = 1; i < points.length; ++i) {
-                    output.add(new Line2D.Double(points[i-1], points[i]));
-                }
-                if (points.length >= 3 && path.isClosed()) {
-                    output.add(new Line2D.Double(points[points.length-1], points[0]));
-                }
-            } else if (path.size() == 2) {
-                // A smooth path between two points is a segment.
-                output.add(new Line2D.Double(path.get(0), path.get(1)));
-            }
-        }
-
-        for (LinearRuler ruler: rulers) {
-            GeneralPolyline path = ruler.spinePolyline();
-            output.add(new Line2D.Double(path.get(0), path.get(1)));
-        }
-
-        return output.toArray(new Line2D.Double[0]);
-    }
-
-    /** Draw a circle around each point in path. */
-    void circleVertices(Graphics2D g, GeneralPolyline path, double scale,
-                        boolean fill, double r) {
-        Point2D.Double xpoint = new Point2D.Double();
-        Affine p2d = principalToScaledPage(scale);
-
-        Stroke oldStroke = g.getStroke();
-        if (!fill) {
-            g.setStroke(new BasicStroke((float) (r / 4)));
-        }
-
-        for (Point2D.Double point: path.getPoints()) {
-            p2d.transform(point, xpoint);
-            Shape shape = new Ellipse2D.Double
-                (xpoint.x - r, xpoint.y - r, r * 2, r * 2);
-            if (fill) {
-                g.fill(shape);
-            } else {
-                g.draw(shape);
-            }
-        }
-
-        if (!fill) {
-            g.setStroke(oldStroke);
-        }
-    }
-
-    @Override
-        public void mouseExited(MouseEvent e) {
+    @Override public void mouseExited(MouseEvent e) {
         mprin = null;
-        repaintEditFrame();
-    }
-
-    /* Draw the label defined by the given label and view combination
-       to the given graphics context while mulitplying the font size
-       and position by scale. */
-    public void drawLabel(Graphics g, int labelNo, double scale) {
-        drawLabel(g, labelNo, scale, false);
-    }
-
-    /* @param Draw the label defined by the given label and view combination
-       to the given graphics context while mulitplying the font size
-       and position by scale. */
-    void drawLabel(Graphics g0, int labelNo, double scale,
-                          boolean circleAnchor) {
-        AnchoredLabel label = labels.get(labelNo);
-        if (label.getFontSize() == 0) {
-            return;
-        }
-
-        Graphics2D g = (Graphics2D) g0;
-        View view = labelViews.get(labelNo);
-        Affine toPage = getPrincipalToAlignedPage();
-        Point2D.Double point = toPage.transform(label.getX(), label.getY());
-        double angle = principalToPageAngle(label.getAngle());
-
-        AffineTransform l2s = labelToScaledPage
-            (view, scale * label.getFontSize(), angle,
-             point.x * scale, point.y * scale,
-             label.getXWeight(), label.getYWeight(),
-             label.getBaselineXOffset(), label.getBaselineYOffset());
-
-        Path2D.Double path = htmlBox(l2s);
-
-        if (label.isOpaque()) {
-            Color oldColor = g.getColor();
-            g.setColor(Color.WHITE);
-            g.fill(path);
-            g.setColor(oldColor);
-        }
-
-        if (label.isBoxed()) {
-            g.draw(path);
-        }
-
-        if (circleAnchor
-            && (label.getXWeight() != 0.5 || label.getYWeight() != 0.5)) {
-            // Mark the anchor with a circle -- either a solid circle
-            // if the selection handle is the anchor, or a hollow
-            // circle if the selection handle is the label's center.
-
-            double r = Math.max(scale * 2.0 / BASE_SCALE, 4.0);
-            Point2D.Double p = new Point2D.Double
-                (label.getXWeight(), label.getYWeight());
-            l2s.transform(p, p);
-            Ellipse2D circle = new Ellipse2D.Double
-                (p.x - r, p.y - r, r * 2, r * 2);
-            if (getLabelHandle().handle == LabelHandleType.CENTER) {
-                g.draw(circle);
-            } else {
-                g.fill(circle);
-            }
-        }
-
-        Point2D.Double centerPage = new Point2D.Double();
-        htmlDraw(g, view, scale * label.getFontSize(),
-                 angle, point.x * scale, point.y * scale,
-                 label.getXWeight(), label.getYWeight(),
-                 label.getBaselineXOffset(), label.getBaselineYOffset(),
-                 centerPage);
-
-        try {
-            labelCenters.set(labelNo,
-                             toPage.createInverse().transform(centerPage));
-        } catch (NoninvertibleTransformException e) {
-            throw new IllegalStateException(toPage + " is not invertible");
-        }
-    }
-
-    /**
-       @param view The view.paint() method is used to perform the
-       drawing (the decorated text to be encoded is implicitly
-       included in this parameter)
-
-       @param scale The text is magnified by this factor before being
-       painted.
-
-       @param angle The printing angle. 0 = running left-to-right (for
-       English); rotated 90 degrees clockwise (running downwards)
-
-       @param ax The X position of the anchor point
-
-       @param ay The Y position of the anchor point
-
-       @param xWeight 0.0 = The anchor point lies along the left edge
-       of the text block in baseline coordinates (if the text is
-       rotated, then this edge may not be on the left in physical
-       coordinates; for example, if the text is rotated by an angle of
-       PI/2, then this will be the top edge in physical coordinates);
-       0.5 = the anchor point lies along the vertical line (in
-       baseline coordinates) that bisects the text block; 1.0 = the
-       anchor point lies along the right edge (in baseline
-       coordinates) of the text block
-
-       @param yWeight 0.0 = The anchor point lies along the top edge
-       of the text block in baseline coordinates (if the text is
-       rotated, then this edge may not be on top in physical
-       coordinates; for example, if the text is rotated by an angle of
-       PI/2, then this will be the right edge in physical
-       coordinates); 0.5 = the anchor point lies along the horizontal
-       line (in baseline coordinates) that bisects the text block; 1.0
-       = the anchor point lies along the bottom edge (in baseline
-       coordinates) of the text block
-
-       @param labelCenter (output parameter) If this parameter is not
-       null, then it will be reset to the standard page coordinates of
-       the center of the label.
-    */
-    void htmlDraw(Graphics g, View view, double scale, double angle,
-                  double ax, double ay,
-                  double xWeight, double yWeight,
-                  double baselineXOffset, double baselineYOffset,
-                  Point2D.Double labelCenter) {
-        scale /= VIEW_MAGNIFICATION;
-        double baseWidth = view.getPreferredSpan(View.X_AXIS);
-        double baseHeight = view.getPreferredSpan(View.Y_AXIS);
-        double width = baseWidth + labelXMargin * 2;
-        double height = baseHeight + labelYMargin * 2;
-
-        Graphics2D g2d = (Graphics2D) g;
-        double textScale = scale / BASE_SCALE;
-
-        AffineTransform baselineToPage = AffineTransform.getRotateInstance(angle);
-        baselineToPage.scale(textScale, textScale);
-        Point2D.Double xpoint = new Point2D.Double();
-        baselineToPage.transform
-            (new Point2D.Double(width * xWeight, height * yWeight), xpoint);
-
-        ax -= xpoint.x;
-        ay -= xpoint.y;
-
-        Point2D.Double baselineOffset = new Point2D.Double
-            (baselineXOffset, baselineYOffset);
-        baselineToPage.transform
-            (baselineOffset, baselineOffset);
-
-        ax += baselineOffset.x;
-        ay += baselineOffset.y;
-
-        // Now (ax, ay) represents the (in baseline coordinates) upper
-        // left corner of the text block expanded by the x- and
-        // y-margins.
-
-        if (labelCenter != null) {
-            baselineToPage.transform(new Point2D.Double(width/2, height/2), xpoint);
-            labelCenter.x = (xpoint.x + ax) / getScale();
-            labelCenter.y = (xpoint.y + ay) / getScale();
-        }
-
-        {
-            // Displace (ax,ay) by (labelXMargin, labelYMargin) (again, in baseline
-            // coordinates) in order to obtain the true upper left corner
-            // of the text block.
-
-            baselineToPage.transform
-                (new Point2D.Double(labelXMargin, labelYMargin), xpoint);
-            ax += xpoint.x;
-            ay += xpoint.y;
-        }
-
-        // Paint the view after creating a transform in which (0,0)
-        // maps to (ax,ay)
-
-        AffineTransform oldxform = g2d.getTransform();
-        g2d.translate(ax, ay);
-        g2d.transform(baselineToPage);
-
-        // Don't pass a rectangle that is larger than necessary to
-        // view.paint(), or else view.paint() will attempt to center
-        // the label on its own, but it won't recenter the way we
-        // want.
-        Rectangle r = new Rectangle
-            (0, 0, (int) Math.ceil(baseWidth), (int) Math.ceil(baseHeight));
-
-        // The views seem to require non-null clip bounds for some
-        // dumb reason, and the SVG uses no clip region, so... TODO
-        // Still needed?!
-        if (g.getClipBounds() == null) {
-            g.setClip(-1000000, -1000000, 2000000, 2000000);
-        }
-
-        try {
-            view.paint(g, r);
-        } catch (NullPointerException e) {
-            System.out.println("Clip = " + g2d.getClipBounds());
-            System.out.println("R = " + r);
-            throw(e);
-        }
-        g2d.setTransform(oldxform);
-    }
-
-    /** @return a transformation that maps the unit square to the
-        outline of this label in scaled page space. */
-    AffineTransform labelToScaledPage
-        (View view, double scale, double angle,
-         double ax, double ay, double xWeight, double yWeight,
-         double baselineXOffset, double baselineYOffset) {
-        double width = view.getPreferredSpan(View.X_AXIS) + labelXMargin * 2;
-        double height = view.getPreferredSpan(View.Y_AXIS) + labelYMargin * 2;
-        double textScale = scale / BASE_SCALE / VIEW_MAGNIFICATION;
-
-        AffineTransform res = AffineTransform.getTranslateInstance(ax, ay);
-        res.rotate(angle);
-        res.scale(textScale, textScale);
-        res.translate(baselineXOffset, baselineYOffset);
-        res.scale(width, height);
-        res.translate(-xWeight, -yWeight);
-        return res;
-    }
-
-
-    /** Create a box in the space that the transform of the unit
-        square would enclose. */
-    Path2D.Double htmlBox(AffineTransform xform) {
-        Point2D.Double[] corners =
-            { new Point2D.Double(0,0),
-              new Point2D.Double(1,0),
-              new Point2D.Double(1,1),
-              new Point2D.Double(0,1) };
-        xform.transform(corners, 0, corners, 0, corners.length);
-        Path2D.Double res = new Path2D.Double();
-        res.moveTo(corners[0].x, corners[0].y);
-        for (int i = 1; i < corners.length; ++i) {
-            res.lineTo(corners[i].x, corners[i].y);
-        }
-        res.closePath();
-        return res;
-    }
-
-    static ObjectMapper getObjectMapper() {
-        if (objectMapper == null) {
-            objectMapper = new ObjectMapper();
-            objectMapper.configure(SerializationConfig.Feature.INDENT_OUTPUT,
-                                   true);
-            SerializationConfig ser = objectMapper.getSerializationConfig();
-            DeserializationConfig des = objectMapper.getDeserializationConfig();
-
-            ser.addMixInAnnotations(Point2D.class, Point2DAnnotations.class);
-            des.addMixInAnnotations(Point2D.class, Point2DAnnotations.class);
-
-            ser.addMixInAnnotations(Rectangle2D.class,
-                                    Rectangle2DAnnotations.class);
-            des.addMixInAnnotations(Rectangle2D.class,
-                                    Rectangle2DAnnotations.class);
-
-            ser.addMixInAnnotations(Rectangle2D.Double.class,
-                                    Rectangle2DDoubleAnnotations.class);
-            des.addMixInAnnotations(Rectangle2D.Double.class,
-                                    Rectangle2DDoubleAnnotations.class);
-
-            ser.addMixInAnnotations(BasicStroke.class,
-                                    BasicStrokeAnnotations.class);
-            des.addMixInAnnotations(BasicStroke.class,
-                                    BasicStrokeAnnotations.class);
-
-            ser.addMixInAnnotations(DecimalFormat.class,
-                                    DecimalFormatAnnotations.class);
-            des.addMixInAnnotations(DecimalFormat.class,
-                                    DecimalFormatAnnotations.class);
-
-            ser.addMixInAnnotations(NumberFormat.class,
-                                    NumberFormatAnnotations.class);
-            des.addMixInAnnotations(NumberFormat.class,
-                                    NumberFormatAnnotations.class);
-
-            ser.addMixInAnnotations(Color.class,
-                                    ColorAnnotations.class);
-            des.addMixInAnnotations(Color.class,
-                                    ColorAnnotations.class);
-        }
-
-        return objectMapper;
-    }
-
-    void drawArrow(Graphics2D g, double scale, Arrow ai) {
-        Affine xform = principalToScaledPage(scale);
-        Point2D.Double xpoint = xform.transform(ai.x, ai.y);
-        Arrow arr = new Arrow
-            (xpoint.x, xpoint.y, scale * ai.size,
-             principalToPageAngle(ai.theta));
-        g.fill(arr);
+        redraw();
     }
 
     synchronized ScaledCroppedImage getScaledOriginalImage() {
@@ -7192,302 +4101,17 @@ public class Editor implements CropEventListener, MouseListener,
         return im;
     }
 
-    void addTernaryBottomRuler(double start /* Z */, double end /* Z */) {
-        saveNeeded = true;
-        LinearRuler r = new DefaultTernaryRuler() {{ // Component-Z axis
-            textAngle = 0;
-            tickLeft = true;
-            labelAnchor = LinearRuler.LabelAnchor.RIGHT;
-        }};
-
-        r.startPoint = new Point2D.Double(start, 0.0);
-        r.endPoint = new Point2D.Double(end, 0);
-        r.startArrow = Math.abs(start) > 1e-8;
-        r.endArrow = (Math.abs(end - 1) > 1e-4);
-        r.suppressStartTick = (diagramType != DiagramType.TERNARY_RIGHT);
-        r.suppressEndTick = (diagramType != DiagramType.TERNARY_LEFT);
-        rulers.add(r);
-    }
-
-    void addTernaryLeftRuler(double start /* Y */, double end /* Y */) {
-        saveNeeded = true;
-        LinearRuler r = new DefaultTernaryRuler() {{ // Left Y-axis
-            textAngle = Math.PI / 3;
-            tickRight = true;
-            labelAnchor = LinearRuler.LabelAnchor.LEFT;
-        }};
-
-        // Usual PED Data Center style leaves out the tick labels on the left unless this is a top or left
-        // partial ternary diagram.
-        boolean showLabels = diagramType == DiagramType.TERNARY_LEFT
-
-            || diagramType == DiagramType.TERNARY_TOP;
-        if (showLabels) {
-            r.labelAnchor = LinearRuler.LabelAnchor.RIGHT;
-            r.suppressEndLabel = diagramType != DiagramType.TERNARY_RIGHT;
-        } else {
-            r.labelAnchor = LinearRuler.LabelAnchor.NONE;
+    @Override public boolean setFontName(String s) {
+        boolean res = super.setFontName(s);
+        if (res) {
+            getEditPane().setFont(embeddedFont);
+            editFrame.setFontName(s);
         }
-
-
-        r.startPoint = new Point2D.Double(0.0, start);
-        r.endPoint = new Point2D.Double(0.0, end);
-        r.startArrow = Math.abs(start) > 1e-8;
-        r.endArrow = (Math.abs(end - 1) > 1e-4);
-        // The tick label for the bottom of the left ruler is
-        // redundant with the tick label for the left end of the
-        // bottom ruler unless this is a top partial ternary
-        // diagram.
-        r.suppressStartLabel = (diagramType != DiagramType.TERNARY_TOP);
-        r.suppressStartTick = (diagramType != DiagramType.TERNARY_TOP);
-        r.suppressEndLabel = (diagramType != DiagramType.TERNARY_TOP);
-        r.suppressEndTick = (diagramType != DiagramType.TERNARY_LEFT);
-        rulers.add(r);
+        return res;
     }
 
-    void addTernaryRightRuler(double start /* Y */, double end /* Y */) {
-        saveNeeded = true;
-        LinearRuler r = new DefaultTernaryRuler() {{ // Right Y-axis
-            textAngle = Math.PI * 2 / 3;
-            tickLeft = true;
-                }};
-
-        // The tick labels for the right ruler are redundant with the
-        // tick labels for the left ruler unless this is a top or right
-        // partial ternary diagram.
-        boolean showLabels = diagramType == DiagramType.TERNARY_RIGHT
-            || diagramType == DiagramType.TERNARY_TOP;
-        if (showLabels) {
-            r.labelAnchor = LinearRuler.LabelAnchor.RIGHT;
-            r.suppressEndLabel = diagramType != DiagramType.TERNARY_RIGHT;
-        } else {
-            r.labelAnchor = LinearRuler.LabelAnchor.NONE;
-        }
-        r.suppressStartTick = diagramType != DiagramType.TERNARY_TOP;
-        r.suppressEndTick = diagramType != DiagramType.TERNARY_RIGHT;
-
-        r.startPoint = new Point2D.Double(1 - start, start);
-        r.endPoint = new Point2D.Double(1 - end, end);
-        r.startArrow = Math.abs(start) > 1e-8;
-        r.endArrow = (Math.abs(end - 1) > 1e-4);
-        rulers.add(r);
-    }
-
-    void addBinaryBottomRuler() {
-        saveNeeded = true;
-        rulers.add(new DefaultBinaryRuler() {{ // X-axis
-            textAngle = 0;
-            tickLeft = true;
-            labelAnchor = LinearRuler.LabelAnchor.RIGHT;
-
-            startPoint = new Point2D.Double(0.0, 0.0);
-            endPoint = new Point2D.Double(1.0, 0.0);
-        }});
-    }
-
-    void addBinaryTopRuler() {
-        saveNeeded = true;
-        rulers.add(new DefaultBinaryRuler() {{ // X-axis
-            textAngle = 0;
-            tickRight = true;
-            labelAnchor = LinearRuler.LabelAnchor.NONE;
-
-            startPoint = new Point2D.Double(0.0, 1.0);
-            endPoint = new Point2D.Double(1.0, 1.0);
-        }});
-    }
-
-    void addBinaryLeftRuler() {
-        saveNeeded = true;
-        rulers.add(new DefaultBinaryRuler() {{ // Left Y-axis
-            textAngle = Math.PI / 2;
-            tickRight = true;
-            labelAnchor = LinearRuler.LabelAnchor.LEFT;
-
-            startPoint = new Point2D.Double(0.0, 0.0);
-            endPoint = new Point2D.Double(0.0, 1.0);
-        }});
-    }
-
-    void addBinaryRightRuler() {
-        saveNeeded = true;
-        rulers.add(new DefaultBinaryRuler() {{ // Right Y-axis
-            textAngle = Math.PI / 2;
-            tickLeft = true;
-            labelAnchor = LinearRuler.LabelAnchor.NONE;
-
-            startPoint = new Point2D.Double(1.0, 0.0);
-            endPoint = new Point2D.Double(1.0, 1.0);
-        }});
-    }
-
-    /** Return the weight of the given component computed as a product
-        of the quantities and standard weights of its individual
-        elements, or 0 if the weight could not be computed, either
-        because the component is not known, it could not be converted
-        to a compound, or the compound includes elements for which no
-        standard weight is defined. */
-    public double componentWeight(Side side) {
-        double[][] componentElements = getComponentElements();
-        double[] ces = componentElements[side.ordinal()];
-        if (ces == null) {
-            return 0;
-        }
-        String[] elements = getDiagramElements();
-        double total = 0;
-        for (int i = 0; i < elements.length; ++i) {
-            double q = ces[i];
-            if (q == 0) {
-                continue;
-            }
-            double w = ChemicalString.elementWeight(elements[i]);
-            if (w == 0) {
-                return 0;
-            }
-            total += q * w;
-        }
-        return total;
-    }
-
-    static Color thisOrBlack(Color c) {
-        return (c == null) ? Color.BLACK : c;
-    }
-
-    @JsonIgnore public Rectangle2D.Double getPrincipalBounds() {
-        return principalToStandardPage.inputBounds();
-    }
-
-    public String getFontName() {
-        return getFont().getFontName();
-    }
-
-    public void setFontName(String s) {
-        if (embeddedFont != null && s.equals(getFontName())) {
-            return; // No change
-        }
-
-        saveNeeded = true;
-        String filename = fontFiles.get(s);
-        if (filename == null) {
-            throw new IllegalArgumentException("Unrecognized font name '" + s + "'");
-        }
-        embeddedFont = loadFont(filename, STANDARD_FONT_SIZE);
-        getEditPane().setFont(embeddedFont);
-        editFrame.setFontName(s);
-    }
-
-    public Font loadFont(String filename, float size) {
-        InputStream is = getClass().getResourceAsStream(filename);
-        if (is == null) {
-            throw new IllegalStateException
-                ("Could not locate font '" + filename + "'");
-        }
-        try {
-            Font f = Font.createFont(Font.TRUETYPE_FONT, is);
-            GraphicsEnvironment.getLocalGraphicsEnvironment().registerFont(f);
-            f = f.deriveFont(size);
-            return f;
-        } catch (IOException e) {
-            throw new IllegalStateException
-                ("Could not process font '" + filename
-                 + "': " + e);
-        } catch (FontFormatException e) {
-            throw new IllegalStateException
-                ("Could not process font '" + filename
-                 + "': " + e);
-        }
-    }
-
-    @JsonIgnore public Font getFont() {
-        if (embeddedFont == null) {
-            setFontName(defaultFontName);
-        }
-        return embeddedFont;
-    }
-
-	public void setFillStyle(StandardFill fill) {
-		// TODO Auto-generated method stub
-	}
-}
-
-// Annotations that are serialization hints for the Jackson JSON
-// encoder
-
-@JsonDeserialize(as=Point2D.Double.class)
-abstract class Point2DAnnotations {
-}
-
-@JsonDeserialize(as=Rectangle2D.Double.class)
-abstract class Rectangle2DAnnotations {
-}
-
-@SuppressWarnings("serial")
-abstract class Rectangle2DDoubleAnnotations
-    extends Rectangle2D.Double {
-    @Override @JsonIgnore abstract public Rectangle getBounds();
-    @Override @JsonIgnore abstract public Rectangle2D getBounds2D();
-    @Override @JsonIgnore abstract public boolean isEmpty();
-    @Override @JsonIgnore abstract public double getMinX();
-    @Override @JsonIgnore abstract public double getMaxX();
-    @Override @JsonIgnore abstract public double getMinY();
-    @Override @JsonIgnore abstract public double getMaxY();
-    @Override @JsonIgnore abstract public Rectangle2D getFrame();
-    @Override @JsonIgnore abstract public double getCenterX();
-    @Override @JsonIgnore abstract public double getCenterY();
-}
-
-class BasicStrokeAnnotations {
-    BasicStrokeAnnotations
-        (@JsonProperty("lineWidth") float lineWidth,
-         @JsonProperty("endCap") int endCap,
-         @JsonProperty("lineJoin") int lineJoin,
-         @JsonProperty("miterLimit") float miterLimit,
-         @JsonProperty("dashArray") float[] dashArray,
-         @JsonProperty("dashPhase") float dashPhase) {}
-}
-
-@SuppressWarnings("serial")
-class DecimalFormatAnnotations extends DecimalFormat {
-    @Override @JsonProperty("pattern") public String toPattern() {
-        return null;
-    }
-    DecimalFormatAnnotations(@JsonProperty("pattern") String pattern) {}
-}
-
-@SuppressWarnings("serial")
-@JsonTypeInfo(
-              use = JsonTypeInfo.Id.NAME,
-              include = JsonTypeInfo.As.PROPERTY,
-              property = "type")
-@JsonSubTypes({
-        @Type(value=DecimalFormat.class, name = "DecimalFormat") })
-@JsonIgnoreProperties
-    ({"groupingUsed", "parseIntegerOnly",
-      "maximumIntegerDigits",
-      "minimumIntegerDigits",
-      "maximumFractionDigits",
-      "minimumFractionDigits",
-      "positivePrefix",
-      "positiveSuffix",
-      "negativePrefix",
-      "negativeSuffix",
-      "multiplier",
-      "groupingSize",
-      "decimalSeparatorAlwaysShown",
-      "parseBigDecimal",
-      "roundingMode",
-      "decimalFormatSymbols",
-      "currency"})
-abstract class NumberFormatAnnotations extends NumberFormat {
-}
-
-@SuppressWarnings("serial")
-@JsonIgnoreProperties
-    ({"alpha", "red", "green", "blue",
-            "colorSpace", "transparency"})
-abstract class ColorAnnotations extends Color {
-    ColorAnnotations(@JsonProperty("rgb") int rgb) {
-        super(rgb);
+    public void setFillStyle(StandardFill fill) {
+        // TODO Auto-generated method stub
     }
 }
 
@@ -7511,7 +4135,7 @@ class ScaledCroppedImage {
             || cropBounds.height < imageBounds.height;
     }
 
-    public String toString() {
+    @Override public String toString() {
         return "Scale: " + scale + " image: " + imageBounds
             + " crop: " + cropBounds;
     }
