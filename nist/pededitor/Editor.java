@@ -5,6 +5,7 @@ import javax.swing.*;
 import javax.swing.filechooser.FileNameExtensionFilter;
 import java.awt.AWTException;
 import java.awt.Color;
+import java.awt.Component;
 import java.awt.Cursor;
 import java.awt.Dimension;
 import java.awt.EventQueue;
@@ -39,7 +40,9 @@ import java.awt.print.PrinterJob;
 import java.io.File;
 import java.io.IOException;
 import java.net.URL;
+import java.nio.file.FileSystems;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -304,6 +307,7 @@ public class Editor extends Diagram
     }
 
     public void editSelection() {
+        String errorTitle = "Cannot edit selection";
         if (selection == null) {
             // Find the nearest editable item, and edit it.
 
@@ -315,8 +319,7 @@ public class Editor extends Diagram
             }
 
             if (selection == null) {
-                JOptionPane.showMessageDialog
-                    (editFrame, "There are no editable items.");
+                showError("There are no editable items.", errorTitle);
                 return;
             }
         }
@@ -328,9 +331,8 @@ public class Editor extends Diagram
         } else if (selection instanceof RulerHandle) {
             edit((RulerHandle) selection);
         } else {
-            JOptionPane.showMessageDialog
-                (editFrame,
-                 "This item does not have a special edit function.");
+            showError("This item does not have a special edit function.",
+                      errorTitle);
             return;
         }
     }
@@ -359,7 +361,7 @@ public class Editor extends Diagram
 
     protected CropFrame cropFrame = new CropFrame();
     protected EditFrame editFrame = new EditFrame(this);
-    protected ImageZoomFrame zoomFrame = new ImageZoomFrame();
+    protected ImageZoomFrame zoomFrame = null;
     protected VertexInfoDialog vertexInfo = new VertexInfoDialog(editFrame);
     protected LabelDialog labelDialog = null;
     protected JColorChooser colorChooser = null;
@@ -386,6 +388,10 @@ public class Editor extends Diagram
 
     protected transient boolean preserveMprin = false;
     protected transient boolean isShiftDown = false;
+
+    /** True if the program already tried and failed to load the image
+        named originalFilename. */
+    protected transient boolean triedToLoadOriginalImage = false;
 
     /** True unless selection instanceof VertexHandle and the next
         vertex to be inserted should be added to the curve before the
@@ -468,7 +474,6 @@ public class Editor extends Diagram
 
     public Editor() {
         init();
-        zoomFrame.setFocusableWindowState(false);
         tieLineDialog.setFocusableWindowState(false);
         vertexInfo.setDefaultCloseOperation
             (WindowConstants.DO_NOTHING_ON_CLOSE);
@@ -482,6 +487,16 @@ public class Editor extends Diagram
         cropFrame.addCropEventListener(this);
     }
 
+    public void initializeZoomFrame() {
+        if (zoomFrame != null)
+            return;
+        zoomFrame = new ImageZoomFrame();
+        zoomFrame.setFocusableWindowState(false);
+        Rectangle rect = editFrame.getBounds();
+        zoomFrame.setLocation(rect.x + rect.width, rect.y);
+        zoomFrame.pack();
+    }
+
     private void init() {
         scale = BASE_SCALE;
         selection = null;
@@ -492,9 +507,11 @@ public class Editor extends Diagram
         vertexInfo.setLineWidth(lineWidth);
         mouseIsStuck = false;
         paintSuppressionRequestCnt = 0;
-        setBackground(EditFrame.BackgroundImage.LIGHT_GRAY);
+        setBackground(EditFrame.BackgroundImageType.LIGHT_GRAY);
         tieLineDialog.setVisible(false);
         tieLineCorners = new ArrayList<>();
+        originalImage = null;
+        triedToLoadOriginalImage = false;
     }
 
     @Override void clear() {
@@ -643,7 +660,7 @@ public class Editor extends Diagram
     }
 
 
-    public synchronized void setBackground(EditFrame.BackgroundImage value) {
+    public synchronized void setBackground(EditFrame.BackgroundImageType value) {
         // Turn blinking off
         if (imageBlinker != null) {
             imageBlinker.cancel();
@@ -651,7 +668,7 @@ public class Editor extends Diagram
         imageBlinker = null;
         darkImage = null;
 
-        if (value == EditFrame.BackgroundImage.BLINK) {
+        if (value == EditFrame.BackgroundImageType.BLINK) {
             imageBlinker = new Timer("ImageBlinker", true);
             imageBlinker.scheduleAtFixedRate(new ImageBlinker(), 500, 500);
             backgroundImageEnabled = true;
@@ -671,22 +688,23 @@ public class Editor extends Diagram
     */
     public void moveRegion() {
         VertexHandle vhand = getVertexHandle();
+        String errorTitle = "Cannot move region";
 
         if (vhand == null) {
-            JOptionPane.showMessageDialog
-                (editFrame,
-                 "Draw a curve to identify the boundary of the region to be moved.");
+            showError
+                ("Draw a curve to identify the boundary of the region "
+                 + "to be moved.",
+                 errorTitle);
             return;
         }
 
         if (mprin == null) {
-            JOptionPane.showMessageDialog
-                (editFrame,
-                 "<html><p>Move the mouse to the target location. "
+            showError
+                ("<html><p>Move the mouse to the target location. "
                  + "Use the 'R' shortcut key or keyboard menu controls "
                  + "instead of selecting the menu item using the mouse."
-                 + "</p></html>"
-                 );
+                 + "</p></html>",
+                 errorTitle);
             return;
         }
 
@@ -730,18 +748,19 @@ public class Editor extends Diagram
         will be moved.
     */
     public void moveSelection(boolean moveAll) {
+        String errorTitle = "Cannot move selection";
         if (selection == null) {
-            JOptionPane.showMessageDialog
-                (editFrame,
-                 "You must select an item before you can move it.");
+            showError
+                ("You must select an item before you can move it.",
+                 errorTitle);
             return;
         }
 
         if (mprin == null) {
-            JOptionPane.showMessageDialog
-                (editFrame,
-                 "You must move the mouse to the target destination " +
-                 "before you can move items.");
+            showError
+                ("You must move the mouse to the target destination " +
+                 "before you can move items.",
+                 errorTitle);
             return;
         }
 
@@ -755,19 +774,20 @@ public class Editor extends Diagram
 
     /** Copy the selection, moving it to mprin. */
     public void copySelection() {
+        String errorTitle = "Cannot copy selection";
 
         if (selection == null) {
-            JOptionPane.showMessageDialog
-                (editFrame,
-                 "You must select an item before you can copy it.");
+            showError
+                ("You must select an item before you can copy it.",
+                 errorTitle);
             return;
         }
 
         if (mprin == null) {
-            JOptionPane.showMessageDialog
-                (editFrame,
-                 "You must move the mouse to the target destination " +
-                 "before you can copy.");
+            showError
+                ("You must move the mouse to the target destination " +
+                 "before you can copy.",
+                 errorTitle);
             return;
         }
 
@@ -780,11 +800,12 @@ public class Editor extends Diagram
 
     /** Change the selection's color. */
     public void colorSelection() {
+        String errorTitle = "Cannot change color";
 
         if (selection == null) {
-            JOptionPane.showMessageDialog
-                (editFrame,
-                 "You must select an item before you can edit it.");
+            showError
+                ("You must select an item before you can change its color.",
+                 errorTitle);
             return;
         }
 
@@ -1130,10 +1151,10 @@ public class Editor extends Diagram
                             RenderingHints.VALUE_RENDER_QUALITY);
 
         { // Draw the background
-            EditFrame.BackgroundImage back = editFrame.getBackgroundImage();
+            EditFrame.BackgroundImageType back = editFrame.getBackgroundImage();
             boolean showBackgroundImage = tracingImage()
-                && back != EditFrame.BackgroundImage.NONE
-                && (back != EditFrame.BackgroundImage.BLINK
+                && back != EditFrame.BackgroundImageType.NONE
+                && (back != EditFrame.BackgroundImageType.BLINK
                     || backgroundImageEnabled);
 
             if (showBackgroundImage) {
@@ -1228,16 +1249,19 @@ public class Editor extends Diagram
     }
 
     public void fill() {
+        String errorTitle = "Cannot change fill settings";
         GeneralPolyline path = getActiveCurve();
         if (path == null) {
-            JOptionPane.showMessageDialog
-                (editFrame, "Fill settings can only be changed when a curve is selected.");
+            showError
+                ("Fill settings can only be changed when a curve is selected.",
+                 errorTitle);
             return;
         }
 
         if (!path.isClosed()) {
-            JOptionPane.showMessageDialog
-                (editFrame, "Fill settings can only be changed for closed curves.");
+            showError
+                ("Fill settings can only be changed for closed curves.",
+                 errorTitle);
             return;
         }
 
@@ -1356,11 +1380,10 @@ public class Editor extends Diagram
     }
 
     void tieLineCornerSelected() {
+        String errorTitle = "Invalid tie line selection";
         VertexHandle vhand = getVertexHandle();
         if (vhand == null) {
-            JOptionPane.showMessageDialog
-                (editFrame,
-                 "You must select a vertex.");
+            showError("You must select a vertex.", errorTitle);
             return;
         }
 
@@ -1371,17 +1394,17 @@ public class Editor extends Diagram
 
         if ((oldCnt == 1 || oldCnt == 3)
             && pat.path != tieLineCorners.get(oldCnt-1).path) {
-            JOptionPane.showMessageDialog
-                (editFrame,
-                 "This selection must belong to the same\n" +
-                 "curve as the previous selection.");
+            showError
+                ("This selection must belong to the same\n" +
+                 "curve as the previous selection.",
+                 errorTitle);
             return;
         }
 
         if ((oldCnt == 1) && pat.t == tieLineCorners.get(0).t) {
-            JOptionPane.showMessageDialog
-                (editFrame,
-                 "The second point cannot be the same as the first.");
+            showError
+                ("The second point cannot be the same as the first.",
+                 errorTitle);
             return;
         }
 
@@ -1417,6 +1440,7 @@ public class Editor extends Diagram
     }
 
     int askNumberOfTieLines(int oldCount) {
+        String errorTitle = "Invalid tie line count";
         while (true) {
             try {
                 String lineCntStr = JOptionPane.showInputDialog
@@ -1431,24 +1455,23 @@ public class Editor extends Diagram
                     return lineCnt;
                 }
 
-                JOptionPane.showMessageDialog
-                    (editFrame, "Enter a positive integer.");
+                showError("Enter a positive integer.", errorTitle);
             } catch (NumberFormatException e) {
-                JOptionPane.showMessageDialog
-                    (editFrame, "Invalid number format.");
+                showError("Invalid number format.", errorTitle);
             }
         }
     }
 
     public void addRuler() {
+        String errorTitle = "Cannot create ruler";
         GeneralPolyline path = getActiveCurve();
         if (path == null || path.size() != 2) {
-            JOptionPane.showMessageDialog
-                (editFrame,
-                 "Before you can create a new ruler,\n"
+            showError
+                ("Before you can create a new ruler,\n"
                  + "you must create and select a curve\n"
                  + "consisting of exactly two vertices\n"
-                 + "which will become the rulers' endpoints.\n");
+                 + "which will become the rulers' endpoints.\n",
+                 errorTitle);
             return;
         }
 
@@ -1517,13 +1540,14 @@ public class Editor extends Diagram
     }
 
     public void addVariable() {
+        String errorTitle = "Cannot add variable";
         GeneralPolyline path = getActiveCurve();
         if (path == null || path.size() != 3) {
-            JOptionPane.showMessageDialog
-                (editFrame,
-                 "<html><p>To create a new variable, you must "
+            showError
+                ("<html><p>To create a new variable, you must "
                  + "first select a curve consisting of exactly three "
-                 + "points.</p></html>");
+                 + "points.</p></html>",
+                 errorTitle);
             return;
         }
 
@@ -2396,62 +2420,18 @@ public class Editor extends Diagram
         toggleCurveClosure(hand.getCurveNo());
     }
 
-    /** Assert that this diagram should not be represented as the
-        traced version of some other diagram image. Disable the
-        zoomFrame, hide the background image in editFrame, and so
-        on. */
-    void dontTrace() {
-        originalFilename = null;
-        originalToPrincipal = null;
-        originalImage = null;
-        zoomFrame.setVisible(false);
-        editFrame.mnBackgroundImage.setEnabled(false);
-    }
-
     @Override public void setOriginalFilename(String filename) {
         if ((filename == null && originalFilename == null)
             || (filename != null && filename.equals(originalFilename))) {
             return;
         }
 
-        originalFilename = filename;
-
-        if (filename == null) {
-            dontTrace();
-            propagateChange();
-            return;
-        }
-
-        if (Files.notExists(new File(filename).toPath())) {
-            JOptionPane.showMessageDialog
-                (editFrame, "Warning: original file '" + filename + "' not found");
-            propagateChange();
-            dontTrace();
-            return;
-        }
-
-        try {
-            BufferedImage im = ImageIO.read(new File(filename));
-            if (im == null) {
-                throw new IOException(filename + ": unknown image format");
-            }
-            originalImage = im;
-            zoomFrame.setImage(getOriginalImage());
-            initializeCrosshairs();
-            zoomFrame.getImageZoomPane().crosshairs = crosshairs;
-            editFrame.mnBackgroundImage.setEnabled(true);
-        } catch (IOException e) {
-            JOptionPane.showMessageDialog
-                (editFrame,
-                 "Original image unavailable: '" + filename + "': " +  e.toString());
-            dontTrace();
-        }
-        propagateChange();
+        super.setOriginalFilename(filename);
+        originalImage = null;
+        triedToLoadOriginalImage = false;
     }
 
-    /**
-     * Launch the application.
-     */
+    /** Launch the application. */
     public static void main(String[] args) {
         try {
             // Work-around for a bug that affects EB's PC as of 7.0_3.
@@ -2916,18 +2896,14 @@ public class Editor extends Diagram
         zoomBy(1.0);
     }
 
-    /** Elements of openDiagram() that apply only if the GUI is
-        actually meant to be visible. */
     protected void initializeGUI() {
         // Force the editor frame image to be initialized.
 
         editFrame.pack();
         Rectangle rect = editFrame.getBounds();
+        revalidateZoomFrame();
+
         if (tracingImage()) {
-            zoomFrame.setLocation(rect.x + rect.width, rect.y);
-            zoomFrame.setTitle("Zoom " + getOriginalFilename());
-            zoomFrame.pack();
-            zoomFrame.setVisible(true);
             Rectangle zrect = zoomFrame.getBounds();
             Rectangle vrect = vertexInfo.getBounds();
             vertexInfo.setLocation(zrect.x, zrect.y + zrect.height - vrect.height);
@@ -3127,7 +3103,107 @@ public class Editor extends Diagram
     }
 
     @JsonIgnore public BufferedImage getOriginalImage() {
+        if (originalImage != null) {
+            return originalImage;
+        }
+
+        if (originalFilename == null || triedToLoadOriginalImage || !isEditable()) {
+            return null;
+        }
+
+        triedToLoadOriginalImage = true;
+
+        File originalFile = new File(originalFilename);
+        if (Files.notExists(originalFile.toPath())) {
+            JOptionPane.showMessageDialog
+                (editFrame, "Warning: original file '" + originalFilename + "' not found");
+            return null;
+        }
+
+        try {
+            originalImage = ImageIO.read(originalFile);
+            if (originalImage == null) {
+                throw new IOException(filename + ": unknown image format");
+            }
+        } catch (IOException e) {
+            JOptionPane.showMessageDialog
+                (editFrame,
+                 "Original image unavailable: '" + filename + "': " +  e.toString());
+        }
+
         return originalImage;
+    }
+
+    /** If the zoom frame is not needed, then then make sure it's null
+        or invisible. Otherwise, make sure the zoom frame is non-null,
+        initialized, visible, and shows the correct image. */
+    void revalidateZoomFrame() {
+        BufferedImage im = getOriginalImage();
+        if (im != null) {
+            initializeZoomFrame();
+            zoomFrame.setImage(im);
+            initializeCrosshairs();
+            zoomFrame.getImageZoomPane().crosshairs = crosshairs;
+            editFrame.mnBackgroundImage.setEnabled(true);
+            zoomFrame.setTitle("Zoom " + getOriginalFilename());
+            zoomFrame.pack();
+            zoomFrame.setVisible(true);
+        } else {
+            if (zoomFrame != null) {
+                zoomFrame.setVisible(false);
+            }
+            editFrame.mnBackgroundImage.setEnabled(false);
+        }
+    }
+
+    @SafeVarargs public static <T> T[] concat(T[] first, T[]... rest) {
+        int totalLength = first.length;
+        for (T[] array : rest) {
+            totalLength += array.length;
+        }
+        T[] result = Arrays.copyOf(first, totalLength);
+        int offset = first.length;
+        for (T[] array : rest) {
+            System.arraycopy(array, 0, result, offset, array.length);
+            offset += array.length;
+        }
+        return result;
+    }
+
+    public void showOpenDialog(Component parent) {
+        String[] exts = { "ped" };
+        if (isEditable()) {
+            exts = concat(exts, ImageIO.getReaderFileSuffixes());
+        }
+        String filterName = isEditable() ? "PED and image files" : "PED files";
+        File file = CropFrame.openDialogFile(parent, filterName, exts);
+        if (file != null) {
+            try {
+                if ("ped".equalsIgnoreCase(getExtension(file.getName()))) {
+                    openDiagram(file);
+                } else if (isEditable()) {
+                    cropFrame.setFilename(file.getAbsolutePath());
+                    cropFrame.pack();
+                    cropFrame.setVisible(true);
+                } else {
+                    showError(parent,
+                              "Unrecognized file extension (expected .ped)",
+                              "File load error");
+                }
+            } catch (IOException e) {
+                showError(parent, "Could not load file: " + e,
+                          "File load error");
+            }
+        }
+    }
+
+    void showError(String mess, String title) {
+        showError(editFrame, mess, title);
+    }
+
+    void showError(Component parent, String mess, String title) {
+        JOptionPane.showMessageDialog
+            (parent, mess, title, JOptionPane.ERROR_MESSAGE);
     }
 
     /** Invoked from the EditFrame menu */
@@ -3248,12 +3324,12 @@ public class Editor extends Diagram
         if (file == null) {
             return;
         }
-        saveAsPED(file);
+        saveAsPED(file.toPath());
     }
 
-    @Override public void saveAsPED(File fn) {
+    @Override public void saveAsPED(Path file) {
         try {
-            super.saveAsPED(fn);
+            super.saveAsPED(file);
             JOptionPane.showMessageDialog(editFrame, "File saved.");
         } catch (IOException e) {
             JOptionPane.showMessageDialog
@@ -3263,7 +3339,7 @@ public class Editor extends Diagram
 
     /** Invoked from the EditFrame menu */
     public void save() {
-        saveAsPED(new File(getFilename()));
+        saveAsPED(FileSystems.getDefault().getPath(getFilename()));
     }
 
     /** Invoked from the EditFrame menu */
@@ -3614,7 +3690,7 @@ public class Editor extends Diagram
     /** @return true if the diagram is currently being traced from
         another image. */
     boolean tracingImage() {
-        return originalImage != null;
+        return getOriginalImage() != null;
     }
 
     /** The mouse was moved in the edit window. Update the coordinates
