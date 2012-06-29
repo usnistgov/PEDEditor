@@ -48,7 +48,7 @@ public class EditFrame extends JFrame
 
     // How to show the original scanned image in the background of
     // the new diagram:
-    enum BackgroundImage
+    enum BackgroundImageType
     { LIGHT_GRAY, // White parts look white, black parts appear light gray
       DARK_GRAY, // Halfway between light gray and black
       BLACK, // Original appearance
@@ -56,16 +56,16 @@ public class EditFrame extends JFrame
       NONE // Not shown
       };
 
-    public BackgroundImage getBackgroundImage() {
-        return !mnBackgroundImage.isEnabled() ? BackgroundImage.NONE
-            : lightGrayBackgroundImage.isSelected() ? BackgroundImage.LIGHT_GRAY
-            : blinkBackgroundImage.isSelected() ? BackgroundImage.BLINK
-            : darkGrayBackgroundImage.isSelected() ? BackgroundImage.DARK_GRAY
-            : blackBackgroundImage.isSelected() ? BackgroundImage.BLACK
-            : BackgroundImage.NONE;
+    public BackgroundImageType getBackgroundImage() {
+        return !mnBackgroundImage.isEnabled() ? BackgroundImageType.NONE
+            : lightGrayBackgroundImage.isSelected() ? BackgroundImageType.LIGHT_GRAY
+            : blinkBackgroundImage.isSelected() ? BackgroundImageType.BLINK
+            : darkGrayBackgroundImage.isSelected() ? BackgroundImageType.DARK_GRAY
+            : blackBackgroundImage.isSelected() ? BackgroundImageType.BLACK
+            : BackgroundImageType.NONE;
     }
 
-    public void setBackgroundImage(BackgroundImage value) {
+    public void setBackgroundImage(BackgroundImageType value) {
         switch (value) {
         case NONE:
             noBackgroundImage.setSelected(true);
@@ -258,9 +258,9 @@ public class EditFrame extends JFrame
     }
 
     class BackgroundImageAction extends AbstractAction {
-        BackgroundImage value;
+        BackgroundImageType value;
 
-        BackgroundImageAction(String name, BackgroundImage value,
+        BackgroundImageAction(String name, BackgroundImageType value,
                               int mnemonic) {
             super(name);
             putValue(MNEMONIC_KEY, new Integer(mnemonic));
@@ -273,7 +273,7 @@ public class EditFrame extends JFrame
     }
 
     class BackgroundImageMenuItem extends JRadioButtonMenuItem {
-        BackgroundImageMenuItem(String name, BackgroundImage back,
+        BackgroundImageMenuItem(String name, BackgroundImageType back,
                                 int mnemonic) {
             super(new BackgroundImageAction(name, back, mnemonic));
             backgroundImageGroup.add(this);
@@ -363,24 +363,13 @@ public class EditFrame extends JFrame
                 }
             });
 
-        // "Open" submenu
-        JMenu mnOpen = new JMenu("Open");
-        mnOpen.setMnemonic(KeyEvent.VK_O);
-        mnFile.add(mnOpen);
-
-        mnOpen.add(new Action("Diagram", KeyEvent.VK_D) {
+        mnFile.add(new Action("Open", KeyEvent.VK_O) {
                 @Override public void actionPerformed(ActionEvent e) {
-                    getParentEditor().openDiagram();
+                    getParentEditor().showOpenDialog(EditFrame.this);
                 }
             });
 
         if (editable) {
-            mnOpen.add(new Action("Image for Digitization", KeyEvent.VK_I) {
-                    @Override public void actionPerformed(ActionEvent e) {
-                        getParentEditor().openImage(null);
-                    }
-                });
-
             // "Save" menu item
             mnFile.add(new Action("Save", KeyEvent.VK_S) {
                     @Override public void actionPerformed(ActionEvent e) {
@@ -993,19 +982,19 @@ public class EditFrame extends JFrame
             mnBackgroundImage.setMnemonic(KeyEvent.VK_B);
             mnBackgroundImage.setEnabled(false);
             lightGrayBackgroundImage = new BackgroundImageMenuItem
-                ("Light gray", BackgroundImage.LIGHT_GRAY, KeyEvent.VK_G);
+                ("Light gray", BackgroundImageType.LIGHT_GRAY, KeyEvent.VK_G);
             mnBackgroundImage.add(lightGrayBackgroundImage);
             darkGrayBackgroundImage = new BackgroundImageMenuItem
-                ("Dark gray", BackgroundImage.DARK_GRAY, KeyEvent.VK_D);
+                ("Dark gray", BackgroundImageType.DARK_GRAY, KeyEvent.VK_D);
             mnBackgroundImage.add(darkGrayBackgroundImage);
             blackBackgroundImage = new BackgroundImageMenuItem
-                ("Black", BackgroundImage.BLACK, KeyEvent.VK_K);
+                ("Black", BackgroundImageType.BLACK, KeyEvent.VK_K);
             mnBackgroundImage.add(blackBackgroundImage);
             blinkBackgroundImage = new BackgroundImageMenuItem
-                ("Blink", BackgroundImage.BLINK, KeyEvent.VK_B);
+                ("Blink", BackgroundImageType.BLINK, KeyEvent.VK_B);
             mnBackgroundImage.add(blinkBackgroundImage);
             noBackgroundImage = new BackgroundImageMenuItem
-                ("Hide", BackgroundImage.NONE, KeyEvent.VK_N);
+                ("Hide", BackgroundImageType.NONE, KeyEvent.VK_N);
             noBackgroundImage.getAction().putValue
                 (AbstractAction.ACCELERATOR_KEY,
                  KeyStroke.getKeyStroke("control H"));
