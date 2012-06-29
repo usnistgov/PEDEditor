@@ -179,21 +179,29 @@ public class CropFrame extends ImageScrollFrame {
         setJMenuBar(menuBar);
     }
 
-    public void showOpenDialog() {
-        Preferences prefs = Preferences.userNodeForPackage(getClass());
+    public static File openDialogFile(Component parent, String filterName, String[] suffixes) {
+        Preferences prefs = Preferences.userNodeForPackage(CropFrame.class);
         String dir = prefs.get(PREF_DIR,  null);
         JFileChooser chooser = new JFileChooser();
         chooser.setDialogTitle("Open PED Image");
         if (dir != null) {
             chooser.setCurrentDirectory(new File(dir));
         }
-        String[] suffixes = ImageIO.getReaderFileSuffixes();
         chooser.setFileFilter
-            (new FileNameExtensionFilter("Image files", suffixes));
-        if (chooser.showOpenDialog(CropFrame.this) ==
-            JFileChooser.APPROVE_OPTION) {
+            (new FileNameExtensionFilter(filterName, suffixes));
+        if (chooser.showOpenDialog(parent) == JFileChooser.APPROVE_OPTION) {
             File file = chooser.getSelectedFile();
             prefs.put(PREF_DIR, file.getParent());
+            return file;
+        } else {
+            return null;
+        }
+    }
+
+    public void showOpenDialog() {
+        File file = openDialogFile(CropFrame.this, "Image files",
+                                   ImageIO.getReaderFileSuffixes());
+        if (file != null) {
             try {
                 setFilename(file.getAbsolutePath());
             } catch (IOException e) {
