@@ -34,7 +34,11 @@ import java.io.FileOutputStream;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.PrintWriter;
 import java.io.Writer;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.text.DecimalFormat;
 import java.text.NumberFormat;
 import java.util.ArrayList;
@@ -2310,6 +2314,11 @@ public class Diagram extends Observable implements Printable {
     }
 
     public void setOriginalFilename(String filename) {
+        if ((filename == null && originalFilename == null)
+            || (filename != null && filename.equals(originalFilename))) {
+            return;
+        }
+
         originalFilename = filename;
         propagateChange();
     }
@@ -2672,10 +2681,12 @@ public class Diagram extends Observable implements Printable {
         wr.close();
     }
 
-    public void saveAsPED(File file) throws IOException {
-        filename = file.getAbsolutePath();
-        getObjectMapper().writeValue(file, this);
-        saveNeeded = false;
+    public void saveAsPED(Path path) throws IOException {
+        try (PrintWriter writer = new PrintWriter
+             (Files.newBufferedWriter(path, StandardCharsets.UTF_8))) {
+                writer.print(Tabify.tabify(getObjectMapper().writeValueAsString(this)));
+                saveNeeded = false;
+            }
     }
 
     /** Invoked from the EditFrame menu */
