@@ -22,7 +22,6 @@ public class Tabify {
                 res.append(ch);
             }
         }
-        System.out.println("Result is " + res.toString());
         return res.toString();
     }
 }
