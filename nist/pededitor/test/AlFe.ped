@@ -1,6 +1,39 @@
 {
   "tags" : [ ],
-  "originalToPrincipal" : null,
+  "originalToPrincipal" : {
+    "transform" : "QuadToRect",
+    "input" : [ {
+      "x" : 164.0,
+      "y" : 1222.0
+    }, {
+      "x" : 166.0,
+      "y" : 101.0
+    }, {
+      "x" : 1652.0,
+      "y" : 101.0
+    }, {
+      "x" : 1652.0,
+      "y" : 1220.0
+    } ],
+    "output" : {
+      "x" : 0.0,
+      "y" : 400.0,
+      "width" : 1.0,
+      "height" : 1200.0
+    },
+    "x" : 0.0,
+    "y" : 400.0,
+    "w" : 1.0,
+    "h" : 1200.0,
+    "llx" : 164.0,
+    "lly" : 1222.0,
+    "ulx" : 166.0,
+    "uly" : 101.0,
+    "urx" : 1652.0,
+    "ury" : 101.0,
+    "lrx" : 1652.0,
+    "lry" : 1220.0
+  },
   "principalToStandardPage" : {
     "transform" : "RectangleTransform",
     "input" : {
@@ -427,7 +460,7 @@
   } ],
   "tieLines" : [ ],
   "diagramComponents" : [ null, null, "Fe", "Al" ],
-  "originalFilename" : null,
+  "originalFilename" : "C:\\eb\\workspace\\PEDEditor\\gov\\nist\\pededitor\\test\\PED_LARGE.png",
   "fontName" : "DejaVu LGC Serif PED",
   "keys" : {
   },
@@ -1487,12 +1520,12 @@
     "name" : "Al",
     "rulers" : [ {
       "startPoint" : {
-        "x" : 0.0,
-        "y" : 400.0
+	"x" : 0.0,
+	"y" : 400.0
       },
       "endPoint" : {
-        "x" : 1.0,
-        "y" : 400.0
+	"x" : 1.0,
+	"y" : 400.0
       },
       "fontSize" : 0.02,
       "lineWidth" : 0.0016,
@@ -1518,12 +1551,12 @@
       "tickEnd" : null
     }, {
       "startPoint" : {
-        "x" : 0.0,
-        "y" : 1600.0
+	"x" : 0.0,
+	"y" : 1600.0
       },
       "endPoint" : {
-        "x" : 1.0,
-        "y" : 1600.0
+	"x" : 1.0,
+	"y" : 1600.0
       },
       "fontSize" : 0.02,
       "lineWidth" : 0.0016,
@@ -1559,12 +1592,12 @@
     "name" : "Y",
     "rulers" : [ {
       "startPoint" : {
-        "x" : 0.0,
-        "y" : 400.0
+	"x" : 0.0,
+	"y" : 400.0
       },
       "endPoint" : {
-        "x" : 0.0,
-        "y" : 1600.0
+	"x" : 0.0,
+	"y" : 1600.0
       },
       "fontSize" : 0.02,
       "lineWidth" : 0.0016,
@@ -1590,12 +1623,12 @@
       "tickEnd" : null
     }, {
       "startPoint" : {
-        "x" : 1.0,
-        "y" : 400.0
+	"x" : 1.0,
+	"y" : 400.0
       },
       "endPoint" : {
-        "x" : 1.0,
-        "y" : 1600.0
+	"x" : 1.0,
+	"y" : 1600.0
       },
       "fontSize" : 0.02,
       "lineWidth" : 0.0016,
