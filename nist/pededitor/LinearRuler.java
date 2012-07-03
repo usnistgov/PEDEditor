@@ -365,7 +365,7 @@ class LinearRuler implements Parameterizable2D {
             : (3 * scale * lineWidth);
         double minTickDelta = minTickPageDelta / m;
 
-        double clearDistance = Math.abs(scale * lineWidth * 8 / m);
+        double clearDistance = Math.abs(tickLength * 2 / m);
 
         /* Minimum value allowed for ticks. */
         double tickStart;
@@ -468,7 +468,7 @@ class LinearRuler implements Parameterizable2D {
                     = toPhysical(logical, pageStartPoint, pageEndPoint);
 
                 if (!((sst && Math.abs(logical - astart) < clearDistance)
-                      || (set && Math.abs(logical -aend) < clearDistance))) {
+                      || (set && Math.abs(logical - aend) < clearDistance))) {
 
                     if (tickRight) {
                         if (tickType == TickType.V) {
