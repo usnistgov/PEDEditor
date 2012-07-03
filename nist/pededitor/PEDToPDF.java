@@ -1,5 +1,6 @@
 package gov.nist.pededitor;
 
+import java.awt.geom.Rectangle2D;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -35,13 +36,22 @@ public class PEDToPDF {
             : s.substring(0, extensionIndex);
     }
 
+    public static Diagram loadAndCrop(String filename) throws IOException {
+        Diagram d = Diagram.loadFrom(new File(filename));
+        Rectangle2D bounds = new Rectangle2D.Double(-0.4, -0.2, 1.7, 1.6);
+        if (d.crop(bounds)) {
+            System.err.println(filename + " did not fit in the normal page bounds.");
+            d.computeMargins();
+        }
+        return d;
+    }
+
     public static void main(String[] args) {
         if (args.length == 2) {
             String ifn = args[0];
             String ofn = args[1];
             try {
-                Diagram.loadFrom(new File(ifn))
-                    .saveAsPDF(new File(ofn));
+                loadAndCrop(ifn).saveAsPDF(new File(ofn));
             } catch (IOException e) {
                 JOptionPane.showMessageDialog(null, e.toString());
             }
@@ -94,7 +104,7 @@ public class PEDToPDF {
                 }
 
                 try {
-                    Diagram d = Diagram.loadFrom(new File(filename));
+                    Diagram d = loadAndCrop(filename);
                     copy.addPage(copy.getImportedPage
                                  (new PdfReader(d.toPDFByteArray()),
                                   1));
