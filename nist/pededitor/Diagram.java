@@ -1891,6 +1891,8 @@ public class Diagram extends Observable implements Printable {
             + " sup { font-size: 75%; } "
             + " --></style>";
 
+        str = NestedSubscripts.unicodify(str);
+
         StringBuilder sb = new StringBuilder("<html><head");
         sb.append(style);
         sb.append("</head><body>");
@@ -2687,6 +2689,27 @@ public class Diagram extends Observable implements Printable {
                 writer.print(Tabify.tabify(getObjectMapper().writeValueAsString(this)));
                 saveNeeded = false;
             }
+    }
+
+    /** Remove every decoration that has at least one handle outside
+        r. Return true if at least one decoration was removed. */
+    public boolean crop(Rectangle2D r) {
+        boolean res = false;
+        boolean finished = false;
+        while (!finished) {
+            finished = true;
+            for (DecorationHandle hand: movementHandles()) {
+                Point2D page = principalToStandardPage.transform
+                    (hand.getLocation());
+                if (Duh.distanceSq(page, r) > 1e-12) {
+                    hand.remove();
+                    finished = false;
+                    res = true;
+                    break;
+                }
+            }
+        }
+        return res;
     }
 
     /** Invoked from the EditFrame menu */
