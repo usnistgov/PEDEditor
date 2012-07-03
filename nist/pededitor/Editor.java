@@ -59,6 +59,7 @@ import Jama.Matrix;
 import org.codehaus.jackson.annotate.JsonIgnore;
 
 // TODO Investigate whether JavaFX is really a plausible alternative.
+// (Answer: it's not really ready, it seems.)
 
 // TODO Allow users to adjust the text angle in the ruler edit dialog.
 
@@ -80,7 +81,10 @@ import org.codehaus.jackson.annotate.JsonIgnore;
 // TODO (optional) Fill styles are nearly completely implemented. The
 // main issue remaining at this point is that an assumption that works
 // OK for lines -- that a single line is either completely smoothed or
-// completely not -- doesn't work so well for fill regions.
+// completely not -- doesn't work so well for fill regions, because it
+// means you can't fill a semicircle.
+
+// TODO (optional) Combine fill styles with colors. Pretty easy.
 
 // TODO (optional) Eutectic and peritectic points.
 
@@ -507,7 +511,7 @@ public class Editor extends Diagram
         vertexInfo.setLineWidth(lineWidth);
         mouseIsStuck = false;
         paintSuppressionRequestCnt = 0;
-        setBackground(EditFrame.BackgroundImageType.LIGHT_GRAY);
+        setBackgroundType(EditFrame.BackgroundImageType.LIGHT_GRAY);
         tieLineDialog.setVisible(false);
         tieLineCorners = new ArrayList<>();
         originalImage = null;
@@ -659,8 +663,8 @@ public class Editor extends Diagram
         }
     }
 
-
-    public synchronized void setBackground(EditFrame.BackgroundImageType value) {
+    public synchronized void setBackgroundType
+        (EditFrame.BackgroundImageType value) {
         // Turn blinking off
         if (imageBlinker != null) {
             imageBlinker.cancel();
@@ -3178,8 +3182,14 @@ public class Editor extends Diagram
         String filterName = isEditable() ? "PED and image files" : "PED files";
         File file = CropFrame.openDialogFile(parent, filterName, exts);
         if (file != null) {
+            String ext = getExtension(file.getName());
+            if (ext == null && Files.notExists(file.toPath())) {
+                // Add .ped extension.
+                ext = "ped";
+                file = new File(file.getAbsolutePath() + "." + ext);
+            }
             try {
-                if ("ped".equalsIgnoreCase(getExtension(file.getName()))) {
+                if ("ped".equalsIgnoreCase(ext)) {
                     openDiagram(file);
                 } else if (isEditable()) {
                     cropFrame.setFilename(file.getAbsolutePath());

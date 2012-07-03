@@ -268,7 +268,7 @@ public class EditFrame extends JFrame
         }
 
         @Override public void actionPerformed(ActionEvent e) {
-            getParentEditor().setBackground(value);
+            getParentEditor().setBackgroundType(value);
         }
     }
 
