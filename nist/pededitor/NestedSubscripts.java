@@ -51,6 +51,8 @@ public class NestedSubscripts {
                 put('-', '\u208b');
                 put('(', '\u208d');
                 put(')', '\u208e');
+                put('e', '\u2091');
+                put('o', '\u2092');
                 put('x', '\u2093');
             }};
         supMap = new HashMap<Character, Character>() {{
