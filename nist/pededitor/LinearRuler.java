@@ -10,6 +10,7 @@ import java.awt.geom.AffineTransform;
 import java.awt.geom.Line2D;
 import java.awt.geom.Point2D;
 import java.awt.geom.Rectangle2D;
+import java.util.regex.Pattern;
 
 import org.codehaus.jackson.annotate.JsonBackReference;
 import org.codehaus.jackson.annotate.JsonIgnore;
@@ -19,6 +20,7 @@ import org.codehaus.jackson.annotate.JsonProperty;
     LinearAxis. */
 class LinearRuler implements Parameterizable2D {
     public static enum LabelAnchor { NONE, LEFT, RIGHT };
+    private static Pattern minusZeroPattern = Pattern.compile("-0\\.?0*\\z");
 
     /** Most applications use straight tick marks, but ternary
         diagrams use V-shaped tick marks (probably because internal
@@ -527,7 +529,12 @@ class LinearRuler implements Parameterizable2D {
                          location.y + mul * tickOffset.y);
 
                     g.rotate(theta + textAngle, anchor.x, anchor.y);
-                    String s = " " + String.format(formatString, logical).trim() + " ";
+                    String s = String.format(formatString, logical).trim();
+                    if (minusZeroPattern.matcher(s).lookingAt()) {
+                        // Java annoyingly formats -0 as "-0". Remove the minus.
+                        s = s.substring(1);
+                    }
+                    s = " " + s + " ";
                     LabelDialog.drawString
                         (g, s, anchor.x, anchor.y, xWeight, yWeight);
                     g.setTransform(oldTransform);
