@@ -1252,7 +1252,7 @@ public class Editor extends Diagram
         redraw();
     }
 
-    public void fill() {
+    public void setFill(StandardFill fill) {
         String errorTitle = "Cannot change fill settings";
         GeneralPolyline path = getActiveCurve();
         if (path == null) {
@@ -1269,8 +1269,7 @@ public class Editor extends Diagram
             return;
         }
 
-        path.setFilled(!path.isFilled());
-        propagateChange();
+        setFill(path, fill);
     }
 
     /** Start a new curve where the old curve ends. */
@@ -2421,7 +2420,11 @@ public class Editor extends Diagram
         if (hand == null) {
             return;
         }
-        toggleCurveClosure(hand.getCurveNo());
+        try {
+            toggleCurveClosure(hand.getCurveNo());
+        } catch (IllegalArgumentException x) {
+            showError(x.toString(), "Cannot perform operation");
+        }
     }
 
     @Override public void setOriginalFilename(String filename) {

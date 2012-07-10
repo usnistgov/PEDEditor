@@ -234,7 +234,7 @@ public class EditFrame extends JFrame
         }
 
         @Override public void actionPerformed(ActionEvent e) {
-            getParentEditor().setFillStyle(fill);
+            getParentEditor().setFill(fill);
         }
     }
 
@@ -632,13 +632,6 @@ public class EditFrame extends JFrame
                     }
                 });
 
-            mnCurve.add(new Action
-                        ("Toggle fill", KeyEvent.VK_F, KeyStroke.getKeyStroke('f')) {
-                    @Override public void actionPerformed(ActionEvent e) {
-                        getParentEditor().fill();
-                    }
-                });
-
             JMenu mnLineStyle = new JMenu("Line style");
             mnLineStyle.setMnemonic(KeyEvent.VK_T);
         
@@ -709,9 +702,7 @@ public class EditFrame extends JFrame
                          }
                      }));
             mnCurve.add(mnLineWidth);
-
-            // TODO Re-enable mnCurve.add(createFillMenu());
-
+            mnCurve.add(createFillMenu());
             mnCurve.add(new Action
                         ("Add vertex", KeyEvent.VK_X,
                          KeyStroke.getKeyStroke('x')) {
@@ -844,8 +835,8 @@ public class EditFrame extends JFrame
             mnFont.setMnemonic(KeyEvent.VK_F);
             mnFont.add(new FontMenuItem("Sans", "DejaVu LGC Sans PED"));
             mnFont.add(new FontMenuItem("Serif", "DejaVu LGC Serif PED"));
-            mnFont.add(new FontMenuItem("Serif (Widely-spaced lines)",
-                                        "DejaVu LGC Serif GRUMP"));
+            mnFont.add(new FontMenuItem("Sans (Widely-spaced lines)",
+                                        "DejaVu LGC Sans GRUMP"));
 
             mnProperties.add(mnFont);
         }
@@ -1281,7 +1272,7 @@ public class EditFrame extends JFrame
         g.clearRect(0, 0, im.getWidth(), im.getHeight());
         g.setColor(Color.BLACK);
         g.drawRect(0, 0, im.getWidth() - 1, im.getHeight() - 1);
-        g.setPaint(fill.getFill());
+        g.setPaint(fill.getPaint(Color.BLACK, 1));
         g.fill(new Rectangle(0, 0, im.getWidth(), im.getHeight()));
         return new ImageIcon(im);
     }
