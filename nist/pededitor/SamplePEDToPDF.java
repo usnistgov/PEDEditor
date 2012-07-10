@@ -22,5 +22,6 @@ public class SamplePEDToPDF {
         peds = peds.subList(0, 200);
         Collections.sort(peds, new MixedIntegerStringComparator());
         PEDToPDF.combinePEDs(peds, 0);
+        System.out.println("Conversion complete.");
     }
 }

@@ -123,6 +123,7 @@ public class PEDToPDF {
             String ofn = args[1];
             try {
                 loadAndCrop(ifn).saveAsPDF(new File(ofn));
+                System.out.println(ifn + " -> " + ofn + " conversion complete.");
             } catch (IOException e) {
                 JOptionPane.showMessageDialog(null, e.toString());
             }
@@ -131,6 +132,7 @@ public class PEDToPDF {
                 ArrayList<String> peds = getInputFilenames(PED_DIR);
                 Collections.sort(peds, new MixedIntegerStringComparator());
                 combinePEDs(peds, 100);
+                System.out.println("Batch conversion complete.");
             } catch (IOException | DirectoryIteratorException x) {
                 // IOException can never be thrown by the iteration.
                 // In this snippet, it can only be thrown by newDirectoryStream.

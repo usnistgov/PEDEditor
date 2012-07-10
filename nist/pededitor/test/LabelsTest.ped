@@ -387,6 +387,162 @@
     "color" : null,
     "boxed" : false,
     "opaque" : false
+  }, {
+    "xWeight" : 0.5,
+    "yWeight" : 0.5,
+    "x" : 0.0665116869052307,
+    "y" : 0.18863615648759624,
+    "baselineXOffset" : 0.0,
+    "baselineYOffset" : 0.0,
+    "text" : "⦵",
+    "angle" : 0.0,
+    "fontSize" : 2.0,
+    "color" : null,
+    "boxed" : false,
+    "opaque" : false
+  }, {
+    "xWeight" : 0.5,
+    "yWeight" : 0.5,
+    "x" : 0.09935877003897929,
+    "y" : 0.17193234970627014,
+    "baselineXOffset" : 0.0,
+    "baselineYOffset" : 0.0,
+    "text" : "✕",
+    "angle" : 0.0,
+    "fontSize" : 2.0,
+    "color" : null,
+    "boxed" : false,
+    "opaque" : false
+  }, {
+    "xWeight" : 0.5,
+    "yWeight" : 0.5,
+    "x" : 0.13477765922869156,
+    "y" : 0.1539206961592834,
+    "baselineXOffset" : 0.0,
+    "baselineYOffset" : 0.0,
+    "text" : "●",
+    "angle" : 0.0,
+    "fontSize" : 2.0,
+    "color" : null,
+    "boxed" : false,
+    "opaque" : false
+  }, {
+    "xWeight" : 0.5,
+    "yWeight" : 0.5,
+    "x" : 0.1710984665144188,
+    "y" : 0.13545038801739484,
+    "baselineXOffset" : 0.0,
+    "baselineYOffset" : 0.0,
+    "text" : "■",
+    "angle" : 0.0,
+    "fontSize" : 2.0,
+    "color" : null,
+    "boxed" : false,
+    "opaque" : false
+  }, {
+    "xWeight" : 0.5,
+    "yWeight" : 0.5,
+    "x" : 0.21222355039080038,
+    "y" : 0.11453694945909831,
+    "baselineXOffset" : 0.0,
+    "baselineYOffset" : 0.0,
+    "text" : "▲",
+    "angle" : 0.0,
+    "fontSize" : 2.0,
+    "color" : null,
+    "boxed" : false,
+    "opaque" : false
+  }, {
+    "xWeight" : 0.5,
+    "yWeight" : 0.5,
+    "x" : 0.2428530461267563,
+    "y" : 0.09896085777084773,
+    "baselineXOffset" : 0.0,
+    "baselineYOffset" : 0.0,
+    "text" : "▼",
+    "angle" : 0.0,
+    "fontSize" : 2.0,
+    "color" : null,
+    "boxed" : false,
+    "opaque" : false
+  }, {
+    "xWeight" : 0.5,
+    "yWeight" : 0.5,
+    "x" : 0.27521196237025247,
+    "y" : 0.08250529968115172,
+    "baselineXOffset" : 0.0,
+    "baselineYOffset" : 0.0,
+    "text" : "◇",
+    "angle" : 0.0,
+    "fontSize" : 2.0,
+    "color" : null,
+    "boxed" : false,
+    "opaque" : false
+  }, {
+    "xWeight" : 0.5,
+    "yWeight" : 0.5,
+    "x" : 0.3089311973262203,
+    "y" : 0.065357975420267,
+    "baselineXOffset" : 0.0,
+    "baselineYOffset" : 0.0,
+    "text" : "◆",
+    "angle" : 0.0,
+    "fontSize" : 2.0,
+    "color" : null,
+    "boxed" : false,
+    "opaque" : false
+  }, {
+    "xWeight" : 0.5,
+    "yWeight" : 0.5,
+    "x" : 0.34306418348795065,
+    "y" : 0.048000245256110574,
+    "baselineXOffset" : 0.0,
+    "baselineYOffset" : 0.0,
+    "text" : "✡",
+    "angle" : 0.0,
+    "fontSize" : 2.0,
+    "color" : null,
+    "boxed" : false,
+    "opaque" : false
+  }, {
+    "xWeight" : 0.5,
+    "yWeight" : 0.5,
+    "x" : 0.3688745194963543,
+    "y" : 0.03487485254193956,
+    "baselineXOffset" : 0.0,
+    "baselineYOffset" : 0.0,
+    "text" : "✶",
+    "angle" : 0.0,
+    "fontSize" : 2.0,
+    "color" : null,
+    "boxed" : false,
+    "opaque" : false
+  }, {
+    "xWeight" : 0.5,
+    "yWeight" : 0.5,
+    "x" : 0.09823180672210206,
+    "y" : 0.9522621559562734,
+    "baselineXOffset" : 0.0,
+    "baselineYOffset" : 0.0,
+    "text" : "Henry Ⅳ",
+    "angle" : 0.0,
+    "fontSize" : 1.2,
+    "color" : null,
+    "boxed" : false,
+    "opaque" : false
+  }, {
+    "xWeight" : 0.5,
+    "yWeight" : 0.5,
+    "x" : 0.21897823921386936,
+    "y" : 0.9522621559562734,
+    "baselineXOffset" : 0.0,
+    "baselineYOffset" : 0.0,
+    "text" : "αβγΑΒΓ",
+    "angle" : 0.0,
+    "fontSize" : 1.2,
+    "color" : null,
+    "boxed" : false,
+    "opaque" : false
   } ],
   "arrows" : [ ],
   "tieLines" : [ ],
@@ -403,9 +559,9 @@
     } ],
     "color" : null,
     "lineWidth" : 0.0016,
-    "filled" : false,
     "closed" : false,
     "lineStyle" : "SOLID",
+    "fillStyle" : null,
     "id" : 15
   }, {
     "shape" : "polyline",
@@ -415,9 +571,9 @@
     } ],
     "color" : null,
     "lineWidth" : 0.0016,
-    "filled" : false,
     "closed" : false,
     "lineStyle" : "SOLID",
+    "fillStyle" : null,
     "id" : 16
   }, {
     "shape" : "polyline",
@@ -427,9 +583,9 @@
     } ],
     "color" : null,
     "lineWidth" : 0.0016,
-    "filled" : false,
     "closed" : false,
     "lineStyle" : "SOLID",
+    "fillStyle" : null,
     "id" : 17
   }, {
     "shape" : "polyline",
@@ -439,9 +595,9 @@
     } ],
     "color" : null,
     "lineWidth" : 0.0016,
-    "filled" : false,
     "closed" : false,
     "lineStyle" : "SOLID",
+    "fillStyle" : null,
     "id" : 18
   }, {
     "shape" : "polyline",
@@ -451,9 +607,9 @@
     } ],
     "color" : null,
     "lineWidth" : 0.0032,
-    "filled" : false,
     "closed" : false,
     "lineStyle" : "SOLID",
+    "fillStyle" : null,
     "id" : 19
   }, {
     "shape" : "polyline",
@@ -463,9 +619,9 @@
     } ],
     "color" : null,
     "lineWidth" : 0.0032,
-    "filled" : false,
     "closed" : false,
     "lineStyle" : "SOLID",
+    "fillStyle" : null,
     "id" : 20
   }, {
     "shape" : "polyline",
@@ -475,9 +631,9 @@
     } ],
     "color" : null,
     "lineWidth" : 0.0032,
-    "filled" : false,
     "closed" : false,
     "lineStyle" : "SOLID",
+    "fillStyle" : null,
     "id" : 21
   }, {
     "shape" : "polyline",
@@ -490,9 +646,9 @@
     } ],
     "color" : null,
     "lineWidth" : 0.0024,
-    "filled" : false,
     "closed" : false,
     "lineStyle" : "SOLID",
+    "fillStyle" : null,
     "id" : 22
   }, {
     "shape" : "polyline",
@@ -502,9 +658,9 @@
     } ],
     "color" : null,
     "lineWidth" : 0.0024,
-    "filled" : false,
     "closed" : false,
     "lineStyle" : "SOLID",
+    "fillStyle" : null,
     "id" : 23
   }, {
     "shape" : "polyline",
@@ -517,9 +673,9 @@
     } ],
     "color" : null,
     "lineWidth" : 0.0024,
-    "filled" : false,
     "closed" : false,
     "lineStyle" : "SOLID",
+    "fillStyle" : null,
     "id" : 24
   }, {
     "shape" : "polyline",
@@ -532,9 +688,9 @@
     } ],
     "color" : null,
     "lineWidth" : 0.0024,
-    "filled" : false,
     "closed" : false,
     "lineStyle" : "SOLID",
+    "fillStyle" : null,
     "id" : 25
   }, {
     "shape" : "polyline",
@@ -547,9 +703,9 @@
     } ],
     "color" : null,
     "lineWidth" : 0.0024,
-    "filled" : false,
     "closed" : false,
     "lineStyle" : "SOLID",
+    "fillStyle" : null,
     "id" : 26
   }, {
     "shape" : "polyline",
@@ -562,10 +718,25 @@
     } ],
     "color" : null,
     "lineWidth" : 0.0024,
-    "filled" : false,
     "closed" : false,
     "lineStyle" : "SOLID",
+    "fillStyle" : null,
     "id" : 27
+  }, {
+    "shape" : "polyline",
+    "points" : [ {
+      "x" : 0.05212862340706364,
+      "y" : 0.19595041062147645
+    }, {
+      "x" : 0.37375321177149834,
+      "y" : 0.032393879337173415
+    } ],
+    "color" : null,
+    "lineWidth" : 0.0024,
+    "closed" : false,
+    "lineStyle" : "SOLID",
+    "fillStyle" : null,
+    "id" : 28
   } ],
   "axes" : [ {
     "format" : {
