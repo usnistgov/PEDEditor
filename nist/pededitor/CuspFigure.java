@@ -3,6 +3,7 @@ package gov.nist.pededitor;
 import java.awt.BasicStroke;
 import java.awt.Color;
 import java.awt.Graphics2D;
+import java.awt.Paint;
 import java.awt.geom.AffineTransform;
 import java.awt.geom.Line2D;
 import java.awt.geom.Path2D;
@@ -44,7 +45,7 @@ public abstract class GeneralPolyline implements Parameterizable2D {
     protected double lineWidth = 1.0;
 
     /** Only closed curves can be filled. */
-    protected boolean filled = false;
+    protected StandardFill fill = null;
 
     static private int minFreeId = 0;
     /** Used only during serialization and deserialization. */
@@ -63,11 +64,16 @@ public abstract class GeneralPolyline implements Parameterizable2D {
     }
 
     public void setFilled(boolean filled) {
-        this.filled = filled;
+        System.out.println("WARNING Used obsolete method setFilled().");
+        if (filled) {
+            setFill(StandardFill.SOLID);
+        } else {
+            setStroke(StandardStroke.SOLID);
+        }
     }
 
-    public boolean isFilled() {
-        return filled;
+    @JsonIgnore public boolean isFilled() {
+        return fill != null;
     }
 
     @JsonProperty("id") int getJSONId() {
@@ -124,17 +130,12 @@ public abstract class GeneralPolyline implements Parameterizable2D {
                      getStroke(), getLineWidth());
         output.setColor(getColor());
         output.setClosed(isClosed());
+        output.setFill(getFill());
         return output;
     }
 
-    @Override
-	public GeneralPolyline clone() {
-        GeneralPolyline output
-            = create(getSmoothingType(), getPoints(),
-                     getStroke(), getLineWidth());
-        output.setColor(getColor());
-        output.setClosed(isClosed());
-        return output;
+    @Override public GeneralPolyline clone() {
+        return nearClone(getSmoothingType());
     }
 
     /** @return a new GeneralPolyline that is like this one, but xform
@@ -153,8 +154,7 @@ public abstract class GeneralPolyline implements Parameterizable2D {
     }
 
     /** @return this's corresponding Path2D.Double. */
-    @JsonIgnore
-    abstract public Path2D.Double getPath();
+    @JsonIgnore abstract public Path2D.Double getPath();
 
     /** @return a Path2D.Double that corresponds to this polyline's
         coordinates with the given transformation applied afterwards.
@@ -208,20 +208,31 @@ public abstract class GeneralPolyline implements Parameterizable2D {
         Color color = getColor();
         if (color != null) {
             g.setColor(color);
+        } else {
+            color = g.getColor();
         }
 
-        if (isClosed() && isFilled()) {
-            g.fill(path);
+        if (isFilled()) {
+            Paint oldPaint = null;
+            try {
+                oldPaint = g.getPaint();
+                // TODO Cash the Paint objects?
+                g.setPaint(getFill().getPaint(color, 1.0));
+                g.fill(path);
+            } finally {
+                g.setPaint(oldPaint);
+            }
         } else {
             if (lineWidth == 0) {
                 return;
             }
+            if (stroke == null) {
+                throw new IllegalStateException("Wak?" + this);
+            }
             stroke.getStroke().draw(g, path, lineWidth);
         }
 
-        if (color != null) {
-            g.setColor(oldColor);
-        }
+        g.setColor(oldColor);
     }
 
     /* Do not alter the object returned by this method. Clone it if
@@ -270,6 +281,12 @@ public abstract class GeneralPolyline implements Parameterizable2D {
         return stroke;
     }
 
+    /** @return null unless this polyline has been assigned a
+        stroke. */
+    @JsonProperty("fillStyle") public StandardFill getFill() {
+        return fill;
+    }
+
     /** @return a copy of "stroke" with its line width and dash
         pattern lengths scaled by a factor of "scaled". */
     public static BasicStroke scaledStroke(BasicStroke stroke, double scaled) {
@@ -306,6 +323,16 @@ public abstract class GeneralPolyline implements Parameterizable2D {
         context. */
     @JsonProperty("lineStyle") public void setStroke(StandardStroke stroke) {
         this.stroke = stroke;
+        if (stroke != null) {
+            this.fill = null;
+        }
+    }
+
+    @JsonProperty("fillStyle") public void setFill(StandardFill fill) {
+        this.fill = fill;
+        if (fill != null) {
+            this.stroke = null;
+        }
     }
 
     public Point2D.Double[] getPoints() {
