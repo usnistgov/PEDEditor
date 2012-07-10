@@ -25,14 +25,16 @@ public class Fill {
     */
 
 
-    public static TexturePaint createHatch(double theta, double lineWidth,
-                                           double density, boolean crosshatch) {
+    public static TexturePaint createHatch
+        (double theta, double lineWidth, double density, boolean crosshatch,
+         Color color) {
         return createHatch(theta, density, crosshatch,
-                           new BasicStroke((float) lineWidth));
+                           new BasicStroke((float) lineWidth), color);
     }
 
-    public static TexturePaint createHatch(double theta, double density,
-                                           boolean crosshatch, BasicStroke stroke) {
+    public static TexturePaint createHatch
+        (double theta, double density, boolean crosshatch, BasicStroke stroke,
+         Color color) {
         theta = normalizeTheta(theta);
         boolean invertY = (theta < 0);
         if (invertY) {
@@ -55,6 +57,7 @@ public class Fill {
         Spec spec = createSpec(theta, lineWidth / density, dashLength);
         BufferedImage im = toBlank(spec, transposeXY);
         Graphics2D g = createGraphics(im);
+        g.setColor(color);
         g.setStroke(stroke);
 
         if (crosshatch) {
