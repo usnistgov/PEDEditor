@@ -1012,6 +1012,7 @@ public class Diagram extends Observable implements Printable {
             put("DejaVu LGC Sans PED", "DejaVuLGCSansPED.ttf");
             put("DejaVu LGC Serif PED", "DejaVuLGCSerifPED.ttf");
             put("DejaVu LGC Serif GRUMP", "DejaVuLGCSerifGRUMP.ttf");
+            put("DejaVu LGC Sans GRUMP", "DejaVuLGCSansGRUMP.ttf");
         }
     };
 
@@ -2195,11 +2196,14 @@ public class Diagram extends Observable implements Printable {
         propagateChange();
     }
 
-    /** Toggle the closed/open status of the currently selected
-        curve. */
-    public void toggleCurveClosure(int pathNo) {
-
+    /** Toggle the closed/open status of curve #pathNo. Throws
+        IllegalArgumentException if that curve is filled, since you
+        can't turn off closure for a filled curve. */
+    public void toggleCurveClosure(int pathNo) throws IllegalArgumentException {
         GeneralPolyline path = paths.get(pathNo);
+        if (path.isFilled() && path.isClosed()) {
+            throw new IllegalArgumentException("Cannot turn off closure of a filled curve");
+        }
         path.setClosed(!path.isClosed());
         propagateChange();
     }
@@ -2691,8 +2695,10 @@ public class Diagram extends Observable implements Printable {
             }
     }
 
-    /** Remove every decoration that has at least one handle outside
-        r. Return true if at least one decoration was removed. */
+    /** Remove every decoration that has at least one handle for which
+        principalToStandardPage.transform(handle.getLocation()) lies
+        outside r. Return true if at least one decoration was
+        removed. */
     public boolean crop(Rectangle2D r) {
         boolean res = false;
         boolean finished = false;
@@ -2702,6 +2708,9 @@ public class Diagram extends Observable implements Printable {
                 Point2D page = principalToStandardPage.transform
                     (hand.getLocation());
                 if (Duh.distanceSq(page, r) > 1e-12) {
+                    System.err.println("Removing handle " + hand
+                                       + " at " + Duh.toString(page)
+                                       + " outside  " + Duh.toString(r) + ")");
                     hand.remove();
                     finished = false;
                     res = true;
@@ -2710,6 +2719,11 @@ public class Diagram extends Observable implements Printable {
             }
         }
         return res;
+    }
+
+    public void setFill(GeneralPolyline path, StandardFill fill) {
+        path.setFill(fill);
+        propagateChange();
     }
 
     /** Invoked from the EditFrame menu */
@@ -3385,7 +3399,7 @@ public class Diagram extends Observable implements Printable {
 
             || diagramType == DiagramType.TERNARY_TOP;
         if (showLabels) {
-            r.labelAnchor = LinearRuler.LabelAnchor.RIGHT;
+            r.labelAnchor = LinearRuler.LabelAnchor.LEFT;
             r.suppressEndLabel = diagramType != DiagramType.TERNARY_RIGHT;
         } else {
             r.labelAnchor = LinearRuler.LabelAnchor.NONE;
@@ -3403,7 +3417,8 @@ public class Diagram extends Observable implements Printable {
         r.suppressStartLabel = (diagramType != DiagramType.TERNARY_TOP);
         r.suppressStartTick = (diagramType != DiagramType.TERNARY_TOP);
         r.suppressEndLabel = (diagramType != DiagramType.TERNARY_TOP);
-        r.suppressEndTick = (diagramType != DiagramType.TERNARY_LEFT);
+        r.suppressEndTick = (diagramType != DiagramType.TERNARY_LEFT)
+            || (end > 1 - 1e-6);
         add(r);
     }
 
