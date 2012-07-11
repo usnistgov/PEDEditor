@@ -72,6 +72,7 @@ import org.codehaus.jackson.map.DeserializationConfig;
 import org.codehaus.jackson.map.ObjectMapper;
 import org.codehaus.jackson.map.SerializationConfig;
 import org.codehaus.jackson.map.annotate.JsonDeserialize;
+import org.jsoup.Jsoup;
 
 import org.apache.batik.svggen.SVGGeneratorContext;
 import org.apache.batik.svggen.SVGGraphics2D;
@@ -471,6 +472,7 @@ public class Diagram extends Observable implements Printable {
         }
 
         public Point2D.Double getCenterLocation() {
+            initializeLabelViews();
             return (Point2D.Double) labelCenters.get(index).clone();
         }
 
@@ -2053,21 +2055,20 @@ public class Diagram extends Observable implements Printable {
         return output;
     }
 
-    /** Like nearestHandles(p), but return only handles of the given
-        type. */
+    /** Like nearestHandles(p), but return only handles of the given type. */
     @SuppressWarnings("unchecked")
-        <T> ArrayList<T> nearestHandles(Point2D.Double p, T type) {
+        <T> ArrayList<T> nearestHandles(Point2D.Double p, T handleType) {
         Point2D.Double pagePoint = principalToStandardPage.transform(p);
 
         ArrayList<HandleAndDistance> hads = new ArrayList<>();
-        Class<? extends Object> c = type.getClass();
+        Class<? extends Object> c = handleType.getClass();
         for (Decoration d: getDecorations()) {
-            if (!c.isInstance(d)) {
-                continue;
-            }
             double minDistSq = 0;
             DecorationHandle nearestHandle = null;
             for (DecorationHandle h: d.getHandles()) {
+                if (!c.isInstance(h)) {
+                    continue;
+                }
                 Point2D.Double p2 = h.getLocation();
                 p2 = principalToStandardPage.transform(p2);
                 double distSq = pagePoint.distanceSq(p2);
@@ -2527,6 +2528,13 @@ public class Diagram extends Observable implements Printable {
         }
 
         res.filename = file.getAbsolutePath();
+        try {
+            res.standardPageToPrincipal = res.principalToStandardPage.createInverse();
+        } catch (NoninvertibleTransformException e) {
+            System.err.println("This transform is not invertible");
+            System.exit(2);
+        }
+        
         for (TieLine tie: res.tieLines) {
             tie.innerEdge = res.idToCurve(tie.innerId);
             tie.outerEdge = res.idToCurve(tie.outerId);
@@ -2784,11 +2792,11 @@ public class Diagram extends Observable implements Printable {
 
             if (ternary) {
                 trd = p.x;
-                ttd = p.y;
-                tld = 1 - p.x - p.y;
+                ttd = -p.y;
+                tld = 1 - p.x + p.y;
             } else {
                 trd = p.x + p.y;
-                tld = p.y - p.x;
+                tld = -p.x + p.y;
                 ttd = 0;
             }
 
@@ -2806,18 +2814,20 @@ public class Diagram extends Observable implements Printable {
             }
         }
 
-        Point2D.Double corner = (side == Side.LEFT) ? left
+        Point2D.Double cornerPage = (side == Side.LEFT) ? left
             : (side == Side.RIGHT) ? right : top;
         double maxDistance = (pageBounds.width + pageBounds.height) / 8;
         double maxDistanceSq = maxDistance * maxDistance;
+        Point2D.Double corner = standardPageToPrincipal.transform(cornerPage);
 
         for (LabelHandle hand: nearestHandles(corner, new LabelHandle(-1, null))) {
             Point2D.Double page = principalToStandardPage.transform
                 (hand.getLocation());
-            if (page.distanceSq(corner) > maxDistanceSq) {
+            if (page.distanceSq(cornerPage) > maxDistanceSq) {
                 return null;
             }
-            String text = hand.getItem().getText().trim();
+            String html = hand.getItem().getText();
+            String text = Jsoup.parse(html).text().trim();
             ChemicalString.Match match = ChemicalString.composition(text);
             if (match != null) {
                 return text.substring(0, match.length);
@@ -2847,9 +2857,11 @@ public class Diagram extends Observable implements Printable {
 
         for (Side side: sides) {
             int i = side.ordinal();
-            if (diagramComponents[i] == null) {
+            String oldName = diagramComponents[i];
+            if (oldName == null
+                || oldName.toLowerCase().equals(side.toString().toLowerCase())) {
                 String c;
-                diagramComponents[i] = c = guessComponent(side);
+                setDiagramComponent(side, c = guessComponent(side));
                 if (c == null) {
                     System.out.println("Unable to guess diagram component for "
                                        + side);
