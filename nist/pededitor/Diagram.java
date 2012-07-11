@@ -454,7 +454,9 @@ public class Diagram extends Observable implements Printable {
         @Override public DecorationHandle remove() {
             saveNeeded = true;
             labels.remove(index);
-            labelViews.remove(index);
+            if (labelViews.size() > 0) {
+                labelViews.remove(index);
+            }
             propagateChange();
             return null;
         }
@@ -496,7 +498,9 @@ public class Diagram extends Observable implements Printable {
             saveNeeded = true;
             AnchoredLabel item = getItem();
             item.setColor(color);
-            labelViews.set(index, toView(item));
+            if (labelViews.size() > 0) {
+                labelViews.set(index, toView(item));
+            }
         }
 
         @Override public Color getColor() { return getItem().getColor(); }
@@ -1011,7 +1015,6 @@ public class Diagram extends Observable implements Printable {
         {
             put("DejaVu LGC Sans PED", "DejaVuLGCSansPED.ttf");
             put("DejaVu LGC Serif PED", "DejaVuLGCSerifPED.ttf");
-            put("DejaVu LGC Serif GRUMP", "DejaVuLGCSerifGRUMP.ttf");
             put("DejaVu LGC Sans GRUMP", "DejaVuLGCSansGRUMP.ttf");
         }
     };
@@ -1310,10 +1313,6 @@ public class Diagram extends Observable implements Printable {
     }
 
     public void paintDiagram(Graphics2D g, double scale, Color backColor) {
-        if (labelViews.size() != labels.size()) {
-            initializeLabelViews();
-        }
-
         g.setRenderingHint(RenderingHints.KEY_ANTIALIASING,
                            RenderingHints.VALUE_ANTIALIAS_ON);
         g.setRenderingHint(RenderingHints.KEY_RENDERING,
@@ -1878,7 +1877,9 @@ public class Diagram extends Observable implements Printable {
 
     public void add(AnchoredLabel label) {
         labels.add(label);
-        labelViews.add(toView(label));
+        if (!labelViews.isEmpty()) {
+            labelViews.add(toView(label));
+        }
         labelCenters.add(new Point2D.Double());
         propagateChange();
     }
@@ -1926,6 +1927,9 @@ public class Diagram extends Observable implements Printable {
 
     /** Regenerate the labelViews field from the labels field. */
     void initializeLabelViews() {
+        if (labelViews.size() == labels.size()) {
+            return;
+        }
         labelViews.clear();
         labelCenters.clear();
         for (AnchoredLabel label: labels) {
@@ -2044,6 +2048,44 @@ public class Diagram extends Observable implements Printable {
         ArrayList<DecorationHandle> output = new ArrayList<>();
         for (HandleAndDistance h: hads) {
             output.add(h.handle);
+        }
+
+        return output;
+    }
+
+    /** Like nearestHandles(p), but return only handles of the given
+        type. */
+    @SuppressWarnings("unchecked")
+        <T> ArrayList<T> nearestHandles(Point2D.Double p, T type) {
+        Point2D.Double pagePoint = principalToStandardPage.transform(p);
+
+        ArrayList<HandleAndDistance> hads = new ArrayList<>();
+        Class<? extends Object> c = type.getClass();
+        for (Decoration d: getDecorations()) {
+            if (!c.isInstance(d)) {
+                continue;
+            }
+            double minDistSq = 0;
+            DecorationHandle nearestHandle = null;
+            for (DecorationHandle h: d.getHandles()) {
+                Point2D.Double p2 = h.getLocation();
+                p2 = principalToStandardPage.transform(p2);
+                double distSq = pagePoint.distanceSq(p2);
+                if (nearestHandle == null || distSq < minDistSq) {
+                    nearestHandle = h;
+                    minDistSq = distSq;
+                }
+            }
+            if (nearestHandle != null) {
+                hads.add(new HandleAndDistance(nearestHandle, minDistSq));
+            }
+        }
+
+        Collections.sort(hads);
+
+        ArrayList<T> output = new ArrayList<>();
+        for (HandleAndDistance h: hads) {
+            output.add((T) h.handle);
         }
 
         return output;
@@ -2633,12 +2675,12 @@ public class Diagram extends Observable implements Printable {
         Document doc = new Document(PageSize.LETTER);
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
         PdfWriter writer;
-		try {
-			writer = PdfWriter.getInstance(doc, baos);
-		} catch (DocumentException e) {
-			e.printStackTrace();
-			return null;
-		}
+        try {
+            writer = PdfWriter.getInstance(doc, baos);
+        } catch (DocumentException e) {
+            e.printStackTrace();
+            return null;
+        }
 
         doc.open();
         appendToPDF(doc, writer);
@@ -2662,7 +2704,7 @@ public class Diagram extends Observable implements Printable {
         PdfTemplate tp = cb.createTemplate((float) bounds.width, (float) bounds.height);
         
         @SuppressWarnings("unused")
-		Graphics2D g2 = false
+            Graphics2D g2 = false
             ? tp.createGraphics((float) bounds.width, (float) bounds.height,
                                 new DefaultFontMapper())
             : tp.createGraphicsShapes((float) bounds.width, (float) bounds.height);
@@ -2719,6 +2761,103 @@ public class Diagram extends Observable implements Printable {
             }
         }
         return res;
+    }
+
+    /** Look at labels within the diagram in an attempt to guess what
+     * the name of the diagram component is. For ternary diagrams,
+     * look for compounds close to the appropriate corner (left,
+     * right, or top). For binary diagrams, look for compound names
+     * close to the lower left or lower right. */
+    public String guessComponent(Side side) {
+        boolean ternary = diagramType.isTernary();
+        Point2D.Double left = null;
+        Point2D.Double right = null;
+        Point2D.Double top = null;
+        double rd = -1e50;
+        double td = -1e50;
+        double ld = -1e50;
+
+        for (Point2D.Double p: principalToStandardPage.getOutputVertices()) {
+            double trd;
+            double ttd;
+            double tld;
+
+            if (ternary) {
+                trd = p.x;
+                ttd = p.y;
+                tld = 1 - p.x - p.y;
+            } else {
+                trd = p.x + p.y;
+                tld = p.y - p.x;
+                ttd = 0;
+            }
+
+            if (trd > rd) {
+                rd = trd;
+                right = p;
+            }
+            if (tld > ld) {
+                ld = tld;
+                left = p;
+            }
+            if (ttd > td) {
+                td = ttd;
+                top = p;
+            }
+        }
+
+        Point2D.Double corner = (side == Side.LEFT) ? left
+            : (side == Side.RIGHT) ? right : top;
+        double maxDistance = (pageBounds.width + pageBounds.height) / 8;
+        double maxDistanceSq = maxDistance * maxDistance;
+
+        for (LabelHandle hand: nearestHandles(corner, new LabelHandle(-1, null))) {
+            Point2D.Double page = principalToStandardPage.transform
+                (hand.getLocation());
+            if (page.distanceSq(corner) > maxDistanceSq) {
+                return null;
+            }
+            String text = hand.getItem().getText().trim();
+            ChemicalString.Match match = ChemicalString.composition(text);
+            if (match != null) {
+                return text.substring(0, match.length);
+            }
+        }
+
+        return null;
+    }
+
+    /** Fill in all undefined diagram components with best guesses. */
+    public void guessComponents() {
+        String code;
+        if (diagramType == DiagramType.OTHER
+            || (((code = get("diagram code")) != null)
+                && (code.equals("Q") || code.equals("P")))) {
+            // Types OTHER, QUATERNARY, and PRESSURE/TEMPERATURE do
+            // not have diagram components. Note that types Q and P
+            // relate only to an obsolete version of this editor, so
+            // you won't find an explanation of these items anywhere
+            // in this editor's source code.
+            return;
+        }
+
+        Side[] sides = diagramType.isTernary()
+            ? new Side[] { Side.LEFT, Side. RIGHT, Side.TOP }
+        : new Side [] { Side.LEFT, Side. RIGHT };
+
+        for (Side side: sides) {
+            int i = side.ordinal();
+            if (diagramComponents[i] == null) {
+                String c;
+                diagramComponents[i] = c = guessComponent(side);
+                if (c == null) {
+                    System.out.println("Unable to guess diagram component for "
+                                       + side);
+                } else {
+                    System.out.println("Assigned " + side + " = " + c);
+                }
+            }
+        }
     }
 
     public void setFill(GeneralPolyline path, StandardFill fill) {
@@ -2968,7 +3107,7 @@ public class Diagram extends Observable implements Printable {
 
         SideDouble[] sds = componentFractions(prin);
         if (sds == null || sds.length == 0) {
-       		return null;
+            return null;
         }
         for (SideDouble sd: sds) {
             if (componentElements[sd.s.ordinal()] == null) {
@@ -3101,6 +3240,7 @@ public class Diagram extends Observable implements Printable {
     /** @return a transformation that maps the unit square to the
         outline of label labelNo in scaled page space. */
     AffineTransform labelToScaledPage(int labelNo, double scale) {
+        initializeLabelViews();
         AnchoredLabel label = labels.get(labelNo);
         View view = labelViews.get(labelNo);
         Affine toPage = getPrincipalToAlignedPage();
@@ -3136,6 +3276,7 @@ public class Diagram extends Observable implements Printable {
         }
 
         // TODO: Exploit the labelToScaledPage transformation in htmlDraw.
+        initializeLabelViews();
         View view = labelViews.get(labelNo);
         Affine toPage = getPrincipalToAlignedPage();
         Point2D.Double centerPage = new Point2D.Double();
@@ -3545,6 +3686,7 @@ public class Diagram extends Observable implements Printable {
             throw new IllegalArgumentException("Unrecognized font name '" + s + "'");
         }
         embeddedFont = loadFont(filename, STANDARD_FONT_SIZE);
+        labelViews.clear();
         propagateChange();
         return true;
     }
