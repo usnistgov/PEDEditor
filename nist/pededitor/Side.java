@@ -12,6 +12,7 @@ public enum Side {
         this.name = name;
     }
 
+    /** Return true if this is an X dimesion (left or right). */
     public boolean isX() {
         return mIsX;
     }
@@ -20,8 +21,7 @@ public enum Side {
         return isX() ? "width" : "height";
     }
 
-    @Override
-	public String toString() {
+    @Override public String toString() {
         return name;
     }
  };
