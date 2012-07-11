@@ -38,13 +38,15 @@ public class PEDToPDF {
             : s.substring(0, extensionIndex);
     }
 
-    public static Diagram loadAndCrop(String filename) throws IOException {
+    public static Diagram loadAndFix(String filename) throws IOException {
         Diagram d = Diagram.loadFrom(new File(filename));
         Rectangle2D bounds = new Rectangle2D.Double(-0.5, -0.5, 2.0, 2.0);
         if (d.crop(bounds)) {
             System.err.println(filename + " did not fit in the normal page bounds.");
             d.computeMargins();
         }
+        d.guessComponents();
+        d.removeKey("diagram code");
         return d;
     }
 
@@ -105,11 +107,16 @@ public class PEDToPDF {
             }
 
             try {
-                Diagram d = loadAndCrop(filename);
+                Diagram d = loadAndFix(filename);
                 copy.addPage(copy.getImportedPage
                              (new PdfReader(d.toPDFByteArray()),
                               1));
+                int pedpos = filename.indexOf("\\ped\\");
+                String pedout = filename.substring(0, pedpos) + "\\ped2\\"
+                    + filename.substring(pedpos + 5);
                 System.out.println(filename + " -> " + ofn);
+                System.out.println(filename + " -> " + pedout);
+                d.saveAsPED(Paths.get(pedout));
             } catch (IOException | BadPdfFormatException x) {
                 System.err.println(filename + ": " + x);
             }
@@ -122,7 +129,7 @@ public class PEDToPDF {
             String ifn = args[0];
             String ofn = args[1];
             try {
-                loadAndCrop(ifn).saveAsPDF(new File(ofn));
+                loadAndFix(ifn).saveAsPDF(new File(ofn));
                 System.out.println(ifn + " -> " + ofn + " conversion complete.");
             } catch (IOException e) {
                 JOptionPane.showMessageDialog(null, e.toString());
