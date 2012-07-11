@@ -176,7 +176,6 @@ public class EditFrame extends JFrame
 
         @Override public void actionPerformed(ActionEvent e) {
             getParentEditor().setFontName(fontName);
-            getParentEditor().initializeLabelViews();
             repaint();
         }
     }

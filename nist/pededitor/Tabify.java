@@ -7,7 +7,6 @@ public class Tabify {
     static String tabify(String s) {
         StringBuilder res = new StringBuilder();
         int spaceCnt = 0;
-        System.out.println("Tabifying " + s);
         for (int i = 0, len = s.length(); i < len; ++i) {
         	char ch = s.charAt(i);
             if (ch == ' ') {
