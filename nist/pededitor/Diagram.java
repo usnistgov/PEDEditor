@@ -2837,8 +2837,10 @@ public class Diagram extends Observable implements Printable {
         return null;
     }
 
-    /** Fill in all undefined diagram components with best guesses. */
-    public void guessComponents() {
+    /** Fill in all undefined diagram components with best guesses.
+        Return false if it appears that some components still need to
+        be added, or true otherwise. */
+    public boolean guessComponents() {
         String code;
         if (diagramType == DiagramType.OTHER
             || (((code = get("diagram code")) != null)
@@ -2848,9 +2850,10 @@ public class Diagram extends Observable implements Printable {
             // relate only to an obsolete version of this editor, so
             // you won't find an explanation of these items anywhere
             // in this editor's source code.
-            return;
+            return true;
         }
 
+        boolean res = true;
         Side[] sides = diagramType.isTernary()
             ? new Side[] { Side.LEFT, Side. RIGHT, Side.TOP }
         : new Side [] { Side.LEFT, Side. RIGHT };
@@ -2860,16 +2863,18 @@ public class Diagram extends Observable implements Printable {
             String oldName = diagramComponents[i];
             if (oldName == null
                 || oldName.toLowerCase().equals(side.toString().toLowerCase())) {
-                String c;
-                setDiagramComponent(side, c = guessComponent(side));
-                if (c == null) {
-                    System.out.println("Unable to guess diagram component for "
-                                       + side);
-                } else {
+                String c = guessComponent(side);
+                if (c != null) {
+                    setDiagramComponent(side, c);
                     System.out.println("Assigned " + side + " = " + c);
+                } else {
+                    res = false;
+                    System.out.println("Could not determine diagram "
+                                       + "component for " + side);
                 }
             }
         }
+        return res;
     }
 
     public void setFill(GeneralPolyline path, StandardFill fill) {
