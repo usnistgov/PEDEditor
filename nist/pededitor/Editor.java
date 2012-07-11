@@ -1690,8 +1690,9 @@ public class Editor extends Diagram
             StringBuilder message = new StringBuilder
                 ("The following diagram component(s) could not be parsed as "
                  + "compounds:\n");
-            int sideNo = 0;
+            int sideNo = -1;
             for (Side side: badSides) {
+                ++sideNo;
                 if (sideNo > 0) {
                     message.append(", ");
                 }
