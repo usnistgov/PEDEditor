@@ -61,6 +61,16 @@ import org.codehaus.jackson.annotate.JsonIgnore;
 // TODO Investigate whether JavaFX is really a plausible alternative.
 // (Answer: it's not really ready, it seems.)
 
+// TODO Warn when a user selects a filename that is already taken.
+
+// TODO Discuss: key/value pairs for "digitizer" (digitizer's name?),
+// "state" ("ready", etc.).
+
+// TODO (bug) Look into the issue where Chris chose the "save" option
+// but it still asks to save before you exit.
+
+// TODO Highlight the newest file in the "Open" dialog.
+
 // TODO Allow users to adjust the text angle in the ruler edit dialog.
 
 // TODO (mandatory, but not clear whose end -- mine or Prometheus' --
@@ -299,7 +309,7 @@ public class Editor extends Diagram
     class CloseListener extends WindowAdapter
                                 implements WindowListener
     {
-        @Override 		public void windowClosing(WindowEvent e) {
+        @Override public void windowClosing(WindowEvent e) {
             close();
         }
     }
@@ -461,8 +471,6 @@ public class Editor extends Diagram
     // added, but whatever, this works.)
     ArrayList<PathAndT> tieLineCorners;
 
-    protected String filename = null;
-
     /** Current mouse position expressed in principal coordinates.
      It's not always sufficient to simply read the mouse position in
      the window, because after the user jumps to a preselected point,
@@ -524,7 +532,8 @@ public class Editor extends Diagram
     }
 
     public void close() {
-        if (verifyCloseDiagram()) {
+        if (verifyCloseDiagram
+            (new Object[] {"Save and quit", "Quit without saving", "Cancel"})) {
             System.exit(0);
         }
     }
@@ -1290,7 +1299,7 @@ public class Editor extends Diagram
     }
 
     public void showTangent(Decoration dec, double t) {
-    	Parameterization2D param = ((Parameterizable2D) dec).getParameterization();
+        Parameterization2D param = ((Parameterizable2D) dec).getParameterization();
         if (dec instanceof CurveDecoration) {
             CurveDecoration cdec = (CurveDecoration) dec;
             GeneralPolyline path = cdec.getItem();
@@ -1862,9 +1871,9 @@ public class Editor extends Diagram
                 }
                 Collections.sort(points, new OrderByXY());
             } else {
-            	JOptionPane.showMessageDialog
-                	(editFrame, "You need to select a curve or label before using this function.");
-            	return;
+                JOptionPane.showMessageDialog
+                    (editFrame, "You need to select a curve or label before using this function.");
+                return;
             }
         }
 
@@ -2926,13 +2935,10 @@ public class Editor extends Diagram
 
         @return false if the user changes their mind and the diagram
         should not be closed. */
-    boolean verifyCloseDiagram() {
+    boolean verifyCloseDiagram(Object[] options) {
         if (!saveNeeded) {
             return true;
         }
-        
-        Object[] options = new Object[]
-            {"Save and continue", "Do not save", "Cancel"};
 
         switch (JOptionPane.showOptionDialog
                 (editFrame,
@@ -2955,6 +2961,30 @@ public class Editor extends Diagram
         }
     }
 
+    /** Give the user an opportunity to save the old diagram or to
+        change their mind before closing a diagram.
+
+        @return false if the user changes their mind and the diagram
+        should not be closed. */
+    boolean verifyCloseDiagram() {
+        return verifyCloseDiagram
+            (new Object[] {"Save and continue", "Do not save", "Cancel"});
+    }
+
+    /** If the file already exists, ask the user whether overwriting
+        the file is OK, and return false if the user says no. If the
+        file does not already exist, or the user confirms overwrite,
+        then return true. */
+    boolean verifyOverwriteFile(File file) {
+        if (!Files.exists(file.toPath())) {
+            return true;
+        }
+        return JOptionPane.showConfirmDialog
+            (editFrame,
+             "A file named '" + file.getName() + "' already exists. Overwrite the file?",
+             "Confirm overwrite",
+             JOptionPane.OK_CANCEL_OPTION) == JOptionPane.OK_OPTION;
+    }
 
     /** Invoked from the EditFrame menu */
     public void setAspectRatio() {
@@ -3309,7 +3339,7 @@ public class Editor extends Diagram
     /** Invoked from the EditFrame menu */
     public void saveAsPDF() {
         File file = showSaveDialog("pdf");
-        if (file == null) {
+        if (file == null || !verifyOverwriteFile(file)) {
             return;
         }
 
@@ -3319,7 +3349,7 @@ public class Editor extends Diagram
     /** Invoked from the EditFrame menu */
     public void saveAsSVG() {
         File file = showSaveDialog("svg");
-        if (file == null) {
+        if (file == null || !verifyOverwriteFile(file)) {
             return;
         }
 
@@ -3334,7 +3364,7 @@ public class Editor extends Diagram
 
     public void saveAsPED() {
         File file = showSaveDialog("ped");
-        if (file == null) {
+        if (file == null || !verifyOverwriteFile(file)) {
             return;
         }
         saveAsPED(file.toPath());
@@ -3343,6 +3373,7 @@ public class Editor extends Diagram
     @Override public void saveAsPED(Path file) {
         try {
             super.saveAsPED(file);
+            filename = file.toAbsolutePath().toString();
             JOptionPane.showMessageDialog(editFrame, "File saved.");
         } catch (IOException e) {
             JOptionPane.showMessageDialog
@@ -3352,7 +3383,12 @@ public class Editor extends Diagram
 
     /** Invoked from the EditFrame menu */
     public void save() {
-        saveAsPED(FileSystems.getDefault().getPath(getFilename()));
+        String filename = getFilename();
+        if (filename == null) {
+            saveAsPED();
+        } else {
+            saveAsPED(FileSystems.getDefault().getPath(filename));
+        }
     }
 
     /** Invoked from the EditFrame menu */
