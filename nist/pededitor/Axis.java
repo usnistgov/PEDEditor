@@ -39,4 +39,9 @@ abstract public class Axis {
     public String valueAsString(double px, double py) {
         return format.format(value(px, py));
     }
+
+    /** Convenience variation of valueAsString(double, double). */
+    public String valueAsString(Point2D p) {
+        return format.format(value(p.getX(), p.getY()));
+    }
 }
