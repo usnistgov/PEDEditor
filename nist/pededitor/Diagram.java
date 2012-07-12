@@ -1928,8 +1928,13 @@ public class Diagram extends Observable implements Printable {
 
         StringBuilder status = new StringBuilder();
 
-        String compound = molePercentToCompound
-            (isUsingWeightFraction() ? weightToMoleFraction(prin) : prin);
+        Point2D.Double mole = isUsingWeightFraction()
+            ? weightToMoleFraction(prin) : prin;
+        Point2D.Double weight = isUsingWeightFraction()
+            ? prin : moleToWeightFraction(mole);
+        boolean haveBoth = mole != null && weight != null;
+
+        String compound = molePercentToCompound(mole);
         if (compound != null) {
             status.append(ChemicalString.autoSubscript(compound) + ": ");
         }
@@ -1943,20 +1948,32 @@ public class Diagram extends Observable implements Printable {
             }
             status.append(ChemicalString.autoSubscript(axis.name.toString()));
             status.append(" = ");
-            status.append(axis.valueAsString(prin.x, prin.y));
 
-            if (axisIsFractional(axis)) {
-                // Express values in fractional terms if the decimal
-                // value is a close approximation to a fraction.
-                double d = axis.value(prin.x, prin.y);
-                ContinuedFraction f = approximateFraction(d);
-                if (f != null && f.numerator != 0 && f.denominator > 1) {
-                    status.append(" (" + f + ")");
-                }
+            if (haveBoth && isComponentAxis(axis)) {
+                status.append(withFraction(axis, mole));
+                status.append("/");
+                status.append(withFraction(axis, weight));
+            } else {
+                status.append(withFraction(axis, prin));
             }
         }
 
         return status.toString();
+    }
+
+    String withFraction(LinearAxis axis, Point2D.Double p) {
+        String res = axis.valueAsString(p);
+
+        if (axisIsFractional(axis)) {
+            // Express values in fractional terms if the decimal
+            // value is a close approximation to a fraction.
+            double d = axis.value(p);
+            ContinuedFraction f = approximateFraction(d);
+            if (f != null && f.numerator != 0 && f.denominator > 1) {
+                res = res + " (" + f + ")";
+            }
+        }
+        return res;
     }
 
     @JsonIgnore public LinearAxis getXAxis() {
@@ -1994,6 +2011,15 @@ public class Diagram extends Observable implements Printable {
 
     static boolean isPrimaryAxis(LinearAxis axis) {
         return (axis.isXAxis() || axis.isYAxis() || isZAxis(axis));
+    }
+
+    /** Return true if this axis measures a diagram component
+        concentration (in either weight or mole fraction) */
+    boolean isComponentAxis(LinearAxis axis) {
+        return axis.isXAxis() ? (diagramComponents[Side.RIGHT.ordinal()] != null)
+            : axis.isYAxis() ? (diagramComponents[Side.TOP.ordinal()] != null)
+            : isZAxis(axis) ? (diagramComponents[Side.LEFT.ordinal()] != null)
+            : false;
     }
 
     // Smells kludgy...
