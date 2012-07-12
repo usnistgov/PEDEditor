@@ -120,6 +120,59 @@ public class EditFrame extends JFrame
             }
         };
 
+    /** Internal use; called from Editor.java. Make the GUI changes
+        necessary to reflect whether we are or aren't currently using weight
+        fraction values. */
+    void setUsingWeightFraction(boolean b) {
+        convertToMole.setEnabled(b);
+        convertToWeight.setEnabled(!b);
+        usingWeightFraction.setSelected(b);
+    }
+
+    void conversionError() {
+        JOptionPane.showMessageDialog
+            (this,
+             "<html><p>The conversion could not be performed.</p>"
+             + "<p>Conversions can only be performed on "
+             + "diagrams for which the left, right, and (for ternary diagrams) "
+             + "top components are defined (using the "
+             + "<code>Che<u>m</u>istry/<u>C</u>omponents</code> "
+             + "menu) as simple chemical formulas such as \"Ca\" or "
+             + "\"Pb3(PO4)2\".</p>"
+             + "</html>");
+    }
+
+    protected Action convertToMole = new Action
+        ("Convert to mole fraction", KeyEvent.VK_C) {
+            {
+                setEnabled(false);
+            }
+            @Override public void actionPerformed(ActionEvent e) {
+                if (!getParentEditor().weightToMoleFraction()) {
+                    conversionError();
+                }
+            }
+        };
+
+    protected Action convertToWeight = new Action
+        ("Convert to weight fraction", KeyEvent.VK_C) {
+            @Override public void actionPerformed(ActionEvent e) {
+                if (!getParentEditor().moleToWeightFraction()) {
+                    conversionError();
+                }
+            }
+        };
+
+    protected JCheckBoxMenuItem usingWeightFraction
+        = new JCheckBoxMenuItem
+        (new Action
+         ("Displaying weight fraction", KeyEvent.VK_W) {
+                @Override public void actionPerformed(ActionEvent e) {
+                    getParentEditor().setUsingWeightFraction
+                        (usingWeightFraction.isSelected());
+                }
+            });
+
     public Editor getParentEditor() { return parentEditor; }
 
     abstract class Action extends AbstractAction {
@@ -926,29 +979,21 @@ public class EditFrame extends JFrame
             mnChem.add(mnComponents);
         }
 
+        {
+            JMenu mnProp = new JMenu("Proportions");
+            mnProp.setMnemonic(KeyEvent.VK_P);
+            mnProp.add(convertToMole);
+            mnProp.add(convertToWeight);
+            mnProp.add(usingWeightFraction);
+            mnChem.add(mnProp);
+        }
+            
+
         mnChem.add(new Action
-                   ("Compound to mole/weight fraction", KeyEvent.VK_M,
+                   ("Chemical formula to mole/weight fraction", KeyEvent.VK_M,
                     KeyStroke.getKeyStroke('%')) {
                 @Override public void actionPerformed(ActionEvent e) {
                     getParentEditor().computeFraction();
-                }
-            });
-
-        mnChem.add(new Action("Mole to Weight Fraction", KeyEvent.VK_W) {
-                @Override public void actionPerformed(ActionEvent e) {
-                    if (!getParentEditor().moleToWeightFraction()) {
-                        JOptionPane.showMessageDialog
-                            (EditFrame.this, "The conversion could not be performed.");
-                    }
-                }
-            });
-
-        mnChem.add(new Action("Weight to Mole Fraction", KeyEvent.VK_O) {
-                @Override public void actionPerformed(ActionEvent e) {
-                    if (!getParentEditor().weightToMoleFraction()) {
-                        JOptionPane.showMessageDialog
-                            (EditFrame.this, "The conversion could not be performed.");
-                    }
                 }
             });
 
