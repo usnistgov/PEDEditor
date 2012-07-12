@@ -512,7 +512,7 @@ public class EditFrame extends JFrame
                 }
             });
 
-        // "Vertex" top-level menu
+        // "Position" top-level menu
         JMenu mnPosition = new JMenu("Position");
         mnPosition.setMnemonic(KeyEvent.VK_P);
         menuBar.add(mnPosition);
@@ -532,14 +532,6 @@ public class EditFrame extends JFrame
                         KeyStroke.getKeyStroke('A')) {
                 @Override public void actionPerformed(ActionEvent e) {
                     getParentEditor().autoPosition();
-                }
-            });
-
-        mnPosition.add(new Action
-                       ("Compound to mole/weight fraction", KeyEvent.VK_M,
-                        KeyStroke.getKeyStroke('%')) {
-                @Override public void actionPerformed(ActionEvent e) {
-                    getParentEditor().computeFraction();
                 }
             });
 
@@ -829,14 +821,6 @@ public class EditFrame extends JFrame
             setAspectRatio.setEnabled(false);
             mnProperties.add(setAspectRatio);
 
-            JMenu mnComponents = new JMenu("Components");
-            mnComponents.setMnemonic(KeyEvent.VK_C);
-            setTopComponent.setEnabled(false);
-            mnComponents.add(setLeftComponent);
-            mnComponents.add(setRightComponent);
-            mnComponents.add(setTopComponent);
-            mnProperties.add(mnComponents);
-
             JMenu mnFont = new JMenu("Font");
             mnFont.setMnemonic(KeyEvent.VK_F);
             mnFont.add(new FontMenuItem("Sans", "DejaVu LGC Sans PED"));
@@ -879,24 +863,6 @@ public class EditFrame extends JFrame
 
             mnProperties.add(mnMargins);
         }
-
-        mnProperties.add(new Action("Mole to Weight Fraction", KeyEvent.VK_W) {
-                @Override public void actionPerformed(ActionEvent e) {
-                    if (!getParentEditor().moleToWeightFraction()) {
-                        JOptionPane.showMessageDialog
-                            (EditFrame.this, "The conversion could not be performed.");
-                    }
-                }
-            });
-
-        mnProperties.add(new Action("Weight to Mole Fraction", KeyEvent.VK_O) {
-                @Override public void actionPerformed(ActionEvent e) {
-                    if (!getParentEditor().weightToMoleFraction()) {
-                        JOptionPane.showMessageDialog
-                            (EditFrame.this, "The conversion could not be performed.");
-                    }
-                }
-            });
 
         if (editable) {
             JMenu mnScale = new JMenu("Scale");
@@ -944,6 +910,47 @@ public class EditFrame extends JFrame
         if (mnProperties.getItemCount() > 0) {
             menuBar.add(mnProperties);
         }
+
+        // "Chemistry" top-level menu
+        JMenu mnChem = new JMenu("Chemistry");
+        mnChem.setMnemonic(KeyEvent.VK_M);
+        menuBar.add(mnChem);
+
+        if (editable) {
+            JMenu mnComponents = new JMenu("Components");
+            mnComponents.setMnemonic(KeyEvent.VK_C);
+            setTopComponent.setEnabled(false);
+            mnComponents.add(setLeftComponent);
+            mnComponents.add(setRightComponent);
+            mnComponents.add(setTopComponent);
+            mnChem.add(mnComponents);
+        }
+
+        mnChem.add(new Action
+                   ("Compound to mole/weight fraction", KeyEvent.VK_M,
+                    KeyStroke.getKeyStroke('%')) {
+                @Override public void actionPerformed(ActionEvent e) {
+                    getParentEditor().computeFraction();
+                }
+            });
+
+        mnChem.add(new Action("Mole to Weight Fraction", KeyEvent.VK_W) {
+                @Override public void actionPerformed(ActionEvent e) {
+                    if (!getParentEditor().moleToWeightFraction()) {
+                        JOptionPane.showMessageDialog
+                            (EditFrame.this, "The conversion could not be performed.");
+                    }
+                }
+            });
+
+        mnChem.add(new Action("Weight to Mole Fraction", KeyEvent.VK_O) {
+                @Override public void actionPerformed(ActionEvent e) {
+                    if (!getParentEditor().weightToMoleFraction()) {
+                        JOptionPane.showMessageDialog
+                            (EditFrame.this, "The conversion could not be performed.");
+                    }
+                }
+            });
 
         // "View" top-level menu
         JMenu mnView = new JMenu("View");
