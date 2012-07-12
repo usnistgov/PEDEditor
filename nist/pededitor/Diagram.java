@@ -53,6 +53,8 @@ import java.util.Map;
 import java.util.Observable;
 import java.util.Set;
 import java.util.TreeMap;
+import java.util.TreeSet;
+
 import com.itextpdf.text.Document;
 import com.itextpdf.text.DocumentException;
 import com.itextpdf.text.PageSize;
@@ -1001,6 +1003,7 @@ public class Diagram extends Observable implements Printable {
         }
     }
 
+    public final String WEIGHT_FRACTION_TAG = "weight fraction";
     protected static final double BASE_SCALE = 615.0;
 
     // The label views are grid-fitted at the font size of the buttons
@@ -1142,6 +1145,10 @@ public class Diagram extends Observable implements Printable {
 
     public String[] getTags() {
         return tags.toArray(new String[0]);
+    }
+
+    public boolean containsTag(String tag) {
+        return tags.contains(tag);
     }
 
     public void removeAllTags() {
@@ -1539,9 +1546,10 @@ public class Diagram extends Observable implements Printable {
     }
 
     /** Assuming that the principal coordinates are defined as mole
-        percents, return the mole fractions of the various diagram
-        components at point prin, or null if the fractions could not
-        be determined.
+        percents (or in the case of binary diagrams, the X coordinate
+        only is define as mole percent), return the mole fractions of
+        the various diagram components at point prin, or null if the
+        fractions could not be determined.
     */
     protected SideDouble[] componentFractions(Point2D prin) {
         if (prin == null || diagramType == null) {
@@ -1629,21 +1637,39 @@ public class Diagram extends Observable implements Printable {
         return res;
     }
 
-    /** Convert the given point from mole fraction to weight fraction.
-        If this is a binary diagram, then the Y component of the
-        return value will equal the Y component of the input value. If
-        the conversion cannot be performed for some reason, then
-        return null. */
-    public Point2D.Double moleToWeightFraction(Point2D mole) {
-        SideDouble[] sds = componentWeightFractions(mole);
-        if (sds == null) {
-            return null;
+    static class ProjectionAndOffset {
+        Point2D.Double projection;
+        Point2D.Double offset;
+    }
+
+    /** Conversions between mole and weight fraction produce ugly
+        results when fractions exceed 100% or are less than 0%, as is
+        often the case for labels outside the core diagram. To reduce
+        this effect, treat such labels as the sum of the nearest point
+        within the diagram (the projection) and an offset from that
+        point, and perform the conversion by converting the projection
+        and then adding the unchanged offset. */
+    ProjectionAndOffset projectOntoDiagram(Point2D p) {
+        ProjectionAndOffset res = new ProjectionAndOffset();
+        res.projection = new Point2D.Double(p.getX(), p.getY());
+        res.offset = new Point2D.Double(0,0);
+        if (res.projection.x < 0) {
+            res.offset.x = res.projection.x;
+            res.projection.x = 0;
+        } else if (res.projection.x > 1) {
+            res.offset.x = res.projection.x - 1;
+            res.projection.x = 1;
         }
         if (diagramType.isTernary()) {
-            return new Point2D.Double(sds[0].d, sds[1].d);
-        } else {
-            return new Point2D.Double(sds[0].d, mole.getY());
+            if (res.projection.y < 0) {
+                res.offset.y = res.projection.y;
+                res.projection.y = 0;
+            } else if (res.projection.y > 1) {
+            res.offset.y = res.projection.y - 1;
+            res.projection.y = 1;
+            }
         }
+        return res;
     }
 
     /** Convert the given point from mole fraction to weight fraction.
@@ -1651,15 +1677,34 @@ public class Diagram extends Observable implements Printable {
         return value will equal the Y component of the input value. If
         the conversion cannot be performed for some reason, then
         return null. */
-    public Point2D.Double weightToMoleFraction(Point2D weight) {
-        SideDouble[] sds = componentMoleFractions(weight);
+    public Point2D.Double moleToWeightFraction(Point2D p) {
+        ProjectionAndOffset pao = projectOntoDiagram(p);
+        Point2D.Double proj = pao.projection;
+        Point2D.Double offs = pao.offset;
+        SideDouble[] sds = componentWeightFractions(proj);
         if (sds == null) {
             return null;
         }
         if (diagramType.isTernary()) {
-            return new Point2D.Double(sds[0].d, sds[1].d);
+            return new Point2D.Double(sds[0].d + offs.x, sds[1].d + offs.y);
         } else {
-            return new Point2D.Double(sds[0].d, weight.getY());
+            return new Point2D.Double(sds[0].d + offs.x, proj.y);
+        }
+    }
+
+    /** Inverse of moleToWeightFraction(). */
+    public Point2D.Double weightToMoleFraction(Point2D p) {
+        ProjectionAndOffset pao = projectOntoDiagram(p);
+        Point2D.Double proj = pao.projection;
+        Point2D.Double offs = pao.offset;
+        SideDouble[] sds = componentMoleFractions(proj);
+        if (sds == null) {
+            return null;
+        }
+        if (diagramType.isTernary()) {
+            return new Point2D.Double(sds[0].d + offs.x, sds[1].d + offs.y);
+        } else {
+            return new Point2D.Double(sds[0].d + offs.x, proj.y);
         }
     }
 
@@ -1675,7 +1720,8 @@ public class Diagram extends Observable implements Printable {
         convert the endpoints only, incorrectly drawing a straight
         line between them.
 
-        2. Angle values are not converted. This is also wrong.
+        2. Angle values are not converted. This will screw up labels
+        that follow isotherms, for example.
     */
     protected boolean moleToWeightFraction() {
         if (!haveComponentCompositions()) {
@@ -1685,6 +1731,7 @@ public class Diagram extends Observable implements Printable {
         for (DecorationHandle hand: movementHandles()) {
             hand.move(moleToWeightFraction(hand.getLocation()));
         }
+        setUsingWeightFraction(true);
 
         return true;
     }
@@ -1705,6 +1752,7 @@ public class Diagram extends Observable implements Printable {
         for (DecorationHandle hand: movementHandles()) {
             hand.move(weightToMoleFraction(hand.getLocation()));
         }
+        setUsingWeightFraction(false);
 
         return true;
     }
@@ -1799,6 +1847,44 @@ public class Diagram extends Observable implements Printable {
         propagateChange();
     }
 
+    public static String getPlainText(AnchoredLabel label) {
+        String text = Jsoup.parse(label.getText()).text();
+        // Convert #0a (non-breaking-space) into ordinary spaces.
+        StringBuilder res = new StringBuilder();
+        for (int i = 0; i < text.length(); ++i) {
+            char ch = text.charAt(i);
+            res.append((ch == '\u00a0') ? ' ' : ch);
+        }
+        return res.toString().trim();
+    }
+
+    /** Return the concatenation of the plain text of all labels,
+        tags, key values, and diagram components. Duplicates are
+        removed. */
+    @JsonIgnore public String getAllText() {
+        TreeSet<String> lines = new TreeSet<>();
+        for (AnchoredLabel label: labels) {
+            lines.add(getPlainText(label));
+        }
+        for (String s: tags) {
+            lines.add(s.trim());
+        }
+        for (String s: keyValues.values()) {
+            lines.add(s.trim());
+        }
+        for (String s: diagramComponents) {
+            if (s != null) {
+                lines.add(s);
+            }
+        }
+        StringBuilder res = new StringBuilder();
+        for (String s: lines) {
+            res.append(s);
+            res.append("\n");
+        }
+        return res.toString();
+    }
+
     LinearAxis getAxis(Side side) {
         switch (side) {
         case RIGHT:
@@ -1809,6 +1895,68 @@ public class Diagram extends Observable implements Printable {
             return getZAxis();
         }
         return null;
+    }
+
+    /* Return true if this diagram has been marked as using weight
+       percent coordinates. (That only matters for diagrams for which
+       diagram components are defined.) */
+    @JsonIgnore public boolean isUsingWeightFraction() {
+        return containsTag(WEIGHT_FRACTION_TAG);
+    }
+
+    /* Indicate whether this diagram uses weight percent coordinates.
+       Note that calling setUsingWeightFraction() only claims that the
+       existing coordinates are ALREADY defined using weight percents.
+       If you want to convert from weight to mole percent or vice
+       versa, call weightToMoleFraction or moleToWeightFraction. */
+    public void setUsingWeightFraction(boolean b) {
+        if (b == isUsingWeightFraction()) {
+            return;
+        } else if (b) {
+            addTag(WEIGHT_FRACTION_TAG);
+        } else {
+            removeTag(WEIGHT_FRACTION_TAG);
+        }
+    }
+
+    /** Return a pretty description of the given point that is
+        specified in principal coordinates. */
+    String principalToPrettyString(Point2D.Double prin) {
+        if (prin == null) {
+            return null;
+        }
+
+        StringBuilder status = new StringBuilder();
+
+        String compound = molePercentToCompound
+            (isUsingWeightFraction() ? weightToMoleFraction(prin) : prin);
+        if (compound != null) {
+            status.append(ChemicalString.autoSubscript(compound) + ": ");
+        }
+
+        boolean first = true;
+        for (LinearAxis axis : axes) {
+            if (first) {
+                first = false;
+            } else {
+                status.append(",  ");
+            }
+            status.append(ChemicalString.autoSubscript(axis.name.toString()));
+            status.append(" = ");
+            status.append(axis.valueAsString(prin.x, prin.y));
+
+            if (axisIsFractional(axis)) {
+                // Express values in fractional terms if the decimal
+                // value is a close approximation to a fraction.
+                double d = axis.value(prin.x, prin.y);
+                ContinuedFraction f = approximateFraction(d);
+                if (f != null && f.numerator != 0 && f.denominator > 1) {
+                    status.append(" (" + f + ")");
+                }
+            }
+        }
+
+        return status.toString();
     }
 
     @JsonIgnore public LinearAxis getXAxis() {
@@ -2826,8 +2974,7 @@ public class Diagram extends Observable implements Printable {
             if (page.distanceSq(cornerPage) > maxDistanceSq) {
                 return null;
             }
-            String html = hand.getItem().getText();
-            String text = Jsoup.parse(html).text().trim();
+            String text = getPlainText(hand.getItem());
             ChemicalString.Match match = ChemicalString.composition(text);
             if (match != null) {
                 return text.substring(0, match.length);
@@ -3115,6 +3262,9 @@ public class Diagram extends Observable implements Printable {
         equals a round fraction, then return the compound that "prin"
         represents. */
     public String molePercentToCompound(Point2D.Double prin) {
+        if (prin == null) {
+            return null;
+        }
         double[][] componentElements = getComponentElements();
         if (componentElements == null) {
             return null;
