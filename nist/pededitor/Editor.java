@@ -61,26 +61,15 @@ import org.codehaus.jackson.annotate.JsonIgnore;
 // TODO Investigate whether JavaFX is really a plausible alternative.
 // (Answer: it's not really ready, it seems.)
 
-// TODO Warn when a user selects a filename that is already taken.
-
-// TODO Discuss: key/value pairs for "digitizer" (digitizer's name?),
-// "state" ("ready", etc.).
-
-// TODO (bug) Look into the issue where Chris chose the "save" option
-// but it still asks to save before you exit.
-
-// TODO Highlight the newest file in the "Open" dialog.
+// TODO Change the way points outside the diagram are handled by
+// mole-to-weight-percent and vice versa.
 
 // TODO Allow users to adjust the text angle in the ruler edit dialog.
 
-// TODO (mandatory, but not clear whose end -- mine or Prometheus' --
-// where it should happen) HTML-to-plaintext conversion. Users who
-// search for "H2SO4" find "H<sub>2</sub>SO<sub>4</sub>". An extra
-// bonus, if done within the PED Editor, is that it makes the mole
-// percent compound entry more flexible; you can take an existing
-// label and compute its proper location without retyping. This is
-// both (1) already solved by a number of different libraries and (2)
-// not too hard to do from scratch in a somewhat slipshod way.
+// TODO Back-convert HTML within the mole percent computer.
+
+// TODO Remember whether a diagram uses mole or weight percent. This
+// could be hacked using a "weight percent" tag.
 
 // TODO (optional) Auto-save the diagram at regular intervals.
 
@@ -1587,7 +1576,7 @@ public class Editor extends Diagram
 
             if ("".equals(values[0])) {
                 JOptionPane.showMessageDialog
-                    (null, "Please enter a variable name.");
+                    (editFrame, "Please enter a variable name.");
                 continue;
             }
 
@@ -1597,7 +1586,7 @@ public class Editor extends Diagram
                     dvs[i] = ContinuedFraction.parseDouble(values[i+1]);
                 } catch (NumberFormatException e) {
                     JOptionPane.showMessageDialog
-                        (null, "Invalid number format '" + values[i+1] + "'");
+                        (editFrame, "Invalid number format '" + values[i+1] + "'");
                     continue;
                 }
             }
@@ -1629,21 +1618,20 @@ public class Editor extends Diagram
         }
     }
 
-    /** Globally convert all coordinates from mole fraction to weight
-        fraction, if the information necessary to do so is available.
-        Return true if the conversion was carried out.
-
-        IMPORTANT BUGS:
-
-        1. In ternary diagrams, the conversion from mole percent to
-        weight percent should distort many straight lines into curves.
-        What this routine actually (and incorrectly) does is to
-        convert the endpoints only, incorrectly drawing a straight
-        line between them.
-
-        2. Angle values are not converted. This is also wrong.
-    */
     @Override protected boolean moleToWeightFraction() {
+        if (isUsingWeightFraction()) {
+            if (JOptionPane.showConfirmDialog
+                (editFrame,
+                 "This diagram is marked as showing weight percents.\n"
+                 + "Does this diagram actually display mole percents?",
+                 "Confirm conversion",
+                 JOptionPane.YES_NO_OPTION) == JOptionPane.YES_OPTION) {
+                setUsingWeightFraction(false);
+            } else {
+                return false;
+            }
+        }
+
         boolean res = super.moleToWeightFraction();
         if (res && mprin != null) {
             moveMouse(moleToWeightFraction(mprin));
@@ -1652,6 +1640,18 @@ public class Editor extends Diagram
     }
 
     @Override protected boolean weightToMoleFraction() {
+        if (!isUsingWeightFraction()) {
+            if (JOptionPane.showConfirmDialog
+                (editFrame,
+                 "Does this diagram currently display weight percents?",
+                 "Confirm conversion",
+                 JOptionPane.YES_NO_OPTION) == JOptionPane.YES_OPTION) {
+                setUsingWeightFraction(true);
+            } else {
+                return false;
+            }
+        }
+
         boolean res = super.weightToMoleFraction();
         if (res && mprin != null) {
             moveMouse(weightToMoleFraction(mprin));
@@ -1659,13 +1659,21 @@ public class Editor extends Diagram
         return res;
     }
 
-    /* Have the user enter a string; parse the string as a compound;
-       and set the mouse position to the principal coordinates that
-       correspond to that compound, if the compound can be expressed
-       as a product of the diagram components. For binary diagrams,
-       the Y coordinate will be left unchanged from its original
-       value. */
-    public void computeMolePercent() {
+    public void computeFraction() {
+        computeFraction(isUsingWeightFraction());
+    }
+
+    /** Have the user enter a string; parse the string as a compound;
+        and set the mouse position to the principal coordinates that
+        correspond to that compound, if the compound can be expressed
+        as a product of the diagram components. For binary diagrams,
+        the Y coordinate will be left unchanged from its original
+        value.
+
+        @param isWeight If true, use weight fractions. If false, use
+        mole fractions.
+    */
+    public void computeFraction(boolean isWeight) {
         double[][] componentElements = getComponentElements();
 
         ArrayList<Side> sides = new ArrayList<>();
@@ -1847,13 +1855,24 @@ public class Editor extends Diagram
                 // defined then RIGHT = 0).
                 break;
             default:
-                throw new IllegalStateException("Side " + side + " should not have an " +
-                                                "associated component.");
+                throw new IllegalStateException
+                    ("Side " + side + " should not have an "
+                     + "associated component.");
             }
         }
 
+        if (isWeight) {
+            fractions = moleToWeightFraction(fractions);
+        }
+
         mouseIsStuck = true;
-        moveMouse(fractions);
+        if (!moveMouse(fractions)) {
+            showError
+                ("<html>You requested the coordinates<br>"
+                 + principalToPrettyString(fractions)
+                 + "<br>which lie outside the boundary of the diagram.</html>",
+                 "Could not move mouse");
+        }
     }
 
     public void copyCoordinatesToClipboard() {
@@ -1892,6 +1911,17 @@ public class Editor extends Diagram
         } catch (HeadlessException e) {
             throw new IllegalArgumentException
                 ("Can't call coordinatesToClipboard() in a headless environment:" + e);
+        }
+    }
+
+    public void copyAllTextToClipboard() {
+        try {
+            StringSelection sel = new StringSelection(getAllText());
+            Toolkit.getDefaultToolkit().getSystemClipboard().setContents
+                (sel, sel);
+        } catch (HeadlessException x) {
+            throw new IllegalArgumentException
+                ("Can't set clipboard in a headless environment:" + x);
         }
     }
 
@@ -2143,11 +2173,12 @@ public class Editor extends Diagram
     }
 
     /** Move the mouse pointer so its position corresponds to the
-        given location in principal coordinates. */
-    void moveMouse(Point2D.Double point) {
+        given location in principal coordinates. Return true if it was
+        possible to go to that location. */
+    boolean moveMouse(Point2D.Double point) {
         mprin = point;
         if (principalToStandardPage == null) {
-            return;
+            return false;
         }
 
         Point mpos = Duh.floorPoint
@@ -2190,8 +2221,11 @@ public class Editor extends Diagram
                 mousePage.x = pageBounds.x + pageBounds.width/2;
                 mousePage.y = pageBounds.y + pageBounds.height/2;
                 moveMouse(standardPageToPrincipal.transform(mousePage));
+                return false;
             }
         }
+
+        return true;
 
     }
 
@@ -2545,7 +2579,7 @@ public class Editor extends Diagram
 
                 while (true) {
                     String heightS = (String) JOptionPane.showInputDialog
-                        (null,
+                        (editFrame,
                          "Enter the visual height of the diagram\n" +
                          "as a fraction of the full triangle height:",
                          initialHeight);
@@ -2556,7 +2590,7 @@ public class Editor extends Diagram
                         height = ContinuedFraction.parseDouble(heightS);
                         break;
                     } catch (NumberFormatException e) {
-                        JOptionPane.showMessageDialog(null, "Invalid number format.");
+                        JOptionPane.showMessageDialog(editFrame, "Invalid number format.");
                     }
                 }
 
@@ -2684,7 +2718,7 @@ public class Editor extends Diagram
                         (pageMaxes[i], true);
                 }
                 DimensionsDialog dialog = new DimensionsDialog
-                    (null, new String[] { sideNames[ov1], sideNames[ov2] });
+                    (editFrame, new String[] { sideNames[ov1], sideNames[ov2] });
                 dialog.setDimensions(pageMaxInitialValues);
                 dialog.setTitle("Select Screen Side Lengths");
 
@@ -2699,7 +2733,7 @@ public class Editor extends Diagram
                         }
                         break;
                     } catch (NumberFormatException e) {
-                        JOptionPane.showMessageDialog(null, "Invalid number format.");
+                        JOptionPane.showMessageDialog(editFrame, "Invalid number format.");
                     }
                 }
 
@@ -3067,7 +3101,7 @@ public class Editor extends Diagram
                 margin = ContinuedFraction.parseDouble(marginStr);
                 break;
             } catch (NumberFormatException e) {
-                JOptionPane.showMessageDialog(null, "Invalid number format.");
+                JOptionPane.showMessageDialog(editFrame, "Invalid number format.");
             }
         }
 
@@ -3774,7 +3808,7 @@ public class Editor extends Diagram
         }
 
         if (mprin != null) {
-            editFrame.setStatus(statusBarString());
+            editFrame.setStatus(principalToPrettyString(mprin));
             
             if (tracingImage()) {
                 try {
@@ -3824,43 +3858,6 @@ public class Editor extends Diagram
         double sy = mpos.getY() + ABOUT_HALF;
 
         return scaledPageToPrincipal(scale).transform(sx,sy);
-    }
-
-    @JsonIgnore String statusBarString() {
-        if (mprin == null) {
-            return null;
-        }
-
-        StringBuilder status = new StringBuilder();
-
-        String compound = molePercentToCompound(mprin);
-        if (compound != null) {
-            status.append(ChemicalString.autoSubscript(compound) + ": ");
-        }
-
-        boolean first = true;
-        for (LinearAxis axis : axes) {
-            if (first) {
-                first = false;
-            } else {
-                status.append(",  ");
-            }
-            status.append(ChemicalString.autoSubscript(axis.name.toString()));
-            status.append(" = ");
-            status.append(axis.valueAsString(mprin.x, mprin.y));
-
-            if (axisIsFractional(axis)) {
-                // Express values in fractional terms if the decimal
-                // value is a close approximation to a fraction.
-                double d = axis.value(mprin.x, mprin.y);
-                ContinuedFraction f = approximateFraction(d);
-                if (f != null && f.numerator != 0 && f.denominator > 1) {
-                    status.append(" (" + f + ")");
-                }
-            }
-        }
-
-        return status.toString();
     }
 
     /** Set the default line width for lines added in the future.
@@ -3955,7 +3952,7 @@ public class Editor extends Diagram
     void customLineWidth() {
         while (true) {
             String str = (String) JOptionPane.showInputDialog
-                (null,
+                (editFrame,
                  "Line width in page X/Y units:",
                  String.format("%.5f", getLineWidth()));
             if (str == null) {
@@ -3965,7 +3962,7 @@ public class Editor extends Diagram
                 setLineWidth(ContinuedFraction.parseDouble(str));
                 return;
             } catch (NumberFormatException e) {
-                JOptionPane.showMessageDialog(null, "Invalid number format.");
+                JOptionPane.showMessageDialog(editFrame, "Invalid number format.");
             }
         }
     }
