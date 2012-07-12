@@ -489,7 +489,7 @@ public class EditFrame extends JFrame
                 });
 
             mnEdit.add(new Action("Move region",
-                                  KeyEvent.VK_V,
+                                  KeyEvent.VK_R,
                                   KeyStroke.getKeyStroke('R')) {
                     @Override public void actionPerformed(ActionEvent e) {
                         getParentEditor().moveRegion();
@@ -502,6 +502,13 @@ public class EditFrame extends JFrame
                               KeyStroke.getKeyStroke("control C")) {
                 @Override public void actionPerformed(ActionEvent e) {
                     getParentEditor().copyCoordinatesToClipboard();
+                }
+            });
+
+        mnEdit.add(new Action("Copy all text to clipboard",
+                              KeyEvent.VK_T) {
+                @Override public void actionPerformed(ActionEvent e) {
+                    getParentEditor().copyAllTextToClipboard();
                 }
             });
 
@@ -529,10 +536,10 @@ public class EditFrame extends JFrame
             });
 
         mnPosition.add(new Action
-                       ("Compound to mole percent", KeyEvent.VK_M,
+                       ("Compound to mole/weight fraction", KeyEvent.VK_M,
                         KeyStroke.getKeyStroke('%')) {
                 @Override public void actionPerformed(ActionEvent e) {
-                    getParentEditor().computeMolePercent();
+                    getParentEditor().computeFraction();
                 }
             });
 
