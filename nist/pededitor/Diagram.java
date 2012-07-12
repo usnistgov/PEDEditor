@@ -1003,7 +1003,6 @@ public class Diagram extends Observable implements Printable {
         }
     }
 
-    public final String WEIGHT_FRACTION_TAG = "weight fraction";
     protected static final double BASE_SCALE = 615.0;
 
     // The label views are grid-fitted at the font size of the buttons
@@ -1075,6 +1074,7 @@ public class Diagram extends Observable implements Printable {
     static final double STANDARD_LINE_WIDTH = 0.0024;
     static final int STANDARD_FONT_SIZE = 15;
     protected String filename;
+    private boolean usingWeightFraction = false;
 
     boolean saveNeeded = false;
 
@@ -1900,8 +1900,8 @@ public class Diagram extends Observable implements Printable {
     /* Return true if this diagram has been marked as using weight
        percent coordinates. (That only matters for diagrams for which
        diagram components are defined.) */
-    @JsonIgnore public boolean isUsingWeightFraction() {
-        return containsTag(WEIGHT_FRACTION_TAG);
+    public boolean isUsingWeightFraction() {
+        return usingWeightFraction;
     }
 
     /* Indicate whether this diagram uses weight percent coordinates.
@@ -1910,12 +1910,9 @@ public class Diagram extends Observable implements Printable {
        If you want to convert from weight to mole percent or vice
        versa, call weightToMoleFraction or moleToWeightFraction. */
     public void setUsingWeightFraction(boolean b) {
-        if (b == isUsingWeightFraction()) {
-            return;
-        } else if (b) {
-            addTag(WEIGHT_FRACTION_TAG);
-        } else {
-            removeTag(WEIGHT_FRACTION_TAG);
+        if (b != usingWeightFraction) {
+            usingWeightFraction = b;
+            propagateChange();
         }
     }
 
@@ -2800,6 +2797,7 @@ public class Diagram extends Observable implements Printable {
         if (!haveBounds) {
             pageBounds = null;
         }
+        setUsingWeightFraction(other.isUsingWeightFraction());
         saveNeeded = other.saveNeeded;
     }
 
