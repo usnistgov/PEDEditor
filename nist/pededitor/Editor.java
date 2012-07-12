@@ -1624,19 +1624,6 @@ public class Editor extends Diagram
     }
 
     @Override protected boolean moleToWeightFraction() {
-        if (isUsingWeightFraction()) {
-            if (JOptionPane.showConfirmDialog
-                (editFrame,
-                 "This diagram is marked as showing weight percents.\n"
-                 + "Does this diagram actually display mole percents?",
-                 "Confirm conversion",
-                 JOptionPane.YES_NO_OPTION) == JOptionPane.YES_OPTION) {
-                setUsingWeightFraction(false);
-            } else {
-                return false;
-            }
-        }
-
         boolean res = super.moleToWeightFraction();
         if (res && mprin != null) {
             moveMouse(moleToWeightFraction(mprin));
@@ -1645,18 +1632,6 @@ public class Editor extends Diagram
     }
 
     @Override protected boolean weightToMoleFraction() {
-        if (!isUsingWeightFraction()) {
-            if (JOptionPane.showConfirmDialog
-                (editFrame,
-                 "Does this diagram currently display weight percents?",
-                 "Confirm conversion",
-                 JOptionPane.YES_NO_OPTION) == JOptionPane.YES_OPTION) {
-                setUsingWeightFraction(true);
-            } else {
-                return false;
-            }
-        }
-
         boolean res = super.weightToMoleFraction();
         if (res && mprin != null) {
             moveMouse(weightToMoleFraction(mprin));
@@ -1724,7 +1699,7 @@ public class Editor extends Diagram
                  + "In Windows, you may press Control-V later to paste\n"
                  + "the text into a label's text box.\n"
                  + "Chemical formula:",
-                 "Compute mole percent", JOptionPane.PLAIN_MESSAGE);
+                 "Compute mole/weight fraction", JOptionPane.PLAIN_MESSAGE);
             if (compound == null) {
                 return;
             }
