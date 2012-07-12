@@ -1618,6 +1618,11 @@ public class Editor extends Diagram
         }
     }
 
+    @Override public void setUsingWeightFraction(boolean b) {
+        super.setUsingWeightFraction(b);
+        editFrame.setUsingWeightFraction(b);
+    }
+
     @Override protected boolean moleToWeightFraction() {
         if (isUsingWeightFraction()) {
             if (JOptionPane.showConfirmDialog
