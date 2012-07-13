@@ -2511,8 +2511,6 @@ public class Editor extends Diagram
     */
     protected void newDiagram(String originalFilename,
                               Point2D.Double[] vertices) {
-        ArrayList<Point2D.Double> diagramOutline
-            = new ArrayList<Point2D.Double>();
         boolean tracing = (vertices != null);
         clear();
         setOriginalFilename(originalFilename);
@@ -2598,12 +2596,6 @@ public class Editor extends Diagram
                 principalToStandardPage = new TriangleTransform
                     (principalTrianglePoints, trianglePagePositions);
 
-                // Add the endpoints of the diagram.
-                diagramOutline.add(outputVertices[1]);
-                diagramOutline.add(outputVertices[0]);
-                diagramOutline.add(outputVertices[3]);
-                diagramOutline.add(outputVertices[2]);
-
                 addTernaryBottomRuler(0.0, 1.0);
                 addTernaryLeftRuler(0.0, height);
                 addTernaryRightRuler(0.0, height);
@@ -2639,11 +2631,6 @@ public class Editor extends Diagram
                     (new Rectangle2D.Double(0.0, 0.0, 1.0, 1.0),
                      new Rectangle2D.Double(0.0, 1.0,
                                             1.0 * r.t, -1.0 * r.t));
-                if (diagramType == DiagramType.BINARY) {
-                    diagramOutline.addAll
-                        (Arrays.asList(principalToStandardPage.getInputVertices()));
-                }
-
                 break;
 
             }
@@ -2761,11 +2748,6 @@ public class Editor extends Diagram
                     break;
                 }
 
-                // Add the endpoints of the diagram.
-                diagramOutline.add(trianglePoints[ov1]);
-                diagramOutline.add(trianglePoints[angleVertex]);
-                diagramOutline.add(trianglePoints[ov2]);
-
                 if (tracing) {
                     originalToPrincipal = new TriangleTransform(vertices,
                                                                 trianglePoints);
@@ -2847,8 +2829,6 @@ public class Editor extends Diagram
                       new Point2D.Double(r.width, r.height) };
                 principalToStandardPage = new TriangleTransform
                     (principalTrianglePoints, trianglePagePositions);
-                diagramOutline.addAll
-                    (Arrays.asList(principalToStandardPage.getInputVertices()));
 
                 addTernaryBottomRuler(0.0, 1.0);
                 addTernaryLeftRuler(0.0, 1.0);
@@ -3359,7 +3339,7 @@ public class Editor extends Diagram
         try {
             saveAsSVG(file);
             JOptionPane.showMessageDialog
-                (editFrame, "File saved.");
+                (editFrame, "Saved '" + file.getAbsolutePath() + "'.");
         } catch (IOException e) {
             JOptionPane.showMessageDialog(editFrame, "File save error: " + e);
         }
@@ -3377,7 +3357,8 @@ public class Editor extends Diagram
         try {
             super.saveAsPED(file);
             filename = file.toAbsolutePath().toString();
-            JOptionPane.showMessageDialog(editFrame, "File saved.");
+            JOptionPane.showMessageDialog
+                (editFrame, "Saved '" + file.toAbsolutePath() + "'.");
         } catch (IOException e) {
             JOptionPane.showMessageDialog
                 (editFrame, "File save error: " + e);
