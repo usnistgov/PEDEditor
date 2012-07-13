@@ -74,6 +74,7 @@ import org.codehaus.jackson.map.DeserializationConfig;
 import org.codehaus.jackson.map.ObjectMapper;
 import org.codehaus.jackson.map.SerializationConfig;
 import org.codehaus.jackson.map.annotate.JsonDeserialize;
+import org.codehaus.jackson.map.annotate.JsonSerialize.Inclusion;
 import org.jsoup.Jsoup;
 
 import org.apache.batik.svggen.SVGGeneratorContext;
@@ -1481,7 +1482,7 @@ public class Diagram extends Observable implements Printable {
         ArrayList<StringComposition> scs = new ArrayList<>();
 
         for (Side side: Side.values()) {
-            String dc = diagramComponents[side.ordinal()];
+            String dc = htmlToText(diagramComponents[side.ordinal()]);
             if (dc == null) {
                 continue;
             }
@@ -1847,8 +1848,11 @@ public class Diagram extends Observable implements Printable {
         propagateChange();
     }
 
-    public static String getPlainText(AnchoredLabel label) {
-        String text = Jsoup.parse(label.getText()).text();
+    public static String htmlToText(String html) {
+        if (html == null) {
+            return null;
+        }
+        String text = Jsoup.parse(html).text();
         // Convert #0a (non-breaking-space) into ordinary spaces.
         StringBuilder res = new StringBuilder();
         for (int i = 0; i < text.length(); ++i) {
@@ -1864,7 +1868,7 @@ public class Diagram extends Observable implements Printable {
     @JsonIgnore public String getAllText() {
         TreeSet<String> lines = new TreeSet<>();
         for (AnchoredLabel label: labels) {
-            lines.add(getPlainText(label));
+            lines.add(htmlToText(label.getText()));
         }
         for (String s: tags) {
             lines.add(s.trim());
@@ -2052,8 +2056,8 @@ public class Diagram extends Observable implements Printable {
         labels.add(label);
         if (!labelViews.isEmpty()) {
             labelViews.add(toView(label));
+            labelCenters.add(new Point2D.Double());
         }
-        labelCenters.add(new Point2D.Double());
         propagateChange();
     }
 
@@ -2107,7 +2111,7 @@ public class Diagram extends Observable implements Printable {
         labelCenters.clear();
         for (AnchoredLabel label: labels) {
             labelViews.add(toView(label));
-            labelCenters.add(new Point2D.Double());
+            labelCenters.add(null);
         }
     }
 
@@ -2998,7 +3002,7 @@ public class Diagram extends Observable implements Printable {
             if (page.distanceSq(cornerPage) > maxDistanceSq) {
                 return null;
             }
-            String text = getPlainText(hand.getItem());
+            String text = htmlToText(hand.getItem().getText());
             ChemicalString.Match match = ChemicalString.composition(text);
             if (match != null) {
                 return text.substring(0, match.length);
@@ -3445,6 +3449,33 @@ public class Diagram extends Observable implements Printable {
              label.getBaselineXOffset(), label.getBaselineYOffset());
     }
 
+    /** Take all labels that have nonzero baseline X/Y offsets
+     * defined, set those offsets to zero, and transform the labels' X
+     * and Y locations so that the label's drawn position remains
+     * unchanged. */
+    void zeroBaselineOffsets() {
+        for (AnchoredLabel label: labels) {
+            double bxo = label.getBaselineXOffset();
+            double byo = label.getBaselineYOffset();
+            if (bxo == 0 && byo == 0) {
+                continue;
+            }
+            double angle = principalToPageAngle(label.getAngle());
+            AffineTransform baselineToPage = AffineTransform.getRotateInstance(angle);
+            double textScale = 1.0 / BASE_SCALE;
+            baselineToPage.scale(textScale, textScale);
+            Point2D.Double offset = new Point2D.Double(bxo, byo);
+            baselineToPage.deltaTransform(offset, offset);
+            // Offset is now defined in standard page coordinates.
+            standardPageToPrincipal.deltaTransform(offset, offset);
+            // Offset is now defined in principal coordinates.
+            label.setX(label.getX() + offset.x);
+            label.setY(label.getY() + offset.y);
+            label.setBaselineXOffset(0);
+            label.setBaselineYOffset(0);
+        }
+    }
+
     void drawLabel(Graphics g0, int labelNo, double scale) {
         AnchoredLabel label = labels.get(labelNo);
         if (label.getFontSize() == 0) {
@@ -3480,6 +3511,8 @@ public class Diagram extends Observable implements Printable {
                  centerPage);
 
         try {
+            centerPage.x /= scale;
+            centerPage.y /= scale;
             labelCenters.set(labelNo,
                              toPage.createInverse().transform(centerPage));
         } catch (NoninvertibleTransformException e) {
@@ -3531,7 +3564,6 @@ public class Diagram extends Observable implements Printable {
                   double xWeight, double yWeight,
                   double baselineXOffset, double baselineYOffset,
                   Point2D.Double labelCenter) {
-        double originalScale = scale;
         scale /= VIEW_MAGNIFICATION;
         double baseWidth = view.getPreferredSpan(View.X_AXIS);
         double baseHeight = view.getPreferredSpan(View.Y_AXIS);
@@ -3564,8 +3596,8 @@ public class Diagram extends Observable implements Printable {
 
         if (labelCenter != null) {
             baselineToPage.transform(new Point2D.Double(width/2, height/2), xpoint);
-            labelCenter.x = (xpoint.x + ax) / originalScale;
-            labelCenter.y = (xpoint.y + ay) / originalScale;
+            labelCenter.x = xpoint.x + ax;
+            labelCenter.y = xpoint.y + ay;
         }
 
         {
@@ -3653,6 +3685,7 @@ public class Diagram extends Observable implements Printable {
             objectMapper = new ObjectMapper();
             objectMapper.configure(SerializationConfig.Feature.INDENT_OUTPUT,
                                    true);
+            objectMapper.setSerializationInclusion(Inclusion.NON_NULL);
             SerializationConfig ser = objectMapper.getSerializationConfig();
             DeserializationConfig des = objectMapper.getDeserializationConfig();
 
