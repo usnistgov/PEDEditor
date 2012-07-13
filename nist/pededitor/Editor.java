@@ -59,29 +59,19 @@ import Jama.Matrix;
 import org.codehaus.jackson.annotate.JsonIgnore;
 
 // TODO Investigate whether JavaFX is really a plausible alternative.
-// (Answer: it's not really ready, it seems.)
-
-// TODO Change the way points outside the diagram are handled by
-// mole-to-weight-percent and vice versa.
+// (Answer: it's not quite ready, it seems.)
 
 // TODO Allow users to adjust the text angle in the ruler edit dialog.
 
-// TODO Back-convert HTML within the mole percent computer.
-
-// TODO Remember whether a diagram uses mole or weight percent. This
-// could be hacked using a "weight percent" tag.
-
 // TODO (optional) Auto-save the diagram at regular intervals.
 
-// TODO Allow users to redefine the third component of a ternary, for
-// situations where the ternary is actually a slice of a 4-component
-// system and the three components do not actually sum to 100%.
+// TODO (optional) Allow users to redefine the third component of a
+// ternary, for situations where the ternary is actually a slice of a
+// 4-component system and the three components do not actually sum to
+// 100%.
 
-// TODO (optional) Fill styles are nearly completely implemented. The
-// main issue remaining at this point is that an assumption that works
-// OK for lines -- that a single line is either completely smoothed or
-// completely not -- doesn't work so well for fill regions, because it
-// means you can't fill a semicircle.
+// TODO (optional) Enable filling of regions with cusps. As things
+// currently stand, it's not possible to fill a semicircle.
 
 // TODO (optional) Combine fill styles with colors. Pretty easy.
 
@@ -93,19 +83,13 @@ import org.codehaus.jackson.annotate.JsonIgnore;
 // is between v1 and v2: "$variable = $variable + k * ($variable - v1)
 // / (v2 - v1)"
 
-// TODO (Optional) Make the GRUMP conversion font sans serif instead of serif.
-
-// TODO (Optional) Fix symbol alignment for GRUMP font. (Symbols are
-// almost centered already, but getting them exactly right would be
-// easy. They are already correct in the PED font.)
-
 // TODO (Optional) Make regular open symbols look as nice as the
-// GRUMP-converted open symbols do. (JavaFX might fix this issue.)
+// GRUMP-converted open symbols do.
 
-// TODO (Optional) Better support for new double subscripts and
-// changing font sizes within a single label. (JavaFX might fix this
-// issue, but it's not ready yet because of difficulties drawing
-// JavaFX Nodes inside Graphics2D objects.)
+// TODO (Optional) Better support for changing font sizes within a
+// single label.
+
+// TODO (Optional) Better support for nested sub/superscripts.
 
 // TODO (optional) You can't make tie lines that cross the "endpoint"
 // of a closed curve. Fix this somehow.
@@ -119,10 +103,6 @@ import org.codehaus.jackson.annotate.JsonIgnore;
 // how much extra white space to include on each side.
 
 // TODO (optional) Make it easier to edit multiple-line labels.
-
-// TODO (Optional) Add font hints to make labels look better on screen
-// (Probably a bad idea: it would increase margin errors in the image
-// the digitizers look at)
 
 // TODO (optional) Arbitrary circles. Right now circles are
 // implemented as symbols, so the ratio of stroke width to radius is
@@ -1691,20 +1671,27 @@ public class Editor extends Diagram
         }
 
         ChemicalString.Match m = null;
+        String originalCompound = null;
         String compound = null;
         for (;;) { // Keep trying until user aborts or enters valid input
-            compound = JOptionPane.showInputDialog
+            originalCompound = JOptionPane.showInputDialog
                 (editFrame,
                  "The string you enter will be placed in the clipboard.\n"
                  + "In Windows, you may press Control-V later to paste\n"
                  + "the text into a label's text box.\n"
                  + "Chemical formula:",
                  "Compute mole/weight fraction", JOptionPane.PLAIN_MESSAGE);
-            if (compound == null) {
+            if (originalCompound == null) {
                 return;
             }
-            compound = compound.trim();
-            if ("".equals(compound)) {
+            originalCompound = originalCompound.trim();
+            
+            // Attempt to convert the input from HTML to regular text.
+            // This should be mostly harmless even if it was regular
+            // text to begin with, since normal chemical formulas
+            // don't include <, >, or & anyhow.
+            compound = htmlToText(originalCompound);
+            if (compound.isEmpty()) {
                 return;
             }
             m = ChemicalString.composition(compound);
@@ -1724,7 +1711,7 @@ public class Editor extends Diagram
         }
 
         try {
-            StringSelection sel = new StringSelection(compound);
+            StringSelection sel = new StringSelection(originalCompound);
             Toolkit.getDefaultToolkit().getSystemClipboard().setContents
                 (sel, sel);
         } catch (HeadlessException e) {
@@ -2082,6 +2069,7 @@ public class Editor extends Diagram
         if (str == null) {
             return;
         }
+        str = str.trim();
 
         setDiagramComponent(side, str.isEmpty() ? null : str);
     }
