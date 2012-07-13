@@ -15,9 +15,12 @@ import java.util.regex.Pattern;
 import org.codehaus.jackson.annotate.JsonBackReference;
 import org.codehaus.jackson.annotate.JsonIgnore;
 import org.codehaus.jackson.annotate.JsonProperty;
+import org.codehaus.jackson.map.annotate.JsonSerialize;
+import org.codehaus.jackson.map.annotate.JsonSerialize.Inclusion;
 
 /** Class describing a ruler whose tick marks describe values from a
     LinearAxis. */
+@JsonSerialize(include = Inclusion.NON_DEFAULT)
 class LinearRuler implements Parameterizable2D {
     public static enum LabelAnchor { NONE, LEFT, RIGHT };
     private static Pattern minusZeroPattern = Pattern.compile("-0\\.?0*\\z");
@@ -92,7 +95,7 @@ class LinearRuler implements Parameterizable2D {
     /** If NaN, compute the number of small ticks automatically
         (generally recommended). If zero, there are no small ticks.
         Otherwise, the fixed delta for small ticks. */
-    @JsonProperty double tickDelta = -Double.NaN;
+    @JsonProperty double tickDelta = Double.NaN;
 
     /** If true, put an arrow at the end of the ruler. */
     @JsonProperty boolean startArrow = false;
@@ -125,8 +128,7 @@ class LinearRuler implements Parameterizable2D {
     /** clone() copies but does not clone the axis field, because the
         axis is considered a relation of the ruler instead of an owned
         field. */
-    @Override
-	public LinearRuler clone() {
+    @Override public LinearRuler clone() {
         LinearRuler o = new LinearRuler();
         o.startPoint = (Point2D.Double) startPoint.clone();
         o.endPoint = (Point2D.Double) endPoint.clone();

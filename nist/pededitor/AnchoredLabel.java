@@ -3,9 +3,12 @@ package gov.nist.pededitor;
 import java.awt.Color;
 
 import org.codehaus.jackson.annotate.JsonProperty;
+import org.codehaus.jackson.map.annotate.JsonSerialize;
+import org.codehaus.jackson.map.annotate.JsonSerialize.Inclusion;
 
 /** Class to hold definitions of a text or HTML string anchored to a
     location in space and possibly drawn at an angle. */
+@JsonSerialize(include = Inclusion.NON_DEFAULT)
 public class AnchoredLabel {
 
     /** x position of the anchor point */
@@ -57,6 +60,9 @@ public class AnchoredLabel {
 
     boolean boxed = false;
     boolean opaque = false;
+
+    public AnchoredLabel() {
+    }
 
     public AnchoredLabel
         (@JsonProperty("string") String text,
