@@ -45,8 +45,11 @@ public class PEDToPDF {
             System.err.println(filename + " did not fit in the normal page bounds.");
             d.computeMargins();
         }
-        d.guessComponents();
+        if (!d.guessComponents()) {
+            d.addTag("WARN missing diagram component");
+        }
         d.removeKey("diagram code");
+        d.zeroBaselineOffsets();
         return d;
     }
 
@@ -136,9 +139,12 @@ public class PEDToPDF {
             }
         } else if (args.length == 0) {
             try {
-                ArrayList<String> peds = getInputFilenames(PED_DIR);
+                List<String> peds = getInputFilenames(PED_DIR);
                 Collections.sort(peds, new MixedIntegerStringComparator());
+                // int i = peds.indexOf("\\eb\\ped\\13125.ped");
+                // peds = peds.subList(i+1, peds.size());
                 combinePEDs(peds, 100);
+                
                 System.out.println("Batch conversion complete.");
             } catch (IOException | DirectoryIteratorException x) {
                 // IOException can never be thrown by the iteration.
