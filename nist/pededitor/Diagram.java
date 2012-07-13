@@ -3462,7 +3462,8 @@ public class Diagram extends Observable implements Printable {
             }
             double angle = principalToPageAngle(label.getAngle());
             AffineTransform baselineToPage = AffineTransform.getRotateInstance(angle);
-            double textScale = 1.0 / BASE_SCALE;
+            double textScale = label.getFontSize() / VIEW_MAGNIFICATION
+                / BASE_SCALE;
             baselineToPage.scale(textScale, textScale);
             Point2D.Double offset = new Point2D.Double(bxo, byo);
             baselineToPage.deltaTransform(offset, offset);
