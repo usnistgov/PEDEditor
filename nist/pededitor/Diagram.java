@@ -964,30 +964,31 @@ public class Diagram extends Observable implements Printable {
 
     
     /** Apply the NIST MML PED standard binary diagram axis style. */
-    class DefaultBinaryRuler extends LinearRuler {
-        DefaultBinaryRuler() {
-            fontSize = normalFontSize();
-            lineWidth = STANDARD_LINE_WIDTH;
-            tickPadding = 3.0;
-            drawSpine = true;
-        }
+    static LinearRuler defaultBinaryRuler() {
+        LinearRuler r = new LinearRuler();
+        r.fontSize = normalFontSize();
+        r.lineWidth = STANDARD_LINE_WIDTH;
+        r.tickPadding = 3.0;
+        r.drawSpine = true;
+        return r;
     }
 
 
     /** Apply the NIST MML PED standard ternary diagram axis style. */
-    class DefaultTernaryRuler extends LinearRuler {
-        DefaultTernaryRuler() {
-            fontSize = normalFontSize();
-            lineWidth = STANDARD_LINE_WIDTH;
-            tickPadding = 3.0;
-            multiplier = 100.0;
+    static LinearRuler defaultTernaryRuler() {
+        LinearRuler r = new LinearRuler();
+        r.fontSize = normalFontSize();
+        r.lineWidth = STANDARD_LINE_WIDTH;
+        r.tickPadding = 3.0;
+        r.multiplier = 100.0;
 
-            tickType = LinearRuler.TickType.V;
-            suppressStartTick = true;
-            suppressEndTick = true;
+        r.tickType = LinearRuler.TickType.V;
+        r.suppressStartTick = true;
+        r.suppressEndTick = true;
+        r.tickDelta = 0;
 
-            drawSpine = true;
-        }
+        r.drawSpine = true;
+        return r;
     }
 
     class PathAndT {
@@ -1486,7 +1487,7 @@ public class Diagram extends Observable implements Printable {
             if (dc == null) {
                 continue;
             }
-            ChemicalString.Match m = ChemicalString.composition(dc);
+            ChemicalString.Match m = ChemicalString.maybeQuotedComposition(dc);
             if (m == null) {
                 System.out.println("Diagram component '" + dc + "' does not start\n"
                                    + "with a simple chemical formula.");
@@ -1559,16 +1560,20 @@ public class Diagram extends Observable implements Printable {
         double x = prin.getX();
         double y = prin.getY();
 
+        LinearAxis leftAxis = getLeftAxis();
         if (diagramType.isTernary()) {
+            double leftFraction = (leftAxis != null) ? leftAxis.value(x,y) :
+                (1 - x - y);
             return new SideDouble[] {
                 new SideDouble(Side.RIGHT, x),
                 new SideDouble(Side.TOP, y),
-                new SideDouble(Side.LEFT, 1 - x - y) };
-        } else if (diagramComponents[Side.LEFT.ordinal()] != null
-                   || diagramComponents[Side.RIGHT.ordinal()] != null) {
+                new SideDouble(Side.LEFT, leftFraction) };
+        } else if (diagramComponents[Side.RIGHT.ordinal()] != null) {
+            double leftFraction = (leftAxis != null) ? leftAxis.value(x,y) :
+                (1 - x);
             return new SideDouble[] {
                 new SideDouble(Side.RIGHT, x),
-                new SideDouble(Side.LEFT, 1 - x) };
+                new SideDouble(Side.LEFT, leftFraction) };
         } else {
             return null;
         }
@@ -1582,13 +1587,21 @@ public class Diagram extends Observable implements Printable {
         }
     }
 
+    protected boolean componentsSumToOne(SideDouble[] sds) {
+        double sum = 0;
+        for (SideDouble sd: sds) {
+            sum += sd.d;
+        }
+        return Math.abs(1 - sum) < 1e-4;
+    }
+
     /** Assuming that diagram's principal coordinates are mole
         fractions, return the weight fractions of the various diagram
         components at point prin, or null if the fractions could not
         be determined. */
     protected SideDouble[] componentWeightFractions(Point2D prin) {
         SideDouble[] res = componentFractions(prin);
-        if (res == null) {
+        if (res == null || !componentsSumToOne(res)) {
             return null;
         }
         double totWeight = 0;
@@ -1616,7 +1629,7 @@ public class Diagram extends Observable implements Printable {
         be determined. */
     protected SideDouble[] componentMoleFractions(Point2D prin) {
         SideDouble[] res = componentFractions(prin);
-        if (res == null) {
+        if (res == null || !componentsSumToOne(res)) {
             return null;
         }
         double totMole = 0;
@@ -1896,7 +1909,7 @@ public class Diagram extends Observable implements Printable {
         case TOP:
             return getYAxis();
         case LEFT:
-            return getZAxis();
+            return getLeftAxis();
         }
         return null;
     }
@@ -1995,23 +2008,29 @@ public class Diagram extends Observable implements Printable {
         return null;
     }
 
-    /*
-    static boolean isZAxis(LinearAxis axis) {
-        String name = axis.name;
-        return name != null
-            && name.equals(diagramComponents[Side.LEFT]);
-    }
-    */
-            
-    static boolean isZAxis(LinearAxis axis) {
-        // TODO This approach doesn't work with ternary diagrams that
-        // are sliced of more complex systems.
-        return axis.getA() == -1.0 && axis.getB() == -1.0
-            && axis.getC() == 1.0;
+    public boolean isLeftAxis(LinearAxis axis) {
+        String name = (String) axis.name;
+        return name.equals("Left")
+            || (name != null
+                && name.equals(diagramComponents[Side.LEFT.ordinal()]));
     }
 
-    static boolean isPrimaryAxis(LinearAxis axis) {
-        return (axis.isXAxis() || axis.isYAxis() || isZAxis(axis));
+    public boolean isXAxis(LinearAxis axis) {
+        String name = (String) axis.name;
+        return name.equals("Right") || name.equals("X")
+            || (name != null
+                && name.equals(diagramComponents[Side.RIGHT.ordinal()]));
+    }
+
+    public boolean isYAxis(LinearAxis axis) {
+        String name = (String) axis.name;
+        return name.equals("Top") || name.equals("Y")
+            || (name != null
+                && name.equals(diagramComponents[Side.TOP.ordinal()]));
+    }
+
+    public boolean isPrimaryAxis(LinearAxis axis) {
+        return isXAxis(axis) || isYAxis(axis) || isLeftAxis(axis);
     }
 
     /** Return true if this axis measures a diagram component
@@ -2019,12 +2038,12 @@ public class Diagram extends Observable implements Printable {
     boolean isComponentAxis(LinearAxis axis) {
         return axis.isXAxis() ? (diagramComponents[Side.RIGHT.ordinal()] != null)
             : axis.isYAxis() ? (diagramComponents[Side.TOP.ordinal()] != null)
-            : isZAxis(axis) ? (diagramComponents[Side.LEFT.ordinal()] != null)
+            : isLeftAxis(axis) ? (diagramComponents[Side.LEFT.ordinal()] != null)
             : false;
     }
 
     // Smells kludgy...
-    static boolean isStandardAxis(LinearAxis axis) {
+    boolean isStandardAxis(LinearAxis axis) {
         if (isPrimaryAxis(axis)) {
             return true;
         }
@@ -2033,9 +2052,9 @@ public class Diagram extends Observable implements Printable {
         return name.equals("page X") || name.equals("page Y");
     }
 
-    @JsonIgnore public LinearAxis getZAxis() {
+    @JsonIgnore public LinearAxis getLeftAxis() {
         for (LinearAxis axis: axes) {
-            if (isZAxis(axis)) {
+            if (isLeftAxis(axis)) {
                 return axis;
             }
         }
@@ -2049,7 +2068,7 @@ public class Diagram extends Observable implements Printable {
     public boolean axisIsFractional(LinearAxis axis) {
         return (axis.isXAxis() && getDiagramComponent(Side.RIGHT) != null)
             || (axis.isYAxis() && getDiagramComponent(Side.TOP) != null)
-            || (isZAxis(axis) && getDiagramComponent(Side.LEFT) != null);
+            || (isLeftAxis(axis) && getDiagramComponent(Side.LEFT) != null);
     }
 
     public void add(AnchoredLabel label) {
@@ -2547,7 +2566,7 @@ public class Diagram extends Observable implements Printable {
         propagateChange();
     }
 
-    protected double normalFontSize() {
+    protected static double normalFontSize() {
         return STANDARD_FONT_SIZE / BASE_SCALE;
     }
 
@@ -2589,12 +2608,12 @@ public class Diagram extends Observable implements Printable {
         boolean isTernary = diagramType.isTernary();
 
         if (isTernary) {
-            axes.add(defaultAxis(Side.LEFT));
-            axes.add(defaultAxis(Side.RIGHT));
-            axes.add(defaultAxis(Side.TOP));
+            add(defaultAxis(Side.LEFT));
+            add(defaultAxis(Side.RIGHT));
+            add(defaultAxis(Side.TOP));
         } else {
-            axes.add(defaultAxis(Side.RIGHT));
-            axes.add(defaultAxis(Side.TOP));
+            add(defaultAxis(Side.RIGHT));
+            add(defaultAxis(Side.TOP));
         }
 
         try {
@@ -3003,9 +3022,9 @@ public class Diagram extends Observable implements Printable {
                 return null;
             }
             String text = htmlToText(hand.getItem().getText());
-            ChemicalString.Match match = ChemicalString.composition(text);
+            ChemicalString.Match match = ChemicalString.maybeQuotedComposition(text);
             if (match != null) {
-                return text.substring(0, match.length);
+                return match.within(text);
             }
         }
 
@@ -3258,7 +3277,7 @@ public class Diagram extends Observable implements Printable {
 
         // Convert all angles from page to the new principal coordinates.
         for (LinearAxis axis: axes) {
-            if (axis.isXAxis() || axis.isYAxis() || isZAxis(axis)) {
+            if (axis.isXAxis() || axis.isYAxis() || isLeftAxis(axis)) {
                 continue;
             }
             axis.concatenate(itrans);
@@ -3286,9 +3305,9 @@ public class Diagram extends Observable implements Printable {
     }
 
     /** If the diagram has a full set of diagram components defined as
-        compounds with integer subscripts, and point "prin" nearly
-        equals a round fraction, then return the compound that "prin"
-        represents. */
+        compounds with integer subscripts (that is, the components sum
+        to 1), and point "prin" nearly equals a round fraction, then
+        return the compound that "prin" represents. */
     public String molePercentToCompound(Point2D.Double prin) {
         if (prin == null) {
             return null;
@@ -3301,7 +3320,7 @@ public class Diagram extends Observable implements Printable {
         String[] diagramElements = getDiagramElements();
 
         SideDouble[] sds = componentFractions(prin);
-        if (sds == null || sds.length == 0) {
+        if (sds == null || sds.length == 0 || !componentsSumToOne(sds)) {
             return null;
         }
         for (SideDouble sd: sds) {
@@ -3737,32 +3756,32 @@ public class Diagram extends Observable implements Printable {
     }
 
     void addTernaryBottomRuler(double start /* Z */, double end /* Z */) {
-        LinearRuler r = new DefaultTernaryRuler() {{ // Component-Z axis
-            textAngle = 0;
-            tickLeft = true;
-            labelAnchor = LinearRuler.LabelAnchor.RIGHT;
-        }};
+        LinearRuler r = defaultTernaryRuler();
+        r.textAngle = 0;
+        r.tickLeft = true;
+        r.labelAnchor = LinearRuler.LabelAnchor.RIGHT;
 
         r.startPoint = new Point2D.Double(start, 0.0);
         r.endPoint = new Point2D.Double(end, 0);
         r.startArrow = Math.abs(start) > 1e-8;
         r.endArrow = (Math.abs(end - 1) > 1e-4);
-        r.suppressStartTick = (diagramType != DiagramType.TERNARY_RIGHT);
-        r.suppressEndTick = (diagramType != DiagramType.TERNARY_LEFT);
+        r.suppressStartTick = (diagramType != DiagramType.TERNARY_RIGHT)
+            || (start < 1e-6);
+        r.suppressEndTick = (diagramType != DiagramType.TERNARY_LEFT)
+            || (end > 1 - 1e-6);
         add(r);
     }
 
     void addTernaryLeftRuler(double start /* Y */, double end /* Y */) {
-        LinearRuler r = new DefaultTernaryRuler() {{ // Left Y-axis
-            textAngle = Math.PI / 3;
-            tickRight = true;
-            labelAnchor = LinearRuler.LabelAnchor.LEFT;
-        }};
+        LinearRuler r = defaultTernaryRuler();
+        r.textAngle = Math.PI / 3;
+        r.tickRight = true;
+        r.labelAnchor = LinearRuler.LabelAnchor.LEFT;
 
-        // Usual PED Data Center style leaves out the tick labels on the left unless this is a top or left
-        // partial ternary diagram.
+        // Usual PED Data Center style leaves out the tick labels on
+        // the left unless this is a top or left partial ternary
+        // diagram.
         boolean showLabels = diagramType == DiagramType.TERNARY_LEFT
-
             || diagramType == DiagramType.TERNARY_TOP;
         if (showLabels) {
             r.labelAnchor = LinearRuler.LabelAnchor.LEFT;
@@ -3770,7 +3789,6 @@ public class Diagram extends Observable implements Printable {
         } else {
             r.labelAnchor = LinearRuler.LabelAnchor.NONE;
         }
-
 
         r.startPoint = new Point2D.Double(0.0, start);
         r.endPoint = new Point2D.Double(0.0, end);
@@ -3781,7 +3799,8 @@ public class Diagram extends Observable implements Printable {
         // bottom ruler unless this is a top partial ternary
         // diagram.
         r.suppressStartLabel = (diagramType != DiagramType.TERNARY_TOP);
-        r.suppressStartTick = (diagramType != DiagramType.TERNARY_TOP);
+        r.suppressStartTick = (diagramType != DiagramType.TERNARY_TOP)
+            || (start < 1e-6);
         r.suppressEndLabel = (diagramType != DiagramType.TERNARY_TOP);
         r.suppressEndTick = (diagramType != DiagramType.TERNARY_LEFT)
             || (end > 1 - 1e-6);
@@ -3789,10 +3808,9 @@ public class Diagram extends Observable implements Printable {
     }
 
     void addTernaryRightRuler(double start /* Y */, double end /* Y */) {
-        LinearRuler r = new DefaultTernaryRuler() {{ // Right Y-axis
-            textAngle = Math.PI * 2 / 3;
-            tickLeft = true;
-                }};
+        LinearRuler r = defaultTernaryRuler();
+        r.textAngle = Math.PI * 2 / 3;
+        r.tickLeft = true;
 
         // The tick labels for the right ruler are redundant with the
         // tick labels for the left ruler unless this is a top or right
@@ -3805,8 +3823,10 @@ public class Diagram extends Observable implements Printable {
         } else {
             r.labelAnchor = LinearRuler.LabelAnchor.NONE;
         }
-        r.suppressStartTick = diagramType != DiagramType.TERNARY_TOP;
-        r.suppressEndTick = diagramType != DiagramType.TERNARY_RIGHT;
+        r.suppressStartTick = diagramType != DiagramType.TERNARY_TOP
+            || (start < 1e-6);
+        r.suppressEndTick = diagramType != DiagramType.TERNARY_RIGHT
+            || (start > 1-1e-6);
 
         r.startPoint = new Point2D.Double(1 - start, start);
         r.endPoint = new Point2D.Double(1 - end, end);
@@ -3816,47 +3836,46 @@ public class Diagram extends Observable implements Printable {
     }
 
     void addBinaryBottomRuler() {
-        add(new DefaultBinaryRuler() {{ // X-axis
-            textAngle = 0;
-            tickLeft = true;
-            labelAnchor = LinearRuler.LabelAnchor.RIGHT;
-
-            startPoint = new Point2D.Double(0.0, 0.0);
-            endPoint = new Point2D.Double(1.0, 0.0);
-        }});
+        LinearRuler r = defaultBinaryRuler();
+        r.textAngle = 0;
+        r.tickLeft = true;
+        r.labelAnchor = LinearRuler.LabelAnchor.RIGHT;
+        r.startPoint = new Point2D.Double(0.0, 0.0);
+        r.endPoint = new Point2D.Double(1.0, 0.0);
+        add(r);
     }
 
     void addBinaryTopRuler() {
-        add(new DefaultBinaryRuler() {{ // X-axis
-            textAngle = 0;
-            tickRight = true;
-            labelAnchor = LinearRuler.LabelAnchor.NONE;
+        LinearRuler r = defaultBinaryRuler();
+        r.textAngle = 0;
+        r.tickRight = true;
+        r.labelAnchor = LinearRuler.LabelAnchor.NONE;
 
-            startPoint = new Point2D.Double(0.0, 1.0);
-            endPoint = new Point2D.Double(1.0, 1.0);
-        }});
+        r.startPoint = new Point2D.Double(0.0, 1.0);
+        r.endPoint = new Point2D.Double(1.0, 1.0);
+        add(r);
     }
 
     void addBinaryLeftRuler() {
-        add(new DefaultBinaryRuler() {{ // Left Y-axis
-            textAngle = Math.PI / 2;
-            tickRight = true;
-            labelAnchor = LinearRuler.LabelAnchor.LEFT;
+        LinearRuler r = defaultBinaryRuler();
+        r.textAngle = Math.PI / 2;
+        r.tickRight = true;
+        r.labelAnchor = LinearRuler.LabelAnchor.LEFT;
 
-            startPoint = new Point2D.Double(0.0, 0.0);
-            endPoint = new Point2D.Double(0.0, 1.0);
-        }});
+        r.startPoint = new Point2D.Double(0.0, 0.0);
+        r.endPoint = new Point2D.Double(0.0, 1.0);
+        add(r);
     }
 
     void addBinaryRightRuler() {
-        add(new DefaultBinaryRuler() {{ // Right Y-axis
-            textAngle = Math.PI / 2;
-            tickLeft = true;
-            labelAnchor = LinearRuler.LabelAnchor.NONE;
+        LinearRuler r = defaultBinaryRuler();
+        r.textAngle = Math.PI / 2;
+        r.tickLeft = true;
+        r.labelAnchor = LinearRuler.LabelAnchor.NONE;
 
-            startPoint = new Point2D.Double(1.0, 0.0);
-            endPoint = new Point2D.Double(1.0, 1.0);
-        }});
+        r.startPoint = new Point2D.Double(1.0, 0.0);
+        r.endPoint = new Point2D.Double(1.0, 1.0);
+        add(r);
     }
 
     /** Return the weight of the given component computed as a product
