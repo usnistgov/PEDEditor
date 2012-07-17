@@ -1,6 +1,5 @@
 {
   "tags" : [ "Fe3Al" ],
-  "originalToPrincipal" : null,
   "principalToStandardPage" : {
     "transform" : "RectangleTransform",
     "input" : {
@@ -24,398 +23,222 @@
   },
   "diagramType" : "BINARY",
   "labels" : [ {
-    "xWeight" : 0.0,
     "yWeight" : 1.0,
     "x" : 0.5237766406025257,
     "y" : 1310.0,
-    "baselineXOffset" : 0.0,
-    "baselineYOffset" : 0.0,
     "text" : "1310°C",
-    "angle" : 0.0,
-    "fontSize" : 1.25,
-    "color" : null,
-    "boxed" : false,
-    "opaque" : false
+    "fontSize" : 1.25
   }, {
     "xWeight" : 0.5,
     "yWeight" : 0.5,
     "x" : 0.12377494462105129,
     "y" : 762.3809523809524,
-    "baselineXOffset" : 0.0,
-    "baselineYOffset" : 0.0,
     "text" : "T<sub>e</sub>",
-    "angle" : 0.0,
-    "fontSize" : 1.25,
-    "color" : null,
-    "boxed" : false,
-    "opaque" : false
+    "fontSize" : 1.25
   }, {
     "xWeight" : 1.0,
     "yWeight" : 0.5,
-    "x" : 0.0,
     "y" : 1538.0,
-    "baselineXOffset" : 0.0,
-    "baselineYOffset" : 0.0,
     "text" : "1538&deg;C ",
-    "angle" : 0.0,
-    "fontSize" : 1.25,
-    "color" : null,
-    "boxed" : false,
-    "opaque" : false
+    "fontSize" : 1.25
   }, {
     "xWeight" : 0.5,
     "yWeight" : 0.5,
     "x" : 0.8062679045200227,
     "y" : 1416.6666666666665,
-    "baselineXOffset" : 0.0,
-    "baselineYOffset" : 0.0,
     "text" : "L",
-    "angle" : 0.0,
-    "fontSize" : 1.8,
-    "color" : null,
-    "boxed" : false,
-    "opaque" : false
+    "fontSize" : 1.8
   }, {
     "xWeight" : 0.5,
     "yWeight" : 1.0,
     "x" : 0.5426816171326031,
     "y" : 1229.047619047619,
-    "baselineXOffset" : 0.0,
-    "baselineYOffset" : 0.0,
     "text" : "1232",
-    "angle" : 0.0,
-    "fontSize" : 1.25,
-    "color" : null,
-    "boxed" : false,
-    "opaque" : false
+    "fontSize" : 1.25
   }, {
     "xWeight" : 0.5,
     "yWeight" : 0.5,
     "x" : 0.4026105875714035,
     "y" : 888.0952380952384,
-    "baselineXOffset" : 0.0,
-    "baselineYOffset" : 0.0,
     "text" : "FeAl",
-    "angle" : 0.0,
-    "fontSize" : 1.5,
-    "color" : null,
-    "boxed" : false,
-    "opaque" : false
+    "fontSize" : 1.5
   }, {
     "xWeight" : 0.5,
     "yWeight" : 0.5,
     "x" : 0.6185431573172342,
     "y" : 1160.4761904761908,
-    "baselineXOffset" : 0.0,
-    "baselineYOffset" : 0.0,
     "text" : "ε",
-    "angle" : 0.0,
-    "fontSize" : 1.5,
-    "color" : null,
-    "boxed" : false,
-    "opaque" : false
+    "fontSize" : 1.5
   }, {
-    "xWeight" : 0.0,
     "yWeight" : 0.5,
     "x" : 0.07911025102709886,
     "y" : 1100.4761904761906,
-    "baselineXOffset" : 0.0,
-    "baselineYOffset" : 0.0,
     "text" : "(γFe)",
-    "angle" : 0.0,
-    "fontSize" : 1.5,
-    "color" : null,
-    "boxed" : false,
-    "opaque" : false
+    "fontSize" : 1.5
   }, {
     "xWeight" : 0.5,
     "yWeight" : 0.5,
     "x" : 0.5,
     "y" : 320.5,
-    "baselineXOffset" : 0.0,
-    "baselineYOffset" : 0.0,
     "text" : "Atomic Percent Aluminum",
-    "angle" : 0.0,
-    "fontSize" : 1.8,
-    "color" : null,
-    "boxed" : false,
-    "opaque" : false
+    "fontSize" : 1.8
   }, {
-    "xWeight" : 0.0,
-    "yWeight" : 0.0,
     "x" : -0.03954880836872268,
     "y" : 358.36309523809814,
-    "baselineXOffset" : 0.0,
-    "baselineYOffset" : 0.0,
     "text" : "Fe",
-    "angle" : 0.0,
-    "fontSize" : 1.8,
-    "color" : null,
-    "boxed" : false,
-    "opaque" : false
+    "fontSize" : 1.8
   }, {
     "xWeight" : 0.5,
-    "yWeight" : 0.0,
     "x" : 0.6066683207192887,
     "y" : 1102.0,
-    "baselineXOffset" : 0.0,
-    "baselineYOffset" : 0.0,
     "text" : "1102&deg;C",
-    "angle" : 0.0,
-    "fontSize" : 1.25,
-    "color" : null,
-    "boxed" : false,
-    "opaque" : false
+    "fontSize" : 1.25
   }, {
     "xWeight" : 0.5,
     "yWeight" : 1.0,
     "x" : 0.8856705454115644,
     "y" : 655.5555555555557,
-    "baselineXOffset" : 0.0,
-    "baselineYOffset" : 0.0,
     "text" : "655&deg;C",
-    "angle" : 0.0,
-    "fontSize" : 1.25,
-    "color" : null,
-    "boxed" : false,
-    "opaque" : false
+    "fontSize" : 1.25
   }, {
-    "xWeight" : 0.0,
     "yWeight" : 0.5,
     "x" : 1.0,
     "y" : 660.452,
-    "baselineXOffset" : 0.0,
-    "baselineYOffset" : 0.0,
     "text" : "660.452&deg;C",
-    "angle" : 0.0,
-    "fontSize" : 1.25,
-    "color" : null,
-    "boxed" : false,
-    "opaque" : false
+    "fontSize" : 1.25
   }, {
-    "xWeight" : 0.0,
     "yWeight" : 1.0,
     "x" : 0.7517480103433155,
     "y" : 1160.0,
-    "baselineXOffset" : 0.0,
-    "baselineYOffset" : 0.0,
     "text" : "~1160&deg;C",
-    "angle" : 0.0,
-    "fontSize" : 1.25,
-    "color" : null,
-    "boxed" : false,
-    "opaque" : false
+    "fontSize" : 1.25
   }, {
     "xWeight" : 0.5,
     "yWeight" : 1.0,
     "x" : 0.7125741521543952,
     "y" : 1169.0,
-    "baselineXOffset" : 0.0,
-    "baselineYOffset" : 0.0,
     "text" : "1169&deg;C",
-    "angle" : 0.0,
-    "fontSize" : 1.25,
-    "color" : null,
-    "boxed" : false,
-    "opaque" : false
+    "fontSize" : 1.25
   }, {
     "xWeight" : 1.0,
-    "yWeight" : 0.0,
-    "x" : 0.0,
     "y" : 1394.0,
-    "baselineXOffset" : 0.0,
-    "baselineYOffset" : 0.0,
     "text" : "1394&deg;C",
-    "angle" : 0.0,
-    "fontSize" : 1.25,
-    "color" : null,
-    "boxed" : false,
-    "opaque" : false
+    "fontSize" : 1.25
   }, {
     "xWeight" : 0.5,
     "yWeight" : 0.5,
     "x" : 0.19796367779109353,
     "y" : 1272.8125000000007,
-    "baselineXOffset" : 0.0,
-    "baselineYOffset" : 0.0,
     "text" : "(αFe)",
-    "angle" : 0.0,
-    "fontSize" : 1.5,
-    "color" : null,
-    "boxed" : false,
-    "opaque" : false
+    "fontSize" : 1.5
   }, {
     "xWeight" : 1.0,
     "yWeight" : 0.5,
     "x" : -0.0025529526706335346,
     "y" : 911.9999999999999,
-    "baselineXOffset" : 0.0,
-    "baselineYOffset" : 0.0,
     "text" : "912&deg;C",
-    "angle" : 0.0,
     "fontSize" : 1.25,
-    "color" : null,
-    "boxed" : false,
     "opaque" : true
   }, {
     "xWeight" : 1.0,
     "yWeight" : 0.5,
     "x" : 0.9792574789074621,
     "y" : 500.0,
-    "baselineXOffset" : 0.0,
-    "baselineYOffset" : 0.0,
     "text" : "(Al)",
-    "angle" : 0.0,
-    "fontSize" : 1.3333333333333333,
-    "color" : null,
-    "boxed" : false,
-    "opaque" : false
+    "fontSize" : 1.3333333333333333
   }, {
     "xWeight" : 0.5,
-    "yWeight" : 0.0,
     "x" : 0.780679413961097,
     "y" : 749.5720868992756,
-    "baselineXOffset" : 0.0,
-    "baselineYOffset" : 0.0,
     "text" : "FeAl<sub>3</sub>",
     "angle" : 1.5707963267948966,
-    "fontSize" : 1.5,
-    "color" : null,
-    "boxed" : false,
-    "opaque" : false
+    "fontSize" : 1.5
   }, {
     "xWeight" : 0.5,
     "yWeight" : 0.5,
     "x" : 0.7167375171406168,
     "y" : 765.3719552337061,
-    "baselineXOffset" : 0.0,
-    "baselineYOffset" : 0.0,
     "text" : "Fe<sub>2</sub>Al<sub>5</sub>",
     "angle" : 1.5707963267948966,
-    "fontSize" : 1.5,
-    "color" : null,
-    "boxed" : false,
-    "opaque" : false
+    "fontSize" : 1.5
   }, {
     "xWeight" : 0.5,
     "yWeight" : 1.0,
     "x" : 0.6448819729083332,
     "y" : 749.572086899273,
-    "baselineXOffset" : 0.0,
-    "baselineYOffset" : 0.0,
     "text" : "FeAl<sub>2</sub>",
     "angle" : 1.5707963267948966,
-    "fontSize" : 1.5,
-    "color" : null,
-    "boxed" : false,
-    "opaque" : false
+    "fontSize" : 1.5
   }, {
-    "xWeight" : 0.0,
     "yWeight" : 0.5,
     "x" : 0.33680391749003624,
     "y" : 485.0000000000001,
-    "baselineXOffset" : 0.0,
-    "baselineYOffset" : 0.0,
     "text" : "Fe<sub>3</sub>Al",
-    "angle" : 0.0,
-    "fontSize" : 1.5,
-    "color" : null,
-    "boxed" : false,
-    "opaque" : false
+    "fontSize" : 1.5
   }, {
     "xWeight" : 1.0,
     "yWeight" : 0.5,
     "x" : -0.0,
     "y" : 770.0,
-    "baselineXOffset" : 0.0,
-    "baselineYOffset" : 0.0,
     "text" : "770&deg;C",
-    "angle" : 0.0,
-    "fontSize" : 1.25,
-    "color" : null,
-    "boxed" : false,
-    "opaque" : false
+    "fontSize" : 1.25
   }, {
     "xWeight" : 0.5,
     "yWeight" : 1.0,
     "x" : 0.6709744209235344,
     "y" : 1220.714285714286,
-    "baselineXOffset" : 0.0,
-    "baselineYOffset" : 0.0,
     "text" : "1165&deg;C",
-    "angle" : 0.0,
-    "fontSize" : 1.25,
-    "color" : null,
-    "boxed" : false,
-    "opaque" : false
+    "fontSize" : 1.25
   }, {
     "xWeight" : 0.5,
     "yWeight" : 1.0,
     "x" : -0.07168943168066007,
     "y" : 999.5238095238092,
-    "baselineXOffset" : 0.0,
-    "baselineYOffset" : 0.0,
     "text" : "Temperature °C",
     "angle" : 1.5707963267948966,
-    "fontSize" : 1.8,
-    "color" : null,
-    "boxed" : false,
-    "opaque" : false
+    "fontSize" : 1.8
   }, {
     "xWeight" : 0.5,
     "yWeight" : 0.5,
     "x" : 1.0064262589102966,
     "y" : 311.07142857142867,
-    "baselineXOffset" : 0.0,
-    "baselineYOffset" : 0.0,
     "text" : "Al",
-    "angle" : 0.0,
-    "fontSize" : 1.8,
-    "color" : null,
-    "boxed" : false,
-    "opaque" : false
+    "fontSize" : 1.8
   } ],
   "arrows" : [ {
     "x" : 0.2829425936086133,
     "y" : 485.0,
     "size" : 0.0012,
-    "angle" : 3.141592653589793,
-    "color" : null
+    "angle" : 3.141592653589793
   }, {
     "x" : 1.0,
     "y" : 500.0,
     "size" : 0.0016,
-    "angle" : 0.008726646259971648,
-    "color" : null
+    "angle" : 0.008726646259971648
   }, {
     "x" : 0.00784766019884341,
     "y" : 1100.278884078547,
     "size" : 0.0016,
-    "angle" : 3.1682961911453065,
-    "color" : null
+    "angle" : 3.1682961911453065
   }, {
     "x" : 0.7570952434217704,
     "y" : 749.5720868992736,
     "size" : 0.0012,
-    "angle" : 3.141592653589793,
-    "color" : null
+    "angle" : 3.141592653589793
   }, {
     "x" : 0.6662693890789573,
     "y" : 749.5720868992722,
     "size" : 0.0012,
-    "angle" : -0.0,
-    "color" : null
+    "angle" : -0.0
   }, {
     "x" : 0.6709782589892909,
     "y" : 1165.0,
     "size" : 0.0012,
-    "angle" : -1.570796216609968,
-    "color" : null
+    "angle" : -1.570796216609968
   } ],
   "tieLines" : [ ],
   "diagramComponents" : [ null, null, "Fe", "Al" ],
-  "originalFilename" : null,
-  "filename" : "C:\\eb\\mypeds\\AlFeAtomic.ped",
+  "usingWeightFraction" : false,
   "fontName" : "DejaVu LGC Serif PED",
   "keys" : {
   },
@@ -428,9 +251,7 @@
       "x" : 0.44962196039326596,
       "y" : 1310.0
     } ],
-    "color" : null,
     "lineWidth" : 0.0012,
-    "filled" : false,
     "closed" : false,
     "lineStyle" : "DASH",
     "id" : 1
@@ -461,9 +282,7 @@
       "x" : 0.2353628519604616,
       "y" : 664.6428571428573
     } ],
-    "color" : null,
     "lineWidth" : 0.0012,
-    "filled" : false,
     "closed" : false,
     "lineStyle" : "DASH",
     "id" : 2
@@ -485,9 +304,7 @@
       "x" : 0.2122407244404238,
       "y" : 400.00000000000017
     } ],
-    "color" : null,
     "lineWidth" : 0.0012,
-    "filled" : false,
     "closed" : false,
     "lineStyle" : "SOLID",
     "id" : 3
@@ -500,9 +317,7 @@
       "x" : 0.23054298327523784,
       "y" : 608.8849203110608
     } ],
-    "color" : null,
     "lineWidth" : 0.0012,
-    "filled" : false,
     "closed" : false,
     "lineStyle" : "DASH",
     "id" : 50
@@ -530,9 +345,7 @@
       "x" : -0.0,
       "y" : 770.0
     } ],
-    "color" : null,
     "lineWidth" : 0.0012,
-    "filled" : false,
     "closed" : false,
     "lineStyle" : "DASH",
     "id" : 5
@@ -566,9 +379,7 @@
       "x" : 0.24340378822948974,
       "y" : 400.00000000000017
     } ],
-    "color" : null,
     "lineWidth" : 0.0012,
-    "filled" : false,
     "closed" : false,
     "lineStyle" : "SOLID",
     "id" : 7
@@ -581,9 +392,7 @@
       "x" : 0.21791837433576638,
       "y" : 470.0000000000001
     } ],
-    "color" : null,
     "lineWidth" : 0.0012,
-    "filled" : false,
     "closed" : false,
     "lineStyle" : "DASH",
     "id" : 8
@@ -596,9 +405,7 @@
       "x" : 0.26202678714597655,
       "y" : 548.0952380952382
     } ],
-    "color" : null,
     "lineWidth" : 0.0012,
-    "filled" : false,
     "closed" : false,
     "lineStyle" : "DASH",
     "id" : 9
@@ -623,9 +430,7 @@
       "x" : 0.33820336518737754,
       "y" : 400.00000000000017
     } ],
-    "color" : null,
     "lineWidth" : 0.0012,
-    "filled" : false,
     "closed" : false,
     "lineStyle" : "DASH",
     "id" : 10
@@ -638,9 +443,7 @@
       "x" : 0.26692386225878617,
       "y" : 400.00000000000017
     } ],
-    "color" : null,
     "lineWidth" : 0.0012,
-    "filled" : false,
     "closed" : false,
     "lineStyle" : "DOT_DASH",
     "id" : 11
@@ -674,9 +477,7 @@
       "x" : 0.5237766406025257,
       "y" : 1310.0
     } ],
-    "color" : null,
     "lineWidth" : 0.0012,
-    "filled" : false,
     "closed" : false,
     "lineStyle" : "SOLID",
     "id" : 12
@@ -692,9 +493,7 @@
       "x" : 0.6066683207192887,
       "y" : 1232.0
     } ],
-    "color" : null,
     "lineWidth" : 0.0012,
-    "filled" : false,
     "closed" : false,
     "lineStyle" : "SOLID",
     "id" : 13
@@ -710,9 +509,7 @@
       "x" : 0.6872832562650858,
       "y" : 1165.0
     } ],
-    "color" : null,
     "lineWidth" : 0.0012,
-    "filled" : false,
     "closed" : false,
     "lineStyle" : "SOLID",
     "id" : 14
@@ -725,9 +522,7 @@
       "x" : 0.5226749665660597,
       "y" : 1232.0
     } ],
-    "color" : null,
     "lineWidth" : 0.0012,
-    "filled" : false,
     "closed" : false,
     "lineStyle" : "SOLID",
     "id" : 15
@@ -743,9 +538,7 @@
       "x" : 0.44962196039326596,
       "y" : 1310.0
     } ],
-    "color" : null,
     "lineWidth" : 0.0012,
-    "filled" : false,
     "closed" : false,
     "lineStyle" : "SOLID",
     "id" : 16
@@ -779,9 +572,7 @@
       "x" : 0.0,
       "y" : 1538.0
     } ],
-    "color" : null,
     "lineWidth" : 0.0012,
-    "filled" : false,
     "closed" : false,
     "lineStyle" : "SOLID",
     "id" : 17
@@ -794,9 +585,7 @@
       "x" : 0.5528854778482282,
       "y" : 1102.0
     } ],
-    "color" : null,
     "lineWidth" : 0.0012,
-    "filled" : false,
     "closed" : false,
     "lineStyle" : "DASH",
     "id" : 18
@@ -812,9 +601,7 @@
       "x" : 0.5361431965075121,
       "y" : 997.6190476190478
     } ],
-    "color" : null,
     "lineWidth" : 0.0012,
-    "filled" : false,
     "closed" : false,
     "lineStyle" : "DASH",
     "id" : 19
@@ -845,9 +632,7 @@
       "x" : 0.4872809548659576,
       "y" : 400.00000000000017
     } ],
-    "color" : null,
     "lineWidth" : 0.0012,
-    "filled" : false,
     "closed" : false,
     "lineStyle" : "SOLID",
     "id" : 20
@@ -860,9 +645,7 @@
       "x" : 0.6134603430950613,
       "y" : 1102.0
     } ],
-    "color" : null,
     "lineWidth" : 0.0012,
-    "filled" : false,
     "closed" : false,
     "lineStyle" : "SOLID",
     "id" : 21
@@ -875,9 +658,7 @@
       "x" : 0.5818304311383674,
       "y" : 1232.0
     } ],
-    "color" : null,
     "lineWidth" : 0.0012,
-    "filled" : false,
     "closed" : false,
     "lineStyle" : "SOLID",
     "id" : 22
@@ -890,9 +671,7 @@
       "x" : 0.7025818538622177,
       "y" : 1165.0
     } ],
-    "color" : null,
     "lineWidth" : 0.0032,
-    "filled" : false,
     "closed" : false,
     "lineStyle" : "SOLID",
     "id" : 23
@@ -920,9 +699,7 @@
       "x" : 0.663340057223618,
       "y" : 400.00000000000017
     } ],
-    "color" : null,
     "lineWidth" : 0.0012,
-    "filled" : false,
     "closed" : false,
     "lineStyle" : "DASH",
     "id" : 24
@@ -953,9 +730,7 @@
       "x" : 0.6653939414460301,
       "y" : 1165.0
     } ],
-    "color" : null,
     "lineWidth" : 0.0012,
-    "filled" : false,
     "closed" : false,
     "lineStyle" : "DASH",
     "id" : 25
@@ -968,9 +743,7 @@
       "x" : 0.5528854778482282,
       "y" : 1102.0
     } ],
-    "color" : null,
     "lineWidth" : 0.0012,
-    "filled" : false,
     "closed" : false,
     "lineStyle" : "SOLID",
     "id" : 26
@@ -983,9 +756,7 @@
       "x" : 0.6537051263629747,
       "y" : 1165.0
     } ],
-    "color" : null,
     "lineWidth" : 0.0012,
-    "filled" : false,
     "closed" : false,
     "lineStyle" : "SOLID",
     "id" : 27
@@ -1001,9 +772,7 @@
       "x" : 0.7018618626435617,
       "y" : 873.8095238095241
     } ],
-    "color" : null,
     "lineWidth" : 0.0012,
-    "filled" : false,
     "closed" : false,
     "lineStyle" : "DASH",
     "id" : 28
@@ -1019,9 +788,7 @@
       "x" : 0.7018618626435617,
       "y" : 873.8095238095241
     } ],
-    "color" : null,
     "lineWidth" : 0.0012,
-    "filled" : false,
     "closed" : false,
     "lineStyle" : "SOLID",
     "id" : 29
@@ -1043,9 +810,7 @@
       "x" : 0.7292554149520528,
       "y" : 877.6190476190478
     } ],
-    "color" : null,
     "lineWidth" : 0.0012,
-    "filled" : false,
     "closed" : false,
     "lineStyle" : "SOLID",
     "id" : 30
@@ -1073,9 +838,7 @@
       "x" : 0.7260582779823626,
       "y" : 400.00000000000017
     } ],
-    "color" : null,
     "lineWidth" : 0.0012,
-    "filled" : false,
     "closed" : false,
     "lineStyle" : "DASH",
     "id" : 31
@@ -1094,9 +857,7 @@
       "x" : 0.7025818538622177,
       "y" : 1165.0
     } ],
-    "color" : null,
     "lineWidth" : 0.0012,
-    "filled" : false,
     "closed" : false,
     "lineStyle" : "SOLID",
     "id" : 32
@@ -1130,9 +891,7 @@
       "x" : 0.9897268662712224,
       "y" : 655.7142857142862
     } ],
-    "color" : null,
     "lineWidth" : 0.0012,
-    "filled" : false,
     "closed" : false,
     "lineStyle" : "SOLID",
     "id" : 33
@@ -1145,9 +904,7 @@
       "x" : 0.7670250022828824,
       "y" : 655.0
     } ],
-    "color" : null,
     "lineWidth" : 0.0032,
-    "filled" : false,
     "closed" : false,
     "lineStyle" : "SOLID",
     "id" : 34
@@ -1163,9 +920,7 @@
       "x" : 1.0,
       "y" : 660.452
     } ],
-    "color" : null,
     "lineWidth" : 0.0012,
-    "filled" : false,
     "closed" : false,
     "lineStyle" : "SOLID",
     "id" : 35
@@ -1187,9 +942,7 @@
       "x" : 0.7450942393687007,
       "y" : 879.047619047619
     } ],
-    "color" : null,
     "lineWidth" : 0.0012,
-    "filled" : false,
     "closed" : false,
     "lineStyle" : "SOLID",
     "id" : 36
@@ -1214,9 +967,7 @@
       "x" : 0.7463351207855918,
       "y" : 400.00000000000017
     } ],
-    "color" : null,
     "lineWidth" : 0.0012,
-    "filled" : false,
     "closed" : false,
     "lineStyle" : "DASH",
     "id" : 37
@@ -1238,9 +989,7 @@
       "x" : 0.7618318216600359,
       "y" : 978.7301587301589
     } ],
-    "color" : null,
     "lineWidth" : 0.0012,
-    "filled" : false,
     "closed" : false,
     "lineStyle" : "SOLID",
     "id" : 38
@@ -1280,9 +1029,7 @@
       "x" : 0.7618318216600359,
       "y" : 978.7301587301589
     } ],
-    "color" : null,
     "lineWidth" : 0.0012,
-    "filled" : false,
     "closed" : false,
     "lineStyle" : "DASH",
     "id" : 39
@@ -1313,9 +1060,7 @@
       "x" : 0.0,
       "y" : 1394.0
     } ],
-    "color" : null,
     "lineWidth" : 0.0032,
-    "filled" : false,
     "closed" : false,
     "lineStyle" : "SOLID",
     "id" : 40
@@ -1328,9 +1073,7 @@
       "x" : 1.0,
       "y" : 500.0
     } ],
-    "color" : null,
     "lineWidth" : 0.0012,
-    "filled" : false,
     "closed" : false,
     "lineStyle" : "SOLID",
     "id" : 41
@@ -1343,9 +1086,7 @@
       "x" : 0.7570952434217704,
       "y" : 749.5720868992736
     } ],
-    "color" : null,
     "lineWidth" : 0.0012,
-    "filled" : false,
     "closed" : false,
     "lineStyle" : "SOLID",
     "id" : 42
@@ -1358,9 +1099,7 @@
       "x" : 0.6372669495207246,
       "y" : 749.5720868992742
     } ],
-    "color" : null,
     "lineWidth" : 0.0012,
-    "filled" : false,
     "closed" : false,
     "lineStyle" : "SOLID",
     "id" : 43
@@ -1373,9 +1112,7 @@
       "x" : 0.2829425936086133,
       "y" : 485.0000000000001
     } ],
-    "color" : null,
     "lineWidth" : 0.0012,
-    "filled" : false,
     "closed" : false,
     "lineStyle" : "SOLID",
     "id" : 44
@@ -1388,9 +1125,7 @@
       "x" : 0.6709782589892909,
       "y" : 1165.0
     } ],
-    "color" : null,
     "lineWidth" : 0.0012,
-    "filled" : false,
     "closed" : false,
     "lineStyle" : "SOLID",
     "id" : 45
@@ -1403,9 +1138,7 @@
       "x" : 0.07911025102709886,
       "y" : 1100.4761904761906
     } ],
-    "color" : null,
     "lineWidth" : 0.0012,
-    "filled" : false,
     "closed" : false,
     "lineStyle" : "SOLID",
     "id" : 46
@@ -1418,9 +1151,7 @@
       "x" : 1.0,
       "y" : 400.0
     } ],
-    "color" : null,
     "lineWidth" : 0.0032,
-    "filled" : false,
     "closed" : false,
     "lineStyle" : "SOLID",
     "id" : 47
@@ -1442,9 +1173,7 @@
       "x" : 0.7517480103433155,
       "y" : 1160.0
     } ],
-    "color" : null,
     "lineWidth" : 0.0012,
-    "filled" : false,
     "closed" : false,
     "lineStyle" : "SOLID",
     "id" : 48
@@ -1457,9 +1186,7 @@
       "x" : 0.7517480103433155,
       "y" : 1160.0
     } ],
-    "color" : null,
     "lineWidth" : 0.0032,
-    "filled" : false,
     "closed" : false,
     "lineStyle" : "SOLID",
     "id" : 49
@@ -1475,66 +1202,34 @@
     "name" : "X",
     "rulers" : [ {
       "startPoint" : {
-        "x" : 0.0,
-        "y" : 400.0
+	"x" : 0.0,
+	"y" : 400.0
       },
       "endPoint" : {
-        "x" : 1.0,
-        "y" : 400.0
+	"x" : 1.0,
+	"y" : 400.0
       },
       "fontSize" : 0.02,
       "lineWidth" : 0.0016,
-      "color" : null,
       "labelAnchor" : "RIGHT",
       "multiplier" : 100.0,
-      "textAngle" : 0.0,
       "tickRight" : true,
-      "tickLeft" : false,
-      "maxBigTicks" : -1,
-      "tickPadding" : 3.0,
-      "bigTickDelta" : "NaN",
-      "tickDelta" : "NaN",
-      "startArrow" : false,
-      "endArrow" : false,
-      "suppressStartTick" : false,
-      "suppressStartLabel" : false,
-      "suppressEndTick" : false,
-      "suppressEndLabel" : false,
-      "tickType" : "NORMAL",
-      "drawSpine" : true,
-      "tickStart" : null,
-      "tickEnd" : null
+      "tickPadding" : 3.0
     }, {
       "startPoint" : {
-        "x" : 0.0,
-        "y" : 1600.0
+	"x" : 0.0,
+	"y" : 1600.0
       },
       "endPoint" : {
-        "x" : 1.0,
-        "y" : 1600.0
+	"x" : 1.0,
+	"y" : 1600.0
       },
       "fontSize" : 0.02,
       "lineWidth" : 0.0016,
-      "color" : null,
       "labelAnchor" : "NONE",
       "multiplier" : 100.0,
-      "textAngle" : 0.0,
       "tickRight" : true,
-      "tickLeft" : false,
-      "maxBigTicks" : -1,
-      "tickPadding" : 3.0,
-      "bigTickDelta" : "NaN",
-      "tickDelta" : "NaN",
-      "startArrow" : false,
-      "endArrow" : false,
-      "suppressStartTick" : false,
-      "suppressStartLabel" : false,
-      "suppressEndTick" : false,
-      "suppressEndLabel" : false,
-      "tickType" : "NORMAL",
-      "drawSpine" : true,
-      "tickStart" : null,
-      "tickEnd" : null
+      "tickPadding" : 3.0
     } ]
   }, {
     "format" : {
@@ -1547,66 +1242,34 @@
     "name" : "Y",
     "rulers" : [ {
       "startPoint" : {
-        "x" : 0.0,
-        "y" : 400.0
+	"x" : 0.0,
+	"y" : 400.0
       },
       "endPoint" : {
-        "x" : 0.0,
-        "y" : 1600.0
+	"x" : 0.0,
+	"y" : 1600.0
       },
       "fontSize" : 0.02,
       "lineWidth" : 0.0016,
-      "color" : null,
       "labelAnchor" : "LEFT",
-      "multiplier" : 1.0,
       "textAngle" : 1.5707963267948966,
-      "tickRight" : false,
       "tickLeft" : true,
-      "maxBigTicks" : -1,
-      "tickPadding" : 3.0,
-      "bigTickDelta" : "NaN",
-      "tickDelta" : "NaN",
-      "startArrow" : false,
-      "endArrow" : false,
-      "suppressStartTick" : false,
-      "suppressStartLabel" : false,
-      "suppressEndTick" : false,
-      "suppressEndLabel" : false,
-      "tickType" : "NORMAL",
-      "drawSpine" : true,
-      "tickStart" : null,
-      "tickEnd" : null
+      "tickPadding" : 3.0
     }, {
       "startPoint" : {
-        "x" : 1.0,
-        "y" : 400.0
+	"x" : 1.0,
+	"y" : 400.0
       },
       "endPoint" : {
-        "x" : 1.0,
-        "y" : 1600.0
+	"x" : 1.0,
+	"y" : 1600.0
       },
       "fontSize" : 0.02,
       "lineWidth" : 0.0016,
-      "color" : null,
       "labelAnchor" : "NONE",
-      "multiplier" : 1.0,
       "textAngle" : 1.5707963267948966,
       "tickRight" : true,
-      "tickLeft" : false,
-      "maxBigTicks" : -1,
-      "tickPadding" : 3.0,
-      "bigTickDelta" : "NaN",
-      "tickDelta" : "NaN",
-      "startArrow" : false,
-      "endArrow" : false,
-      "suppressStartTick" : false,
-      "suppressStartLabel" : false,
-      "suppressEndTick" : false,
-      "suppressEndLabel" : false,
-      "tickType" : "NORMAL",
-      "drawSpine" : true,
-      "tickStart" : null,
-      "tickEnd" : null
+      "tickPadding" : 3.0
     } ]
   }, {
     "format" : {

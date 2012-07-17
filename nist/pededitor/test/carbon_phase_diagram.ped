@@ -1,6 +1,5 @@
 {
   "tags" : [ ],
-  "originalToPrincipal" : null,
   "principalToStandardPage" : {
     "transform" : "RectangleTransform",
     "input" : {
@@ -28,227 +27,135 @@
     "yWeight" : 1.0,
     "x" : 8.322103466309406,
     "y" : 0.5762435909029977,
-    "baselineXOffset" : 0.0,
-    "baselineYOffset" : 0.0,
     "text" : "ΔV(p)=-0.1·ΔV(T)",
     "angle" : 0.02736476825857537,
-    "fontSize" : 1.5,
-    "color" : null,
-    "boxed" : false,
-    "opaque" : false
+    "fontSize" : 1.5
   }, {
     "xWeight" : 0.5,
     "yWeight" : 0.5,
     "x" : 4.487628876810325,
     "y" : 0.6618062180100246,
-    "baselineXOffset" : 0.0,
-    "baselineYOffset" : 0.0,
     "text" : "○",
     "angle" : -0.0,
-    "fontSize" : 2.0,
-    "color" : null,
-    "boxed" : false,
-    "opaque" : false
+    "fontSize" : 2.0
   }, {
     "xWeight" : 0.5,
     "yWeight" : 0.5,
     "x" : 4.471368714208699,
     "y" : 0.1528631285791302,
-    "baselineXOffset" : 0.0,
-    "baselineYOffset" : 0.0,
     "text" : "○",
     "angle" : -0.0,
-    "fontSize" : 2.0,
-    "color" : null,
-    "boxed" : false,
-    "opaque" : false
+    "fontSize" : 2.0
   }, {
     "xWeight" : 0.5,
     "yWeight" : 0.5,
     "x" : 6.016084161363171,
     "y" : 0.325220852156366,
-    "baselineXOffset" : 0.0,
-    "baselineYOffset" : 0.0,
     "text" : "○",
     "angle" : -0.0,
-    "fontSize" : 1.1,
-    "color" : null,
-    "boxed" : false,
-    "opaque" : false
+    "fontSize" : 1.1
   }, {
     "xWeight" : 0.5,
     "yWeight" : 0.5,
     "x" : 4.7087594871929,
     "y" : 0.3779363529303391,
-    "baselineXOffset" : 0.0,
-    "baselineYOffset" : 0.0,
     "text" : "○",
     "angle" : -0.0,
-    "fontSize" : 1.1,
-    "color" : null,
-    "boxed" : false,
-    "opaque" : false
+    "fontSize" : 1.1
   }, {
     "xWeight" : 0.5,
     "yWeight" : 0.5,
     "x" : 3.155314715718629,
     "y" : 0.21364829201529556,
-    "baselineXOffset" : 0.0,
-    "baselineYOffset" : 0.0,
     "text" : "graphite",
     "angle" : -0.0,
-    "fontSize" : 2.2,
-    "color" : null,
-    "boxed" : false,
-    "opaque" : false
+    "fontSize" : 2.2
   }, {
     "xWeight" : 0.5,
     "yWeight" : 0.5,
     "x" : 6.290607607109081,
     "y" : 0.4579120679863885,
-    "baselineXOffset" : 0.0,
-    "baselineYOffset" : 0.0,
     "text" : "liquid",
     "angle" : -0.0,
-    "fontSize" : 2.2,
-    "color" : null,
-    "boxed" : false,
-    "opaque" : false
+    "fontSize" : 2.2
   }, {
     "xWeight" : 0.5,
     "yWeight" : 0.5,
     "x" : 3.7779260700372985,
     "y" : 0.85682805714628,
-    "baselineXOffset" : 0.0,
-    "baselineYOffset" : 0.0,
     "text" : "diamond",
     "angle" : -0.0,
-    "fontSize" : 2.2,
-    "color" : null,
-    "boxed" : false,
-    "opaque" : false
+    "fontSize" : 2.2
   }, {
     "xWeight" : 0.5,
     "yWeight" : 0.5,
     "x" : 7.3746184472174825,
     "y" : 0.21148027033507877,
-    "baselineXOffset" : 0.0,
-    "baselineYOffset" : 0.0,
     "text" : "vapor",
     "angle" : -0.0,
-    "fontSize" : 2.2,
-    "color" : null,
-    "boxed" : false,
-    "opaque" : false
+    "fontSize" : 2.2
   }, {
     "xWeight" : 0.5,
-    "yWeight" : 0.0,
     "x" : 4.998842122095874,
-    "y" : 0.0,
-    "baselineXOffset" : 0.0,
-    "baselineYOffset" : 0.0,
     "text" : "Temperature, in 10<sup>3</sup> K",
-    "angle" : 0.0,
-    "fontSize" : 2.0,
-    "color" : null,
-    "boxed" : false,
-    "opaque" : false
+    "fontSize" : 2.0
   }, {
     "xWeight" : 0.5,
     "yWeight" : 1.0,
-    "x" : 0.0,
     "y" : 0.5162055699990957,
-    "baselineXOffset" : 0.0,
-    "baselineYOffset" : 0.0,
     "text" : "Pressure, in GPa",
     "angle" : 1.5707963267948961,
-    "fontSize" : 2.0,
-    "color" : null,
-    "boxed" : false,
-    "opaque" : false
+    "fontSize" : 2.0
   }, {
     "xWeight" : 0.5,
     "yWeight" : 0.5,
     "x" : 1.4650916596419123,
     "y" : 0.6783276054750971,
-    "baselineXOffset" : 0.0,
-    "baselineYOffset" : 0.0,
     "text" : "diamond +<br>metastable graphite",
-    "angle" : 0.0,
-    "fontSize" : 1.5,
-    "color" : null,
-    "boxed" : false,
-    "opaque" : false
+    "fontSize" : 1.5
   }, {
     "xWeight" : 0.5,
     "yWeight" : 0.5,
     "x" : 2.143293313453325,
     "y" : 0.5670358258906342,
-    "baselineXOffset" : 0.0,
-    "baselineYOffset" : 0.0,
     "text" : "graphite +<br>metastable diamond",
-    "angle" : 0.0,
-    "fontSize" : 1.5,
-    "color" : null,
-    "boxed" : false,
-    "opaque" : false
+    "fontSize" : 1.5
   }, {
     "xWeight" : 0.5,
     "yWeight" : 1.0,
     "x" : 5.465594946596937,
     "y" : 0.8144632415134148,
-    "baselineXOffset" : 0.0,
-    "baselineYOffset" : 0.0,
     "text" : "ΔV(p) = -ΔV(T)",
     "angle" : 0.08583370874902317,
-    "fontSize" : 1.5,
-    "color" : null,
-    "boxed" : false,
-    "opaque" : false
+    "fontSize" : 1.5
   }, {
     "xWeight" : 0.5,
     "yWeight" : 0.5,
     "x" : 9.103198809944185,
     "y" : 0.9536663588626306,
-    "baselineXOffset" : 0.0,
-    "baselineYOffset" : 0.0,
     "text" : "metal?",
     "angle" : -0.0,
-    "fontSize" : 2.2,
-    "color" : null,
-    "boxed" : false,
-    "opaque" : false
+    "fontSize" : 2.2
   }, {
     "xWeight" : 0.5,
     "yWeight" : 0.5,
     "x" : 5.161846575909025,
     "y" : 0.31482263709207936,
-    "baselineXOffset" : 0.0,
-    "baselineYOffset" : 0.0,
     "text" : "metastable<br>liquid",
-    "angle" : 0.0,
-    "fontSize" : 1.0,
-    "color" : null,
-    "boxed" : false,
-    "opaque" : false
+    "fontSize" : 1.0
   }, {
     "xWeight" : 0.5,
     "yWeight" : 1.0,
     "x" : 10.0,
     "y" : 0.5233615333018481,
-    "baselineXOffset" : 0.0,
-    "baselineYOffset" : 0.0,
     "text" : "Pressure, in bar",
     "angle" : -1.5707963267948961,
-    "fontSize" : 2.0,
-    "color" : null,
-    "boxed" : false,
-    "opaque" : false
+    "fontSize" : 2.0
   } ],
   "arrows" : [ ],
   "tieLines" : [ ],
   "diagramComponents" : [ null, null, null, null ],
-  "originalFilename" : null,
+  "usingWeightFraction" : false,
   "fontName" : "DejaVu LGC Sans PED",
   "keys" : {
   },
@@ -261,9 +168,7 @@
       "x" : 4.487628876810325,
       "y" : 0.6618062180100246
     } ],
-    "color" : null,
     "lineWidth" : 0.0016,
-    "filled" : false,
     "closed" : false,
     "lineStyle" : "DASH",
     "id" : 0
@@ -288,9 +193,7 @@
       "x" : 4.487628876810325,
       "y" : 0.6618062180100246
     } ],
-    "color" : null,
     "lineWidth" : 0.0016,
-    "filled" : false,
     "closed" : false,
     "lineStyle" : "SOLID",
     "id" : 1
@@ -303,9 +206,7 @@
       "x" : 0.0,
       "y" : 1.0
     } ],
-    "color" : null,
     "lineWidth" : 0.0016,
-    "filled" : false,
     "closed" : false,
     "lineStyle" : "DASH",
     "id" : 2
@@ -330,9 +231,7 @@
       "x" : 0.0,
       "y" : 0.5463590635384798
     } ],
-    "color" : null,
     "lineWidth" : 0.0016,
-    "filled" : false,
     "closed" : false,
     "lineStyle" : "SOLID",
     "id" : 3
@@ -357,9 +256,7 @@
       "x" : 4.471368714208699,
       "y" : 0.1528631285791302
     } ],
-    "color" : null,
     "lineWidth" : 0.0016,
-    "filled" : false,
     "closed" : false,
     "lineStyle" : "SOLID",
     "id" : 4
@@ -372,9 +269,7 @@
       "x" : 0.0,
       "y" : 0.765871258660431
     } ],
-    "color" : null,
     "lineWidth" : 0.0016,
-    "filled" : false,
     "closed" : false,
     "lineStyle" : "DASH",
     "id" : 5
@@ -405,9 +300,7 @@
       "x" : 10.0,
       "y" : 0.4081476814246586
     } ],
-    "color" : null,
     "lineWidth" : 0.0016,
-    "filled" : false,
     "closed" : false,
     "lineStyle" : "SOLID",
     "id" : 6
@@ -435,9 +328,7 @@
       "x" : 0.32502725079406464,
       "y" : 0.0
     } ],
-    "color" : null,
     "lineWidth" : 0.0032,
-    "filled" : false,
     "closed" : false,
     "lineStyle" : "DOT",
     "id" : 7
@@ -450,9 +341,7 @@
       "x" : 6.016084161363171,
       "y" : 0.325220852156366
     } ],
-    "color" : null,
     "lineWidth" : 0.0016,
-    "filled" : false,
     "closed" : false,
     "lineStyle" : "DASH",
     "id" : 8
@@ -504,9 +393,7 @@
       "x" : 0.32502725079406464,
       "y" : 0.0
     } ],
-    "color" : null,
     "lineWidth" : 0.0032,
-    "filled" : false,
     "closed" : false,
     "lineStyle" : "DOT",
     "id" : 9
@@ -522,66 +409,34 @@
     "name" : "X",
     "rulers" : [ {
       "startPoint" : {
-        "x" : 0.0,
-        "y" : 0.0
+	"x" : 0.0,
+	"y" : 0.0
       },
       "endPoint" : {
-        "x" : 10.0,
-        "y" : 0.0
+	"x" : 10.0,
+	"y" : 0.0
       },
       "fontSize" : 0.03902439024390244,
       "lineWidth" : 0.0032,
-      "color" : null,
       "labelAnchor" : "RIGHT",
-      "multiplier" : 1.0,
-      "textAngle" : 0.0,
-      "tickRight" : false,
       "tickLeft" : true,
-      "maxBigTicks" : -1,
-      "tickPadding" : 0.0,
       "bigTickDelta" : -1.0,
-      "tickDelta" : -1.0,
-      "startArrow" : false,
-      "endArrow" : false,
-      "suppressStartTick" : false,
-      "suppressStartLabel" : false,
-      "suppressEndTick" : false,
-      "suppressEndLabel" : false,
-      "tickType" : "NORMAL",
-      "drawSpine" : true,
-      "tickStart" : null,
-      "tickEnd" : null
+      "tickDelta" : -1.0
     }, {
       "startPoint" : {
-        "x" : 0.0,
-        "y" : 1.0
+	"x" : 0.0,
+	"y" : 1.0
       },
       "endPoint" : {
-        "x" : 10.0,
-        "y" : 1.0
+	"x" : 10.0,
+	"y" : 1.0
       },
       "fontSize" : 0.03902439024390244,
       "lineWidth" : 0.0032,
-      "color" : null,
       "labelAnchor" : "LEFT",
-      "multiplier" : 1.0,
-      "textAngle" : 0.0,
       "tickRight" : true,
-      "tickLeft" : false,
-      "maxBigTicks" : -1,
-      "tickPadding" : 0.0,
       "bigTickDelta" : -1.0,
-      "tickDelta" : -1.0,
-      "startArrow" : false,
-      "endArrow" : false,
-      "suppressStartTick" : false,
-      "suppressStartLabel" : false,
-      "suppressEndTick" : false,
-      "suppressEndLabel" : false,
-      "tickType" : "NORMAL",
-      "drawSpine" : true,
-      "tickStart" : null,
-      "tickEnd" : null
+      "tickDelta" : -1.0
     } ]
   }, {
     "format" : {
@@ -594,66 +449,36 @@
     "name" : "Y",
     "rulers" : [ {
       "startPoint" : {
-        "x" : 0.0,
-        "y" : 0.0
+	"x" : 0.0,
+	"y" : 0.0
       },
       "endPoint" : {
-        "x" : 0.0,
-        "y" : 1.0
+	"x" : 0.0,
+	"y" : 1.0
       },
       "fontSize" : 0.03902439024390244,
       "lineWidth" : 0.0032,
-      "color" : null,
       "labelAnchor" : "NONE",
-      "multiplier" : 1.0,
       "textAngle" : 1.5707963267948966,
-      "tickRight" : false,
-      "tickLeft" : false,
-      "maxBigTicks" : -1,
       "tickPadding" : 3.0,
       "bigTickDelta" : -1.0,
-      "tickDelta" : -1.0,
-      "startArrow" : false,
-      "endArrow" : false,
-      "suppressStartTick" : false,
-      "suppressStartLabel" : false,
-      "suppressEndTick" : false,
-      "suppressEndLabel" : false,
-      "tickType" : "NORMAL",
-      "drawSpine" : true,
-      "tickStart" : null,
-      "tickEnd" : null
+      "tickDelta" : -1.0
     }, {
       "startPoint" : {
-        "x" : 10.0,
-        "y" : 0.0
+	"x" : 10.0,
+	"y" : 0.0
       },
       "endPoint" : {
-        "x" : 10.0,
-        "y" : 1.0
+	"x" : 10.0,
+	"y" : 1.0
       },
       "fontSize" : 0.03902439024390244,
       "lineWidth" : 0.0032,
-      "color" : null,
       "labelAnchor" : "NONE",
-      "multiplier" : 1.0,
       "textAngle" : 1.5707963267948966,
-      "tickRight" : false,
-      "tickLeft" : false,
-      "maxBigTicks" : -1,
       "tickPadding" : 3.0,
       "bigTickDelta" : -1.0,
-      "tickDelta" : -1.0,
-      "startArrow" : false,
-      "endArrow" : false,
-      "suppressStartTick" : false,
-      "suppressStartLabel" : false,
-      "suppressEndTick" : false,
-      "suppressEndLabel" : false,
-      "tickType" : "NORMAL",
-      "drawSpine" : true,
-      "tickStart" : null,
-      "tickEnd" : null
+      "tickDelta" : -1.0
     } ]
   }, {
     "format" : {
