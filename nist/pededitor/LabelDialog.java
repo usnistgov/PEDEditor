@@ -44,7 +44,7 @@ public class LabelDialog extends JDialog {
     JCheckBox mIsOpaque = new JCheckBox("Opaque background");
     JCheckBox mIsBoxed = new JCheckBox("Box label");
     JTextField fontSize = new JTextField(10);
-    JTextField codePoint = new JTextField(10);
+    JTextField codePoint = new JTextField("0000", 10);
 
     /** Text angle in degrees, where 0 = left-to-right and 90 =
         bottom-to-top. */
@@ -67,8 +67,8 @@ public class LabelDialog extends JDialog {
         }
 
         @Override public void actionPerformed(ActionEvent e) {
-            LabelDialog.this.xWeight = xWeight;
-            LabelDialog.this.yWeight = yWeight;
+            setXWeight(xWeight);
+            setYWeight(yWeight);
             pressedOK = true;
             setVisible(false);
         }
@@ -219,19 +219,6 @@ public class LabelDialog extends JDialog {
                                               (textField.getText()));
                         }
                     }));
-
-            /* TODO
-
-            gb.endRowWith
-                (new JButton(new AbstractAction("Compute location") {
-                        private static final long serialVersionUID = 197868896745807236L;
-
-                        @Override public void actionPerformed(ActionEvent e) {
-                            textField.setText(ChemicalString.autoSubscript
-                                              (textField.getText()));
-                        }
-                    }));
-            */
 
             JLabel fontSizeLabel = new JLabel("Font size:");
             fontSizeLabel.setLabelFor(fontSize);
