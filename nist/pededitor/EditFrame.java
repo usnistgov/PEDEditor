@@ -107,14 +107,14 @@ public class EditFrame extends JFrame
         };
 
     protected Action scaleXUnits = new Action
-        ("X Axis", KeyEvent.VK_X) {
+        ("X Axis (or Right Component)", KeyEvent.VK_X) {
             @Override public void actionPerformed(ActionEvent e) {
                 getParentEditor().scaleXUnits();
             }
         };
 
     protected Action scaleYUnits = new Action
-        ("Y Axis", KeyEvent.VK_Y) {
+        ("Y Axis (or Top component)", KeyEvent.VK_Y) {
             @Override public void actionPerformed(ActionEvent e) {
                 getParentEditor().scaleYUnits();
             }
