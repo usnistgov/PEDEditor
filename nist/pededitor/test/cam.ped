@@ -1,6 +1,5 @@
 {
   "tags" : [ ],
-  "originalToPrincipal" : null,
   "principalToStandardPage" : {
     "transform" : "RectangleTransform",
     "input" : {
@@ -28,219 +27,124 @@
     "yWeight" : 0.5,
     "x" : 0.21177766327065675,
     "y" : 0.5699839025656419,
-    "baselineXOffset" : 0.0,
-    "baselineYOffset" : 0.0,
     "text" : "θ - φ",
-    "angle" : 0.0,
-    "fontSize" : 0.75,
-    "color" : null,
-    "boxed" : false,
-    "opaque" : false
+    "fontSize" : 0.75
   }, {
     "xWeight" : 0.5,
     "yWeight" : 1.0,
     "x" : 0.4300160974343582,
     "y" : 0.4750550769428661,
-    "baselineXOffset" : 0.0,
-    "baselineYOffset" : 0.0,
     "text" : "f",
     "angle" : 1.5707963267948966,
-    "fontSize" : 0.75,
-    "color" : null,
-    "boxed" : false,
-    "opaque" : false
+    "fontSize" : 0.75
   }, {
     "xWeight" : 0.5,
     "yWeight" : 1.0,
     "x" : 0.2581970712111775,
     "y" : 0.604111241433717,
-    "baselineXOffset" : 0.0,
-    "baselineYOffset" : 0.0,
     "text" : "f<sub>c</sub>",
     "angle" : 0.3665191429188092,
-    "fontSize" : 1.0,
-    "color" : null,
-    "boxed" : false,
-    "opaque" : false
+    "fontSize" : 1.0
   }, {
-    "xWeight" : 0.0,
     "yWeight" : 0.5,
     "x" : 0.38083604292193646,
     "y" : 0.8445158130746684,
-    "baselineXOffset" : 0.0,
-    "baselineYOffset" : 0.0,
     "text" : "θ: camming angle<br>f: fall force<br>φ: crack flare angle<br>μ: coefficient of friction<br>f<sub>c</sub>: cam force (per crack side)",
-    "angle" : 0.0,
-    "fontSize" : 1.0,
-    "color" : null,
-    "boxed" : false,
-    "opaque" : false
+    "fontSize" : 1.0
   }, {
     "xWeight" : 0.5,
-    "yWeight" : 0.0,
     "x" : 0.22547873088631543,
     "y" : 0.8488984933129728,
-    "baselineXOffset" : 0.0,
-    "baselineYOffset" : 0.0,
     "text" : "φ",
-    "angle" : 0.0,
-    "fontSize" : 1.0,
-    "color" : null,
-    "boxed" : false,
-    "opaque" : false
+    "fontSize" : 1.0
   }, {
     "xWeight" : 0.5,
     "yWeight" : 0.5,
     "x" : 0.20541998429194452,
     "y" : 0.5518753893735358,
-    "baselineXOffset" : 0.0,
-    "baselineYOffset" : 0.0,
     "text" : "φ",
-    "angle" : 0.0,
-    "fontSize" : 0.8,
-    "color" : null,
-    "boxed" : false,
-    "opaque" : false
+    "fontSize" : 0.8
   }, {
     "xWeight" : 0.5,
     "yWeight" : 1.0,
     "x" : 0.1548198199748154,
     "y" : 0.623770050304178,
-    "baselineXOffset" : 0.0,
-    "baselineYOffset" : 0.0,
     "text" : "f<sub>c</sub> sin θ",
     "angle" : 1.3264502315156903,
-    "fontSize" : 0.75,
-    "color" : null,
-    "boxed" : false,
-    "opaque" : false
+    "fontSize" : 0.75
   }, {
     "xWeight" : 0.5,
     "yWeight" : 1.0,
     "x" : 0.26954421112223836,
     "y" : 0.6710226926490099,
-    "baselineXOffset" : 0.0,
-    "baselineYOffset" : 0.0,
     "text" : "f<sub>c</sub> cos θ",
     "angle" : -0.24434609527920617,
-    "fontSize" : 0.75,
-    "color" : null,
-    "boxed" : false,
-    "opaque" : false
+    "fontSize" : 0.75
   }, {
-    "xWeight" : 0.0,
     "yWeight" : 0.5,
     "x" : 0.4669858752342311,
     "y" : 0.697273816814723,
-    "baselineXOffset" : 0.0,
-    "baselineYOffset" : 0.0,
     "text" : "f<sub>c</sub> sin θ ≤ μ f<sub>c</sub> cos θ<br>μ ≥ tan θ*<br>2 f<sub>c</sub> sin(θ-φ) = f<br>f<sub>c</sub> = f / (2 sin (θ-φ))",
-    "angle" : 0.0,
-    "fontSize" : 1.0,
-    "color" : null,
-    "boxed" : false,
-    "opaque" : false
+    "fontSize" : 1.0
   }, {
     "xWeight" : 0.5,
     "yWeight" : 0.5,
     "x" : 0.3240384754006995,
     "y" : 0.6438503687954438,
-    "baselineXOffset" : 0.0,
-    "baselineYOffset" : 0.0,
     "text" : "θ",
-    "angle" : 0.0,
-    "fontSize" : 0.75,
-    "color" : null,
-    "boxed" : false,
-    "opaque" : false
+    "fontSize" : 0.75
   }, {
     "xWeight" : 0.5,
     "yWeight" : 1.0,
     "x" : 0.4300160974343582,
     "y" : 0.5939393367669741,
-    "baselineXOffset" : 0.0,
-    "baselineYOffset" : 0.0,
     "text" : "f<sub>c</sub> sin (θ-φ)",
     "angle" : 1.5707963267948966,
-    "fontSize" : 0.6,
-    "color" : null,
-    "boxed" : false,
-    "opaque" : false
+    "fontSize" : 0.6
   }, {
     "xWeight" : 0.5,
     "yWeight" : 0.5,
     "x" : 0.37155301971435556,
     "y" : 1.0002923248669464,
-    "baselineXOffset" : 0.0,
-    "baselineYOffset" : 0.0,
     "text" : "Force diagram for a cam in a<br>symmetrical vertically flaring crack",
-    "angle" : 0.0,
-    "fontSize" : 1.0,
-    "color" : null,
-    "boxed" : false,
-    "opaque" : false
+    "fontSize" : 1.0
   }, {
-    "xWeight" : 0.0,
-    "yWeight" : 0.0,
     "x" : 0.4669858752342311,
     "y" : 0.5183257414674984,
-    "baselineXOffset" : 0.0,
-    "baselineYOffset" : 0.0,
     "text" : "<div style=\"width: 1250 px;\"><p>* Minimum coefficient of friction for cam to hold.</p><p>As I believe a cam manufacturer warns, the cam may grind soft rock surfaces into dust and skate out on that dust layer. This has happened to me under body weight (I even heard the grinding noise), and there are videos of it happening several times in a single fall. That is why Fat Cams exist (though finding a better fit or a wider crack also works to reduce PSIs).</p><p>Also, in a flare, if the cam loses contact with the rock even momentarily and it is pulled out fast enough, it may never reestablish contact.</p></div>",
-    "angle" : 0.0,
-    "fontSize" : 0.6666666666666666,
-    "color" : null,
-    "boxed" : false,
-    "opaque" : false
+    "fontSize" : 0.6666666666666666
   }, {
-    "xWeight" : 0.0,
-    "yWeight" : 0.0,
     "x" : 0.47083221831929956,
     "y" : 0.6063848963179026,
-    "baselineXOffset" : 0.0,
-    "baselineYOffset" : 0.0,
     "text" : "<p style=\"width: 1250 px;\">For typical camming angles, about twice the supported force is exerted on the sides of a parallel crack.</p>",
-    "angle" : 0.0,
-    "fontSize" : 0.6666666666666666,
-    "color" : null,
-    "boxed" : false,
-    "opaque" : false
+    "fontSize" : 0.6666666666666666
   }, {
     "xWeight" : 1.0,
     "yWeight" : 1.0,
     "x" : 0.6970052055140217,
     "y" : 0.10305730596243479,
-    "baselineXOffset" : 0.0,
-    "baselineYOffset" : 0.0,
     "text" : "E. Boesch",
-    "angle" : 0.0,
-    "fontSize" : 0.4,
-    "color" : null,
-    "boxed" : false,
-    "opaque" : false
+    "fontSize" : 0.4
   } ],
   "arrows" : [ {
     "x" : 0.4300160974343582,
     "y" : 0.3913592655925968,
     "size" : 0.0032,
-    "angle" : -1.5707963267948966,
-    "color" : null
+    "angle" : -1.5707963267948966
   }, {
     "x" : 0.4300160974343582,
     "y" : 0.6463184221385955,
     "size" : 0.0032,
-    "angle" : 1.5707963267948966,
-    "color" : null
+    "angle" : 1.5707963267948966
   }, {
     "x" : 0.5561105577533751,
     "y" : 0.6364018294686598,
     "size" : 0.0024,
-    "angle" : 1.5707963267948966,
-    "color" : null
+    "angle" : 1.5707963267948966
   } ],
   "tieLines" : [ ],
   "diagramComponents" : [ null, null, null, null ],
-  "originalFilename" : null,
+  "usingWeightFraction" : false,
   "fontName" : "DejaVu LGC Sans PED",
   "keys" : {
     "title" : "Cam Force Diagram"
@@ -279,7 +183,6 @@
       "rgb" : -10066330
     },
     "lineWidth" : 0.0024,
-    "filled" : true,
     "closed" : true,
     "lineStyle" : "SOLID",
     "id" : 0
@@ -292,9 +195,7 @@
       "x" : 0.02387730739877089,
       "y" : 0.09999999999999998
     } ],
-    "color" : null,
     "lineWidth" : 0.0024,
-    "filled" : false,
     "closed" : true,
     "lineStyle" : "SOLID",
     "id" : 1
@@ -313,9 +214,7 @@
       "x" : 0.1814395849788421,
       "y" : 0.6570835466937557
     } ],
-    "color" : null,
     "lineWidth" : 0.0024,
-    "filled" : false,
     "closed" : false,
     "lineStyle" : "SOLID",
     "id" : 2
@@ -328,9 +227,7 @@
       "x" : 0.36836129316389554,
       "y" : 0.6463184221385956
     } ],
-    "color" : null,
     "lineWidth" : 0.0024,
-    "filled" : false,
     "closed" : false,
     "lineStyle" : "SOLID",
     "id" : 3
@@ -349,9 +246,7 @@
       "x" : 0.36836129316389554,
       "y" : 0.09999999999999998
     } ],
-    "color" : null,
     "lineWidth" : 0.0024,
-    "filled" : false,
     "closed" : true,
     "lineStyle" : "SOLID",
     "id" : 4
@@ -364,9 +259,7 @@
       "x" : 0.1384339133195961,
       "y" : 0.5582264236833008
     } ],
-    "color" : null,
     "lineWidth" : 0.0024,
-    "filled" : false,
     "closed" : false,
     "lineStyle" : "SOLID",
     "id" : 5
@@ -382,9 +275,7 @@
       "x" : 0.4300160974343582,
       "y" : 0.3913592655925968
     } ],
-    "color" : null,
     "lineWidth" : 0.0032,
-    "filled" : false,
     "closed" : false,
     "lineStyle" : "SOLID",
     "id" : 6
@@ -394,9 +285,7 @@
       "x" : 0.4300160974343582,
       "y" : 0.5559882090523782
     } ],
-    "color" : null,
     "lineWidth" : 0.0024,
-    "filled" : false,
     "closed" : false,
     "lineStyle" : "SOLID",
     "id" : 7
@@ -409,9 +298,7 @@
       "x" : 0.36836129316389554,
       "y" : 0.49395157214164764
     } ],
-    "color" : null,
     "lineWidth" : 0.0024,
-    "filled" : false,
     "closed" : false,
     "lineStyle" : "SOLID",
     "id" : 8
@@ -424,9 +311,7 @@
       "x" : 0.2410421451343447,
       "y" : 0.7182454961351017
     } ],
-    "color" : null,
     "lineWidth" : 0.0024,
-    "filled" : false,
     "closed" : false,
     "lineStyle" : "DASH",
     "id" : 10
@@ -439,9 +324,7 @@
       "x" : 0.1726865823587419,
       "y" : 0.695237099839884
     } ],
-    "color" : null,
     "lineWidth" : 0.0024,
-    "filled" : false,
     "closed" : false,
     "lineStyle" : "SOLID",
     "id" : 12
@@ -460,9 +343,7 @@
       "x" : 0.1705384058541642,
       "y" : 0.6866443938215732
     } ],
-    "color" : null,
     "lineWidth" : 0.0024,
-    "filled" : false,
     "closed" : false,
     "lineStyle" : "SOLID",
     "id" : 13
@@ -478,9 +359,7 @@
       "x" : 0.13516295916127202,
       "y" : 0.5451426070500045
     } ],
-    "color" : null,
     "lineWidth" : 0.0024,
-    "filled" : false,
     "closed" : false,
     "lineStyle" : "SOLID",
     "id" : 14
@@ -502,9 +381,7 @@
       "x" : 0.36836129316389554,
       "y" : 0.5461159106986719
     } ],
-    "color" : null,
     "lineWidth" : 0.0024,
-    "filled" : false,
     "closed" : false,
     "lineStyle" : "SOLID",
     "id" : 15
@@ -517,9 +394,7 @@
       "x" : 0.36836129316389554,
       "y" : 0.16482376021688727
     } ],
-    "color" : null,
     "lineWidth" : 0.0064,
-    "filled" : false,
     "closed" : false,
     "lineStyle" : "SOLID",
     "id" : 16
@@ -532,9 +407,7 @@
       "x" : 0.5190730369361376,
       "y" : 0.16482376021688727
     } ],
-    "color" : null,
     "lineWidth" : 0.0064,
-    "filled" : false,
     "closed" : false,
     "lineStyle" : "SOLID",
     "id" : 17
@@ -553,9 +426,7 @@
       "x" : 0.25190221843079935,
       "y" : 0.17167429402471646
     } ],
-    "color" : null,
     "lineWidth" : 0.0064,
-    "filled" : false,
     "closed" : false,
     "lineStyle" : "SOLID",
     "id" : 18
@@ -568,9 +439,7 @@
       "x" : 0.25190221843079935,
       "y" : 0.16482376021688727
     } ],
-    "color" : null,
     "lineWidth" : 0.0064,
-    "filled" : false,
     "closed" : false,
     "lineStyle" : "SOLID",
     "id" : 19
@@ -589,9 +458,7 @@
       "x" : 0.5180943892493048,
       "y" : 0.17167429402471646
     } ],
-    "color" : null,
     "lineWidth" : 0.0064,
-    "filled" : false,
     "closed" : false,
     "lineStyle" : "SOLID",
     "id" : 20
@@ -604,9 +471,7 @@
       "x" : 0.5180943892493048,
       "y" : 0.16482376021688727
     } ],
-    "color" : null,
     "lineWidth" : 0.0064,
-    "filled" : false,
     "closed" : false,
     "lineStyle" : "SOLID",
     "id" : 21
@@ -619,9 +484,7 @@
       "x" : 0.5561105577533751,
       "y" : 0.6364018294686598
     } ],
-    "color" : null,
     "lineWidth" : 0.0024,
-    "filled" : false,
     "closed" : false,
     "lineStyle" : "SOLID",
     "id" : 116
