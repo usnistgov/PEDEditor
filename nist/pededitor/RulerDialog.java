@@ -3,11 +3,14 @@ package gov.nist.pededitor;
 import java.awt.Dialog;
 import java.awt.Frame;
 import java.awt.event.ActionEvent;
+import java.util.ArrayList;
+import java.util.Arrays;
 
 import javax.swing.AbstractAction;
 import javax.swing.ButtonGroup;
 import javax.swing.JButton;
 import javax.swing.JCheckBox;
+import javax.swing.JComboBox;
 import javax.swing.JDialog;
 import javax.swing.JLabel;
 import javax.swing.JOptionPane;
@@ -65,9 +68,12 @@ public class RulerDialog extends JDialog {
     JCheckBox suppressStartLabel = new JCheckBox("Suppress start label");
     JCheckBox suppressEndTick = new JCheckBox("Suppress end tick");
     JCheckBox suppressEndLabel = new JCheckBox("Suppress end label");
+    JCheckBox suppressSmallTicks = new JCheckBox("Suppress small ticks");
 
     JCheckBox showPercentages = new JCheckBox("Use percentages in labels");
     JTextField tickPadding = new JTextField("0", 10);
+    JTextField textAngle = new JTextField("0", 10);
+    JComboBox<String> variable;
 
     boolean pressedOK = false;
     LinearRuler.LabelAnchor labelAnchor = null;
@@ -81,13 +87,12 @@ public class RulerDialog extends JDialog {
             }
         });
 
-    RulerDialog(Frame owner, String title, LinearRuler ruler) {
+    RulerDialog(Frame owner, String title) {
         super(owner, "Edit Ruler", true);
         JPanel contentPane = (JPanel) getContentPane();
         GridBagUtil cpgb = new GridBagUtil(contentPane);
 
         cpgb.addWest(new JLabel("Tick labels:"));
-        labelAnchor = ruler.labelAnchor;
 
         {
             JPanel panel = new JPanel();
@@ -103,6 +108,21 @@ public class RulerDialog extends JDialog {
                  ("On right", LinearRuler.LabelAnchor.RIGHT));
             cpgb.endRowWith(panel);
         }
+
+        {
+            variable = new JComboBox<String>();
+            JLabel variableLabel = new JLabel("Display variable/component:");
+            variableLabel.setLabelFor(variable);
+            cpgb.addWest(variableLabel);
+            cpgb.endRowWith(variable);
+        }
+
+        JLabel textAngleLabel = new JLabel
+            ("Label angle with respect to axis:");
+        textAngleLabel.setLabelFor(textAngle);
+        cpgb.addWest(textAngleLabel);
+        cpgb.addWest(textAngle);
+        cpgb.endRowWith(new JLabel("degrees"));
 
         JLabel tickPaddingLabel = new JLabel("Extra padding between ticks:");
         tickPaddingLabel.setLabelFor(tickPadding);
@@ -127,9 +147,40 @@ public class RulerDialog extends JDialog {
         cpgb.endRowWith(suppressStartLabel);
         cpgb.addWest(suppressEndTick);
         cpgb.endRowWith(suppressEndLabel);
+        cpgb.endRowWith(suppressSmallTicks);
 
         cpgb.centerAndEndRow(okButton);
         getRootPane().setDefaultButton(okButton);
+        pack();
+    }
+
+    RulerDialog(Frame owner, String title, LinearRuler ruler,
+                ArrayList<LinearAxis> axes) {
+        this(owner, title);
+        set(ruler, axes);
+    }
+
+    public void set(LinearRuler ruler, ArrayList<LinearAxis> axes) {
+        labelAnchor = ruler.labelAnchor;
+
+        String[] variables = new String[axes.size()];
+        variable.removeAllItems();
+        int i = -1;
+        for (Axis axis: axes) {
+            ++i;
+            variables[i] = (String) axis.name;
+        }
+        Arrays.sort(variables);
+
+        i = -1;
+        String name = (String) ruler.axis.name;
+        for (String s: variables) {
+            ++i;
+            variable.addItem(s);
+            if (s.equals(name)) {
+                variable.setSelectedIndex(i);
+            }
+        }
 
         tickLeft.setSelected(ruler.tickLeft);
         tickRight.setSelected(ruler.tickRight);
@@ -153,6 +204,9 @@ public class RulerDialog extends JDialog {
             throw new IllegalStateException("Multiplier = " + ruler.multiplier);
         }
         showPercentages.setSelected(showPct);
+
+        suppressSmallTicks.setSelected(ruler.tickDelta == 0);
+        textAngle.setText(String.format("%7.3f", ruler.textAngle * (-180 / Math.PI)));
         tickPadding.setText(ContinuedFraction.toString(ruler.tickPadding,
                                                        false));
     }
@@ -160,9 +214,9 @@ public class RulerDialog extends JDialog {
     /** Show the dialog as document-modal. If the dialog is closed
         normally, then update "dest" with the new values and return
         true. Otherwise, make no changes to "dest" and return false. */
-    public boolean showModal(LinearRuler dest) {
-        pack();
+    public boolean showModal(LinearRuler dest, ArrayList<LinearAxis> axes) {
         setModalityType(Dialog.ModalityType.DOCUMENT_MODAL);
+        set(dest, axes);
         setVisible(true);
         if (!pressedOK) {
             return false;
@@ -186,8 +240,35 @@ public class RulerDialog extends JDialog {
         } catch (NumberFormatException e) {
             JOptionPane.showMessageDialog
                 (getOwner(),
-                 "Warning: could not parse tickPadding value '" + padStr + "'");
-            dest.tickPadding = 0.0;
+                 "Warning: could not parse tick padding value '"
+                 + padStr + "'");
+        }
+
+        String angleStr = textAngle.getText();
+        try {
+            double degangle = ContinuedFraction.parseDouble(angleStr);
+            double odegangle = -dest.textAngle * 180 / Math.PI;
+            if (Math.abs(degangle - odegangle) > 1e-3) {
+                dest.textAngle = -degangle * Math.PI / 180;
+            }
+        } catch (NumberFormatException e) {
+            JOptionPane.showMessageDialog
+                (getOwner(),
+                 "Warning: could not parse text angle value '"
+                 + angleStr + "'");
+        }
+
+        String name = (String) variable.getSelectedItem();
+        for (LinearAxis axis: axes) {
+            if (name.equals(axis.name)) {
+                dest.axis = axis;
+                break;
+            }
+        }
+        if (suppressSmallTicks.isSelected()) {
+            dest.tickDelta = 0;
+        } else if (dest.tickDelta == 0) {
+            dest.tickDelta = Double.NaN;
         }
         return true;
     }
