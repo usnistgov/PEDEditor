@@ -39,8 +39,14 @@ public class LinearAxis extends Axis {
         this(0.0, 0.0, 0.0);
     }
 
-    @Override
-	public double value(double px, double py) {
+    @Override public LinearAxis clone() {
+        LinearAxis axis = new LinearAxis
+            ((NumberFormat) format.clone(), a, b, c);
+        axis.name = name;
+        return axis;
+    }
+
+    @Override public double value(double px, double py) {
         return a * px + b * py + c;
     }
 
