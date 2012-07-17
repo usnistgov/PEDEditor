@@ -61,19 +61,20 @@ import org.codehaus.jackson.annotate.JsonIgnore;
 // TODO Investigate whether JavaFX is really a plausible alternative.
 // (Answer: it's not quite ready, it seems.)
 
-// TODO Allow users to adjust the text angle in the ruler edit dialog.
+// TODO (Optional) Allow shift-L and/or shift-A to cycle around likely
+// candidates the same way that shift-P does. In other words, if
+// shift-L doesn't give you what you want the first time, just try it
+// again.
+
+// TODO (optional) Allow new variables to be shown as percentages.
 
 // TODO (optional) Auto-save the diagram at regular intervals.
-
-// TODO (optional) Allow users to redefine the third component of a
-// ternary, for situations where the ternary is actually a slice of a
-// 4-component system and the three components do not actually sum to
-// 100%.
 
 // TODO (optional) Enable filling of regions with cusps. As things
 // currently stand, it's not possible to fill a semicircle.
 
-// TODO (optional) Combine fill styles with colors. Pretty easy.
+// TODO (optional) Mush all decorations together (as layers) and allow
+// layers to be brought forward or backward.
 
 // TODO (optional) Eutectic and peritectic points.
 
@@ -331,8 +332,8 @@ public class Editor extends Diagram
 
     public void edit(RulerHandle hand) {
         LinearRuler item = hand.getItem();
-        if ((new RulerDialog(editFrame, "Edit Ruler", item))
-            .showModal(item)) {
+
+        if (getRulerDialog().showModal(item, axes)) {
             propagateChange();
         }
     }
@@ -347,14 +348,23 @@ public class Editor extends Diagram
     protected ImageZoomFrame zoomFrame = null;
     protected VertexInfoDialog vertexInfo = new VertexInfoDialog(editFrame);
     protected LabelDialog labelDialog = null;
+    protected RulerDialog rulerDialog = null;
     protected JColorChooser colorChooser = null;
     protected JDialog colorDialog = null;
 
     LabelDialog getLabelDialog() {
         if (labelDialog == null) {
-            labelDialog = new LabelDialog(editFrame, "Add label", getFont().deriveFont(16.0f));
+            labelDialog = new LabelDialog(editFrame, "Add label",
+                                          getFont().deriveFont(16.0f));
         }
         return labelDialog;
+    }
+
+    RulerDialog getRulerDialog() {
+        if (rulerDialog == null) {
+            rulerDialog = new RulerDialog(editFrame, "Add ruler");
+        }
+        return rulerDialog;
     }
 
     protected transient double scale;
@@ -1505,8 +1515,7 @@ public class Editor extends Diagram
         ruler.startPoint = path.get(1 - vhand.vertexNo);
         ruler.endPoint = path.get(vhand.vertexNo);
 
-        if (!(new RulerDialog(editFrame, "Edit Ruler", ruler))
-            .showModal(ruler)) {
+        if (!getRulerDialog().showModal(ruler, axes)) {
             return;
         }
 
@@ -1517,7 +1526,9 @@ public class Editor extends Diagram
 
     @Override public void add(LinearAxis axis) {
         super.add(axis);
-        editFrame.addVariable((String) axis.name);
+        if (!isXAxis(axis) && !isYAxis(axis)) {
+            editFrame.addVariable((String) axis.name);
+        }
     }
 
     public void addVariable() {
@@ -1634,6 +1645,7 @@ public class Editor extends Diagram
         mole fractions.
     */
     public void computeFraction(boolean isWeight) {
+        String errorTitle = "Could not compute component ratios";
         double[][] componentElements = getComponentElements();
 
         ArrayList<Side> sides = new ArrayList<>();
@@ -1697,13 +1709,13 @@ public class Editor extends Diagram
             m = ChemicalString.composition(compound);
             if (m == null) {
                 JOptionPane.showMessageDialog
-                    (editFrame, "Parse error at start of formula");
+                    (editFrame, "Parse error in formula");
                 continue;
-            } else if (m.length < compound.length()) {
+            } else if (m.endIndex < compound.length()) {
                 JOptionPane.showMessageDialog
                     (editFrame, "Parse error at <<HERE in '"
-                     + compound.substring(0, m.length)
-                     + "<<HERE" + compound.substring(m.length) + "'");
+                     + compound.substring(0, m.endIndex)
+                     + "<<HERE" + compound.substring(m.endIndex) + "'");
                 continue;
             } else {
                 break;
@@ -1798,6 +1810,21 @@ public class Editor extends Diagram
         } else {
             Rectangle2D b = principalToStandardPage.outputBounds();
             fractions = new Point2D.Double(0, b.getMaxY());
+        }
+
+        double componentsSum = 0;
+        boolean sumIsKnown = true;
+        for (Side side: sides) {
+            LinearAxis axis = getAxis(side);
+            if (axis == null) {
+                sumIsKnown = false;
+                break;
+            }
+            componentsSum += axis.value(fractions);
+        }
+        if (sumIsKnown && Math.abs(1 - componentsSum) > 1e-4) {
+            showError("Components do not sum to 1", errorTitle);
+            return;
         }
 
         for (int compNo = 0; compNo < sides.size(); ++compNo) {
@@ -3115,7 +3142,7 @@ public class Editor extends Diagram
         removeAllTags();
         super.cannibalize(other);
         for (LinearAxis axis: axes) {
-            if (!isStandardAxis(axis)) {
+            if (!isXAxis(axis) && !isYAxis(axis)) {
                 editFrame.addVariable((String) axis.name);
             }
         }
@@ -3210,6 +3237,8 @@ public class Editor extends Diagram
                 } else if (isEditable()) {
                     cropFrame.setFilename(file.getAbsolutePath());
                     cropFrame.pack();
+                    editFrame.setStatus("");
+                    clear();
                     cropFrame.setVisible(true);
                 } else {
                     showError(parent,
