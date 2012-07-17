@@ -64,6 +64,8 @@ public class ChemicalString {
     static Pattern subscriptNeededPattern = null;
     static Pattern subscriptPattern = null;
     static Pattern elementCountPattern = null;
+    final static String quoted = "\"\\s*([^\"]+)\"";
+    static Pattern quotedPattern = null;
 
     // The following patterns need work.
     final static String elementWithCount = "(" + element + ")" + ion + "*"
@@ -173,16 +175,61 @@ public class ChemicalString {
             .replaceAll(subscriptNeededReplacement);
     }
 
-    static class Match {
-        int length;
+    public static class Match {
+        /** Inclusive index of beginning of match into input
+            CharSequence -- like String#substring(). */
+        int beginIndex;
+        /** Exclusive index of end of match into input CharSquence --
+            like String#substring(). */
+        int endIndex;
         Map<String,Double> composition;
+
+        public String within(String s) {
+            return s.substring(beginIndex, endIndex);
+        }
+    }
+
+    /* Like composition(), but also accept formulas enclosed in
+       double-quotation marks to indicate that the oxidation state is
+       unknown. beginIndex in the return value (if the return value is
+       non-null) indicates the start of the actual formula,
+       discounting the quotation marks. beginIndex will be nonzero if
+       and only if the formula was quoted. */
+    public static Match maybeQuotedComposition(CharSequence s) {
+        if (s.length() > 0 && s.charAt(0) == '\"') {
+            // Grab the quoted portion of this pattern.
+            if (quotedPattern == null) {
+                try {
+                    quotedPattern = Pattern.compile(quoted);
+                } catch (PatternSyntaxException e) {
+                    throw new IllegalStateException("Pattern '" + quoted
+                                                    + "' could not compile: " + e);
+                }
+            }
+            Matcher quotedMatcher = quotedPattern.matcher(s);
+            if (!quotedMatcher.lookingAt()) {
+                return null;
+            }
+
+            int start = quotedMatcher.start(1);
+            s = s.subSequence(start, quotedMatcher.end(1));
+            Match c = composition(s);
+            if (c != null) {
+                c.beginIndex += start;
+                c.endIndex += start;
+            }
+            return c;
+        } else {
+            return composition(s);
+        }
     }
 
     /** Read the longest leading sequence of s that can be interpreted
-        as a chemical name, and return a Match indicating the number
-        of elements of each type. Return null if no leading sequence
-        resembles a compound name. Note that spaces are not
-        ignored. */
+        as a chemical formula, and return a Match indicating the
+        number of elements of each type. Return null if no leading
+        sequence resembles a compound name. Note that spaces are not
+        ignored. The beginIndex field will always equal 0 for this
+        call. */
     public static Match composition(CharSequence s) {
         Match res = new Match();
         HashMap<String,Double> compo = new HashMap<>();
@@ -197,12 +244,12 @@ public class ChemicalString {
                 if (submatch == null) {
                     return null;
                 }
-                s = s.subSequence(submatch.length, s.length());
+                s = s.subSequence(submatch.endIndex, s.length());
                 if (s.length() == 0 || s.charAt(0) != ')') {
-                    return (res.length > 0) ? res : null;
+                    return (res.endIndex > 0) ? res : null;
                 }
                 s = s.subSequence(1, s.length());
-                res.length += 2 + submatch.length;
+                res.endIndex += 2 + submatch.endIndex;
                 // Successfully matched a parenthesized subcompound.
 
                 // Now try to match a trailing subscript (as in
@@ -219,7 +266,7 @@ public class ChemicalString {
                             ("'" + substr + "' does not parse as a double!");
                     }
                     s = s.subSequence(subscriptMatcher.end(), s.length());
-                    res.length += subscriptMatcher.end();
+                    res.endIndex += subscriptMatcher.end();
                 }
 
                 // Merge this sub-compound with the existing
@@ -245,7 +292,7 @@ public class ChemicalString {
                 // Successfully matched an element and possible count,
                 // such as "Si" or "Si2".
                 int charCount = elementCountMatcher.end();
-                res.length += charCount;
+                res.endIndex += charCount;
                 s = s.subSequence(charCount, s.length());
                 String element = elementCountMatcher.group(1);
                 String countStr = elementCountMatcher.group(2);
@@ -270,10 +317,20 @@ public class ChemicalString {
                 continue;
             }
 
+            if (Character.isLetter(ch)) {
+                // If the character immediately after a matching
+                // portion is a letter or digit, then it invalidates
+                // the whole match. For instance, it would be wrong to
+                // extract the chemical formula "BO" from the string
+                // "BORON".
+                return null;
+            }
+
+            // Return the portion of the input that matched.
             break;
         }
 
-        return (res.length > 0) ? res : null;
+        return (res.endIndex > 0) ? res : null;
     }
 
     public static void main(String[] args) {
@@ -289,7 +346,7 @@ public class ChemicalString {
                 break;
             }
             System.out.println("Auto-subscripted: " + autoSubscript(line));
-            Match match = composition(line);
+            Match match = maybeQuotedComposition(line);
             if (match == null) {
                 System.out.println("No leading compound found");
             } else {
@@ -308,7 +365,7 @@ public class ChemicalString {
                 }
                 System.out.println();
 
-                System.out.println("Remainder = " + line.substring(match.length));
+                System.out.println("Trimmed = " + match.within(line));
             }
         }
     }
