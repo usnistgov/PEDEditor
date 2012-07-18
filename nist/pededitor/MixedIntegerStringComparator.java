@@ -20,20 +20,16 @@ public class MixedIntegerStringComparator implements Comparator<String> {
         int len = s.length();
         for (int i = startPos + 1; i < len; ++i) {
             if (!Character.isDigit(s.charAt(i))) {
-                // System.out.println("iep(" + s + ", " + startPos + ") = " + i);
                 return i;
             }
         }
-        // System.out.println("iep(" + s + ", " + startPos + ") = " + len);
         return len;
     }
 
     @Override public int compare(String a, String b) {
         int la = a.length();
         int lb = b.length();
-        // System.out.println(String.format("compare(\"%s\", \"%s\")", a, b));
         for (int p = 0; ; ++p) {
-            // System.out.println("p = " + p);
             if (p == la) {
                 return (p == lb) ? 0 : -1;
             } else if (p == lb) {
