@@ -87,6 +87,8 @@ import org.w3c.dom.DOMImplementation;
     but not including GUI elements such as menus and windows. */
 public class Diagram extends Observable implements Printable {
     static ObjectMapper objectMapper = null;
+    private static final DecimalFormat STANDARD_PERCENT_FORMAT
+        = new DecimalFormat("##0.00%");
 
     /** Series of classes that implement the Decoration and
         DecorationHandle interfaces so that different types of
@@ -476,7 +478,12 @@ public class Diagram extends Observable implements Printable {
 
         public Point2D.Double getCenterLocation() {
             initializeLabelViews();
-            return (Point2D.Double) labelCenters.get(index).clone();
+            Point2D.Double lc = labelCenters.get(index);
+            if (lc == null) {
+                System.out.println("Unknown center for label of '"
+                                   + getItem().getText() + "'");
+            }
+            return (lc == null) ? null : (Point2D.Double) lc.clone();
         }
 
         public Point2D.Double getAnchorLocation() {
@@ -1065,10 +1072,10 @@ public class Diagram extends Observable implements Printable {
 
     protected String originalFilename;
 
-    protected ArrayList<LinearAxis> axes;
+    protected ArrayList<LinearAxis> axes = new ArrayList<>();
     /** principal coordinates are used to define rulers' startPoints
         and endPoints. */
-    protected ArrayList<LinearRuler> rulers;
+    protected ArrayList<LinearRuler> rulers = new ArrayList<>();
 
     protected double labelXMargin = 0;
     protected double labelYMargin = 0;
@@ -1077,8 +1084,19 @@ public class Diagram extends Observable implements Printable {
     static final int STANDARD_FONT_SIZE = 15;
     protected String filename;
     private boolean usingWeightFraction = false;
+    transient boolean suppressNotifications = false;
+    transient boolean saveNeeded = false;
 
-    boolean saveNeeded = false;
+    class NotificationDelay implements AutoCloseable {
+        boolean oldSuppressNotifications = suppressNotifications;
+
+        @Override public void close() {
+            suppressNotifications = oldSuppressNotifications;
+            if (!suppressNotifications) {
+                notifyObservers(null);
+            }
+        }
+    }
 
     public Diagram() {
         init();
@@ -1103,16 +1121,14 @@ public class Diagram extends Observable implements Printable {
         labels = new ArrayList<>();
         labelViews = new ArrayList<>();
         labelCenters = new ArrayList<>();
-        axes = new ArrayList<>();
-        rulers = new ArrayList<>();
+        removeAllTags();
+        removeAllVariables();
         diagramComponents = new String[Side.values().length];
         componentElements = null;
         filename = null;
         saveNeeded = false;
         embeddedFont = null;
         keyValues = new TreeMap<>();
-        removeAllTags();
-        removeAllVariables();
     }
 
     /** Initialize/clear almost every field except diagramType. */
@@ -1161,7 +1177,7 @@ public class Diagram extends Observable implements Printable {
 
     public void removeAllVariables() {
         while (axes.size() > 0) {
-            removeVariable((String) axes.get(0).name);
+            remove(axes.get(0));
         }
     }
 
@@ -1183,17 +1199,9 @@ public class Diagram extends Observable implements Printable {
     }
 
     public void removeVariable(String name) {
-        for (Axis axis: axes) {
+        for (LinearAxis axis: axes) {
             if (axis.name.equals(name)) {
-                axes.remove(axis);
-                for (int i = 0; i < rulers.size(); ) {
-                    if (rulers.get(i).axis == axis) {
-                        rulers.remove(i);
-                    } else {
-                        ++i;
-                    }
-                }
-                propagateChange();
+                remove(axis);
                 return;
             }
         }
@@ -1286,7 +1294,9 @@ public class Diagram extends Observable implements Printable {
         call repaint() on the edit frame. */
     public void propagateChange() {
         setChanged();
-        notifyObservers(null);
+        if (!suppressNotifications) {
+            notifyObservers(null);
+        }
         saveNeeded = true;
     }
 
@@ -1458,7 +1468,39 @@ public class Diagram extends Observable implements Printable {
     }
 
     public void add(LinearAxis axis) {
-        axes.add(axis);
+        String name = (String) axis.name;
+        // Insert in order sorted by name.
+        for (int i = 0; ; ++i) {
+            if (i == axes.size()
+                || name.compareTo((String) axes.get(i).name) < 0) {
+                axes.add(i, axis);
+                propagateChange();
+                return;
+            }
+        }
+    }
+
+    public void rename(LinearAxis axis, String name) {
+        axis.name = name;
+        propagateChange();
+    }
+
+    public void remove(LinearAxis axis) {
+        // Remove all rulers that depend on this axis.
+        for (int i = 0; i < rulers.size(); ) {
+            if (rulers.get(i).axis == axis) {
+                rulers.remove(i);
+            } else {
+                ++i;
+            }
+        }
+        for (int i = 0; i < axes.size(); ) {
+            if (axes.get(i) == axis) {
+                axes.remove(i);
+            } else {
+                ++i;
+            }
+        }
         propagateChange();
     }
 
@@ -1561,7 +1603,7 @@ public class Diagram extends Observable implements Printable {
         double y = prin.getY();
 
         LinearAxis leftAxis = getLeftAxis();
-        if (diagramType.isTernary()) {
+        if (isTernary()) {
             double leftFraction = (leftAxis != null) ? leftAxis.value(x,y) :
                 (1 - x - y);
             return new SideDouble[] {
@@ -1580,7 +1622,7 @@ public class Diagram extends Observable implements Printable {
     }
 
     protected Side[] sidesThatCanHaveComponents() {
-        if (diagramType.isTernary()) {
+        if (isTernary()) {
             return new Side[] { Side.LEFT, Side.RIGHT, Side.TOP };
         } else {
             return new Side[] { Side.LEFT, Side.RIGHT };
@@ -1674,7 +1716,7 @@ public class Diagram extends Observable implements Printable {
             res.offset.x = res.projection.x - 1;
             res.projection.x = 1;
         }
-        if (diagramType.isTernary()) {
+        if (isTernary()) {
             if (res.projection.y < 0) {
                 res.offset.y = res.projection.y;
                 res.projection.y = 0;
@@ -1699,7 +1741,7 @@ public class Diagram extends Observable implements Printable {
         if (sds == null) {
             return null;
         }
-        if (diagramType.isTernary()) {
+        if (isTernary()) {
             return new Point2D.Double(sds[0].d + offs.x, sds[1].d + offs.y);
         } else {
             return new Point2D.Double(sds[0].d + offs.x, proj.y);
@@ -1715,7 +1757,7 @@ public class Diagram extends Observable implements Printable {
         if (sds == null) {
             return null;
         }
-        if (diagramType.isTernary()) {
+        if (isTernary()) {
             return new Point2D.Double(sds[0].d + offs.x, sds[1].d + offs.y);
         } else {
             return new Point2D.Double(sds[0].d + offs.x, proj.y);
@@ -1772,16 +1814,27 @@ public class Diagram extends Observable implements Printable {
     }
 
     /* Return true if all sides that could have components do have
-       them, and those components' composiitions are known. */
+       them, those components' composiitions are known, and those
+       components sum to 100%. */
     boolean haveComponentCompositions() {
         double[][] componentElements = getComponentElements();
+        double a = 0;
+        double b = 0;
+        double c = 0;
         for (Side side: sidesThatCanHaveComponents()) {
             if (componentElements[side.ordinal()] == null) {
                 return false;
             }
+            LinearAxis axis = getAxis(side);
+            if (axis == null) {
+                return false;
+            }
+            a += axis.getA();
+            b += axis.getB();
+            c += axis.getC();
         }
 
-        return true;
+        return Math.abs(a) < 1e-4 && Math.abs(b) < 1e-4 && Math.abs(c-1) < 1e-4;
     }
 
     static class PointAndError {
@@ -1829,36 +1882,38 @@ public class Diagram extends Observable implements Printable {
         return output;
     }
 
+    @JsonIgnore boolean isTernary() {
+        return diagramType != null && diagramType.isTernary();
+    }
+
     public void setDiagramComponent(Side side, String str) {
         componentElements = null;
+        LinearAxis axis = getAxis(side);
+        if (str != null && str.isEmpty()) {
+            str = null;
+        }
 
-        // When updating a diagram component, you may also have to
-        // update the corresponding axis name and format (since xx.x%
-        // format is used with component axes).
+        diagramComponents[side.ordinal()] = str;
+
+        if (axis != null) {
+            if (str == null) {
+                remove(axis);
+            } else {
+                rename(axis, str);
+                axis.format = STANDARD_PERCENT_FORMAT;
+            }
+            return;
+        }
 
         if (str == null) {
-            // Reset this axis to the default.
-            diagramComponents[side.ordinal()] = null;
-            LinearAxis axis = getAxis(side);
-            if (axis != null) {
-                axes.remove(axis);
-            }
-            axes.add(defaultAxis(side));
-        } else {
-            LinearAxis axis = getAxis(side);
-            if (axis != null) {
-                axis.name = str;
-                axis.format = new DecimalFormat("##0.00%");
-                for (LinearRuler r: rulers) {
-                    if (r.axis == axis) {
-                        // Show percentages on this axis.
-                        r.multiplier = 100.0;
-                    }
-                }
-            }
-            diagramComponents[side.ordinal()] = str.isEmpty() ? null : str;
+            // Nothing to do.
+            return;
         }
-        propagateChange();
+
+        axis = defaultAxis(side);
+        axis.format = STANDARD_PERCENT_FORMAT;
+        axis.name = str;
+        add(axis);
     }
 
     public static String htmlToText(String html) {
@@ -1992,7 +2047,7 @@ public class Diagram extends Observable implements Printable {
 
     @JsonIgnore public LinearAxis getXAxis() {
         for (LinearAxis axis: axes) {
-            if (axis.isXAxis()) {
+            if (isXAxis(axis)) {
                 return axis;
             }
         }
@@ -2001,7 +2056,7 @@ public class Diagram extends Observable implements Printable {
 
     @JsonIgnore public LinearAxis getYAxis() {
         for (LinearAxis axis: axes) {
-            if (axis.isYAxis()) {
+            if (isYAxis(axis)) {
                 return axis;
             }
         }
@@ -2029,10 +2084,6 @@ public class Diagram extends Observable implements Printable {
                 && name.equals(diagramComponents[Side.TOP.ordinal()]));
     }
 
-    public boolean isPrimaryAxis(LinearAxis axis) {
-        return isXAxis(axis) || isYAxis(axis) || isLeftAxis(axis);
-    }
-
     /** Return true if this axis measures a diagram component
         concentration (in either weight or mole fraction) */
     boolean isComponentAxis(LinearAxis axis) {
@@ -2042,22 +2093,13 @@ public class Diagram extends Observable implements Printable {
             : false;
     }
 
-    // Smells kludgy...
-    boolean isStandardAxis(LinearAxis axis) {
-        if (isPrimaryAxis(axis)) {
-            return true;
-        }
-
-        String name = (String) axis.name;
-        return name.equals("page X") || name.equals("page Y");
-    }
-
     @JsonIgnore public LinearAxis getLeftAxis() {
         for (LinearAxis axis: axes) {
             if (isLeftAxis(axis)) {
                 return axis;
             }
         }
+        
         return null;
     }
 
@@ -2523,7 +2565,7 @@ public class Diagram extends Observable implements Printable {
             return null;
         }
 
-        if (diagramType.isTernary()) {
+        if (isTernary()) {
             sides = new Side[] {Side.LEFT, Side.RIGHT, Side.TOP};
         } else {
             sides = new Side[] {Side.LEFT, Side.RIGHT};
@@ -2570,9 +2612,20 @@ public class Diagram extends Observable implements Printable {
         return STANDARD_FONT_SIZE / BASE_SCALE;
     }
 
+    LinearAxis createLeftAxis() {
+        LinearAxis axis = new LinearAxis
+                (STANDARD_PERCENT_FORMAT,
+                 -1.0,
+                 isTernary() ? -1.0 : 0.0,
+                 1.0);
+        String name = diagramComponents[Side.LEFT.ordinal()];
+        axis.name = (name == null) ? "Left" : name;
+        return axis;
+    }
+
     LinearAxis defaultAxis(Side side) {
-        NumberFormat format = new DecimalFormat("0.0000");
-        if (diagramType.isTernary()) {
+        if (isTernary()) {
+            NumberFormat format = STANDARD_PERCENT_FORMAT;
             LinearAxis axis;
 
             switch (side) {
@@ -2581,9 +2634,7 @@ public class Diagram extends Observable implements Printable {
                 axis.name = "Right";
                 return axis;
             case LEFT:
-                axis = new LinearAxis(format, -1.0, -1.0, 1.0);
-                axis.name = "Left";
-                return axis;
+                return createLeftAxis();
             case TOP:
                 axis = LinearAxis.createYAxis(format);
                 axis.name = "Top";
@@ -2592,7 +2643,10 @@ public class Diagram extends Observable implements Printable {
                 return null;
             }
         } else {
+            NumberFormat format = new DecimalFormat("0.0000");
             switch (side) {
+            case LEFT:
+                return createLeftAxis();
             case RIGHT:
                 return LinearAxis.createXAxis(format);
             case TOP:
@@ -2604,35 +2658,11 @@ public class Diagram extends Observable implements Printable {
     }
 
     protected void initializeDiagram() {
-
-        boolean isTernary = diagramType.isTernary();
-
-        if (isTernary) {
-            add(defaultAxis(Side.LEFT));
-            add(defaultAxis(Side.RIGHT));
-            add(defaultAxis(Side.TOP));
-        } else {
-            add(defaultAxis(Side.RIGHT));
-            add(defaultAxis(Side.TOP));
-        }
-
         try {
             standardPageToPrincipal = principalToStandardPage.createInverse();
         } catch (NoninvertibleTransformException e) {
             System.err.println("This transform is not invertible");
             System.exit(2);
-        }
-
-        {
-            NumberFormat format = new DecimalFormat("0.0000");
-            LinearAxis pageXAxis = LinearAxis.createFromAffine
-                (format, principalToStandardPage, false);
-            pageXAxis.name = "page X";
-            LinearAxis pageYAxis = LinearAxis.createFromAffine
-                (format, principalToStandardPage, true);
-            pageYAxis.name = "page Y";
-            axes.add(pageXAxis);
-            axes.add(pageYAxis);
         }
 
         if (getOriginalFilename() != null) {
@@ -2972,7 +3002,7 @@ public class Diagram extends Observable implements Printable {
      * right, or top). For binary diagrams, look for compound names
      * close to the lower left or lower right. */
     public String guessComponent(Side side) {
-        boolean ternary = diagramType.isTernary();
+        boolean ternary = isTernary();
         Point2D.Double left = null;
         Point2D.Double right = null;
         Point2D.Double top = null;
@@ -3048,7 +3078,7 @@ public class Diagram extends Observable implements Printable {
         }
 
         boolean res = true;
-        Side[] sides = diagramType.isTernary()
+        Side[] sides = isTernary()
             ? new Side[] { Side.LEFT, Side. RIGHT, Side.TOP }
         : new Side [] { Side.LEFT, Side. RIGHT };
 
@@ -3769,6 +3799,7 @@ public class Diagram extends Observable implements Printable {
             || (start < 1e-6);
         r.suppressEndTick = (diagramType != DiagramType.TERNARY_LEFT)
             || (end > 1 - 1e-6);
+        r.axis = getXAxis();
         add(r);
     }
 
@@ -3804,6 +3835,7 @@ public class Diagram extends Observable implements Printable {
         r.suppressEndLabel = (diagramType != DiagramType.TERNARY_TOP);
         r.suppressEndTick = (diagramType != DiagramType.TERNARY_LEFT)
             || (end > 1 - 1e-6);
+        r.axis = getYAxis();
         add(r);
     }
 
@@ -3832,6 +3864,7 @@ public class Diagram extends Observable implements Printable {
         r.endPoint = new Point2D.Double(1 - end, end);
         r.startArrow = Math.abs(start) > 1e-8;
         r.endArrow = (Math.abs(end - 1) > 1e-4);
+        r.axis = getYAxis();
         add(r);
     }
 
@@ -3842,6 +3875,7 @@ public class Diagram extends Observable implements Printable {
         r.labelAnchor = LinearRuler.LabelAnchor.RIGHT;
         r.startPoint = new Point2D.Double(0.0, 0.0);
         r.endPoint = new Point2D.Double(1.0, 0.0);
+        r.axis = getYAxis();
         add(r);
     }
 
@@ -3853,6 +3887,7 @@ public class Diagram extends Observable implements Printable {
 
         r.startPoint = new Point2D.Double(0.0, 1.0);
         r.endPoint = new Point2D.Double(1.0, 1.0);
+        r.axis = getYAxis();
         add(r);
     }
 
@@ -3864,6 +3899,7 @@ public class Diagram extends Observable implements Printable {
 
         r.startPoint = new Point2D.Double(0.0, 0.0);
         r.endPoint = new Point2D.Double(0.0, 1.0);
+        r.axis = getXAxis();
         add(r);
     }
 
@@ -3875,6 +3911,7 @@ public class Diagram extends Observable implements Printable {
 
         r.startPoint = new Point2D.Double(1.0, 0.0);
         r.endPoint = new Point2D.Double(1.0, 1.0);
+        r.axis = getXAxis();
         add(r);
     }
 

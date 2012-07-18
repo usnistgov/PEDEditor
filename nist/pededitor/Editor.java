@@ -44,6 +44,7 @@ import java.nio.file.FileSystems;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.text.DecimalFormat;
+import java.text.NumberFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -73,8 +74,8 @@ import org.codehaus.jackson.annotate.JsonIgnore;
 // TODO (optional) Enable filling of regions with cusps. As things
 // currently stand, it's not possible to fill a semicircle.
 
-// TODO (optional) Mush all decorations together (as layers) and allow
-// layers to be brought forward or backward.
+// TODO (optional) Keep an undifferentiated list of decorations, which
+// allows any decoration to be moved up or down on the screen.
 
 // TODO (optional) Eutectic and peritectic points.
 
@@ -600,11 +601,6 @@ public class Editor extends Diagram
     @Override public void removeTag(String tag) {
         super.removeTag(tag);
         editFrame.removeTag(tag);
-    }
-
-    @Override public void removeVariable(String name) {
-        super.removeVariable(name);
-        editFrame.removeVariable(name);
     }
 
     public void put() {
@@ -1497,38 +1493,47 @@ public class Editor extends Diagram
 
         LinearAxis axis = axes.get(choiceNo);
 
-        LinearRuler ruler = new LinearRuler() {{
-            fontSize = currentFontSize();
-            tickPadding = 0.0;
-            labelAnchor = LinearRuler.LabelAnchor.NONE;
-            drawSpine = true;
-        }};
-
-        ruler.lineWidth = lineWidth;
-        ruler.axis = axis;
+        LinearRuler r = new LinearRuler();
+        r.fontSize = currentFontSize();
+        r.tickPadding = 0.0;
+        r.labelAnchor = LinearRuler.LabelAnchor.NONE;
+        r.drawSpine = true;
+        r.lineWidth = lineWidth;
+        r.axis = axis;
 
         if (diagramType.isTernary()) {
-            ruler.tickType = LinearRuler.TickType.V;
+            r.tickType = LinearRuler.TickType.V;
         }
 
         VertexHandle vhand = getVertexHandle();
-        ruler.startPoint = path.get(1 - vhand.vertexNo);
-        ruler.endPoint = path.get(vhand.vertexNo);
+        r.startPoint = path.get(1 - vhand.vertexNo);
+        r.endPoint = path.get(vhand.vertexNo);
 
-        if (!getRulerDialog().showModal(ruler, axes)) {
+        if (!getRulerDialog().showModal(r, axes)) {
             return;
         }
 
         removeCurve(vhand.getCurveNo());
-        add(ruler);
+        add(r);
         selection = new RulerHandle(rulers.size() - 1, RulerHandleType.END);
+    }
+
+    @Override public void rename(LinearAxis axis, String name) {
+        if (axis.name != null) {
+            editFrame.removeVariable((String) axis.name);
+        }
+        super.rename(axis, name);
+        editFrame.addVariable(name);
     }
 
     @Override public void add(LinearAxis axis) {
         super.add(axis);
-        if (!isXAxis(axis) && !isYAxis(axis)) {
-            editFrame.addVariable((String) axis.name);
-        }
+        editFrame.addVariable((String) axis.name);
+    }
+
+    @Override public void remove(LinearAxis axis) {
+        super.remove(axis);
+        editFrame.removeVariable((String) axis.name);
     }
 
     public void addVariable() {
@@ -2101,6 +2106,8 @@ public class Editor extends Diagram
         setDiagramComponent(side, str.isEmpty() ? null : str);
     }
 
+    
+
     /** Invoked from the EditFrame menu */
     public void addLabel() {
         if (principalToStandardPage == null) {
@@ -2111,7 +2118,7 @@ public class Editor extends Diagram
             JOptionPane.showMessageDialog
                 (editFrame,
                  "Position the mouse where the label belongs,\n"
-                 + "then press the Enter short-cut key to add the label.");
+                 + "then press 't' to add the label.");
             return;
         }
 
@@ -2539,375 +2546,356 @@ public class Editor extends Diagram
     protected void newDiagram(String originalFilename,
                               Point2D.Double[] vertices) {
         boolean tracing = (vertices != null);
-        clear();
-        setOriginalFilename(originalFilename);
+        try (NotificationDelay d = new NotificationDelay()) {
+                clear();
+                setOriginalFilename(originalFilename);
 
-        // It's easier to shrink than to enlarge a diagram, so start
-        // with fairly generous margins.
-        double leftMargin = 0.15;
-        double rightMargin = 0.15;
-        double topMargin = 0.15;
-        double bottomMargin = 0.15;
-        double maxDiagramHeight = 1.0;
-        double maxDiagramWidth = 1.0;
-
-        Point2D.Double[] principalTrianglePoints =
-            { new Point2D.Double(0.0, 0.0),
-              new Point2D.Double(0.0, 1.0),
-              new Point2D.Double(1.0, 0.0) };
-
-        Rescale r = null;
-
-        switch (diagramType) {
-        case TERNARY_BOTTOM:
-            {
-                double height;
-
-                double defaultHeight = !tracing ? 0.45
-                    : (1.0
-                       - (vertices[1].distance(vertices[2]) / 
-                          vertices[0].distance(vertices[3])));
-                String initialHeight = String.format
-                    ("%.1f%%", defaultHeight * 100);
-
-                while (true) {
-                    String heightS = (String) JOptionPane.showInputDialog
-                        (editFrame,
-                         "Enter the visual height of the diagram\n" +
-                         "as a fraction of the full triangle height:",
-                         initialHeight);
-                    if (heightS == null) {
-                        heightS = initialHeight;
-                    }
-                    try {
-                        height = ContinuedFraction.parseDouble(heightS);
-                        break;
-                    } catch (NumberFormatException e) {
-                        JOptionPane.showMessageDialog(editFrame, "Invalid number format.");
-                    }
+                add(defaultAxis(Side.RIGHT));
+                add(defaultAxis(Side.TOP));
+                if (isTernary()) {
+                    add(defaultAxis(Side.LEFT));
                 }
 
-                // The logical coordinates of the four legs of the
-                // trapezoid. These are not normal Cartesian
-                // coordinates, but ternary diagram concentration
-                // values. The first coordinate represents the
-                // percentage of the bottom right corner substance,
-                // and the second coordinate represents the percentage
-                // of the top corner substance. The two coordinate
-                // axes, then, are not visually perpendicular; they
-                // meet to make a 60 degree angle that is the bottom
-                // left corner of the triangle.
+                // It's easier to shrink than to enlarge a diagram, so start
+                // with fairly generous margins.
+                double leftMargin = 0.15;
+                double rightMargin = 0.15;
+                double topMargin = 0.15;
+                double bottomMargin = 0.15;
+                double maxDiagramHeight = 1.0;
+                double maxDiagramWidth = 1.0;
 
-                Point2D.Double[] outputVertices =
+                Point2D.Double[] principalTrianglePoints =
                     { new Point2D.Double(0.0, 0.0),
-                      new Point2D.Double(0.0, height),
-                      new Point2D.Double(1.0 - height, height),
+                      new Point2D.Double(0.0, 1.0),
                       new Point2D.Double(1.0, 0.0) };
 
-                if (tracing) {
-                    originalToPrincipal = new QuadToQuad(vertices, outputVertices);
-                }
-
-                r = new Rescale(1.0, 0.0, maxDiagramWidth,
-                                TriangleTransform.UNIT_TRIANGLE_HEIGHT * height,
-                                0.0, maxDiagramHeight);
-
-                double rx = r.width;
-                double bottom = r.height;
-
-                Point2D.Double[] trianglePagePositions =
-                    { new Point2D.Double(0.0, bottom),
-                      new Point2D.Double(rx/2,
-                                         bottom - TriangleTransform.UNIT_TRIANGLE_HEIGHT * r.t),
-                      new Point2D.Double(rx, bottom) };
-                principalToStandardPage = new TriangleTransform
-                    (principalTrianglePoints, trianglePagePositions);
-
-                addTernaryBottomRuler(0.0, 1.0);
-                addTernaryLeftRuler(0.0, height);
-                addTernaryRightRuler(0.0, height);
-                break;
-            }
-        case BINARY:
-            {
-                addBinaryBottomRuler();
-                addBinaryTopRuler();
-                addBinaryLeftRuler();
-                addBinaryRightRuler();
-                // Fall through...
-            }
-        case OTHER:
-            {
-                if (diagramType == DiagramType.OTHER) {
-                    leftMargin = rightMargin = topMargin = bottomMargin = 0.05;
-                }
-                Rectangle2D.Double principalBounds
-                    = new Rectangle2D.Double(0.0, 0.0, 1.0, 1.0);
-                if (tracing) {
-                    // Transform the input quadrilateral into a rectangle
-                    QuadToRect q = new QuadToRect();
-                    q.setVertices(vertices);
-                    q.setRectangle(principalBounds);
-                    originalToPrincipal = q;
-                }
-
-                r = new Rescale(1.0, 0.0, maxDiagramWidth,
-                                1.0, 0.0, maxDiagramHeight);
-
-                principalToStandardPage = new RectangleTransform
-                    (new Rectangle2D.Double(0.0, 0.0, 1.0, 1.0),
-                     new Rectangle2D.Double(0.0, 1.0,
-                                            1.0 * r.t, -1.0 * r.t));
-                break;
-
-            }
-
-        case TERNARY_LEFT:
-        case TERNARY_RIGHT:
-        case TERNARY_TOP:
-            {
-                final int LEFT_VERTEX = 0;
-                final int TOP_VERTEX = 1;
-                final int RIGHT_VERTEX = 2;
-
-                final int RIGHT_SIDE = 0;
-                final int BOTTOM_SIDE = 1;
-                final int LEFT_SIDE = 2;
-                String sideNames[] = { "Right", "Bottom", "Left" };
-
-                int angleVertex = diagramType.getTriangleVertexNo();
-                int ov1 = (angleVertex+1) % 3; // Other Vertex #1
-                int ov2 = (angleVertex+2) % 3; // Other Vertex #2
-
-                double pageMaxes[];
-
-                if (!tracing) {
-                    pageMaxes = new double[] { 1.0, 1.0 };
-                } else {
-                    double angleSideLengths[] =
-                        { vertices[angleVertex].distance(vertices[ov2]),
-                          vertices[angleVertex].distance(vertices[ov1]) };
-                    double maxSideLength = Math.max(angleSideLengths[0],
-                                                    angleSideLengths[1]);
-                    pageMaxes = new double[]
-                        { angleSideLengths[0] / maxSideLength,
-                          angleSideLengths[1] / maxSideLength };
-                }
-
-                String pageMaxInitialValues[] = new String[pageMaxes.length];
-                for (int i = 0; i < pageMaxes.length; ++i) {
-                    pageMaxInitialValues[i] = ContinuedFraction.toString
-                        (pageMaxes[i], true);
-                }
-                DimensionsDialog dialog = new DimensionsDialog
-                    (editFrame, new String[] { sideNames[ov1], sideNames[ov2] });
-                dialog.setDimensions(pageMaxInitialValues);
-                dialog.setTitle("Select Screen Side Lengths");
-
-                while (true) {
-                    String[] pageMaxStrings = dialog.showModal();
-                    if (pageMaxStrings == null) {
-                        pageMaxStrings = (String[]) pageMaxInitialValues.clone();
-                    }
-                    try {
-                        for (int i = 0; i < pageMaxStrings.length; ++i) {
-                            pageMaxes[i] = ContinuedFraction.parseDouble(pageMaxStrings[i]);
-                        }
-                        break;
-                    } catch (NumberFormatException e) {
-                        JOptionPane.showMessageDialog(editFrame, "Invalid number format.");
-                    }
-                }
-
-                double[] sideLengths = new double[3];
-                sideLengths[ov1] = pageMaxes[0];
-                sideLengths[ov2] = pageMaxes[1];
-
-                // One of the following 3 values will be invalid and
-                // equal to 0, but we only use the ones that are
-                // valid.
-                double leftLength = sideLengths[LEFT_SIDE];
-                double rightLength = sideLengths[RIGHT_SIDE];
-                double bottomLength = sideLengths[BOTTOM_SIDE];
-
-                // trianglePoints is to be set to a set of coordinates
-                // of the 3 vertices of the ternary diagram expressed
-                // in principal coordinates. The first principal
-                // coordinate represents the fraction of the
-                // lower-right principal component, and the second
-                // principal coordinate represents the fraction of
-                // the top principal component.
-
-                // At this point, principal component lengths should
-                // be proportional to page distances.
-
-                // trianglePoints[] contains the key points of the
-                // actual diagram (though only one of those key points
-                // will be a diagram component).
-                Point2D.Double[] trianglePoints
-                    = Duh.deepCopy(principalTrianglePoints);
+                Rescale r = null;
 
                 switch (diagramType) {
+                case TERNARY_BOTTOM:
+                    {
+                        double height;
+
+                        double defaultHeight = !tracing ? 0.45
+                            : (1.0
+                               - (vertices[1].distance(vertices[2]) / 
+                                  vertices[0].distance(vertices[3])));
+                        String initialHeight = String.format
+                            ("%.1f%%", defaultHeight * 100);
+
+                        while (true) {
+                            String heightS = (String) JOptionPane.showInputDialog
+                                (editFrame,
+                                 "Enter the visual height of the diagram\n" +
+                                 "as a fraction of the full triangle height:",
+                                 initialHeight);
+                            if (heightS == null) {
+                                heightS = initialHeight;
+                            }
+                            try {
+                                height = ContinuedFraction.parseDouble(heightS);
+                                break;
+                            } catch (NumberFormatException e) {
+                                JOptionPane.showMessageDialog(editFrame, "Invalid number format.");
+                            }
+                        }
+
+                        // The logical coordinates of the four legs of the
+                        // trapezoid. These are not normal Cartesian
+                        // coordinates, but ternary diagram concentration
+                        // values. The first coordinate represents the
+                        // percentage of the bottom right corner substance,
+                        // and the second coordinate represents the percentage
+                        // of the top corner substance. The two coordinate
+                        // axes, then, are not visually perpendicular; they
+                        // meet to make a 60 degree angle that is the bottom
+                        // left corner of the triangle.
+
+                        Point2D.Double[] outputVertices =
+                            { new Point2D.Double(0.0, 0.0),
+                              new Point2D.Double(0.0, height),
+                              new Point2D.Double(1.0 - height, height),
+                              new Point2D.Double(1.0, 0.0) };
+
+                        if (tracing) {
+                            originalToPrincipal = new QuadToQuad(vertices, outputVertices);
+                        }
+
+                        r = new Rescale(1.0, 0.0, maxDiagramWidth,
+                                        TriangleTransform.UNIT_TRIANGLE_HEIGHT * height,
+                                        0.0, maxDiagramHeight);
+
+                        double rx = r.width;
+                        double bottom = r.height;
+
+                        Point2D.Double[] trianglePagePositions =
+                            { new Point2D.Double(0.0, bottom),
+                              new Point2D.Double(rx/2,
+                                                 bottom - TriangleTransform.UNIT_TRIANGLE_HEIGHT * r.t),
+                              new Point2D.Double(rx, bottom) };
+                        principalToStandardPage = new TriangleTransform
+                            (principalTrianglePoints, trianglePagePositions);
+
+                        addTernaryBottomRuler(0.0, 1.0);
+                        addTernaryLeftRuler(0.0, height);
+                        addTernaryRightRuler(0.0, height);
+                        break;
+                    }
+                case BINARY:
+                    {
+                        addBinaryBottomRuler();
+                        addBinaryTopRuler();
+                        addBinaryLeftRuler();
+                        addBinaryRightRuler();
+                        // Fall through...
+                    }
+                case OTHER:
+                    {
+                        if (diagramType == DiagramType.OTHER) {
+                            leftMargin = rightMargin = topMargin = bottomMargin = 0.05;
+                        }
+                        Rectangle2D.Double principalBounds
+                            = new Rectangle2D.Double(0.0, 0.0, 1.0, 1.0);
+                        if (tracing) {
+                            // Transform the input quadrilateral into a rectangle
+                            QuadToRect q = new QuadToRect();
+                            q.setVertices(vertices);
+                            q.setRectangle(principalBounds);
+                            originalToPrincipal = q;
+                        }
+
+                        r = new Rescale(1.0, 0.0, maxDiagramWidth,
+                                        1.0, 0.0, maxDiagramHeight);
+
+                        principalToStandardPage = new RectangleTransform
+                            (new Rectangle2D.Double(0.0, 0.0, 1.0, 1.0),
+                             new Rectangle2D.Double(0.0, 1.0,
+                                                    1.0 * r.t, -1.0 * r.t));
+                        break;
+
+                    }
+
                 case TERNARY_LEFT:
-                    trianglePoints[TOP_VERTEX] = new Point2D.Double(0, leftLength);
-                    trianglePoints[RIGHT_VERTEX]
-                        = new Point2D.Double(bottomLength, 0);
-                    addTernaryBottomRuler(0.0, bottomLength);
-                    addTernaryLeftRuler(0.0, leftLength);
-                    break;
-
-                case TERNARY_TOP:
-                    trianglePoints[LEFT_VERTEX]
-                        = new Point2D.Double(0, 1.0 - leftLength);
-                    trianglePoints[RIGHT_VERTEX]
-                        = new Point2D.Double(rightLength, 1.0 - rightLength);
-                    addTernaryLeftRuler(1 - leftLength, 1.0);
-                    addTernaryRightRuler(1 - rightLength, 1.0);
-                    break;
-
                 case TERNARY_RIGHT:
-                    trianglePoints[LEFT_VERTEX]
-                        = new Point2D.Double(1.0 - bottomLength, 0.0);
-                    trianglePoints[TOP_VERTEX]
-                        = new Point2D.Double(1.0 - rightLength, rightLength);
-                    addTernaryBottomRuler(1.0 - bottomLength, 1.0);
-                    addTernaryRightRuler(0.0, rightLength);
-                    break;
+                case TERNARY_TOP:
+                    {
+                        final int LEFT_VERTEX = 0;
+                        final int TOP_VERTEX = 1;
+                        final int RIGHT_VERTEX = 2;
+
+                        final int RIGHT_SIDE = 0;
+                        final int BOTTOM_SIDE = 1;
+                        final int LEFT_SIDE = 2;
+                        String sideNames[] = { "Right", "Bottom", "Left" };
+
+                        int angleVertex = diagramType.getTriangleVertexNo();
+                        int ov1 = (angleVertex+1) % 3; // Other Vertex #1
+                        int ov2 = (angleVertex+2) % 3; // Other Vertex #2
+
+                        double pageMaxes[];
+
+                        if (!tracing) {
+                            pageMaxes = new double[] { 1.0, 1.0 };
+                        } else {
+                            double angleSideLengths[] =
+                                { vertices[angleVertex].distance(vertices[ov2]),
+                                  vertices[angleVertex].distance(vertices[ov1]) };
+                            double maxSideLength = Math.max(angleSideLengths[0],
+                                                            angleSideLengths[1]);
+                            pageMaxes = new double[]
+                                { angleSideLengths[0] / maxSideLength,
+                                  angleSideLengths[1] / maxSideLength };
+                        }
+
+                        String pageMaxInitialValues[] = new String[pageMaxes.length];
+                        for (int i = 0; i < pageMaxes.length; ++i) {
+                            pageMaxInitialValues[i] = ContinuedFraction.toString
+                                (pageMaxes[i], true);
+                        }
+                        DimensionsDialog dialog = new DimensionsDialog
+                            (editFrame, new String[] { sideNames[ov1], sideNames[ov2] });
+                        dialog.setDimensions(pageMaxInitialValues);
+                        dialog.setTitle("Select Screen Side Lengths");
+
+                        while (true) {
+                            String[] pageMaxStrings = dialog.showModal();
+                            if (pageMaxStrings == null) {
+                                pageMaxStrings = (String[]) pageMaxInitialValues.clone();
+                            }
+                            try {
+                                for (int i = 0; i < pageMaxStrings.length; ++i) {
+                                    pageMaxes[i] = ContinuedFraction.parseDouble(pageMaxStrings[i]);
+                                }
+                                break;
+                            } catch (NumberFormatException e) {
+                                showError(e.toString(), "Invalid number format.");
+                            }
+                        }
+
+                        double[] sideLengths = new double[3];
+                        sideLengths[ov1] = pageMaxes[0];
+                        sideLengths[ov2] = pageMaxes[1];
+
+                        // One of the following 3 values will be invalid and
+                        // equal to 0, but we only use the ones that are
+                        // valid.
+                        double leftLength = sideLengths[LEFT_SIDE];
+                        double rightLength = sideLengths[RIGHT_SIDE];
+                        double bottomLength = sideLengths[BOTTOM_SIDE];
+
+                        // trianglePoints is to be set to a set of coordinates
+                        // of the 3 vertices of the ternary diagram expressed
+                        // in principal coordinates. The first principal
+                        // coordinate represents the fraction of the
+                        // lower-right principal component, and the second
+                        // principal coordinate represents the fraction of
+                        // the top principal component.
+
+                        // At this point, principal component lengths should
+                        // be proportional to page distances.
+
+                        // trianglePoints[] contains the key points of the
+                        // actual diagram (though only one of those key points
+                        // will be a diagram component).
+                        Point2D.Double[] trianglePoints
+                            = Duh.deepCopy(principalTrianglePoints);
+
+                        switch (diagramType) {
+                        case TERNARY_LEFT:
+                            trianglePoints[TOP_VERTEX] = new Point2D.Double(0, leftLength);
+                            trianglePoints[RIGHT_VERTEX]
+                                = new Point2D.Double(bottomLength, 0);
+                            addTernaryBottomRuler(0.0, bottomLength);
+                            addTernaryLeftRuler(0.0, leftLength);
+                            break;
+
+                        case TERNARY_TOP:
+                            trianglePoints[LEFT_VERTEX]
+                                = new Point2D.Double(0, 1.0 - leftLength);
+                            trianglePoints[RIGHT_VERTEX]
+                                = new Point2D.Double(rightLength, 1.0 - rightLength);
+                            addTernaryLeftRuler(1 - leftLength, 1.0);
+                            addTernaryRightRuler(1 - rightLength, 1.0);
+                            break;
+
+                        case TERNARY_RIGHT:
+                            trianglePoints[LEFT_VERTEX]
+                                = new Point2D.Double(1.0 - bottomLength, 0.0);
+                            trianglePoints[TOP_VERTEX]
+                                = new Point2D.Double(1.0 - rightLength, rightLength);
+                            addTernaryBottomRuler(1.0 - bottomLength, 1.0);
+                            addTernaryRightRuler(0.0, rightLength);
+                            break;
+                        }
+
+                        if (tracing) {
+                            originalToPrincipal = new TriangleTransform(vertices,
+                                                                        trianglePoints);
+                        }
+
+                        // xform is fixed -- three vertices of an equilateral
+                        // triangle in principal coordinates transformed to an
+                        // equilateral triangle in Euclidean coordinates, with
+                        // the y-axis facing up -- -- and ignores the
+                        // particulars of this diagram. However, applying
+                        // xform to trianglePoints yields the correct
+                        // proportions (though not the scale) for the limit
+                        // points of the actual diagram.
+
+                        TriangleTransform xform = new TriangleTransform
+                            (principalTrianglePoints,
+                             TriangleTransform.equilateralTriangleVertices());
+                        Point2D.Double[] xformed = {
+                            xform.transform(trianglePoints[0]),
+                            xform.transform(trianglePoints[1]),
+                            xform.transform(trianglePoints[2]) };
+
+                        // Rescale the principalToStandardPage transform
+
+                        // Reverse the direction of the y-axis to point
+                        // downwards, and rescale to fill the available
+                        // space as much as possible.
+
+                        Rectangle2D.Double bounds = Duh.bounds(xformed);
+                        r = new Rescale
+                            (bounds.width, 0.0, maxDiagramWidth,
+                             bounds.height, 0.0, maxDiagramHeight);
+                        xform.preConcatenate
+                            (AffineTransform.getScaleInstance(r.t, -r.t));
+
+                        // Translate so the top vertex has y value = topMargin
+                        // and the leftmost vertex (either the left or,
+                        // possibly but unlikely, the top) has x value =
+                        // leftMargin.
+                        Point2D.Double top
+                            = xform.transform(trianglePoints[TOP_VERTEX]);
+                        double minX = Math.min
+                            (top.x, xform.transform(trianglePoints[LEFT_VERTEX]).x);
+                        double minY = top.y;
+                        xform.preConcatenate
+                            (AffineTransform.getTranslateInstance(-minX, -minY));
+
+                        // Change the input vertices to be the actual
+                        // corners of the triangle in principal
+                        // coordinates and the output vertices to be the
+                        // translations of those points. This won't affect
+                        // the transform in most ways, but it will cause
+                        // getInputVertices(), getOutputVertices(),
+                        // inputBounds(), and outputBounds() to return
+                        // meaningful values.
+
+                        for (int i = 0; i < 3; ++i) {
+                            xformed[i] = xform.transform(trianglePoints[i]);
+                        }
+
+                        principalToStandardPage = new TriangleTransform
+                            (trianglePoints, xformed);
+
+                        break;
+                    }
+                case TERNARY:
+                    {
+                        if (tracing) {
+                            originalToPrincipal = new TriangleTransform
+                                (vertices, principalTrianglePoints);
+                        }
+
+                        r = new Rescale(1.0, 0.0, maxDiagramWidth,
+                                        TriangleTransform.UNIT_TRIANGLE_HEIGHT,
+                                        0.0, maxDiagramHeight);
+                        Point2D.Double[] trianglePagePositions =
+                            { new Point2D.Double(0.0, r.height),
+                              new Point2D.Double(r.width/2, 0.0),
+                              new Point2D.Double(r.width, r.height) };
+                        principalToStandardPage = new TriangleTransform
+                            (principalTrianglePoints, trianglePagePositions);
+
+                        addTernaryBottomRuler(0.0, 1.0);
+                        addTernaryLeftRuler(0.0, 1.0);
+                        addTernaryRightRuler(0.0, 1.0);
+                        break;
+                    }
                 }
 
-                if (tracing) {
-                    originalToPrincipal = new TriangleTransform(vertices,
-                                                                trianglePoints);
+                pageBounds = new Rectangle2D.Double
+                    (-leftMargin, -topMargin, r.width + leftMargin + rightMargin,
+                     r.height + topMargin + bottomMargin);
+
+                {
+                    NumberFormat format = new DecimalFormat("0.0000");
+                    LinearAxis pageXAxis = LinearAxis.createFromAffine
+                        (format, principalToStandardPage, false);
+                    pageXAxis.name = "page X";
+                    LinearAxis pageYAxis = LinearAxis.createFromAffine
+                        (format, principalToStandardPage, true);
+                    pageYAxis.name = "page Y";
+                    add(pageXAxis);
+                    add(pageYAxis);
                 }
 
-                // xform is fixed -- three vertices of an equilateral
-                // triangle in principal coordinates transformed to an
-                // equilateral triangle in Euclidean coordinates, with
-                // the y-axis facing up -- -- and ignores the
-                // particulars of this diagram. However, applying
-                // xform to trianglePoints yields the correct
-                // proportions (though not the scale) for the limit
-                // points of the actual diagram.
-
-                TriangleTransform xform = new TriangleTransform
-                    (principalTrianglePoints,
-                     TriangleTransform.equilateralTriangleVertices());
-                Point2D.Double[] xformed = {
-                    xform.transform(trianglePoints[0]),
-                    xform.transform(trianglePoints[1]),
-                    xform.transform(trianglePoints[2]) };
-
-                // Rescale the principalToStandardPage transform
-
-                // Reverse the direction of the y-axis to point
-                // downwards, and rescale to fill the available
-                // space as much as possible.
-
-                Rectangle2D.Double bounds = Duh.bounds(xformed);
-                r = new Rescale
-                    (bounds.width, 0.0, maxDiagramWidth,
-                     bounds.height, 0.0, maxDiagramHeight);
-                xform.preConcatenate
-                    (AffineTransform.getScaleInstance(r.t, -r.t));
-
-                // Translate so the top vertex has y value = topMargin
-                // and the leftmost vertex (either the left or,
-                // possibly but unlikely, the top) has x value =
-                // leftMargin.
-                Point2D.Double top
-                    = xform.transform(trianglePoints[TOP_VERTEX]);
-                double minX = Math.min
-                    (top.x, xform.transform(trianglePoints[LEFT_VERTEX]).x);
-                double minY = top.y;
-                xform.preConcatenate
-                    (AffineTransform.getTranslateInstance(-minX, -minY));
-
-                // Change the input vertices to be the actual
-                // corners of the triangle in principal
-                // coordinates and the output vertices to be the
-                // translations of those points. This won't affect
-                // the transform in most ways, but it will cause
-                // getInputVertices(), getOutputVertices(),
-                // inputBounds(), and outputBounds() to return
-                // meaningful values.
-
-                for (int i = 0; i < 3; ++i) {
-                    xformed[i] = xform.transform(trianglePoints[i]);
-                }
-
-                principalToStandardPage = new TriangleTransform
-                    (trianglePoints, xformed);
-
-                break;
+                initializeDiagram();
             }
-        case TERNARY:
-            {
-                if (tracing) {
-                    originalToPrincipal = new TriangleTransform
-                        (vertices, principalTrianglePoints);
-                }
-
-                r = new Rescale(1.0, 0.0, maxDiagramWidth,
-                                TriangleTransform.UNIT_TRIANGLE_HEIGHT,
-                                0.0, maxDiagramHeight);
-                Point2D.Double[] trianglePagePositions =
-                    { new Point2D.Double(0.0, r.height),
-                      new Point2D.Double(r.width/2, 0.0),
-                      new Point2D.Double(r.width, r.height) };
-                principalToStandardPage = new TriangleTransform
-                    (principalTrianglePoints, trianglePagePositions);
-
-                addTernaryBottomRuler(0.0, 1.0);
-                addTernaryLeftRuler(0.0, 1.0);
-                addTernaryRightRuler(0.0, 1.0);
-                break;
-            }
-        }
-
-        pageBounds = new Rectangle2D.Double
-            (-leftMargin, -topMargin, r.width + leftMargin + rightMargin,
-             r.height + topMargin + bottomMargin);
-
-        initializeDiagram();
-
-        // xAxis etc. don't exist until initializeDiagram() is called,
-        // so we can't assign them until now.
-        switch (diagramType) {
-        case TERNARY:
-        case TERNARY_BOTTOM:
-            {
-                rulers.get(0).axis = getXAxis();
-                rulers.get(1).axis = getYAxis();
-                rulers.get(2).axis = getYAxis();
-                break;
-            }
-        case BINARY:
-            {
-                rulers.get(0).axis = getXAxis();
-                rulers.get(1).axis = getXAxis();
-                rulers.get(2).axis = getYAxis();
-                rulers.get(3).axis = getYAxis();
-                break;
-            }
-        case TERNARY_LEFT:
-            {
-                rulers.get(0).axis = getXAxis();
-                rulers.get(1).axis = getYAxis();
-                break;
-            }
-        case TERNARY_RIGHT:
-            {
-                rulers.get(0).axis = getXAxis();
-                rulers.get(1).axis = getYAxis();
-                break;
-            }
-        case TERNARY_TOP:
-            {
-                rulers.get(0).axis = getYAxis();
-                rulers.get(1).axis = getYAxis();
-                break;
-            }
-        }
     }
 
     protected double currentFontSize() {
@@ -3142,9 +3130,7 @@ public class Editor extends Diagram
         removeAllTags();
         super.cannibalize(other);
         for (LinearAxis axis: axes) {
-            if (!isXAxis(axis) && !isYAxis(axis)) {
-                editFrame.addVariable((String) axis.name);
-            }
+            editFrame.addVariable((String) axis.name);
         }
         selection = null;
     }
