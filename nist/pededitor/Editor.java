@@ -620,6 +620,11 @@ public class Editor extends Diagram
 
     public void listKeyValues() {
         Set<Map.Entry<String,String>> entries = keyValues.entrySet();
+        if (entries.isEmpty()) {
+            JOptionPane.showMessageDialog
+                (editFrame, "No key/value pairs have been assigned yet.");
+            return;
+        }
         String[] keys = new String[keyValues.size()];
         String[] values = new String[keyValues.size()];
         int ii = 0;
@@ -1660,7 +1665,7 @@ public class Editor extends Diagram
                 JOptionPane.showMessageDialog
                     (editFrame,
                      "The " + side + " diagram component is not defined.\n"
-                     + "Define it with the \"Properties/Components/Set "
+                     + "Define it with the \"Chemistry/Components/Set "
                      + side.toString().toLowerCase() + " component\" menu item.");
                 return;
             }
@@ -1890,8 +1895,9 @@ public class Editor extends Diagram
                 }
                 Collections.sort(points, new OrderByXY());
             } else {
-                JOptionPane.showMessageDialog
-                    (editFrame, "You need to select a curve or label before using this function.");
+                showError
+                    ("You must first select a curve or label whose\ncoordinates "
+                     + "are to be copied.", "Cannot perform operation");
                 return;
             }
         }
