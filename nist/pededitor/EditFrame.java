@@ -486,7 +486,6 @@ public class EditFrame extends JFrame
         menuBar.add(mnEdit);
 
         if (editable) {
-
             mnEdit.add(new Action
                        ("Color...",
                         KeyEvent.VK_R,
@@ -503,7 +502,24 @@ public class EditFrame extends JFrame
                         getParentEditor().copySelection();
                     }
                 });
+        }
 
+        mnEdit.add(new Action("Copy all text to clipboard",
+                              KeyEvent.VK_T) {
+                @Override public void actionPerformed(ActionEvent e) {
+                    getParentEditor().copyAllTextToClipboard();
+                }
+            });
+
+        mnEdit.add(new Action("Copy coordinates to clipboard",
+                              KeyEvent.VK_P,
+                              KeyStroke.getKeyStroke("control C")) {
+                @Override public void actionPerformed(ActionEvent e) {
+                    getParentEditor().copyCoordinatesToClipboard();
+                }
+            });
+
+        if (editable) {
             mnEdit.add(new Action("Delete", KeyEvent.VK_D, "DELETE") {
                     @Override public void actionPerformed(ActionEvent e) {
                         getParentEditor().removeSelection();
@@ -533,14 +549,6 @@ public class EditFrame extends JFrame
                     }
                 });
 
-            mnEdit.add(new Action("Move selection only",
-                                  KeyEvent.VK_V,
-                                  KeyStroke.getKeyStroke('M')) {
-                    @Override public void actionPerformed(ActionEvent e) {
-                        getParentEditor().moveSelection(false);
-                    }
-                });
-
             mnEdit.add(new Action("Move region",
                                   KeyEvent.VK_R,
                                   KeyStroke.getKeyStroke('R')) {
@@ -548,36 +556,20 @@ public class EditFrame extends JFrame
                         getParentEditor().moveRegion();
                     }
                 });
+
+            mnEdit.add(new Action("Move selection only",
+                                  KeyEvent.VK_V,
+                                  KeyStroke.getKeyStroke('M')) {
+                    @Override public void actionPerformed(ActionEvent e) {
+                        getParentEditor().moveSelection(false);
+                    }
+                });
         }
-
-        mnEdit.add(new Action("Copy coordinates to clipboard",
-                              KeyEvent.VK_P,
-                              KeyStroke.getKeyStroke("control C")) {
-                @Override public void actionPerformed(ActionEvent e) {
-                    getParentEditor().copyCoordinatesToClipboard();
-                }
-            });
-
-        mnEdit.add(new Action("Copy all text to clipboard",
-                              KeyEvent.VK_T) {
-                @Override public void actionPerformed(ActionEvent e) {
-                    getParentEditor().copyAllTextToClipboard();
-                }
-            });
 
         // "Position" top-level menu
         JMenu mnPosition = new JMenu("Position");
         mnPosition.setMnemonic(KeyEvent.VK_P);
         menuBar.add(mnPosition);
-
-        mnPosition.add(new Action
-                       ("Jump to selection",
-                        KeyEvent.VK_J,
-                        KeyStroke.getKeyStroke('j')) {
-                @Override public void actionPerformed(ActionEvent e) {
-                    getParentEditor().centerSelection();
-                }
-            });
 
         mnPosition.add(new Action
                        ("Auto-position",
@@ -598,11 +590,29 @@ public class EditFrame extends JFrame
             });
 
         mnPosition.add(new Action
+                       ("Jump to selection",
+                        KeyEvent.VK_J,
+                        KeyStroke.getKeyStroke('j')) {
+                @Override public void actionPerformed(ActionEvent e) {
+                    getParentEditor().centerSelection();
+                }
+            });
+
+        mnPosition.add(new Action
                        ("Nearest key point",
                         KeyEvent.VK_N,
                         KeyStroke.getKeyStroke('p')) {
                 @Override public void actionPerformed(ActionEvent e) {
                     getParentEditor().seekNearestPoint(false);
+                }
+            });
+
+        mnPosition.add(new Action
+                       ("Nearest line/curve",
+                        KeyEvent.VK_L,
+                        KeyStroke.getKeyStroke('l')) {
+                @Override public void actionPerformed(ActionEvent e) {
+                    getParentEditor().seekNearestCurve(false);
                 }
             });
 
@@ -616,15 +626,6 @@ public class EditFrame extends JFrame
                     }
                 });
         }
-
-        mnPosition.add(new Action
-                       ("Nearest line/curve",
-                        KeyEvent.VK_L,
-                        KeyStroke.getKeyStroke('l')) {
-                @Override public void actionPerformed(ActionEvent e) {
-                    getParentEditor().seekNearestCurve(false);
-                }
-            });
 
         if (editable) {
             mnPosition.add(new Action
@@ -667,21 +668,7 @@ public class EditFrame extends JFrame
         mnCurve.setMnemonic(KeyEvent.VK_C);
 
         if (editable) {
-            mnCurve.add(new Action("Toggle smoothing",
-                                   KeyEvent.VK_S,
-                                   KeyStroke.getKeyStroke('s')) {
-                    @Override public void actionPerformed(ActionEvent e) {
-                        getParentEditor().toggleSmoothing();
-                    }
-                });
-
-            mnCurve.add(new Action("Toggle curve closure",
-                                   KeyEvent.VK_O,
-                                   KeyStroke.getKeyStroke('o')) {
-                    @Override public void actionPerformed(ActionEvent e) {
-                        getParentEditor().toggleCurveClosure();
-                    }
-                });
+            mnCurve.add(createFillMenu());
 
             JMenu mnLineStyle = new JMenu("Line style");
             mnLineStyle.setMnemonic(KeyEvent.VK_T);
@@ -753,7 +740,23 @@ public class EditFrame extends JFrame
                          }
                      }));
             mnCurve.add(mnLineWidth);
-            mnCurve.add(createFillMenu());
+
+            mnCurve.add(new Action("Toggle smoothing",
+                                   KeyEvent.VK_S,
+                                   KeyStroke.getKeyStroke('s')) {
+                    @Override public void actionPerformed(ActionEvent e) {
+                        getParentEditor().toggleSmoothing();
+                    }
+                });
+
+            mnCurve.add(new Action("Toggle curve closure",
+                                   KeyEvent.VK_O,
+                                   KeyStroke.getKeyStroke('o')) {
+                    @Override public void actionPerformed(ActionEvent e) {
+                        getParentEditor().toggleCurveClosure();
+                    }
+                });
+
             mnCurve.add(new Action
                         ("Add vertex", KeyEvent.VK_X,
                          KeyStroke.getKeyStroke('x')) {
@@ -1002,42 +1005,17 @@ public class EditFrame extends JFrame
         mnView.setMnemonic(KeyEvent.VK_V);
         menuBar.add(mnView);
 
-        mnView.add(new Action("Zoom In", KeyEvent.VK_I,
-                              "typed +") {
-                @Override public void actionPerformed(ActionEvent e) {
-                    getParentEditor().zoomBy(1.5);
-                }
-            });
-        mnView.add(new Action("Zoom Out", KeyEvent.VK_O,
-                              "typed -") {
-                @Override public void actionPerformed(ActionEvent e) {
-                    getParentEditor().zoomBy(1 / 1.5);
-                }
-            });
-        mnView.add(new Action("Best Fit", KeyEvent.VK_B,
-                              KeyStroke.getKeyStroke("control B")) {
-                @Override public void actionPerformed(ActionEvent e) {
-                    getParentEditor().bestFit();
-                }
-            });
-        mnView.add(new Action("Center Mouse", KeyEvent.VK_C,
-                              KeyStroke.getKeyStroke("control L")) {
-                @Override public void actionPerformed(ActionEvent e) {
-                    getParentEditor().centerMouse();
-                }
-            });
-
         if (editable) {
             mnBackgroundImage.setMnemonic(KeyEvent.VK_B);
             mnBackgroundImage.setEnabled(false);
             lightGrayBackgroundImage = new BackgroundImageMenuItem
-                ("Light gray", BackgroundImageType.LIGHT_GRAY, KeyEvent.VK_G);
+                ("Light", BackgroundImageType.LIGHT_GRAY, KeyEvent.VK_L);
             mnBackgroundImage.add(lightGrayBackgroundImage);
             darkGrayBackgroundImage = new BackgroundImageMenuItem
-                ("Dark gray", BackgroundImageType.DARK_GRAY, KeyEvent.VK_D);
+                ("Medium", BackgroundImageType.DARK_GRAY, KeyEvent.VK_M);
             mnBackgroundImage.add(darkGrayBackgroundImage);
             blackBackgroundImage = new BackgroundImageMenuItem
-                ("Black", BackgroundImageType.BLACK, KeyEvent.VK_K);
+                ("Dark", BackgroundImageType.BLACK, KeyEvent.VK_D);
             mnBackgroundImage.add(blackBackgroundImage);
             blinkBackgroundImage = new BackgroundImageMenuItem
                 ("Blink", BackgroundImageType.BLINK, KeyEvent.VK_B);
@@ -1052,6 +1030,32 @@ public class EditFrame extends JFrame
             lightGrayBackgroundImage.setSelected(true);
             mnView.add(mnBackgroundImage);
         }
+
+        mnView.add(new Action("Best Fit", KeyEvent.VK_B,
+                              KeyStroke.getKeyStroke("control B")) {
+                @Override public void actionPerformed(ActionEvent e) {
+                    getParentEditor().bestFit();
+                }
+            });
+        mnView.add(new Action("Center Mouse", KeyEvent.VK_C,
+                              KeyStroke.getKeyStroke("control L")) {
+                @Override public void actionPerformed(ActionEvent e) {
+                    getParentEditor().centerMouse();
+                }
+            });
+
+        mnView.add(new Action("Zoom In", KeyEvent.VK_I,
+                              "typed +") {
+                @Override public void actionPerformed(ActionEvent e) {
+                    getParentEditor().zoomBy(1.5);
+                }
+            });
+        mnView.add(new Action("Zoom Out", KeyEvent.VK_O,
+                              "typed -") {
+                @Override public void actionPerformed(ActionEvent e) {
+                    getParentEditor().zoomBy(1 / 1.5);
+                }
+            });
 
         JMenu mnHelp = new JMenu("Help");
         mnHelp.setMnemonic(KeyEvent.VK_H);
