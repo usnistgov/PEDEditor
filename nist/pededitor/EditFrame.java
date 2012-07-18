@@ -1214,7 +1214,7 @@ public class EditFrame extends JFrame
         mnRemoveVariable.setVisible(true);
         for (int i = firstVariableIndex(); i <= itemCount; ++i) {
             if (i == itemCount
-                || mnVariables.getItem(i).getText().compareToIgnoreCase(variable) > 0) {
+                || mnVariables.getItem(i).getText().compareTo(variable) > 0) {
                 mnVariables.insert(new RemoveVariableAction(variable), i);
                 break;
             }
