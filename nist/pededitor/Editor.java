@@ -2131,6 +2131,8 @@ public class Editor extends Diagram
         if (mouseIsStuckAtSelection() && getSelectedLabel() != null) {
             unstickMouse();
         }
+        double x = mprin.x;
+        double y = mprin.y;
 
         LabelDialog dog = getLabelDialog();
         double fontSize = dog.getFontSize();
@@ -2143,8 +2145,8 @@ public class Editor extends Diagram
         }
 
         newLabel.setAngle(pageToPrincipalAngle(newLabel.getAngle()));
-        newLabel.setX(mprin.x);
-        newLabel.setY(mprin.y);
+        newLabel.setX(x);
+        newLabel.setY(y);
         add(newLabel);
         selection = new LabelHandle(labels.size() - 1, LabelHandleType.ANCHOR);
         mouseIsStuck = true;

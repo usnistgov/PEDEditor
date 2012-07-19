@@ -3875,7 +3875,7 @@ public class Diagram extends Observable implements Printable {
         r.labelAnchor = LinearRuler.LabelAnchor.RIGHT;
         r.startPoint = new Point2D.Double(0.0, 0.0);
         r.endPoint = new Point2D.Double(1.0, 0.0);
-        r.axis = getYAxis();
+        r.axis = getXAxis();
         add(r);
     }
 
@@ -3887,7 +3887,7 @@ public class Diagram extends Observable implements Printable {
 
         r.startPoint = new Point2D.Double(0.0, 1.0);
         r.endPoint = new Point2D.Double(1.0, 1.0);
-        r.axis = getYAxis();
+        r.axis = getXAxis();
         add(r);
     }
 
@@ -3899,7 +3899,7 @@ public class Diagram extends Observable implements Printable {
 
         r.startPoint = new Point2D.Double(0.0, 0.0);
         r.endPoint = new Point2D.Double(0.0, 1.0);
-        r.axis = getXAxis();
+        r.axis = getYAxis();
         add(r);
     }
 
@@ -3911,7 +3911,7 @@ public class Diagram extends Observable implements Printable {
 
         r.startPoint = new Point2D.Double(1.0, 0.0);
         r.endPoint = new Point2D.Double(1.0, 1.0);
-        r.axis = getXAxis();
+        r.axis = getYAxis();
         add(r);
     }
 

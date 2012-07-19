@@ -74,7 +74,7 @@ public class LabelDialog extends JDialog {
         }
     }
 
-	/** The funny method name is because isOpaque() is already taken by JDialog. */
+    /** The funny method name is because isOpaque() is already taken by JDialog. */
     public boolean isOpaqueLabel() { return mIsOpaque.isSelected(); }
     public boolean isBoxed() { return mIsBoxed.isSelected(); }
     public void setOpaqueLabel(boolean v) {
