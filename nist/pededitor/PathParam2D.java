@@ -112,7 +112,9 @@ public class PathParam2D
                          (segment, segments.size() + offsetAdjustment));
         }
 
-        t1 = segments.get(segments.size() - 1).getMaxT();
+        if (!segments.isEmpty()) {
+            t1 = segments.get(segments.size() - 1).getMaxT();
+        }
     }
 
     public PathParam2D(Shape shape) {
