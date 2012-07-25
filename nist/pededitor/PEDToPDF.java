@@ -49,6 +49,8 @@ public class PEDToPDF {
             d.addTag("WARN missing diagram component");
         }
         d.removeKey("diagram code");
+        d.removeKey("x3");
+        d.removeKey("y3");
         d.zeroBaselineOffsets();
         return d;
     }
