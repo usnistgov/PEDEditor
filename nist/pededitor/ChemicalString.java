@@ -3,6 +3,7 @@ package gov.nist.pededitor;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
@@ -187,9 +188,59 @@ public class ChemicalString {
         public String within(String s) {
             return s.substring(beginIndex, endIndex);
         }
+
+        /** Return this Match expressed as a Hill order chemical
+            formula. */
+        @Override public String toString() {
+            String[] elements = composition.keySet().toArray(new String[0]);
+            ChemicalString.hillSort(elements);
+            StringBuilder res = new StringBuilder();
+            for (String element: elements) {
+                res.append(element);
+                double quantity = composition.get(element);
+                long approx = Math.round(quantity);
+                if (quantity - approx < 1e-4) {
+                    if (approx != 1) {
+                        //res.append(Long.toString(approx));
+                        res.append(approx);
+                    }
+                } else {
+                    res.append(String.format("%.3f", quantity));
+                }
+            }
+            return res.toString();
+        }
     }
 
-    /* Like composition(), but also accept formulas enclosed in
+    /** Return an array of all maximal-length chemical formulas that
+        appear in the given string. Chemical formulas must start and
+        end at word boundaries, except that leading non-English
+        letters are ignored. This is because of text such as
+        "&alpha;Fe". */
+    public static Match[] embeddedFormulas(CharSequence s) {
+        ArrayList<Match> res = new ArrayList<>();
+        for (int i = 0; i < s.length(); ++i) {
+            char ch = s.charAt(i);
+            if (Character.isLetterOrDigit(ch) && ch <= 'z') {
+                Match m = composition(s.subSequence(i, s.length()));
+                if (m == null) {
+                    for (; i < s.length()
+                             && Character.isLetterOrDigit(s.charAt(i));
+                         ++i) {
+                    }
+                    continue;
+                } else {
+                    m.beginIndex += i;
+                    m.endIndex += i;
+                    res.add(m);
+                    i = m.endIndex;
+                }
+            }
+        }
+        return res.toArray(new Match[0]);
+    }
+
+    /** Like composition(), but also accept formulas enclosed in
        double-quotation marks to indicate that the oxidation state is
        unknown. beginIndex in the return value (if the return value is
        non-null) indicates the start of the actual formula,
