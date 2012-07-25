@@ -990,10 +990,16 @@ public class EditFrame extends JFrame
             mnProp.add(usingWeightFraction);
             mnChem.add(mnProp);
         }
-            
 
         mnChem.add(new Action
-                   ("Chemical formula to mole/weight fraction", KeyEvent.VK_M,
+                   ("Copy all formulas to clipboard", KeyEvent.VK_O) {
+                @Override public void actionPerformed(ActionEvent e) {
+                    getParentEditor().copyAllFormulasToClipboard();
+                }
+            });
+
+        mnChem.add(new Action
+                   ("Formula to mole/weight fraction", KeyEvent.VK_M,
                     KeyStroke.getKeyStroke('%')) {
                 @Override public void actionPerformed(ActionEvent e) {
                     getParentEditor().computeFraction();

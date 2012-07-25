@@ -59,55 +59,60 @@ import Jama.Matrix;
 
 import org.codehaus.jackson.annotate.JsonIgnore;
 
-// TODO Investigate whether JavaFX is really a plausible alternative.
-// (Answer: it's not quite ready, it seems.)
+// TODO (mandatory) Auto-save the diagram at regular intervals.
+
+// TODO (mandatory) Put the figure number in single-page printouts.
+
+// TODO (mandatory) Make regular open symbols look as nice as the
+// GRUMP-converted open symbols do.
+
+// TODO (mandatory, feature, two days) Allow detection of the intersections
+// of two splines. (What makes this feature more desirable than it
+// would be otherwise is that it would create consistency. As long as
+// some kinds of intersections are detectable, people will sometimes
+// forget that other kinds are not detectable and be confused when
+// that does not work. (I did that myself at least once, even though I
+// wrote the program.)
+
+// TODO (mandatory, 1 week) Enable filling of regions with cusps. As
+// things currently stand, it's not possible to fill a semicircle.
+
+// TODO (mandatory) Allow different densities of dotted and dashed
+// lines, just as is the case for railroad ties.
+
+// TODO (mandatory, 1 day): At this point, the rule that tie lines
+// have to end at vertexes of the diagram is no longer needed and not
+// difficult to eliminate. Tie lines ending on rulers without extra
+// steps could also be enabled (and the extra steps are unintuitive).
 
 // TODO (Optional) Allow shift-L and/or shift-A to cycle around likely
 // candidates the same way that shift-P does. In other words, if
 // shift-L doesn't give you what you want the first time, just try it
 // again.
 
-// TODO (optional) Auto-save the diagram at regular intervals.
+// TODO (optional, 2 weeks) Keep an undifferentiated list of
+// decorations, which allows any decoration to be moved up or down on
+// the screen.
 
-// TODO (optional) Enable filling of regions with cusps. As things
-// currently stand, it's not possible to fill a semicircle.
+// TODO (optional, 1 day) In the text dialog, link state-on buttons to
+// state-offf buttons so that if a region is selected and a state-on
+// button is pressed, then the state-on text is pasted before the
+// selection and the state-off selection is pasted after it.
 
-// TODO (optional) Keep an undifferentiated list of decorations, which
-// allows any decoration to be moved up or down on the screen.
-
-// TODO (optional) Eutectic and peritectic points.
-
-// TODO (mandatory?, preexisting) Apply a gradient to all control
+// TODO (mandatory?, preexisting, 1 week) Apply a gradient to all control
 // points on a curve. Specifically, apply the following transformation
 // to all points on the currently selected curve for which $variable
 // is between v1 and v2: "$variable = $variable + k * ($variable - v1)
 // / (v2 - v1)"
 
-// TODO (Optional) Make regular open symbols look as nice as the
-// GRUMP-converted open symbols do.
+// TODO (optional, TAV not so important unless someone complains) You
+// can't make tie lines that cross the "endpoint" of a closed curve.
+// Fix this somehow.
 
-// TODO (Optional) Better support for changing font sizes within a
-// single label.
-
-// TODO (Optional) Better support for nested sub/superscripts.
-
-// TODO (optional) You can't make tie lines that cross the "endpoint"
-// of a closed curve. Fix this somehow.
-
-// TODO: At this point, the rule that tie lines have to end at
-// vertexes of the diagram is no longer needed and not difficult to
-// eliminate. Tie lines ending on rulers without extra steps could
-// also be enabled (and the extra steps are unintuitive).
-
-// TODO (optional) For opaque and boxed labels, allow users to decide
+// TODO (optional, 3 days) For opaque and boxed labels, allow users to decide
 // how much extra white space to include on each side.
 
-// TODO (optional) Make it easier to edit multiple-line labels.
-
-// TODO (optional) Arbitrary circles. Right now circles are
-// implemented as symbols, so the ratio of stroke width to radius is
-// fixed and making a circle of a precise size requires trial and
-// error.
+// TODO (optional, TV leave it alone and see if anyone complains) Make it easier to edit multiple-line labels.
 
 // TODO (optional) Support of GRUMP-style explicit assignment of ruler
 // limits such as label skip, label density, and so on. The downside
@@ -125,7 +130,8 @@ import org.codehaus.jackson.annotate.JsonIgnore;
 // TODO (optional) Curve tags, such as temperature, liquidus, solidus, and
 // presumably user-defined tags too.
 
-// TODO (optional) Point tags: pen-up, pen-down, temperature
+// TODO (optional) Make cross sections of quaternary diagrams
+// first-class.
 
 // TODO (optional) As Chris suggested, allow input images to be
 // rotated (currently images must be within about 45 degrees of the
@@ -133,20 +139,12 @@ import org.codehaus.jackson.annotate.JsonIgnore;
 // the image in MS-Paint and rotate it in a minute, and Chris said
 // that was a good solution.
 
-// TODO (optional) Right-click popup menus. I don't think experienced
-// users (the digitizers) would make much use of them, but occasional
-// users might. Forcing the users to remember shortcuts isn't very
-// friendly, and you can't use the mouse to click on an ordinary menu
-// if you're already using the mouse to identify the location the
-// operation should apply to.
-
-// TODO (feature, a day or two) Allow detection of the intersections
-// of two splines. (What makes this feature more desirable than it
-// would be otherwise is that it would create consistency. As long as
-// some kinds of intersections are detectable, people will sometimes
-// forget that other kinds are not detectable and be confused when
-// that does not work. (I did that myself at least once, even though I
-// wrote the program.)
+// TODO (optional, 2 weeks) Right-click popup menus. I don't think
+// experienced users (the digitizers) would make much use of them, but
+// occasional users might. Forcing the users to remember shortcuts
+// isn't very friendly, and you can't use the mouse to click on an
+// ordinary menu if you're already using the mouse to identify the
+// location the operation should apply to.
 
 // TODO (optional) Other commonly used shapes (equilateral triangle,
 // square, circle) whose scale and orientation are defined by
@@ -154,6 +152,8 @@ import org.codehaus.jackson.annotate.JsonIgnore;
 // time as you move the mouse around. (Auto-positioning has made this
 // slightly less important than before; squares, rectangles, and
 // equilateral triangles are easy if one side is horizontal.)
+
+// TODO (optional) Eutectic and peritectic points.
 
 // TODO (optional) Allow the diagram domain and range to be expanded.
 // Right now, you can expand the margins, change the aspect ratio, or
@@ -185,22 +185,19 @@ import org.codehaus.jackson.annotate.JsonIgnore;
 // better fit than 4 degrees of freedom does and not much worse than 7
 // degrees of freedom does, so the perfect ellipse is a good choice.)
 
-// TODO "Undo" option. Any good drawing program has that feature, but
-// making everything undoable would take a couple weeks. (Every time
-// an operation that changes the diagram is completed, push the
-// inverse operation onto a stack.)
+// TODO (2-3 weeks, optional) "Undo" option. Any good drawing program
+// has that feature, but making everything undoable would take a
+// couple weeks. (Every time an operation that changes the diagram is
+// completed, push the inverse operation onto a stack.)
 
 // TODO (optional) More compact representation for symbol sets in the
 // PED format.
 
 // TODO (preexisting in viewer) Periodic table integration.
 
-// TODO (optional) weight vs mole percent enhancements. If anybody
-// actually wants to convert mole percent ternary diagrams to weight
-// percent, then straight lines will have to be bent into curves. A
-// ruler that shows weight percent would also be a nice feature, and
-// so would the corresponding variables. Finally, text at an angle
-// gets distorted, and that should really be fixed.
+// TODO (optional, TAV leave for now see if someone complains) weight
+// vs mole percent enhancements. Text at an angle gets distorted, and
+// that should really be fixed.
 
 // TODO (preexisting but not mandatory) Smart line dash lengths. Peter
 // Schenk's PED Editor adjusts the segment length for dashed lines to
@@ -242,6 +239,9 @@ import org.codehaus.jackson.annotate.JsonIgnore;
 // edge-finding algorithms and have the answer pop right out. If the
 // return value is off by even half of a line width, then the feature
 // is almost worthless.
+
+// TODO Investigate whether JavaFX is really a plausible alternative.
+// (Answer: it's not quite ready, it seems.)
 
 // TODO (major) Visual location of curves in the scanned diagram.
 // Problems are much the same as for the previous section, plus more
@@ -489,7 +489,6 @@ public class Editor extends Diagram
 
     private void init() {
         scale = BASE_SCALE;
-        selection = null;
         mprin = null;
         scaledOriginalImages = null;
         vertexInfo.setAngle(0);
@@ -505,6 +504,7 @@ public class Editor extends Diagram
     }
 
     @Override void clear() {
+        selection = null;
         super.clear();
         init();
     }
@@ -1910,7 +1910,28 @@ public class Editor extends Diagram
 
     public void copyAllTextToClipboard() {
         try {
-            StringSelection sel = new StringSelection(getAllText());
+            StringBuilder res = new StringBuilder();
+            for (String s: getAllText()) {
+                res.append(s);
+                res.append("\n");
+            }
+            StringSelection sel = new StringSelection(res.toString());
+            Toolkit.getDefaultToolkit().getSystemClipboard().setContents
+                (sel, sel);
+        } catch (HeadlessException x) {
+            throw new IllegalArgumentException
+                ("Can't set clipboard in a headless environment:" + x);
+        }
+    }
+
+    public void copyAllFormulasToClipboard() {
+        try {
+            StringBuilder res = new StringBuilder();
+            for (String s: getAllFormulas()) {
+                res.append(s);
+                res.append("\n");
+            }
+            StringSelection sel = new StringSelection(res.toString());
             Toolkit.getDefaultToolkit().getSystemClipboard().setContents
                 (sel, sel);
         } catch (HeadlessException x) {
