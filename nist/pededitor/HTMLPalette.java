@@ -13,6 +13,7 @@ public class HTMLPalette extends StringPalette {
                 {"<i>", yesPrefix + "<i>italic</i></html>"},
                 {"<b>", yesPrefix + "<b>bold</b></html>"},
                 {"<u>", yesPrefix + "<u>under</u></html>"},
+                null,
 
                 // Turn-off row
                 {"</sub>", noPrefix + "T<sub>sub</sub>" + noSuffix},
@@ -20,6 +21,21 @@ public class HTMLPalette extends StringPalette {
                 {"</i>", noPrefix + "<i>italic</i>" + noSuffix},
                 {"</b>", noPrefix + "<b>bold</b>" + noSuffix},
                 {"</u>", noPrefix + "<u>under</u>" + noSuffix},
+                null,
+
+                {"<span style=\"font-size: 75%;\">",
+                 yesPrefix
+                 + "<span style=\"font-size: 75%;\">Small</span>"},
+                {"<span style=\"font-size: 133%;\">",
+                 yesPrefix
+                 + "<span style=\"font-size: 133%;\">Big</span>"},
+                null,
+                {"</span>",
+                 noPrefix + "<span style=\"font-size: 75%;\">Small</span>"
+                 + noSuffix},
+                {"</span>",
+                 noPrefix + "<span style=\"font-size: 133%;\">Big</span>"
+                 + noSuffix},
                 null,
 
                 {"<br>", "<html>line <br> break</html>"},
