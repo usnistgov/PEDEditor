@@ -87,7 +87,7 @@ import org.w3c.dom.DOMImplementation;
     but not including GUI elements such as menus and windows. */
 public class Diagram extends Observable implements Printable {
     static ObjectMapper objectMapper = null;
-    private static final DecimalFormat STANDARD_PERCENT_FORMAT
+    protected static final DecimalFormat STANDARD_PERCENT_FORMAT
         = new DecimalFormat("##0.00%");
 
     /** Series of classes that implement the Decoration and
@@ -3003,6 +3003,7 @@ public class Diagram extends Observable implements Printable {
      * close to the lower left or lower right. */
     public String guessComponent(Side side) {
         boolean ternary = isTernary();
+
         Point2D.Double left = null;
         Point2D.Double right = null;
         Point2D.Double top = null;
@@ -3041,6 +3042,25 @@ public class Diagram extends Observable implements Printable {
 
         Point2D.Double cornerPage = (side == Side.LEFT) ? left
             : (side == Side.RIGHT) ? right : top;
+
+        if (ternary && side == Side.TOP && keyValues != null) {
+            // The location of the top corner may be stored in the
+            // x3,y3 coordinates, which in the case of bottom
+            // ternaries may differ from the top corner of the diagram
+            // itself.
+
+            String x3 = get("x3");
+            String y3 = get("y3");
+            if (x3 != null && y3 != null) {
+                try {
+                    Point2D.Double p = new Point2D.Double
+                        (ContinuedFraction.parseDouble(x3),
+                         ContinuedFraction.parseDouble(y3));
+                    cornerPage = principalToStandardPage.transform(p);
+                } catch (NumberFormatException e) { }
+            }
+        }
+
         double maxDistance = (pageBounds.width + pageBounds.height) / 8;
         double maxDistanceSq = maxDistance * maxDistance;
         Point2D.Double corner = standardPageToPrincipal.transform(cornerPage);
