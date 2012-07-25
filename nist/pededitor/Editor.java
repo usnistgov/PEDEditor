@@ -67,8 +67,6 @@ import org.codehaus.jackson.annotate.JsonIgnore;
 // shift-L doesn't give you what you want the first time, just try it
 // again.
 
-// TODO (optional) Allow new variables to be shown as percentages.
-
 // TODO (optional) Auto-save the diagram at regular intervals.
 
 // TODO (optional) Enable filling of regions with cusps. As things
@@ -560,7 +558,7 @@ public class Editor extends Diagram
             : null;
     }
 
-    @JsonIgnore RulerDecoration getRulerSelection() {
+    @JsonIgnore RulerDecoration getSelectedRuler() {
         return (selection instanceof RulerHandle)
             ? ((RulerHandle) selection).getDecoration()
             : null;
@@ -1467,36 +1465,7 @@ public class Editor extends Diagram
             return;
         }
 
-        Object[] choices = new Object[axes.size()];
-        int i = -1;
-        for (LinearAxis axis: axes) {
-            ++i;
-            choices[i] = axis.name;
-        }
-
-        String s = (String) JOptionPane.showInputDialog
-            (editFrame,
-             "Select variable to display:",
-             "New ruler",
-             JOptionPane.PLAIN_MESSAGE,
-             null, choices, choices[0]);
-
-        if (s == null) {
-            return;
-        }
-
-        int choiceNo;
-        for (choiceNo = 0; choiceNo < axes.size(); ++choiceNo) {
-            if (s.equals(axes.get(choiceNo).name)) {
-                break;
-            }
-        }
-
-        if (choiceNo == axes.size()) {
-            throw new IllegalStateException("Choice " + s + " is not on the list!");
-        }
-
-        LinearAxis axis = axes.get(choiceNo);
+        LinearAxis axis = axes.get(0);
 
         LinearRuler r = new LinearRuler();
         r.fontSize = currentFontSize();
@@ -1537,6 +1506,10 @@ public class Editor extends Diagram
     }
 
     @Override public void remove(LinearAxis axis) {
+        RulerDecoration rdec = getSelectedRuler();
+        if (rdec != null && axis == rdec.getItem().axis) {
+            selection = null;
+        }
         super.remove(axis);
         editFrame.removeVariable((String) axis.name);
     }
@@ -1553,7 +1526,7 @@ public class Editor extends Diagram
             return;
         }
 
-        String[] values = { "Rupert", "0", "0", "1" };
+        String[] values = { "", "0", "0", "1" };
 
         while (true) {
             StringArrayDialog dog = new StringArrayDialog
@@ -1582,14 +1555,22 @@ public class Editor extends Diagram
             }
 
             double[] dvs = new double[3];
+            boolean ok = true;
+            boolean maybePercentage = true;
             for (int i = 0; i < dvs.length; ++i) {
                 try {
                     dvs[i] = ContinuedFraction.parseDouble(values[i+1]);
+                    maybePercentage = maybePercentage &&
+                        (dvs[i] >= 0 && dvs[i] <= 1);
                 } catch (NumberFormatException e) {
                     JOptionPane.showMessageDialog
                         (editFrame, "Invalid number format '" + values[i+1] + "'");
-                    continue;
+                    ok = false;
+                    break;
                 }
+            }
+            if (!ok) {
+                continue;
             }
 
             Point2D.Double p0 = path.get(0);
@@ -1600,12 +1581,20 @@ public class Editor extends Diagram
                 (new double[][] {{p0.x, p0.y, 1},
                                  {p1.x, p1.y, 1},
                                  {p2.x, p2.y, 1}});
-            xform.print(8,2);
             try {
                 Matrix m = xform.solve(new Matrix(dvs, 3));
+                DecimalFormat format =
+                    (maybePercentage
+                    && JOptionPane.showConfirmDialog
+                    (editFrame,
+                     "Display variable as a percentage?",
+                     "Display format",
+                     JOptionPane.YES_NO_OPTION)
+                     == JOptionPane.YES_OPTION)
+                    ? STANDARD_PERCENT_FORMAT
+                    : new DecimalFormat("0.0000");
                 LinearAxis axis = new LinearAxis
-                    (new DecimalFormat("0.0000"),
-                     m.get(0,0), m.get(1,0), m.get(2,0));
+                    (format, m.get(0,0), m.get(1,0), m.get(2,0));
                 axis.name = values[0];
                 add(axis);
                 return;
