@@ -3149,7 +3149,6 @@ public class Diagram extends Observable implements Printable {
             return Printable.NO_SUCH_PAGE;
         }
         Graphics2D g = (Graphics2D) g0;
-        g.setFont(getFont());
 
         AffineTransform oldTransform = g.getTransform();
 
@@ -3158,8 +3157,21 @@ public class Diagram extends Observable implements Printable {
             (pf.getImageableX(), pf.getImageableY(),
              pf.getImageableWidth(), pf.getImageableHeight());
 
-        g.translate(bounds.getX(), bounds.getY());
-        double scale = Math.min(bounds.height / pageBounds.height,
+        String title = getTitle();
+        double deltaY = 0;
+        double titleY = 0;
+        if (title != null) {
+            Rectangle2D tbox = g.getFontMetrics().getStringBounds(title, g);
+            deltaY = tbox.getHeight();
+            titleY = -tbox.getY();
+        }
+
+        g.translate(bounds.getX(), bounds.getY() + deltaY);
+        if (title != null) {
+            g.drawString(title, 0, (int) Math.round(titleY - deltaY));
+        }
+        g.setFont(getFont());
+        double scale = Math.min((bounds.height - deltaY) / pageBounds.height,
                                 bounds.width / pageBounds.width);
         paintDiagram(g, scale, null);
         g.setTransform(oldTransform);
