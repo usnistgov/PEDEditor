@@ -1930,10 +1930,9 @@ public class Diagram extends Observable implements Printable {
         return res.toString().trim();
     }
 
-    /** Return the concatenation of the plain text of all labels,
-        tags, key values, and diagram components. Duplicates are
-        removed. */
-    @JsonIgnore public String getAllText() {
+    /** Return the plain text of all labels, tags, key values, and
+        diagram components. Duplicates are removed. */
+    @JsonIgnore public String[] getAllText() {
         TreeSet<String> lines = new TreeSet<>();
         for (AnchoredLabel label: labels) {
             lines.add(htmlToText(label.getText()));
@@ -1949,12 +1948,19 @@ public class Diagram extends Observable implements Printable {
                 lines.add(s);
             }
         }
-        StringBuilder res = new StringBuilder();
-        for (String s: lines) {
-            res.append(s);
-            res.append("\n");
+        return lines.toArray(new String[0]);
+    }
+
+    /** Return all chemical formulas converted to Hill order.
+        Duplicates are removed. */
+    @JsonIgnore public String[] getAllFormulas() {
+        TreeSet<String> res = new TreeSet<>();
+        for (String line: getAllText()) {
+            for (ChemicalString.Match m: ChemicalString.embeddedFormulas(line)) {
+                res.add(m.toString());
+            }
         }
-        return res.toString();
+        return res.toArray(new String[0]);
     }
 
     LinearAxis getAxis(Side side) {
