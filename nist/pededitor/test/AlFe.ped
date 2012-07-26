@@ -282,6 +282,7 @@
   "usingWeightFraction" : true,
   "fontName" : "DejaVu LGC Serif PED",
   "keys" : {
+    "title" : "AlFe"
   },
   "curves" : [ {
     "shape" : "polyline",
