@@ -179,7 +179,8 @@ public class CropFrame extends ImageScrollFrame {
         setJMenuBar(menuBar);
     }
 
-    public static File openDialogFile(Component parent, String filterName, String[] suffixes) {
+    public static File openFileDialog(Component parent, String filterName,
+                                      String[] suffixes) {
         Preferences prefs = Preferences.userNodeForPackage(CropFrame.class);
         String dir = prefs.get(PREF_DIR,  null);
         JFileChooser chooser = new JFileChooser();
@@ -199,7 +200,7 @@ public class CropFrame extends ImageScrollFrame {
     }
 
     public void showOpenDialog() {
-        File file = openDialogFile(CropFrame.this, "Image files",
+        File file = openFileDialog(CropFrame.this, "Image files",
                                    ImageIO.getReaderFileSuffixes());
         if (file != null) {
             try {
