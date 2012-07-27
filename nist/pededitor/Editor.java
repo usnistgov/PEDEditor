@@ -51,6 +51,8 @@ import java.util.Collections;
 import java.util.Formatter;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Observable;
+import java.util.Observer;
 import java.util.Set;
 import java.util.Timer;
 import java.util.TimerTask;
@@ -59,11 +61,11 @@ import Jama.Matrix;
 
 import org.codehaus.jackson.annotate.JsonIgnore;
 
-// TODO (mandatory) Auto-save the diagram at regular intervals.
+// TODO (optional but in my opinion quite useful for general
+// digitization tasks, 1 day) Make tangent dialog slope values reflect
+// principal coordinates.
 
-// TODO (mandatory) Put the figure number in single-page printouts.
-
-// TODO (mandatory) Make regular open symbols look as nice as the
+// TODO (mandatory, 2 days) Make regular open symbols look as nice as the
 // GRUMP-converted open symbols do.
 
 // TODO (mandatory, feature, two days) Allow detection of the intersections
@@ -259,7 +261,8 @@ import org.codehaus.jackson.annotate.JsonIgnore;
 
 /** Main driver class for Phase Equilibria Diagram digitization and creation. */
 public class Editor extends Diagram
-    implements CropEventListener, MouseListener, MouseMotionListener {
+    implements CropEventListener, MouseListener, MouseMotionListener,
+               Observer {
     abstract class Action extends AbstractAction {
         private static final long serialVersionUID = 1834208008403586162L;
 
@@ -272,6 +275,51 @@ public class Editor extends Diagram
         @Override public void run() {
             backgroundImageEnabled = !backgroundImageEnabled;
             redraw();
+        }
+    }
+
+    /** Return the path to use for autosave files. If getFilename()
+        returns something useful, then switch the file name from
+        /path/foo.ped to /path/#foo.ped# like emacs does. Otherwise use
+        the name AUTOSAVE.ped. */
+    Path getAutosave() {
+        String fn = getFilename();
+        if (fn != null) {
+            return getAutosave(FileSystems.getDefault().getPath(fn));
+        } else {
+            return getAutosave(null);
+        }
+    }
+
+    /** Return the autosave file corresponding to the given normal PED
+        file. A value is returned regardless of whether the autosave
+        file exists or not. If file is null, return the default
+        autosave file. */
+    Path getAutosave(Path file) {
+        if (file == null) {
+            String dir = getCurrentDirectory();
+            if (dir == null) {
+                return null;
+            }
+            return FileSystems.getDefault().getPath(dir, "AUTOSAVE.ped");
+        }
+        return FileSystems.getDefault().getPath
+            (file.getParent().toString(), '#' + file.getFileName().toString());
+    }
+
+    class FileSaver extends TimerTask {
+        @Override public void run() {
+            if (saveNeeded) {
+                Path file = getAutosave();
+                try {
+                    saveAsPED(file);
+                    System.out.println("Saved '" + file + "'");
+                    autosaveFile = file;
+                } catch (IOException x) {
+                    System.err.println("Could not save '" + file + "': " + x);
+                }
+            }
+            fileSaver = null;
         }
     }
 
@@ -338,6 +386,7 @@ public class Editor extends Diagram
     }
 
     private static final String PREF_DIR = "dir";
+    private static final long SAVE_DELAY = 5 * 1000 /* milliseconds */;
 
     static final protected double MOUSE_UNSTICK_DISTANCE = 30; /* pixels */
     static protected Image crosshairs = null;
@@ -374,12 +423,17 @@ public class Editor extends Diagram
     /** If the timer exists, the original image (if any) upon which
         the new diagram is overlaid will blink. */
     transient Timer imageBlinker = null;
+    transient Timer fileSaver = null;
     /** True if imageBlinker is enabled and the original image should
         be displayed in the background at this time. */
     transient boolean backgroundImageEnabled;
 
     protected transient boolean preserveMprin = false;
     protected transient boolean isShiftDown = false;
+
+    /** autosaveFile is null unless an autosave event happened and the
+        resulting autosavefile has not been deleted by this program. */
+    protected transient Path autosaveFile = null;
 
     /** True if the program already tried and failed to load the image
         named originalFilename. */
@@ -475,6 +529,7 @@ public class Editor extends Diagram
         cropFrame.setDefaultCloseOperation
             (WindowConstants.HIDE_ON_CLOSE);
         cropFrame.addCropEventListener(this);
+        addObserver(this);
     }
 
     public void initializeZoomFrame() {
@@ -505,6 +560,11 @@ public class Editor extends Diagram
 
     @Override void clear() {
         selection = null;
+        if (fileSaver != null) {
+            fileSaver.cancel();
+            fileSaver = null;
+        }
+        autosaveFile = null;
         super.clear();
         init();
     }
@@ -803,11 +863,11 @@ public class Editor extends Diagram
         if (colorChooser == null) {
             colorChooser = new JColorChooser();
             colorDialog = JColorChooser.createDialog
-            (editFrame, "Choose color", true,
-             colorChooser, new ActionListener() {
+            (editFrame, "Choose color", true, colorChooser,
+             new ActionListener() {
                  @Override public void actionPerformed(ActionEvent e) {
-                     Editor.this.selection.getDecoration().setColor(colorChooser.getColor());
-                     propagateChange();
+                     Editor.this.selection.getDecoration()
+                         .setColor(colorChooser.getColor());
                  }
              },
              null);
@@ -906,6 +966,9 @@ public class Editor extends Diagram
        mouse cursor may have been recentered, the scale may have
        changed, an item may have been selected... */
     public void redraw() {
+        if (suppressUpdateCnt > 0) {
+            return;
+        }
         setChanged();
         notifyObservers(null);
     }
@@ -1032,7 +1095,6 @@ public class Editor extends Diagram
             // results from this addition in red. Then remove the
             // extra vertex.
 
-            boolean oldSaveNeeded = saveNeeded;
             Color oldColor = csel.getColor();
             csel.setColor(toColor(ap.position));
 
@@ -1042,7 +1104,6 @@ public class Editor extends Diagram
             csel.draw(g, scale);
             path.remove(vertexNo);
             csel.setColor(oldColor);
-            saveNeeded = oldSaveNeeded;
         }
 
         csel.draw(g, scale);
@@ -1173,24 +1234,24 @@ public class Editor extends Diagram
         }
 
         if (selection != null) { // Draw the selection
-            Decoration dec = selection.getDecoration();
-            Color oldColor = dec.getColor();
-            boolean oldSaveNeeded = saveNeeded;
-            Color highlight = getHighlightColor(oldColor);
+            try (UpdateSuppressor us = new UpdateSuppressor()) {
+                    Decoration dec = selection.getDecoration();
+                    Color oldColor = dec.getColor();
+                    Color highlight = getHighlightColor(oldColor);
 
-            g.setColor(highlight);
-            dec.setColor(highlight);
-            if (selection instanceof VertexHandle) {
-                paintSelectedCurve(g, scale);
-            } else {
-                if (selection instanceof LabelHandle) {
-                    paintSelectedLabel(g, scale);
-                } else {
-                    sel.draw(g, scale);
+                    g.setColor(highlight);
+                    dec.setColor(highlight);
+                    if (selection instanceof VertexHandle) {
+                        paintSelectedCurve(g, scale);
+                    } else {
+                        if (selection instanceof LabelHandle) {
+                            paintSelectedLabel(g, scale);
+                        } else {
+                            sel.draw(g, scale);
+                        }
+                    }
+                    dec.setColor(oldColor);
                 }
-            }
-            dec.setColor(oldColor);
-            saveNeeded = oldSaveNeeded;
         }
 
         if (getVertexHandle() == null && isShiftDown) {
@@ -1293,6 +1354,16 @@ public class Editor extends Diagram
 
         Point2D.Double g = param.getDerivative(t);
         if (g != null) {
+            if (g.x * g.y <= 0 && Math.abs(g.y) > Math.abs(g.x) * 1e8) {
+                // This is a vertical line almost to the limits of
+                // double numerical precision, and it was probably
+                // intended to be literally vertical. For consistency,
+                // make the tangents of vertical lines point upwards
+                // instead of downwards, so users can rely on '>'
+                // creating upwards-pointing arrows and '<' creating
+                // downwards-pointing arrows on vertical lines.
+                g = new Point2D.Double(-g.x, -g.y);
+            }
             vertexInfo.setDerivative(g);
         }
 
@@ -2173,7 +2244,6 @@ public class Editor extends Diagram
             return;
         }
 
-        saveNeeded = true;
         newLabel.setAngle(pageToPrincipalAngle(newLabel.getAngle()));
         newLabel.setX(label.getX());
         newLabel.setY(label.getY());
@@ -2530,10 +2600,12 @@ public class Editor extends Diagram
     }
 
     @Override public void cropPerformed(CropEvent e) {
-        diagramType = e.getDiagramType();
-        newDiagram(e.filename, Duh.toPoint2DDoubles(e.getVertices()));
-        initializeGUI();
-        saveNeeded = true;
+        try (UpdateSuppressor us = new UpdateSuppressor()) {
+                diagramType = e.getDiagramType();
+                newDiagram(e.filename, Duh.toPoint2DDoubles(e.getVertices()));
+                initializeGUI();
+            }
+        propagateChange();
     }
 
     /** Start on a blank new diagram. */
@@ -2542,14 +2614,40 @@ public class Editor extends Diagram
             return;
         }
 
-        DiagramType temp = (new DiagramDialog(null)).showModal();
-        if (temp == null) {
+        setSaveNeeded(false);
+        try (UpdateSuppressor us = new UpdateSuppressor()) {
+                DiagramType temp = (new DiagramDialog(null)).showModal();
+                if (temp == null) {
+                    return;
+                }
+
+                diagramType = temp;
+                newDiagram(null, null);
+            }
+
+        propagateChange1();
+    }
+
+    @Override public void setSaveNeeded(boolean b) {
+        if (b != saveNeeded) {
+            super.setSaveNeeded(b);
+            if (!b) {
+                if (fileSaver != null) {
+                    fileSaver.cancel();
+                    fileSaver = null;
+                }
+            }
+        }
+    }
+
+    @Override public void update(Observable o, Object arg) {
+        if (!isEditable() || !saveNeeded) {
             return;
         }
-
-        diagramType = temp;
-        newDiagram(null, null);
-        saveNeeded = false;
+        if (fileSaver == null) {
+            fileSaver = new Timer("FileSaver", true);
+            fileSaver.schedule(new FileSaver(), SAVE_DELAY);
+        }
     }
 
     /** Start on a blank new diagram.
@@ -2564,7 +2662,7 @@ public class Editor extends Diagram
     protected void newDiagram(String originalFilename,
                               Point2D.Double[] vertices) {
         boolean tracing = (vertices != null);
-        try (NotificationDelay d = new NotificationDelay()) {
+        try (UpdateSuppressor d = new UpdateSuppressor()) {
                 clear();
                 setOriginalFilename(originalFilename);
 
@@ -2914,6 +3012,7 @@ public class Editor extends Diagram
 
                 initializeDiagram();
             }
+        propagateChange();
     }
 
     protected double currentFontSize() {
@@ -3221,38 +3320,83 @@ public class Editor extends Diagram
         return result;
     }
 
-    public void showOpenDialog(Component parent) {
-        String[] exts = { "ped" };
-        if (isEditable()) {
-            exts = concat(exts, ImageIO.getReaderFileSuffixes());
+    public static File openPEDFileDialog(Component parent) {
+        return CropFrame.openFileDialog(parent, "PED files",
+                                        new String[] {"ped"});
+    }
+
+    /** Return the default directory to save to and load from. */
+    public static String getCurrentDirectory() {
+        return Preferences.userNodeForPackage(Editor.class)
+            .get(PREF_DIR,  null);
+    }
+
+    /** Set the default directory to save to and load from. */
+    public static void setCurrentDirectory(String dir) {
+        Preferences.userNodeForPackage(Editor.class)
+            .put(PREF_DIR,  dir);
+    }
+
+    public static File openPEDOrImageFileDialog(Component parent) {
+        String[] pedExts = { "ped" };
+        String[] imageExts = ImageIO.getReaderFileSuffixes();
+        String[] allExts = concat(pedExts, imageExts);
+        JFileChooser chooser = new JFileChooser();
+        chooser.setDialogTitle("Open PED or image file");
+        String dir = getCurrentDirectory();
+        if (dir != null) {
+            chooser.setCurrentDirectory(new File(dir));
         }
-        String filterName = isEditable() ? "PED and image files" : "PED files";
-        File file = CropFrame.openDialogFile(parent, filterName, exts);
-        if (file != null) {
-            String ext = getExtension(file.getName());
-            if (ext == null && Files.notExists(file.toPath())) {
-                // Add .ped extension.
-                ext = "ped";
-                file = new File(file.getAbsolutePath() + "." + ext);
-            }
-            try {
+        if (dir != null) {
+            chooser.setCurrentDirectory(new File(dir));
+        }
+       chooser.setFileFilter
+            (new FileNameExtensionFilter("PED and image files", allExts));
+       chooser.addChoosableFileFilter
+           (new FileNameExtensionFilter("PED files only", pedExts));
+       chooser.addChoosableFileFilter
+           (new FileNameExtensionFilter("Image files only", imageExts));
+       if (chooser.showOpenDialog(parent) == JFileChooser.APPROVE_OPTION) {
+           File file = chooser.getSelectedFile();
+           setCurrentDirectory(file.getParent());
+           return file;
+       } else {
+           return null;
+       }
+    }
+
+    public void showOpenDialog(Component parent) {
+        File file = isEditable() ? openPEDOrImageFileDialog(parent)
+            : openPEDFileDialog(parent);
+        if (file == null) {
+            return;
+        }
+        String ext = getExtension(file.getName());
+        try {
+            if (isEditable() && ext != null && !"ped".equalsIgnoreCase(ext)) {
+                // This had better be an image file.
+                cropFrame.setFilename(file.getAbsolutePath());
+                cropFrame.pack();
+                editFrame.setStatus("");
+                clear();
+                cropFrame.setVisible(true);
+            } else {
+                if (ext == null && Files.notExists(file.toPath())) {
+                    // Add .ped extension.
+                    ext = "ped";
+                    file = new File(file.getAbsolutePath() + "." + ext);
+                }
                 if ("ped".equalsIgnoreCase(ext)) {
                     openDiagram(file);
-                } else if (isEditable()) {
-                    cropFrame.setFilename(file.getAbsolutePath());
-                    cropFrame.pack();
-                    editFrame.setStatus("");
-                    clear();
-                    cropFrame.setVisible(true);
                 } else {
                     showError(parent,
                               "Unrecognized file extension (expected .ped)",
                               "File load error");
                 }
-            } catch (IOException e) {
-                showError(parent, "Could not load file: " + e,
-                          "File load error");
             }
+        } catch (IOException x) {
+            showError(parent, "Could not load file: " + x,
+                      "File load error");
         }
     }
 
@@ -3290,8 +3434,7 @@ public class Editor extends Diagram
         @param ext the extension to use with this file ("pdf" for
         example). */
     public File showSaveDialog(String ext) {
-        Preferences prefs = Preferences.userNodeForPackage(getClass());
-        String dir = prefs.get(PREF_DIR,  null);
+        String dir = getCurrentDirectory();
         JFileChooser chooser = new JFileChooser();
         chooser.setDialogTitle("Save as " + ext.toUpperCase());
         if (dir != null) {
@@ -3309,7 +3452,7 @@ public class Editor extends Diagram
             file = new File(file.getAbsolutePath() + "." + ext);
         }
 
-        prefs.put(PREF_DIR, file.getParent());
+        setCurrentDirectory(file.getParent());
         return file;
     }
 
@@ -3318,8 +3461,7 @@ public class Editor extends Diagram
         @param ext the extension to use with this file ("pdf" for
         example). */
     public File showOpenDialog(String ext) {
-        Preferences prefs = Preferences.userNodeForPackage(getClass());
-        String dir = prefs.get(PREF_DIR,  null);
+        String dir = getCurrentDirectory();
         JFileChooser chooser = new JFileChooser();
         chooser.setDialogTitle("Open " + ext.toUpperCase() + " file");
         if (dir != null) {
@@ -3337,7 +3479,7 @@ public class Editor extends Diagram
             file = new File(file.getAbsolutePath() + "." + ext);
         }
 
-        prefs.put(PREF_DIR, file.getParent());
+        setCurrentDirectory(file.getParent());
         return file;
     }
 
@@ -3383,12 +3525,14 @@ public class Editor extends Diagram
         if (file == null || !verifyOverwriteFile(file)) {
             return;
         }
-        saveAsPED(file.toPath());
+        saveAsPEDGUI(file.toPath());
     }
 
-    @Override public void saveAsPED(Path file) {
+    /** Like saveAsPED(), but handle both exceptions and success
+        internally with warning or information dialogs. */
+    public void saveAsPEDGUI(Path file) {
         try {
-            super.saveAsPED(file);
+            saveAsPED(file);
             filename = file.toAbsolutePath().toString();
             JOptionPane.showMessageDialog
                 (editFrame, "Saved '" + file.toAbsolutePath() + "'.");
@@ -3398,13 +3542,32 @@ public class Editor extends Diagram
         }
     }
 
+    @Override public void saveAsPED(Path file) throws IOException {
+        super.saveAsPED(file);
+        // Now delete the auto-save file if it exists.
+        if (autosaveFile != null) {
+            try {
+                if (Files.deleteIfExists(autosaveFile)) {
+                    System.out.println("Deleted '" + autosaveFile + "'");
+                }
+            } catch (IOException|SecurityException x) {
+                showError("Auto-save file '" + autosaveFile + "': " + x,
+                          "Could not delete file");
+            } finally {
+                // No matter whether we succeeded or failed, do not
+                // try again.
+                autosaveFile = null;
+            }
+        }
+    }
+
     /** Invoked from the EditFrame menu */
     public void save() {
         String filename = getFilename();
         if (filename == null) {
             saveAsPED();
         } else {
-            saveAsPED(FileSystems.getDefault().getPath(filename));
+            saveAsPEDGUI(FileSystems.getDefault().getPath(filename));
         }
     }
 
@@ -3520,76 +3683,74 @@ public class Editor extends Diagram
         // Location to move to. If null, no good candidate has been found yet.
         Point2D.Double newPage = null;
 
-        boolean oldSaveNeeded = saveNeeded;
-        ArrayList<Point2D.Double> selections = new ArrayList<>();
-        int oldSize = paths.size();
+        try (UpdateSuppressor us = new UpdateSuppressor()) {
+                ArrayList<Point2D.Double> selections = new ArrayList<>();
+                int oldSize = paths.size();
 
-        if (selection != null) {
-            selections.add(selection.getLocation());
-        }
-        Point2D.Double point2 = secondarySelectionLocation();
-        if (point2 != null) {
-            selections.add(point2);
-        }
+                if (selection != null) {
+                    selections.add(selection.getLocation());
+                }
+                Point2D.Double point2 = secondarySelectionLocation();
+                if (point2 != null) {
+                    selections.add(point2);
+                }
 
-        try {
-        for (Point2D.Double p: selections) {
-            principalToStandardPage.transform(p, p);
-            Line2D.Double gridLine = nearestGridLine
-                (new Line2D.Double(p, mousePage));
-            if (gridLine == null) {
-                continue;
-            }
-            gridLine = Duh.transform(standardPageToPrincipal, gridLine);
-            paths.add(new Polyline(new Point2D[] { gridLine.getP1(), gridLine.getP2() },
-                                   StandardStroke.INVISIBLE, 0));
-        }
+                for (Point2D.Double p: selections) {
+                    principalToStandardPage.transform(p, p);
+                    Line2D.Double gridLine = nearestGridLine
+                        (new Line2D.Double(p, mousePage));
+                    if (gridLine == null) {
+                        continue;
+                    }
+                    gridLine = Duh.transform(standardPageToPrincipal, gridLine);
+                    paths.add(new Polyline(new Point2D[] { gridLine.getP1(), gridLine.getP2() },
+                                           StandardStroke.INVISIBLE, 0));
+                }
 
-        {
-            Point2D.Double point = nearestPoint(mousePage);
-            double keyPointDist = 1e6;
+                {
+                    Point2D.Double point = nearestPoint(mousePage);
+                    double keyPointDist = 1e6;
 
-            if (point != null) {
-                newPage = principalToStandardPage.transform(point);
+                    if (point != null) {
+                        newPage = principalToStandardPage.transform(point);
 
-                // Subtract keyPointPixelDist (converted to page
-                // coordinates) from keyPointDist before comparing
-                // with curves, in order to express the preference for
-                // key points over curves when the mouse is close to
-                // both.
-                double keyPointPixelDist = 10;
-                keyPointDist = newPage.distance(mousePage)
-                    - keyPointPixelDist / scale;
-                ap.position = AutoPositionType.POINT;
-            }
+                        // Subtract keyPointPixelDist (converted to page
+                        // coordinates) from keyPointDist before comparing
+                        // with curves, in order to express the preference for
+                        // key points over curves when the mouse is close to
+                        // both.
+                        double keyPointPixelDist = 10;
+                        keyPointDist = newPage.distance(mousePage)
+                            - keyPointPixelDist / scale;
+                        ap.position = AutoPositionType.POINT;
+                    }
 
-            // Only jump to the nearest curve if it is at least three
-            // times closer than the nearest key point.
-            DecorationDistance nc;
-            if (keyPointDist > 0
-                && (nc = nearestCurve(mousePage)) != null
-                && keyPointDist > 3 * nc.distance.distance) {
-                ap.position = AutoPositionType.CURVE;
-                newPage = nc.distance.point;
-            }
-        }
-        } catch (Exception e) {
+                    // Only jump to the nearest curve if it is at least three
+                    // times closer than the nearest key point.
+                    DecorationDistance nc;
+                    if (keyPointDist > 0
+                        && (nc = nearestCurve(mousePage)) != null
+                        && keyPointDist > 3 * nc.distance.distance) {
+                        ap.position = AutoPositionType.CURVE;
+                        newPage = nc.distance.point;
+                    }
+                }
+
+                double maxMovePixels = 50; // Maximum number of pixels to
+                // move the mouse
+                if (newPage == null
+                    || newPage.distance(mousePage) * scale > maxMovePixels) {
+                    ap.position = AutoPositionType.NONE;
+                    newPage = mousePage; // Leave the mouse where it is.
+                }
+
+                while (paths.size() > oldSize) {
+                    paths.remove(paths.size() - 1);
+                }
+            } catch (Exception e) {
             System.err.println(e);
             System.exit(1);
         }
-
-        double maxMovePixels = 50; // Maximum number of pixels to
-                                        // move the mouse
-        if (newPage == null
-            || newPage.distance(mousePage) * scale > maxMovePixels) {
-            ap.position = AutoPositionType.NONE;
-            newPage = mousePage; // Leave the mouse where it is.
-        }
-
-        while (paths.size() > oldSize) {
-            paths.remove(paths.size() - 1);
-        }
-        saveNeeded = oldSaveNeeded;
 
         return standardPageToPrincipal.transform(newPage);
     }
@@ -3730,6 +3891,11 @@ public class Editor extends Diagram
     }
 
     @Override public void mousePressed(MouseEvent e) {
+        if (e.getButton() == MouseEvent.BUTTON2 
+            || e.getButton() == MouseEvent.BUTTON3) {
+            deselectCurve();
+            return;
+        }
         if (e.isShiftDown()) {
             autoPosition();
         }
