@@ -166,6 +166,8 @@ public class VertexInfoDialog extends JDialog {
         return angled;
     }
 
+    /** Return the angle in radians, where 0 is straight right and
+        values increase clockwise. */
     public double getAngle() {
         return Compass.degreesToTheta(angled);
     }
