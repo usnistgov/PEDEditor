@@ -367,7 +367,6 @@ public class Diagram extends Observable implements Printable {
         }
 
         @Override public void move(Point2D dest) {
-            saveNeeded = true;
             Point2D.Double destAnchor = getAnchorLocation(dest);
             AnchoredLabel item = getItem();
             item.setX(destAnchor.getX());
@@ -376,7 +375,6 @@ public class Diagram extends Observable implements Printable {
         }
 
         @Override public LabelHandle copy(Point2D dest) {
-            saveNeeded = true;
             AnchoredLabel output = getItem().clone();
             Point2D.Double destAnchor = getAnchorLocation(dest);
             output.setX(destAnchor.getX());
@@ -458,7 +456,6 @@ public class Diagram extends Observable implements Printable {
         }
 
         @Override public DecorationHandle remove() {
-            saveNeeded = true;
             labels.remove(index);
             if (labelViews.size() > 0) {
                 labelViews.remove(index);
@@ -507,12 +504,12 @@ public class Diagram extends Observable implements Printable {
         }
 
         @Override public void setColor(Color color) {
-            saveNeeded = true;
             AnchoredLabel item = getItem();
             item.setColor(color);
             if (labelViews.size() > 0) {
                 labelViews.set(index, toView(item));
             }
+            propagateChange();
         }
 
         @Override public Color getColor() { return getItem().getColor(); }
@@ -573,14 +570,12 @@ public class Diagram extends Observable implements Printable {
         }
 
         @Override public ArrowDecoration remove() {
-            saveNeeded = true;
             arrows.remove(index);
             propagateChange();
             return null;
         }
 
         @Override public void move(Point2D dest) {
-            saveNeeded = true;
             Arrow item = getItem();
             item.x = dest.getX();
             item.y = dest.getY();
@@ -588,7 +583,6 @@ public class Diagram extends Observable implements Printable {
         }
 
         @Override public ArrowDecoration copy(Point2D dest) {
-            saveNeeded = true;
             Arrow output = getItem().clonus();
             output.x = dest.getX();
             output.y = dest.getY();
@@ -598,7 +592,6 @@ public class Diagram extends Observable implements Printable {
         }
 
         @Override public void setLineWidth(double lineWidth) {
-            saveNeeded = true;
             getItem().size = lineWidth;
             propagateChange();
         }
@@ -617,7 +610,7 @@ public class Diagram extends Observable implements Printable {
         }
 
         @Override public void setColor(Color color) {
-            saveNeeded = true;
+            propagateChange();
             getItem().setColor(color);
         }
 
@@ -735,7 +728,6 @@ public class Diagram extends Observable implements Printable {
          */
 
         @Override public void setLineWidth(double lineWidth) {
-            saveNeeded = true;
             getItem().lineWidth = lineWidth;
             propagateChange();
         }
@@ -745,21 +737,19 @@ public class Diagram extends Observable implements Printable {
         }
 
         @Override public void setLineStyle(StandardStroke lineStyle) {
-            saveNeeded = true;
             getItem().stroke = lineStyle;
             propagateChange();
         }
 
         @Override public DecorationHandle remove() {
-            saveNeeded = true;
             tieLines.remove(index);
             propagateChange();
             return null;
         }
 
         @Override public void setColor(Color color) {
-            saveNeeded = true;
             getItem().setColor(color);
+            propagateChange();
         }
 
         @Override public Color getColor() { return getItem().getColor(); }
@@ -830,12 +820,10 @@ public class Diagram extends Observable implements Printable {
                 break;
             }
 
-            saveNeeded = true;
             propagateChange();
         }
 
         @Override public RulerHandle copy(Point2D dest) {
-            saveNeeded = true;
             Point2D.Double d = new Point2D.Double(dest.getX(), dest.getY());
             LinearRuler r = getItem().clone();
             double dx = r.endPoint.x - r.startPoint.x;
@@ -909,7 +897,6 @@ public class Diagram extends Observable implements Printable {
         }
 
         @Override public void setLineWidth(double lineWidth) {
-            saveNeeded = true;
             LinearRuler item = getItem();
             // Change fontSize too, to maintain a fixed ratio between
             // lineWidth and fontSize.
@@ -928,14 +915,13 @@ public class Diagram extends Observable implements Printable {
         }
 
         @Override public DecorationHandle remove() {
-            saveNeeded = true;
             rulers.remove(index);
             propagateChange();
             return null;
         }
 
         @Override public void setColor(Color color) {
-            saveNeeded = true;
+            propagateChange();
             getItem().setColor(color);
         }
         @Override public Color getColor() { return getItem().getColor(); }
@@ -1084,17 +1070,27 @@ public class Diagram extends Observable implements Printable {
     static final int STANDARD_FONT_SIZE = 15;
     protected String filename;
     private boolean usingWeightFraction = false;
-    transient boolean suppressNotifications = false;
+    /** suppressUpdateCnt represents a count of the number of
+        currently active orders to turn off the whole notification
+        system. If suppressUpdateCnt > 0, changes are treated like no
+        change. There are two reasons you may want to do this: 1) you
+        are pushing through a whole bunch of changes and the diagram
+        may temporarily be in an invalid state in the meantime, so you
+        turn notifications off and then notify at the end; 2) you are
+        making transient changes that will be undone later. */
+    transient int suppressUpdateCnt = 0;
     transient boolean saveNeeded = false;
 
-    class NotificationDelay implements AutoCloseable {
-        boolean oldSuppressNotifications = suppressNotifications;
+    /** If an UpdateSuppressor object is created, then all changes are
+        treated like no change at all, until the object is closed
+        again. */
+    class UpdateSuppressor implements AutoCloseable {
+        public UpdateSuppressor() {
+            ++suppressUpdateCnt;
+        }
 
         @Override public void close() {
-            suppressNotifications = oldSuppressNotifications;
-            if (!suppressNotifications) {
-                notifyObservers(null);
-            }
+            --suppressUpdateCnt;
         }
     }
 
@@ -1208,8 +1204,12 @@ public class Diagram extends Observable implements Printable {
         throw new IllegalStateException("Variable '" + name + "' + not found.");
     }
 
-    @JsonIgnore public void setSaveNeeded(boolean saveNeeded) {
-        this.saveNeeded = saveNeeded;
+    @JsonIgnore public void setSaveNeeded(boolean b) {
+        if (b) {
+            propagateChange();
+        } else {
+            saveNeeded = false;
+        }
     }
 
     @JsonIgnore public boolean getSaveNeeded() {
@@ -1223,7 +1223,7 @@ public class Diagram extends Observable implements Printable {
     }
 
     void setKeyValues(@JsonProperty("keys") Map<String, String> keyValues) {
-        saveNeeded = true;
+        propagateChange();
         this.keyValues = keyValues;
     }
 
@@ -1290,14 +1290,22 @@ public class Diagram extends Observable implements Printable {
         }
     }
 
-    /** Make sure the mouse position and status bar are up to date and
-        call repaint() on the edit frame. */
-    public void propagateChange() {
+    /** setChanged() and then notifyObservers() */
+    public void propagateChange1() {
+        if (suppressUpdateCnt > 0) {
+            return;
+        }
         setChanged();
-        if (!suppressNotifications) {
-            notifyObservers(null);
+        notifyObservers(null);
+    }
+
+    /** Like propagateChange1(), but also set saveNeeded = true. */
+    public void propagateChange() {
+        if (suppressUpdateCnt > 0) {
+            return;
         }
         saveNeeded = true;
+        propagateChange1();
     }
 
     Rectangle scaledPageBounds(double scale) {
@@ -2772,16 +2780,18 @@ public class Diagram extends Observable implements Printable {
         if (res.pageBounds == null) {
             res.computeMargins();
         }
-        res.saveNeeded = false;
+        res.setSaveNeeded(false);
         return res;
     }
 
     /** Invoked from the EditFrame menu */
     public void openDiagram(File file) throws IOException {
-        clear();
-        cannibalize(loadFrom(file));
-        propagateChange();
-        saveNeeded = false;
+        setSaveNeeded(false);
+        try (UpdateSuppressor us = new UpdateSuppressor()) {
+                clear();
+                cannibalize(loadFrom(file));
+            }
+        propagateChange1();
     }
 
     public Rectangle2D.Double getPageBounds() {
@@ -2828,36 +2838,38 @@ public class Diagram extends Observable implements Printable {
         this as well. In other words, this is a shallow copy that
         destroys other. */
     void cannibalize(Diagram other) {
-        diagramType = other.diagramType;
-        diagramComponents = other.diagramComponents;
-        originalToPrincipal = other.originalToPrincipal;
-        principalToStandardPage = other.principalToStandardPage;
-        pageBounds = other.pageBounds;
-        originalFilename = other.originalFilename;
-        filename = other.filename;
-        arrows = other.arrows;
+        try (UpdateSuppressor us = new UpdateSuppressor()) {
+                diagramType = other.diagramType;
+                diagramComponents = other.diagramComponents;
+                originalToPrincipal = other.originalToPrincipal;
+                principalToStandardPage = other.principalToStandardPage;
+                pageBounds = other.pageBounds;
+                originalFilename = other.originalFilename;
+                filename = other.filename;
+                arrows = other.arrows;
 
-        boolean haveBounds = (pageBounds != null);
-        if (!haveBounds) {
-            pageBounds = new Rectangle2D.Double(0,0,1,1);
-        }
-        initializeDiagram();
-        paths = other.paths;
-        tieLines = other.tieLines;
-        setFontName(other.getFontName());
-        axes = other.axes;
-        rulers = other.rulers;
-        labels = other.labels;
-        labelViews = other.labelViews;
-        labelCenters = other.labelCenters;
-        componentElements = null;
-        setTags(other.getTags());
-        setKeyValues(other.getKeyValues());
-        if (!haveBounds) {
-            pageBounds = null;
-        }
-        setUsingWeightFraction(other.isUsingWeightFraction());
-        saveNeeded = other.saveNeeded;
+                boolean haveBounds = (pageBounds != null);
+                if (!haveBounds) {
+                    pageBounds = new Rectangle2D.Double(0,0,1,1);
+                }
+                initializeDiagram();
+                paths = other.paths;
+                tieLines = other.tieLines;
+                setFontName(other.getFontName());
+                axes = other.axes;
+                rulers = other.rulers;
+                labels = other.labels;
+                labelViews = other.labelViews;
+                labelCenters = other.labelCenters;
+                componentElements = null;
+                setTags(other.getTags());
+                setKeyValues(other.getKeyValues());
+                if (!haveBounds) {
+                    pageBounds = null;
+                }
+                setUsingWeightFraction(other.isUsingWeightFraction());
+            }
+        propagateChange1();
     }
 
     /** Populate the "rulers" fields of the axes, and then return the
@@ -2972,7 +2984,7 @@ public class Diagram extends Observable implements Printable {
         try (PrintWriter writer = new PrintWriter
              (Files.newBufferedWriter(path, StandardCharsets.UTF_8))) {
                 writer.print(Tabify.tabify(getObjectMapper().writeValueAsString(this)));
-                saveNeeded = false;
+                setSaveNeeded(false);
             }
     }
 
