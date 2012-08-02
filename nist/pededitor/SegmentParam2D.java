@@ -42,7 +42,7 @@ public class SegmentParam2D
     }
 
     @Override public CurveDistanceRange distance
-        (Point2D p, double maxError, double maxIterations) {
+        (Point2D p, double maxError, int maxSteps) {
         return distance(p);
     }
 
@@ -51,6 +51,12 @@ public class SegmentParam2D
             .getBounds2D();
         return new Rectangle2D.Double(r.getX(), r.getY(), 
                                       r.getWidth(), r.getHeight());
+    }
+
+    @Override public double[] getBounds(double xc, double yc) {
+        double d1 = p0.x * xc + p0.y * yc;
+        double d2 = pEnd.x * xc + pEnd.y * yc;
+        return new double[] { Math.min(d1,d2), Math.max(d1,d2) };
     }
         
     @Override public Point2D.Double getDerivative(double t) {
@@ -91,5 +97,10 @@ public class SegmentParam2D
         }
         s.append("]");
         return s.toString();
+    }
+
+    @Override public Parameterization2D createSubset(double minT,
+                                                     double maxT) {
+        return new SegmentParam2D(p0, pEnd, minT, maxT);
     }
 }
