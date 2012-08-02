@@ -55,10 +55,8 @@ abstract public class BezierParam2D
             xs[i] = points[i].getX();
             ys[i] = points[i].getY();
         }
-        xCoefficients = new double[points.length];
-        bezierToPoly(xs, xCoefficients);
-        yCoefficients = new double[points.length];
-        bezierToPoly(ys, yCoefficients);
+        xCoefficients = bezierToPoly(xs);
+        yCoefficients = bezierToPoly(ys);
     }
 
     public int getDegree() {
@@ -134,6 +132,18 @@ abstract public class BezierParam2D
                 ("bezierToPoly(" + Arrays.toString(bezs) + ",...) only accepts "
                  + "array length 0-4");
         }
+    }
+
+    public static double[] polyToBezier(double[] poly) {
+        double[] res = new double[poly.length];
+        polyToBezier(poly, res);
+        return res;
+    }
+
+    public static double[] bezierToPoly(double[] bez) {
+        double[] res = new double[bez.length];
+        bezierToPoly(bez, res);
+        return res;
     }
 
     /** Convert the quadratic poynomial "poly" to the corresponding set
@@ -289,6 +299,15 @@ abstract public class BezierParam2D
         return new Rectangle2D.Double
             (xBounds[0], yBounds[0],
              xBounds[1] - xBounds[0], yBounds[1] - yBounds[0]);
+    }
+
+    @Override public double[] getBounds(double xc, double yc) {
+        int s = xCoefficients.length;
+        double[] poly = new double[s];
+        for (int i = 0; i < s; ++i) {
+            poly[i] = xCoefficients[i] * xc + yCoefficients[i] * yc;
+        }
+        return Polynomial.getBounds(poly, getMinT(), getMaxT());
     }
 
     @Override public String toString() {
