@@ -2401,11 +2401,10 @@ public class Diagram extends Observable implements Printable {
     }
 
 
-    /** @return a list of all segment+segment and segment+curve
-        intersections. curve+curve intersections are not detected at
-        this time. */
+    /** @return all point intersections involves curves and/or line
+        segments. */
     ArrayList<Point2D.Double> intersections() {
-        ArrayList<Point2D.Double> output = new ArrayList<Point2D.Double>();
+        ArrayList<Point2D.Double> res = new ArrayList<>();
         Line2D.Double[] segments = getAllLineSegments();
 
         // Spline curves are defined in the page coordinates, and the
@@ -2428,12 +2427,35 @@ public class Diagram extends Observable implements Printable {
                 for (Point2D.Double point:
                          pagePath.segIntersections(segment)) {
                     standardPageToPrincipal.transform(point, point);
-                    output.add(point);
+                    res.add(point);
                 }
             }
         }
 
-        return output;
+        GeneralPolyline[] curves = getAllCurvedCurves();
+        for (int i = 0; i < curves.length; ++i) {
+            curves[i] = curves[i].createTransformed
+                (principalToStandardPage);
+        }
+
+        for (int i = 0; i < curves.length; ++i) {
+            GeneralPolyline a = curves[i];
+            for (int j = i+1; j < curves.length; ++j) {
+                GeneralPolyline b = curves[j];
+                try {
+                    for (Point2D.Double p: Parameterization2Ds.intersections
+                             (a.getParameterization(), b.getParameterization(),
+                              1e-9, 80)) {
+                        standardPageToPrincipal.transform(p, p);
+                        res.add(p);
+                    }
+                } catch (FailedToConvergeException x) {
+                    // That's OK.
+                }
+            }
+        }
+
+        return res;
     }
 
     /* Return the DecorationDistance for the curve or ruler whose
@@ -3502,6 +3524,22 @@ public class Diagram extends Observable implements Printable {
         }
 
         return output.toArray(new Line2D.Double[0]);
+    }
+
+    /** @return an array of non-straight curves defined for this
+        diagram. */
+    @JsonIgnore public GeneralPolyline[] getAllCurvedCurves() {
+        ArrayList<GeneralPolyline> res = new ArrayList<>();
+         
+        for (GeneralPolyline path : paths) {
+            if (path.getSmoothingType() == GeneralPolyline.LINEAR
+                || path.size() == 2) {
+                continue;
+            }
+            res.add(path);
+        }
+
+        return res.toArray(new GeneralPolyline[0]);
     }
 
     /** Draw a circle around each point in path. */
