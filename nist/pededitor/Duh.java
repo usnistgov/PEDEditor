@@ -755,7 +755,30 @@ public class Duh {
         at.transform(p2, p2);
         return new Line2D.Double(p1, p2);
     }
-    
+
+    /** Create a Line2D.Double that represents a ray starting at point
+        p and pointing in direction v such that, if possible, the
+        length of the ray equals the distance from the origin to p.
+        The intent is to prevent loss-of-precision errors such as
+        would result from trying to construct a vector like
+
+        (1e20, 0) - (1e20 + 1, 0). */
+    public static Line2D.Double createRay(Point2D p, Point2D v) {
+        double px = p.getX();
+        double py = p.getY();
+        double vx = v.getX();
+        double vy = v.getY();
+        double vlSq = vx * vx + vy * vy;
+        if (vlSq == 0) {
+            return new Line2D.Double(px, py, px, py);
+        }
+        double plSq = px * px + py * py;
+        if (plSq == 0) {
+            return new Line2D.Double(0, 0, vx, vy);
+        }
+        double ratio = Math.sqrt(plSq / vlSq);
+        return new Line2D.Double(px, py, px + ratio * vx, py + ratio * vy);
+    }
 
     /** @return a point where segments a1a2 and b1b2 intersect, or
         null if no such point exists.
