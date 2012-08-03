@@ -61,20 +61,16 @@ import Jama.Matrix;
 
 import org.codehaus.jackson.annotate.JsonIgnore;
 
-// TODO (optional but in my opinion quite useful for general
-// digitization tasks, 1 day) Make tangent dialog slope values reflect
-// principal coordinates.
+// TODO (optional) Warn users when there exists an autosave version of
+// a file that is newer than the regular saved version.
+
+// TODO (optional, easy?) Add "Print visible region" as an alternative
+// to "Print". (You can always collapse the margins to the region you
+// want to show and then print that, but that's slow and might be hard
+// to undo.)
 
 // TODO (mandatory, 2 days) Make regular open symbols look as nice as the
 // GRUMP-converted open symbols do.
-
-// TODO (mandatory, feature, two days) Allow detection of the intersections
-// of two splines. (What makes this feature more desirable than it
-// would be otherwise is that it would create consistency. As long as
-// some kinds of intersections are detectable, people will sometimes
-// forget that other kinds are not detectable and be confused when
-// that does not work. (I did that myself at least once, even though I
-// wrote the program.)
 
 // TODO (mandatory, 1 week) Enable filling of regions with cusps. As
 // things currently stand, it's not possible to fill a semicircle.
@@ -86,6 +82,15 @@ import org.codehaus.jackson.annotate.JsonIgnore;
 // have to end at vertexes of the diagram is no longer needed and not
 // difficult to eliminate. Tie lines ending on rulers without extra
 // steps could also be enabled (and the extra steps are unintuitive).
+
+// TODO (optional but in my opinion super useful for general
+// digitization tasks, 3 days) Currently the tangent dialog displays a
+// slope value that is just the tangent of the angle and frankly is
+// not very useful. The user could select the rise and run variables
+// instead, so, for example, the slope could show the derivative of
+// the liquidus with respect to composition. This would also
+// facilitate drawing straight lines whose slopes are defined in terms
+// of user variables.
 
 // TODO (Optional) Allow shift-L and/or shift-A to cycle around likely
 // candidates the same way that shift-P does. In other words, if
@@ -114,7 +119,11 @@ import org.codehaus.jackson.annotate.JsonIgnore;
 // TODO (optional, 3 days) For opaque and boxed labels, allow users to decide
 // how much extra white space to include on each side.
 
-// TODO (optional, TV leave it alone and see if anyone complains) Make it easier to edit multiple-line labels.
+// TODO (optional) Grid lines might occasionally be nice. At one point
+// I would have liked to have them
+
+// TODO (optional, TV leave it alone and see if anyone complains) Make
+// it easier to edit multiple-line labels.
 
 // TODO (optional) Support of GRUMP-style explicit assignment of ruler
 // limits such as label skip, label density, and so on. The downside
@@ -386,7 +395,7 @@ public class Editor extends Diagram
     }
 
     private static final String PREF_DIR = "dir";
-    private static final long SAVE_DELAY = 5 * 1000 /* milliseconds */;
+    private static final long AUTO_SAVE_DELAY = 5 * 60 * 1000; // 5 minutes
 
     static final protected double MOUSE_UNSTICK_DISTANCE = 30; /* pixels */
     static protected Image crosshairs = null;
@@ -417,6 +426,7 @@ public class Editor extends Diagram
 
     protected transient double scale;
     protected transient BufferedImage originalImage;
+    protected transient boolean editorIsPacked = false;
 
     /** The item (vertex, label, etc.) that is selected, or null if nothing is. */
     protected transient DecorationHandle selection;
@@ -1333,12 +1343,12 @@ public class Editor extends Diagram
 
     /** Update the tangency information to display the slope at the
         given vertex. */
-    public void showTangent(ParameterizableHandle hand) {
+    public void showTangent(BoundedParam2DHandle hand) {
         showTangent(hand.getDecoration(), hand.getT());
     }
 
     public void showTangent(Decoration dec, double t) {
-        Parameterization2D param = ((Parameterizable2D) dec).getParameterization();
+        BoundedParam2D param = ((BoundedParameterizable2D) dec).getParameterization();
         if (dec instanceof CurveDecoration) {
             CurveDecoration cdec = (CurveDecoration) dec;
             GeneralPolyline path = cdec.getItem();
@@ -1347,23 +1357,13 @@ public class Editor extends Diagram
                 // For polylines, insertBeforeSelection gives a hint which
                 // of the two segments adjoining a vertex is the one whose
                 // derivative we want.
-                t = Parameterization2Ds.constrainToDomain
+                t = BoundedParam2Ds.constrainToDomain
                     (param, t + (insertBeforeSelection ? -0.5 : 0.5));
             }
         }
 
         Point2D.Double g = param.getDerivative(t);
         if (g != null) {
-            if (g.x * g.y <= 0 && Math.abs(g.y) > Math.abs(g.x) * 1e8) {
-                // This is a vertical line almost to the limits of
-                // double numerical precision, and it was probably
-                // intended to be literally vertical. For consistency,
-                // make the tangents of vertical lines point upwards
-                // instead of downwards, so users can rely on '>'
-                // creating upwards-pointing arrows and '<' creating
-                // downwards-pointing arrows on vertical lines.
-                g = new Point2D.Double(-g.x, -g.y);
-            }
             vertexInfo.setDerivative(g);
         }
 
@@ -2095,8 +2095,8 @@ public class Editor extends Diagram
 
             selection = sel;
 
-            if (sel instanceof ParameterizableHandle) {
-                showTangent((ParameterizableHandle) sel);
+            if (sel instanceof BoundedParam2DHandle) {
+                showTangent((BoundedParam2DHandle) sel);
             }
 
             point = sel.getLocation();
@@ -2221,7 +2221,7 @@ public class Editor extends Diagram
         dog.setTitle("Add Label");
         dog.setFontSize(fontSize);
         AnchoredLabel newLabel = dog.showModal();
-        if (newLabel == null || "".equals(newLabel.getText())) {
+        if (newLabel == null || !check(newLabel)) {
             return;
         }
 
@@ -2233,6 +2233,17 @@ public class Editor extends Diagram
         mouseIsStuck = true;
     }
 
+    public boolean check(AnchoredLabel label) {
+        if (label.getText().isEmpty()) {
+            return false;
+        }
+        if (label.getFontSize() <= 0) {
+            showError("Font size is not a positive number", "Cannot perform operation");
+            return false;
+        }
+        return true;
+    }
+
     public void editLabel(int index) {
         AnchoredLabel label = (AnchoredLabel) labels.get(index).clone();
         label.setAngle(principalToPageAngle(label.getAngle()));
@@ -2240,7 +2251,7 @@ public class Editor extends Diagram
         dog.setTitle("Edit Label");
         dog.set(label);
         AnchoredLabel newLabel = dog.showModal();
-        if (newLabel == null) {
+        if (newLabel == null || !check(newLabel)) {
             return;
         }
 
@@ -2426,8 +2437,8 @@ public class Editor extends Diagram
             // for what the closest curve is -- but whatever...
             DecorationDistance nc = nearestCurve(pagePoint);
             if (nc != null) {
-                if (nc.decoration instanceof Parameterizable2D) {
-                    Parameterization2D param = ((Parameterizable2D) nc.decoration)
+                if (nc.decoration instanceof BoundedParameterizable2D) {
+                    BoundedParam2D param = ((BoundedParameterizable2D) nc.decoration)
                         .getParameterization();
                     Point2D.Double selPage = principalToStandardPage
                         .transform(selection.getLocation());
@@ -2511,9 +2522,9 @@ public class Editor extends Diagram
         Decoration dec = dist.decoration;
         CurveDistance minDist = dist.distance;
         double t = minDist.t;
-        Parameterization2D c
-          = ((Parameterizable2D) dec).getParameterization();
-        int vertex = (int) Parameterization2Ds.getNearestVertex(c, t);
+        BoundedParam2D c
+          = ((BoundedParameterizable2D) dec).getParameterization();
+        int vertex = (int) BoundedParam2Ds.getNearestVertex(c, t);
         boolean closerToNext = (t < vertex);
 
         if (dec instanceof CurveDecoration) {
@@ -2646,7 +2657,7 @@ public class Editor extends Diagram
         }
         if (fileSaver == null) {
             fileSaver = new Timer("FileSaver", true);
-            fileSaver.schedule(new FileSaver(), SAVE_DELAY);
+            fileSaver.schedule(new FileSaver(), AUTO_SAVE_DELAY);
         }
     }
 
@@ -3024,13 +3035,16 @@ public class Editor extends Diagram
         boolean isTernary = diagramType.isTernary();
         editFrame.setAspectRatio.setEnabled(!isTernary);
         editFrame.setTopComponent.setEnabled(isTernary);
-        zoomBy(1.0);
+        bestFit();
     }
 
     protected void initializeGUI() {
         // Force the editor frame image to be initialized.
 
-        editFrame.pack();
+        if (!editorIsPacked) {
+            editFrame.pack();
+            editorIsPacked = true;
+        }
         Rectangle rect = editFrame.getBounds();
         revalidateZoomFrame();
 
