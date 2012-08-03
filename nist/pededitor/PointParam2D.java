@@ -5,7 +5,7 @@ import java.awt.geom.Point2D;
 import java.awt.geom.Rectangle2D;
 
 /** Parameterize a single point over t in [0,0]. Not real interesting... */
-public class PointParam2D implements Parameterization2D {
+public class PointParam2D implements BoundedParam2D {
     Point2D.Double p0;
 
     public PointParam2D(Point2D p0) {
@@ -18,8 +18,6 @@ public class PointParam2D implements Parameterization2D {
 
     @Override public double getMinT() { return 0; }
     @Override public double getMaxT() { return 0; }
-    @Override public void setMinT(double t) { /* no-op */ }
-    @Override public void setMaxT(double t) { /* no-op */ }
 
     @Override public Point2D.Double getLocation(double t) {
         return (Point2D.Double) p0.clone();
@@ -37,10 +35,6 @@ public class PointParam2D implements Parameterization2D {
         return new CurveDistanceRange(0, p0, d, d);
     }
 
-    @Override public CurveDistance vertexDistance(Point2D p) {
-        return distance(p);
-    }
-
     @Override public Point2D.Double getStart() {
         return (Point2D.Double) p0.clone();
     }
@@ -54,16 +48,21 @@ public class PointParam2D implements Parameterization2D {
     }
 
     @Override public CurveDistanceRange distance
-        (Point2D p, double maxError, double maxIterations) {
+        (Point2D p, double maxError, int maxSteps) {
         return distance(p);
     }
 
-    @Override public Parameterization2D derivative() {
+    @Override public BoundedParam2D derivative() {
         return null;
     }
 
     @Override public Rectangle2D.Double getBounds() {
         return new Rectangle2D.Double(p0.x, p0.y, 0, 0);
+    }
+
+    @Override public double[] getBounds(double xc, double yc) {
+        double d = p0.x * xc + p0.y * yc;
+        return new double[] { d, d };
     }
 
     @Override public double[] segIntersections(Line2D segment) {
@@ -84,4 +83,8 @@ public class PointParam2D implements Parameterization2D {
     @Override public String toString() {
         return getClass().getSimpleName() + Duh.toString(getStart());
     }
+
+	@Override public BoundedParam2D createSubset(double minT, double maxT) {
+		return this;
+	}
 }

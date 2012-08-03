@@ -5,29 +5,27 @@ import java.awt.geom.Point2D;
 import java.awt.geom.Rectangle2D;
 import java.util.ArrayList;
 
-/** Offset the t values in a CurveParameterization2D by a fixed value.
+/** Offset the t values in a CurveBoundedParam2D by a fixed value.
     If offset = 0.5, for example, then getMinT() will return 0.5 more
     than the original curve's getMinT() does, and getLocation(0.5)
     returns the same value as the original curve's getLocation(0)
     would, and so on.
  */
 
-public class OffsetParam2D implements Parameterization2D {
-    Parameterization2D c;
+public class OffsetParam2D implements BoundedParam2D {
+    BoundedParam2D c;
     double offset;
 
     /** Warning: c will be incorporated into this object, so later
         modifications to this object may modify c and vice versa. If
         you don't like that, then clone c first. */
-    public OffsetParam2D(Parameterization2D c, double offset) {
+    public OffsetParam2D(BoundedParam2D c, double offset) {
         this.c = c;
         this.offset = offset;
     }
 
     @Override public double getMinT() { return c.getMinT() + offset; }
     @Override public double getMaxT() { return c.getMaxT() + offset; }
-    @Override public void setMaxT(double t) { c.setMaxT(t - offset); }
-    @Override public void setMinT(double t) { c.setMinT(t - offset); }
     @Override public double getNextVertex(double t) {
         return c.getNextVertex(t - offset) + offset;
     }
@@ -52,12 +50,8 @@ public class OffsetParam2D implements Parameterization2D {
     }
 
     @Override public CurveDistanceRange distance(Point2D p, double maxError,
-                                            double maxIterations) {
-        return addOffset(c.distance(p, maxError, maxIterations));
-    }
-
-    @Override public CurveDistance vertexDistance(Point2D p) {
-        return addOffset(c.vertexDistance(p));
+                                            int maxSteps) {
+        return addOffset(c.distance(p, maxError, maxSteps));
     }
 
     @Override public OffsetParam2D derivative() {
@@ -68,8 +62,8 @@ public class OffsetParam2D implements Parameterization2D {
         return c.getBounds();
     }
 
-    @Override public OffsetParam2D clone() {
-        return new OffsetParam2D(c.clone(), offset);
+    @Override public double[] getBounds(double xc, double yc) {
+        return c.getBounds(xc, yc);
     }
 
     @Override public double[] segIntersections(Line2D segment) {
@@ -88,13 +82,19 @@ public class OffsetParam2D implements Parameterization2D {
         return res;
     }
 
-    @Override public Parameterization2D[] subdivide() {
-        Parameterization2D[] parts = c.subdivide();
-        Parameterization2D[] res = new Parameterization2D[parts.length];
+    @Override public BoundedParam2D[] subdivide() {
+        BoundedParam2D[] parts = c.subdivide();
+        BoundedParam2D[] res = new BoundedParam2D[parts.length];
         for (int i = 0; i < parts.length; ++i) {
             res[i] = new OffsetParam2D(parts[i], offset);
         }
         return res;
+    }
+
+    @Override public OffsetParam2D createSubset
+        (double minT, double maxT) {
+        return new OffsetParam2D
+            (c.createSubset(minT - offset, maxT - offset), offset);
     }
 
     CurveDistance addOffset(CurveDistance cd) {
@@ -143,15 +143,15 @@ public class OffsetParam2D implements Parameterization2D {
      those results, because extra effort to improve precision is only
      made for curves that are still candidates to be the nearest one.
 
-     @see Parameterization2Ds.distance(Parameterization2D, p, maxError,
-     maxIterations).
+     @see BoundedParam2Ds.distance(BoundedParam2D, p, maxError,
+     maxSteps).
     */
     public static DistanceIndex distance
-        (ArrayList<Parameterization2D> params, Point2D p,
-         double maxError, double maxIterations) {
+        (ArrayList<BoundedParam2D> params, Point2D p,
+         double maxError, int maxSteps) {
         ArrayList<OffsetParam2D> oparams = separate(params);
-        CurveDistance dist = Parameterization2Ds.distance
-            (oparams, p, maxError, maxIterations);
+        CurveDistance dist = BoundedParam2Ds.distance
+            (oparams, p, maxError, maxSteps);
         if (dist == null) {
             return null;
         }
@@ -160,12 +160,12 @@ public class OffsetParam2D implements Parameterization2D {
     }
 
     /** Convert the inputs so that their domains are separate. This is
-        used by Parameterization2Ds.distance() to allow one to
+        used by BoundedParam2Ds.distance() to allow one to
         distinguish which input a CurveDistance comes from. */
-    static <T extends Parameterization2D> ArrayList<OffsetParam2D> separate(Iterable<T> ps) {
+    static <T extends BoundedParam2D> ArrayList<OffsetParam2D> separate(Iterable<T> ps) {
         ArrayList<OffsetParam2D> res = new ArrayList<>();
         double offset = 0;
-        for (Parameterization2D p: ps) {
+        for (BoundedParam2D p: ps) {
             OffsetParam2D op = new OffsetParam2D(p, offset - p.getMinT());
             offset = op.getMaxT() + 1;
             res.add(op);
