@@ -6,20 +6,17 @@ import java.awt.geom.Rectangle2D;
 
 /* Interface for curves in two dimensions parameterized by t over the
    domain [getMinT(), getMaxT()]. */
-public interface Parameterization2D {
+public interface BoundedParam2D {
     /** Return the maximum valid t value for this curve. */
     double getMinT();
     /** Return the minimum valid t value for this curve. */
     double getMaxT();
 
-    /** Increasing the maximum t value may be prohibited, but
-        decreasing the maximum t value to a value no less than the
-        minimum is always allowed. */
-    void setMaxT(double t);
-    /** Decreasing the minimum t value may be prohibited, but
-        increasing the minimum t value to a value no greater than
-        the maximum is always allowed. */
-    void setMinT(double t);
+    /** Return a subset BoundedParam2D that is only valid for t
+        values in [minT, maxT]. minT must be greater than or equal to
+        the old getMinT(), and maxT must be less than or equal to the
+        old getMaxT(). */
+    BoundedParam2D createSubset(double minT, double maxT);
 
     /* Return the t value of the vertex whose t value is least among
      those greater than t. A vertex is a location that was explicitly
@@ -47,31 +44,30 @@ public interface Parameterization2D {
         "distance" (if "minDistance" = "distance" then the distance
         computation is exact to within precision limits). This
         computation should be fast; for high accuracy, a user should
-        select distance(p, maxError, maxIterations) instead.
+        select distance(p, maxError, maxSteps) instead.
     */
     CurveDistanceRange distance(Point2D p);
 
     /** Compute the distance from p to this curve to within maxError
-        of the correct value, unless it takes more than maxIterations
+        of the correct value, unless it takes more than maxSteps
         to compute. In that case, just return the best estimate known
         at that time. */
-    CurveDistanceRange distance(Point2D p, double maxError, double maxIterations);
+    CurveDistanceRange distance(Point2D p, double maxError, int maxSteps);
 
     /** Return the distance between p and getLocation(t). */
     CurveDistance distance(Point2D p, double t);
 
-    /** Return the minimum distance between p and any vertex of the
-        curve. */
-    CurveDistance vertexDistance(Point2D p);
-
     /** Return the derivative of this curve with respect to t, or null
         if the derivative is undefined. */
-    Parameterization2D derivative();
+    BoundedParam2D derivative();
 
     /** Return bounds for this curve for t in [minT, maxT]. If the
         bounds cannot be computed exactly, then they should be wider
         than necessary instead of too narrow. */
     Rectangle2D.Double getBounds();
+
+    /** Return {min,max} for the function f(x) = x(t) * xc + y(t) * yc. */
+    double[] getBounds(double xc, double yc);
 
     /** @return an array of t values where segment intersects this. */
     double[] segIntersections(Line2D segment);
@@ -80,12 +76,10 @@ public interface Parameterization2D {
         intersects this. */
     double[] lineIntersections(Line2D segment);
 
-    Parameterization2D clone();
-
     /** Divide this object into a union of parts that are disjoint
         except possibly at their endpoints. Bisection is one obvious
         way to subdivide the object, but it might not be most
         efficient. Unless this is a single point, at least two objects
         should be returned. */
-    Parameterization2D[] subdivide();
+    BoundedParam2D[] subdivide();
 }
