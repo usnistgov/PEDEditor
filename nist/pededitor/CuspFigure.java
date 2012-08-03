@@ -38,7 +38,7 @@ import org.codehaus.jackson.map.SerializationConfig;
 @JsonSubTypes({
         @Type(value=Polyline.class, name = "polyline"),
             @Type(value=SplinePolyline.class, name = "cubic spline") })
-public abstract class GeneralPolyline implements Parameterizable2D {
+public abstract class GeneralPolyline implements BoundedParameterizable2D {
     protected ArrayList<Point2D.Double> points;
     protected StandardStroke stroke = null;
     protected Color color = null;
@@ -170,7 +170,7 @@ public abstract class GeneralPolyline implements Parameterizable2D {
     /** @return an array of all intersections between segment and
         this. */
     public Point2D.Double[] segIntersections(Line2D segment) {
-        Parameterization2D c = getParameterization();
+        BoundedParam2D c = getParameterization();
         double[] ts = c.segIntersections(segment);
         Point2D.Double[] output = new Point2D.Double[ts.length];
         for (int i = 0; i < ts.length; ++i) {
@@ -182,7 +182,7 @@ public abstract class GeneralPolyline implements Parameterizable2D {
     /** @return an array of all intersections between segment and
         this. */
     public Point2D.Double[] lineIntersections(Line2D segment) {
-        Parameterization2D c = getParameterization();
+        BoundedParam2D c = getParameterization();
         double[] ts = c.lineIntersections(segment);
         Point2D.Double[] output = new Point2D.Double[ts.length];
         for (int i = 0; i < ts.length; ++i) {
@@ -238,8 +238,8 @@ public abstract class GeneralPolyline implements Parameterizable2D {
     /* Do not alter the object returned by this method. Clone it if
        you need to make changes to a copy. */
     @Override @JsonIgnore
-        public Parameterization2D getParameterization() {
-        return new PathParam2D(getPath());
+        public BoundedParam2D getParameterization() {
+        return PathParam2D.create(getPath());
     }
 
     public Point2D.Double getLocation(double d) {
