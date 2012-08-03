@@ -5,7 +5,7 @@ import java.awt.geom.Rectangle2D;
 
 /** Parameterize a Bezier curve. */
 public abstract class Parameterization2DAdapter
-    implements Parameterization2D {
+    implements BoundedParam2D {
      /* Allowed t values belong to [t0, t1]. */
     double t0;
     double t1;
@@ -21,11 +21,9 @@ public abstract class Parameterization2DAdapter
         this.p0 = new Point2D.Double(p0.getX(), p0.getY());
         this.pEnd = new Point2D.Double(pEnd.getX(), pEnd.getY());
     }
-
+    
     @Override public double getMinT() { return t0; }
     @Override public double getMaxT() { return t1; }
-    @Override public void setMinT(double t) { t0 = t; }
-    @Override public void setMaxT(double t) { t1 = t; }
 
     @Override public double getLastVertex(double t) { return 0; }
     @Override public double getNextVertex(double t) { return 1; }
@@ -46,24 +44,19 @@ public abstract class Parameterization2DAdapter
     /** If your distance() method is exact, you should override this
         method to point to that one instead. */
     @Override public CurveDistanceRange distance
-        (Point2D p, double maxError, double maxIterations) {
-        return Parameterization2Ds.distance(this, p, maxError, maxIterations);
+        (Point2D p, double maxError, int maxSteps) {
+        return BoundedParam2Ds.distance(this, p, maxError, maxSteps);
     }
 
-    @Override public CurveDistance vertexDistance(Point2D p) {
-        return CurveDistance.min(distance(p, 0), distance(p, 1));
-    }
-
-    @Override public Parameterization2D[] subdivide() {
-        return Parameterization2Ds.subdivide(this);
+    @Override public BoundedParam2D[] subdivide() {
+        return BoundedParam2Ds.subdivide(this);
     }
 
     public boolean inDomain(double t) { return t >= t0 && t <= t1; }
 
-    @Override abstract public Parameterization2D derivative();
+    @Override abstract public BoundedParam2D derivative();
     @Override abstract public CurveDistanceRange distance(Point2D p);
     @Override abstract public Rectangle2D.Double getBounds();
     @Override abstract public Point2D.Double getDerivative(double t);
     @Override abstract public Point2D.Double getLocation(double t);
-    @Override abstract public Parameterization2DAdapter clone();
 }
