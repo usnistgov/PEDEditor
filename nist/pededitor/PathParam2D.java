@@ -7,9 +7,9 @@ import java.awt.geom.Point2D;
 import java.awt.geom.Rectangle2D;
 import java.util.ArrayList;
 
-/** CurveParameterization2D that can be constructed from a
-    PathIterator. The individual segments of the PathIterator are
-    converted into OffsetParameterization2Ds.
+/** Param2D that can be constructed from a PathIterator. The
+    individual segments of the PathIterator are converted into
+    OffsetParam2Ds.
 
     An initial moveTo followed by a lineTo is deleted. That permits
     the t values to line up, so the numbering of the points used to
@@ -19,13 +19,13 @@ import java.util.ArrayList;
 
     For example, suppose the path consists of a moveTo followed by a
     lineTo, another lineTo, and then a final moveTo. A
-    PointParameterization2D is initially added to the "segments" list
+    PointParam2D is initially added to the "segments" list
     to mark the destination of the first moveTo, just in case the path
-    ends right away, but the PointParameterization2D is later removed.
-    The SegmentParameterization2D that represents the first line
+    ends right away, but the PointParam2D is later removed.
+    The SegmentParam2D that represents the first line
     segment starts at the moveTo destination at t = 0 (so the moveTo
     destination is still remembered even after the
-    PointParameterization2D segment is removed), and ends at the
+    PointParam2D segment is removed), and ends at the
     lineTo destination at t = 2. The second segment, corresponding to
     the second lineTo, is assigned an offset of 1, so it ranges from
     t=1 to t=2, overlapping with the previous segment at t=1, but
@@ -51,13 +51,13 @@ public class PathParam2D extends Param2DAdapter
         this.t1 = t1;
     }
 
-    /** Create a Parameterization2D that follows the given path. */
+    /** Create a BoundedParam2D that follows the given path. */
     public static Param2DBounder create(PathIterator pit) {
         PathParam2D p = new PathParam2D(pit);
         return new Param2DBounder(p, p.t0, p.t1);
     }
 
-    /** Create a Parameterization2D that follows shape's outline as
+    /** Create a BoundedParam2D that follows shape's outline as
         returned by getPathIterator(). */
     public static Param2DBounder create(Shape shape) {
         return create(shape.getPathIterator(null));
