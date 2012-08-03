@@ -95,11 +95,11 @@ public class Diagram extends Observable implements Printable {
         decorations, such as curves and labels, can be manipulated the
         same way. */
 
-    class VertexHandle implements ParameterizableHandle {
+    class VertexHandle implements BoundedParam2DHandle {
         CurveDecoration decoration;
         int vertexNo;
 
-        @Override public Parameterization2D getParameterization() {
+        @Override public BoundedParam2D getParameterization() {
             return getDecoration().getParameterization();
         }
 
@@ -238,7 +238,7 @@ public class Diagram extends Observable implements Printable {
     }
 
     
-    class CurveDecoration implements Decoration, Parameterizable2D {
+    class CurveDecoration implements Decoration, BoundedParameterizable2D {
         int curveNo;
 
         CurveDecoration(int curveNo) {
@@ -294,8 +294,8 @@ public class Diagram extends Observable implements Printable {
             }
         }
 
-        @Override public PathParam2D getParameterization() {
-            return new PathParam2D(getShape());
+        @Override public BoundedParam2D getParameterization() {
+            return PathParam2D.create(getShape());
         }
 
         public int getCurveNo() {
@@ -330,10 +330,10 @@ public class Diagram extends Observable implements Printable {
 
         /** Return the VertexHandle closest to path(t). */
         public VertexHandle getHandle(double t) {
-            Parameterization2D c = getItem()
+            BoundedParam2D c = getItem()
                 .createTransformed(principalToStandardPage)
                 .getParameterization();
-            double ct = Parameterization2Ds.getNearestVertex(c, t);
+            double ct = BoundedParam2Ds.getNearestVertex(c, t);
             return new VertexHandle(this, (int) ct);
         }
     }
@@ -780,7 +780,7 @@ public class Diagram extends Observable implements Printable {
 
     static enum RulerHandleType { START, END };
 
-    class RulerHandle implements ParameterizableHandle {
+    class RulerHandle implements BoundedParam2DHandle {
         RulerDecoration decoration;
         /** Either end of the ruler may be used as a handle. */
         RulerHandleType handle; 
@@ -796,7 +796,7 @@ public class Diagram extends Observable implements Printable {
 
         LinearRuler getItem() { return getDecoration().getItem(); }
 
-        @Override public Parameterization2D getParameterization() {
+        @Override public BoundedParam2D getParameterization() {
             return getDecoration().getParameterization();
         }
 
@@ -871,7 +871,7 @@ public class Diagram extends Observable implements Printable {
         }
     }
 
-    class RulerDecoration implements Decoration, Parameterizable2D {
+    class RulerDecoration implements Decoration, BoundedParameterizable2D {
         /** Index into rulers list. */
         int index;
 
@@ -892,8 +892,8 @@ public class Diagram extends Observable implements Printable {
             return new Line2D.Double(s, e);
         }
 
-        @Override public PathParam2D getParameterization() {
-            return new PathParam2D(getShape());
+        @Override public BoundedParam2D getParameterization() {
+            return PathParam2D.create(getShape());
         }
 
         @Override public void setLineWidth(double lineWidth) {
@@ -2443,7 +2443,7 @@ public class Diagram extends Observable implements Printable {
             for (int j = i+1; j < curves.length; ++j) {
                 GeneralPolyline b = curves[j];
                 try {
-                    for (Point2D.Double p: Parameterization2Ds.intersections
+                    for (Point2D.Double p: BoundedParam2Ds.intersections
                              (a.getParameterization(), b.getParameterization(),
                               1e-9, 80)) {
                         standardPageToPrincipal.transform(p, p);
@@ -2464,11 +2464,11 @@ public class Diagram extends Observable implements Printable {
        of the input and output values. */
     DecorationDistance nearestCurve(Point2D pagePoint) {
         ArrayList<Decoration> decs = new ArrayList<>();
-        ArrayList<Parameterization2D> params = new ArrayList<>();
+        ArrayList<BoundedParam2D> params = new ArrayList<>();
         for (Decoration dec: getDecorations()) {
-            if (dec instanceof Parameterizable2D) {
-                Parameterization2D param
-                    = ((Parameterizable2D) dec).getParameterization();
+            if (dec instanceof BoundedParameterizable2D) {
+                BoundedParam2D param
+                    = ((BoundedParameterizable2D) dec).getParameterization();
                 if (param.getMinT() == param.getMaxT()) {
                     // That's a point, not a curve. If the user wanted
                     // a point, they would have pressed 'p' instead.
