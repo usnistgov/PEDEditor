@@ -9,7 +9,7 @@ import java.util.*;
     endpoints; closed splines are approximated by computing an open
     spline with each end extended by 5 extra control points' worth of
     padding from the opposite end of the curve. */
-final public class CubicSpline2D implements Parameterizable2D {
+final public class CubicSpline2D implements BoundedParameterizable2D {
     CubicSpline1D xSpline;
     CubicSpline1D ySpline;
 
@@ -217,8 +217,8 @@ final public class CubicSpline2D implements Parameterizable2D {
     }
 
     @Override
-	public Parameterization2D getParameterization() {
-        return new PathParam2D(path());
+	public BoundedParam2D getParameterization() {
+        return PathParam2D.create(path());
     }
 
     /** @return the set of Bezier control points that define the given

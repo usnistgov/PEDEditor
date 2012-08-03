@@ -12,7 +12,7 @@ public class Polyline extends GeneralPolyline {
     /** The parameterization is cached for efficiency. This class and
         its subclasses should reset param to null whenever a change
         invalidates the cached version. */
-    protected transient Parameterization2D param = null;
+    protected transient BoundedParam2D param = null;
 
     public Polyline() {
     }
@@ -111,7 +111,7 @@ public class Polyline extends GeneralPolyline {
         return output;
     }
 
-    @Override public Parameterization2D getParameterization() {
+    @Override public BoundedParam2D getParameterization() {
         if (param == null) {
             param = super.getParameterization();
         }

@@ -166,8 +166,8 @@ public class TieLine {
 
     @JsonIgnore public Path2D.Double getPath() {
         Path2D.Double output = new Path2D.Double();
-        Parameterization2D innerParam = innerEdge.getParameterization();
-        Parameterization2D outerParam = outerEdge.getParameterization();
+        BoundedParam2D innerParam = innerEdge.getParameterization();
+        BoundedParam2D outerParam = outerEdge.getParameterization();
 
         if (isTwisted()) {
             // Swap ot1 <=> ot2 to untwist.

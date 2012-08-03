@@ -21,7 +21,7 @@ import org.codehaus.jackson.map.annotate.JsonSerialize.Inclusion;
 /** Class describing a ruler whose tick marks describe values from a
     LinearAxis. */
 @JsonSerialize(include = Inclusion.NON_DEFAULT)
-class LinearRuler implements Parameterizable2D {
+class LinearRuler implements BoundedParameterizable2D {
     public static enum LabelAnchor { NONE, LEFT, RIGHT };
     private static Pattern minusZeroPattern = Pattern.compile("-0\\.?0*\\z");
 
@@ -153,8 +153,8 @@ class LinearRuler implements Parameterizable2D {
     }
 
     /** Functions required for the CurveParameterization interface. */
-    @JsonIgnore @Override public Parameterization2D getParameterization() {
-        return new SegmentParam2D(startPoint, endPoint, 0, 1);
+    @JsonIgnore @Override public BoundedParam2D getParameterization() {
+        return BezierParam2D.create(startPoint, endPoint);
     }
 
     /** @return null unless this polyline has been assigned a

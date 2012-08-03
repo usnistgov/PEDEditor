@@ -16,7 +16,7 @@ public class SplinePolyline extends GeneralPolyline {
         invalidates the cached version. */
     protected transient CubicSpline2D spline = null;
     /** Param is also cached. */
-    protected transient Parameterization2D param = null;
+    protected transient BoundedParam2D param = null;
 
     public SplinePolyline() {
     }
@@ -91,7 +91,7 @@ public class SplinePolyline extends GeneralPolyline {
         return spline;
     }
 
-    @Override public Parameterization2D getParameterization() {
+    @Override public BoundedParam2D getParameterization() {
         if (param == null) {
             param = super.getParameterization();
         }
