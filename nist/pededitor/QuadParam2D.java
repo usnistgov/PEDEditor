@@ -21,30 +21,21 @@ public class QuadParam2D extends BezierParam2D {
 
         @param t1 The minimum t value (normally 1).
     */
-    public QuadParam2D(Point2D p0, Point2D p1, Point2D pEnd,
-                                  double t0, double t1) {
-        this(new Point2D[] {p0, p1, pEnd}, t0, t1);
+    public QuadParam2D(Point2D p0, Point2D p1, Point2D pEnd) {
+        this(new Point2D[] {p0, p1, pEnd});
     }
 
     /** @param points The array of 3 Bezier control points.
-
-        @param t0 The minimum t value (normally 0).
-
-        @param t1 The minimum t value (normally 1).
     */
-    public QuadParam2D(Point2D[] points, double t0, double t1) {
-        super(points, t0, t1);
-        Point2D ip1 = points[1];
-        p1 = new Point2D.Double(ip1.getX(), ip1.getY());
-    }
-
-    @Override public QuadParam2D clone() {
-        return new QuadParam2D(points, t0, t1);
+    public QuadParam2D(Point2D[] points) {
+        super(points);
+        p1 = new Point2D.Double(points[1].getX(), points[1].getY());
     }
 
     /** @return the distance between p and the quadratic Bezier curve
         defined by the given control points. */
-    @Override public CurveDistanceRange distance(Point2D p) {
+    @Override public CurveDistanceRange distance
+        (Point2D p, double t0, double t1) {
         // The formula for a quadratic Bezier is (1-t)^2 p0 + 2t(1-t)
         // p1 + t^2 pEnd, or
 
@@ -73,7 +64,7 @@ public class QuadParam2D extends BezierParam2D {
 
         if (ax == 0 && ay == 0) {
             // This is a straight segment from p0 to pEnd.
-            return (new SegmentParam2D (p0, pEnd, t0, t1))
+            return new SegmentParam2D(p0, pEnd).createSubset(t0, t1)
                 .distance(p);
         }
 
@@ -110,7 +101,7 @@ public class QuadParam2D extends BezierParam2D {
             double dot = -xCusp * ax - yCusp * ay;
             if (dot <= 0) {
                 // The point of nearest approach is the cusp.
-                if (inDomain(tCusp)) {
+                if (tCusp >= t0 && tCusp <= t1) {
                     return new CurveDistanceRange(distance(p, tCusp));
                 } else {
                     return new CurveDistanceRange(nearest);
@@ -124,7 +115,7 @@ public class QuadParam2D extends BezierParam2D {
 
                 double deltaT = dot / (ax * ax + ay * ay);
                 double t = tCusp + (tCusp > rangeMid ? -1 : 1) * deltaT;
-                if (inDomain(t)) {
+                if (t >= t0 && t <= t1) {
                     return new CurveDistanceRange(distance(p, t));
                 } else {
                     return new CurveDistanceRange(nearest);
@@ -209,7 +200,7 @@ public class QuadParam2D extends BezierParam2D {
             // transformed into x = sweepLen.
             double t = tCusp + x / sweepLen;
 
-            if (inDomain(t)) {
+            if (t >= t0 && t <= t1) {
                 nearest = CurveDistance.min(nearest, distance(p, t));
             }
         }
@@ -254,13 +245,13 @@ public class QuadParam2D extends BezierParam2D {
     }
 
     public static void main(String[] args) {
-        Point2D.Double[] q =
-        { new Point2D.Double(0, 5),
-          new Point2D.Double(1,3),
-          new Point2D.Double(2,5) };
-        QuadParam2D param = new QuadParam2D
-            (q[0], q[1], q[2], 0, 1);
+        // Test quadratic Bezier curve
+        BoundedParam2D param = BezierParam2D.create
+            (new Point2D.Double(0,5),
+             new Point2D.Double(1,3),
+             new Point2D.Double(2,5));
             
+        // Test points
         Point2D.Double[] ps =
             { new Point2D.Double(1,0), // t = 0.5, p = (1,4), d = 4
               new Point2D.Double(-0.5, 3.25), // t = 0.25, p = (0.5, 4.25), d = sqrt(2)
@@ -270,7 +261,8 @@ public class QuadParam2D extends BezierParam2D {
               new Point2D.Double(0.999, 5.49), // a bit more than t = 0
               new Point2D.Double(1.001, 5.49) // a bit less than t = 1
             };
-            
+
+        // Correct distance values corresponding to the above array of points.
         double[] ds =
             { 0.5,
               0.25,
@@ -286,19 +278,6 @@ public class QuadParam2D extends BezierParam2D {
             CurveDistance cd = param.distance(p);
             System.out.println(p + " -> " + cd);
             expect(cd.t, expectedT);
-        }
-
-        {
-            Point2D.Double[] colinear =
-                { new Point2D.Double(1.32, 0.7875000000000001),
-                  new Point2D.Double(1.2085425, 0.7875000000000001),
-                  new Point2D.Double(0.81048, 0.7875000000000001) };
-            QuadParam2D param2 = new QuadParam2D
-                (colinear[0], colinear[1], colinear[2], 0.1875, 0.25);
-            Point2D.Double p = new Point2D.Double
-                (1.2006555395189615, 0.7809566687535915);
-            CurveDistance cd = param2.distance(p);
-            System.out.println(p + " -> " + cd);
         }
     }
 }

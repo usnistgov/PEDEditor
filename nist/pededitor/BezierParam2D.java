@@ -7,41 +7,52 @@ import java.util.ArrayList;
 import java.util.Arrays;
 
 /** Parameterize a Bezier curve of arbitary degree. */
-abstract public class BezierParam2D
-    extends Parameterization2DAdapter {
+abstract public class BezierParam2D extends Param2DAdapter {
     /** Polynomial x(t) coefficients */
-    double[] xCoefficients;
+    final double[] xCoefficients;
     /** Polynomial y(t) coefficients */
-    double[] yCoefficients;
+    final double[] yCoefficients;
+    final Point2D.Double p0;
+    final Point2D.Double pEnd;
+
+    Param2D deriv = null;
 
     /** Bezier control points. #0 is the start and #(length-1) is the
         end, but intermediate control points usually do not lie on the
         curve. */
-    Point2D.Double[] points;
+    final Point2D.Double[] points;
 
     /** @param points The array of Bezier control points.
-
-        @param t0 The minimum t value (normally 0).
-
-        @param t1 The minimum t value (normally 1).
     */
-    public BezierParam2D(Point2D[] points, double t0, double t1) {
-        super(points[0], points[points.length-1], t0, t1);
+    public BezierParam2D(Point2D[] points) {
         this.points = Duh.deepCopy(points);
-        init(points);
+        int len = points.length;
+        double[] xs = new double[len];
+        double[] ys = new double[len];
+        for (int i = 0; i < len; ++i) {
+            xs[i] = points[i].getX();
+            ys[i] = points[i].getY();
+        }
+        xCoefficients = bezierToPoly(xs);
+        yCoefficients = bezierToPoly(ys);
+        p0 = new Point2D.Double(points[0].getX(), points[0].getY());
+        pEnd = new Point2D.Double(points[len - 1].getX(), points[len - 1].getY());
     }
 
-    public static Parameterization2D create
-        (Point2D[] points, double t0, double t1) {
+    public static BoundedParam2D create(Point2D... points) {
+        return createUnbounded(points).createSubset(0, 1);
+    }
+
+    public static Param2D createUnbounded(Point2D... points) {
         switch (points.length) {
         case 4:
-            return new CubicParam2D(points, t0, t1);
+            return new CubicParam2D(points);
         case 3:
-            return new QuadParam2D(points, t0, t1);
+            return new QuadParam2D(points);
         case 2:
-            return new SegmentParam2D(points[0], points[1], t0, t1);
+            return new SegmentParam2D(points[0], points[1]);
         case 1:
-            return new SegmentParam2D(points[0], points[0], t0, t1);
+            return new SegmentParam2D(points[0], points[0]);
         default:
             throw new IllegalArgumentException
                 ("create() can only handle 1-4 control points");
@@ -49,14 +60,6 @@ abstract public class BezierParam2D
     }
 
     protected void init(Point2D[] points) {
-        double[] xs = new double[points.length];
-        double[] ys = new double[points.length];
-        for (int i = 0; i < points.length; ++i) {
-            xs[i] = points[i].getX();
-            ys[i] = points[i].getY();
-        }
-        xCoefficients = bezierToPoly(xs);
-        yCoefficients = bezierToPoly(ys);
     }
 
     public int getDegree() {
@@ -192,28 +195,27 @@ abstract public class BezierParam2D
         }
     }
 
-    @Override public Parameterization2D derivative() {
+    @Override protected Param2D computeDerivative() {
         double[] xd = Polynomial.derivative(xCoefficients);
         polyToBezier(xd, xd);
         double[] yd = Polynomial.derivative(yCoefficients);
         polyToBezier(yd, yd);
-        return create(Duh.merge(xd, yd), getMinT(), getMaxT());
+        return createUnbounded(Duh.merge(xd, yd));
     }
 
-    /** @return the distance between p and this Bezier curve. */
-    @Override abstract public CurveDistanceRange distance(Point2D p);
-
-    /** Return the t values for all intersections of this curve with segment. */
-    @Override public double[] segIntersections(Line2D segment) {
-        return segIntersections(segment, false);
+    @Override public double[] segIntersections
+        (Line2D segment, double t0, double t1) {
+        return segIntersections(segment, t0, t1, false);
     }
 
     /** Return the t values for all intersections of this curve with segment. */
-    @Override public double[] lineIntersections(Line2D segment) {
-        return segIntersections(segment, true);
+    @Override public double[] lineIntersections
+        (Line2D segment, double t0, double t1) {
+        return segIntersections(segment, t0, t1, true);
     }
 
-    public double[] segIntersections(Line2D segment, boolean isLine) {
+    public double[] segIntersections
+        (Line2D segment, double t0, double t1, boolean isLine) {
         double sdx = segment.getX2() - segment.getX1();
         double sdy = segment.getY2() - segment.getY1();
         if (sdx == 0 && sdy == 0) {
@@ -267,7 +269,7 @@ abstract public class BezierParam2D
         poly[0] += b;
 
         for (double t: Polynomial.solve(poly)) {
-            if (!inDomain(t)) {
+            if (t < t0 || t > t1) {
                 continue;
             }
 
@@ -291,23 +293,22 @@ abstract public class BezierParam2D
         return o;
     }
 
-    @Override public Rectangle2D.Double getBounds() {
-        double[] xBounds = Polynomial.getBounds
-            (xCoefficients, getMinT(), getMaxT());
-        double[] yBounds = Polynomial.getBounds
-            (yCoefficients, getMinT(), getMaxT());
+    @Override public Rectangle2D.Double getBounds(double t0, double t1) {
+        double[] xBounds = Polynomial.getBounds(xCoefficients, t0, t1);
+        double[] yBounds = Polynomial.getBounds(yCoefficients, t0, t1);
         return new Rectangle2D.Double
             (xBounds[0], yBounds[0],
              xBounds[1] - xBounds[0], yBounds[1] - yBounds[0]);
     }
 
-    @Override public double[] getBounds(double xc, double yc) {
+    @Override public double[] getBounds
+        (double xc, double yc, double t0, double t1) {
         int s = xCoefficients.length;
         double[] poly = new double[s];
         for (int i = 0; i < s; ++i) {
             poly[i] = xCoefficients[i] * xc + yCoefficients[i] * yc;
         }
-        return Polynomial.getBounds(poly, getMinT(), getMaxT());
+        return Polynomial.getBounds(poly, t0, t1);
     }
 
     @Override public String toString() {
@@ -319,9 +320,6 @@ abstract public class BezierParam2D
             }
             s.append(Duh.toString(p));
             first = false;
-        }
-        if (getMinT() != 0 || getMaxT() != 1) {
-            s.append(" t in [" + getMinT() + ", " + getMaxT() + "]");
         }
         s.append("]");
         return s.toString();

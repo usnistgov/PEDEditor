@@ -40,14 +40,27 @@ import java.util.ArrayList;
     (segments.size()) represents the endPoint of segment #1
     segments.size() -1.
  */
-public class PathParam2D
-    implements Parameterization2D,
-               Iterable<OffsetParam2D> {
+public class PathParam2D extends Param2DAdapter
+    implements Param2D, Iterable<OffsetParam2D> {
     ArrayList<OffsetParam2D> segments = new ArrayList<>();
     double t0 = 0;
     double t1 = 0;
 
-    public PathParam2D() {
+    PathParam2D(double t0, double t1) {
+        this.t0 = t0;
+        this.t1 = t1;
+    }
+
+    /** Create a Parameterization2D that follows the given path. */
+    public static Param2DBounder create(PathIterator pit) {
+        PathParam2D p = new PathParam2D(pit);
+        return new Param2DBounder(p, p.t0, p.t1);
+    }
+
+    /** Create a Parameterization2D that follows shape's outline as
+        returned by getPathIterator(). */
+    public static Param2DBounder create(Shape shape) {
+        return create(shape.getPathIterator(null));
     }
 
     public PathParam2D(PathIterator pit) {
@@ -59,7 +72,7 @@ public class PathParam2D
 
         for (int pointCnt = 0; !pit.isDone(); ++pointCnt, pit.next()) {
             Point2D.Double op = p;
-            Parameterization2D segment;
+            BoundedParam2D segment;
             int offsetAdjustment = 0;
 
             switch (pit.currentSegment(coords)) {
@@ -80,24 +93,24 @@ public class PathParam2D
                 break;
             case PathIterator.SEG_LINETO:
                 p = new Point2D.Double(coords[0], coords[1]);
-                segment = new SegmentParam2D(op, p, 0, 1);
+                segment = BezierParam2D.create(op, p);
                 break;
             case PathIterator.SEG_QUADTO:
                 p = new Point2D.Double(coords[2], coords[3]);
-                segment = new QuadParam2D
-                    (op, new Point2D.Double(coords[0], coords[1]), p, 0, 1);
+                segment = BezierParam2D.create
+                    (op, new Point2D.Double(coords[0], coords[1]), p);
                 break;
             case PathIterator.SEG_CUBICTO:
                 p = new Point2D.Double(coords[4], coords[5]);
-                segment = new CubicParam2D
+                segment = BezierParam2D.create
                     (op,
                      new Point2D.Double(coords[0], coords[1]),
                      new Point2D.Double(coords[2], coords[3]),
-                     p, 0, 1);
+                     p);
                 break;
             case PathIterator.SEG_CLOSE:
                 p = lastMove;
-                segment = new SegmentParam2D(op, p, 0, 1);
+                segment = BezierParam2D.create(op, p);
                 break;
             default:
                 throw new IllegalStateException
@@ -122,21 +135,33 @@ public class PathParam2D
     }
 
     class Iterator implements java.util.Iterator<OffsetParam2D> {
-        int segNo = 0;
+        double t0;
+        double t1;
+        int segNo;
+        int firstSegNo;
+        int lastSegNo;
 
-        Iterator() {}
-
-        Iterator(int segNo) {
-            this.segNo = segNo;
+        Iterator(double t0, double t1) {
+            this.t0 = t0;
+            this.t1 = t1;
+            segNo = firstSegNo = getSegmentNo(t0);
+            lastSegNo = getSegmentNo(t1);
         }
 
         /** @return the next segment of this path. */
         @Override public OffsetParam2D next() {
-            return segments.get(segNo++);
+            OffsetParam2D seg = segments.get(segNo);
+            double minT = (segNo == firstSegNo) ? t0 : seg.getMinT();
+            double maxT = (segNo == lastSegNo) ? t1 : seg.getMaxT();
+            if (minT != seg.getMinT() || maxT != seg.getMaxT()) {
+                seg = seg.createSubset(minT, maxT);
+            }
+            ++segNo;
+            return seg;
         }
 
         @Override public boolean hasNext() {
-            return segNo < segments.size();
+            return segNo <= lastSegNo;
         }
 
         @Override public void remove() {
@@ -144,54 +169,32 @@ public class PathParam2D
         }
     }
 
-    @Override public Point2D.Double getStart() {
-        return getLocation(getMinT());
+    class Subset implements Iterable<OffsetParam2D> {
+        double t0;
+        double t1;
+
+        Subset(double t0, double t1) {
+            this.t0 = t0;
+            this.t1 = t1;
+        }
+
+        @Override public Iterator iterator() {
+            return new Iterator(t0, t1);
+        }
     }
 
-    @Override public Point2D.Double getEnd() {
-        return getLocation(getMaxT());
-    }
-
-    @Override public CurveDistance distance(Point2D p, double t) {
-        Point2D.Double pt = getLocation(t);
-        return new CurveDistance(t, pt, pt.distance(p));
-    }
-
-    @SuppressWarnings("unchecked")
-	@Override public PathParam2D clone() {
-        PathParam2D output = new PathParam2D();
-        output.segments = (ArrayList<OffsetParam2D>)
-            segments.clone();
-        output.t0 = t0;
-        output.t1 = t1;
-        return output;
+    public Subset subsetIterable(double t0, double t1) {
+        return new Subset(t0, t1);
     }
 
     @Override public Iterator iterator() {
-        int segNo = (t0 == 0) ? 0 : ((int) Math.ceil(t0) - 1);
-        return new Iterator(segNo);
+        return new Iterator(t0, t1);
     }
 
-    @Override public double getMinT() { return t0; }
-    @Override public double getMaxT() { return t1; }
-
-    @Override public void setMinT(double t) {
-        // Change the segment containing the old t0 value back to normal.
-        OffsetParam2D segment = getSegment(t0);
-        segment.setMinT(segment.offset);
-
-        // Make the change.
-        getSegment(t0).setMinT(t);
-        t0 = t;
-    }
-
-    @Override public void setMaxT(double t) {
-        // Change the segment containing the old t1 value back to normal.
-        getSegment(t1).setMaxT((int) Math.ceil(t1));
-
-        // Make the change.
-        getSegment(t1).setMaxT(t);
-        t1 = t;
+    /** Return the segment that t belongs to. If t lies on the joint
+        between two segments, return the segment on the left. */
+    int getSegmentNo(double t) {
+        return (t == 0) ? 0 : ((int) Math.ceil(t) - 1);
     }
 
     /** Return the segment that t belongs to. If t lies on the joint
@@ -200,8 +203,7 @@ public class PathParam2D
         return segments.get((t == 0) ? 0 : ((int) Math.ceil(t) - 1));
     }
 
-    @Override
-	public Point2D.Double getLocation(double t) {
+    @Override public Point2D.Double getLocation(double t) {
         return getSegment(t).getLocation(t);
     }
 
@@ -209,8 +211,7 @@ public class PathParam2D
         return getSegment(t).distance(p, t);
     }
 
-    @Override
-	public Point2D.Double getDerivative(double t) {
+    @Override public Point2D.Double getDerivative(double t) {
         return getSegment(t).getDerivative(t);
     }
 
@@ -222,9 +223,10 @@ public class PathParam2D
         return Math.floor(t);
     }
 
-    @Override public CurveDistanceRange distance(Point2D p) {
+    @Override public CurveDistanceRange distance
+        (Point2D p, double t0, double t1) {
         CurveDistanceRange minDist = null;
-        for (Parameterization2D segment: this) {
+        for (BoundedParam2D segment: subsetIterable(t0, t1)) {
             CurveDistanceRange dist = segment.distance(p);
             minDist = CurveDistanceRange.min(minDist, dist);
         }
@@ -232,67 +234,67 @@ public class PathParam2D
         return minDist;
     }
 
-    @Override public CurveDistance vertexDistance(Point2D p) {
-        CurveDistance minDist = null;
-
-        for (OffsetParam2D segment: this) {
-            CurveDistance dist;
-            double minT = segment.getMinT();
-            if (minT >= t0) {
-                dist = segment.distance(p, minT);
-                minDist = CurveDistance.min(minDist, dist);
-            }
-            double maxT = segment.getMaxT();
-            if (maxT <= t1) {
-                dist = segment.distance(p, maxT);
-                minDist = CurveDistance.min(minDist, dist);
-            }
-        }
-
-        return minDist;
-    }
-
-    @Override public PathParam2D derivative() {
-        PathParam2D output = new PathParam2D();
+    @Override protected PathParam2D computeDerivative() {
+        PathParam2D output = new PathParam2D(t0, t1);
         for (OffsetParam2D segment: this) {
             output.segments.add(segment.derivative());
         }
         return output;
     }
 
-    @Override public Rectangle2D.Double getBounds() {
-        Rectangle2D output = null;
-        for (Parameterization2D segment: this) {
+    @Override public Rectangle2D.Double getBounds(double t0, double t1) {
+        Rectangle2D res = null;
+        for (BoundedParam2D segment: subsetIterable(t0, t1)) {
             Rectangle2D b = segment.getBounds();
-            if (output == null) {
-                output = b;
+            if (res == null) {
+                res = b;
             } else {
-                output.add(b);
+                res.add(b);
             }
         }
         return new Rectangle2D.Double
-            (output.getX(), output.getY(), 
-             output.getWidth(), output.getHeight());
+            (res.getX(), res.getY(), 
+             res.getWidth(), res.getHeight());
+    }
+
+    @Override public double[] getBounds
+        (double xc, double yc, double t0, double t1) {
+        double min = Double.NaN;
+        double max = Double.NaN;
+
+        for (BoundedParam2D segment: subsetIterable(t0, t1)) {
+            double[] thisb = segment.getBounds(xc, yc);
+            double thismin = thisb[0];
+            double thismax = thisb[1];
+            if (Double.isNaN(min) || thismin < min) {
+                min = thismin;
+            }
+            if (Double.isNaN(max) || thismax > max) {
+                max = thismax;
+            }
+        }
+        return new double[] { min, max };
     }
 
     /** Compute the distance from p to this curve to within maxError
-        of the correct value, unless it takes more than maxIterations
+        of the correct value, unless it takes more than maxSteps
         to compute. In that case, just return the best estimate known
         at that time. */
-    @Override
-	public CurveDistanceRange distance(Point2D p, double maxError,
-                                  double maxIterations) {
-        ArrayList<Parameterization2D> segs = new ArrayList<>();
-        for (Parameterization2D segment: this) {
+    @Override public CurveDistanceRange distance
+        (Point2D p, double maxError, int maxSteps,
+         double t0, double t1) {
+        ArrayList<BoundedParam2D> segs = new ArrayList<>();
+        for (BoundedParam2D segment: subsetIterable(t0, t1)) {
             segs.add(segment);
         }
-        return Parameterization2Ds.distance
-            (segs, p, maxError, maxIterations);
+        return BoundedParam2Ds.distance
+            (segs, p, maxError, maxSteps);
     }
 
-    @Override public double[] segIntersections(Line2D segment) {
+    @Override public double[] segIntersections
+        (Line2D segment, double t0, double t1) {
         ArrayList<Double> res = new ArrayList<>();
-        for (Parameterization2D c: this) {
+        for (BoundedParam2D c: subsetIterable(t0, t1)) {
             for (double t: c.segIntersections(segment)) {
                 if (res.size() == 0 || res.get(res.size() -1) < t) {
                     res.add(t);
@@ -306,9 +308,10 @@ public class PathParam2D
         return res0;
     }
 
-    @Override public double[] lineIntersections(Line2D segment) {
+    @Override public double[] lineIntersections
+        (Line2D segment, double t0, double t1) {
         ArrayList<Double> res = new ArrayList<>();
-        for (Parameterization2D c: this) {
+        for (BoundedParam2D c: subsetIterable(t0, t1)) {
             for (double t: c.lineIntersections(segment)) {
                 if (res.size() == 0 || res.get(res.size() -1) < t) {
                     res.add(t);
@@ -332,18 +335,36 @@ public class PathParam2D
             s.append(c);
             first = false;
         }
-        if (getMinT() != 0 || getMaxT() != 1) {
-            s.append(" t in [" + getMinT() + ", " + getMaxT() + "]");
-        }
         s.append("]");
         return s.toString();
     }
 
-    @Override public Parameterization2D[] subdivide() {
-        if (segments.size() == 1) {
-            return segments.get(0).subdivide();
+    @Override public BoundedParam2D createSubset(double t0, double t1) {
+        if (Math.ceil(t1) <= t0 + 1) {
+            // This is a subset of a single segment, so for efficiency
+            // access that segment directly.
+            return getSegment(t1).createSubset(t0, t1);
         } else {
-            return segments.toArray(new OffsetParam2D[0]);
+            return super.createSubset(t0, t1);
         }
+    }
+
+    @Override public BoundedParam2D[] subdivide(double t0, double t1) {
+        if (Math.ceil(t1) <= t0 + 1) {
+            return super.subdivide(t0, t1);
+        } else if (t1 - t0 > 8) {
+            // Divide roughly in two
+            return subdivide(t0, Math.rint((t1 + t0) / 2), t1);
+        } else {
+            ArrayList<BoundedParam2D> res = new ArrayList<>();
+            int seg0 = (int) Math.floor(t0);
+            int seg1 = getSegmentNo(t1);
+            res.add(createSubset(t0, Math.floor(t0) + 1));
+            for (int seg = seg0 + 1; seg < seg1; ++seg) {
+                res.add(createSubset(seg, seg + 1));
+            }
+            res.add(createSubset(seg1, t1));
+        }
+        return segments.toArray(new BoundedParam2D[0]);
     }
 }
