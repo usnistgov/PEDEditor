@@ -5,8 +5,10 @@ import java.awt.Frame;
 import java.awt.event.ActionEvent;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Enumeration;
 
 import javax.swing.AbstractAction;
+import javax.swing.AbstractButton;
 import javax.swing.ButtonGroup;
 import javax.swing.JButton;
 import javax.swing.JCheckBox;
@@ -55,6 +57,16 @@ public class RulerDialog extends JDialog {
             setSelected(anchor == RulerDialog.this.labelAnchor);
             labelAnchorGroup.add(this);
         }
+    }
+
+    void setLabelAnchor(LinearRuler.LabelAnchor anchor) {
+        for (Enumeration<AbstractButton> e = labelAnchorGroup.getElements();
+             e.hasMoreElements();) {
+            LabelAnchorButton lab = (LabelAnchorButton) e.nextElement();
+            LabelAnchorAction act = (LabelAnchorAction) lab.getAction();
+            lab.setSelected(act.labelAnchor == anchor);
+        }
+        labelAnchor = anchor; 
     }
 
     JCheckBox tickLeft = new JCheckBox("Left-side tick marks");
@@ -161,8 +173,7 @@ public class RulerDialog extends JDialog {
     }
 
     public void set(LinearRuler ruler, ArrayList<LinearAxis> axes) {
-        labelAnchor = ruler.labelAnchor;
-
+        setLabelAnchor(ruler.labelAnchor); 
         String[] variables = new String[axes.size()];
         variable.removeAllItems();
         int i = -1;
