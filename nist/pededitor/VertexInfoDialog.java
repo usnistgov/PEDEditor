@@ -131,10 +131,14 @@ public class VertexInfoDialog extends JDialog {
     }
 
     public double thetaToDegrees(double theta) {
+        // Semi-lame hack to turn values almost exactly equal to -90
+        // degrees into 90 degrees so it's not a coin flip whether a
+        // nearly-vertical line ends up being displayed as pointing
+        // upwards (90 degrees) or downwards (-90).
         double deg = -theta * 180 / Math.PI;
-        if (deg < -90) {
+        if (deg < -90 + 1e-10) {
             deg += 180;
-        } else if (deg > 90) {
+        } else if (deg > 90 + 1e-10) {
             deg -= 180;
         }
         return deg;
@@ -174,7 +178,15 @@ public class VertexInfoDialog extends JDialog {
 
     public void setSlope(double m) {
         sloped = -m;
-        slope.setText(String.format("%.4f", -m));
+        double mabs = Math.abs(m);
+        String format =
+            (mabs < 1e-12) ? "%.0f"
+            : (mabs < 1e-4) ? "%.4e"
+            : (mabs < 1) ? "%.6f"
+            : (mabs < 1e5) ? "%.4f"
+            : (mabs < 1e9) ? "%.0f"
+            : "%.6e";
+        slope.setText(String.format(format, -m));
         repaint();
     }
 
