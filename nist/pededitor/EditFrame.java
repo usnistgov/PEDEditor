@@ -240,11 +240,16 @@ public class EditFrame extends JFrame
         }
     }
 
+    static Icon getLineWidthIcon(double lineWidth) {
+        int w = (int) Math.round(lineWidth / 0.0008);
+        return icon(StandardStroke.SOLID, 25, w, w);
+    }
+
     class LineWidthAction extends AbstractAction {
         double lineWidth;
 
-        LineWidthAction(String imagePath, double lineWidth) {
-            super(null, loadIcon(imagePath));
+        LineWidthAction(double lineWidth) {
+            super(null, getLineWidthIcon(lineWidth));
             this.lineWidth = lineWidth;
         }
 
@@ -254,18 +259,14 @@ public class EditFrame extends JFrame
     }
 
     class LineWidthMenuItem extends JRadioButtonMenuItem {
-        LineWidthMenuItem(String imagePath, double lineWidth) {
-            super(new LineWidthAction(imagePath, lineWidth));
+        LineWidthMenuItem(double lineWidth) {
+            super(new LineWidthAction(lineWidth));
             lineWidthGroup.add(this);
         }
     }
 
     class LineStyleAction extends AbstractAction {
         StandardStroke lineStyle;
-
-        LineStyleAction(String imagePath, StandardStroke lineStyle) {
-            this (loadIcon(imagePath), lineStyle);
-        }
 
         LineStyleAction(Icon icon, StandardStroke lineStyle) {
             super(null, icon);
@@ -291,9 +292,9 @@ public class EditFrame extends JFrame
     }
 
     class LineStyleMenuItem extends JRadioButtonMenuItem {
-        LineStyleMenuItem(String imagePath, StandardStroke lineStyle) {
-            super(new LineStyleAction(imagePath, lineStyle));
-            lineStyleGroup.add(this);
+        LineStyleMenuItem(StandardStroke lineStyle, int width, int height,
+                          double lineWidth) {
+            this (icon(lineStyle, width, height, lineWidth), lineStyle);
         }
 
         LineStyleMenuItem(Icon icon, StandardStroke lineStyle) {
@@ -367,15 +368,6 @@ public class EditFrame extends JFrame
         @Override public void actionPerformed(ActionEvent e) {
             getParentEditor().removeVariable(e.getActionCommand());
         }
-    }
-
-    static Icon loadIcon(String imagePath) {
-        URL url = EditFrame.class.getResource(imagePath);
-        if (url == null) {
-            throw new IllegalStateException("Could not load " + imagePath);
-        }
-        Icon icon = new ImageIcon(url);
-        return icon;
     }
 
     /**
@@ -674,64 +666,60 @@ public class EditFrame extends JFrame
             mnLineStyle.setMnemonic(KeyEvent.VK_T);
         
             LineStyleMenuItem solidLineItem = 
-                new LineStyleMenuItem("images/line.png",
-                                      StandardStroke.SOLID);
+                new LineStyleMenuItem(StandardStroke.SOLID, 59, 2, 2.0);
             solidLineItem.setSelected(true);
             mnLineStyle.add(solidLineItem);
-            mnLineStyle.add
-                (new LineStyleMenuItem("images/dashedline.png",
-                                       StandardStroke.DASH));
-            mnLineStyle.add
-                (new LineStyleMenuItem("images/dottedline.png",
-                                       StandardStroke.DOT));
-            mnLineStyle.add
-                (new LineStyleMenuItem("images/dashdotline.png",
-                                       StandardStroke.DOT_DASH));
-            mnLineStyle.add
-                (new LineStyleMenuItem("images/soliddotline.png",
-                                       StandardStroke.SOLID_DOT));
-            mnCurve.add(mnLineStyle);
+            mnLineStyle.add(new LineStyleMenuItem
+                            (StandardStroke.DOT_DASH, 59, 3, 2.0));
+            mnLineStyle.add(new LineStyleMenuItem
+                            (StandardStroke.SOLID_DOT, 55, 5, 3.0));
 
-            JMenu mnRailroad = new JMenu();
-            mnRailroad.setIcon(loadIcon("images/railroadline.png"));
+            {
+                JMenu mnDensity = new JMenu();
+                mnDensity.setIcon(icon(StandardStroke.DASH3, 60, 2, 2.0));
 
-            int width = 104;
-            int height = 24;
-
-            Shape line = new Line2D.Float(0f, 12f, (float) width, 12f);
-
-            for (StandardStroke railroad:
-                     EnumSet.range(StandardStroke.RAILROAD1,
-                                   StandardStroke.RAILROAD24)) {
-                // Draw a BufferedImage of this line style and create
-                // an Icon from it. To consider: do that for all line
-                // styles, ditching the pre-drawn images such as
-                // "dottedline.png".)
-                BufferedImage im = new BufferedImage
-                    (width, height, BufferedImage.TYPE_INT_ARGB);
-                Graphics2D g = im.createGraphics();
-                // Set the background color to transparent.
-                g.setBackground(new Color(255, 255, 255, 0));
-                g.clearRect(0, 0, im.getWidth(), im.getHeight());
-                g.setColor(Color.BLACK);
-                g.setRenderingHint(RenderingHints.KEY_ANTIALIASING,
-                                   RenderingHints.VALUE_ANTIALIAS_ON);
-                railroad.getStroke().draw(g, line, 2.0);
-                
-                mnRailroad.add
-                    (new LineStyleMenuItem(new ImageIcon(im), railroad));
+                for (StandardStroke stroke:
+                         EnumSet.range(StandardStroke.DASH1, 
+                                       StandardStroke.DASH5)) {
+                    mnDensity.add(new LineStyleMenuItem(stroke, 104, 4, 2.0));
+                }
+                mnLineStyle.add(mnDensity);
             }
-            mnLineStyle.add(mnRailroad);
+
+            {
+                JMenu mnDensity = new JMenu();
+                mnDensity.setIcon(icon(StandardStroke.DOT3, 56, 4, 2.0));
+
+                for (StandardStroke stroke:
+                         EnumSet.range(StandardStroke.DOT1, 
+                                       StandardStroke.DOT5)) {
+                    mnDensity.add(new LineStyleMenuItem(stroke, 104, 4, 2.0));
+                }
+                mnLineStyle.add(mnDensity);
+            }
+
+            {
+                JMenu mnDensity = new JMenu();
+                mnDensity.setIcon(icon(StandardStroke.RAILROAD12, 54, 7, 1.0));
+
+                for (StandardStroke stroke:
+                         EnumSet.range(StandardStroke.RAILROAD1,
+                                       StandardStroke.RAILROAD24)) {
+                    mnDensity.add(new LineStyleMenuItem(stroke, 104, 24, 2.0));
+                }
+                mnLineStyle.add(mnDensity);
+            }
+            mnCurve.add(mnLineStyle);
 
             JMenu mnLineWidth = new JMenu("Line width");
             mnLineWidth.setMnemonic(KeyEvent.VK_W);
-            mnLineWidth.add(new LineWidthMenuItem("images/line1.png", 0.0008));
+            mnLineWidth.add(new LineWidthMenuItem(0.0008));
             LineWidthMenuItem normalWidthItem = 
-                new LineWidthMenuItem("images/line2.png", 0.0016);
+                new LineWidthMenuItem(0.0016);
             normalWidthItem.setSelected(true);
             mnLineWidth.add(normalWidthItem);
-            mnLineWidth.add(new LineWidthMenuItem("images/line4.png", 0.0032));
-            mnLineWidth.add(new LineWidthMenuItem("images/line8.png", 0.0064));
+            mnLineWidth.add(new LineWidthMenuItem(0.0032));
+            mnLineWidth.add(new LineWidthMenuItem(0.0064));
             mnLineWidth.add
                 (new JRadioButtonMenuItem
                  (new AbstractAction("Custom...") {
@@ -1342,6 +1330,21 @@ public class EditFrame extends JFrame
         g.drawRect(0, 0, im.getWidth() - 1, im.getHeight() - 1);
         g.setPaint(fill.getPaint(Color.BLACK, 1));
         g.fill(new Rectangle(0, 0, im.getWidth(), im.getHeight()));
+        return new ImageIcon(im);
+    }
+
+    static ImageIcon icon(StandardStroke stroke, int width, int height, double lineWidth) {
+        float middle = height/2.0f;
+        Shape line = new Line2D.Float(0f, middle, (float) width, middle);
+        BufferedImage im = new BufferedImage
+            (width, height, BufferedImage.TYPE_INT_ARGB);
+        Graphics2D g = im.createGraphics();
+        g.setBackground(new Color(255, 255, 255, 0));
+        g.clearRect(0, 0, im.getWidth(), im.getHeight());
+        g.setColor(Color.BLACK);
+        g.setRenderingHint(RenderingHints.KEY_ANTIALIASING,
+                           RenderingHints.VALUE_ANTIALIAS_ON);
+        stroke.getStroke().draw(g, line, lineWidth);
         return new ImageIcon(im);
     }
 }
