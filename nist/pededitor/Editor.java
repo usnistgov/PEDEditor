@@ -3200,9 +3200,6 @@ public class Editor extends Diagram
         }
 
         setMargin(side, margin);
-        getEditPane().setPreferredSize(scaledPageBounds(scale).getSize());
-        getEditPane().revalidate();
-        scaledOriginalImages = null;
     }
 
     /** Invoked from the EditFrame menu */
@@ -3254,6 +3251,7 @@ public class Editor extends Diagram
         super.setPageBounds(rect);
         getEditPane().setPreferredSize(scaledPageBounds(scale).getSize());
         getEditPane().revalidate();
+        scaledOriginalImages = null;
     }
 
     @Override void cannibalize(Diagram other) {
@@ -3868,18 +3866,30 @@ public class Editor extends Diagram
             Point2D.Double newMprin = xformi.transform(vs.get(0), vs.get(1));
             Point2D.Double newMousePage = principalToStandardPage
                 .transform(newMprin);
-            if (Duh.distance(newMousePage, pageBounds) > 1e-6) {
-                JOptionPane.showMessageDialog
+            double d = Duh.distance(newMousePage, pageBounds);
+            if (d > 10) {
+                showError
+                    ("<html><body width = \"300 px\""
+                     + "<p>The coordinates you selected lie far outside "
+                     + "the page boundaries.  (Remember to use the percent "
+                     + "sign when entering percentage values.)"
+                     + "</body></html>",
+                     "Coordinates out of bounds");
+                return;
+            } else if (d > 1e-6) {
+                if (JOptionPane.showConfirmDialog
                     (editFrame,
                      "<html><body width = \"300 px\""
                      + "<p>The coordinates you selected lie beyond the edge "
-                     + "of the page. "
-                     + "Maybe you left out a % sign, or maybe you need "
-                     + "to adjust the margins using the "
-                     + "<code><u>L</u>ayout/<u>M</u>argins</code> "
-                     + "menu selections.</p>"
-                     + "</body></html>");
-                return;
+                     + "of the page. Expand the page margins?"
+                     + "</body></html>",
+                     "Coordinates out of bounds",
+                     JOptionPane.OK_CANCEL_OPTION) == JOptionPane.OK_OPTION) {
+                    pageBounds.add(newMousePage);
+                    setPageBounds(pageBounds);
+                } else {
+                    return;
+                }
             }
 
             mprin = newMprin;

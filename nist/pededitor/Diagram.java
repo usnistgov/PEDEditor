@@ -2774,7 +2774,8 @@ public class Diagram extends Observable implements Printable {
             pageBounds.height += delta;
             break;
         }
-        propagateChange();
+
+        setPageBounds(pageBounds);
     }
 
     static Diagram loadFrom(File file) throws IOException {
