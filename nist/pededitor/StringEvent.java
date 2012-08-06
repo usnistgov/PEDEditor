@@ -16,8 +16,8 @@ public class StringEvent extends EventObject {
         return string;
     }
 
-    @Override
-	public String toString() {
-        return "StringEvent[" + getSource() + ", " + string + "]";
+    @Override public String toString() {
+        return getClass().getSimpleName() + "[" + getSource() + ", "
+            + string + "]";
     }
 }
