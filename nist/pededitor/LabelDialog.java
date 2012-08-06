@@ -135,6 +135,20 @@ public class LabelDialog extends JDialog {
         textField.setSelectionEnd(ss + s.length());
     }
 
+    public void delimit(Delimiter d) {
+        String str = textField.getText();
+        int ss = textField.getSelectionStart();
+        int se = textField.getSelectionEnd();
+        int dsl = d.getStart().length();
+        textField.setText
+            (str.substring(0, ss) + d.getStart()
+             + str.substring(ss, se) + d.getEnd()
+             + str.substring(se));
+
+        textField.setSelectionStart(ss + dsl);
+        textField.setSelectionEnd(se + dsl);
+    }
+
     LabelDialog(Frame owner, String title, Font font) {
         super(owner, "Edit Text", true);
 
@@ -155,6 +169,17 @@ public class LabelDialog extends JDialog {
         {
             JPanel panel = new JPanel();
             GridBagUtil gb = new GridBagUtil(panel);
+
+            DelimiterEventListener dlisten = new DelimiterEventListener() {
+                    @Override public void actionPerformed(DelimiterEvent e) {
+                        delimit(e.getDelimiter());
+                    }
+                };
+
+            DelimiterPalettePanel dpal = new DelimiterPalettePanel
+                (new HTMLDelimiterPalette(), 7, font);
+            dpal.addListener(dlisten);
+            gb.endRowWith(dpal);
 
             StringPalettePanel pal;
             StringEventListener listen = new StringEventListener() {
