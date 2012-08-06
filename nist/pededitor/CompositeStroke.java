@@ -58,12 +58,12 @@ public class CompositeStroke {
         return new CompositeStroke(BasicStrokes.getSolidLine());
     }
 
-    public static CompositeStroke getDottedLine() {
-        return new CompositeStroke(BasicStrokes.getDottedLine());
+    public static CompositeStroke getDottedLine(double dashPeriod) {
+        return new CompositeStroke(BasicStrokes.getDottedLine(dashPeriod));
     }
 
-    public static CompositeStroke getDashedLine() {
-        return new CompositeStroke(BasicStrokes.getDashedLine());
+    public static CompositeStroke getDashedLine(double dashPeriod) {
+        return new CompositeStroke(BasicStrokes.getDashedLine(dashPeriod));
     }
 
     public static CompositeStroke getBlankFirstDashedLine() {

@@ -39,22 +39,38 @@ public class BasicStrokes {
     }
 
     public static BasicStroke getDottedLine() {
+        return getDottedLine(5.4f);
+    }
+
+    public static BasicStroke getDottedLine(double dashPeriod) {
         return new BasicStroke
             (1.8f,
              BasicStroke.CAP_ROUND,
              BasicStroke.JOIN_ROUND,
              3.0f,
-             new float[] { 0, 5.4f },
+             new float[] { 0, (float) dashPeriod },
              0.0f);
     }
 
     public static BasicStroke getDashedLine() {
+        return getDashedLine(9);
+    }
+
+    /** Return a dashed line that is about 64% filled, accounting for
+        the leading and trailing diameter-1 semicircles */
+    public static BasicStroke getDashedLine(double dashPeriod) {
+        double density = 0.642822018f;
+        double on = dashPeriod * density - Math.PI / 4;
+        return getDashedLine(on, dashPeriod - on);
+    }
+
+    public static BasicStroke getDashedLine(double on, double off) {
         return new BasicStroke
             (1.0f,
              BasicStroke.CAP_ROUND,
              BasicStroke.JOIN_ROUND,
              3.0f,
-             new float[] { 5, 4 },
+             new float[] { (float) on, (float) off },
              0.0f);
     }
 
