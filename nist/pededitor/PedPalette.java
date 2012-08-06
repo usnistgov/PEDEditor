@@ -9,6 +9,7 @@ public class PedPalette extends StringPalette {
                     new Object[][] {
                         { "\u207a", "C\u207a" } /* superscript plus */,
                         {"\u207b", "C\u207b" } /* superscript minus */,
+                        {"<sub>1</sub>", "<html>C<sub>1</sub></html>"},
                         {"<sub>2</sub>", "<html>C<sub>2</sub></html>"},
                         {"<sub>3</sub>", "<html>C<sub>3</sub></html>"},
                         {"<sub>4</sub>", "<html>C<sub>4</sub></html>"},
