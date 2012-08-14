@@ -27,7 +27,7 @@ public class TieLine {
 
     @JsonProperty("innerT1") public double it1 = -1.0;
     @JsonProperty("innerT2") public double it2 = -1.0;
-    @JsonIgnore public GeneralPolyline innerEdge;
+    @JsonIgnore public CuspFigure innerEdge;
 
     /** Used only during JSON deserialization. Later, use getInnerID()
         instead. */
@@ -35,7 +35,7 @@ public class TieLine {
 
     @JsonProperty("outerT1") public double ot1 = -1.0;
     @JsonProperty("outerT2") public double ot2 = -1.0;
-    @JsonIgnore public GeneralPolyline outerEdge;
+    @JsonIgnore public CuspFigure outerEdge;
 
     /** Used only during JSON deserialization. Later, use getOuterID()
         instead. */
@@ -65,20 +65,6 @@ public class TieLine {
         this.outerId = outerId;
         this.ot1 = ot1;
         this.ot2 = ot2;
-    }
-
-    @Override
-	public TieLine clone() {
-        TieLine output = new TieLine(lineCnt, stroke);
-        output.it1 = it1;
-        output.it2 = it2;
-        output.ot1 = ot1;
-        output.ot2 = ot2;
-        output.lineWidth = lineWidth;
-        output.innerEdge = (GeneralPolyline) innerEdge.clone();
-        output.outerEdge = (GeneralPolyline) outerEdge.clone();
-        output.setColor(getColor());
-        return output;
     }
 
     /** @return null unless this polyline has been assigned a
@@ -303,12 +289,17 @@ public class TieLine {
         the transform is generally not the same as the transform of
         the smoothing. */
     public TieLine createTransformed(AffineTransform xform) {
-        TieLine output = clone();
-        output.innerEdge = innerEdge.createTransformed(xform);
-        output.outerEdge = outerEdge.createTransformed(xform);
-        return output;
+        TieLine res = new TieLine(lineCnt, stroke);
+        res.it1 = it1;
+        res.it2 = it2;
+        res.ot1 = ot1;
+        res.ot2 = ot2;
+        res.lineWidth = lineWidth;
+        res.innerEdge = innerEdge.createTransformed(xform);
+        res.outerEdge = outerEdge.createTransformed(xform);
+        res.setColor(getColor());
+        return res;
     }
-
 
     /** Draw the path of this TieLine. The coordinates for
         this path should be defined in the "Original" coordinate
