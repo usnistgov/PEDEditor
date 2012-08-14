@@ -756,6 +756,18 @@ public class Duh {
         return new Line2D.Double(p1, p2);
     }
 
+    public static Point2D.Double[] transform(AffineTransform xform, Collection<Point2D> points) {
+        int cnt = points.size();
+        int i = -1;
+        Point2D.Double[] res = new Point2D.Double[cnt];
+        for (Point2D p: points) {
+            ++i;
+            res[i] = new Point2D.Double();
+            xform.transform(p, res[i]);
+        }
+        return res;
+    }
+
     /** Create a Line2D.Double that represents a ray starting at point
         p and pointing in direction v such that, if possible, the
         length of the ray equals the distance from the origin to p.
