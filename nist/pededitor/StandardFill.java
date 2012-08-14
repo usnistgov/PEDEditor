@@ -60,8 +60,7 @@ public enum StandardFill {
         double lineWidth;
         double density;
         boolean crosshatch;
-        @Override
-		public Paint getPaint(Color c, double scale) {
+        @Override public Paint getPaint(Color c, double scale) {
             return Fill.createHatch(theta, lineWidth * scale, density,
                                     crosshatch, c);
         }
@@ -82,11 +81,21 @@ public enum StandardFill {
         double lineWidth;
         boolean crosshatch;
         BasicStroke stroke;
+
+        // Cache the arguments and return value of the most recent fill()
+        // call.
+        private transient Paint paint = null;
+        private transient Color color = null;
+        private transient double scale = 0;
         
-        @Override
-		public Paint getPaint(Color c, double scale) {
-            return Fill.createHatch(theta, lineWidth * scale, crosshatch,
-                                    stroke, c);
+        @Override public Paint getPaint(Color c, double scale) {
+            if (paint == null || !c.equals(color) || scale != this.scale) {
+                color = c;
+                this.scale = scale;
+                paint = Fill.createHatch(theta, lineWidth * scale, crosshatch,
+                                         stroke, c);
+            }
+            return paint;
         }
     }
 
