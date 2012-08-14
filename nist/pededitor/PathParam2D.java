@@ -1,6 +1,7 @@
 package gov.nist.pededitor;
 
 import java.awt.Shape;
+import java.awt.geom.AffineTransform;
 import java.awt.geom.Line2D;
 import java.awt.geom.PathIterator;
 import java.awt.geom.Point2D;
@@ -366,5 +367,34 @@ public class PathParam2D extends Param2DAdapter
             res.add(createSubset(seg1, t1));
         }
         return segments.toArray(new BoundedParam2D[0]);
+    }
+
+    public Line2D.Double[] lineSegments() {
+        ArrayList<Line2D.Double> res = new ArrayList<>();
+        for (OffsetParam2D seg: segments) {
+            BoundedParam2D c = seg.getContents();
+            if (c instanceof SegmentParam2D) {
+                res.add(new Line2D.Double(c.getStart(), c.getEnd()));
+            }
+        }
+        return res.toArray(new Line2D.Double[0]);
+    }
+
+    public BoundedParam2D[] curvedSegments() {
+        ArrayList<BoundedParam2D> res = new ArrayList<>();
+        for (OffsetParam2D seg: segments) {
+            if (seg.getContents() instanceof BezierParam2D) {
+                res.add(seg);
+            }
+        }
+        return res.toArray(new BoundedParam2D[0]);
+    }
+
+    @Override public PathParam2D createTransformed(AffineTransform xform) {
+        PathParam2D res = new PathParam2D(t0, t1);
+        for (OffsetParam2D segment: segments) {
+            res.segments.add(segment.createTransformed(xform));
+        }
+        return res;
     }
 }

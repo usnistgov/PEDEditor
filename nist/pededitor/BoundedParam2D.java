@@ -1,5 +1,6 @@
 package gov.nist.pededitor;
 
+import java.awt.geom.AffineTransform;
 import java.awt.geom.Line2D;
 import java.awt.geom.Point2D;
 import java.awt.geom.Rectangle2D;
@@ -29,6 +30,7 @@ public interface BoundedParam2D {
 
     Point2D.Double getLocation(double t);
     Point2D.Double getDerivative(double t);
+    BoundedParam2D createTransformed(AffineTransform xform);
 
     /** Return getLocation(getMinT()). */
     Point2D.Double getStart();

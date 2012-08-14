@@ -12,6 +12,7 @@ import java.util.*;
 final public class CubicSpline2D implements BoundedParameterizable2D {
     CubicSpline1D xSpline;
     CubicSpline1D ySpline;
+    Path2D.Double cachedPath = null;
 
     public CubicSpline2D (Point2D[] points) {
         this(points, false);
@@ -195,29 +196,32 @@ final public class CubicSpline2D implements BoundedParameterizable2D {
         }
     }
 
-    /** Convert this spline into a Path2D. */
-    Path2D.Double path() {
+    void appendSplinesTo(Path2D path, int start, int end) {
         double[] bezx = new double[4];
         double[] bezy = new double[4];
-        Path2D.Double path = new Path2D.Double();
-        int cnt = segmentCnt();
-        if (cnt < 0) {
-            return path;
-        }
-
-        Point2D.Double p = getVertex(0);
-        path.moveTo(p.x, p.y);
-        for (int segment = 0; segment < cnt; ++segment) {
+        for (int segment = start; segment < end; ++segment) {
             xSpline.bezier(segment, bezx);
             ySpline.bezier(segment, bezy);
             path.curveTo(bezx[1],bezy[1],bezx[2],bezy[2],bezx[3],bezy[3]);
         }
-
-        return path;
     }
 
-    @Override
-	public BoundedParam2D getParameterization() {
+    /** Convert this spline into a Path2D. */
+    public Path2D.Double path() {
+        if (cachedPath == null) {
+            cachedPath = new Path2D.Double();
+            int cnt = segmentCnt();
+            if (cnt >= 0) {
+                Point2D.Double p = getVertex(0);
+                cachedPath.moveTo(p.x, p.y);
+                appendSplinesTo(cachedPath, 0, cnt);
+            }
+        }
+
+        return (Path2D.Double) cachedPath.clone();
+    }
+
+    @Override public BoundedParam2D getParameterization() {
         return PathParam2D.create(path());
     }
 
@@ -235,8 +239,7 @@ final public class CubicSpline2D implements BoundedParameterizable2D {
               new Point2D.Double(bezx[3], bezy[3]) };
     }
 
-    @Override
-	public String toString() {
+    @Override public String toString() {
         return super.toString() + "\n" + "x: " + xSpline + "y: " + ySpline;
     }
 

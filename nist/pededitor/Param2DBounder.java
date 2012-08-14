@@ -1,5 +1,6 @@
 package gov.nist.pededitor;
 
+import java.awt.geom.AffineTransform;
 import java.awt.geom.Line2D;
 import java.awt.geom.Point2D;
 import java.awt.geom.Rectangle2D;
@@ -61,6 +62,11 @@ public class Param2DBounder implements BoundedParam2D {
             deriv = new Param2DBounder(c.derivative(), t0, t1);
         }
         return deriv;
+    }
+
+    @Override public BoundedParam2D createTransformed
+        (AffineTransform xform) {
+        return new Param2DBounder(c.createTransformed(xform), t0, t1);
     }
 
     @Override public Rectangle2D.Double getBounds() {

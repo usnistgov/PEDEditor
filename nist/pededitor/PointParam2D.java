@@ -1,5 +1,6 @@
 package gov.nist.pededitor;
 
+import java.awt.geom.AffineTransform;
 import java.awt.geom.Line2D;
 import java.awt.geom.Point2D;
 import java.awt.geom.Rectangle2D;
@@ -86,5 +87,9 @@ public class PointParam2D implements BoundedParam2D {
 
 	@Override public BoundedParam2D createSubset(double minT, double maxT) {
 		return this;
+	}
+
+	@Override public BoundedParam2D createTransformed(AffineTransform xform) {
+		return new PointParam2D(xform.transform(p0, new Point2D.Double()));
 	}
 }

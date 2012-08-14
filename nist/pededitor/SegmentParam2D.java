@@ -1,5 +1,6 @@
 package gov.nist.pededitor;
 
+import java.awt.geom.AffineTransform;
 import java.awt.geom.Line2D;
 import java.awt.geom.Point2D;
 import java.awt.geom.Rectangle2D;
@@ -86,6 +87,12 @@ public class SegmentParam2D extends Param2DAdapter
         } else {
             return new double[0];
         }
+    }
+
+    @Override public SegmentParam2D createTransformed(AffineTransform xform) {
+        return new SegmentParam2D
+            (xform.transform(p0, new Point2D.Double()),
+             xform.transform(pEnd, new Point2D.Double()));
     }
 
     @Override public String toString() {

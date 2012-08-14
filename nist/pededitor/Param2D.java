@@ -1,5 +1,6 @@
 package gov.nist.pededitor;
 
+import java.awt.geom.AffineTransform;
 import java.awt.geom.Line2D;
 import java.awt.geom.Point2D;
 import java.awt.geom.Rectangle2D;
@@ -46,6 +47,7 @@ public interface Param2D {
     /** Return the derivative of this curve with respect to t, or null
         if the derivative is undefined. */
     Param2D derivative();
+    Param2D createTransformed(AffineTransform xform);
 
     /** Return bounds for this curve. If the bounds cannot be computed
         exactly, then they should be wider than necessary instead of

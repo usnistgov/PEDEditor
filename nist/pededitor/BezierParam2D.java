@@ -1,5 +1,6 @@
 package gov.nist.pededitor;
 
+import java.awt.geom.AffineTransform;
 import java.awt.geom.Line2D;
 import java.awt.geom.Point2D;
 import java.awt.geom.Rectangle2D;
@@ -57,6 +58,16 @@ abstract public class BezierParam2D extends Param2DAdapter {
             throw new IllegalArgumentException
                 ("create() can only handle 1-4 control points");
         }
+    }
+
+    @Override public Param2D createTransformed(AffineTransform xform) {
+        Point2D.Double[] xpoints = new Point2D.Double[points.length];
+        int i=-1;
+        for (Point2D.Double point: points) {
+            ++i;
+            xform.transform(point, xpoints[i] = new Point2D.Double());
+        }
+        return createUnbounded(points);
     }
 
     protected void init(Point2D[] points) {

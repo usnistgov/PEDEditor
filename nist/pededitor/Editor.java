@@ -75,9 +75,6 @@ import org.codehaus.jackson.annotate.JsonIgnore;
 // TODO (mandatory, 1 week) Enable filling of regions with cusps. As
 // things currently stand, it's not possible to fill a semicircle.
 
-// TODO (mandatory) Allow different densities of dotted and dashed
-// lines, just as is the case for railroad ties.
-
 // TODO (mandatory, 1 day): At this point, the rule that tie lines
 // have to end at vertexes of the diagram is no longer needed and not
 // difficult to eliminate. Tie lines ending on rulers without extra
@@ -427,6 +424,7 @@ public class Editor extends Diagram
     protected transient double scale;
     protected transient BufferedImage originalImage;
     protected transient boolean editorIsPacked = false;
+    protected transient boolean smoothed = false;
 
     /** The item (vertex, label, etc.) that is selected, or null if nothing is. */
     protected transient DecorationHandle selection;
@@ -642,7 +640,7 @@ public class Editor extends Diagram
 
     /** @return The currently selected GeneralPolyline, or null if no
         curve is selected. */
-    @JsonIgnore public GeneralPolyline getActiveCurve() {
+    @JsonIgnore public CuspFigure getActiveCurve() {
         CurveDecoration sel = getSelectedCurve();
         return (sel == null) ? null : sel.getItem();
     }
@@ -775,7 +773,7 @@ public class Editor extends Diagram
             unstickMouse();
         }
 
-        GeneralPolyline path = vhand.getDecoration().getItem();
+        CuspFigure path = vhand.getDecoration().getItem();
         Shape region = vhand.getDecoration().getShape();
         PathParam2D param = new PathParam2D(region);
 
@@ -953,7 +951,7 @@ public class Editor extends Diagram
             return; // Nothing to do.
         }
 
-        GeneralPolyline path = getActiveCurve();
+        CuspFigure path = getActiveCurve();
         int cnt = path.size();
 
         if (path.isClosed()) {
@@ -1082,7 +1080,7 @@ public class Editor extends Diagram
         // the curve that already exists.
 
         CurveDecoration csel = getSelectedCurve();
-        GeneralPolyline path = csel.getItem();
+        CuspFigure path = csel.getItem();
 
         // Disable anti-aliasing for this phase because it
         // prevents the green line from precisely overwriting
@@ -1110,7 +1108,7 @@ public class Editor extends Diagram
 
             int vertexNo = getVertexHandle().vertexNo
                 + (insertBeforeSelection ? 0 : 1);
-            path.add(vertexNo, extraVertex);
+            path.getCurve().add(vertexNo, extraVertex, smoothed);
             csel.draw(g, scale);
             path.remove(vertexNo);
             csel.setColor(oldColor);
@@ -1287,19 +1285,18 @@ public class Editor extends Diagram
         If a curve was already selected, then that will be the return
         value; if no curve is selected, then start a new curve and
         return that. */
-    @JsonIgnore public GeneralPolyline getCurveForAppend() {
+    @JsonIgnore public CuspFigure getCurveForAppend() {
         if (principalToStandardPage == null) {
             return null;
         }
 
-        GeneralPolyline activeCurve = getActiveCurve();
+        CuspFigure activeCurve = getActiveCurve();
         if (activeCurve != null) {
             return activeCurve;
         }
 
-        paths.add(GeneralPolyline.create
-                  (GeneralPolyline.LINEAR,
-                   new Point2D.Double[0], lineStyle, lineWidth));
+        paths.add
+            (new CuspFigure(new CuspInterp2D(false), lineStyle, lineWidth));
         selection = new VertexHandle(paths.size() - 1, -1);
         insertBeforeSelection = false;
         return getActiveCurve();
@@ -1312,7 +1309,7 @@ public class Editor extends Diagram
 
     public void setFill(StandardFill fill) {
         String errorTitle = "Cannot change fill settings";
-        GeneralPolyline path = getActiveCurve();
+        CuspFigure path = getActiveCurve();
         if (path == null) {
             showError
                 ("Fill settings can only be changed when a curve is selected.",
@@ -1330,15 +1327,16 @@ public class Editor extends Diagram
         setFill(path, fill);
     }
 
-    /** Start a new curve where the old curve ends. */
-    public void addCusp() {
-        if (mprin == null) {
+    /** Toggle the highlighted vertex between the smoothed and
+        un-smoothed states. */
+    public void toggleCusp() {
+        VertexHandle vhand = getVertexHandle();
+        if (vhand == null) {
             return;
         }
 
-        add(mprin);
-        deselectCurve();
-        add(mprin);
+        vhand.getItem().getCurve().toggleSmoothed(vhand.vertexNo);
+        propagateChange();
     }
 
     /** Update the tangency information to display the slope at the
@@ -1348,15 +1346,15 @@ public class Editor extends Diagram
     }
 
     public void showTangent(Decoration dec, double t) {
-        BoundedParam2D param = ((BoundedParameterizable2D) dec).getParameterization();
+        BoundedParam2D param = ((BoundedParameterizable2D) dec)
+            .getParameterization();
         if (dec instanceof CurveDecoration) {
             CurveDecoration cdec = (CurveDecoration) dec;
-            GeneralPolyline path = cdec.getItem();
-            if (path instanceof Polyline && t == Math.floor(t)) {
-
-                // For polylines, insertBeforeSelection gives a hint which
-                // of the two segments adjoining a vertex is the one whose
-                // derivative we want.
+            CuspFigure path = cdec.getItem();
+            if (t == Math.floor(t) && !path.getCurve().isSmoothed((int) t)) {
+                // For polylines, insertBeforeSelection gives a
+                // hint which of the two segments adjoining a
+                // vertex is the one whose derivative we want.
                 t = BoundedParam2Ds.constrainToDomain
                     (param, t + (insertBeforeSelection ? -0.5 : 0.5));
             }
@@ -1389,7 +1387,7 @@ public class Editor extends Diagram
             return true;
         }
 
-        GeneralPolyline path = vhand.getItem();
+        CuspFigure path = vhand.getItem();
         return vhand.vertexNo < path.size() - 1 && p.equals(path.get(vhand.vertexNo + 1));
     }
 
@@ -1398,10 +1396,10 @@ public class Editor extends Diagram
         if (isDuplicate(point)) {
             return; // Adding the same point twice causes problems.
         }
-        GeneralPolyline path = getCurveForAppend();
+        CuspFigure path = getCurveForAppend();
         VertexHandle vhand = getVertexHandle();
         int addPos = vhand.vertexNo + (insertBeforeSelection ? -1 : 0 );
-        add(path, addPos, point);
+        add(path, addPos, point, smoothed);
         if (!insertBeforeSelection) {
             ++vhand.vertexNo;
         }
@@ -1409,7 +1407,7 @@ public class Editor extends Diagram
     }
 
     @Override void removeCurve(int curveNo) {
-        GeneralPolyline path = paths.get(curveNo);
+        CuspFigure path = paths.get(curveNo);
 
         // If an incomplete tie line selection refers to this curve,
         // then stop selecting a tie line.
@@ -1525,7 +1523,7 @@ public class Editor extends Diagram
 
     public void addRuler() {
         String errorTitle = "Cannot create ruler";
-        GeneralPolyline path = getActiveCurve();
+        CuspFigure path = getActiveCurve();
         if (path == null || path.size() != 2) {
             showError
                 ("Before you can create a new ruler,\n"
@@ -1587,7 +1585,7 @@ public class Editor extends Diagram
 
     public void addVariable() {
         String errorTitle = "Cannot add variable";
-        GeneralPolyline path = getActiveCurve();
+        CuspFigure path = getActiveCurve();
         if (path == null || path.size() != 3) {
             showError
                 ("<html><p>To create a new variable, you must "
@@ -1941,7 +1939,7 @@ public class Editor extends Diagram
 
     public void copyCoordinatesToClipboard() {
         ArrayList<Point2D.Double> points = new ArrayList<>();
-        GeneralPolyline path = getActiveCurve();
+        CuspFigure path = getActiveCurve();
         if (path != null) {
             points.addAll(Arrays.asList(path.getPoints()));
         } else {
@@ -2540,7 +2538,7 @@ public class Editor extends Diagram
         if (select) {
             selection = handle;
             if (selection instanceof VertexHandle) {
-                GeneralPolyline path = getActiveCurve();
+                CuspFigure path = getActiveCurve();
                 insertBeforeSelection = closerToNext
                     || (path.size() >= 2 && t == 0);
             }
@@ -2550,12 +2548,10 @@ public class Editor extends Diagram
         showTangent(dec, t);
     }
 
+    /** Toggle the initial setting for vertexes added in the future
+        between the smoothed and un-smoothed states. */
     public void toggleSmoothing() {
-        VertexHandle hand = getVertexHandle();
-        if (hand == null) {
-            return;
-        }
-        toggleSmoothing(hand.getCurveNo());
+        smoothed = !smoothed;
     }
 
     /** Toggle the closed/open status of the currently selected
@@ -3630,7 +3626,7 @@ public class Editor extends Diagram
     public DecorationHandle secondarySelection() {
         VertexHandle vh = getVertexHandle();
         if (vh != null) {
-            GeneralPolyline path = vh.getItem();
+            CuspFigure path = vh.getItem();
             int size = path.size();
             if (size < 2) {
                 return null;
@@ -3715,8 +3711,9 @@ public class Editor extends Diagram
                         continue;
                     }
                     gridLine = Duh.transform(standardPageToPrincipal, gridLine);
-                    paths.add(new Polyline(new Point2D[] { gridLine.getP1(), gridLine.getP2() },
-                                           StandardStroke.INVISIBLE, 0));
+                    paths.add(new CuspFigure
+                              (new CuspInterp2D(gridLine),
+                               StandardStroke.INVISIBLE, 0));
                 }
 
                 {
@@ -4114,7 +4111,7 @@ public class Editor extends Diagram
     }
 
     double getLineWidth() {
-        GeneralPolyline path = getActiveCurve();
+        CuspFigure path = getActiveCurve();
         if (path != null) {
             return path.getLineWidth();
         }

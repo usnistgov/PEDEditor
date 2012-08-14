@@ -179,9 +179,9 @@ class LinearRuler implements BoundedParameterizable2D {
         return axis.value(endPoint) * multiplier;
     }
 
-    Polyline spinePolyline() {
-        return new Polyline
-            (new Point2D.Double[] { startPoint, endPoint },
+    CuspFigure spinePolyline() {
+        return new CuspFigure
+            (new CuspInterp2D(startPoint, endPoint),
              StandardStroke.SOLID, lineWidth);
     }
 

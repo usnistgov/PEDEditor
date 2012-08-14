@@ -121,12 +121,12 @@ public class Diagram extends Observable implements Printable {
             this.vertexNo = vertexNo;
         }
 
-        public GeneralPolyline getItem() {
+        public CuspFigure getItem() {
             return getDecoration().getItem();
         }
 
         @Override public VertexHandle remove() {
-            GeneralPolyline path = getItem();
+            CuspFigure path = getItem();
             int oldVertexCnt = path.size();
 
             if (oldVertexCnt >= 2) {
@@ -201,23 +201,17 @@ public class Diagram extends Observable implements Printable {
         }
 
         @Override public void move(Point2D target) {
-            GeneralPolyline path = getItem();
+            CuspFigure path = getItem();
             path.set(vertexNo, target);
             propagateChange();
         }
 
         @Override public VertexHandle copy(Point2D dest) {
-            Point2D.Double delta = getLocation();
-            delta.x = dest.getX() - delta.x;
-            delta.y = dest.getY() - delta.y;
-            GeneralPolyline path = getItem().clone();
-            for (int i = 0; i < path.size(); ++i) {
-                Point2D.Double point = path.get(i);
-                point.x += delta.x;
-                point.y += delta.y;
-                path.set(i, point);
-            }
-            paths.add(path);
+            Point2D.Double loc = getLocation();
+            paths.add
+                (getItem().createTransformed
+                 (AffineTransform.getTranslateInstance
+                  (dest.getX() - loc.x, dest.getY() - loc.y)));
             propagateChange();
             return new VertexHandle(paths.size() - 1, vertexNo);
         }
@@ -260,8 +254,8 @@ public class Diagram extends Observable implements Printable {
         }
 
         @Override public void setColor(Color color) {
-            propagateChange();
             getItem().setColor(color);
+            propagateChange();
         }
 
         @Override public Color getColor() {
@@ -269,10 +263,11 @@ public class Diagram extends Observable implements Printable {
         }
 
         public Path2D.Double getShape() {
-            return getItem().getPath(principalToStandardPage);
+            return getItem().createTransformed(principalToStandardPage)
+                .getPath();
         }
 
-        GeneralPolyline getItem() {
+        CuspFigure getItem() {
             return paths.get(curveNo);
         }
 
@@ -283,14 +278,15 @@ public class Diagram extends Observable implements Printable {
         }
 
         @Override public void draw(Graphics2D g, double scale) {
-            GeneralPolyline item = getItem();
+            CuspFigure item = getItem();
             if (item.size() == 1
                 && item.getStroke() != StandardStroke.INVISIBLE) {
                 // Draw a dot.
                 double r = item.getLineWidth() * 2 * scale;
                 circleVertices(g, item, scale, true, r);
             } else {
-                item.draw(g, getPrincipalToAlignedPage(), scale);
+                item.createTransformed(principalToScaledPage(scale))
+                    .draw(g, scale * item.getLineWidth());
             }
         }
 
@@ -317,7 +313,7 @@ public class Diagram extends Observable implements Printable {
 
         @Override public DecorationHandle[] getHandles() {
             ArrayList<DecorationHandle> output = new ArrayList<>();
-            GeneralPolyline path = getItem();
+            CuspFigure path = getItem();
             for (int j = 0; j < path.size(); ++j) {
                 output.add(new VertexHandle(this, j));
             }
@@ -985,10 +981,10 @@ public class Diagram extends Observable implements Printable {
     }
 
     class PathAndT {
-        GeneralPolyline path;
+        CuspFigure path;
         double t;
 
-        PathAndT(GeneralPolyline path, double t) {
+        PathAndT(CuspFigure path, double t) {
             this.path = path;
             this.t = t;
         }
@@ -1039,7 +1035,7 @@ public class Diagram extends Observable implements Printable {
         compute automatically instead. */
     protected Rectangle2D.Double pageBounds;
     protected DiagramType diagramType = null;
-    protected ArrayList<GeneralPolyline> paths;
+    protected ArrayList<CuspFigure> paths;
     protected ArrayList<AnchoredLabel> labels;
     protected transient ArrayList<Point2D.Double> labelCenters;
     protected transient ArrayList<View> labelViews;
@@ -1133,13 +1129,13 @@ public class Diagram extends Observable implements Printable {
     }
 
     @JsonProperty("curves")
-    ArrayList<GeneralPolyline> getPaths() {
+    ArrayList<CuspFigure> getPaths() {
         return paths;
     }
 
     @JsonProperty("curves")
-    void setPaths(Collection<GeneralPolyline> paths) {
-        this.paths = new ArrayList<GeneralPolyline>(paths);
+    void setPaths(Collection<CuspFigure> paths) {
+        this.paths = new ArrayList<CuspFigure>(paths);
     }
 
     @JsonProperty("tieLines")
@@ -1147,8 +1143,8 @@ public class Diagram extends Observable implements Printable {
         return tieLines;
     }
 
-    GeneralPolyline idToCurve(int id) {
-        for (GeneralPolyline path: paths) {
+    CuspFigure idToCurve(int id) {
+        for (CuspFigure path: paths) {
             if (path.getJSONId() == id) {
                 return path;
             }
@@ -1362,11 +1358,11 @@ public class Diagram extends Observable implements Printable {
 
     /** Add a new vertex to path, located at point, and inserted just
         after vertex vertexNo. */
-    public void add(GeneralPolyline path, int vertexNo,
-                    Point2D.Double point) {
-        propagateChange();
+    public void add(CuspFigure path, int vertexNo,
+                    Point2D.Double point, boolean smoothed) {
         if (path.size() == 0) {
-            path.add(0, point);
+            path.getCurve().add(0, point, smoothed);
+            propagateChange();
             return;
         }
 
@@ -1401,12 +1397,13 @@ public class Diagram extends Observable implements Printable {
             segments.set(i, t);
         }
 
-        path.add(vertexNo + 1, point);
+        path.getCurve().add(vertexNo+1, point, smoothed);
         setPathSegments(path, segments);
+        propagateChange();
     }
 
     void removeCurve(int curveNo) {
-        GeneralPolyline path = paths.get(curveNo);
+        CuspFigure path = paths.get(curveNo);
 
         // Remove all associated tie lines.
         for (int i = tieLines.size() - 1; i >= 0; --i) {
@@ -1422,7 +1419,7 @@ public class Diagram extends Observable implements Printable {
 
     /** Make a list of t values that appear in this Diagram
         object and that refer to locations on the given path. */
-    ArrayList<Double> getPathSegments(GeneralPolyline path) {
+    ArrayList<Double> getPathSegments(CuspFigure path) {
         ArrayList<Double> output = new ArrayList<>();
 
         // Tie Lines' limits are defined by t values.
@@ -1443,7 +1440,7 @@ public class Diagram extends Observable implements Printable {
     /** You can change the segments returned by getPathSegments() and
         call setPathSegments() to make corresponding updates to the
         fields from which they came. */
-    void setPathSegments(GeneralPolyline path, ArrayList<Double> segments) {
+    void setPathSegments(CuspFigure path, ArrayList<Double> segments) {
         int index = 0;
         for (TieLine tie: tieLines) {
             if (tie.innerEdge == path) {
@@ -2419,8 +2416,8 @@ public class Diagram extends Observable implements Printable {
                  principalToStandardPage.transform(segments[i].getP2()));
         }
 
-        for (GeneralPolyline path: paths) {
-            GeneralPolyline pagePath = path.createTransformed
+        for (CuspFigure path: paths) {
+            CuspFigure pagePath = path.createTransformed
                 (principalToStandardPage);
 
             for (Line2D segment: pageSegments) {
@@ -2432,20 +2429,19 @@ public class Diagram extends Observable implements Printable {
             }
         }
 
-        GeneralPolyline[] curves = getAllCurvedCurves();
+        BoundedParam2D[] curves = getAllCurvedSegments();
         for (int i = 0; i < curves.length; ++i) {
             curves[i] = curves[i].createTransformed
                 (principalToStandardPage);
         }
 
         for (int i = 0; i < curves.length; ++i) {
-            GeneralPolyline a = curves[i];
+            BoundedParam2D a = curves[i];
             for (int j = i+1; j < curves.length; ++j) {
-                GeneralPolyline b = curves[j];
+                BoundedParam2D b = curves[j];
                 try {
                     for (Point2D.Double p: BoundedParam2Ds.intersections
-                             (a.getParameterization(), b.getParameterization(),
-                              1e-9, 80)) {
+                             (a, b, 1e-9, 80)) {
                         standardPageToPrincipal.transform(p, p);
                         res.add(p);
                     }
@@ -2488,34 +2484,11 @@ public class Diagram extends Observable implements Printable {
         return new DecorationDistance(decs.get(di.index), di.distance);
     }
 
-    public void toggleSmoothing(int pathNo) {
-        GeneralPolyline oldPath = paths.get(pathNo);
-
-        GeneralPolyline path = oldPath.nearClone
-            (oldPath.getSmoothingType() == GeneralPolyline.LINEAR
-             ? GeneralPolyline.CUBIC_SPLINE : GeneralPolyline.LINEAR);
-
-        // Switch over all tie lines defined using the old path to use
-        // the new one instead. T values remain unchanged.
-
-        for (TieLine tie: tieLines) {
-            if (tie.innerEdge == oldPath) {
-                tie.innerEdge = path;
-            }
-            if (tie.outerEdge == oldPath) {
-                tie.outerEdge = path;
-            }
-        }
-
-        paths.set(pathNo, path);
-        propagateChange();
-    }
-
     /** Toggle the closed/open status of curve #pathNo. Throws
         IllegalArgumentException if that curve is filled, since you
         can't turn off closure for a filled curve. */
     public void toggleCurveClosure(int pathNo) throws IllegalArgumentException {
-        GeneralPolyline path = paths.get(pathNo);
+        CuspFigure path = paths.get(pathNo);
         if (path.isFilled() && path.isClosed()) {
             throw new IllegalArgumentException("Cannot turn off closure of a filled curve");
         }
@@ -2532,8 +2505,9 @@ public class Diagram extends Observable implements Printable {
         return xform;
     }
 
-    void draw(Graphics2D g, GeneralPolyline path, double scale) {
-        path.draw(g, getPrincipalToAlignedPage(), scale);
+    void draw(Graphics2D g, CuspFigure path, double scale) {
+        path.createTransformed(principalToScaledPage(scale))
+            .draw(g, scale * path.getLineWidth());
     }
 
     void draw(Graphics2D g, TieLine tie, double scale) {
@@ -3162,7 +3136,7 @@ public class Diagram extends Observable implements Printable {
         return res;
     }
 
-    public void setFill(GeneralPolyline path, StandardFill fill) {
+    public void setFill(CuspFigure path, StandardFill fill) {
         path.setFill(fill);
         propagateChange();
     }
@@ -3308,10 +3282,8 @@ public class Diagram extends Observable implements Printable {
         locations, all arrow locations, and all ruler start- and
         endpoints. */
     public void transformPrincipalCoordinates(AffineTransform trans) {
-        for (GeneralPolyline path: paths) {
-            Point2D.Double[] points = path.getPoints();
-            trans.transform(points, 0, points, 0, points.length);
-            path.setPoints(Arrays.asList(points));
+        for (CuspFigure path: paths) {
+            path.setCurve(path.getCurve().createTransformed(trans));
         }
 
         Point2D.Double tmp = new Point2D.Double();
@@ -3494,57 +3466,47 @@ public class Diagram extends Observable implements Printable {
         return res.toString();
     }
 
-    boolean isStraight(GeneralPolyline path) {
-        return path.size() < 2 || path.getSmoothingType() == GeneralPolyline.LINEAR;
-    }
-
     /** @return an array of all straight line segments defined for
-        this diagram. */
+        this diagram. 2-point SplinePols are actually straight, so
+        they are included. */
     @JsonIgnore public Line2D.Double[] getAllLineSegments() {
-        ArrayList<Line2D.Double> output
-            = new ArrayList<Line2D.Double>();
+        ArrayList<Line2D.Double> res = new ArrayList<>();
          
-        for (GeneralPolyline path : paths) {
-            if (path.getSmoothingType() == GeneralPolyline.LINEAR) {
-                Point2D.Double[] points = path.getPoints();
-                for (int i = 1; i < points.length; ++i) {
-                    output.add(new Line2D.Double(points[i-1], points[i]));
-                }
-                if (points.length >= 3 && path.isClosed()) {
-                    output.add(new Line2D.Double(points[points.length-1], points[0]));
-                }
-            } else if (path.size() == 2) {
-                // A smooth path between two points is a segment.
-                output.add(new Line2D.Double(path.get(0), path.get(1)));
+        for (CuspFigure path : paths) {
+            Param2DBounder b = (Param2DBounder) path.getParameterization();
+            PathParam2D pp = (PathParam2D) b.getUnboundedCurve();
+            for (Line2D.Double line: pp.lineSegments()) {
+                res.add(line);
             }
         }
 
         for (LinearRuler ruler: rulers) {
-            GeneralPolyline path = ruler.spinePolyline();
-            output.add(new Line2D.Double(path.get(0), path.get(1)));
+        	BoundedParam2D p = ruler.getParameterization();
+        	res.add(new Line2D.Double(p.getStart(), p.getEnd()));
         }
 
-        return output.toArray(new Line2D.Double[0]);
+        return res.toArray(new Line2D.Double[0]);
     }
 
-    /** @return an array of non-straight curves defined for this
-        diagram. */
-    @JsonIgnore public GeneralPolyline[] getAllCurvedCurves() {
-        ArrayList<GeneralPolyline> res = new ArrayList<>();
+    /** @return an array of all curved segments defined for this
+        diagram. 2-point SplinePols are not actually curved, so they
+        are not included. */
+    @JsonIgnore public BoundedParam2D[] getAllCurvedSegments() {
+        ArrayList<BoundedParam2D> res = new ArrayList<>();
          
-        for (GeneralPolyline path : paths) {
-            if (path.getSmoothingType() == GeneralPolyline.LINEAR
-                || path.size() == 2) {
-                continue;
+        for (CuspFigure path : paths) {
+            Param2DBounder b = (Param2DBounder) path.getParameterization();
+            PathParam2D pp = (PathParam2D) b.getUnboundedCurve();
+            for (BoundedParam2D curve: pp.curvedSegments()) {
+                res.add(curve);
             }
-            res.add(path);
         }
 
-        return res.toArray(new GeneralPolyline[0]);
+        return res.toArray(new BoundedParam2D[0]);
     }
 
     /** Draw a circle around each point in path. */
-    void circleVertices(Graphics2D g, GeneralPolyline path, double scale,
+    void circleVertices(Graphics2D g, CuspFigure path, double scale,
                         boolean fill, double r) {
         Point2D.Double xpoint = new Point2D.Double();
         Affine p2d = principalToScaledPage(scale);

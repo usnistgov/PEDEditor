@@ -1,5 +1,6 @@
 package gov.nist.pededitor;
 
+import java.awt.geom.AffineTransform;
 import java.awt.geom.Line2D;
 import java.awt.geom.Point2D;
 import java.awt.geom.Rectangle2D;
@@ -24,6 +25,7 @@ public class OffsetParam2D implements BoundedParam2D {
         this.offset = offset;
     }
 
+    public BoundedParam2D getContents() { return c; }
     @Override public double getMinT() { return c.getMinT() + offset; }
     @Override public double getMaxT() { return c.getMaxT() + offset; }
     @Override public double getNextVertex(double t) {
@@ -127,8 +129,8 @@ public class OffsetParam2D implements BoundedParam2D {
         int index;
         
         public DistanceIndex(CurveDistance d, int i) {
-        	distance = d;
-        	index = i;
+            distance = d;
+            index = i;
         }
     }
 
@@ -193,5 +195,9 @@ public class OffsetParam2D implements BoundedParam2D {
             ++i;
         }
         throw new IllegalStateException(d.t + " is above the domain");
+    }
+
+    @Override public OffsetParam2D createTransformed(AffineTransform xform) {
+        return new OffsetParam2D(c.createTransformed(xform), offset);
     }
 }
