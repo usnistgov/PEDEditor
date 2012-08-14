@@ -12,8 +12,7 @@ public class NestedSubscripts {
     static HashMap<Character, Character> subMap = null;
     static HashMap<Character, Character> supMap = null;
 
-    @SuppressWarnings("serial")
-	private static void init() {
+    @SuppressWarnings("serial") private static void init() {
         if (subPattern != null) {
             return;
         }
