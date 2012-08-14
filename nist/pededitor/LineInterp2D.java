@@ -1,142 +1,67 @@
 package gov.nist.pededitor;
 
 import java.awt.geom.AffineTransform;
+import java.awt.geom.Line2D;
 import java.awt.geom.Path2D;
 import java.awt.geom.Point2D;
-import java.util.Collection;
+import java.util.List;
 
-/** Specialization of GeneralPolyline for vanilla polylines. */
-public class Polyline extends GeneralPolyline {
-    private boolean closed = false;
+import org.codehaus.jackson.annotate.JsonProperty;
 
-    /** The parameterization is cached for efficiency. This class and
-        its subclasses should reset param to null whenever a change
-        invalidates the cached version. */
-    protected transient BoundedParam2D param = null;
-
-    public Polyline() {
+/** Specialization of GeneralPol for vanilla polylines. */
+public class LineInterp2D extends PointsInterp2D {
+    public LineInterp2D(Point2D[] points, boolean closed) {
+        super(points, closed);
     }
 
-    public Polyline(Point2D[] points,
-                    StandardStroke stroke,
-                    double lineWidth) {
-        super(points, stroke, lineWidth);
+    // This constructor is redundant, but it allows me to tell Jackson
+    // that the "points" field of the JSON file is filled with
+    // Point2D.Doubles.
+    public LineInterp2D(@JsonProperty("points") Point2D.Double[] points,
+               @JsonProperty("closed") boolean closed) {
+        super(points, closed);
     }
 
-    @Override public void set(int vertexNo, Point2D point) {
-        param = null;
-        super.set(vertexNo, point);
+    /** Shorthand to create a line segment. */
+    public LineInterp2D(Point2D a, Point2D b) {
+        super(new Point2D[] { a, b }, false);
     }
 
-    @Override public void add(Point2D point) {
-        param = null;
-        super.add(point);
-    }
-
-    /** Add the point to the polyline in the given position. */
-    @Override public void add(int index, Point2D point) {
-        param = null;
-        super.add(index, point);
-    }
-
-    /** Remove the last point added. */
-    @Override public void remove() {
-        param = null;
-        super.remove();
-    }
-
-    /** Remove the given vertex. */
-    @Override public void remove(int vertexNo) {
-        param = null;
-        super.remove(vertexNo);
-    }
-
-    @Override public void setPoints(Collection<Point2D.Double> points) {
-        super.setPoints(points);
-        param = null;
-    }
-
-    @Override public void setClosed(boolean closed) {
-        if (closed != this.closed) {
-            this.closed = closed;
-            param = null;
-        }
-    }
-
-    @Override public boolean isClosed() {
-        return closed;
+    /** Shorthand to create a line segment. */
+    public LineInterp2D(Line2D segment) {
+        this(segment.getP1(), segment.getP2());
     }
 
     @Override public Path2D.Double getPath() {
+        return createPath(points, isClosed());
+    }
+
+    /** Create a straight (polyline) Path2D.Double connecting the
+        given set of points, returning to the starting point if closed
+        is true. */
+    static public Path2D.Double createPath
+        (List<Point2D.Double> points, boolean closed) {
         int size = points.size();
-        Path2D.Double output = new Path2D.Double();
+        Path2D.Double res = new Path2D.Double();
         if (size == 0) {
-            return output;
+            return res;
         }
 
         Point2D.Double p0 = points.get(0);
-        output.moveTo(p0.x, p0.y);
+        res.moveTo(p0.x, p0.y);
 
         for (int i = 1; i < size; ++i) {
             Point2D.Double p = points.get(i);
-            output.lineTo(p.x, p.y);
+            res.lineTo(p.x, p.y);
         }
 
-        if (isClosed() && size > 1) {
-            output.closePath();
+        if (closed && size > 1) {
+            res.closePath();
         }
-        return output;
+        return res;
     }
 
-    @Override public Path2D.Double getPath(AffineTransform at) {
-        int size = points.size();
-        Path2D.Double output = new Path2D.Double();
-        if (size == 0) {
-            return output;
-        }
-
-        Point2D.Double p0 = new Point2D.Double();
-        Point2D.Double xpt = new Point2D.Double();
-        at.transform(points.get(0), p0);
-        output.moveTo(p0.x, p0.y);
-
-        for (int i = 1; i < size; ++i) {
-            at.transform(points.get(i), xpt);
-            output.lineTo(xpt.x, xpt.y);
-        }
-
-        if (isClosed() && size > 1) {
-            output.closePath();
-        }
-        return output;
-    }
-
-    @Override public BoundedParam2D getParameterization() {
-        if (param == null) {
-            param = super.getParameterization();
-        }
-        return param;
-    }
-
-    @Override public int getSmoothingType() {
-        return GeneralPolyline.LINEAR;
-    }
-
-    public String toString(AffineTransform at) {
-        int size = points.size();
-        if (size == 0) {
-            return super.toString();
-        }
-        StringBuilder buf = new StringBuilder(super.toString() + "[");
-        Point2D.Double xpt = new Point2D.Double();
-        for (int i = 0; i < size; ++i) {
-            if (i > 0) {
-                buf.append(" - ");
-            }
-            at.transform(points.get(i), xpt);
-            buf.append(xpt.toString());
-        }
-        buf.append("]");
-        return buf.toString();
+    @Override public LineInterp2D createTransformed(AffineTransform xform) {
+        return new LineInterp2D(transformPoints(xform), isClosed());
     }
 }
