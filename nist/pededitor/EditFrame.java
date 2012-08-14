@@ -4,7 +4,6 @@ import java.awt.*;
 import java.awt.event.*;
 import java.awt.geom.Line2D;
 import java.awt.image.BufferedImage;
-import java.net.URL;
 import java.util.EnumSet;
 import java.util.Enumeration;
 import java.util.Observable;
@@ -765,7 +764,7 @@ public class EditFrame extends JFrame
             mnCurve.add(new Action
                         ("Add cusp", KeyEvent.VK_C, "typed ,") {
                     @Override public void actionPerformed(ActionEvent e) {
-                        getParentEditor().addCusp();
+                        getParentEditor().toggleCusp();
                     }
                 });
         }
