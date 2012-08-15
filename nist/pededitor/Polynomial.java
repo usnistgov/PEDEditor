@@ -23,6 +23,10 @@ public class Polynomial {
     }
 
     public static String toString(double[] poly) {
+        return toString(poly, "t");
+    }
+
+    public static String toString(double[] poly, String var) {
         if (poly == null) {
             return "null";
         }
@@ -49,9 +53,9 @@ public class Polynomial {
             }
             out.append(c);
             if (i > 1) {
-                out.append(" t^" + i);
+                out.append(" " + var + "^" + i);
             } else if (i == 1) {
-                out.append(" t");
+                out.append(" " + var);
             }
             printed = true;
         }
