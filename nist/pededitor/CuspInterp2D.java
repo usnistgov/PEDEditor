@@ -65,14 +65,6 @@ public class CuspInterp2D extends PointsInterp2D {
         this(segment.getP1(), segment.getP2());
     }
 
-    /*
-    CompositePol(@JsonProperty("points") Point2D.Double[] points,
-                 @JsonProperty("closed") boolean closed,
-                 @JsonProperty("shape") String style) {
-        this(points, !style.equals("polyline"), closed);
-    }
-    */
-
     /** Return true if the curve is to be smoothed across vertex
         #vertexNo. If the curve is not closed or if the curve contains
         two or fewer points, then the smoothing settings for the first
@@ -143,6 +135,7 @@ public class CuspInterp2D extends PointsInterp2D {
         int ss = 0; // Spline start no.
         int lastClear;
         CubicSpline2D straddleSpline = null;
+        boolean oldLast = false;
         if (isClosed()) {
             if (nextClear > 0) {
                 // Smooth through point #0, which requires a spline that
@@ -170,7 +163,10 @@ public class CuspInterp2D extends PointsInterp2D {
                 lastClear = s;
             }
         } else {
+            // Temporarily set smoothing for the last vertex to false.
             lastClear = s-1;
+            oldLast = smoothed.get(lastClear);
+            setSmoothed(lastClear, false);
         }
         while (ss < lastClear) {
             int se = nextClearBit(ss+1);
@@ -190,6 +186,11 @@ public class CuspInterp2D extends PointsInterp2D {
         if (points.size() > s) {
             // Remove the temporary duplicate of the starting point.
             points.remove(s);
+        }
+        if (!isClosed()) {
+            // Reset the last vertex to its
+            // original smoothing value.
+            setSmoothed(lastClear, oldLast);
         }
         return res;
     }
