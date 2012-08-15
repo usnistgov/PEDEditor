@@ -1,5 +1,7 @@
 package gov.nist.pededitor;
 
+import gov.nist.pededitor.EditFrame.BackgroundImageType;
+
 import javax.imageio.ImageIO;
 import javax.swing.*;
 import javax.swing.filechooser.FileNameExtensionFilter;
@@ -435,6 +437,9 @@ public class Editor extends Diagram
     /** True if imageBlinker is enabled and the original image should
         be displayed in the background at this time. */
     transient boolean backgroundImageEnabled;
+    protected transient BackgroundImageType backgroundType = null;
+    protected transient BackgroundImageType oldBackgroundType = null;
+
 
     protected transient boolean preserveMprin = false;
     protected transient boolean isShiftDown = false;
@@ -720,6 +725,9 @@ public class Editor extends Diagram
 
     public synchronized void setBackgroundType
         (EditFrame.BackgroundImageType value) {
+        oldBackgroundType = backgroundType;
+        backgroundType = value;
+
         // Turn blinking off
         if (imageBlinker != null) {
             imageBlinker.cancel();
@@ -732,10 +740,20 @@ public class Editor extends Diagram
             imageBlinker.scheduleAtFixedRate(new ImageBlinker(), 500, 500);
             backgroundImageEnabled = true;
         }
+        editFrame.setBackgroundType(value);
 
         // The rest is handed in paintDiagram().
 
         redraw();
+    }
+
+    /* Like setBackgroundType(), but attempting to set the background
+       to its current value causes it to revert to its previous value.
+       This exists just to allow control-H to hide the background
+       image and then uh-hide it. */
+    public synchronized void toggleBackgroundType
+        (EditFrame.BackgroundImageType value) {
+        setBackgroundType(value == backgroundType ? oldBackgroundType : value);
     }
 
     /** Reset the location of all vertices and labels that have the
