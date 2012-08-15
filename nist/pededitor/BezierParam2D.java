@@ -67,7 +67,7 @@ abstract public class BezierParam2D extends Param2DAdapter {
             ++i;
             xform.transform(point, xpoints[i] = new Point2D.Double());
         }
-        return createUnbounded(points);
+        return createUnbounded(xpoints);
     }
 
     protected void init(Point2D[] points) {

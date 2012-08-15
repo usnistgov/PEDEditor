@@ -372,9 +372,13 @@ public class PathParam2D extends Param2DAdapter
     public Line2D.Double[] lineSegments() {
         ArrayList<Line2D.Double> res = new ArrayList<>();
         for (OffsetParam2D seg: segments) {
-            BoundedParam2D c = seg.getContents();
-            if (c instanceof SegmentParam2D) {
-                res.add(new Line2D.Double(c.getStart(), c.getEnd()));
+            BoundedParam2D bp = seg.getContents();
+            if (!(bp instanceof Param2DBounder)) {
+                continue;
+            }
+            Param2DBounder pb = (Param2DBounder) bp;
+            if (pb.getUnboundedCurve() instanceof SegmentParam2D) {
+                res.add(new Line2D.Double(seg.getStart(), seg.getEnd()));
             }
         }
         return res.toArray(new Line2D.Double[0]);
@@ -383,7 +387,12 @@ public class PathParam2D extends Param2DAdapter
     public BoundedParam2D[] curvedSegments() {
         ArrayList<BoundedParam2D> res = new ArrayList<>();
         for (OffsetParam2D seg: segments) {
-            if (seg.getContents() instanceof BezierParam2D) {
+            BoundedParam2D bp = seg.getContents();
+            if (!(bp instanceof Param2DBounder)) {
+                continue;
+            }
+            Param2DBounder pb = (Param2DBounder) bp;
+            if (pb.getUnboundedCurve() instanceof BezierParam2D) {
                 res.add(seg);
             }
         }
