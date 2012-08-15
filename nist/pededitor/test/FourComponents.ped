@@ -44,30 +44,11 @@
       "type" : "DecimalFormat",
       "pattern" : "#0.00%"
     },
-    "a" : 1.0,
+    "a" : 0.0,
     "b" : 0.0,
-    "c" : 0.0,
-    "name" : "Gd",
-    "rulers" : [ {
-      "startPoint" : {
-	"x" : 0.0,
-	"y" : 0.0
-      },
-      "endPoint" : {
-	"x" : 0.98,
-	"y" : 0.0
-      },
-      "fontSize" : 0.024390243902439025,
-      "lineWidth" : 0.0024,
-      "labelAnchor" : "RIGHT",
-      "multiplier" : 100.0,
-      "tickLeft" : true,
-      "tickPadding" : 3.0,
-      "tickDelta" : 0.0,
-      "suppressStartTick" : true,
-      "suppressEndTick" : true,
-      "tickType" : "V"
-    } ]
+    "c" : 0.02,
+    "name" : "Au",
+    "rulers" : [ ]
   }, {
     "format" : {
       "type" : "DecimalFormat",
@@ -123,6 +104,45 @@
   }, {
     "format" : {
       "type" : "DecimalFormat",
+      "pattern" : "#0.00%"
+    },
+    "a" : 1.0,
+    "b" : 0.0,
+    "c" : 0.0,
+    "name" : "Gd",
+    "rulers" : [ {
+      "startPoint" : {
+	"x" : 0.0,
+	"y" : 0.0
+      },
+      "endPoint" : {
+	"x" : 0.98,
+	"y" : 0.0
+      },
+      "fontSize" : 0.024390243902439025,
+      "lineWidth" : 0.0024,
+      "labelAnchor" : "RIGHT",
+      "multiplier" : 100.0,
+      "tickLeft" : true,
+      "tickPadding" : 3.0,
+      "tickDelta" : 0.0,
+      "suppressStartTick" : true,
+      "suppressEndTick" : true,
+      "tickType" : "V"
+    } ]
+  }, {
+    "format" : {
+      "type" : "DecimalFormat",
+      "pattern" : "#0.00%"
+    },
+    "a" : -1.0000000000000004,
+    "b" : -1.0000000000000004,
+    "c" : 0.9800000000000004,
+    "name" : "Ge",
+    "rulers" : [ ]
+  }, {
+    "format" : {
+      "type" : "DecimalFormat",
       "pattern" : "#0.0000"
     },
     "a" : 1.0204081632653061,
@@ -139,16 +159,6 @@
     "b" : -0.8836993916167741,
     "c" : 0.8660254037844386,
     "name" : "page Y",
-    "rulers" : [ ]
-  }, {
-    "format" : {
-      "type" : "DecimalFormat",
-      "pattern" : "#0.00%"
-    },
-    "a" : -1.0000000000000004,
-    "b" : -1.0000000000000004,
-    "c" : 0.9800000000000004,
-    "name" : "Ge",
     "rulers" : [ ]
   } ]
 }
