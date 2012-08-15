@@ -101,4 +101,8 @@ public class Param2DBounder implements BoundedParam2D {
     }
 
     public boolean inDomain(double t) { return t >= t0 && t <= t1; }
+
+    @Override public String toString() {
+        return getClass().getSimpleName() + "[t in [" + getMinT() + ", " + getMaxT() + "] " + c + "]";
+    }
 }
