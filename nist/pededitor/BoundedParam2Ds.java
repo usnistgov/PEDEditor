@@ -36,14 +36,13 @@ public class BoundedParam2Ds {
         use distanceLowerBound0() instead. */
     public static double distanceLowerBound
         (BoundedParam2D c, Point2D p) {
+        double d0 = distanceLowerBound0(c, p);
+        double d1 = distanceLowerBound1(c, p);
         if (debug) {
-            double d0 = distanceLowerBound0(c, p);
-            double d1 = distanceLowerBound1(c, p);
             System.out.println("distanceLowerBound((" + c.getMinT() + ", " + c.getMaxT() + ") , " + p
                                + ") = max(" + d0 + ", " + d1 + ")");
         }
-        return Math.max(distanceLowerBound0(c, p),
-                        distanceLowerBound1(c, p));
+        return Math.max(d0, d1);
     }
 
     static <T extends BoundedParam2D> CurveDistanceRange distance
@@ -55,11 +54,11 @@ public class BoundedParam2Ds {
     	}
 
         if (debug) {
-            System.err.println("Sections are: ");
+            System.out.println("Sections are: ");
             for (BoundedParam2D cp: cps) {
-                System.err.println(cp);
+                System.out.println(cp);
             }
-            System.err.println();
+            System.out.println();
         }
 
         if (cps.size() == 0) {
@@ -69,7 +68,7 @@ public class BoundedParam2Ds {
         CurveDistanceRange minDist = null;
         for (int step = 0;; ++step) {
             if (debug) {
-                System.err.println("Step " + step);
+                System.out.println("Step " + step);
             }
 
             if (minDist != null) {
@@ -86,7 +85,7 @@ public class BoundedParam2Ds {
                 cds.add(dist);
 
                 if (debug) {
-                    System.err.println("[" + cp.getMinT() + ", " + cp.getMaxT()
+                    System.out.println("[" + cp.getMinT() + ", " + cp.getMaxT()
                                        + "]: " + dist);
                 }
                 minDist = CurveDistanceRange.min(minDist, dist);
@@ -100,7 +99,7 @@ public class BoundedParam2Ds {
             double cutoffDistance = minDist.distance - maxError;
 
             if (debug) {
-                System.err.println("Step " + step + ": dist = " + minDist
+                System.out.println("Step " + step + ": dist = " + minDist
                                    + ", cutoff = " + cutoffDistance);
             }
 
@@ -116,7 +115,7 @@ public class BoundedParam2Ds {
                 CurveDistanceRange dist = cds.get(segNo);
 
                 if (debug) {
-                    System.err.println("Seg#" + segNo + "[" + cp.getMinT() + ", " + cp.getMaxT()
+                    System.out.println("Seg#" + segNo + "[" + cp.getMinT() + ", " + cp.getMaxT()
                                        + "]: " + dist);
                 }
 
@@ -125,7 +124,7 @@ public class BoundedParam2Ds {
                 }
 
                 if (debug) {
-                    System.err.println("Bisecting [" + cp.getMinT() + ", "
+                    System.out.println("Bisecting [" + cp.getMinT() + ", "
                                        + cp.getMaxT() + "]");
                 }
 
@@ -182,11 +181,17 @@ public class BoundedParam2Ds {
         }
 
         // Figure out whether pn might equal f(t) for some t. That is
-        // possible if at least one of the segments passes above pn,
-        // and at least one of the segments passes below pn.
+        // possible if at least one of the segments (or the horizontal
+        // edges of b or -b) passes above pn, and at least one of the
+        // segments (or one of the horizontal edges of b or -b) passes
+        // below pn.
 
-        boolean segmentAbove = false;
-        boolean segmentBelow = false;
+        boolean segmentAbove
+            = (pn.x >= b.x && pn.x <= b.x+b.width && pn.y <= b.y+b.height)
+            || (pn.x >= -b.x-b.width && pn.x <= -b.x && pn.y <= -b.y);
+        boolean segmentBelow
+            = (pn.x >= b.x && pn.x <= b.x+b.width && pn.y >= b.y)
+            || (pn.x >= -b.x-b.width && pn.x <= -b.x && pn.y >= -b.y-b.height);
 
         for (Line2D.Double segment: segments) {
             if (pn.x == segment.x1 || pn.x == segment.x2 ||
@@ -235,8 +240,11 @@ public class BoundedParam2Ds {
         
 
         if (debug) {
-            System.out.println("dlb1(" + Duh.toString(pn) + ", "
-                               + Duh.toString(b) + ") = " + minDist);
+            System.out.println
+                ("dlb1(" + Duh.toString(p) + ", " + Duh.toString(f0) + ", " + deltaT + ", "
+                 + Duh.toString(dfdtBounds) + ") = ");
+            System.out.println("pn = " + Duh.toString(pn) + ", b = "
+                               + Duh.toString(b) + ", dist = " + minDist);
         }
         return minDist;
     }
