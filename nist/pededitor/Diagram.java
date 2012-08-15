@@ -2436,12 +2436,10 @@ public class Diagram extends Observable implements Printable {
         }
 
         for (int i = 0; i < curves.length; ++i) {
-            BoundedParam2D a = curves[i];
             for (int j = i+1; j < curves.length; ++j) {
-                BoundedParam2D b = curves[j];
                 try {
                     for (Point2D.Double p: BoundedParam2Ds.intersections
-                             (a, b, 1e-9, 80)) {
+                             (curves[i], curves[j], 1e-9, 80)) {
                         standardPageToPrincipal.transform(p, p);
                         res.add(p);
                     }
