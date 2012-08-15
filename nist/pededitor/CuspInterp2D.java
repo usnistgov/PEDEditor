@@ -5,8 +5,6 @@ import java.awt.geom.Line2D;
 import java.awt.geom.Path2D;
 import java.awt.geom.Point2D;
 import java.util.ArrayList;
-import java.util.Collections;
-
 import org.codehaus.jackson.annotate.JsonProperty;
 
 /** Interpolation where control points may be individually marked
@@ -22,6 +20,10 @@ public class CuspInterp2D extends PointsInterp2D {
                         ArrayList<Boolean> smoothed, 
                         boolean closed) {
         super(points, closed);
+        if (smoothed.size() != points.length) {
+            throw new IllegalArgumentException("smoothed.size() " + smoothed.size()
+                                               + " != points.length " + points.length);
+        }
         this.smoothed = new ArrayList<>(smoothed);
     }
 
@@ -50,9 +52,11 @@ public class CuspInterp2D extends PointsInterp2D {
     public CuspInterp2D(Point2D.Double[] points,
                         boolean smoothed,
                         boolean closed) {
-    	super(points, closed);
+        super(points, closed);
         this.smoothed = new ArrayList<>(points.length);
-        Collections.fill(this.smoothed, smoothed);
+        for (int i = points.length; i > 0; --i) {
+            this.smoothed.add(smoothed);
+        }
     }
 
     /** Shorthand to create a line segment. */
