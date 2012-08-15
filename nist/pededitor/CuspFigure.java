@@ -29,6 +29,10 @@ public class CuspFigure implements BoundedParameterizable2D {
     protected Color color = null;
     protected double lineWidth = 1.0;
 
+    /** Used only during deserialization of the old PED format. */
+    protected String jsonShape = null;
+    protected boolean jsonClosed = false;
+
     /** Only closed curves can be filled. */
     protected StandardFill fill = null;
 
@@ -77,8 +81,43 @@ public class CuspFigure implements BoundedParameterizable2D {
         jsonId = id;
     }
 
-    public CuspFigure(@JsonProperty("curve") CuspInterp2D curve) {
+    /** Used only for deserializatino of the old PED format. */
+    @JsonProperty("shape") void setJsonShape(String shape) {
+        if (curve != null) {
+            int s = curve.size();
+            boolean smoothed = shape.equals("cubic spline");
+            for (int i = 0; i < s; ++i) {
+                curve.setSmoothed(i, smoothed);
+            }
+        } else {
+            jsonShape = shape;
+        }
+    }
+
+    /** Used only for deserializing an obsolete version of the JSON
+        PED format. */
+    @JsonProperty("points") void setPoints(Point2D.Double[] points) {
+        setCurve(new CuspInterp2D(points, "cubic spline".equals(jsonShape),
+                                  jsonClosed));
+        jsonShape = null;
+        jsonClosed = false;
+    }
+
+    /** Used only for deserializing an obsolete version of the JSON
+        PED format. */
+    @JsonProperty("closed") void setJsonClosed(boolean closed) {
+        if (curve == null) {
+            jsonClosed = closed;
+        } else setClosed(closed);
+    }
+
+    public CuspFigure() { }
+    public CuspFigure(CuspInterp2D curve) {
         this.curve = curve;
+    }
+
+    CuspFigure(String shape, Point2D.Double[] points, boolean closed) {
+        this.curve = new CuspInterp2D(points, !shape.equals("polyline"), closed);
     }
 
     public CuspFigure(CuspInterp2D curve,
