@@ -44,6 +44,8 @@ public class EditFrame extends JFrame
     protected JSeparator mnVariablesSeparator = new JSeparator();
     protected JMenuItem mnRemoveVariable = new JMenuItem("Delete");
     protected JMenu mnVariables = new JMenu("Variables");
+    protected transient BackgroundImageType backgroundType = null;
+    protected transient BackgroundImageType oldBackgroundType = null;
 
     // How to show the original scanned image in the background of
     // the new diagram:
@@ -64,7 +66,7 @@ public class EditFrame extends JFrame
             : BackgroundImageType.NONE;
     }
 
-    public void setBackgroundImage(BackgroundImageType value) {
+    public void setBackgroundType(BackgroundImageType value) {
         switch (value) {
         case NONE:
             noBackgroundImage.setSelected(true);
@@ -165,7 +167,7 @@ public class EditFrame extends JFrame
     protected JCheckBoxMenuItem usingWeightFraction
         = new JCheckBoxMenuItem
         (new Action
-         ("Displaying weight fraction", KeyEvent.VK_W) {
+         ("Already displaying weight fraction", KeyEvent.VK_W) {
                 @Override public void actionPerformed(ActionEvent e) {
                     getParentEditor().setUsingWeightFraction
                         (usingWeightFraction.isSelected());
@@ -320,9 +322,11 @@ public class EditFrame extends JFrame
         }
 
         @Override public void actionPerformed(ActionEvent e) {
-            getParentEditor().setBackgroundType(value);
+            getParentEditor().toggleBackgroundType(value);
         }
     }
+
+    
 
     class BackgroundImageMenuItem extends JRadioButtonMenuItem {
         BackgroundImageMenuItem(String name, BackgroundImageType back,
@@ -807,7 +811,7 @@ public class EditFrame extends JFrame
 
         if (editable) {
             mnDecorations.add(new Action
-                              ("Add text...",
+                              ("Text...",
                                KeyEvent.VK_T,
                                KeyStroke.getKeyStroke('t')) {
                     @Override public void actionPerformed(ActionEvent e) {
@@ -815,7 +819,7 @@ public class EditFrame extends JFrame
                     }
                 });
 
-            mnDecorations.add(new Action("Add left arrowhead",
+            mnDecorations.add(new Action("Left arrowhead",
                                          KeyEvent.VK_L,
                                          KeyStroke.getKeyStroke('<')) {
                     @Override public void actionPerformed(ActionEvent e) {
@@ -823,7 +827,7 @@ public class EditFrame extends JFrame
                     }
                 });
 
-            mnDecorations.add(new Action("Add right arrowhead",
+            mnDecorations.add(new Action("Right arrowhead",
                                          KeyEvent.VK_R,
                                          KeyStroke.getKeyStroke('>')) {
                     @Override public void actionPerformed(ActionEvent e) {
@@ -832,14 +836,14 @@ public class EditFrame extends JFrame
                 });
 
             mnDecorations.add(new Action
-                              ("Add ruler", KeyEvent.VK_U) {
+                              ("Ruler", KeyEvent.VK_U) {
                     @Override public void actionPerformed(ActionEvent e) {
                         getParentEditor().addRuler();
                     }
                 });
 
             mnDecorations.add(new Action
-                              ("Add tie lines", KeyEvent.VK_I) {
+                              ("Tie lines", KeyEvent.VK_I) {
                     @Override public void actionPerformed(ActionEvent e) {
                         getParentEditor().addTieLine();
                     }
