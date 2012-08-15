@@ -5,6 +5,9 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 
+import org.codehaus.jackson.annotate.JsonIgnore;
+import org.codehaus.jackson.annotate.JsonProperty;
+
 // The annotations below for deserializing this GeneralPolyline into
 // its appropriate subtype were recommended on Programmer Bruce's
 // blog, "Deserialize JSON with Jackson into Polymorphic Types". -- EB
@@ -36,10 +39,16 @@ public abstract class PointsInterp2D extends Interp2D {
         return Duh.deepCopy(points.toArray(new Point2D.Double[0]));
     }
 
-    public <T extends Point2D> void setPoints(Collection<T> points) {
+    @JsonIgnore public <T extends Point2D> void setPoints(Collection<T> points) {
         this.points = new ArrayList<Point2D.Double>
             (Arrays.asList(Duh.deepCopy(points.toArray
                                         (new Point2D.Double[0]))));
+        param = null;
+    }
+
+    @JsonProperty("points") public void setPoints(Point2D.Double[] points) {
+        this.points = new ArrayList<Point2D.Double>
+            (Arrays.asList(Duh.deepCopy(points)));
         param = null;
     }
 
