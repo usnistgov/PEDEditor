@@ -16,8 +16,6 @@ abstract public class BezierParam2D extends Param2DAdapter {
     final Point2D.Double p0;
     final Point2D.Double pEnd;
 
-    Param2D deriv = null;
-
     /** Bezier control points. #0 is the start and #(length-1) is the
         end, but intermediate control points usually do not lie on the
         curve. */
