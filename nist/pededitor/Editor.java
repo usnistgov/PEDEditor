@@ -6,6 +6,7 @@ import javax.imageio.ImageIO;
 import javax.swing.*;
 import javax.swing.filechooser.FileNameExtensionFilter;
 import java.awt.AWTException;
+import java.awt.BasicStroke;
 import java.awt.Color;
 import java.awt.Component;
 import java.awt.Cursor;
@@ -20,6 +21,7 @@ import java.awt.Rectangle;
 import java.awt.RenderingHints;
 import java.awt.Robot;
 import java.awt.Shape;
+import java.awt.Stroke;
 import java.awt.Toolkit;
 import java.awt.datatransfer.StringSelection;
 import java.awt.event.ActionEvent;
@@ -74,9 +76,6 @@ import org.codehaus.jackson.annotate.JsonIgnore;
 // TODO (mandatory, 2 days) Make regular open symbols look as nice as the
 // GRUMP-converted open symbols do.
 
-// TODO (mandatory, 1 week) Enable filling of regions with cusps. As
-// things currently stand, it's not possible to fill a semicircle.
-
 // TODO (mandatory, 1 day): At this point, the rule that tie lines
 // have to end at vertexes of the diagram is no longer needed and not
 // difficult to eliminate. Tie lines ending on rulers without extra
@@ -99,11 +98,6 @@ import org.codehaus.jackson.annotate.JsonIgnore;
 // TODO (optional, 2 weeks) Keep an undifferentiated list of
 // decorations, which allows any decoration to be moved up or down on
 // the screen.
-
-// TODO (optional, 1 day) In the text dialog, link state-on buttons to
-// state-offf buttons so that if a region is selected and a state-on
-// button is pressed, then the state-on text is pasted before the
-// selection and the state-off selection is pasted after it.
 
 // TODO (mandatory?, preexisting, 1 week) Apply a gradient to all control
 // points on a curve. Specifically, apply the following transformation
@@ -1145,6 +1139,31 @@ public class Editor extends Diagram
             g.fill(new Ellipse2D.Double
                    (xpoint.x - r, xpoint.y - r, r * 2, r * 2));
         }
+
+        g.setRenderingHint(RenderingHints.KEY_ANTIALIASING,
+                           RenderingHints.VALUE_ANTIALIAS_ON);
+    }
+
+
+    /** Show the result if the mouse point were added to the currently
+        selected curve in red, and show the currently selected curve in
+        green. */
+    void highlightKeyPoints(Graphics2D g, double scale) {
+        double r = 4.0;
+        Point2D.Double xpoint = new Point2D.Double();
+        Affine p2d = principalToScaledPage(scale);
+
+        Stroke oldStroke = g.getStroke();
+        g.setStroke(new BasicStroke((float) (r / 4)));
+
+        for (Point2D.Double point: keyPoints()) {
+            p2d.transform(point, xpoint);
+            Shape shape = new Ellipse2D.Double
+                (xpoint.x - r, xpoint.y - r, r * 2, r * 2);
+            g.draw(shape);
+        }
+
+        g.setStroke(oldStroke);
     }
 
 
@@ -1258,6 +1277,9 @@ public class Editor extends Diagram
                 decoration.draw(g, scale);
             }
         }
+
+        // g.setColor(Color.GREEN);
+        // highlightKeyPoints(g, scale);
 
         if (selection != null) { // Draw the selection
             try (UpdateSuppressor us = new UpdateSuppressor()) {
@@ -2292,8 +2314,8 @@ public class Editor extends Diagram
     /** Move the mouse pointer so its position corresponds to the
         given location in principal coordinates. Return true if it was
         possible to go to that location. */
-    boolean moveMouse(Point2D.Double point) {
-        mprin = point;
+    boolean moveMouse(Point2D point) {
+        mprin = new Point2D.Double(point.getX(), point.getY());
         if (principalToStandardPage == null) {
             return false;
         }
@@ -2352,10 +2374,13 @@ public class Editor extends Diagram
         if (mprin == null) {
             return;
         }
+        centerPoint(mprin);
+    }
+
+    public void centerPoint(Point2D point) {
         JScrollPane spane = editFrame.getScrollPane();
         Rectangle view = spane.getViewport().getViewRect();
-        setViewportRelation(mprin,
-                            new Point(view.width/2, view.height/2));
+        setViewportRelation(point, new Point(view.width/2, view.height/2));
     }
 
     /** Move the mouse to the selection and center it. */
@@ -3170,6 +3195,15 @@ public class Editor extends Diagram
         scaledOriginalImages = null;
     }
 
+
+    /** Invoked from the EditFrame menu */
+    public void cropToSelection() {
+        Rectangle2D.Double sbounds = getSelectionBounds();
+        if (sbounds == null) {
+            return;
+        }
+        setPageBounds(sbounds);
+    }
 
     /** Invoked from the EditFrame menu */
     public void setMargin(Side side) {
@@ -4061,6 +4095,46 @@ public class Editor extends Diagram
     /** Equivalent to setScale(getScale() * factor). */
     void zoomBy(double factor) {
         setScale(getScale() * factor);
+    }
+
+    @JsonIgnore Rectangle2D.Double getSelectionBounds() {
+        if (selection == null) {
+            showError("You must first select a curve to perform this operation",
+                      "Cannot perform operation");
+            return null;
+        }
+        if (!(selection instanceof BoundedParam2DHandle)) {
+            showError("This program cannot compute the bounds\n"
+                      + "of that object. Try selecting a curve or just\n"
+                      + "clicking on two points.",
+                      "Cannot perform operation");
+            return null;
+        }
+        Rectangle2D.Double res = ((BoundedParam2DHandle) selection)
+            .getParameterization().getBounds();
+        if (res.width == 0 || res.height == 0) {
+            showError("The selection's width and/or height is too small.",
+                      "Cannot perform operation");
+            return null;
+        }
+        return res;
+    }
+
+    void zoomToSelection() {
+        Rectangle2D.Double sbounds = getSelectionBounds();
+        if (sbounds == null) {
+            return;
+        }
+        JScrollPane spane = editFrame.getScrollPane();
+        Dimension bounds = spane.getSize(null);
+        bounds.width -= 13;
+        bounds.height -= 13;
+        Rescale r = new Rescale(sbounds.width, 0, (double) bounds.width,
+                                sbounds.height, 0, (double) bounds.height);
+        setScale(r.t);
+        Point2D center = new Point2D.Double
+            (sbounds.getCenterX(), sbounds.getCenterY());
+        centerPoint(standardPageToPrincipal.transform(center, center));
     }
 
     /** Adjust the scale so that the page just fits in the edit frame. */
