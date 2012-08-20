@@ -44,4 +44,9 @@ abstract public class Axis {
     public String valueAsString(Point2D p) {
         return format.format(value(p.getX(), p.getY()));
     }
+
+    @Override public String toString() {
+        return getClass().getSimpleName() + "['" + name + "', fmt: "
+            + format + "]";
+    }
 }

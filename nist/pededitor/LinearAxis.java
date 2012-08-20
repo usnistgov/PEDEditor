@@ -86,6 +86,11 @@ public class LinearAxis extends Axis {
         return new Point2D.Double(a, b);
     }
 
+    @Override public String toString() {
+        return getClass().getSimpleName() + "['" + name + "', "
+            + a + " x " + b + " y " + c + ", fmt = " + format + "]";
+    }
+
     static NumberFormat getDefaultFormat() {
         return new DecimalFormat("##0.0");
     }
