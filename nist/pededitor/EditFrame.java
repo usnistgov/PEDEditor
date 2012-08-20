@@ -108,14 +108,14 @@ public class EditFrame extends JFrame
         };
 
     protected Action scaleXUnits = new Action
-        ("X Axis (or Right Component)", KeyEvent.VK_X) {
+        ("X axis/right component", KeyEvent.VK_X) {
             @Override public void actionPerformed(ActionEvent e) {
                 getParentEditor().scaleXUnits();
             }
         };
 
     protected Action scaleYUnits = new Action
-        ("Y Axis (or Top component)", KeyEvent.VK_Y) {
+        ("Y axis/top component", KeyEvent.VK_Y) {
             @Override public void actionPerformed(ActionEvent e) {
                 getParentEditor().scaleYUnits();
             }
@@ -907,6 +907,11 @@ public class EditFrame extends JFrame
                         getParentEditor().computeMargins();
                     }
                 });
+            mnMargins.add(new Action("Crop to selection", KeyEvent.VK_P) {
+                    @Override public void actionPerformed(ActionEvent e) {
+                        getParentEditor().cropToSelection();
+                    }
+                });
 
             mnProperties.add(mnMargins);
         }
@@ -1028,29 +1033,36 @@ public class EditFrame extends JFrame
             mnView.add(mnBackgroundImage);
         }
 
-        mnView.add(new Action("Best Fit", KeyEvent.VK_B,
+        mnView.add(new Action("Best fit", KeyEvent.VK_B,
                               KeyStroke.getKeyStroke("control B")) {
                 @Override public void actionPerformed(ActionEvent e) {
                     getParentEditor().bestFit();
                 }
             });
-        mnView.add(new Action("Center Mouse", KeyEvent.VK_C,
+        mnView.add(new Action("Center mouse", KeyEvent.VK_C,
                               KeyStroke.getKeyStroke("control L")) {
                 @Override public void actionPerformed(ActionEvent e) {
                     getParentEditor().centerMouse();
                 }
             });
 
-        mnView.add(new Action("Zoom In", KeyEvent.VK_I,
+        mnView.add(new Action("Zoom in", KeyEvent.VK_I,
                               "typed +") {
                 @Override public void actionPerformed(ActionEvent e) {
                     getParentEditor().zoomBy(1.5);
                 }
             });
-        mnView.add(new Action("Zoom Out", KeyEvent.VK_O,
+        mnView.add(new Action("Zoom out", KeyEvent.VK_O,
                               "typed -") {
                 @Override public void actionPerformed(ActionEvent e) {
                     getParentEditor().zoomBy(1 / 1.5);
+                }
+            });
+
+        mnView.add(new Action("Zoom to selection", KeyEvent.VK_S,
+                              KeyStroke.getKeyStroke("control Z")) {
+                @Override public void actionPerformed(ActionEvent e) {
+                    getParentEditor().zoomToSelection();
                 }
             });
 
