@@ -2098,8 +2098,8 @@ public class Diagram extends Observable implements Printable {
     /** Return true if this axis measures a diagram component
         concentration (in either weight or mole fraction) */
     boolean isComponentAxis(LinearAxis axis) {
-        return axis.isXAxis() ? (diagramComponents[Side.RIGHT.ordinal()] != null)
-            : axis.isYAxis() ? (diagramComponents[Side.TOP.ordinal()] != null)
+        return isXAxis(axis) ? (diagramComponents[Side.RIGHT.ordinal()] != null)
+            : isYAxis(axis) ? (diagramComponents[Side.TOP.ordinal()] != null)
             : isLeftAxis(axis) ? (diagramComponents[Side.LEFT.ordinal()] != null)
             : false;
     }
@@ -2119,8 +2119,8 @@ public class Diagram extends Observable implements Printable {
     }
 
     public boolean axisIsFractional(LinearAxis axis) {
-        return (axis.isXAxis() && getDiagramComponent(Side.RIGHT) != null)
-            || (axis.isYAxis() && getDiagramComponent(Side.TOP) != null)
+        return (isXAxis(axis) && getDiagramComponent(Side.RIGHT) != null)
+            || (isYAxis(axis) && getDiagramComponent(Side.TOP) != null)
             || (isLeftAxis(axis) && getDiagramComponent(Side.LEFT) != null);
     }
 
@@ -2416,9 +2416,17 @@ public class Diagram extends Observable implements Printable {
                  principalToStandardPage.transform(segments[i].getP2()));
         }
 
+        ArrayList<BoundedParam2D> curves = new ArrayList<>();
         for (CuspFigure path: paths) {
             CuspFigure pagePath = path.createTransformed
                 (principalToStandardPage);
+
+            Param2DBounder b = (Param2DBounder) pagePath.getParameterization();
+            PathParam2D pp = (PathParam2D) b.getUnboundedCurve();
+            for (BoundedParam2D curve: pp.curvedSegments()) {
+                curves.add(curve);
+            }
+
 
             for (Line2D segment: pageSegments) {
                 for (Point2D.Double point:
@@ -2429,21 +2437,17 @@ public class Diagram extends Observable implements Printable {
             }
         }
 
-        BoundedParam2D[] curves = getAllCurvedSegments();
-        for (int i = 0; i < curves.length; ++i) {
-            curves[i] = curves[i].createTransformed
-                (principalToStandardPage);
-        }
-
-        for (int i = 0; i < curves.length; ++i) {
-            for (int j = i+1; j < curves.length; ++j) {
+        int cs = curves.size();
+        for (int i = 0; i < cs; ++i) {
+            for (int j = i+1; j < cs; ++j) {
                 try {
                     for (Point2D.Double p: BoundedParam2Ds.intersections
-                             (curves[i], curves[j], 1e-9, 80)) {
+                             (curves.get(i), curves.get(j), 1e-9, 80)) {
                         standardPageToPrincipal.transform(p, p);
                         res.add(p);
                     }
                 } catch (FailedToConvergeException x) {
+                    System.err.println(x);
                     // That's OK.
                 }
             }
@@ -3313,7 +3317,7 @@ public class Diagram extends Observable implements Printable {
     /** Apply the given transform to all coordinates defined in
         principal coordinates, but apply corresponding and inverse
         transformations to all transforms to and from principal
-        coordinates, with one exception: leave the x-, y-, and z-axes
+        coordinates, with one exception: leave the x- and y-axes
         alone. So the diagram looks the same as before except for (1)
         principal component axis ticks and (2) principal coordinate
         values as indicated in the status bar. For example, one might
@@ -3350,7 +3354,7 @@ public class Diagram extends Observable implements Printable {
 
         // Convert all angles from page to the new principal coordinates.
         for (LinearAxis axis: axes) {
-            if (axis.isXAxis() || axis.isYAxis() || isLeftAxis(axis)) {
+            if (isXAxis(axis) || isYAxis(axis)) {
                 continue;
             }
             axis.concatenate(itrans);
@@ -3362,6 +3366,8 @@ public class Diagram extends Observable implements Printable {
         for (AnchoredLabel item: labels) {
             item.setAngle(pageToPrincipalAngle(item.getAngle()));
         }
+
+
 
     }
 
@@ -3484,23 +3490,6 @@ public class Diagram extends Observable implements Printable {
         }
 
         return res.toArray(new Line2D.Double[0]);
-    }
-
-    /** @return an array of all curved segments defined for this
-        diagram. 2-point SplinePols are not actually curved, so they
-        are not included. */
-    @JsonIgnore public BoundedParam2D[] getAllCurvedSegments() {
-        ArrayList<BoundedParam2D> res = new ArrayList<>();
-         
-        for (CuspFigure path : paths) {
-            Param2DBounder b = (Param2DBounder) path.getParameterization();
-            PathParam2D pp = (PathParam2D) b.getUnboundedCurve();
-            for (BoundedParam2D curve: pp.curvedSegments()) {
-                res.add(curve);
-            }
-        }
-
-        return res.toArray(new BoundedParam2D[0]);
     }
 
     /** Draw a circle around each point in path. */
