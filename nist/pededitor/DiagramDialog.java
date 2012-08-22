@@ -1,17 +1,26 @@
 package gov.nist.pededitor;
 
-import java.awt.*;
-import java.awt.event.*;
-import java.awt.image.*;
-import javax.swing.*;
+import java.awt.Dialog;
+import java.awt.Dimension;
+import java.awt.FlowLayout;
+import java.awt.Frame;
+import java.awt.GridLayout;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.awt.image.BufferedImage;
+
+import javax.swing.AbstractAction;
+import javax.swing.ButtonGroup;
+import javax.swing.JButton;
+import javax.swing.JDialog;
+import javax.swing.JPanel;
+import javax.swing.SwingConstants;
 
 /** GUI for selecting a DiagramType. */
 public class DiagramDialog extends JDialog
     implements ActionListener  {
     private static final long serialVersionUID = -1082463709970796523L;
     DiagramType selectedDiagram = null;
-    boolean pressedOK = false;
-    JButton okButton;
 
     abstract class Action extends AbstractAction {
         private static final long serialVersionUID = -7296210099594024294L;
@@ -30,12 +39,7 @@ public class DiagramDialog extends JDialog
     }
 
     DiagramDialog(Frame owner, BufferedImage image) {
-        this(owner, image, DiagramType.values()[0]);
-    }
-
-    DiagramDialog(Frame owner, BufferedImage image, DiagramType selected) {
         super(owner, "Select Diagram Type", false);
-        selectedDiagram = selected;
 
         DiagramType[] diagrams = DiagramType.values();
         ButtonGroup group = new ButtonGroup();
@@ -44,27 +48,15 @@ public class DiagramDialog extends JDialog
         radioPanel.setLayout(new GridLayout(0,1));
         
         for (DiagramType diagram : diagrams) {
-            JRadioButton button = new JRadioButton
+            JButton button = new JButton
                 (diagram.getDescription(),
-                 diagram.getIcon(),
-                 (diagram == selected));
+                 diagram.getIcon());
             button.setActionCommand(diagram.toString());
+            button.setHorizontalAlignment(SwingConstants.LEFT);
             group.add(button);
             radioPanel.add(button);
             button.addActionListener(this);
         }
-
-        okButton = new JButton(new Action("OK") {
-                private static final long serialVersionUID = -4517446754034705381L;
-
-                @Override public void actionPerformed(ActionEvent e) {
-                    DiagramDialog.this.pressedOK = true;
-                    DiagramDialog.this.setVisible(false);
-                }
-            });
-        getRootPane().setDefaultButton(okButton);
-        
-        radioPanel.add(okButton);
 
         if (image == null) {
             setContentPane(radioPanel);
@@ -87,15 +79,15 @@ public class DiagramDialog extends JDialog
         pack();
         setModalityType(Dialog.ModalityType.DOCUMENT_MODAL);
         setVisible(true);
-        return pressedOK ? getSelectedDiagram() : null;
+        return getSelectedDiagram();
     }
 
-    @Override
-	public void actionPerformed(ActionEvent e) {
+    @Override public void actionPerformed(ActionEvent e) {
         String what = e.getActionCommand();
         for (DiagramType diagram: DiagramType.values()) {
             if (diagram.toString() == what) {
                 selectedDiagram = diagram;
+                DiagramDialog.this.setVisible(false);
             }
         }
     }
