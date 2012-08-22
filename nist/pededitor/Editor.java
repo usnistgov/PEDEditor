@@ -68,6 +68,14 @@ import org.codehaus.jackson.annotate.JsonIgnore;
 // TODO (optional) Warn users when there exists an autosave version of
 // a file that is newer than the regular saved version.
 
+// TODO (optional? maybe so important as to be mandatory) Use relative
+// paths to locate source image files, so Chu's computer can be used
+// better
+
+// TODO Zoom-to-selection is kind of hokey, and if it requires opening
+// up scroll bars, you have to perform the operation twice before it
+// takes.
+
 // TODO (optional, easy?) Add "Print visible region" as an alternative
 // to "Print". (You can always collapse the margins to the region you
 // want to show and then print that, but that's slow and might be hard
@@ -787,7 +795,7 @@ public class Editor extends Diagram
 
         CuspFigure path = vhand.getDecoration().getItem();
         Shape region = vhand.getDecoration().getShape();
-        PathParam2D param = new PathParam2D(region);
+        Param2DBounder param = PathParam2D.create(region);
 
         Point2D.Double delta = Duh.aMinusB(mprin, selection.getLocation());
 
@@ -1717,6 +1725,13 @@ public class Editor extends Diagram
         }
     }
 
+    /** Toggle the initial setting for vertexes added in the future
+        between the smoothed and un-smoothed states. */
+    public void setSmoothed(boolean b) {
+        smoothed = b;
+        editFrame.setSmoothed(b);
+    }
+
     @Override public void setUsingWeightFraction(boolean b) {
         super.setUsingWeightFraction(b);
         editFrame.setUsingWeightFraction(b);
@@ -2589,12 +2604,6 @@ public class Editor extends Diagram
         moveMouse(standardPageToPrincipal.transform(minDist.point));
         mouseIsStuck = true;
         showTangent(dec, t);
-    }
-
-    /** Toggle the initial setting for vertexes added in the future
-        between the smoothed and un-smoothed states. */
-    public void toggleSmoothing() {
-        smoothed = !smoothed;
     }
 
     /** Toggle the closed/open status of the currently selected
