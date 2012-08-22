@@ -130,6 +130,11 @@ public class EditFrame extends JFrame
         usingWeightFraction.setSelected(b);
     }
 
+    /** Internal use; called from Editor.java. */
+    void setSmoothed(boolean b) {
+        smoothed.setSelected(b);
+    }
+
     void conversionError() {
         JOptionPane.showMessageDialog
             (this,
@@ -171,6 +176,16 @@ public class EditFrame extends JFrame
                 @Override public void actionPerformed(ActionEvent e) {
                     getParentEditor().setUsingWeightFraction
                         (usingWeightFraction.isSelected());
+                }
+            });
+
+    protected JCheckBoxMenuItem smoothed
+        = new JCheckBoxMenuItem
+        (new Action
+         ("Smooth through new points", KeyEvent.VK_S,
+          KeyStroke.getKeyStroke('s')) {
+                @Override public void actionPerformed(ActionEvent e) {
+                    getParentEditor().setSmoothed(smoothed.isSelected());
                 }
             });
 
@@ -666,7 +681,7 @@ public class EditFrame extends JFrame
             mnCurve.add(createFillMenu());
 
             JMenu mnLineStyle = new JMenu("Line style");
-            mnLineStyle.setMnemonic(KeyEvent.VK_T);
+            mnLineStyle.setMnemonic(KeyEvent.VK_L);
         
             LineStyleMenuItem solidLineItem = 
                 new LineStyleMenuItem(StandardStroke.SOLID, 59, 2, 2.0);
@@ -731,16 +746,9 @@ public class EditFrame extends JFrame
                          }
                      }));
             mnCurve.add(mnLineWidth);
+            mnCurve.add(smoothed);
 
-            mnCurve.add(new Action("Toggle smoothing",
-                                   KeyEvent.VK_S,
-                                   KeyStroke.getKeyStroke('s')) {
-                    @Override public void actionPerformed(ActionEvent e) {
-                        getParentEditor().toggleSmoothing();
-                    }
-                });
-
-            mnCurve.add(new Action("Toggle curve closure",
+            mnCurve.add(new Action("Toggle closure",
                                    KeyEvent.VK_O,
                                    KeyStroke.getKeyStroke('o')) {
                     @Override public void actionPerformed(ActionEvent e) {
@@ -766,7 +774,7 @@ public class EditFrame extends JFrame
                 });
 
             mnCurve.add(new Action
-                        ("Add cusp", KeyEvent.VK_C, "typed ,") {
+                        ("Toggle point closure", KeyEvent.VK_C, "typed ,") {
                     @Override public void actionPerformed(ActionEvent e) {
                         getParentEditor().toggleCusp();
                     }
