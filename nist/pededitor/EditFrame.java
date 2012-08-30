@@ -793,18 +793,6 @@ public class EditFrame extends JFrame
                 }
             });
 
-        mnCurve.add(new Action("Select previous curve", KeyEvent.VK_R) {
-                @Override public void actionPerformed(ActionEvent e) {
-                    getParentEditor().cycleActiveCurve(-1);
-                }
-            });
-
-        mnCurve.add(new Action("Select next curve", KeyEvent.VK_X) {
-                @Override public void actionPerformed(ActionEvent e) {
-                    getParentEditor().cycleActiveCurve(+1);
-                }
-            });
-
         if (editable) {
             JMenuItem mnGradient = new JMenuItem("Apply gradient");
             mnGradient.setEnabled(false);
