@@ -9,7 +9,7 @@ import org.codehaus.jackson.map.annotate.JsonSerialize.Inclusion;
 /** Class to hold definitions of a text or HTML string anchored to a
     location in space and possibly drawn at an angle. */
 @JsonSerialize(include = Inclusion.NON_DEFAULT)
-public class AnchoredLabel {
+public class AnchoredLabel implements Decorated {
 
     /** x position of the anchor point */
     double x;
@@ -65,7 +65,7 @@ public class AnchoredLabel {
     }
 
     public AnchoredLabel
-        (@JsonProperty("string") String text,
+        (@JsonProperty("text") String text,
          @JsonProperty("xWeight") double xWeight,
          @JsonProperty("yWeight") double yWeight) {
         this.text = text;

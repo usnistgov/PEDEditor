@@ -11,7 +11,7 @@ import org.codehaus.jackson.annotate.JsonCreator;
 import org.codehaus.jackson.annotate.JsonIgnore;
 import org.codehaus.jackson.annotate.JsonProperty;
 
-public class TieLine {
+public class TieLine implements Decorated {
     /** Number of tie lines. Lines are painted only on the interior of
         the tie line region; the angle at which
         outerEdge(ot1)innerEdge(it1) and outerEdge(ot2)innerEdge(it2)

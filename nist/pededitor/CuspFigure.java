@@ -17,13 +17,9 @@ import org.codehaus.jackson.map.JsonMappingException;
 import org.codehaus.jackson.map.ObjectMapper;
 import org.codehaus.jackson.map.SerializationConfig;
 
-// The annotations below for deserializing this GeneralPolyline into
-// its appropriate subtype were recommended on Programmer Bruce's
-// blog, "Deserialize JSON with Jackson into Polymorphic Types". -- EB
-
 /** A class for pairing a CuspInterp2D with its color, stroke, fill,
     and/or line width. */
-public class CuspFigure implements BoundedParameterizable2D {
+public class CuspFigure implements BoundedParameterizable2D, Decorated {
     CuspInterp2D curve;
     protected StandardStroke stroke = null;
     protected Color color = null;
@@ -81,7 +77,7 @@ public class CuspFigure implements BoundedParameterizable2D {
         jsonId = id;
     }
 
-    /** Used only for deserializatino of the old PED format. */
+    /** Used only for deserialization of the old PED format. */
     @JsonProperty("shape") void setJsonShape(String shape) {
         if (curve != null) {
             int s = curve.size();
@@ -103,8 +99,8 @@ public class CuspFigure implements BoundedParameterizable2D {
         jsonClosed = false;
     }
 
-    /** Used only for deserializing an obsolete version of the JSON
-        PED format. */
+    /** OBSOLESCENT Used only for deserializing an obsolete version of
+        the JSON PED format. */
     @JsonProperty("closed") void setJsonClosed(boolean closed) {
         if (curve == null) {
             jsonClosed = closed;
@@ -116,6 +112,7 @@ public class CuspFigure implements BoundedParameterizable2D {
         this.curve = curve;
     }
 
+    // OBSOLESCENT
     CuspFigure(String shape, Point2D.Double[] points, boolean closed) {
         this.curve = new CuspInterp2D(points, !shape.equals("polyline"), closed);
     }
@@ -217,8 +214,7 @@ public class CuspFigure implements BoundedParameterizable2D {
         return getFill().getPaint(getColor(), 1.0);
     }
 
-    @Override
-    public String toString() {
+    @Override public String toString() {
         try {
             return getClass().getCanonicalName()
                 + (new ObjectMapper()).writeValueAsString(this);
