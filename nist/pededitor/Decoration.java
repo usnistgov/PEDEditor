@@ -3,8 +3,6 @@ package gov.nist.pededitor;
 import java.awt.Color;
 import java.awt.Graphics2D;
 
-/** Interface that permits common operations to be applied to
-    different kinds of graphics objects */
 public interface Decoration {
     void draw(Graphics2D g, double scale);
     /** @return the new SelectionHandle that should result from the removal
@@ -27,4 +25,14 @@ public interface Decoration {
      points, then the list should contain just one handle, since
      moving that one will move the others along with it. */
     DecorationHandle[] getMovementHandles();
+
+    /** Used during serialization. Some Decorations are just an
+        interface between an underlying object and the manipulating
+        environment, and in that case, serializing the underlying
+        object (as opposed to serializing the Decoration itself) is
+        enough (and if the Decoration is an inner class, then Jackson
+        can't deserialize the inner class directly anyhow). If that is
+        NOT the case, then it's perfectly legitimate just to have
+        getSerializationObject() return "this". */
+    Decorated getSerializationObject();
 }
