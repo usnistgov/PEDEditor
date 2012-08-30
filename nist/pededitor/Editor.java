@@ -65,6 +65,17 @@ import Jama.Matrix;
 
 import org.codehaus.jackson.annotate.JsonIgnore;
 
+// TODO (mandatory, 2 days) Make regular open symbols look as nice as
+// the GRUMP-converted open symbols do. How? Construct a special
+// decoration type... what about size, color, et cetera? It's
+// basically a regular LabelDialog minus everything related to text
+// selection.
+
+// TODO (mandatory, 1 day): At this point, the rule that tie lines
+// have to end at vertexes of the diagram is no longer needed and not
+// difficult to eliminate. Tie lines ending on rulers without extra
+// steps could also be enabled (and the extra steps are unintuitive).
+
 // TODO (optional) Warn users when there exists an autosave version of
 // a file that is newer than the regular saved version.
 
@@ -80,14 +91,6 @@ import org.codehaus.jackson.annotate.JsonIgnore;
 // to "Print". (You can always collapse the margins to the region you
 // want to show and then print that, but that's slow and might be hard
 // to undo.)
-
-// TODO (mandatory, 2 days) Make regular open symbols look as nice as the
-// GRUMP-converted open symbols do.
-
-// TODO (mandatory, 1 day): At this point, the rule that tie lines
-// have to end at vertexes of the diagram is no longer needed and not
-// difficult to eliminate. Tie lines ending on rulers without extra
-// steps could also be enabled (and the extra steps are unintuitive).
 
 // TODO (optional but in my opinion super useful for general
 // digitization tasks, 3 days) Currently the tangent dialog displays a
@@ -366,7 +369,7 @@ public class Editor extends Diagram
         }
 
         if (selection instanceof LabelHandle) {
-            editLabel(((LabelHandle) selection).getDecoration().getIndex());
+            editLabel(((LabelHandle) selection).getItem());
         } else if (selection instanceof TieLineHandle) {
             edit((TieLineHandle) selection);
         } else if (selection instanceof RulerHandle) {
@@ -938,28 +941,6 @@ public class Editor extends Diagram
         }
     }
 
-    /** Cycle the currently active curve.
-
-        @param delta if 1, then cycle forwards; if -1, then cycle
-        backwards. */
-    public void cycleActiveCurve(int delta) {
-        if (paths.size() < 2) {
-            return; // Nothing to do.
-        }
-
-        insertBeforeSelection = false;
-        VertexHandle sel = getVertexHandle();
-
-        if (sel == null) {
-            selection = sel = new VertexHandle((delta > 0) ? -1 : 0, -1);
-        }
-        CurveDecoration csel = sel.getDecoration();
-
-        csel.curveNo = (csel.curveNo + delta + paths.size()) % paths.size();
-        sel.vertexNo = sel.getItem().size() - 1;
-        redraw();
-    }
-
     /** Cycle the currently active vertex.
 
         @param delta if 1, then cycle forwards; if -1, then cycle
@@ -1181,12 +1162,12 @@ public class Editor extends Diagram
         selected). */
     void paintSelectedLabel(Graphics2D g, double scale) {
         LabelHandle hand = getLabelHandle();
-        LabelDecoration ldec = hand.getDecoration();
-        AnchoredLabel label = ldec.getItem();
+        LabelInfo labelInfo = hand.getItem();
+        AnchoredLabel label = labelInfo.label;
 
         boolean isBoxed = label.isBoxed();
         label.setBoxed(true);
-        drawLabel(g, ldec.index, scale);
+        draw(g, labelInfo, scale);
 
         if (label.getXWeight() != 0.5 || label.getYWeight() != 0.5) {
             // Mark the anchor with a circle -- either a solid circle
@@ -1195,7 +1176,7 @@ public class Editor extends Diagram
             double r = Math.max(scale * 2.0 / BASE_SCALE, 4.0);
             Point2D.Double p = new Point2D.Double
                 (label.getXWeight(), label.getYWeight());
-            labelToScaledPage(ldec.index, scale).transform(p, p);
+            labelToScaledPage(labelInfo, scale).transform(p, p);
             Ellipse2D circle = new Ellipse2D.Double
                 (p.x - r, p.y - r, r * 2, r * 2);
             if (getLabelHandle().handle == LabelHandleType.CENTER) {
@@ -1244,10 +1225,6 @@ public class Editor extends Diagram
         if (principalToStandardPage == null
             || paintSuppressionRequestCnt > 0) {
             return;
-        }
-
-        if (labelViews.size() != labels.size()) {
-            initializeLabelViews();
         }
 
         g.setRenderingHint(RenderingHints.KEY_ANTIALIASING,
@@ -1338,16 +1315,17 @@ public class Editor extends Diagram
             return null;
         }
 
-        CuspFigure activeCurve = getActiveCurve();
-        if (activeCurve != null) {
-            return activeCurve;
+        CuspFigure c = getActiveCurve();
+        if (c != null) {
+            return c;
         }
 
-        paths.add
-            (new CuspFigure(new CuspInterp2D(false), lineStyle, lineWidth));
-        selection = new VertexHandle(paths.size() - 1, -1);
+        c = new CuspFigure(new CuspInterp2D(false), lineStyle, lineWidth);
+        CurveDecoration d = new CurveDecoration(c);
+        decorations.add(d);
+        selection = new VertexHandle(d, -1);
         insertBeforeSelection = false;
-        return getActiveCurve();
+        return c;
     }
 
     public void deselectCurve() {
@@ -1454,8 +1432,7 @@ public class Editor extends Diagram
         showTangent(vhand);
     }
 
-    @Override void removeCurve(int curveNo) {
-        CuspFigure path = paths.get(curveNo);
+    @Override public void remove(CuspFigure path) {
 
         // If an incomplete tie line selection refers to this curve,
         // then stop selecting a tie line.
@@ -1467,7 +1444,7 @@ public class Editor extends Diagram
                 break;
             }
         }
-        super.removeCurve(curveNo);
+        super.remove(path);
     }
 
     /** Print an arrow at the currently selected location that is
@@ -1542,8 +1519,9 @@ public class Editor extends Diagram
         tie.ot1 = tieLineCorners.get(0).t;
         tie.ot2 = tieLineCorners.get(1).t;
 
-        selection = new TieLineHandle(tieLines.size(), TieLineHandleType.OUTER2);
-        add(tie);
+        TieLineDecoration d = new TieLineDecoration(tie);
+        selection = new TieLineHandle(d, TieLineHandleType.OUTER2);
+        addDecoration(d);
     }
 
     int askNumberOfTieLines(int oldCount) {
@@ -1604,9 +1582,10 @@ public class Editor extends Diagram
             return;
         }
 
-        removeCurve(vhand.getCurveNo());
-        add(r);
-        selection = new RulerHandle(rulers.size() - 1, RulerHandleType.END);
+        vhand.getDecoration().remove();
+        RulerDecoration d = new RulerDecoration(r);
+        addDecoration(d);
+        selection = new RulerHandle(d, RulerHandleType.END);
     }
 
     @Override public void rename(LinearAxis axis, String name) {
@@ -2000,8 +1979,8 @@ public class Editor extends Diagram
         } else {
             LabelDecoration ldec = getSelectedLabel();
             if (ldec != null) {
-                String text = ldec.getItem().getText();
-                for (AnchoredLabel label: labels) {
+                String text = ldec.getLabel().getText();
+                for (AnchoredLabel label: labelzz()) {
                     if (text.equals(label.getText())) {
                         points.add(new Point2D.Double(label.getX(), label.getY()));
                     }
@@ -2070,13 +2049,6 @@ public class Editor extends Diagram
         tieLineDialog.pack();
         tieLineDialog.setVisible(true);
         tieLineDialog.toFront();
-    }
-
-    /** @return the index of the label that is closest to mprin, as
-        measured by distance from the center of the label to mprin on
-        the standard page. */
-    int nearestLabelNo() {
-        return (mprin == null) ? -1 : nearestLabelNo(mprin);
     }
 
     /** Move the mouse to the nearest key point.
@@ -2281,9 +2253,11 @@ public class Editor extends Diagram
         newLabel.setAngle(pageToPrincipalAngle(newLabel.getAngle()));
         newLabel.setX(x);
         newLabel.setY(y);
-        add(newLabel);
-        selection = new LabelHandle(labels.size() - 1, LabelHandleType.ANCHOR);
+        LabelDecoration d = new LabelDecoration(new LabelInfo(newLabel));
+        decorations.add(d);
+        selection = new LabelHandle(d, LabelHandleType.ANCHOR);
         mouseIsStuck = true;
+        propagateChange();
     }
 
     public boolean check(AnchoredLabel label) {
@@ -2297,8 +2271,8 @@ public class Editor extends Diagram
         return true;
     }
 
-    public void editLabel(int index) {
-        AnchoredLabel label = (AnchoredLabel) labels.get(index).clone();
+    public void editLabel(LabelInfo labelInfo) {
+        AnchoredLabel label = labelInfo.label.clone();
         label.setAngle(principalToPageAngle(label.getAngle()));
         LabelDialog dog = getLabelDialog();
         dog.setTitle("Edit Label");
@@ -2313,8 +2287,7 @@ public class Editor extends Diagram
         newLabel.setY(label.getY());
         newLabel.setBaselineXOffset(label.getBaselineXOffset());
         newLabel.setBaselineYOffset(label.getBaselineYOffset());
-        labels.set(index, newLabel);
-        labelViews.set(index, toView(newLabel));
+        labelInfo.label = newLabel;
         propagateChange();
     }
 
@@ -2614,7 +2587,7 @@ public class Editor extends Diagram
             return;
         }
         try {
-            toggleCurveClosure(hand.getCurveNo());
+            toggleCurveClosure(hand.getItem());
         } catch (IllegalArgumentException x) {
             showError(x.toString(), "Cannot perform operation");
         }
@@ -3606,8 +3579,10 @@ public class Editor extends Diagram
             JOptionPane.showMessageDialog
                 (editFrame, "Saved '" + file.toAbsolutePath() + "'.");
         } catch (IOException e) {
-            JOptionPane.showMessageDialog
-                (editFrame, "File save error: " + e);
+            // UNDO OBSOLESCENT
+            throw new RuntimeException(e);
+            // JOptionPane.showMessageDialog
+                // (editFrame, "File save error: " + e);
         }
     }
 
@@ -3754,7 +3729,7 @@ public class Editor extends Diagram
 
         try (UpdateSuppressor us = new UpdateSuppressor()) {
                 ArrayList<Point2D.Double> selections = new ArrayList<>();
-                int oldSize = paths.size();
+                int oldSize = decorations.size();
 
                 if (selection != null) {
                     selections.add(selection.getLocation());
@@ -3772,9 +3747,10 @@ public class Editor extends Diagram
                         continue;
                     }
                     gridLine = Duh.transform(standardPageToPrincipal, gridLine);
-                    paths.add(new CuspFigure
-                              (new CuspInterp2D(gridLine),
-                               StandardStroke.INVISIBLE, 0));
+                    decorations.add
+                        (new CurveDecoration
+                         (new CuspFigure(new CuspInterp2D(gridLine),
+                                         StandardStroke.INVISIBLE, 0)));
                 }
 
                 {
@@ -3814,8 +3790,8 @@ public class Editor extends Diagram
                     newPage = mousePage; // Leave the mouse where it is.
                 }
 
-                while (paths.size() > oldSize) {
-                    paths.remove(paths.size() - 1);
+                while (decorations.size() > oldSize) {
+                    decorations.get(decorations.size()-1).remove();
                 }
             } catch (Exception e) {
             System.err.println(e);
