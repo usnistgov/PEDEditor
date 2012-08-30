@@ -1980,7 +1980,7 @@ public class Editor extends Diagram
             LabelDecoration ldec = getSelectedLabel();
             if (ldec != null) {
                 String text = ldec.getLabel().getText();
-                for (AnchoredLabel label: labelzz()) {
+                for (AnchoredLabel label: labels()) {
                     if (text.equals(label.getText())) {
                         points.add(new Point2D.Double(label.getX(), label.getY()));
                     }
