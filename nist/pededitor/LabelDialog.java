@@ -150,82 +150,88 @@ public class LabelDialog extends JDialog {
     }
 
     LabelDialog(Frame owner, String title, Font font) {
+        this (owner, title, font, true);
+    }
+
+    LabelDialog(Frame owner, String title, Font font, boolean modifiableText) {
         super(owner, "Edit Text", true);
 
         GridBagUtil cpgb = new GridBagUtil(this);
 
-        {
-            JPanel panel = new JPanel();
-            GridBagUtil gb = new GridBagUtil(panel);
+        if (modifiableText) {
+            {
+                JPanel panel = new JPanel();
+                GridBagUtil gb = new GridBagUtil(panel);
 
-            JLabel textLabel = new JLabel("Text:");
-            textLabel.setLabelFor(textField);
-            textField.setFont(font.deriveFont(16f));
-            gb.addWest(textLabel);
-            gb.endRowWith(textField);
-            cpgb.endRowWith(panel);
-        }
+                JLabel textLabel = new JLabel("Text:");
+                textLabel.setLabelFor(textField);
+                textField.setFont(font.deriveFont(16f));
+                gb.addWest(textLabel);
+                gb.endRowWith(textField);
+                cpgb.endRowWith(panel);
+            }
 
-        {
-            JPanel panel = new JPanel();
-            GridBagUtil gb = new GridBagUtil(panel);
+            {
+                JPanel panel = new JPanel();
+                GridBagUtil gb = new GridBagUtil(panel);
 
-            DelimiterEventListener dlisten = new DelimiterEventListener() {
-                    @Override public void actionPerformed(DelimiterEvent e) {
-                        delimit(e.getDelimiter());
-                    }
-                };
-
-            DelimiterPalettePanel dpal = new DelimiterPalettePanel
-                (new HTMLDelimiterPalette(), 7, font);
-            dpal.addListener(dlisten);
-            gb.endRowWith(dpal);
-
-            StringPalettePanel pal;
-            StringEventListener listen = new StringEventListener() {
-                    @Override public void actionPerformed(StringEvent e) {
-                        insertText(e.getString());
-                    }
-                };
-
-            pal = new StringPalettePanel(new HTMLPalette(), 5, font);
-            pal.addListener(listen);
-            gb.endRowWith(pal);
-
-            pal = new StringPalettePanel(new PedPalette(), 8, font);
-            pal.addListener(listen);
-            gb.endRowWith(pal);
-
-            JLabel codePointLabel = new JLabel("Unicode code point (hex):");
-            codePointLabel.setLabelFor(codePoint);
-            gb.addWest(codePointLabel);
-            gb.addWest(codePoint);
-            gb.endRowWith
-                (new JButton(new AbstractAction("Insert") {
-                        private static final long serialVersionUID = 197868896745807236L;
-
-                        @Override public void actionPerformed(ActionEvent e) {
-                            String hex = codePoint.getText();
-                            int codePoint;
-
-                            try {
-                                codePoint = Integer.parseInt(hex, 16);
-                                String utfChar = new String(Character.toChars(codePoint));
-                                insertText(utfChar);
-                            } catch (NumberFormatException nfe) {
-                                JOptionPane.showMessageDialog
-                                    (null, "'" + hex + "' is not a valid input.\n" +
-                                     "Enter a hexadecimal number such as '25bc'.");
-                                return;
-                            } catch (IllegalArgumentException iae) {
-                                JOptionPane.showMessageDialog
-                                    (null, "'" + hex + "' is not a valid Unicode code point.\n");
-                                return;
-                            }
+                DelimiterEventListener dlisten = new DelimiterEventListener() {
+                        @Override public void actionPerformed(DelimiterEvent e) {
+                            delimit(e.getDelimiter());
                         }
-                    }));
+                    };
 
-            cpgb.addNorthwest(panel);
+                DelimiterPalettePanel dpal = new DelimiterPalettePanel
+                    (new HTMLDelimiterPalette(), 7, font);
+                dpal.addListener(dlisten);
+                gb.endRowWith(dpal);
+
+                StringPalettePanel pal;
+                StringEventListener listen = new StringEventListener() {
+                        @Override public void actionPerformed(StringEvent e) {
+                            insertText(e.getString());
+                        }
+                    };
+
+                pal = new StringPalettePanel(new HTMLPalette(), 5, font);
+                pal.addListener(listen);
+                gb.endRowWith(pal);
+
+                pal = new StringPalettePanel(new PedPalette(), 8, font);
+                pal.addListener(listen);
+                gb.endRowWith(pal);
+
+                JLabel codePointLabel = new JLabel("Unicode code point (hex):");
+                codePointLabel.setLabelFor(codePoint);
+                gb.addWest(codePointLabel);
+                gb.addWest(codePoint);
+                gb.endRowWith
+                    (new JButton(new AbstractAction("Insert") {
+                            private static final long serialVersionUID = 197868896745807236L;
+
+                            @Override public void actionPerformed(ActionEvent e) {
+                                String hex = codePoint.getText();
+                                int codePoint;
+
+                                try {
+                                    codePoint = Integer.parseInt(hex, 16);
+                                    String utfChar = new String(Character.toChars(codePoint));
+                                    insertText(utfChar);
+                                } catch (NumberFormatException nfe) {
+                                    JOptionPane.showMessageDialog
+                                        (null, "'" + hex + "' is not a valid input.\n" +
+                                         "Enter a hexadecimal number such as '25bc'.");
+                                    return;
+                                } catch (IllegalArgumentException iae) {
+                                    JOptionPane.showMessageDialog
+                                        (null, "'" + hex + "' is not a valid Unicode code point.\n");
+                                    return;
+                                }
+                            }
+                        }));
+
+                cpgb.addNorthwest(panel);
+            }
         }
 
         JPanel miscPane = new JPanel();
@@ -235,15 +241,19 @@ public class LabelDialog extends JDialog {
             JPanel panel = new JPanel();
             GridBagUtil gb = new GridBagUtil(panel);
 
-            gb.endRowWith
-                (new JButton(new AbstractAction("H2SO4 \u2192 H\u2082SO\u2084") {
-                        private static final long serialVersionUID = 197868896745807236L;
+            if (modifiableText) {
+                gb.endRowWith
+                    (new JButton(new AbstractAction
+                                 ("H2SO4 \u2192 H\u2082SO\u2084") {
+                            private static final long serialVersionUID
+                                = 197868896745807236L;
 
-                        @Override public void actionPerformed(ActionEvent e) {
-                            textField.setText(ChemicalString.autoSubscript
-                                              (textField.getText()));
-                        }
-                    }));
+                            @Override public void actionPerformed(ActionEvent e) {
+                                textField.setText(ChemicalString.autoSubscript
+                                                  (textField.getText()));
+                            }
+                        }));
+            }
 
             JLabel fontSizeLabel = new JLabel("Font size:");
             fontSizeLabel.setLabelFor(fontSize);
@@ -269,7 +279,7 @@ public class LabelDialog extends JDialog {
             mgb.endRowWith(panel);
         }
 
-        {
+        if (modifiableText) {
             JPanel panel = new JPanel();
             GridBagUtil gb = new GridBagUtil(panel);
 
@@ -302,7 +312,7 @@ public class LabelDialog extends JDialog {
     }
 
     LabelDialog(Frame owner, String title, AnchoredLabel label, Font font) {
-        this(owner, title, font);
+        this(owner, title, font, true);
         set(label);
     }
 
@@ -480,7 +490,7 @@ public class LabelDialog extends JDialog {
             JOptionPane.showMessageDialog
                 (null, "Warning: font '" + fontName + "' not found.");
         }
-        LabelDialog dialog = new LabelDialog(null, "Labels test", font);
+        LabelDialog dialog = new LabelDialog(null, "Labels test", font, false);
         dialog.setFontSize(4.0/3);
         dialog.setAngle(Math.PI / 2);
         AnchoredLabel t = dialog.showModal();
