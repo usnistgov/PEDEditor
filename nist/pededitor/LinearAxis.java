@@ -1,11 +1,11 @@
 package gov.nist.pededitor;
 
-import java.awt.geom.*;
-import java.util.*;
-import java.text.*;
+import java.awt.geom.AffineTransform;
+import java.awt.geom.Point2D;
+import java.text.DecimalFormat;
+import java.text.NumberFormat;
 
 import org.codehaus.jackson.annotate.JsonIgnore;
-import org.codehaus.jackson.annotate.JsonManagedReference;
 import org.codehaus.jackson.annotate.JsonProperty;
 
 /** Class to hold information about an axis whose value equals
@@ -16,8 +16,15 @@ public class LinearAxis extends Axis {
     double a;
     double b;
     double c;
-    @JsonManagedReference public ArrayList<LinearRuler> rulers
-        = new ArrayList<LinearRuler>();
+
+    // OBSOLESCENT
+    LinearRuler[] rulers = null;
+    @JsonProperty("rulers") void setRulers(LinearRuler[] values) {
+        for (LinearRuler r: values) {
+            r.axis = this;
+        }
+        rulers = values;
+    }
 
     /** Create a LinearAxisInfo for the formula a*x + b*y + c. */
     public LinearAxis(@JsonProperty("format") NumberFormat format,

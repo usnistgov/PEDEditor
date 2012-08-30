@@ -12,7 +12,6 @@ import java.awt.geom.Point2D;
 import java.awt.geom.Rectangle2D;
 import java.util.regex.Pattern;
 
-import org.codehaus.jackson.annotate.JsonBackReference;
 import org.codehaus.jackson.annotate.JsonIgnore;
 import org.codehaus.jackson.annotate.JsonProperty;
 import org.codehaus.jackson.map.annotate.JsonSerialize;
@@ -21,7 +20,7 @@ import org.codehaus.jackson.map.annotate.JsonSerialize.Inclusion;
 /** Class describing a ruler whose tick marks describe values from a
     LinearAxis. */
 @JsonSerialize(include = Inclusion.NON_DEFAULT)
-class LinearRuler implements BoundedParameterizable2D {
+class LinearRuler implements BoundedParameterizable2D, Decorated {
     public static enum LabelAnchor { NONE, LEFT, RIGHT };
     private static Pattern minusZeroPattern = Pattern.compile("-0\\.?0*\\z");
 
@@ -51,7 +50,7 @@ class LinearRuler implements BoundedParameterizable2D {
         right-side ticks). */
     @JsonProperty LabelAnchor labelAnchor;
 
-    @JsonBackReference LinearAxis axis;
+    LinearAxis axis;
 
     /** Multiply the axis values by multiplier. Normally multiplier =
         1.0, but multiplier = 100.0 for rulers that show percentages
@@ -124,6 +123,19 @@ class LinearRuler implements BoundedParameterizable2D {
         to be a big tick. */
     @JsonProperty("tickStart") Double tickStartD = null;
     @JsonProperty("tickEnd") Double tickEndD = null;
+
+    /** Used during serialization. */
+    @JsonProperty("axis") String getAxisName() {
+        return (axis == null) ? null : (String) (axis.name);
+    }
+
+    @JsonProperty("axis") void setJSONAxisName(String name) {
+        axisName = name;
+    }
+
+    /** Used to temporarily store the name of the axis during
+        deserialization. */
+    transient String axisName = null;
 
     /** clone() copies but does not clone the axis field, because the
         axis is considered a relation of the ruler instead of an owned
