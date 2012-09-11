@@ -38,10 +38,14 @@ public class PEDToPDF {
             : s.substring(0, extensionIndex);
     }
 
-    public static Diagram loadAndFix(String filename) throws IOException {
+    /** Load the PED file with the given filename, crop it, guess
+        diagram components, remove the x3 and y3 keys (which are used
+        to guess diagram components), and remove baseline offsets
+        (which are artifacts from the GRUMP conversion). */
+    public static Diagram loadAndFix(String filename, boolean crop) throws IOException {
         Diagram d = Diagram.loadFrom(new File(filename));
         Rectangle2D bounds = new Rectangle2D.Double(-0.5, -0.5, 2.0, 2.0);
-        if (d.crop(bounds)) {
+        if (crop && d.crop(bounds)) {
             System.err.println(filename + " did not fit in the normal page bounds.");
             d.computeMargins();
         }
@@ -74,6 +78,7 @@ public class PEDToPDF {
             // In this snippet, it can only be thrown by newDirectoryStream.
             System.err.println(x);
         }
+        Collections.sort(res, new MixedIntegerStringComparator());
         return res;
     }
 
@@ -112,7 +117,7 @@ public class PEDToPDF {
             }
 
             try {
-                Diagram d = loadAndFix(filename);
+                Diagram d = loadAndFix(filename, true);
                 copy.addPage(copy.getImportedPage
                              (new PdfReader(d.toPDFByteArray()),
                               1));
@@ -129,31 +134,64 @@ public class PEDToPDF {
         doc.close();
     }
 
+    public static void loadAndSave(String filename, String outdir) {
+        try {
+            Diagram d = loadAndFix(filename, false);
+            int pedpos = filename.lastIndexOf("\\");
+            String ofn = outdir + "\\" + filename.substring(pedpos + 1);
+            System.out.println(filename + " -> " + ofn);
+            d.saveAsPED(Paths.get(ofn));
+        } catch (IOException x) {
+            System.err.println(filename + ": " + x);
+        }
+    }
+
+    /** Convert all files under PED_DIR to PDFs. Also fix the files
+        and place the fixed files in the ped2 directory. */
+    public static void convertAll() {
+        try {
+            List<String> peds = getInputFilenames(PED_DIR);
+            // int i = peds.indexOf("\\eb\\ped\\13125.ped");
+            // peds = peds.subList(i+1, peds.size());
+            combinePEDs(peds, 100);
+                
+            System.out.println("Batch conversion complete.");
+        } catch (IOException | DirectoryIteratorException x) {
+            // IOException can never be thrown by the iteration.
+            // In this snippet, it can only be thrown by newDirectoryStream.
+            System.err.println(x);
+            return;
+        }
+    }
+
+    /** Convert all files under PED_DIR to PDFs. Also fix the files
+        and place the fixed files in the ped2 directory. */
+    public static void fixAll(String inDir, String outDir) {
+        try {
+            for (String filename: getInputFilenames(inDir)) {
+                loadAndSave(filename, outDir);
+            }
+            System.out.println("Batch conversion complete.");
+        } catch (IOException | DirectoryIteratorException x) {
+            // IOException can never be thrown by the iteration.
+            // In this snippet, it can only be thrown by newDirectoryStream.
+            System.err.println(x);
+            return;
+        }
+    }
+
     public static void main(String[] args) {
         if (args.length == 2) {
             String ifn = args[0];
             String ofn = args[1];
             try {
-                loadAndFix(ifn).saveAsPDF(new File(ofn));
+                loadAndFix(ifn, true).saveAsPDF(new File(ofn));
                 System.out.println(ifn + " -> " + ofn + " conversion complete.");
             } catch (IOException e) {
                 JOptionPane.showMessageDialog(null, e.toString());
             }
         } else if (args.length == 0) {
-            try {
-                List<String> peds = getInputFilenames(PED_DIR);
-                Collections.sort(peds, new MixedIntegerStringComparator());
-                // int i = peds.indexOf("\\eb\\ped\\13125.ped");
-                // peds = peds.subList(i+1, peds.size());
-                combinePEDs(peds, 100);
-                
-                System.out.println("Batch conversion complete.");
-            } catch (IOException | DirectoryIteratorException x) {
-                // IOException can never be thrown by the iteration.
-                // In this snippet, it can only be thrown by newDirectoryStream.
-                System.err.println(x);
-                return;
-            }
+            convertAll();
         } else {
             System.err.println("Expected 0 or 2 arguments");
         }
