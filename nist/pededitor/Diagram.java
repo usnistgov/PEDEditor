@@ -43,13 +43,14 @@ import java.text.DecimalFormat;
 import java.text.NumberFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.NoSuchElementException;
 import java.util.Observable;
 import java.util.Set;
 import java.util.TreeMap;
@@ -111,8 +112,8 @@ public class Diagram extends Observable implements Printable {
             return decoration;
         }
 
-        VertexHandle(int curveNo, int vertexNo) {
-            this.decoration = new CurveDecoration(curveNo);
+        VertexHandle(CuspFigure curve, int vertexNo) {
+            this.decoration = new CurveDecoration(curve);
             this.vertexNo = vertexNo;
         }
 
@@ -192,12 +193,8 @@ public class Diagram extends Observable implements Printable {
             }
         }
 
-        @JsonIgnore public int getCurveNo() {
-            return getDecoration().getCurveNo();
-        }
-
         @Override public String toString() {
-            return getClass().getSimpleName() + "[" + getCurveNo() + ", " + vertexNo + "]";
+            return getClass().getSimpleName() + "[" + getItem() + ", " + vertexNo + "]";
         }
 
         @Override public void move(Point2D target) {
@@ -208,12 +205,13 @@ public class Diagram extends Observable implements Printable {
 
         @Override public VertexHandle copy(Point2D dest) {
             Point2D.Double loc = getLocation();
-            paths.add
+            CurveDecoration dec = new CurveDecoration
                 (getItem().createTransformed
                  (AffineTransform.getTranslateInstance
                   (dest.getX() - loc.x, dest.getY() - loc.y)));
+            decorations.add(dec);
             propagateChange();
-            return new VertexHandle(paths.size() - 1, vertexNo);
+            return new VertexHandle(dec, vertexNo);
         }
 
         @Override public Point2D.Double getLocation() {
@@ -233,10 +231,18 @@ public class Diagram extends Observable implements Printable {
 
     
     class CurveDecoration implements Decoration, BoundedParameterizable2D {
-        int curveNo;
+        CuspFigure curve;
 
-        CurveDecoration(int curveNo) {
-            this.curveNo = curveNo;
+        CurveDecoration(CuspFigure curve) {
+            this.curve = curve;
+        }
+
+        CurveDecoration
+            (@JsonProperty("points") Point2D.Double[] points,
+             @JsonProperty("smoothed") boolean[] smoothed,
+             @JsonProperty("closed") boolean closed) {
+            this(new CuspFigure(new CuspInterp2D(points, smoothed, closed),
+                 null, 0));
         }
 
         @Override public void setLineWidth(double lineWidth) {
@@ -262,18 +268,19 @@ public class Diagram extends Observable implements Printable {
             return getItem().getColor();
         }
 
-        public Path2D.Double getShape() {
+        @JsonIgnore public Path2D.Double getShape() {
             return getItem().createTransformed(principalToStandardPage)
                 .getPath();
         }
 
-        CuspFigure getItem() {
-            return paths.get(curveNo);
+        @JsonIgnore public final CuspFigure getItem() {
+            return curve;
         }
+        @Override public CuspFigure getSerializationObject() { return getItem(); }
 
         @Override public DecorationHandle remove() {
-            removeCurve(curveNo);
-            propagateChange();
+            Diagram.this.remove(getItem());
+            removeDecoration(this);
             return null;
         }
 
@@ -290,16 +297,12 @@ public class Diagram extends Observable implements Printable {
             }
         }
 
-        @Override public BoundedParam2D getParameterization() {
+        @JsonIgnore @Override public BoundedParam2D getParameterization() {
             return PathParam2D.create(getShape());
         }
 
-        public int getCurveNo() {
-            return curveNo;
-        }
-
         @Override public String toString() {
-            return getClass().getSimpleName() + "[" + getCurveNo() + "]";
+            return getClass().getSimpleName() + "[" + getItem() + "]";
         }
 
         @Override public boolean equals(Object other) {
@@ -308,10 +311,10 @@ public class Diagram extends Observable implements Printable {
             if (getClass() != CurveDecoration.class) return false;
 
             CurveDecoration cast = (CurveDecoration) other;
-            return this.curveNo == cast.curveNo;
+            return this.curve == cast.curve;
         }
 
-        @Override public DecorationHandle[] getHandles() {
+        @JsonIgnore @Override public DecorationHandle[] getHandles() {
             ArrayList<DecorationHandle> output = new ArrayList<>();
             CuspFigure path = getItem();
             for (int j = 0; j < path.size(); ++j) {
@@ -320,7 +323,7 @@ public class Diagram extends Observable implements Printable {
             return output.toArray(new DecorationHandle[0]);
         }
 
-        @Override public DecorationHandle[] getMovementHandles() {
+        @JsonIgnore @Override public DecorationHandle[] getMovementHandles() {
             return getHandles();
         }
 
@@ -345,8 +348,13 @@ public class Diagram extends Observable implements Printable {
             return decoration;
         }
 
-        LabelHandle(int index, LabelHandleType handle) {
-            this.decoration = new LabelDecoration(index);
+        LabelHandle() {
+            decoration = null;
+            handle = null;
+        }
+
+        LabelHandle(LabelInfo info, LabelHandleType handle) {
+            this.decoration = new LabelDecoration(info);
             this.handle = handle;
         }
 
@@ -355,7 +363,8 @@ public class Diagram extends Observable implements Printable {
             this.handle = handle;
         }
 
-        AnchoredLabel getItem() { return getDecoration().getItem(); }
+        LabelInfo getItem() { return getDecoration().getItem(); }
+        AnchoredLabel getLabel() { return getDecoration().getLabel(); }
 
         @Override public LabelHandle remove() {
             getDecoration().remove();
@@ -364,20 +373,21 @@ public class Diagram extends Observable implements Printable {
 
         @Override public void move(Point2D dest) {
             Point2D.Double destAnchor = getAnchorLocation(dest);
-            AnchoredLabel item = getItem();
+            AnchoredLabel item = getLabel();
             item.setX(destAnchor.getX());
             item.setY(destAnchor.getY());
             propagateChange();
         }
 
         @Override public LabelHandle copy(Point2D dest) {
-            AnchoredLabel output = getItem().clone();
+            AnchoredLabel label = getLabel().clone();
             Point2D.Double destAnchor = getAnchorLocation(dest);
-            output.setX(destAnchor.getX());
-            output.setY(destAnchor.getY());
-            add(output);
+            label.setX(destAnchor.getX());
+            label.setY(destAnchor.getY());
+            LabelDecoration d = new LabelDecoration(new LabelInfo(label));
+            decorations.add(d);
             propagateChange();
-            return new LabelHandle(labels.size() - 1, handle);
+            return new LabelHandle(d, handle);
         }
 
         @Override public Point2D.Double getLocation() {
@@ -435,29 +445,36 @@ public class Diagram extends Observable implements Printable {
 
 
     class LabelDecoration implements Decoration {
-        int index;
+        LabelInfo label;
 
-        LabelDecoration(int index) {
-            this.index = index;
+        public LabelDecoration() {
+            this.label = null;
         }
 
-        public int getIndex() { 
-            return index;
+        LabelDecoration(LabelInfo label) {
+            this.label = label;
         }
 
-        AnchoredLabel getItem() { return labels.get(index); }
+        final LabelInfo getItem() { return label; }
+        @Override public AnchoredLabel getSerializationObject() {
+            return getLabel();
+        }
+        final AnchoredLabel getLabel() { return label.label; }
 
         @Override public void draw(Graphics2D g, double scale) {
-            drawLabel(g, index, scale);
+            Diagram.this.draw(g, label, scale);
         }
 
         @Override public DecorationHandle remove() {
-            labels.remove(index);
-            if (labelViews.size() > 0) {
-                labelViews.remove(index);
+            for (Iterator<LabelInfo> it = new LabelInfoIterator();
+                 it.hasNext();) {
+                if (it.next() == label) {
+                    it.remove();
+                    propagateChange();
+                    return null;
+                }
             }
-            propagateChange();
-            return null;
+            throw new IllegalStateException("Could not locate " + label.label);
         }
 
         @Override public boolean equals(Object other) {
@@ -466,21 +483,23 @@ public class Diagram extends Observable implements Printable {
             if (getClass() != LabelDecoration.class) return false;
 
             LabelDecoration cast = (LabelDecoration) other;
-            return this.index == cast.index;
+            return this.label == cast.label;
         }
 
-        public Point2D.Double getCenterLocation() {
-            initializeLabelViews();
-            Point2D.Double lc = labelCenters.get(index);
-            if (lc == null) {
-                System.out.println("Unknown center for label of '"
-                                   + getItem().getText() + "'");
+        @JsonIgnore public Point2D.Double getCenterLocation() {
+            initializeLabelInfo(label);
+            Point2D.Double center = label.getCenter();
+            if (center == null) {
+                center = new Point2D.Double(0.5, 0.5);
+                labelToScaledPage(label, 1.0).transform(center, center);
+                scaledPageToPrincipal(1.0).transform(center, center);
+                label.setCenter(center);
             }
-            return (lc == null) ? null : (Point2D.Double) lc.clone();
+            return (Point2D.Double) center.clone();
         }
 
-        public Point2D.Double getAnchorLocation() {
-            AnchoredLabel item = getItem();
+        @JsonIgnore public Point2D.Double getAnchorLocation() {
+            AnchoredLabel item = getLabel();
             return new Point2D.Double(item.getX(), item.getY());
         }
 
@@ -500,18 +519,15 @@ public class Diagram extends Observable implements Printable {
         }
 
         @Override public void setColor(Color color) {
-            AnchoredLabel item = getItem();
-            item.setColor(color);
-            if (labelViews.size() > 0) {
-                labelViews.set(index, toView(item));
-            }
-            propagateChange();
+            LabelInfo labelInfo = getItem();
+            labelInfo.label.setColor(color);
+            labelInfo.view = null;
         }
 
-        @Override public Color getColor() { return getItem().getColor(); }
+        @Override public Color getColor() { return getLabel().getColor(); }
 
-        @Override public DecorationHandle[] getHandles() {
-            AnchoredLabel label = getItem();
+        @JsonIgnore @Override public DecorationHandle[] getHandles() {
+            AnchoredLabel label = getLabel();
             if (label.getXWeight() != 0.5 || label.getYWeight() != 0.5) {
                 return new DecorationHandle[]
                     { new LabelHandle(this, LabelHandleType.ANCHOR),
@@ -523,29 +539,34 @@ public class Diagram extends Observable implements Printable {
         }
 
         /* Moving the anchor will move the center as well. */
-        @Override public DecorationHandle[] getMovementHandles() {
+        @JsonIgnore @Override public DecorationHandle[] getMovementHandles() {
             return new DecorationHandle[] { getHandles()[0] };
         }
 
         @Override public String toString() {
-            return getClass().getSimpleName() + "[" + index
-                + " (" + getItem().getText() + ")]";
+            return getClass().getSimpleName() + "[" + getLabel() + ")]";
         }
     }
 
-
     class ArrowDecoration implements Decoration, DecorationHandle {
-        int index;
+        Arrow item;
 
-        ArrowDecoration(int index) {
-            this.index = index;
+        ArrowDecoration(Arrow item) {
+            this.item = item;
         }
 
-        Arrow getItem() { return arrows.get(index); }
+        ArrowDecoration(@JsonProperty("x") double x,
+                        @JsonProperty("y") double y,
+                        @JsonProperty("size") double size,
+                        @JsonProperty("angle") double theta) {
+            this(new Arrow(x, y, size, theta));
+        }
+
+        Arrow getItem() { return item; }
+        @Override public Arrow getSerializationObject() { return getItem(); }
 
         /*
-        // Problem is, nobody really cares to follow the outline
-        // of an arrow.
+        // Nobody really cares to follow the outline of an arrow.
 
         public void getShape() {
 
@@ -566,8 +587,7 @@ public class Diagram extends Observable implements Printable {
         }
 
         @Override public ArrowDecoration remove() {
-            arrows.remove(index);
-            propagateChange();
+            removeDecoration(this);
             return null;
         }
 
@@ -579,12 +599,13 @@ public class Diagram extends Observable implements Printable {
         }
 
         @Override public ArrowDecoration copy(Point2D dest) {
-            Arrow output = getItem().clonus();
-            output.x = dest.getX();
-            output.y = dest.getY();
-            arrows.add(output);
+            Arrow arrow = getItem().clonus();
+            arrow.x = dest.getX();
+            arrow.y = dest.getY();
+            ArrowDecoration res = new ArrowDecoration(arrow);
+            decorations.add(res);
             propagateChange();
-            return new ArrowDecoration(arrows.size() - 1);
+            return res;
         }
 
         @Override public void setLineWidth(double lineWidth) {
@@ -600,7 +621,7 @@ public class Diagram extends Observable implements Printable {
             // Nothing to do here
         }
 
-        @Override public Point2D.Double getLocation() {
+        @JsonIgnore @Override public Point2D.Double getLocation() {
             Arrow item = getItem();
             return new Point2D.Double(item.x, item.y);
         }
@@ -618,7 +639,7 @@ public class Diagram extends Observable implements Printable {
             if (getClass() != ArrowDecoration.class) return false;
 
             ArrowDecoration cast = (ArrowDecoration) other;
-            return this.index == cast.index;
+            return item == cast.item;
         }
 
         @Override public ArrowDecoration getDecoration() {
@@ -647,8 +668,8 @@ public class Diagram extends Observable implements Printable {
             this.handle = handle;
         }
 
-        TieLineHandle(int index, TieLineHandleType handle) {
-            this(new TieLineDecoration(index), handle);
+        TieLineHandle(TieLine tieLine, TieLineHandleType handle) {
+            this(new TieLineDecoration(tieLine), handle);
         }
 
         TieLine getItem() { return getDecoration().getItem(); }
@@ -700,14 +721,18 @@ public class Diagram extends Observable implements Printable {
     }
 
     class TieLineDecoration implements Decoration {
-        /** Index into tieLines list. */
-        int index;
+        TieLine item;
 
-        TieLineDecoration(int index) {
-            this.index = index;
+        TieLineDecoration(TieLine item) {
+            this.item = item;
         }
 
-        TieLine getItem() { return tieLines.get(index); }
+        TieLineDecoration() {
+            this(null);
+        }
+
+        TieLine getItem() { return item; }
+        @Override public TieLine getSerializationObject() { return getItem(); }
 
         @Override public void draw(Graphics2D g, double scale) {
             getItem().draw(g, getPrincipalToAlignedPage(), scale);
@@ -738,8 +763,7 @@ public class Diagram extends Observable implements Printable {
         }
 
         @Override public DecorationHandle remove() {
-            tieLines.remove(index);
-            propagateChange();
+            removeDecoration(this);
             return null;
         }
 
@@ -756,7 +780,7 @@ public class Diagram extends Observable implements Printable {
             if (getClass() != TieLineDecoration.class) return false;
 
             TieLineDecoration cast = (TieLineDecoration) other;
-            return index == cast.index;
+            return item == cast.item;
         }
 
         @Override public DecorationHandle[] getHandles() {
@@ -786,8 +810,8 @@ public class Diagram extends Observable implements Printable {
             this.handle = handle;
         }
 
-        RulerHandle(int index, RulerHandleType handle) {
-            this(new RulerDecoration(index), handle);
+        RulerHandle(LinearRuler ruler, RulerHandleType handle) {
+            this(new RulerDecoration(ruler), handle);
         }
 
         LinearRuler getItem() { return getDecoration().getItem(); }
@@ -836,9 +860,10 @@ public class Diagram extends Observable implements Printable {
                 break;
             }
 
-            rulers.add(r);
+            RulerDecoration dec = new RulerDecoration(r);
+            decorations.add(dec);
             propagateChange();
-            return new RulerHandle(rulers.size() - 1, handle);
+            return new RulerHandle(dec, handle);
         }
 
         @Override public Point2D.Double getLocation() {
@@ -868,14 +893,14 @@ public class Diagram extends Observable implements Printable {
     }
 
     class RulerDecoration implements Decoration, BoundedParameterizable2D {
-        /** Index into rulers list. */
-        int index;
+        LinearRuler item;
 
-        RulerDecoration(int index) {
-            this.index = index;
+        RulerDecoration(LinearRuler item) {
+            this.item = item;
         }
 
-        LinearRuler getItem() { return rulers.get(index); }
+        LinearRuler getItem() { return item; }
+        @Override public LinearRuler getSerializationObject() { return getItem(); }
 
         @Override public void draw(Graphics2D g, double scale) {
             getItem().draw(g, getPrincipalToAlignedPage(), scale);
@@ -911,8 +936,7 @@ public class Diagram extends Observable implements Printable {
         }
 
         @Override public DecorationHandle remove() {
-            rulers.remove(index);
-            propagateChange();
+            removeDecoration(this);
             return null;
         }
 
@@ -928,7 +952,7 @@ public class Diagram extends Observable implements Printable {
             if (getClass() != RulerDecoration.class) return false;
 
             RulerDecoration cast = (RulerDecoration) other;
-            return index == cast.index;
+            return item == cast.item;
         }
 
         @Override public DecorationHandle[] getHandles() {
@@ -1035,12 +1059,42 @@ public class Diagram extends Observable implements Printable {
         compute automatically instead. */
     protected Rectangle2D.Double pageBounds;
     protected DiagramType diagramType = null;
-    protected ArrayList<CuspFigure> paths;
-    protected ArrayList<AnchoredLabel> labels;
-    protected transient ArrayList<Point2D.Double> labelCenters;
-    protected transient ArrayList<View> labelViews;
-    @JsonProperty protected ArrayList<Arrow> arrows;
-    protected ArrayList<TieLine> tieLines;
+    protected ArrayList<Decoration> decorations;
+
+    class LabelInfo {
+        AnchoredLabel label;
+        protected transient Point2D.Double center;
+        protected transient View view;
+
+        public View getView() {
+            if (view == null) {
+                view = toView(label);
+            }
+            return view;
+        }
+
+        public Point2D.Double getCenter() {
+            return (center == null) ? null
+                : new Point2D.Double(center.getX(), center.getY());
+        }
+
+        public void setCenter(Point2D p) {
+            center = (p == null) ? null : new Point2D.Double(p.getX(), p.getY());
+        }
+
+        public LabelInfo(AnchoredLabel label) {
+            this(label, null, null);
+        }
+
+        public LabelInfo(AnchoredLabel label, Point2D center,
+                                 View view) {
+            this.label = label;
+            this.center = (center == null) ? null
+                : new Point2D.Double(center.getX(), center.getY());
+            this.view = view;
+        }
+    }
+
     @JsonProperty protected String[/* Side */] diagramComponents = null;
 
     /** All elements contained in diagram components, sorted into Hill
@@ -1055,12 +1109,9 @@ public class Diagram extends Observable implements Printable {
     protected String originalFilename;
 
     protected ArrayList<LinearAxis> axes = new ArrayList<>();
-    /** principal coordinates are used to define rulers' startPoints
-        and endPoints. */
-    protected ArrayList<LinearRuler> rulers = new ArrayList<>();
 
-    protected double labelXMargin = 0;
-    protected double labelYMargin = 0;
+    protected double labelXMargin = Double.NaN;
+    protected double labelYMargin = Double.NaN;
 
     static final double STANDARD_LINE_WIDTH = 0.0024;
     static final int STANDARD_FONT_SIZE = 15;
@@ -1107,12 +1158,7 @@ public class Diagram extends Observable implements Printable {
         principalToStandardPage = null;
         standardPageToPrincipal = null;
         pageBounds = null;
-        paths = new ArrayList<>();
-        arrows = new ArrayList<>();
-        tieLines = new ArrayList<>();
-        labels = new ArrayList<>();
-        labelViews = new ArrayList<>();
-        labelCenters = new ArrayList<>();
+        decorations = new ArrayList<>();
         removeAllTags();
         removeAllVariables();
         diagramComponents = new String[Side.values().length];
@@ -1128,23 +1174,31 @@ public class Diagram extends Observable implements Printable {
         init();
     }
 
-    @JsonProperty("curves")
-    ArrayList<CuspFigure> getPaths() {
-        return paths;
+    // OBSOLESCENT
+    @JsonProperty("curves") void setPaths(CuspFigure[] paths) {
+        ArrayList<Decoration> figs = new ArrayList<>();
+        for (CuspFigure path: paths) {
+            figs.add(decorate(path));
+        }
+        decorations.addAll(0, figs);
     }
 
-    @JsonProperty("curves")
-    void setPaths(Collection<CuspFigure> paths) {
-        this.paths = new ArrayList<CuspFigure>(paths);
+    // OBSOLESCENT
+    @JsonProperty void setArrows(Arrow[] values) {
+        for (Arrow v: values) {
+            decorations.add(0, decorate(v));
+        }
     }
 
-    @JsonProperty("tieLines")
-    ArrayList<TieLine> getTieLines() {
-        return tieLines;
+    // OBSOLESCENT
+    @JsonProperty void setLabels(AnchoredLabel[] values) {
+        for (AnchoredLabel v: values) {
+            decorations.add(decorate(v));
+        }
     }
 
     CuspFigure idToCurve(int id) {
-        for (CuspFigure path: paths) {
+        for (CuspFigure path: paths()) {
             if (path.getJSONId() == id) {
                 return path;
             }
@@ -1402,39 +1456,24 @@ public class Diagram extends Observable implements Printable {
         propagateChange();
     }
 
-    void removeCurve(int curveNo) {
-        CuspFigure path = paths.get(curveNo);
-
-        // Remove all associated tie lines.
-        for (int i = tieLines.size() - 1; i >= 0; --i) {
-            TieLine tie = tieLines.get(i);
-            if (tie.innerEdge == path || tie.outerEdge == path) {
-                tieLines.remove(i);
-            }
-        }
-
-        paths.remove(curveNo);
-        propagateChange();
-    }
-
     /** Make a list of t values that appear in this Diagram
         object and that refer to locations on the given path. */
     ArrayList<Double> getPathSegments(CuspFigure path) {
-        ArrayList<Double> output = new ArrayList<>();
+        ArrayList<Double> res = new ArrayList<>();
 
         // Tie Lines' limits are defined by t values.
-        for (TieLine tie: tieLines) {
+        for (TieLine tie: tieLines()) {
             if (tie.innerEdge == path) {
-                output.add(tie.it1);
-                output.add(tie.it2);
+                res.add(tie.it1);
+                res.add(tie.it2);
             }
             if (tie.outerEdge == path) {
-                output.add(tie.ot1);
-                output.add(tie.ot2);
+                res.add(tie.ot1);
+                res.add(tie.ot2);
             }
         }
 
-        return output;
+        return res;
     }
 
     /** You can change the segments returned by getPathSegments() and
@@ -1442,7 +1481,7 @@ public class Diagram extends Observable implements Printable {
         fields from which they came. */
     void setPathSegments(CuspFigure path, ArrayList<Double> segments) {
         int index = 0;
-        for (TieLine tie: tieLines) {
+        for (TieLine tie: tieLines()) {
             if (tie.innerEdge == path) {
                 tie.it1 = segments.get(index++);
                 tie.it2 = segments.get(index++);
@@ -1457,19 +1496,23 @@ public class Diagram extends Observable implements Printable {
     /** Add an arrow with the given location, line width, and angle
         (expressed in principal coordinates). */
     public void addArrow(Point2D prin, double lineWidth, double theta) {
-        arrows.add
-            (new Arrow(prin.getX(), prin.getY(), lineWidth, theta));
+        decorations.add
+            (new ArrowDecoration
+             (new Arrow(prin.getX(), prin.getY(), lineWidth, theta)));
         propagateChange();
     }
 
-    public void add(TieLine tie) {
-        tieLines.add(tie);
+    public void addDecoration(Decoration d) {
+        decorations.add(d);
         propagateChange();
+    }
+        
+    public void add(TieLine tie) {
+        addDecoration(new TieLineDecoration(tie));
     }
 
     public void add(LinearRuler ruler) {
-        rulers.add(ruler);
-        propagateChange();
+        addDecoration(new RulerDecoration(ruler));
     }
 
     public void add(LinearAxis axis) {
@@ -1492,13 +1535,13 @@ public class Diagram extends Observable implements Printable {
 
     public void remove(LinearAxis axis) {
         // Remove all rulers that depend on this axis.
-        for (int i = 0; i < rulers.size(); ) {
-            if (rulers.get(i).axis == axis) {
-                rulers.remove(i);
-            } else {
-                ++i;
+        for (Iterator<LinearRuler> it = rulers().iterator(); it.hasNext();) {
+            LinearRuler ruler = it.next();
+            if (ruler.axis == axis) {
+                it.remove();
             }
         }
+
         for (int i = 0; i < axes.size(); ) {
             if (axes.get(i) == axis) {
                 axes.remove(i);
@@ -1507,6 +1550,19 @@ public class Diagram extends Observable implements Printable {
             }
         }
         propagateChange();
+    }
+
+    public void remove(CuspFigure path) {
+        // Remove all associated tie lines.
+        for (int i = decorations.size() - 1; i >= 0; --i) {
+            Decoration d = decorations.get(i);
+            if (d instanceof TieLineDecoration) {
+                TieLine tie = ((TieLineDecoration) d).getItem();
+                if (tie.innerEdge == path || tie.outerEdge == path) {
+                    decorations.remove(i);
+                }
+            }
+        }
     }
 
     static class StringComposition {
@@ -1861,30 +1917,204 @@ public class Diagram extends Observable implements Printable {
         return diagramElements;
     }
 
-    /** @return the index of the label that is closest to prin, as
-        measured by distance from the center of the label to prin on
-        the standard page. */
-    int nearestLabelNo(Point2D.Double prin) {
-        if (prin == null) {
+    class DecorationIterator<T extends Decoration> implements Iterator<T> {
+        int lastIndex = -1;
+        int index;
+        Decoration singleton;
+
+        public DecorationIterator(T singleton) {
+            this.singleton = singleton;
+            index = nextIndex(0);
+        }
+
+        @Override public final boolean hasNext() {
+            return index >= 0;
+        }
+
+        @SuppressWarnings("unchecked") @Override public final T next() {
+            if (index < 0) {
+                throw new NoSuchElementException();
+            }
+            lastIndex = index;
+            index = nextIndex(index+1);
+            return (T) decorations.get(lastIndex);
+        }
+
+        @Override public final void remove() {
+            if (lastIndex < 0) {
+                throw new IllegalStateException();
+            }
+            if (index > 0) {
+                --index;
+            }
+            decorations.remove(lastIndex);
+        }
+
+        private final int nextIndex(int startIndex) {
+            for (int i = startIndex; i < decorations.size(); ++i) {
+                Decoration d = decorations.get(i);
+                if (singleton.getClass().isInstance(d)) {
+                    return i;
+                }
+            }
             return -1;
         }
+    }
 
-        Affine toPage = getPrincipalToAlignedPage();
-        Point2D.Double mousePage = toPage.transform(prin);
-        Point2D.Double centerPage = new Point2D.Double();
+    class LabelDecorationIterator extends DecorationIterator<LabelDecoration> {
+        LabelDecorationIterator() {
+            super(new LabelDecoration());
+        }
+    }
 
-        int output = -1;
-        double minDistance = 0.0;
-        for (int i = 0; i < labels.size(); ++i) {
-            toPage.transform(labelCenters.get(i), centerPage);
-            double distance = centerPage.distance(mousePage);
-            if (output == -1 || distance < minDistance) {
-                output = i;
-                minDistance = distance;
-            }
+    class ArrowDecorationIterator extends DecorationIterator<ArrowDecoration> {
+        ArrowDecorationIterator() {
+            super(new ArrowDecoration(null));
+        }
+    }
+
+    class LabelInfoIterator implements Iterator<LabelInfo> {
+        DecorationIterator<LabelDecoration> it;
+
+        public LabelInfoIterator() {
+            it = new DecorationIterator<LabelDecoration>(new LabelDecoration());
         }
 
-        return output;
+        @Override public final boolean hasNext() { return it.hasNext(); }
+        @Override public final LabelInfo next() throws NoSuchElementException {
+            return it.next().getItem();
+        }
+        @Override public final void remove() { it.remove(); }
+    }
+
+    class AnchoredLabelIterator implements Iterator<AnchoredLabel> {
+        DecorationIterator<LabelDecoration> it;
+
+        public AnchoredLabelIterator() {
+            it = new DecorationIterator<LabelDecoration>(new LabelDecoration());
+        }
+
+        @Override public final boolean hasNext() { return it.hasNext(); }
+        @Override public final AnchoredLabel next() throws NoSuchElementException {
+            return it.next().getLabel();
+        }
+        @Override public final void remove() { it.remove(); }
+    }
+
+    class ArrowIterator implements Iterator<Arrow> {
+        DecorationIterator<ArrowDecoration> it;
+
+        public ArrowIterator() {
+            it = new DecorationIterator<ArrowDecoration>(new ArrowDecoration(null));
+        }
+
+        @Override public final boolean hasNext() { return it.hasNext(); }
+        @Override public final Arrow next() throws NoSuchElementException {
+            return it.next().getItem();
+        }
+        @Override public final void remove() { it.remove(); }
+    }
+
+    class TieLineIterator implements Iterator<TieLine> {
+        DecorationIterator<TieLineDecoration> it;
+
+        public TieLineIterator() {
+            it = new DecorationIterator<TieLineDecoration>(new TieLineDecoration());
+        }
+
+        @Override public final boolean hasNext() { return it.hasNext(); }
+        @Override public final TieLine next() throws NoSuchElementException {
+            return it.next().getItem();
+        }
+        @Override public final void remove() { it.remove(); }
+    }
+
+    class CuspFigureIterator implements Iterator<CuspFigure> {
+        DecorationIterator<CurveDecoration> it;
+
+        public CuspFigureIterator() {
+            it = new DecorationIterator<CurveDecoration>(new CurveDecoration(null));
+        }
+
+        @Override public final boolean hasNext() { return it.hasNext(); }
+        @Override public final CuspFigure next() throws NoSuchElementException {
+            return it.next().getItem();
+        }
+        @Override public final void remove() { it.remove(); }
+    }
+
+    class LinearRulerIterator implements Iterator<LinearRuler> {
+        DecorationIterator<RulerDecoration> it;
+
+        public LinearRulerIterator() {
+            it = new DecorationIterator<RulerDecoration>(new RulerDecoration(null));
+        }
+
+        @Override public final boolean hasNext() { return it.hasNext(); }
+        @Override public final LinearRuler next() throws NoSuchElementException {
+            return it.next().getItem();
+        }
+        @Override public final void remove() { it.remove(); }
+    }
+
+    class LabelInfoIterable implements Iterable<LabelInfo> {
+        @Override public Iterator<LabelInfo> iterator() {
+            return new LabelInfoIterator();
+        }
+    }
+
+    class AnchoredLabelIterable implements Iterable<AnchoredLabel> {
+        @Override public Iterator<AnchoredLabel> iterator() {
+            return new AnchoredLabelIterator();
+        }
+    }
+
+    class ArrowIterable implements Iterable<Arrow> {
+        @Override public Iterator<Arrow> iterator() {
+            return new ArrowIterator();
+        }
+    }
+
+    class TieLineIterable implements Iterable<TieLine> {
+        @Override public Iterator<TieLine> iterator() {
+            return new TieLineIterator();
+        }
+    }
+
+    class CuspFigureIterable implements Iterable<CuspFigure> {
+        @Override public Iterator<CuspFigure> iterator() {
+            return new CuspFigureIterator();
+        }
+    }
+
+    class LinearRulerIterable implements Iterable<LinearRuler> {
+        @Override public Iterator<LinearRuler> iterator() {
+            return new LinearRulerIterator();
+        }
+    }
+
+    public LabelInfoIterable labelInfos() {
+        return new LabelInfoIterable();
+    }
+
+    public AnchoredLabelIterable labels() {
+        return new AnchoredLabelIterable();
+    }
+
+    public ArrowIterable arrows() {
+        return new ArrowIterable();
+    }
+
+    public TieLineIterable tieLines() {
+        return new TieLineIterable();
+    }
+
+    public CuspFigureIterable paths() {
+        return new CuspFigureIterable();
+    }
+
+    public LinearRulerIterable rulers() {
+        return new LinearRulerIterable();
     }
 
     @JsonIgnore boolean isTernary() {
@@ -1939,7 +2169,7 @@ public class Diagram extends Observable implements Printable {
         diagram components. Duplicates are removed. */
     @JsonIgnore public String[] getAllText() {
         TreeSet<String> lines = new TreeSet<>();
-        for (AnchoredLabel label: labels) {
+        for (AnchoredLabel label: labels()) {
             lines.add(htmlToText(label.getText()));
         }
         for (String s: tags) {
@@ -2125,16 +2355,13 @@ public class Diagram extends Observable implements Printable {
     }
 
     public void add(AnchoredLabel label) {
-        labels.add(label);
-        if (!labelViews.isEmpty()) {
-            labelViews.add(toView(label));
-            labelCenters.add(new Point2D.Double());
-        }
+        decorations.add(new LabelDecoration(new LabelInfo(label)));
         propagateChange();
     }
 
     /** @param xWeight Used to determine how to justify rows of text. */
     View toView(String str, double xWeight, Color textColor) {
+        // System.out.println("toView('" + str + "', " + xWeight + ", " + textColor + ")");
         String style
             = "<style type=\"text/css\"><!--"
             + " body { font-size: 100 pt; } "
@@ -2175,25 +2402,17 @@ public class Diagram extends Observable implements Printable {
     }
 
     /** Regenerate the labelViews field from the labels field. */
-    void initializeLabelViews() {
-        if (labelViews.size() == labels.size()) {
-            return;
+    /* void initializeLabelViews() {
+        for (LabelInfo labelInfo: labelz()) {
+            initializeLabelInfo(labelInfo);
         }
-        labelViews.clear();
-        labelCenters.clear();
-        for (AnchoredLabel label: labels) {
-            labelViews.add(toView(label));
-            labelCenters.add(null);
+        } */
+
+    /** Regenerate the labelViews field from the labels field. */
+    void initializeLabelInfo(LabelInfo labelInfo) {
+        if (labelInfo.view == null) {
+            labelInfo.view = toView(labelInfo.label);
         }
-    }
-
-    @JsonProperty ArrayList<AnchoredLabel> getLabels() {
-        return labels;
-    }
-
-    @JsonProperty void setLabels(Collection<AnchoredLabel> labels) {
-        this.labels = new ArrayList<AnchoredLabel>(labels);
-        propagateChange();
     }
 
     public DiagramType getDiagramType() {
@@ -2254,6 +2473,32 @@ public class Diagram extends Observable implements Printable {
         }
     }
 
+    void removeDecoration(Decoration d) {
+        for (Iterator<Decoration> it = decorations.iterator(); it.hasNext();) {
+            if (it.next() == d) {
+                it.remove();
+                propagateChange();
+                return;
+            }
+        }
+
+        throw new IllegalStateException("Could not find " + d);
+    }
+
+    Decoration decorate(Decorated item) {
+        if (item instanceof CuspFigure)
+            return new CurveDecoration((CuspFigure) item);
+        if (item instanceof AnchoredLabel)
+            return new LabelDecoration(new LabelInfo((AnchoredLabel) item));
+        if (item instanceof Arrow)
+            return new ArrowDecoration((Arrow) item);
+        if (item instanceof LinearRuler)
+            return new RulerDecoration((LinearRuler) item);
+        if (item instanceof TieLine)
+            return new TieLineDecoration((TieLine) item);
+        throw new IllegalStateException("decorate(): unrecognized item " + item);
+    }
+
     /** @return a list of DecorationHandles such that moving all of
         those handles will move every decoration in the diagram. */
     ArrayList<DecorationHandle> movementHandles() {
@@ -2294,12 +2539,12 @@ public class Diagram extends Observable implements Printable {
 
         Collections.sort(hads);
 
-        ArrayList<DecorationHandle> output = new ArrayList<>();
+        ArrayList<DecorationHandle> res = new ArrayList<>();
         for (HandleAndDistance h: hads) {
-            output.add(h.handle);
+            res.add(h.handle);
         }
 
-        return output;
+        return res;
     }
 
     /** Like nearestHandles(p), but return only handles of the given type. */
@@ -2331,12 +2576,12 @@ public class Diagram extends Observable implements Printable {
 
         Collections.sort(hads);
 
-        ArrayList<T> output = new ArrayList<>();
+        ArrayList<T> res = new ArrayList<>();
         for (HandleAndDistance h: hads) {
-            output.add((T) h.handle);
+            res.add((T) h.handle);
         }
 
-        return output;
+        return res;
     }
 
     /** @return a list of all key points in the diagram. Some
@@ -2362,39 +2607,48 @@ public class Diagram extends Observable implements Printable {
     }
 
     /** @return a list of all possible selections. */
-    @JsonIgnore ArrayList<Decoration> getDecorations() {
-        // TODO Replace these with a uniform list of Decorations
+    ArrayList<Decoration> getDecorations() {
+        return decorations;
+    }
 
-        ArrayList<Decoration> res = new ArrayList<>();
-
-        for (int i = 0; i < paths.size(); ++i) {
-            res.add(new CurveDecoration(i));
+    /** @return the underlying objects behind all decorations. */
+    @JsonProperty("decorations") ArrayList<Decorated> getJSONDecorations() {
+        ArrayList<Decorated> res = new ArrayList<>();
+        for (Decoration d: getDecorations()) {
+            res.add(d.getSerializationObject());
         }
-        for (int i = 0; i < arrows.size(); ++i) {
-            res.add(new ArrowDecoration(i));
-        }
-        for (int i = 0; i < tieLines.size(); ++i) {
-            res.add(new TieLineDecoration(i));
-        }
-        for (int i = 0; i < rulers.size(); ++i) {
-            res.add(new RulerDecoration(i));
-        }
-        for (int i = 0; i < labels.size(); ++i) {
-            res.add(new LabelDecoration(i));
-        }
-
         return res;
     }
 
+    @JsonProperty("decorations") void setJSONDecorations(Decorated[] objects) {
+        decorations = new ArrayList<>();
+        for (Decorated o: objects) {
+            decorations.add(decorate(o));
+        }
+        for (LinearRuler r: rulers()) {
+            String name = r.axisName;
+            for (LinearAxis axis: axes) {
+                if (axis.name.equals(name)) {
+                    r.axis = axis;
+                    r.axisName = null;
+                    break;
+                }
+            }
+            if (r.axisName != null) {
+                throw new IllegalStateException
+                    ("Unknown axis name '" + r.getAxisName() + "'");
+            }
+        }
+    }
 
-    /** @return a list of all possible selections. */
+    /** @return all decoration handles. */
     @JsonIgnore ArrayList<DecorationHandle> getDecorationHandles() {
-        ArrayList<DecorationHandle> output = new ArrayList<>();
+        ArrayList<DecorationHandle> res = new ArrayList<>();
 
         for (Decoration selectable: getDecorations()) {
-            output.addAll(Arrays.asList(selectable.getHandles()));
+            res.addAll(Arrays.asList(selectable.getHandles()));
         }
-        return output;
+        return res;
     }
 
 
@@ -2417,7 +2671,7 @@ public class Diagram extends Observable implements Printable {
         }
 
         ArrayList<BoundedParam2D> curves = new ArrayList<>();
-        for (CuspFigure path: paths) {
+        for (CuspFigure path: paths()) {
             CuspFigure pagePath = path.createTransformed
                 (principalToStandardPage);
 
@@ -2489,8 +2743,7 @@ public class Diagram extends Observable implements Printable {
     /** Toggle the closed/open status of curve #pathNo. Throws
         IllegalArgumentException if that curve is filled, since you
         can't turn off closure for a filled curve. */
-    public void toggleCurveClosure(int pathNo) throws IllegalArgumentException {
-        CuspFigure path = paths.get(pathNo);
+    public void toggleCurveClosure(CuspFigure path) throws IllegalArgumentException {
         if (path.isFilled() && path.isClosed()) {
             throw new IllegalArgumentException("Cannot turn off closure of a filled curve");
         }
@@ -2688,10 +2941,6 @@ public class Diagram extends Observable implements Printable {
         }
 
         setOriginalFilename(getOriginalFilename());
-
-        View em = toView("n", 0, Color.BLACK);
-        labelXMargin = em.getPreferredSpan(View.X_AXIS) / 3.0;
-        // labelYMargin = em.getPreferredSpan(View.Y_AXIS) / 5.0;
     }
 
     /** Invoked from the EditFrame menu */
@@ -2772,7 +3021,7 @@ public class Diagram extends Observable implements Printable {
             System.exit(2);
         }
         
-        for (TieLine tie: res.tieLines) {
+        for (TieLine tie: res.tieLines()) {
             tie.innerEdge = res.idToCurve(tie.innerId);
             tie.outerEdge = res.idToCurve(tie.outerId);
         }
@@ -2845,21 +3094,15 @@ public class Diagram extends Observable implements Printable {
                 pageBounds = other.pageBounds;
                 originalFilename = other.originalFilename;
                 filename = other.filename;
-                arrows = other.arrows;
 
                 boolean haveBounds = (pageBounds != null);
                 if (!haveBounds) {
                     pageBounds = new Rectangle2D.Double(0,0,1,1);
                 }
                 initializeDiagram();
-                paths = other.paths;
-                tieLines = other.tieLines;
+                decorations = other.decorations;
                 setFontName(other.getFontName());
                 axes = other.axes;
-                rulers = other.rulers;
-                labels = other.labels;
-                labelViews = other.labelViews;
-                labelCenters = other.labelCenters;
                 componentElements = null;
                 setTags(other.getTags());
                 setKeyValues(other.getKeyValues());
@@ -2871,39 +3114,32 @@ public class Diagram extends Observable implements Printable {
         propagateChange1();
     }
 
-    /** Populate the "rulers" fields of the axes, and then return the
-        axes. */
-    @JsonProperty("axes")
-        ArrayList<LinearAxis> getSerializationReadyAxes() {
-        for (LinearAxis axis: axes) {
-            axis.rulers = new ArrayList<LinearRuler>();
-        }
-
-        // Make each ruler a child of its respective axis.
-        for (LinearRuler r: rulers) {
-            r.axis.rulers.add(r);
-        }
-
+    @JsonProperty("axes") ArrayList<LinearAxis> getAxes() {
         return axes;
     }
 
     /** Populate the Diagram object's "rulers" field from the
         individual axes' "rulers" fields, and set the individual axes'
         "rulers" fields to null. */
-    @JsonProperty("axes")
-        void setAxesFromSerialization(ArrayList<LinearAxis> axes) {
-        rulers = new ArrayList<LinearRuler>();
-
+    @JsonProperty("axes") void setAxes(ArrayList<LinearAxis> axes) {
         for (LinearAxis axis: axes) {
             add(axis);
-            rulers.addAll(axis.rulers);
-            axis.rulers = null;
+            // OBSOLESCENT
+            if (axis.rulers != null) {
+                for (LinearRuler r: axis.rulers) {
+                    decorations.add(0, decorate(r));
+                }
+                axis.rulers = null;
+            }
         }
     }
 
+    // OBSOLESCENT
     @JsonProperty("tieLines")
     void setTieLines(ArrayList<TieLine> tieLines) {
-        this.tieLines = tieLines;
+        for (TieLine tie: tieLines) {
+            decorations.add(0, decorate(tie));
+        }
     }
 
     public void saveAsPDF(File file) {
@@ -3082,13 +3318,13 @@ public class Diagram extends Observable implements Printable {
         double maxDistanceSq = maxDistance * maxDistance;
         Point2D.Double corner = standardPageToPrincipal.transform(cornerPage);
 
-        for (LabelHandle hand: nearestHandles(corner, new LabelHandle(-1, null))) {
+        for (LabelHandle hand: nearestHandles(corner, new LabelHandle())) {
             Point2D.Double page = principalToStandardPage.transform
                 (hand.getLocation());
             if (page.distanceSq(cornerPage) > maxDistanceSq) {
                 return null;
             }
-            String text = htmlToText(hand.getItem().getText());
+            String text = htmlToText(hand.getLabel().getText());
             ChemicalString.Match match = ChemicalString.maybeQuotedComposition(text);
             if (match != null) {
                 return match.within(text);
@@ -3130,8 +3366,9 @@ public class Diagram extends Observable implements Printable {
                     System.out.println("Assigned " + side + " = " + c);
                 } else {
                     res = false;
-                    System.out.println("Could not determine diagram "
-                                       + "component for " + side);
+                    System.out.println
+                        ("Could not determine " + side
+                         + " diagram component in " + getFilename());
                 }
             }
         }
@@ -3284,13 +3521,13 @@ public class Diagram extends Observable implements Printable {
         locations, all arrow locations, and all ruler start- and
         endpoints. */
     public void transformPrincipalCoordinates(AffineTransform trans) {
-        for (CuspFigure path: paths) {
+        for (CuspFigure path: paths()) {
             path.setCurve(path.getCurve().createTransformed(trans));
         }
 
         Point2D.Double tmp = new Point2D.Double();
 
-        for (AnchoredLabel label: labels) {
+        for (AnchoredLabel label: labels()) {
             tmp.x = label.x;
             tmp.y = label.y;
             trans.transform(tmp, tmp);
@@ -3298,7 +3535,7 @@ public class Diagram extends Observable implements Printable {
             label.y = tmp.y;
         }
 
-        for (Arrow arrow: arrows) {
+        for (Arrow arrow: arrows()) {
             tmp.x = arrow.x;
             tmp.y = arrow.y;
             trans.transform(tmp, tmp);
@@ -3306,7 +3543,7 @@ public class Diagram extends Observable implements Printable {
             arrow.y = tmp.y;
         }
 
-        for (LinearRuler ruler: rulers) {
+        for (LinearRuler ruler: rulers()) {
             trans.transform(ruler.startPoint, ruler.startPoint);
             trans.transform(ruler.endPoint, ruler.endPoint);
         }
@@ -3342,10 +3579,10 @@ public class Diagram extends Observable implements Printable {
         }
 
         // Convert all angles from principal to page coordinates.
-        for (Arrow item: arrows) {
+        for (Arrow item: arrows()) {
             item.setAngle(principalToPageAngle(item.getAngle()));
         }
-        for (AnchoredLabel item: labels) {
+        for (AnchoredLabel item: labels()) {
             item.setAngle(principalToPageAngle(item.getAngle()));
         }
 
@@ -3360,10 +3597,10 @@ public class Diagram extends Observable implements Printable {
             axis.concatenate(itrans);
         }
 
-        for (Arrow item: arrows) {
+        for (Arrow item: arrows()) {
             item.setAngle(pageToPrincipalAngle(item.getAngle()));
         }
-        for (AnchoredLabel item: labels) {
+        for (AnchoredLabel item: labels()) {
             item.setAngle(pageToPrincipalAngle(item.getAngle()));
         }
 
@@ -3476,7 +3713,7 @@ public class Diagram extends Observable implements Printable {
     @JsonIgnore public Line2D.Double[] getAllLineSegments() {
         ArrayList<Line2D.Double> res = new ArrayList<>();
          
-        for (CuspFigure path : paths) {
+        for (CuspFigure path : paths()) {
             Param2DBounder b = (Param2DBounder) path.getParameterization();
             PathParam2D pp = (PathParam2D) b.getUnboundedCurve();
             for (Line2D.Double line: pp.lineSegments()) {
@@ -3484,9 +3721,9 @@ public class Diagram extends Observable implements Printable {
             }
         }
 
-        for (LinearRuler ruler: rulers) {
-        	BoundedParam2D p = ruler.getParameterization();
-        	res.add(new Line2D.Double(p.getStart(), p.getEnd()));
+        for (LinearRuler ruler: rulers()) {
+            BoundedParam2D p = ruler.getParameterization();
+            res.add(new Line2D.Double(p.getStart(), p.getEnd()));
         }
 
         return res.toArray(new Line2D.Double[0]);
@@ -3521,10 +3758,10 @@ public class Diagram extends Observable implements Printable {
 
     /** @return a transformation that maps the unit square to the
         outline of label labelNo in scaled page space. */
-    AffineTransform labelToScaledPage(int labelNo, double scale) {
-        initializeLabelViews();
-        AnchoredLabel label = labels.get(labelNo);
-        View view = labelViews.get(labelNo);
+    AffineTransform labelToScaledPage(LabelInfo labelInfo, double scale) {
+        initializeLabelInfo(labelInfo);
+        AnchoredLabel label = labelInfo.label;
+        View view = labelInfo.view;
         Affine toPage = getPrincipalToAlignedPage();
         Point2D.Double point = toPage.transform(label.getX(), label.getY());
         double angle = principalToPageAngle(label.getAngle());
@@ -3537,11 +3774,13 @@ public class Diagram extends Observable implements Printable {
     }
 
     /** Take all labels that have nonzero baseline X/Y offsets
-     * defined, set those offsets to zero, and transform the labels' X
-     * and Y locations so that the label's drawn position remains
-     * unchanged. */
+        defined, set those offsets to zero, and transform the labels'
+        X and Y locations so that the label's drawn position remains
+        unchanged. Baseline offsets in their current state are little
+        more than a hack used during the conversion of GRUMP files, so
+        zeroing them out is a good thing. */
     void zeroBaselineOffsets() {
-        for (AnchoredLabel label: labels) {
+        for (AnchoredLabel label: labels()) {
             double bxo = label.getBaselineXOffset();
             double byo = label.getBaselineYOffset();
             if (bxo == 0 && byo == 0) {
@@ -3564,14 +3803,14 @@ public class Diagram extends Observable implements Printable {
         }
     }
 
-    void drawLabel(Graphics g0, int labelNo, double scale) {
-        AnchoredLabel label = labels.get(labelNo);
+    void draw(Graphics g0, LabelInfo labelInfo, double scale) {
+        AnchoredLabel label = labelInfo.label;
         if (label.getFontSize() == 0) {
             return;
         }
 
         Graphics2D g = (Graphics2D) g0;
-        AffineTransform l2s = labelToScaledPage(labelNo, scale);
+        AffineTransform l2s = labelToScaledPage(labelInfo, scale);
         Path2D.Double box = htmlBox(l2s);
 
         if (label.isOpaque()) {
@@ -3586,25 +3825,22 @@ public class Diagram extends Observable implements Printable {
         }
 
         // TODO: Exploit the labelToScaledPage transformation in htmlDraw.
-        initializeLabelViews();
-        View view = labelViews.get(labelNo);
+        View view = labelInfo.view;
         Affine toPage = getPrincipalToAlignedPage();
-        Point2D.Double centerPage = new Point2D.Double();
         Point2D.Double point = toPage.transform(label.getX(), label.getY());
         double angle = principalToPageAngle(label.getAngle());
         htmlDraw(g, view, scale * label.getFontSize(),
                  angle, point.x * scale, point.y * scale,
                  label.getXWeight(), label.getYWeight(),
-                 label.getBaselineXOffset(), label.getBaselineYOffset(),
-                 centerPage);
+                 label.getBaselineXOffset(), label.getBaselineYOffset());
+    }
 
-        try {
-            centerPage.x /= scale;
-            centerPage.y /= scale;
-            labelCenters.set(labelNo,
-                             toPage.createInverse().transform(centerPage));
-        } catch (NoninvertibleTransformException e) {
-            throw new IllegalStateException(toPage + " is not invertible");
+    void initializeLabelMargins() {
+        if (Double.isNaN(labelXMargin)) {
+            View em = toView("n", 0, Color.BLACK);
+            labelXMargin = em.getPreferredSpan(View.X_AXIS) / 3.0;
+            // labelYMargin = em.getPreferredSpan(View.Y_AXIS) / 5.0;
+            labelYMargin = 0;
         }
     }
 
@@ -3642,19 +3878,15 @@ public class Diagram extends Observable implements Printable {
        line (in baseline coordinates) that bisects the text block; 1.0
        = the anchor point lies along the bottom edge (in baseline
        coordinates) of the text block
-
-       @param labelCenter (output parameter) If this parameter is not
-       null, then it will be reset to the standard page coordinates of
-       the center of the label.
     */
     void htmlDraw(Graphics g, View view, double scale, double angle,
                   double ax, double ay,
                   double xWeight, double yWeight,
-                  double baselineXOffset, double baselineYOffset,
-                  Point2D.Double labelCenter) {
+                  double baselineXOffset, double baselineYOffset) {
         scale /= VIEW_MAGNIFICATION;
         double baseWidth = view.getPreferredSpan(View.X_AXIS);
         double baseHeight = view.getPreferredSpan(View.Y_AXIS);
+        initializeLabelMargins();
         double width = baseWidth + labelXMargin * 2;
         double height = baseHeight + labelYMargin * 2;
 
@@ -3681,12 +3913,6 @@ public class Diagram extends Observable implements Printable {
         // Now (ax, ay) represents the (in baseline coordinates) upper
         // left corner of the text block expanded by the x- and
         // y-margins.
-
-        if (labelCenter != null) {
-            baselineToPage.transform(new Point2D.Double(width/2, height/2), xpoint);
-            labelCenter.x = xpoint.x + ax;
-            labelCenter.y = xpoint.y + ay;
-        }
 
         {
             // Displace (ax,ay) by (labelXMargin, labelYMargin) (again, in baseline
@@ -3736,6 +3962,7 @@ public class Diagram extends Observable implements Printable {
         (View view, double scale, double angle,
          double ax, double ay, double xWeight, double yWeight,
          double baselineXOffset, double baselineYOffset) {
+        initializeLabelMargins();
         double width = view.getPreferredSpan(View.X_AXIS) + labelXMargin * 2;
         double height = view.getPreferredSpan(View.Y_AXIS) + labelYMargin * 2;
         double textScale = scale / BASE_SCALE / VIEW_MAGNIFICATION;
@@ -3809,6 +4036,14 @@ public class Diagram extends Observable implements Printable {
                                     ColorAnnotations.class);
             des.addMixInAnnotations(Color.class,
                                     ColorAnnotations.class);
+
+            ser.addMixInAnnotations(Decorated.class,
+                                    DecoratedAnnotations.class);
+            // OBSOLESCENT
+            /*
+            des.addMixInAnnotations(Decorated.class,
+                                    DecoratedAnnotations.class);
+            */
         }
 
         return objectMapper;
@@ -4005,7 +4240,10 @@ public class Diagram extends Observable implements Printable {
             throw new IllegalArgumentException("Unrecognized font name '" + s + "'");
         }
         embeddedFont = loadFont(filename, STANDARD_FONT_SIZE);
-        labelViews.clear();
+        for (LabelInfo labelInfo: labelInfos()) {
+            labelInfo.view = null;
+            labelInfo.setCenter(null);
+        }
         propagateChange();
         return true;
     }
@@ -4119,4 +4357,18 @@ abstract class ColorAnnotations extends Color {
     ColorAnnotations(@JsonProperty("rgb") int rgb) {
         super(rgb);
     }
+}
+
+@JsonTypeInfo(
+              use = JsonTypeInfo.Id.NAME,
+              include = JsonTypeInfo.As.PROPERTY,
+              property = "decoration")
+@JsonSubTypes({
+        @Type(value=CuspFigure.class, name = "curve"),
+        @Type(value=AnchoredLabel.class, name = "label"),
+        @Type(value=LinearRuler.class, name = "ruler"),
+        @Type(value=Arrow.class, name = "arrow"),
+        @Type(value=TieLine.class, name = "tie line")
+            })
+interface DecoratedAnnotations extends Decorated {
 }
