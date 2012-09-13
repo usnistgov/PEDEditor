@@ -20,7 +20,6 @@ import java.awt.font.GlyphVector;
 import java.awt.geom.AffineTransform;
 import java.awt.geom.Line2D;
 import java.awt.geom.Path2D;
-import java.awt.geom.PathIterator;
 import java.awt.geom.Rectangle2D;
 import java.awt.image.BufferedImage;
 import java.awt.image.BufferedImageOp;
@@ -53,116 +52,94 @@ public class MeteredGraphics extends Graphics2D {
 
     public MeteredGraphics(MeteredGraphics orig) {
         im = orig.im;
+        accuracy = orig.accuracy;
         g = (Graphics2D) orig.g.create();
         if (orig.bounds != null) {
             bounds = Duh.createRectangle2DDouble(orig.bounds);
         }
     }
 
-    @Override public void draw(Shape s) {
-        fill(getStroke().createStrokedShape(s));
-    }
-
-    public Rectangle2D.Double getBounds() {
-        if (bounds == null) {
-            return null;
-        }
-        return (Rectangle2D.Double) bounds.clone();
-    }
-
-    @Override public void addRenderingHints(Map<?, ?> arg0) {
-        g.addRenderingHints(arg0);
+    @Override public void addRenderingHints(Map<?,?> hints) {
+        g.addRenderingHints(hints);
     }
 
     @Override public void clip(Shape arg0) {
         g.clip(arg0);
     }
 
-    @Override public void drawGlyphVector
-        (GlyphVector arg0, float arg1, float arg2) {
-        // TODO Measure?
-        // g.drawGlyphVector(arg0, arg1, arg2);
+    @Override public void draw(Shape s) {
+        fill(getStroke().createStrokedShape(s));
     }
 
-    @Override public boolean drawImage(Image arg0, AffineTransform arg1,
-                                       ImageObserver arg2) {
-        // TODO Measure?
-        // drawImage(arg0, arg1, arg2);
-    	return false;
+    @Override public void draw3DRect(int x, int y, int width, int height, boolean raised) {
+        drawRect(x, y, width, height);
+    }
+
+    @Override public void drawGlyphVector
+        (GlyphVector arg0, float arg1, float arg2) {
+        fill(arg0.getOutline(arg1, arg2));
     }
 
     @Override public void drawImage(BufferedImage arg0,
                                     BufferedImageOp arg1, int arg2,
                                     int arg3) {
-        // TODO Measure?
-        // drawImage(arg0, arg1, arg2, arg3);
+        System.err.println("Ignoring drawImage#2");
+        // TODO Measure
+    }
+
+    @Override public boolean drawImage(Image arg0, AffineTransform arg1,
+                                       ImageObserver arg2) {
+        System.err.println("Ignoring drawImage#1");
+        // TODO Measure
+        return false;
     }
 
     @Override public void drawRenderableImage
         (RenderableImage arg0, AffineTransform arg1) {
-        // TODO Auto-generated method stub
+        System.err.println("Ignoring drawRenderableImage#1");
+        // TODO Measure
     }
 
     @Override public void drawRenderedImage
         (RenderedImage arg0, AffineTransform arg1) {
-        // TODO Measure?
+        System.err.println("Ignoring drawRenderedImage#1");
+        // TODO Measure
+    }
+
+    @Override public void drawString
+        (AttributedCharacterIterator iterator, float x, float y) {
+        System.err.println("Ignoring drawString#z");
+        // TODO Measure
+    }
+
+    @Override public void drawString
+        (AttributedCharacterIterator iterator, int x, int y) {
+        drawString(iterator, (float) x, (float) y);
+    }
+
+    @Override public void drawString(String str, float x, float y) {
+        drawGlyphVector
+            (getFont().createGlyphVector(getFontRenderContext(), str),
+             x, y);
     }
 
     @Override public void drawString(String arg0, int arg1, int arg2) {
         drawString(arg0, (float) arg1, (float) arg2);
     }
 
-    @Override public void drawString(String str, float x, float y) {
-        // Should actually draw the string rather than
-        // trusting getStringBounds() to be correct, but whatever.
-        FontMetrics fm = getFontMetrics();
-        Rectangle2D bounds = fm.getStringBounds(str, g);
-        fill(new Rectangle2D.Double
-             (bounds.getX() + x, bounds.getY() + y,
-              bounds.getWidth(), bounds.getHeight()));
-    }
-
-    public double getAccuracy() {
-        return accuracy;
-    }
-
-    public void setAccuracy(double accuracy) {
-        this.accuracy = accuracy;
-    }
-
     @Override public void fill(Shape s) {
-        PathIterator pit = s.getPathIterator(getTransform(), getAccuracy());
-        float[] coords = new float[6];
-        for (; !pit.isDone(); pit.next()) {
-            int pointCount = 0;
-            switch (pit.currentSegment(coords)) {
-            case PathIterator.SEG_MOVETO:
-                pointCount = 1;
-                break;
-            case PathIterator.SEG_LINETO:
-                pointCount = 1;
-                break;
-            case PathIterator.SEG_QUADTO:
-                pointCount = 2;
-                break;
-            case PathIterator.SEG_CUBICTO:
-                pointCount = 3;
-                break;
-            default:
-                pointCount = 0;
-                break;
-            }
-
-            for (int i = 0; i < pointCount; ++i) {
-                float x = coords[i*2];
-                float y = coords[i*2+1];
-                if (bounds == null) {
-                    bounds = new Rectangle2D.Double(x, y, 0, 0);
-                } else {
-                    bounds.add(x, y);
-                }
-            }
+        Rectangle2D.Double b = PathParam2D.create
+            (s.getPathIterator(getTransform(), getAccuracy()))
+            .getBounds();
+        if (bounds == null) {
+            bounds = b;
+        } else {
+            bounds.add(b);
         }
+    }
+
+    @Override public void fill3DRect(int x, int y, int width, int height, boolean raised) {
+        fillRect(x, y, width, height);
     }
 
     @Override public Color getBackground() {
@@ -253,11 +230,11 @@ public class MeteredGraphics extends Graphics2D {
         g.transform(arg0);
     }
 
-    @Override public void translate(int arg0, int arg1) {
+    @Override public void translate(double arg0, double arg1) {
         g.translate(arg0, arg1);
     }
 
-    @Override public void translate(double arg0, double arg1) {
+    @Override public void translate(int arg0, int arg1) {
         g.translate(arg0, arg1);
     }
 
@@ -270,11 +247,19 @@ public class MeteredGraphics extends Graphics2D {
 
     @Override public void copyArea(int arg0, int arg1, int arg2, int arg3, int arg4,
                                            int arg5) {
+        System.err.println("Ignoring copyArea()");
         // TODO I'm not sure how to handle this.
     }
 
     @Override public Graphics create() {
         return new MeteredGraphics(this);
+    }
+
+    @Override public Graphics create(int x, int y, int width, int height) {
+        MeteredGraphics res = new MeteredGraphics(this);
+        res.clipRect(x, y, width, height);
+        res.translate(x, y);
+        return res;
     }
 
     @Override public void dispose() {
@@ -286,34 +271,40 @@ public class MeteredGraphics extends Graphics2D {
 
     @Override public void drawArc(int arg0, int arg1, int arg2, int arg3, int arg4,
                                           int arg5) {
+        System.err.println("Ignoring drawArc()");
         // TODO Auto-generated method stub
     }
 
     @Override public boolean drawImage(Image arg0, int arg1, int arg2, ImageObserver arg3) {
         // TODO Auto-generated method stub
+        System.err.println("Ignoring drawImage#5()");
         return false;
     }
 
     @Override public boolean drawImage(Image arg0, int arg1, int arg2, Color arg3,
                                                ImageObserver arg4) {
+        System.err.println("Ignoring drawImage#6()");
         // TODO Auto-generated method stub
         return false;
     }
 
     @Override public boolean drawImage(Image arg0, int arg1, int arg2, int arg3,
                                                int arg4, ImageObserver arg5) {
+        System.err.println("Ignoring drawImage#7()");
         // TODO Auto-generated method stub
         return false;
     }
 
     @Override public boolean drawImage(Image arg0, int arg1, int arg2, int arg3,
                                                int arg4, Color arg5, ImageObserver arg6) {
+        System.err.println("Ignoring drawImage#8()");
         // TODO Auto-generated method stub
         return false;
     }
 
     @Override public boolean drawImage(Image arg0, int arg1, int arg2, int arg3,
                                                int arg4, int arg5, int arg6, int arg7, int arg8, ImageObserver arg9) {
+        System.err.println("Ignoring drawImage#9()");
         // TODO Auto-generated method stub
         return false;
     }
@@ -321,6 +312,7 @@ public class MeteredGraphics extends Graphics2D {
     @Override public boolean drawImage(Image arg0, int arg1, int arg2, int arg3,
                                                int arg4, int arg5, int arg6, int arg7, int arg8, Color arg9,
                                                ImageObserver arg10) {
+        System.err.println("Ignoring drawImage#10()");
         // TODO Auto-generated method stub
         return false;
     }
@@ -356,6 +348,10 @@ public class MeteredGraphics extends Graphics2D {
         fill(new Polygon(xs, ys, n));
     }
 
+    @Override public void fillPolygon(Polygon p) {
+        fill((Shape) p);
+    }
+
     @Override public void drawRoundRect(int x, int y, int width, int height,
                                         int arg4, int arg5) {
         drawRect(x, y, width, height);
@@ -363,6 +359,7 @@ public class MeteredGraphics extends Graphics2D {
 
     @Override public void fillArc(int arg0, int arg1, int arg2, int arg3, int arg4,
                                           int arg5) {
+        System.err.println("Ignoring fillArc#2()");
         // TODO Auto-generated method stub
                 
     }
@@ -393,7 +390,6 @@ public class MeteredGraphics extends Graphics2D {
     }
 
     @Override public Font getFont() {
-        // TODO Auto-generated method stub
         return g.getFont();
     }
 
@@ -425,13 +421,40 @@ public class MeteredGraphics extends Graphics2D {
         g.setXORMode(arg0);
     }
 
-    @Override public void drawString
-        (AttributedCharacterIterator iterator, int x, int y) {
-        drawString(iterator, (float) x, (float) y);
+    @Override public void drawChars(char[] data, int offset, int length,
+                                    int x, int y) {
+        StringBuilder b = new StringBuilder();
+        for (int i = offset; i < offset+length; ++i) {
+            b.append(data[i]);
+        }
+        drawString(b.toString(), x, y);
     }
 
-    @Override public void drawString
-        (AttributedCharacterIterator iterator, float x, float y) {
-        // TODO Measure?
+    @Override public void drawBytes(byte[] data, int offset, int length,
+                                    int x, int y) {
+        StringBuilder b = new StringBuilder();
+        for (int i = offset; i < offset+length; ++i) {
+            b.append((char) data[i]);
+        }
+        drawString(b.toString(), x, y);
+    }
+
+    public Rectangle2D.Double getBounds() {
+        if (bounds == null) {
+            return null;
+        }
+        return (Rectangle2D.Double) bounds.clone();
+    }
+
+    @Override public FontMetrics getFontMetrics() {
+        return g.getFontMetrics();
+    }
+
+    public double getAccuracy() {
+        return accuracy;
+    }
+
+    public void setAccuracy(double accuracy) {
+        this.accuracy = accuracy;
     }
 }
