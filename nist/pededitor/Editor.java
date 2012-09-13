@@ -914,7 +914,6 @@ public class Editor extends Diagram
                  layer > 0 && layer < decorations.size() - 1;
                  layer += ((delta > 0) ? 1 : -1)) {
                 Decoration jumpedPast = decorations.get(layer);
-                double distSq = Duh.distanceSq(selectionBounds, bounds(jumpedPast));
                 if (Duh.distanceSq(selectionBounds, bounds(jumpedPast))
                 		< 1e-12) {
                     break;
@@ -2635,11 +2634,6 @@ public class Editor extends Diagram
     }
 
     @Override public void setOriginalFilename(String filename) {
-        if ((filename == null && originalFilename == null)
-            || (filename != null && filename.equals(originalFilename))) {
-            return;
-        }
-
         super.setOriginalFilename(filename);
         originalImage = null;
         triedToLoadOriginalImage = false;
@@ -2736,8 +2730,9 @@ public class Editor extends Diagram
                               Point2D.Double[] vertices) {
         boolean tracing = (vertices != null);
         try (UpdateSuppressor d = new UpdateSuppressor()) {
+                String ofn = getAbsoluteOriginalFilename();
                 clear();
-                setOriginalFilename(originalFilename);
+                setOriginalFilename(ofn);
 
                 add(defaultAxis(Side.RIGHT));
                 add(defaultAxis(Side.TOP));
@@ -3340,16 +3335,18 @@ public class Editor extends Diagram
             return originalImage;
         }
 
-        if (originalFilename == null || triedToLoadOriginalImage || !isEditable()) {
+        String ofn = getAbsoluteOriginalFilename();
+
+        if (ofn == null || triedToLoadOriginalImage || !isEditable()) {
             return null;
         }
 
         triedToLoadOriginalImage = true;
 
-        File originalFile = new File(originalFilename);
+        File originalFile = new File(ofn);
         if (Files.notExists(originalFile.toPath())) {
             JOptionPane.showMessageDialog
-                (editFrame, "Warning: original file '" + originalFilename + "' not found");
+                (editFrame, "Warning: original file '" + ofn + "' not found");
             return null;
         }
 
@@ -3361,7 +3358,7 @@ public class Editor extends Diagram
         } catch (IOException e) {
             JOptionPane.showMessageDialog
                 (editFrame,
-                 "Original image unavailable: '" + filename + "': " +  e.toString());
+                 "Original image unavailable: '" + ofn + "': " +  e.toString());
         }
 
         return originalImage;
@@ -3378,7 +3375,8 @@ public class Editor extends Diagram
             initializeCrosshairs();
             zoomFrame.getImageZoomPane().crosshairs = crosshairs;
             editFrame.mnBackgroundImage.setEnabled(true);
-            zoomFrame.setTitle("Zoom " + getOriginalFilename());
+            zoomFrame.setTitle
+                ("Zoom " + getOriginalFilename());
             zoomFrame.pack();
             zoomFrame.setVisible(true);
         } else {
@@ -3616,9 +3614,8 @@ public class Editor extends Diagram
     public void saveAsPEDGUI(Path file) {
         try {
             saveAsPED(file);
-            filename = file.toAbsolutePath().toString();
             JOptionPane.showMessageDialog
-                (editFrame, "Saved '" + file.toAbsolutePath() + "'.");
+                (editFrame, "Saved '" + getFilename() + "'.");
         } catch (IOException e) {
             // UNDO OBSOLESCENT
             throw new RuntimeException(e);
@@ -3628,7 +3625,19 @@ public class Editor extends Diagram
     }
 
     @Override public void saveAsPED(Path file) throws IOException {
-        super.saveAsPED(file);
+        String oldFilename = getFilename();
+        try {
+            // Reset the filename before saving. This will
+            // re-relativize originalFilename so that it can still be
+            // found using a relative path even if the new filename is
+            // in a different directory from before.
+            setFilename(file.toAbsolutePath().toString());
+            super.saveAsPED(file);
+        } catch (IOException x) {
+            // Revert to the old filename;
+            setFilename(oldFilename);
+            throw x;
+        }
         // Now delete the auto-save file if it exists.
         if (autosaveFile != null) {
             try {

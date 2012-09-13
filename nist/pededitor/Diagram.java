@@ -39,6 +39,7 @@ import java.io.Writer;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.text.DecimalFormat;
 import java.text.NumberFormat;
 import java.util.ArrayList;
@@ -2340,7 +2341,6 @@ public class Diagram extends Observable implements Printable {
                 return axis;
             }
         }
-        
         return null;
     }
 
@@ -2770,6 +2770,30 @@ public class Diagram extends Observable implements Printable {
     }
 
     /** @return the name of the image file that this diagram was
+        digitized from converted to an absolute path, or null if this
+        diagram is not known to be digitized from a file. */
+    @JsonIgnore public String getAbsoluteOriginalFilename() {
+        if (filename == null || originalFilename == null) {
+            return originalFilename;
+        }
+
+        Path op = Paths.get(originalFilename);
+        if (op.isAbsolute()) {
+            return originalFilename;
+        }
+
+        // Convert originalFilename from a relative path starting from
+        // the directory that filename belongs to into an absolute
+        // path.
+
+        String res = Paths.get(Paths.get(filename).getParent().toString(),
+        		originalFilename)
+            .toAbsolutePath().toString();
+        return Paths.get(Paths.get(filename).getParent().toString(), originalFilename)
+            .toAbsolutePath().toString();
+    }
+
+    /** @return the name of the image file that this diagram was
         digitized from, or null if this diagram is not known to be
         digitized from a file. */
     public String getOriginalFilename() {
@@ -2810,6 +2834,7 @@ public class Diagram extends Observable implements Printable {
             str = getFilename();
         }
         if (str != null) {
+            str = Paths.get(str).getFileName().toString();
             if (titleBuf.length() > 0) {
                 titleBuf.append(" ");
             }
@@ -2864,13 +2889,63 @@ public class Diagram extends Observable implements Printable {
     }
 
     public void setOriginalFilename(String filename) {
-        if ((filename == null && originalFilename == null)
-            || (filename != null && filename.equals(originalFilename))) {
+        originalFilename = filename;
+        relativizeOriginalFilename();
+        propagateChange();
+    }
+
+    public void setFilename(String fn) {
+        if ((filename == null && fn == null)
+            || (filename != null && filename.equals(fn))) {
             return;
         }
-
-        originalFilename = filename;
+        String ofn = getAbsoluteOriginalFilename();
+        filename = fn;
+        setOriginalFilename(ofn);
         propagateChange();
+    }
+
+    /** Convert originalFilename to be relative to filename if
+        possible. */
+    void relativizeOriginalFilename() {
+        if (filename == null || originalFilename == null) {
+            return;
+        }
+        originalFilename = relativizeFilename(getAbsoluteOriginalFilename());
+    }
+
+    /** @return fn converted to be relative to the directory that
+        contains getFilename(). For example, if
+        getFilename.equals("a/b/c") and fn.equals("a/x/y") then
+        "../x/y" would be returned. */
+    public String relativizeFilename(String fn) {
+        if (fn == null || filename == null) {
+            return fn;
+        }
+        Path op = Paths.get(fn).toAbsolutePath();
+        Path p = Paths.get(filename).toAbsolutePath();
+        int pnc = p.getNameCount();
+        int opnc = op.getNameCount();
+        int commonCnt;
+        for (commonCnt = 0;
+             commonCnt < pnc-1 && commonCnt < opnc - 1;
+             ++commonCnt) {
+            if (!p.getName(commonCnt).equals(op.getName(commonCnt))) {
+                break;
+            }
+        }
+        if (commonCnt > 0) {
+            ArrayList<String> names = new ArrayList<>();
+            for (int i = commonCnt; i < pnc-1; ++i) {
+                names.add("..");
+            }
+            names.add(op.subpath(commonCnt, opnc).toString());
+            fn = Paths.get(names.get(0),
+                           names.subList(1, names.size())
+                           .toArray(new String[0]))
+                .toString();
+        }
+        return fn;
     }
 
     protected static double normalFontSize() {
@@ -3013,7 +3088,7 @@ public class Diagram extends Observable implements Printable {
             throw new IOException("File load error: " + e);
         }
 
-        res.filename = file.getAbsolutePath();
+        res.setFilename(file.getAbsolutePath());
         try {
             res.standardPageToPrincipal = res.principalToStandardPage.createInverse();
         } catch (NoninvertibleTransformException e) {
