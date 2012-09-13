@@ -65,6 +65,11 @@ import Jama.Matrix;
 
 import org.codehaus.jackson.annotate.JsonIgnore;
 
+// TODO Allow users to turn off the connection to the original
+// diagram.
+
+// TODO Add checkbox to turn on/off editing capability.
+
 // TODO (mandatory, 2 days) Make regular open symbols look as nice as
 // the GRUMP-converted open symbols do. How? Construct a special
 // decoration type... what about size, color, et cetera? It's
@@ -105,10 +110,6 @@ import org.codehaus.jackson.annotate.JsonIgnore;
 // candidates the same way that shift-P does. In other words, if
 // shift-L doesn't give you what you want the first time, just try it
 // again.
-
-// TODO (optional, 2 weeks) Keep an undifferentiated list of
-// decorations, which allows any decoration to be moved up or down on
-// the screen.
 
 // TODO (mandatory?, preexisting, 1 week) Apply a gradient to all control
 // points on a curve. Specifically, apply the following transformation
@@ -880,6 +881,49 @@ public class Editor extends Diagram
         selection = selection.copy(mprin);
     }
 
+    /** Move the selection closer to the front(drawn later/positive
+        delta) or back (drawn earlier/negative delta). If the selection
+        cannot be raised or lowered by the given amount because there
+        are not enough layers above/below it, then raise/lower it to
+        the top/bottom. */
+    public void changeLayer(int delta) {
+        String errorTitle = "Cannot change layer";
+
+        if (selection == null) {
+            showError
+                ("You must select an item before you can change its layer.",
+                 errorTitle);
+            return;
+        }
+
+        Decoration d = selection.getDecoration();
+        int layer = getLayer(d);
+        if (layer < 0) {
+            throw new IllegalStateException
+                ("Could not locate decoration " + d);
+        }
+        layer += delta;
+        if (layer > 0 && layer < decorations.size() - 1) {
+            // If the layer was raised or lowered just a little bit,
+            // and it did not move the selection ahead of or behind
+            // any other decoration that intersects this decoration's
+            // bounds, then keep moving the layer up until it can go
+            // no further or it passes in front of a decorations whose
+            // bounds it intersects.
+            for (Rectangle2D selectionBounds = bounds(d);
+                 layer > 0 && layer < decorations.size() - 1;
+                 layer += ((delta > 0) ? 1 : -1)) {
+                Decoration jumpedPast = decorations.get(layer);
+                double distSq = Duh.distanceSq(selectionBounds, bounds(jumpedPast));
+                if (Duh.distanceSq(selectionBounds, bounds(jumpedPast))
+                		< 1e-12) {
+                    break;
+                }
+            }
+        }
+        setLayer(d, layer);
+    }
+
     /** Change the selection's color. */
     public void colorSelection() {
         String errorTitle = "Cannot change color";
@@ -1253,11 +1297,29 @@ public class Editor extends Diagram
 
         boolean showSel = selection != null;
 
-        ArrayList<Decoration> decorations = getDecorations();
-
         Decoration sel = showSel ? selection.getDecoration() : null;
-        for (Decoration decoration: decorations) {
-            if (!decoration.equals(sel)) {
+        for (int dn = 0; dn < decorations.size(); ++dn) {
+            Decoration decoration = decorations.get(dn);
+            if (decoration == sel) {
+                try (UpdateSuppressor us = new UpdateSuppressor()) {
+                        Decoration dec = selection.getDecoration();
+                        Color oldColor = dec.getColor();
+                        Color highlight = getHighlightColor(oldColor);
+
+                        g.setColor(highlight);
+                        dec.setColor(highlight);
+                        if (selection instanceof VertexHandle) {
+                            paintSelectedCurve(g, scale);
+                        } else {
+                            if (selection instanceof LabelHandle) {
+                                paintSelectedLabel(g, scale);
+                            } else {
+                                sel.draw(g, scale);
+                            }
+                        }
+                        dec.setColor(oldColor);
+                    }
+            } else {
                 g.setColor(thisOrBlack(decoration.getColor()));
                 decoration.draw(g, scale);
             }
@@ -1265,27 +1327,6 @@ public class Editor extends Diagram
 
         // g.setColor(Color.GREEN);
         // highlightKeyPoints(g, scale);
-
-        if (selection != null) { // Draw the selection
-            try (UpdateSuppressor us = new UpdateSuppressor()) {
-                    Decoration dec = selection.getDecoration();
-                    Color oldColor = dec.getColor();
-                    Color highlight = getHighlightColor(oldColor);
-
-                    g.setColor(highlight);
-                    dec.setColor(highlight);
-                    if (selection instanceof VertexHandle) {
-                        paintSelectedCurve(g, scale);
-                    } else {
-                        if (selection instanceof LabelHandle) {
-                            paintSelectedLabel(g, scale);
-                        } else {
-                            sel.draw(g, scale);
-                        }
-                    }
-                    dec.setColor(oldColor);
-                }
-        }
 
         if (getVertexHandle() == null && isShiftDown) {
             AutoPositionHolder ap = new AutoPositionHolder();
@@ -4084,21 +4125,14 @@ public class Editor extends Diagram
 
     @JsonIgnore Rectangle2D.Double getSelectionBounds() {
         if (selection == null) {
-            showError("You must first select a curve to perform this operation",
+            showError("You must first select something to perform this operation",
                       "Cannot perform operation");
             return null;
         }
-        if (!(selection instanceof BoundedParam2DHandle)) {
-            showError("This program cannot compute the bounds\n"
-                      + "of that object. Try selecting a curve or just\n"
-                      + "clicking on two points.",
-                      "Cannot perform operation");
-            return null;
-        }
-        Rectangle2D.Double res = ((BoundedParam2DHandle) selection)
-            .getParameterization().getBounds();
+        Rectangle2D.Double res = bounds(selection.getDecoration());
         if (res.width == 0 || res.height == 0) {
-            showError("The selection's width and/or height is too small.",
+            showError("The selection's width and/or height is too small. ("
+                      + Duh.toString(res) + ", " + selection.getDecoration() + ")",
                       "Cannot perform operation");
             return null;
         }
