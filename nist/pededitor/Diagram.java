@@ -3081,6 +3081,32 @@ public class Diagram extends Observable implements Printable {
         setPageBounds(bounds);
     }
 
+    /** Return the bounds of d on the aligned page. */
+    public Rectangle2D.Double bounds(Decoration d) {
+        if (pageBounds == null) {
+            setPageBounds(new Rectangle2D.Double(0, 0, 1, 1));
+        }
+        MeteredGraphics mg = new MeteredGraphics();
+        double mscale = 10000;
+        d.draw(mg, mscale);
+        Rectangle2D.Double bounds = mg.getBounds();
+        if (bounds == null) {
+            return null;
+        }
+        bounds.x /= mscale;
+        bounds.y /= mscale;
+        bounds.width /= mscale;
+        bounds.height /= mscale;
+        bounds.x += pageBounds.x;
+        bounds.y += pageBounds.y;
+        double margin = (bounds.width + bounds.height) / 200;
+        bounds.width += margin * 2;
+        bounds.height += margin * 2;
+        bounds.x -= margin;
+        bounds.y -= margin;
+        return bounds;
+    }
+
     /** Copy non-transient data fields from other. Afterwards, it is
         unsafe to modify other, because the modifications may affect
         this as well. In other words, this is a shallow copy that
@@ -3802,6 +3828,33 @@ public class Diagram extends Observable implements Printable {
             label.setBaselineYOffset(0);
         }
     }
+
+    public void setLayer(Decoration d, int layer) {
+        int oldLayer = getLayer(d);
+        int cnt = decorations.size();
+        if (oldLayer != -1) {
+            decorations.remove(oldLayer);
+        }
+        if (layer < 0) {
+            layer = 0;
+        } else if (layer >= cnt) {
+            layer = cnt - 1;
+        }
+        decorations.add(layer, d);
+        propagateChange();
+    }
+
+    public int getLayer(Decoration d) {
+        int i = -1;
+        for (Decoration thisd: decorations) {
+            ++i;
+            if (d == thisd) {
+                return i;
+            }
+        }
+        return i;
+    }
+
 
     void draw(Graphics g0, LabelInfo labelInfo, double scale) {
         AnchoredLabel label = labelInfo.label;
