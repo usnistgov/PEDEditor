@@ -249,6 +249,21 @@ public class EditFrame extends JFrame
         }
     }
 
+    class LayerAction extends Action {
+        int layerDelta;
+
+        public LayerAction(String name, int mnemonic, KeyStroke accelerator,
+                           int layerDelta) {
+            super(name, mnemonic, accelerator);
+            this.layerDelta = layerDelta;
+        }
+
+        @Override public void actionPerformed(ActionEvent e) {
+            getParentEditor().changeLayer(layerDelta);
+            repaint();
+        }
+    }
+
     class FontMenuItem extends JRadioButtonMenuItem {
         FontMenuItem(String label, String fontName) {
             super(new FontAction(label, fontName));
@@ -550,6 +565,26 @@ public class EditFrame extends JFrame
                         getParentEditor().editSelection();
                     }
                 });
+
+            JMenu mnLayer = new JMenu("Layer");
+            mnLayer.setMnemonic(KeyEvent.VK_L);
+            mnLayer.add
+                (new LayerAction
+                 ("Lower", KeyEvent.VK_L,
+                  KeyStroke.getKeyStroke("control typed ["), -1));
+            mnLayer.add
+                (new LayerAction
+                 ("Raise", KeyEvent.VK_R,
+                  KeyStroke.getKeyStroke("control typed ]"), +1));
+            mnLayer.add
+                (new LayerAction
+                 ("To bottom", KeyEvent.VK_B,
+                  KeyStroke.getKeyStroke("shift control typed ["), -1000000));
+            mnLayer.add
+                (new LayerAction
+                 ("To top", KeyEvent.VK_T,
+                  KeyStroke.getKeyStroke("shift control typed ]"), +1000000));
+            mnEdit.add(mnLayer);
 
             mnEdit.add(new Action("Move",
                                   KeyEvent.VK_M,
