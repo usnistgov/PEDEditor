@@ -319,8 +319,8 @@ public class Duh {
               new Point(rect.x + rect.width, rect.y) };
     }
 
-    /** @return the distance between p and the nearest point on rect.
-        The return value will be 0 if p is in rect. */
+    /** @return the square of the distance between p and the nearest point on rect,
+        or 0 if p is in rect. */
     public static double distanceSq(Point2D p, Rectangle2D rect) {
         double x0 = p.getX();
         double x1 = (x0 > rect.getMaxX()) ? rect.getMaxX()
@@ -335,6 +335,24 @@ public class Duh {
         double dy = y1 - y0;
 
         return dx * dx + dy * dy;
+    }
+
+    /** @return the square of the distance between the two rectangles,
+        or 0 if they intersect. */
+    public static double distanceSq(Rectangle2D r1, Rectangle2D r2) {
+        double dx = segmentsDistance(r1.getMinX(), r1.getMaxX(),
+                                     r2.getMinX(), r2.getMaxX());
+        double dy = segmentsDistance(r1.getMinY(), r1.getMaxY(),
+                                     r2.getMinY(), r2.getMaxY());
+        return dx * dx + dy * dy;
+    }
+
+    /** @return the distance between the 1D segments a1a2 and b1b2, or
+        0 if they intersect. */
+    static double segmentsDistance(double a1, double a2, double b1, double b2) {
+        return (a2 < b1) ? (b1 - a2)
+            : (b2 < a1) ? (a1 - b2)
+            : 0;
     }
 
     /** @return the distance between p and the nearest point on rect.
