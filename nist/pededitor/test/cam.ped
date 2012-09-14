@@ -22,134 +22,51 @@
     "height" : 0.9417694876632691
   },
   "diagramType" : "OTHER",
-  "labels" : [ {
-    "xWeight" : 0.5,
-    "yWeight" : 0.5,
-    "x" : 0.21177766327065675,
-    "y" : 0.5699839025656419,
-    "text" : "θ - φ",
-    "fontSize" : 0.75
-  }, {
-    "xWeight" : 0.5,
-    "yWeight" : 1.0,
-    "x" : 0.4300160974343582,
-    "y" : 0.4750550769428661,
-    "text" : "f",
-    "angle" : 1.5707963267948966,
-    "fontSize" : 0.75
-  }, {
-    "xWeight" : 0.5,
-    "yWeight" : 1.0,
-    "x" : 0.2581970712111775,
-    "y" : 0.604111241433717,
-    "text" : "f<sub>c</sub>",
-    "angle" : 0.3665191429188092,
-    "fontSize" : 1.0
-  }, {
-    "yWeight" : 0.5,
-    "x" : 0.38083604292193646,
-    "y" : 0.8445158130746684,
-    "text" : "θ: camming angle<br>f: fall force<br>φ: crack flare angle<br>μ: coefficient of friction<br>f<sub>c</sub>: cam force (per crack side)",
-    "fontSize" : 1.0
-  }, {
-    "xWeight" : 0.5,
-    "x" : 0.22547873088631543,
-    "y" : 0.8488984933129728,
-    "text" : "φ",
-    "fontSize" : 1.0
-  }, {
-    "xWeight" : 0.5,
-    "yWeight" : 0.5,
-    "x" : 0.20541998429194452,
-    "y" : 0.5518753893735358,
-    "text" : "φ",
-    "fontSize" : 0.8
-  }, {
-    "xWeight" : 0.5,
-    "yWeight" : 1.0,
-    "x" : 0.1548198199748154,
-    "y" : 0.623770050304178,
-    "text" : "f<sub>c</sub> sin θ",
-    "angle" : 1.3264502315156903,
-    "fontSize" : 0.75
-  }, {
-    "xWeight" : 0.5,
-    "yWeight" : 1.0,
-    "x" : 0.26954421112223836,
-    "y" : 0.6710226926490099,
-    "text" : "f<sub>c</sub> cos θ",
-    "angle" : -0.24434609527920617,
-    "fontSize" : 0.75
-  }, {
-    "yWeight" : 0.5,
-    "x" : 0.4669858752342311,
-    "y" : 0.697273816814723,
-    "text" : "f<sub>c</sub> sin θ ≤ μ f<sub>c</sub> cos θ<br>μ ≥ tan θ*<br>2 f<sub>c</sub> sin(θ-φ) = f<br>f<sub>c</sub> = f / (2 sin (θ-φ))",
-    "fontSize" : 1.0
-  }, {
-    "xWeight" : 0.5,
-    "yWeight" : 0.5,
-    "x" : 0.3240384754006995,
-    "y" : 0.6438503687954438,
-    "text" : "θ",
-    "fontSize" : 0.75
-  }, {
-    "xWeight" : 0.5,
-    "yWeight" : 1.0,
-    "x" : 0.4300160974343582,
-    "y" : 0.5939393367669741,
-    "text" : "f<sub>c</sub> sin (θ-φ)",
-    "angle" : 1.5707963267948966,
-    "fontSize" : 0.6
-  }, {
-    "xWeight" : 0.5,
-    "yWeight" : 0.5,
-    "x" : 0.37155301971435556,
-    "y" : 1.0002923248669464,
-    "text" : "Force diagram for a cam in a<br>symmetrical vertically flaring crack",
-    "fontSize" : 1.0
-  }, {
-    "x" : 0.4669858752342311,
-    "y" : 0.5183257414674984,
-    "text" : "<div style=\"width: 1250 px;\"><p>* Minimum coefficient of friction for cam to hold.</p><p>As I believe a cam manufacturer warns, the cam may grind soft rock surfaces into dust and skate out on that dust layer. This has happened to me under body weight (I even heard the grinding noise), and there are videos of it happening several times in a single fall. That is why Fat Cams exist (though finding a better fit or a wider crack also works to reduce PSIs).</p><p>Also, in a flare, if the cam loses contact with the rock even momentarily and it is pulled out fast enough, it may never reestablish contact.</p></div>",
-    "fontSize" : 0.6666666666666666
-  }, {
-    "x" : 0.47083221831929956,
-    "y" : 0.6063848963179026,
-    "text" : "<p style=\"width: 1250 px;\">For typical camming angles, about twice the supported force is exerted on the sides of a parallel crack.</p>",
-    "fontSize" : 0.6666666666666666
-  }, {
-    "xWeight" : 1.0,
-    "yWeight" : 1.0,
-    "x" : 0.6970052055140217,
-    "y" : 0.10305730596243479,
-    "text" : "E. Boesch",
-    "fontSize" : 0.4
-  } ],
-  "arrows" : [ {
-    "x" : 0.4300160974343582,
-    "y" : 0.3913592655925968,
-    "size" : 0.0032,
-    "angle" : -1.5707963267948966
-  }, {
-    "x" : 0.4300160974343582,
-    "y" : 0.6463184221385955,
-    "size" : 0.0032,
-    "angle" : 1.5707963267948966
-  }, {
-    "x" : 0.5561105577533751,
-    "y" : 0.6364018294686598,
-    "size" : 0.0024,
-    "angle" : 1.5707963267948966
-  } ],
-  "tieLines" : [ ],
   "diagramComponents" : [ null, null, null, null ],
+  "axes" : [ {
+    "format" : {
+      "type" : "DecimalFormat",
+      "pattern" : "#0.0000"
+    },
+    "a" : 1.0,
+    "b" : 0.0,
+    "c" : 0.0,
+    "name" : "X"
+  }, {
+    "format" : {
+      "type" : "DecimalFormat",
+      "pattern" : "#0.0000"
+    },
+    "a" : 0.0,
+    "b" : 1.0,
+    "c" : 0.0,
+    "name" : "Y"
+  }, {
+    "format" : {
+      "type" : "DecimalFormat",
+      "pattern" : "#0.0000"
+    },
+    "a" : 1.0,
+    "b" : 0.0,
+    "c" : 0.0,
+    "name" : "page X"
+  }, {
+    "format" : {
+      "type" : "DecimalFormat",
+      "pattern" : "#0.0000"
+    },
+    "a" : 0.0,
+    "b" : -1.0,
+    "c" : 1.0,
+    "name" : "page Y"
+  } ],
   "usingWeightFraction" : false,
   "fontName" : "DejaVu LGC Sans PED",
   "keys" : {
     "title" : "Cam Force Diagram"
   },
-  "curves" : [ {
+  "decorations" : [ {
+    "decoration" : "curve",
     "curve" : {
       "points" : [ {
 	"x" : 0.0,
@@ -189,6 +106,7 @@
     "lineStyle" : "SOLID",
     "id" : 0
   }, {
+    "decoration" : "curve",
     "curve" : {
       "points" : [ {
 	"x" : 0.2410421451343447,
@@ -204,6 +122,7 @@
     "lineStyle" : "SOLID",
     "id" : 1
   }, {
+    "decoration" : "curve",
     "curve" : {
       "points" : [ {
 	"x" : 0.16773851736318368,
@@ -225,6 +144,7 @@
     "lineStyle" : "SOLID",
     "id" : 2
   }, {
+    "decoration" : "curve",
     "curve" : {
       "points" : [ {
 	"x" : 0.13843391331959604,
@@ -240,6 +160,7 @@
     "lineStyle" : "SOLID",
     "id" : 3
   }, {
+    "decoration" : "curve",
     "curve" : {
       "points" : [ {
 	"x" : 0.36836129316389554,
@@ -261,6 +182,7 @@
     "lineStyle" : "SOLID",
     "id" : 4
   }, {
+    "decoration" : "curve",
     "curve" : {
       "points" : [ {
 	"x" : 0.36836129316389554,
@@ -276,6 +198,7 @@
     "lineStyle" : "SOLID",
     "id" : 5
   }, {
+    "decoration" : "curve",
     "curve" : {
       "points" : [ {
 	"x" : 0.4300160974343582,
@@ -294,6 +217,7 @@
     "lineStyle" : "SOLID",
     "id" : 6
   }, {
+    "decoration" : "curve",
     "curve" : {
       "points" : [ {
 	"x" : 0.4300160974343582,
@@ -306,6 +230,7 @@
     "lineStyle" : "SOLID",
     "id" : 7
   }, {
+    "decoration" : "curve",
     "curve" : {
       "points" : [ {
 	"x" : 0.1384339133195948,
@@ -321,6 +246,7 @@
     "lineStyle" : "SOLID",
     "id" : 8
   }, {
+    "decoration" : "curve",
     "curve" : {
       "points" : [ {
 	"x" : 0.2410421451343447,
@@ -336,6 +262,7 @@
     "lineStyle" : "DASH",
     "id" : 10
   }, {
+    "decoration" : "curve",
     "curve" : {
       "points" : [ {
 	"x" : 0.36836129316389554,
@@ -351,6 +278,7 @@
     "lineStyle" : "SOLID",
     "id" : 12
   }, {
+    "decoration" : "curve",
     "curve" : {
       "points" : [ {
 	"x" : 0.17497911524968537,
@@ -372,6 +300,7 @@
     "lineStyle" : "SOLID",
     "id" : 13
   }, {
+    "decoration" : "curve",
     "curve" : {
       "points" : [ {
 	"x" : 0.149144806399749,
@@ -390,6 +319,7 @@
     "lineStyle" : "SOLID",
     "id" : 14
   }, {
+    "decoration" : "curve",
     "curve" : {
       "points" : [ {
 	"x" : 0.36836129316389554,
@@ -414,6 +344,7 @@
     "lineStyle" : "SOLID",
     "id" : 15
   }, {
+    "decoration" : "curve",
     "curve" : {
       "points" : [ {
 	"x" : 0.25092357074396665,
@@ -429,6 +360,7 @@
     "lineStyle" : "SOLID",
     "id" : 16
   }, {
+    "decoration" : "curve",
     "curve" : {
       "points" : [ {
 	"x" : 0.4016353145162087,
@@ -444,6 +376,7 @@
     "lineStyle" : "SOLID",
     "id" : 17
   }, {
+    "decoration" : "curve",
     "curve" : {
       "points" : [ {
 	"x" : 0.36836129316389554,
@@ -465,6 +398,7 @@
     "lineStyle" : "SOLID",
     "id" : 18
   }, {
+    "decoration" : "curve",
     "curve" : {
       "points" : [ {
 	"x" : 0.25190221843079935,
@@ -480,6 +414,7 @@
     "lineStyle" : "SOLID",
     "id" : 19
   }, {
+    "decoration" : "curve",
     "curve" : {
       "points" : [ {
 	"x" : 0.40163531451620865,
@@ -501,6 +436,7 @@
     "lineStyle" : "SOLID",
     "id" : 20
   }, {
+    "decoration" : "curve",
     "curve" : {
       "points" : [ {
 	"x" : 0.5180943892493048,
@@ -516,6 +452,7 @@
     "lineStyle" : "SOLID",
     "id" : 21
   }, {
+    "decoration" : "curve",
     "curve" : {
       "points" : [ {
 	"x" : 0.5561105577533751,
@@ -530,46 +467,141 @@
     "lineWidth" : 0.0024,
     "lineStyle" : "SOLID",
     "id" : 116
-  } ],
-  "axes" : [ {
-    "format" : {
-      "type" : "DecimalFormat",
-      "pattern" : "#0.0000"
-    },
-    "a" : 1.0,
-    "b" : 0.0,
-    "c" : 0.0,
-    "name" : "X",
-    "rulers" : [ ]
   }, {
-    "format" : {
-      "type" : "DecimalFormat",
-      "pattern" : "#0.0000"
-    },
-    "a" : 0.0,
-    "b" : 1.0,
-    "c" : 0.0,
-    "name" : "Y",
-    "rulers" : [ ]
+    "decoration" : "arrow",
+    "x" : 0.5561105577533751,
+    "y" : 0.6364018294686598,
+    "size" : 0.0024,
+    "angle" : 1.5707963267948966
   }, {
-    "format" : {
-      "type" : "DecimalFormat",
-      "pattern" : "#0.0000"
-    },
-    "a" : 1.0,
-    "b" : 0.0,
-    "c" : 0.0,
-    "name" : "page X",
-    "rulers" : [ ]
+    "decoration" : "arrow",
+    "x" : 0.4300160974343582,
+    "y" : 0.6463184221385955,
+    "size" : 0.0032,
+    "angle" : 1.5707963267948966
   }, {
-    "format" : {
-      "type" : "DecimalFormat",
-      "pattern" : "#0.0000"
-    },
-    "a" : 0.0,
-    "b" : -1.0,
-    "c" : 1.0,
-    "name" : "page Y",
-    "rulers" : [ ]
+    "decoration" : "arrow",
+    "x" : 0.4300160974343582,
+    "y" : 0.3913592655925968,
+    "size" : 0.0032,
+    "angle" : -1.5707963267948966
+  }, {
+    "decoration" : "label",
+    "text" : "θ - φ",
+    "xWeight" : 0.5,
+    "yWeight" : 0.5,
+    "x" : 0.21177766327065675,
+    "y" : 0.5699839025656419,
+    "fontSize" : 0.75
+  }, {
+    "decoration" : "label",
+    "text" : "f",
+    "xWeight" : 0.5,
+    "yWeight" : 1.0,
+    "x" : 0.4300160974343582,
+    "y" : 0.4750550769428661,
+    "angle" : 1.5707963267948966,
+    "fontSize" : 0.75
+  }, {
+    "decoration" : "label",
+    "text" : "f<sub>c</sub>",
+    "xWeight" : 0.5,
+    "yWeight" : 1.0,
+    "x" : 0.2581970712111775,
+    "y" : 0.604111241433717,
+    "angle" : 0.3665191429188092,
+    "fontSize" : 1.0
+  }, {
+    "decoration" : "label",
+    "text" : "θ: camming angle<br>f: fall force<br>φ: crack flare angle<br>μ: coefficient of friction<br>f<sub>c</sub>: cam force (per crack side)",
+    "yWeight" : 0.5,
+    "x" : 0.38083604292193646,
+    "y" : 0.8445158130746684,
+    "fontSize" : 1.0
+  }, {
+    "decoration" : "label",
+    "text" : "φ",
+    "xWeight" : 0.5,
+    "x" : 0.22547873088631543,
+    "y" : 0.8488984933129728,
+    "fontSize" : 1.0
+  }, {
+    "decoration" : "label",
+    "text" : "φ",
+    "xWeight" : 0.5,
+    "yWeight" : 0.5,
+    "x" : 0.20541998429194452,
+    "y" : 0.5518753893735358,
+    "fontSize" : 0.8
+  }, {
+    "decoration" : "label",
+    "text" : "f<sub>c</sub> sin θ",
+    "xWeight" : 0.5,
+    "yWeight" : 1.0,
+    "x" : 0.1548198199748154,
+    "y" : 0.623770050304178,
+    "angle" : 1.3264502315156903,
+    "fontSize" : 0.75
+  }, {
+    "decoration" : "label",
+    "text" : "f<sub>c</sub> cos θ",
+    "xWeight" : 0.5,
+    "yWeight" : 1.0,
+    "x" : 0.26954421112223836,
+    "y" : 0.6710226926490099,
+    "angle" : -0.24434609527920617,
+    "fontSize" : 0.75
+  }, {
+    "decoration" : "label",
+    "text" : "f<sub>c</sub> sin θ ≤ μ f<sub>c</sub> cos θ<br>μ ≥ tan θ*<br>2 f<sub>c</sub> sin(θ-φ) = f<br>f<sub>c</sub> = f / (2 sin (θ-φ))",
+    "yWeight" : 0.5,
+    "x" : 0.4669858752342311,
+    "y" : 0.697273816814723,
+    "fontSize" : 1.0
+  }, {
+    "decoration" : "label",
+    "text" : "θ",
+    "xWeight" : 0.5,
+    "yWeight" : 0.5,
+    "x" : 0.3240384754006995,
+    "y" : 0.6438503687954438,
+    "fontSize" : 0.75
+  }, {
+    "decoration" : "label",
+    "text" : "f<sub>c</sub> sin (θ-φ)",
+    "xWeight" : 0.5,
+    "yWeight" : 1.0,
+    "x" : 0.4300160974343582,
+    "y" : 0.5939393367669741,
+    "angle" : 1.5707963267948966,
+    "fontSize" : 0.6
+  }, {
+    "decoration" : "label",
+    "text" : "Force diagram for a cam in a<br>symmetrical vertically flaring crack",
+    "xWeight" : 0.5,
+    "yWeight" : 0.5,
+    "x" : 0.37155301971435556,
+    "y" : 1.0002923248669464,
+    "fontSize" : 1.0
+  }, {
+    "decoration" : "label",
+    "text" : "<div style=\"width: 1250 px;\"><p>* Minimum coefficient of friction for cam to hold.</p><p>As I believe a cam manufacturer warns, the cam may grind soft rock surfaces into dust and skate out on that dust layer. This has happened to me under body weight (I even heard the grinding noise), and there are videos of it happening several times in a single fall. That is why Fat Cams exist (though finding a better fit or a wider crack also works to reduce PSIs).</p><p>Also, in a flare, if the cam loses contact with the rock even momentarily and it is pulled out fast enough, it may never reestablish contact.</p></div>",
+    "x" : 0.4669858752342311,
+    "y" : 0.5183257414674984,
+    "fontSize" : 0.6666666666666666
+  }, {
+    "decoration" : "label",
+    "text" : "<p style=\"width: 1250 px;\">For typical camming angles, about twice the supported force is exerted on the sides of a parallel crack.</p>",
+    "x" : 0.47083221831929956,
+    "y" : 0.6063848963179026,
+    "fontSize" : 0.6666666666666666
+  }, {
+    "decoration" : "label",
+    "text" : "E. Boesch",
+    "xWeight" : 1.0,
+    "yWeight" : 1.0,
+    "x" : 0.6970052055140217,
+    "y" : 0.10305730596243479,
+    "fontSize" : 0.4
   } ]
 }

@@ -22,321 +22,66 @@
     "height" : 1.0
   },
   "diagramType" : "OTHER",
-  "labels" : [ {
-    "xWeight" : 0.5,
-    "x" : 0.5,
-    "y" : 1.0,
-    "text" : "Labels Test",
-    "angle" : -0.0,
-    "fontSize" : 2.0,
-    "boxed" : true
-  }, {
-    "xWeight" : 0.5,
-    "x" : 0.4077882347925092,
-    "y" : 0.6931291964001514,
-    "text" : "Upside down",
-    "angle" : -3.141592653589793,
-    "fontSize" : 1.0,
-    "boxed" : true
-  }, {
-    "x" : 0.477218172233878,
-    "y" : 0.4593671936197805,
-    "text" : "Northwest",
-    "angle" : -0.0,
-    "fontSize" : 2.0,
-    "boxed" : true
-  }, {
-    "xWeight" : 1.0,
-    "yWeight" : 1.0,
-    "x" : 0.260958009632252,
-    "y" : 0.3813184131319757,
-    "text" : "Southeast",
-    "angle" : -1.5707963267948966,
-    "fontSize" : 2.5,
-    "boxed" : true
-  }, {
-    "xWeight" : 0.5,
-    "yWeight" : 0.5,
-    "x" : 0.6606381258554028,
-    "y" : 0.5819544667371899,
-    "text" : "C⁺C⁻C<sub>2</sub>C<sub>3</sub>C<sub>4</sub>C<sub>5</sub>C<sub>6</sub>Ã○●◉□■△▲✕⇌∇",
-    "angle" : -0.0,
-    "fontSize" : 1.6,
-    "boxed" : true
-  }, {
-    "xWeight" : 0.5,
-    "x" : 0.5520149202013577,
-    "y" : 0.32928589280677234,
-    "text" : "St. Paul,<br>Fall.<br>thing<br>spring<br>fall",
-    "angle" : -0.0,
-    "fontSize" : 1.5,
-    "boxed" : true
-  }, {
-    "xWeight" : 0.5,
-    "yWeight" : 0.5,
-    "x" : 0.5064864649168048,
-    "y" : 0.8593671936197805,
-    "text" : "The cat in the hat said, \"Run, Spot, run!\" See Spot run.",
-    "angle" : -0.0,
-    "fontSize" : 1.6,
-    "boxed" : true
-  }, {
-    "xWeight" : 1.0,
-    "yWeight" : 1.0,
-    "x" : 0.8544539445916016,
-    "y" : 0.26587125866043093,
-    "text" : "Southeast",
-    "angle" : 0.7853981633974483,
-    "fontSize" : 3.0,
-    "boxed" : true
-  }, {
-    "xWeight" : 1.0,
-    "yWeight" : 1.0,
-    "x" : 0.23006370068916257,
-    "y" : 0.7016436163840082,
-    "text" : "m",
-    "angle" : -0.0,
-    "fontSize" : 3.0,
-    "boxed" : true
-  }, {
-    "xWeight" : 1.0,
-    "yWeight" : 1.0,
-    "x" : 0.6185116851476343,
-    "y" : 0.6559604837583157,
-    "text" : "p",
-    "angle" : -0.0,
-    "fontSize" : 4.0,
-    "boxed" : true
-  }, {
-    "xWeight" : 0.5,
-    "yWeight" : 0.5,
-    "x" : 0.5018503962082186,
-    "y" : 0.06373099914061853,
-    "text" : "E=Mc<sup>2</sup>",
-    "fontSize" : 2.0,
-    "boxed" : true
-  }, {
-    "xWeight" : 0.5,
-    "yWeight" : 0.5,
-    "x" : 0.29649452818482536,
-    "y" : 0.1753589061173627,
-    "text" : "H<sub>2</sub>O",
-    "fontSize" : 2.0,
-    "boxed" : true
-  }, {
-    "xWeight" : 0.5,
-    "yWeight" : 0.5,
-    "x" : 0.6560799608517642,
-    "y" : 0.3748143480913252,
-    "text" : "○",
-    "fontSize" : 2.0
-  }, {
-    "xWeight" : 0.5,
-    "yWeight" : 0.5,
-    "x" : 0.7048604486566422,
-    "y" : 0.3748143480913252,
-    "text" : "◉",
-    "fontSize" : 2.0
-  }, {
-    "xWeight" : 0.5,
-    "yWeight" : 0.5,
-    "x" : 0.7503889039411951,
-    "y" : 0.3748143480913252,
-    "text" : "□",
-    "fontSize" : 2.0
-  }, {
-    "xWeight" : 0.5,
-    "yWeight" : 0.5,
-    "x" : 0.787787277924935,
-    "y" : 0.3748143480913252,
-    "text" : "△",
-    "fontSize" : 2.0
-  }, {
-    "xWeight" : 1.0,
-    "yWeight" : 0.5,
-    "x" : 0.42780662611935494,
-    "y" : 0.2925682084429442,
-    "text" : "There once was a man from St. Paul<br>who fell in a spring in the Fall<br>'Twould have been a sad thing<br>had he died in the spring,<br>but he didn't; he died in the fall.",
-    "fontSize" : 1.0,
-    "boxed" : true
-  }, {
-    "x" : 0.6330671249678674,
-    "y" : 0.805273776675314,
-    "text" : "Two",
-    "fontSize" : 1.5,
-    "boxed" : true
-  }, {
-    "x" : 0.6329070786217226,
-    "y" : 0.769204245754477,
-    "text" : "Lines",
-    "fontSize" : 1.5,
-    "boxed" : true
-  }, {
-    "x" : 0.7240779039576151,
-    "y" : 0.805672575888834,
-    "text" : "Two<br>Lines",
-    "fontSize" : 1.5,
-    "boxed" : true
-  }, {
-    "xWeight" : 0.5,
-    "yWeight" : 0.5,
-    "x" : 0.33193442215169905,
-    "y" : 0.7912137259964491,
-    "text" : "<i>italic</i>",
-    "fontSize" : 1.4000000000000001,
-    "boxed" : true
-  }, {
-    "xWeight" : 0.5,
-    "yWeight" : 0.5,
-    "x" : 0.3263788665961435,
-    "y" : 0.7486211334038565,
-    "text" : "<b>bold</b>",
-    "fontSize" : 1.0,
-    "boxed" : true
-  }, {
-    "xWeight" : 0.5,
-    "yWeight" : 0.5,
-    "x" : 0.4365640517813287,
-    "y" : 0.7865840963668195,
-    "text" : "<u>under</u>",
-    "fontSize" : 1.0,
-    "boxed" : true
-  }, {
-    "xWeight" : 0.5,
-    "yWeight" : 0.5,
-    "x" : 0.8206572529414596,
-    "y" : 0.3748143480913252,
-    "text" : "◇",
-    "fontSize" : 2.0
-  }, {
-    "xWeight" : 0.5,
-    "yWeight" : 0.5,
-    "x" : 0.8540214790767702,
-    "y" : 0.3748143480913252,
-    "text" : "◆",
-    "fontSize" : 2.0
-  }, {
-    "xWeight" : 0.5,
-    "yWeight" : 0.5,
-    "x" : 0.8864589211527665,
-    "y" : 0.3748143480913252,
-    "text" : "▽",
-    "fontSize" : 2.0
-  }, {
-    "xWeight" : 0.5,
-    "yWeight" : 0.5,
-    "x" : 0.9188963632287628,
-    "y" : 0.3748143480913252,
-    "text" : "◓",
-    "fontSize" : 2.0
-  }, {
-    "xWeight" : 0.5,
-    "yWeight" : 0.5,
-    "x" : 0.1617710177623333,
-    "y" : 0.5471720716685611,
-    "text" : "a|b<br>c|d",
-    "fontSize" : 2.0
-  }, {
-    "xWeight" : 0.5,
-    "yWeight" : 0.5,
-    "x" : 0.0665116869052307,
-    "y" : 0.18863615648759624,
-    "text" : "⦵",
-    "fontSize" : 2.0
-  }, {
-    "xWeight" : 0.5,
-    "yWeight" : 0.5,
-    "x" : 0.09935877003897929,
-    "y" : 0.17193234970627014,
-    "text" : "✕",
-    "fontSize" : 2.0
-  }, {
-    "xWeight" : 0.5,
-    "yWeight" : 0.5,
-    "x" : 0.13477765922869156,
-    "y" : 0.1539206961592834,
-    "text" : "●",
-    "fontSize" : 2.0
-  }, {
-    "xWeight" : 0.5,
-    "yWeight" : 0.5,
-    "x" : 0.1710984665144188,
-    "y" : 0.13545038801739484,
-    "text" : "■",
-    "fontSize" : 2.0
-  }, {
-    "xWeight" : 0.5,
-    "yWeight" : 0.5,
-    "x" : 0.21222355039080038,
-    "y" : 0.11453694945909831,
-    "text" : "▲",
-    "fontSize" : 2.0
-  }, {
-    "xWeight" : 0.5,
-    "yWeight" : 0.5,
-    "x" : 0.2428530461267563,
-    "y" : 0.09896085777084773,
-    "text" : "▼",
-    "fontSize" : 2.0
-  }, {
-    "xWeight" : 0.5,
-    "yWeight" : 0.5,
-    "x" : 0.27521196237025247,
-    "y" : 0.08250529968115172,
-    "text" : "◇",
-    "fontSize" : 2.0
-  }, {
-    "xWeight" : 0.5,
-    "yWeight" : 0.5,
-    "x" : 0.3089311973262203,
-    "y" : 0.065357975420267,
-    "text" : "◆",
-    "fontSize" : 2.0
-  }, {
-    "xWeight" : 0.5,
-    "yWeight" : 0.5,
-    "x" : 0.34306418348795065,
-    "y" : 0.048000245256110574,
-    "text" : "✡",
-    "fontSize" : 2.0
-  }, {
-    "xWeight" : 0.5,
-    "yWeight" : 0.5,
-    "x" : 0.3688745194963543,
-    "y" : 0.03487485254193956,
-    "text" : "✶",
-    "fontSize" : 2.0
-  }, {
-    "xWeight" : 0.5,
-    "yWeight" : 0.5,
-    "x" : 0.09823180672210206,
-    "y" : 0.9522621559562734,
-    "text" : "Henry Ⅳ",
-    "fontSize" : 1.2
-  }, {
-    "xWeight" : 0.5,
-    "yWeight" : 0.5,
-    "x" : 0.21897823921386936,
-    "y" : 0.9522621559562734,
-    "text" : "αβγΑΒΓ",
-    "fontSize" : 1.2
-  }, {
-    "xWeight" : 0.5,
-    "yWeight" : 0.5,
-    "x" : 0.11604511552645412,
-    "y" : 0.6518447927304266,
-    "text" : "M",
-    "fontSize" : 3.0,
-    "boxed" : true
-  } ],
-  "arrows" : [ ],
-  "tieLines" : [ ],
   "diagramComponents" : [ null, null, null, null ],
+  "axes" : [ {
+    "format" : {
+      "type" : "DecimalFormat",
+      "pattern" : "#0.000"
+    },
+    "a" : 1.0,
+    "b" : 0.0,
+    "c" : 0.0,
+    "name" : "X"
+  }, {
+    "format" : {
+      "type" : "DecimalFormat",
+      "pattern" : "#0.000"
+    },
+    "a" : 0.0,
+    "b" : 1.0,
+    "c" : 0.0,
+    "name" : "Y"
+  }, {
+    "format" : {
+      "type" : "DecimalFormat",
+      "pattern" : "#0.000"
+    },
+    "a" : 1.0,
+    "b" : 0.0,
+    "c" : 0.0,
+    "name" : "page X"
+  }, {
+    "format" : {
+      "type" : "DecimalFormat",
+      "pattern" : "#0.000"
+    },
+    "a" : 0.0,
+    "b" : -1.0,
+    "c" : 1.0,
+    "name" : "page Y"
+  } ],
   "usingWeightFraction" : false,
   "fontName" : "DejaVu LGC Serif PED",
   "keys" : {
   },
-  "curves" : [ {
+  "decorations" : [ {
+    "decoration" : "ruler",
+    "startPoint" : {
+      "x" : 0.4650454017716701,
+      "y" : 0.10597323309739903
+    },
+    "endPoint" : {
+      "x" : 0.464017652542482,
+      "y" : 0.39415295382956317
+    },
+    "fontSize" : 0.016260162601626018,
+    "lineWidth" : 0.0016,
+    "labelAnchor" : "LEFT",
+    "tickRight" : true,
+    "tickLeft" : true,
+    "axis" : "Y"
+  }, {
+    "decoration" : "curve",
     "curve" : {
       "points" : [ {
 	"x" : 0.4077882347925092,
@@ -349,6 +94,7 @@
     "lineStyle" : "SOLID",
     "id" : 15
   }, {
+    "decoration" : "curve",
     "curve" : {
       "points" : [ {
 	"x" : 0.477218172233878,
@@ -361,6 +107,7 @@
     "lineStyle" : "SOLID",
     "id" : 16
   }, {
+    "decoration" : "curve",
     "curve" : {
       "points" : [ {
 	"x" : 0.260958009632252,
@@ -373,6 +120,7 @@
     "lineStyle" : "SOLID",
     "id" : 17
   }, {
+    "decoration" : "curve",
     "curve" : {
       "points" : [ {
 	"x" : 0.5,
@@ -385,6 +133,7 @@
     "lineStyle" : "SOLID",
     "id" : 18
   }, {
+    "decoration" : "curve",
     "curve" : {
       "points" : [ {
 	"x" : 0.8544539445916016,
@@ -397,6 +146,7 @@
     "lineStyle" : "SOLID",
     "id" : 19
   }, {
+    "decoration" : "curve",
     "curve" : {
       "points" : [ {
 	"x" : 0.23006370068916257,
@@ -409,6 +159,7 @@
     "lineStyle" : "SOLID",
     "id" : 20
   }, {
+    "decoration" : "curve",
     "curve" : {
       "points" : [ {
 	"x" : 0.6185116851476343,
@@ -421,6 +172,7 @@
     "lineStyle" : "SOLID",
     "id" : 21
   }, {
+    "decoration" : "curve",
     "curve" : {
       "points" : [ {
 	"x" : 0.6105515055672114,
@@ -436,6 +188,7 @@
     "lineStyle" : "SOLID",
     "id" : 22
   }, {
+    "decoration" : "curve",
     "curve" : {
       "points" : [ {
 	"x" : 0.42780662611935494,
@@ -448,6 +201,7 @@
     "lineStyle" : "SOLID",
     "id" : 23
   }, {
+    "decoration" : "curve",
     "curve" : {
       "points" : [ {
 	"x" : 0.787787277924935,
@@ -463,6 +217,7 @@
     "lineStyle" : "SOLID",
     "id" : 24
   }, {
+    "decoration" : "curve",
     "curve" : {
       "points" : [ {
 	"x" : 0.7503889039411951,
@@ -478,6 +233,7 @@
     "lineStyle" : "SOLID",
     "id" : 25
   }, {
+    "decoration" : "curve",
     "curve" : {
       "points" : [ {
 	"x" : 0.7048604486566422,
@@ -493,6 +249,7 @@
     "lineStyle" : "SOLID",
     "id" : 26
   }, {
+    "decoration" : "curve",
     "curve" : {
       "points" : [ {
 	"x" : 0.6560799608517642,
@@ -508,6 +265,7 @@
     "lineStyle" : "SOLID",
     "id" : 27
   }, {
+    "decoration" : "curve",
     "curve" : {
       "points" : [ {
 	"x" : 0.05212862340706364,
@@ -526,6 +284,7 @@
     "lineStyle" : "SOLID",
     "id" : 51
   }, {
+    "decoration" : "curve",
     "curve" : {
       "points" : [ {
 	"x" : 0.0665116869052307,
@@ -541,6 +300,7 @@
     "lineStyle" : "SOLID",
     "id" : 52
   }, {
+    "decoration" : "curve",
     "curve" : {
       "points" : [ {
 	"x" : 0.09935877003897929,
@@ -556,6 +316,7 @@
     "lineStyle" : "SOLID",
     "id" : 53
   }, {
+    "decoration" : "curve",
     "curve" : {
       "points" : [ {
 	"x" : 0.13477765922869156,
@@ -571,6 +332,7 @@
     "lineStyle" : "SOLID",
     "id" : 54
   }, {
+    "decoration" : "curve",
     "curve" : {
       "points" : [ {
 	"x" : 0.1710984665144188,
@@ -586,6 +348,7 @@
     "lineStyle" : "SOLID",
     "id" : 55
   }, {
+    "decoration" : "curve",
     "curve" : {
       "points" : [ {
 	"x" : 0.21222355039080038,
@@ -601,6 +364,7 @@
     "lineStyle" : "SOLID",
     "id" : 56
   }, {
+    "decoration" : "curve",
     "curve" : {
       "points" : [ {
 	"x" : 0.2428530461267563,
@@ -616,6 +380,7 @@
     "lineStyle" : "SOLID",
     "id" : 57
   }, {
+    "decoration" : "curve",
     "curve" : {
       "points" : [ {
 	"x" : 0.27521196237025247,
@@ -631,6 +396,7 @@
     "lineStyle" : "SOLID",
     "id" : 58
   }, {
+    "decoration" : "curve",
     "curve" : {
       "points" : [ {
 	"x" : 0.3089311973262203,
@@ -646,6 +412,7 @@
     "lineStyle" : "SOLID",
     "id" : 59
   }, {
+    "decoration" : "curve",
     "curve" : {
       "points" : [ {
 	"x" : 0.34306418348795065,
@@ -660,60 +427,352 @@
     "lineWidth" : 0.0024,
     "lineStyle" : "SOLID",
     "id" : 60
-  } ],
-  "axes" : [ {
-    "format" : {
-      "type" : "DecimalFormat",
-      "pattern" : "#0.000"
-    },
-    "a" : 1.0,
-    "b" : 0.0,
-    "c" : 0.0,
-    "name" : "X",
-    "rulers" : [ ]
   }, {
-    "format" : {
-      "type" : "DecimalFormat",
-      "pattern" : "#0.000"
-    },
-    "a" : 0.0,
-    "b" : 1.0,
-    "c" : 0.0,
-    "name" : "Y",
-    "rulers" : [ {
-      "startPoint" : {
-	"x" : 0.4650454017716701,
-	"y" : 0.10597323309739903
-      },
-      "endPoint" : {
-	"x" : 0.464017652542482,
-	"y" : 0.39415295382956317
-      },
-      "fontSize" : 0.016260162601626018,
-      "lineWidth" : 0.0016,
-      "labelAnchor" : "LEFT",
-      "tickRight" : true,
-      "tickLeft" : true
-    } ]
+    "decoration" : "label",
+    "text" : "Labels Test",
+    "xWeight" : 0.5,
+    "x" : 0.5,
+    "y" : 1.0,
+    "angle" : -0.0,
+    "fontSize" : 2.0,
+    "boxed" : true
   }, {
-    "format" : {
-      "type" : "DecimalFormat",
-      "pattern" : "#0.000"
-    },
-    "a" : 1.0,
-    "b" : 0.0,
-    "c" : 0.0,
-    "name" : "page X",
-    "rulers" : [ ]
+    "decoration" : "label",
+    "text" : "Upside down",
+    "xWeight" : 0.5,
+    "x" : 0.4077882347925092,
+    "y" : 0.6931291964001514,
+    "angle" : -3.141592653589793,
+    "fontSize" : 1.0,
+    "boxed" : true
   }, {
-    "format" : {
-      "type" : "DecimalFormat",
-      "pattern" : "#0.000"
-    },
-    "a" : 0.0,
-    "b" : -1.0,
-    "c" : 1.0,
-    "name" : "page Y",
-    "rulers" : [ ]
+    "decoration" : "label",
+    "text" : "Northwest",
+    "x" : 0.477218172233878,
+    "y" : 0.4593671936197805,
+    "angle" : -0.0,
+    "fontSize" : 2.0,
+    "boxed" : true
+  }, {
+    "decoration" : "label",
+    "text" : "Southeast",
+    "xWeight" : 1.0,
+    "yWeight" : 1.0,
+    "x" : 0.260958009632252,
+    "y" : 0.3813184131319757,
+    "angle" : -1.5707963267948966,
+    "fontSize" : 2.5,
+    "boxed" : true
+  }, {
+    "decoration" : "label",
+    "text" : "C⁺C⁻C<sub>2</sub>C<sub>3</sub>C<sub>4</sub>C<sub>5</sub>C<sub>6</sub>Ã○●◉□■△▲✕⇌∇",
+    "xWeight" : 0.5,
+    "yWeight" : 0.5,
+    "x" : 0.6606381258554028,
+    "y" : 0.5819544667371899,
+    "angle" : -0.0,
+    "fontSize" : 1.6,
+    "boxed" : true
+  }, {
+    "decoration" : "label",
+    "text" : "St. Paul,<br>Fall.<br>thing<br>spring<br>fall",
+    "xWeight" : 0.5,
+    "x" : 0.5520149202013577,
+    "y" : 0.32928589280677234,
+    "angle" : -0.0,
+    "fontSize" : 1.5,
+    "boxed" : true
+  }, {
+    "decoration" : "label",
+    "text" : "The cat in the hat said, \"Run, Spot, run!\" See Spot run.",
+    "xWeight" : 0.5,
+    "yWeight" : 0.5,
+    "x" : 0.5064864649168048,
+    "y" : 0.8593671936197805,
+    "angle" : -0.0,
+    "fontSize" : 1.6,
+    "boxed" : true
+  }, {
+    "decoration" : "label",
+    "text" : "Southeast",
+    "xWeight" : 1.0,
+    "yWeight" : 1.0,
+    "x" : 0.8544539445916016,
+    "y" : 0.26587125866043093,
+    "angle" : 0.7853981633974483,
+    "fontSize" : 3.0,
+    "boxed" : true
+  }, {
+    "decoration" : "label",
+    "text" : "m",
+    "xWeight" : 1.0,
+    "yWeight" : 1.0,
+    "x" : 0.23006370068916257,
+    "y" : 0.7016436163840082,
+    "angle" : -0.0,
+    "fontSize" : 3.0,
+    "boxed" : true
+  }, {
+    "decoration" : "label",
+    "text" : "p",
+    "xWeight" : 1.0,
+    "yWeight" : 1.0,
+    "x" : 0.6185116851476343,
+    "y" : 0.6559604837583157,
+    "angle" : -0.0,
+    "fontSize" : 4.0,
+    "boxed" : true
+  }, {
+    "decoration" : "label",
+    "text" : "E=Mc<sup>2</sup>",
+    "xWeight" : 0.5,
+    "yWeight" : 0.5,
+    "x" : 0.5018503962082186,
+    "y" : 0.06373099914061853,
+    "fontSize" : 2.0,
+    "boxed" : true
+  }, {
+    "decoration" : "label",
+    "text" : "H<sub>2</sub>O",
+    "xWeight" : 0.5,
+    "yWeight" : 0.5,
+    "x" : 0.29649452818482536,
+    "y" : 0.1753589061173627,
+    "fontSize" : 2.0,
+    "boxed" : true
+  }, {
+    "decoration" : "label",
+    "text" : "○",
+    "xWeight" : 0.5,
+    "yWeight" : 0.5,
+    "x" : 0.6560799608517642,
+    "y" : 0.3748143480913252,
+    "fontSize" : 2.0
+  }, {
+    "decoration" : "label",
+    "text" : "◉",
+    "xWeight" : 0.5,
+    "yWeight" : 0.5,
+    "x" : 0.7048604486566422,
+    "y" : 0.3748143480913252,
+    "fontSize" : 2.0
+  }, {
+    "decoration" : "label",
+    "text" : "□",
+    "xWeight" : 0.5,
+    "yWeight" : 0.5,
+    "x" : 0.7503889039411951,
+    "y" : 0.3748143480913252,
+    "fontSize" : 2.0
+  }, {
+    "decoration" : "label",
+    "text" : "△",
+    "xWeight" : 0.5,
+    "yWeight" : 0.5,
+    "x" : 0.787787277924935,
+    "y" : 0.3748143480913252,
+    "fontSize" : 2.0
+  }, {
+    "decoration" : "label",
+    "text" : "There once was a man from St. Paul<br>who fell in a spring in the Fall<br>'Twould have been a sad thing<br>had he died in the spring,<br>but he didn't; he died in the fall.",
+    "xWeight" : 1.0,
+    "yWeight" : 0.5,
+    "x" : 0.42780662611935494,
+    "y" : 0.2925682084429442,
+    "fontSize" : 1.0,
+    "boxed" : true
+  }, {
+    "decoration" : "label",
+    "text" : "Two",
+    "x" : 0.6330671249678674,
+    "y" : 0.805273776675314,
+    "fontSize" : 1.5,
+    "boxed" : true
+  }, {
+    "decoration" : "label",
+    "text" : "Lines",
+    "x" : 0.6329070786217226,
+    "y" : 0.769204245754477,
+    "fontSize" : 1.5,
+    "boxed" : true
+  }, {
+    "decoration" : "label",
+    "text" : "Two<br>Lines",
+    "x" : 0.7240779039576151,
+    "y" : 0.805672575888834,
+    "fontSize" : 1.5,
+    "boxed" : true
+  }, {
+    "decoration" : "label",
+    "text" : "<i>italic</i>",
+    "xWeight" : 0.5,
+    "yWeight" : 0.5,
+    "x" : 0.33193442215169905,
+    "y" : 0.7912137259964491,
+    "fontSize" : 1.4000000000000001,
+    "boxed" : true
+  }, {
+    "decoration" : "label",
+    "text" : "<b>bold</b>",
+    "xWeight" : 0.5,
+    "yWeight" : 0.5,
+    "x" : 0.3263788665961435,
+    "y" : 0.7486211334038565,
+    "fontSize" : 1.0,
+    "boxed" : true
+  }, {
+    "decoration" : "label",
+    "text" : "<u>under</u>",
+    "xWeight" : 0.5,
+    "yWeight" : 0.5,
+    "x" : 0.4365640517813287,
+    "y" : 0.7865840963668195,
+    "fontSize" : 1.0,
+    "boxed" : true
+  }, {
+    "decoration" : "label",
+    "text" : "◇",
+    "xWeight" : 0.5,
+    "yWeight" : 0.5,
+    "x" : 0.8206572529414596,
+    "y" : 0.3748143480913252,
+    "fontSize" : 2.0
+  }, {
+    "decoration" : "label",
+    "text" : "◆",
+    "xWeight" : 0.5,
+    "yWeight" : 0.5,
+    "x" : 0.8540214790767702,
+    "y" : 0.3748143480913252,
+    "fontSize" : 2.0
+  }, {
+    "decoration" : "label",
+    "text" : "▽",
+    "xWeight" : 0.5,
+    "yWeight" : 0.5,
+    "x" : 0.8864589211527665,
+    "y" : 0.3748143480913252,
+    "fontSize" : 2.0
+  }, {
+    "decoration" : "label",
+    "text" : "◓",
+    "xWeight" : 0.5,
+    "yWeight" : 0.5,
+    "x" : 0.9188963632287628,
+    "y" : 0.3748143480913252,
+    "fontSize" : 2.0
+  }, {
+    "decoration" : "label",
+    "text" : "a|b<br>c|d",
+    "xWeight" : 0.5,
+    "yWeight" : 0.5,
+    "x" : 0.1617710177623333,
+    "y" : 0.5471720716685611,
+    "fontSize" : 2.0
+  }, {
+    "decoration" : "label",
+    "text" : "⦵",
+    "xWeight" : 0.5,
+    "yWeight" : 0.5,
+    "x" : 0.0665116869052307,
+    "y" : 0.18863615648759624,
+    "fontSize" : 2.0
+  }, {
+    "decoration" : "label",
+    "text" : "✕",
+    "xWeight" : 0.5,
+    "yWeight" : 0.5,
+    "x" : 0.09935877003897929,
+    "y" : 0.17193234970627014,
+    "fontSize" : 2.0
+  }, {
+    "decoration" : "label",
+    "text" : "●",
+    "xWeight" : 0.5,
+    "yWeight" : 0.5,
+    "x" : 0.13477765922869156,
+    "y" : 0.1539206961592834,
+    "fontSize" : 2.0
+  }, {
+    "decoration" : "label",
+    "text" : "■",
+    "xWeight" : 0.5,
+    "yWeight" : 0.5,
+    "x" : 0.1710984665144188,
+    "y" : 0.13545038801739484,
+    "fontSize" : 2.0
+  }, {
+    "decoration" : "label",
+    "text" : "▲",
+    "xWeight" : 0.5,
+    "yWeight" : 0.5,
+    "x" : 0.21222355039080038,
+    "y" : 0.11453694945909831,
+    "fontSize" : 2.0
+  }, {
+    "decoration" : "label",
+    "text" : "▼",
+    "xWeight" : 0.5,
+    "yWeight" : 0.5,
+    "x" : 0.2428530461267563,
+    "y" : 0.09896085777084773,
+    "fontSize" : 2.0
+  }, {
+    "decoration" : "label",
+    "text" : "◇",
+    "xWeight" : 0.5,
+    "yWeight" : 0.5,
+    "x" : 0.27521196237025247,
+    "y" : 0.08250529968115172,
+    "fontSize" : 2.0
+  }, {
+    "decoration" : "label",
+    "text" : "◆",
+    "xWeight" : 0.5,
+    "yWeight" : 0.5,
+    "x" : 0.3089311973262203,
+    "y" : 0.065357975420267,
+    "fontSize" : 2.0
+  }, {
+    "decoration" : "label",
+    "text" : "✡",
+    "xWeight" : 0.5,
+    "yWeight" : 0.5,
+    "x" : 0.34306418348795065,
+    "y" : 0.048000245256110574,
+    "fontSize" : 2.0
+  }, {
+    "decoration" : "label",
+    "text" : "✶",
+    "xWeight" : 0.5,
+    "yWeight" : 0.5,
+    "x" : 0.3688745194963543,
+    "y" : 0.03487485254193956,
+    "fontSize" : 2.0
+  }, {
+    "decoration" : "label",
+    "text" : "Henry Ⅳ",
+    "xWeight" : 0.5,
+    "yWeight" : 0.5,
+    "x" : 0.09823180672210206,
+    "y" : 0.9522621559562734,
+    "fontSize" : 1.2
+  }, {
+    "decoration" : "label",
+    "text" : "αβγΑΒΓ",
+    "xWeight" : 0.5,
+    "yWeight" : 0.5,
+    "x" : 0.21897823921386936,
+    "y" : 0.9522621559562734,
+    "fontSize" : 1.2
+  }, {
+    "decoration" : "label",
+    "text" : "M",
+    "xWeight" : 0.5,
+    "yWeight" : 0.5,
+    "x" : 0.11604511552645412,
+    "y" : 0.6518447927304266,
+    "fontSize" : 3.0,
+    "boxed" : true
   } ]
 }

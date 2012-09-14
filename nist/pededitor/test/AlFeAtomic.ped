@@ -22,227 +22,118 @@
     "height" : 1.135015948059082
   },
   "diagramType" : "BINARY",
-  "labels" : [ {
-    "yWeight" : 1.0,
-    "x" : 0.5237766406025257,
-    "y" : 1310.0,
-    "text" : "1310°C",
-    "fontSize" : 1.25
-  }, {
-    "xWeight" : 0.5,
-    "yWeight" : 0.5,
-    "x" : 0.12377494462105129,
-    "y" : 762.3809523809524,
-    "text" : "T<sub>e</sub>",
-    "fontSize" : 1.25
-  }, {
-    "xWeight" : 1.0,
-    "yWeight" : 0.5,
-    "y" : 1538.0,
-    "text" : "1538&deg;C ",
-    "fontSize" : 1.25
-  }, {
-    "xWeight" : 0.5,
-    "yWeight" : 0.5,
-    "x" : 0.8062679045200227,
-    "y" : 1416.6666666666665,
-    "text" : "L",
-    "fontSize" : 1.8
-  }, {
-    "xWeight" : 0.5,
-    "yWeight" : 1.0,
-    "x" : 0.5426816171326031,
-    "y" : 1229.047619047619,
-    "text" : "1232",
-    "fontSize" : 1.25
-  }, {
-    "xWeight" : 0.5,
-    "yWeight" : 0.5,
-    "x" : 0.4026105875714035,
-    "y" : 888.0952380952384,
-    "text" : "FeAl",
-    "fontSize" : 1.5
-  }, {
-    "xWeight" : 0.5,
-    "yWeight" : 0.5,
-    "x" : 0.6185431573172342,
-    "y" : 1160.4761904761908,
-    "text" : "ε",
-    "fontSize" : 1.5
-  }, {
-    "yWeight" : 0.5,
-    "x" : 0.07911025102709886,
-    "y" : 1100.4761904761906,
-    "text" : "(γFe)",
-    "fontSize" : 1.5
-  }, {
-    "xWeight" : 0.5,
-    "yWeight" : 0.5,
-    "x" : 0.5,
-    "y" : 320.5,
-    "text" : "Atomic Percent Aluminum",
-    "fontSize" : 1.8
-  }, {
-    "x" : -0.03954880836872268,
-    "y" : 358.36309523809814,
-    "text" : "Fe",
-    "fontSize" : 1.8
-  }, {
-    "xWeight" : 0.5,
-    "x" : 0.6066683207192887,
-    "y" : 1102.0,
-    "text" : "1102&deg;C",
-    "fontSize" : 1.25
-  }, {
-    "xWeight" : 0.5,
-    "yWeight" : 1.0,
-    "x" : 0.8856705454115644,
-    "y" : 655.5555555555557,
-    "text" : "655&deg;C",
-    "fontSize" : 1.25
-  }, {
-    "yWeight" : 0.5,
-    "x" : 1.0,
-    "y" : 660.452,
-    "text" : "660.452&deg;C",
-    "fontSize" : 1.25
-  }, {
-    "yWeight" : 1.0,
-    "x" : 0.7517480103433155,
-    "y" : 1160.0,
-    "text" : "~1160&deg;C",
-    "fontSize" : 1.25
-  }, {
-    "xWeight" : 0.5,
-    "yWeight" : 1.0,
-    "x" : 0.7125741521543952,
-    "y" : 1169.0,
-    "text" : "1169&deg;C",
-    "fontSize" : 1.25
-  }, {
-    "xWeight" : 1.0,
-    "y" : 1394.0,
-    "text" : "1394&deg;C",
-    "fontSize" : 1.25
-  }, {
-    "xWeight" : 0.5,
-    "yWeight" : 0.5,
-    "x" : 0.19796367779109353,
-    "y" : 1272.8125000000007,
-    "text" : "(αFe)",
-    "fontSize" : 1.5
-  }, {
-    "xWeight" : 1.0,
-    "yWeight" : 0.5,
-    "x" : -0.0025529526706335346,
-    "y" : 911.9999999999999,
-    "text" : "912&deg;C",
-    "fontSize" : 1.25,
-    "opaque" : true
-  }, {
-    "xWeight" : 1.0,
-    "yWeight" : 0.5,
-    "x" : 0.9792574789074621,
-    "y" : 500.0,
-    "text" : "(Al)",
-    "fontSize" : 1.3333333333333333
-  }, {
-    "xWeight" : 0.5,
-    "x" : 0.780679413961097,
-    "y" : 749.5720868992756,
-    "text" : "FeAl<sub>3</sub>",
-    "angle" : 1.5707963267948966,
-    "fontSize" : 1.5
-  }, {
-    "xWeight" : 0.5,
-    "yWeight" : 0.5,
-    "x" : 0.7167375171406168,
-    "y" : 765.3719552337061,
-    "text" : "Fe<sub>2</sub>Al<sub>5</sub>",
-    "angle" : 1.5707963267948966,
-    "fontSize" : 1.5
-  }, {
-    "xWeight" : 0.5,
-    "yWeight" : 1.0,
-    "x" : 0.6448819729083332,
-    "y" : 749.572086899273,
-    "text" : "FeAl<sub>2</sub>",
-    "angle" : 1.5707963267948966,
-    "fontSize" : 1.5
-  }, {
-    "yWeight" : 0.5,
-    "x" : 0.33680391749003624,
-    "y" : 485.0000000000001,
-    "text" : "Fe<sub>3</sub>Al",
-    "fontSize" : 1.5
-  }, {
-    "xWeight" : 1.0,
-    "yWeight" : 0.5,
-    "x" : -0.0,
-    "y" : 770.0,
-    "text" : "770&deg;C",
-    "fontSize" : 1.25
-  }, {
-    "xWeight" : 0.5,
-    "yWeight" : 1.0,
-    "x" : 0.6709744209235344,
-    "y" : 1220.714285714286,
-    "text" : "1165&deg;C",
-    "fontSize" : 1.25
-  }, {
-    "xWeight" : 0.5,
-    "yWeight" : 1.0,
-    "x" : -0.07168943168066007,
-    "y" : 999.5238095238092,
-    "text" : "Temperature °C",
-    "angle" : 1.5707963267948966,
-    "fontSize" : 1.8
-  }, {
-    "xWeight" : 0.5,
-    "yWeight" : 0.5,
-    "x" : 1.0064262589102966,
-    "y" : 311.07142857142867,
-    "text" : "Al",
-    "fontSize" : 1.8
-  } ],
-  "arrows" : [ {
-    "x" : 0.2829425936086133,
-    "y" : 485.0,
-    "size" : 0.0012,
-    "angle" : 3.141592653589793
-  }, {
-    "x" : 1.0,
-    "y" : 500.0,
-    "size" : 0.0016,
-    "angle" : 0.008726646259971648
-  }, {
-    "x" : 0.00784766019884341,
-    "y" : 1100.278884078547,
-    "size" : 0.0016,
-    "angle" : 3.1682961911453065
-  }, {
-    "x" : 0.7570952434217704,
-    "y" : 749.5720868992736,
-    "size" : 0.0012,
-    "angle" : 3.141592653589793
-  }, {
-    "x" : 0.6662693890789573,
-    "y" : 749.5720868992722,
-    "size" : 0.0012,
-    "angle" : -0.0
-  }, {
-    "x" : 0.6709782589892909,
-    "y" : 1165.0,
-    "size" : 0.0012,
-    "angle" : -1.570796216609968
-  } ],
-  "tieLines" : [ ],
   "diagramComponents" : [ null, null, "Fe", "Al" ],
+  "axes" : [ {
+    "format" : {
+      "type" : "DecimalFormat",
+      "pattern" : "#0.0%"
+    },
+    "a" : 1.0,
+    "b" : 0.0,
+    "c" : 0.0,
+    "name" : "X"
+  }, {
+    "format" : {
+      "type" : "DecimalFormat",
+      "pattern" : "#0.0"
+    },
+    "a" : 0.0,
+    "b" : 1.0,
+    "c" : 0.0,
+    "name" : "Y"
+  }, {
+    "format" : {
+      "type" : "DecimalFormat",
+      "pattern" : "#0.000"
+    },
+    "a" : 0.7,
+    "b" : 0.0,
+    "c" : 0.15,
+    "name" : "page X"
+  }, {
+    "format" : {
+      "type" : "DecimalFormat",
+      "pattern" : "#0.000"
+    },
+    "a" : 0.0,
+    "b" : -5.833333333333333E-4,
+    "c" : 1.0833333333333333,
+    "name" : "page Y"
+  } ],
   "usingWeightFraction" : false,
   "fontName" : "DejaVu LGC Serif PED",
   "keys" : {
   },
-  "curves" : [ {
+  "decorations" : [ {
+    "decoration" : "ruler",
+    "startPoint" : {
+      "x" : 1.0,
+      "y" : 400.0
+    },
+    "endPoint" : {
+      "x" : 1.0,
+      "y" : 1600.0
+    },
+    "fontSize" : 0.02,
+    "lineWidth" : 0.0016,
+    "labelAnchor" : "NONE",
+    "textAngle" : 1.5707963267948966,
+    "tickRight" : true,
+    "tickPadding" : 3.0,
+    "axis" : "Y"
+  }, {
+    "decoration" : "ruler",
+    "startPoint" : {
+      "x" : 0.0,
+      "y" : 400.0
+    },
+    "endPoint" : {
+      "x" : 0.0,
+      "y" : 1600.0
+    },
+    "fontSize" : 0.02,
+    "lineWidth" : 0.0016,
+    "labelAnchor" : "LEFT",
+    "textAngle" : 1.5707963267948966,
+    "tickLeft" : true,
+    "tickPadding" : 3.0,
+    "axis" : "Y"
+  }, {
+    "decoration" : "ruler",
+    "startPoint" : {
+      "x" : 0.0,
+      "y" : 1600.0
+    },
+    "endPoint" : {
+      "x" : 1.0,
+      "y" : 1600.0
+    },
+    "fontSize" : 0.02,
+    "lineWidth" : 0.0016,
+    "labelAnchor" : "NONE",
+    "multiplier" : 100.0,
+    "tickRight" : true,
+    "tickPadding" : 3.0,
+    "axis" : "X"
+  }, {
+    "decoration" : "ruler",
+    "startPoint" : {
+      "x" : 0.0,
+      "y" : 400.0
+    },
+    "endPoint" : {
+      "x" : 1.0,
+      "y" : 400.0
+    },
+    "fontSize" : 0.02,
+    "lineWidth" : 0.0016,
+    "labelAnchor" : "RIGHT",
+    "multiplier" : 100.0,
+    "tickRight" : true,
+    "tickPadding" : 3.0,
+    "axis" : "X"
+  }, {
+    "decoration" : "curve",
     "curve" : {
       "points" : [ {
 	"x" : 0.5237766406025257,
@@ -258,6 +149,7 @@
     "lineStyle" : "DASH",
     "id" : 1
   }, {
+    "decoration" : "curve",
     "curve" : {
       "points" : [ {
 	"x" : 0.44962196039326596,
@@ -291,6 +183,7 @@
     "lineStyle" : "DASH",
     "id" : 2
   }, {
+    "decoration" : "curve",
     "curve" : {
       "points" : [ {
 	"x" : 0.23536285196046153,
@@ -315,6 +208,7 @@
     "lineStyle" : "SOLID",
     "id" : 3
   }, {
+    "decoration" : "curve",
     "curve" : {
       "points" : [ {
 	"x" : 0.25931726888604195,
@@ -330,6 +224,7 @@
     "lineStyle" : "DASH",
     "id" : 50
   }, {
+    "decoration" : "curve",
     "curve" : {
       "points" : [ {
 	"x" : 0.23054298327523784,
@@ -360,6 +255,7 @@
     "lineStyle" : "DASH",
     "id" : 5
   }, {
+    "decoration" : "curve",
     "curve" : {
       "points" : [ {
 	"x" : 0.2353628519604616,
@@ -396,6 +292,7 @@
     "lineStyle" : "SOLID",
     "id" : 7
   }, {
+    "decoration" : "curve",
     "curve" : {
       "points" : [ {
 	"x" : 0.249657357725371,
@@ -411,6 +308,7 @@
     "lineStyle" : "DASH",
     "id" : 8
   }, {
+    "decoration" : "curve",
     "curve" : {
       "points" : [ {
 	"x" : 0.22436145904285154,
@@ -426,6 +324,7 @@
     "lineStyle" : "DASH",
     "id" : 9
   }, {
+    "decoration" : "curve",
     "curve" : {
       "points" : [ {
 	"x" : 0.26202678714597655,
@@ -453,6 +352,7 @@
     "lineStyle" : "DASH",
     "id" : 10
   }, {
+    "decoration" : "curve",
     "curve" : {
       "points" : [ {
 	"x" : 0.249657357725371,
@@ -468,6 +368,7 @@
     "lineStyle" : "DOT_DASH",
     "id" : 11
   }, {
+    "decoration" : "curve",
     "curve" : {
       "points" : [ {
 	"x" : 0.0,
@@ -504,6 +405,7 @@
     "lineStyle" : "SOLID",
     "id" : 12
   }, {
+    "decoration" : "curve",
     "curve" : {
       "points" : [ {
 	"x" : 0.5237766406025257,
@@ -522,6 +424,7 @@
     "lineStyle" : "SOLID",
     "id" : 13
   }, {
+    "decoration" : "curve",
     "curve" : {
       "points" : [ {
 	"x" : 0.6066683207192887,
@@ -540,6 +443,7 @@
     "lineStyle" : "SOLID",
     "id" : 14
   }, {
+    "decoration" : "curve",
     "curve" : {
       "points" : [ {
 	"x" : 0.6066683207192887,
@@ -555,6 +459,7 @@
     "lineStyle" : "SOLID",
     "id" : 15
   }, {
+    "decoration" : "curve",
     "curve" : {
       "points" : [ {
 	"x" : 0.5226749665660597,
@@ -573,6 +478,7 @@
     "lineStyle" : "SOLID",
     "id" : 16
   }, {
+    "decoration" : "curve",
     "curve" : {
       "points" : [ {
 	"x" : 0.44962196039326596,
@@ -609,6 +515,7 @@
     "lineStyle" : "SOLID",
     "id" : 17
   }, {
+    "decoration" : "curve",
     "curve" : {
       "points" : [ {
 	"x" : 0.5226749665660597,
@@ -624,6 +531,7 @@
     "lineStyle" : "DASH",
     "id" : 18
   }, {
+    "decoration" : "curve",
     "curve" : {
       "points" : [ {
 	"x" : 0.5528854778482282,
@@ -642,6 +550,7 @@
     "lineStyle" : "DASH",
     "id" : 19
   }, {
+    "decoration" : "curve",
     "curve" : {
       "points" : [ {
 	"x" : 0.5361431965075121,
@@ -675,6 +584,7 @@
     "lineStyle" : "SOLID",
     "id" : 20
   }, {
+    "decoration" : "curve",
     "curve" : {
       "points" : [ {
 	"x" : 0.5818304311383674,
@@ -690,6 +600,7 @@
     "lineStyle" : "SOLID",
     "id" : 21
   }, {
+    "decoration" : "curve",
     "curve" : {
       "points" : [ {
 	"x" : 0.6537051263629747,
@@ -705,6 +616,7 @@
     "lineStyle" : "SOLID",
     "id" : 22
   }, {
+    "decoration" : "curve",
     "curve" : {
       "points" : [ {
 	"x" : 0.6537051263629747,
@@ -720,6 +632,7 @@
     "lineStyle" : "SOLID",
     "id" : 23
   }, {
+    "decoration" : "curve",
     "curve" : {
       "points" : [ {
 	"x" : 0.6653939414460301,
@@ -750,6 +663,7 @@
     "lineStyle" : "DASH",
     "id" : 24
   }, {
+    "decoration" : "curve",
     "curve" : {
       "points" : [ {
 	"x" : 0.6703945168883529,
@@ -783,6 +697,7 @@
     "lineStyle" : "DASH",
     "id" : 25
   }, {
+    "decoration" : "curve",
     "curve" : {
       "points" : [ {
 	"x" : 0.6609235749126379,
@@ -798,6 +713,7 @@
     "lineStyle" : "SOLID",
     "id" : 26
   }, {
+    "decoration" : "curve",
     "curve" : {
       "points" : [ {
 	"x" : 0.6134603430950613,
@@ -813,6 +729,7 @@
     "lineStyle" : "SOLID",
     "id" : 27
   }, {
+    "decoration" : "curve",
     "curve" : {
       "points" : [ {
 	"x" : 0.7031945167815588,
@@ -831,6 +748,7 @@
     "lineStyle" : "DASH",
     "id" : 28
   }, {
+    "decoration" : "curve",
     "curve" : {
       "points" : [ {
 	"x" : 0.7025818538622177,
@@ -849,6 +767,7 @@
     "lineStyle" : "SOLID",
     "id" : 29
   }, {
+    "decoration" : "curve",
     "curve" : {
       "points" : [ {
 	"x" : 0.7224056940855906,
@@ -873,6 +792,7 @@
     "lineStyle" : "SOLID",
     "id" : 30
   }, {
+    "decoration" : "curve",
     "curve" : {
       "points" : [ {
 	"x" : 0.7292554149520528,
@@ -903,6 +823,7 @@
     "lineStyle" : "DASH",
     "id" : 31
   }, {
+    "decoration" : "curve",
     "curve" : {
       "points" : [ {
 	"x" : 0.7224056940855906,
@@ -924,6 +845,7 @@
     "lineStyle" : "SOLID",
     "id" : 32
   }, {
+    "decoration" : "curve",
     "curve" : {
       "points" : [ {
 	"x" : 0.7517480103433155,
@@ -960,6 +882,7 @@
     "lineStyle" : "SOLID",
     "id" : 33
   }, {
+    "decoration" : "curve",
     "curve" : {
       "points" : [ {
 	"x" : 1.0,
@@ -975,6 +898,7 @@
     "lineStyle" : "SOLID",
     "id" : 34
   }, {
+    "decoration" : "curve",
     "curve" : {
       "points" : [ {
 	"x" : 0.9897268662712224,
@@ -993,6 +917,7 @@
     "lineStyle" : "SOLID",
     "id" : 35
   }, {
+    "decoration" : "curve",
     "curve" : {
       "points" : [ {
 	"x" : 0.7517480103433155,
@@ -1017,6 +942,7 @@
     "lineStyle" : "SOLID",
     "id" : 36
   }, {
+    "decoration" : "curve",
     "curve" : {
       "points" : [ {
 	"x" : 0.7450942393687007,
@@ -1044,6 +970,7 @@
     "lineStyle" : "DASH",
     "id" : 37
   }, {
+    "decoration" : "curve",
     "curve" : {
       "points" : [ {
 	"x" : 0.7517480103433155,
@@ -1068,6 +995,7 @@
     "lineStyle" : "SOLID",
     "id" : 38
   }, {
+    "decoration" : "curve",
     "curve" : {
       "points" : [ {
 	"x" : 0.7626362503399244,
@@ -1110,6 +1038,7 @@
     "lineStyle" : "DASH",
     "id" : 39
   }, {
+    "decoration" : "curve",
     "curve" : {
       "points" : [ {
 	"x" : 0.0,
@@ -1143,6 +1072,7 @@
     "lineStyle" : "SOLID",
     "id" : 40
   }, {
+    "decoration" : "curve",
     "curve" : {
       "points" : [ {
 	"x" : 0.9792574789074621,
@@ -1158,6 +1088,7 @@
     "lineStyle" : "SOLID",
     "id" : 41
   }, {
+    "decoration" : "curve",
     "curve" : {
       "points" : [ {
 	"x" : 0.780679413961097,
@@ -1173,6 +1104,7 @@
     "lineStyle" : "SOLID",
     "id" : 42
   }, {
+    "decoration" : "curve",
     "curve" : {
       "points" : [ {
 	"x" : 0.6662693890789573,
@@ -1188,6 +1120,7 @@
     "lineStyle" : "SOLID",
     "id" : 43
   }, {
+    "decoration" : "curve",
     "curve" : {
       "points" : [ {
 	"x" : 0.33680391749003685,
@@ -1203,6 +1136,7 @@
     "lineStyle" : "SOLID",
     "id" : 44
   }, {
+    "decoration" : "curve",
     "curve" : {
       "points" : [ {
 	"x" : 0.6709744209235344,
@@ -1218,6 +1152,7 @@
     "lineStyle" : "SOLID",
     "id" : 45
   }, {
+    "decoration" : "curve",
     "curve" : {
       "points" : [ {
 	"x" : 0.00784766019884341,
@@ -1233,6 +1168,7 @@
     "lineStyle" : "SOLID",
     "id" : 46
   }, {
+    "decoration" : "curve",
     "curve" : {
       "points" : [ {
 	"x" : 1.0,
@@ -1248,6 +1184,7 @@
     "lineStyle" : "SOLID",
     "id" : 47
   }, {
+    "decoration" : "curve",
     "curve" : {
       "points" : [ {
 	"x" : 0.6872832562650858,
@@ -1272,6 +1209,7 @@
     "lineStyle" : "SOLID",
     "id" : 48
   }, {
+    "decoration" : "curve",
     "curve" : {
       "points" : [ {
 	"x" : 0.7224056940855906,
@@ -1286,106 +1224,250 @@
     "lineWidth" : 0.0032,
     "lineStyle" : "SOLID",
     "id" : 49
-  } ],
-  "axes" : [ {
-    "format" : {
-      "type" : "DecimalFormat",
-      "pattern" : "#0.0%"
-    },
-    "a" : 1.0,
-    "b" : 0.0,
-    "c" : 0.0,
-    "name" : "X",
-    "rulers" : [ {
-      "startPoint" : {
-	"x" : 0.0,
-	"y" : 400.0
-      },
-      "endPoint" : {
-	"x" : 1.0,
-	"y" : 400.0
-      },
-      "fontSize" : 0.02,
-      "lineWidth" : 0.0016,
-      "labelAnchor" : "RIGHT",
-      "multiplier" : 100.0,
-      "tickRight" : true,
-      "tickPadding" : 3.0
-    }, {
-      "startPoint" : {
-	"x" : 0.0,
-	"y" : 1600.0
-      },
-      "endPoint" : {
-	"x" : 1.0,
-	"y" : 1600.0
-      },
-      "fontSize" : 0.02,
-      "lineWidth" : 0.0016,
-      "labelAnchor" : "NONE",
-      "multiplier" : 100.0,
-      "tickRight" : true,
-      "tickPadding" : 3.0
-    } ]
   }, {
-    "format" : {
-      "type" : "DecimalFormat",
-      "pattern" : "#0.0"
-    },
-    "a" : 0.0,
-    "b" : 1.0,
-    "c" : 0.0,
-    "name" : "Y",
-    "rulers" : [ {
-      "startPoint" : {
-	"x" : 0.0,
-	"y" : 400.0
-      },
-      "endPoint" : {
-	"x" : 0.0,
-	"y" : 1600.0
-      },
-      "fontSize" : 0.02,
-      "lineWidth" : 0.0016,
-      "labelAnchor" : "LEFT",
-      "textAngle" : 1.5707963267948966,
-      "tickLeft" : true,
-      "tickPadding" : 3.0
-    }, {
-      "startPoint" : {
-	"x" : 1.0,
-	"y" : 400.0
-      },
-      "endPoint" : {
-	"x" : 1.0,
-	"y" : 1600.0
-      },
-      "fontSize" : 0.02,
-      "lineWidth" : 0.0016,
-      "labelAnchor" : "NONE",
-      "textAngle" : 1.5707963267948966,
-      "tickRight" : true,
-      "tickPadding" : 3.0
-    } ]
+    "decoration" : "arrow",
+    "x" : 0.6709782589892909,
+    "y" : 1165.0,
+    "size" : 0.0012,
+    "angle" : -1.570796216609968
   }, {
-    "format" : {
-      "type" : "DecimalFormat",
-      "pattern" : "#0.000"
-    },
-    "a" : 0.7,
-    "b" : 0.0,
-    "c" : 0.15,
-    "name" : "page X",
-    "rulers" : [ ]
+    "decoration" : "arrow",
+    "x" : 0.6662693890789573,
+    "y" : 749.5720868992722,
+    "size" : 0.0012,
+    "angle" : -0.0
   }, {
-    "format" : {
-      "type" : "DecimalFormat",
-      "pattern" : "#0.000"
-    },
-    "a" : 0.0,
-    "b" : -5.833333333333333E-4,
-    "c" : 1.0833333333333333,
-    "name" : "page Y",
-    "rulers" : [ ]
+    "decoration" : "arrow",
+    "x" : 0.7570952434217704,
+    "y" : 749.5720868992736,
+    "size" : 0.0012,
+    "angle" : 3.141592653589793
+  }, {
+    "decoration" : "arrow",
+    "x" : 0.00784766019884341,
+    "y" : 1100.278884078547,
+    "size" : 0.0016,
+    "angle" : 3.1682961911453065
+  }, {
+    "decoration" : "arrow",
+    "x" : 1.0,
+    "y" : 500.0,
+    "size" : 0.0016,
+    "angle" : 0.008726646259971648
+  }, {
+    "decoration" : "arrow",
+    "x" : 0.2829425936086133,
+    "y" : 485.0,
+    "size" : 0.0012,
+    "angle" : 3.141592653589793
+  }, {
+    "decoration" : "label",
+    "text" : "1310°C",
+    "yWeight" : 1.0,
+    "x" : 0.5237766406025257,
+    "y" : 1310.0,
+    "fontSize" : 1.25
+  }, {
+    "decoration" : "label",
+    "text" : "T<sub>e</sub>",
+    "xWeight" : 0.5,
+    "yWeight" : 0.5,
+    "x" : 0.12377494462105129,
+    "y" : 762.3809523809524,
+    "fontSize" : 1.25
+  }, {
+    "decoration" : "label",
+    "text" : "1538&deg;C ",
+    "xWeight" : 1.0,
+    "yWeight" : 0.5,
+    "y" : 1538.0,
+    "fontSize" : 1.25
+  }, {
+    "decoration" : "label",
+    "text" : "L",
+    "xWeight" : 0.5,
+    "yWeight" : 0.5,
+    "x" : 0.8062679045200227,
+    "y" : 1416.6666666666665,
+    "fontSize" : 1.8
+  }, {
+    "decoration" : "label",
+    "text" : "1232",
+    "xWeight" : 0.5,
+    "yWeight" : 1.0,
+    "x" : 0.5426816171326031,
+    "y" : 1229.047619047619,
+    "fontSize" : 1.25
+  }, {
+    "decoration" : "label",
+    "text" : "FeAl",
+    "xWeight" : 0.5,
+    "yWeight" : 0.5,
+    "x" : 0.4026105875714035,
+    "y" : 888.0952380952384,
+    "fontSize" : 1.5
+  }, {
+    "decoration" : "label",
+    "text" : "ε",
+    "xWeight" : 0.5,
+    "yWeight" : 0.5,
+    "x" : 0.6185431573172342,
+    "y" : 1160.4761904761908,
+    "fontSize" : 1.5
+  }, {
+    "decoration" : "label",
+    "text" : "(γFe)",
+    "yWeight" : 0.5,
+    "x" : 0.07911025102709886,
+    "y" : 1100.4761904761906,
+    "fontSize" : 1.5
+  }, {
+    "decoration" : "label",
+    "text" : "Atomic Percent Aluminum",
+    "xWeight" : 0.5,
+    "yWeight" : 0.5,
+    "x" : 0.5,
+    "y" : 320.5,
+    "fontSize" : 1.8
+  }, {
+    "decoration" : "label",
+    "text" : "Fe",
+    "x" : -0.03954880836872268,
+    "y" : 358.36309523809814,
+    "fontSize" : 1.8
+  }, {
+    "decoration" : "label",
+    "text" : "1102&deg;C",
+    "xWeight" : 0.5,
+    "x" : 0.6066683207192887,
+    "y" : 1102.0,
+    "fontSize" : 1.25
+  }, {
+    "decoration" : "label",
+    "text" : "655&deg;C",
+    "xWeight" : 0.5,
+    "yWeight" : 1.0,
+    "x" : 0.8856705454115644,
+    "y" : 655.5555555555557,
+    "fontSize" : 1.25
+  }, {
+    "decoration" : "label",
+    "text" : "660.452&deg;C",
+    "yWeight" : 0.5,
+    "x" : 1.0,
+    "y" : 660.452,
+    "fontSize" : 1.25
+  }, {
+    "decoration" : "label",
+    "text" : "~1160&deg;C",
+    "yWeight" : 1.0,
+    "x" : 0.7517480103433155,
+    "y" : 1160.0,
+    "fontSize" : 1.25
+  }, {
+    "decoration" : "label",
+    "text" : "1169&deg;C",
+    "xWeight" : 0.5,
+    "yWeight" : 1.0,
+    "x" : 0.7125741521543952,
+    "y" : 1169.0,
+    "fontSize" : 1.25
+  }, {
+    "decoration" : "label",
+    "text" : "1394&deg;C",
+    "xWeight" : 1.0,
+    "y" : 1394.0,
+    "fontSize" : 1.25
+  }, {
+    "decoration" : "label",
+    "text" : "(αFe)",
+    "xWeight" : 0.5,
+    "yWeight" : 0.5,
+    "x" : 0.19796367779109353,
+    "y" : 1272.8125000000007,
+    "fontSize" : 1.5
+  }, {
+    "decoration" : "label",
+    "text" : "912&deg;C",
+    "xWeight" : 1.0,
+    "yWeight" : 0.5,
+    "x" : -0.0025529526706335346,
+    "y" : 911.9999999999999,
+    "fontSize" : 1.25,
+    "opaque" : true
+  }, {
+    "decoration" : "label",
+    "text" : "(Al)",
+    "xWeight" : 1.0,
+    "yWeight" : 0.5,
+    "x" : 0.9792574789074621,
+    "y" : 500.0,
+    "fontSize" : 1.3333333333333333
+  }, {
+    "decoration" : "label",
+    "text" : "FeAl<sub>3</sub>",
+    "xWeight" : 0.5,
+    "x" : 0.780679413961097,
+    "y" : 749.5720868992756,
+    "angle" : 1.5707963267948966,
+    "fontSize" : 1.5
+  }, {
+    "decoration" : "label",
+    "text" : "Fe<sub>2</sub>Al<sub>5</sub>",
+    "xWeight" : 0.5,
+    "yWeight" : 0.5,
+    "x" : 0.7167375171406168,
+    "y" : 765.3719552337061,
+    "angle" : 1.5707963267948966,
+    "fontSize" : 1.5
+  }, {
+    "decoration" : "label",
+    "text" : "FeAl<sub>2</sub>",
+    "xWeight" : 0.5,
+    "yWeight" : 1.0,
+    "x" : 0.6448819729083332,
+    "y" : 749.572086899273,
+    "angle" : 1.5707963267948966,
+    "fontSize" : 1.5
+  }, {
+    "decoration" : "label",
+    "text" : "Fe<sub>3</sub>Al",
+    "yWeight" : 0.5,
+    "x" : 0.33680391749003624,
+    "y" : 485.0000000000001,
+    "fontSize" : 1.5
+  }, {
+    "decoration" : "label",
+    "text" : "770&deg;C",
+    "xWeight" : 1.0,
+    "yWeight" : 0.5,
+    "x" : -0.0,
+    "y" : 770.0,
+    "fontSize" : 1.25
+  }, {
+    "decoration" : "label",
+    "text" : "1165&deg;C",
+    "xWeight" : 0.5,
+    "yWeight" : 1.0,
+    "x" : 0.6709744209235344,
+    "y" : 1220.714285714286,
+    "fontSize" : 1.25
+  }, {
+    "decoration" : "label",
+    "text" : "Temperature °C",
+    "xWeight" : 0.5,
+    "yWeight" : 1.0,
+    "x" : -0.07168943168066007,
+    "y" : 999.5238095238092,
+    "angle" : 1.5707963267948966,
+    "fontSize" : 1.8
+  }, {
+    "decoration" : "label",
+    "text" : "Al",
+    "xWeight" : 0.5,
+    "yWeight" : 0.5,
+    "x" : 1.0064262589102966,
+    "y" : 311.07142857142867,
+    "fontSize" : 1.8
   } ]
 }

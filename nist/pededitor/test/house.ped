@@ -1,5 +1,5 @@
 {
-  "tags" : [ ],
+  "tags" : [ "WARN missing diagram component" ],
   "principalToStandardPage" : {
     "transform" : "RectangleTransform",
     "input" : {
@@ -22,15 +22,68 @@
     "height" : 1.5413371517333985
   },
   "diagramType" : "BINARY",
-  "labels" : [ ],
-  "arrows" : [ ],
-  "tieLines" : [ ],
   "diagramComponents" : [ null, null, null, null ],
+  "axes" : [ {
+    "format" : {
+      "type" : "DecimalFormat",
+      "pattern" : "#0.0000"
+    },
+    "a" : 1.0000000000000002,
+    "b" : 1.0,
+    "c" : -1.0,
+    "name" : "Diag1"
+  }, {
+    "format" : {
+      "type" : "DecimalFormat",
+      "pattern" : "#0.0000"
+    },
+    "a" : -1.0000000000000002,
+    "b" : 1.0,
+    "c" : 0.0,
+    "name" : "Diag2"
+  }, {
+    "format" : {
+      "type" : "DecimalFormat",
+      "pattern" : "#0.0000"
+    },
+    "a" : 1.0,
+    "b" : 0.0,
+    "c" : 0.0,
+    "name" : "X"
+  }, {
+    "format" : {
+      "type" : "DecimalFormat",
+      "pattern" : "#0.0000"
+    },
+    "a" : 0.0,
+    "b" : 1.0,
+    "c" : 0.0,
+    "name" : "Y"
+  }, {
+    "format" : {
+      "type" : "DecimalFormat",
+      "pattern" : "#0.0000"
+    },
+    "a" : 1.0,
+    "b" : 0.0,
+    "c" : 0.0,
+    "name" : "page X"
+  }, {
+    "format" : {
+      "type" : "DecimalFormat",
+      "pattern" : "#0.0000"
+    },
+    "a" : 0.0,
+    "b" : -1.0,
+    "c" : 1.0,
+    "name" : "page Y"
+  } ],
   "usingWeightFraction" : false,
   "fontName" : "DejaVu LGC Sans PED",
   "keys" : {
   },
-  "curves" : [ {
+  "decorations" : [ {
+    "decoration" : "curve",
     "curve" : {
       "points" : [ {
 	"x" : 0.3044539445916016,
@@ -52,6 +105,7 @@
     "lineStyle" : "SOLID",
     "id" : 0
   }, {
+    "decoration" : "curve",
     "curve" : {
       "points" : [ {
 	"x" : 0.5166490665428212,
@@ -67,6 +121,7 @@
     "lineStyle" : "SOLID",
     "id" : 1
   }, {
+    "decoration" : "curve",
     "curve" : {
       "points" : [ {
 	"x" : 0.3044539445916016,
@@ -82,6 +137,7 @@
     "lineStyle" : "SOLID",
     "id" : 2
   }, {
+    "decoration" : "curve",
     "curve" : {
       "points" : [ {
 	"x" : 0.746613931518104,
@@ -103,6 +159,7 @@
     "lineStyle" : "SOLID",
     "id" : 3
   }, {
+    "decoration" : "curve",
     "curve" : {
       "points" : [ {
 	"x" : 0.9137117733684849,
@@ -124,6 +181,7 @@
     "lineStyle" : "SOLID",
     "id" : 4
   }, {
+    "decoration" : "curve",
     "curve" : {
       "points" : [ {
 	"x" : 0.8765638756104575,
@@ -148,6 +206,7 @@
     "lineStyle" : "SOLID",
     "id" : 5
   }, {
+    "decoration" : "curve",
     "curve" : {
       "points" : [ {
 	"x" : 1.0,
@@ -169,6 +228,7 @@
     "lineStyle" : "SOLID",
     "id" : 6
   }, {
+    "decoration" : "curve",
     "curve" : {
       "points" : [ {
 	"x" : 1.1499999999999997,
@@ -190,6 +250,7 @@
     "lineStyle" : "SOLID",
     "id" : 7
   }, {
+    "decoration" : "curve",
     "curve" : {
       "points" : [ {
 	"x" : 0.8249999999999998,
@@ -211,6 +272,7 @@
     "lineStyle" : "SOLID",
     "id" : 8
   }, {
+    "decoration" : "curve",
     "curve" : {
       "points" : [ {
 	"x" : 0.6743358234244733,
@@ -232,6 +294,7 @@
     "lineStyle" : "SOLID",
     "id" : 9
   }, {
+    "decoration" : "curve",
     "curve" : {
       "points" : [ {
 	"x" : 0.7506109870237843,
@@ -286,6 +349,7 @@
     "lineStyle" : "SOLID",
     "id" : 10
   }, {
+    "decoration" : "curve",
     "curve" : {
       "points" : [ {
 	"x" : 0.7889441853810039,
@@ -307,6 +371,7 @@
     "lineStyle" : "SOLID",
     "id" : 11
   }, {
+    "decoration" : "curve",
     "curve" : {
       "points" : [ {
 	"x" : 0.5,
@@ -325,6 +390,7 @@
     "lineStyle" : "SOLID",
     "id" : 12
   }, {
+    "decoration" : "curve",
     "curve" : {
       "points" : [ {
 	"x" : -0.006512525776999567,
@@ -349,6 +415,7 @@
     "fillStyle" : "SOLID",
     "id" : 13
   }, {
+    "decoration" : "curve",
     "curve" : {
       "points" : [ {
 	"x" : 0.44489214647848085,
@@ -367,6 +434,7 @@
     "lineStyle" : "SOLID",
     "id" : 14
   }, {
+    "decoration" : "curve",
     "curve" : {
       "points" : [ {
 	"x" : -0.11339122162055981,
@@ -385,6 +453,7 @@
     "lineStyle" : "SOLID",
     "id" : 15
   }, {
+    "decoration" : "curve",
     "curve" : {
       "points" : [ {
 	"x" : 0.09338850824675435,
@@ -403,6 +472,7 @@
     "lineStyle" : "SOLID",
     "id" : 16
   }, {
+    "decoration" : "curve",
     "curve" : {
       "points" : [ {
 	"x" : 0.09338850824675435,
@@ -421,6 +491,7 @@
     "lineStyle" : "SOLID",
     "id" : 17
   }, {
+    "decoration" : "curve",
     "curve" : {
       "points" : [ {
 	"x" : 0.27232664599995027,
@@ -439,6 +510,7 @@
     "lineStyle" : "SOLID",
     "id" : 18
   }, {
+    "decoration" : "curve",
     "curve" : {
       "points" : [ {
 	"x" : -0.01713001676535436,
@@ -457,6 +529,7 @@
     "lineStyle" : "SOLID",
     "id" : 19
   }, {
+    "decoration" : "curve",
     "curve" : {
       "points" : [ {
 	"x" : 0.29507908907573177,
@@ -475,6 +548,7 @@
     "lineStyle" : "SOLID",
     "id" : 20
   }, {
+    "decoration" : "curve",
     "curve" : {
       "points" : [ {
 	"x" : 0.0016726066189887145,
@@ -492,66 +566,5 @@
     "lineWidth" : 0.0024,
     "lineStyle" : "SOLID",
     "id" : 21
-  } ],
-  "axes" : [ {
-    "format" : {
-      "type" : "DecimalFormat",
-      "pattern" : "#0.0000"
-    },
-    "a" : 1.0000000000000002,
-    "b" : 1.0,
-    "c" : -1.0,
-    "name" : "Diag1",
-    "rulers" : [ ]
-  }, {
-    "format" : {
-      "type" : "DecimalFormat",
-      "pattern" : "#0.0000"
-    },
-    "a" : -1.0000000000000002,
-    "b" : 1.0,
-    "c" : 0.0,
-    "name" : "Diag2",
-    "rulers" : [ ]
-  }, {
-    "format" : {
-      "type" : "DecimalFormat",
-      "pattern" : "#0.0000"
-    },
-    "a" : 1.0,
-    "b" : 0.0,
-    "c" : 0.0,
-    "name" : "X",
-    "rulers" : [ ]
-  }, {
-    "format" : {
-      "type" : "DecimalFormat",
-      "pattern" : "#0.0000"
-    },
-    "a" : 0.0,
-    "b" : 1.0,
-    "c" : 0.0,
-    "name" : "Y",
-    "rulers" : [ ]
-  }, {
-    "format" : {
-      "type" : "DecimalFormat",
-      "pattern" : "#0.0000"
-    },
-    "a" : 1.0,
-    "b" : 0.0,
-    "c" : 0.0,
-    "name" : "page X",
-    "rulers" : [ ]
-  }, {
-    "format" : {
-      "type" : "DecimalFormat",
-      "pattern" : "#0.0000"
-    },
-    "a" : 0.0,
-    "b" : -1.0,
-    "c" : 1.0,
-    "name" : "page Y",
-    "rulers" : [ ]
   } ]
 }

@@ -53,160 +53,131 @@
     "height" : 1.2160254037844387
   },
   "diagramType" : "TERNARY",
-  "labels" : [ {
-    "yWeight" : 0.5,
-    "x" : 0.4238078354083791,
-    "y" : 0.5972921120300037,
-    "text" : "B*",
-    "fontSize" : 1.8
-  }, {
-    "xWeight" : 1.0,
-    "yWeight" : 0.5,
-    "x" : -0.022513204802504294,
-    "y" : 0.5934958362873866,
-    "text" : "A*",
-    "fontSize" : 1.8
-  }, {
-    "xWeight" : 0.5,
-    "yWeight" : 1.0,
-    "x" : 0.24205499192592295,
-    "y" : 0.42658715374106027,
-    "text" : "phase separation",
-    "angle" : 1.974594720965947,
-    "fontSize" : 1.8,
-    "opaque" : true
-  }, {
-    "xWeight" : 0.5,
-    "yWeight" : 0.5,
-    "x" : -0.1832391584491822,
-    "y" : 0.2771395244026603,
-    "text" : "y",
-    "angle" : -0.0,
-    "fontSize" : 2.0
-  }, {
-    "xWeight" : 1.0,
-    "x" : 0.017000000000000015,
-    "y" : -0.03400000000000003,
-    "text" : "A",
-    "fontSize" : 1.8
-  }, {
-    "x" : 1.0,
-    "text" : "B",
-    "fontSize" : 1.8
-  }, {
-    "xWeight" : 0.5,
-    "yWeight" : 0.5,
-    "x" : 0.6103034333605631,
-    "y" : 0.9410132448927588,
-    "text" : "1 phase<br>(unsaturated liquid)",
-    "fontSize" : 1.8
-  }, {
-    "xWeight" : 0.5,
-    "yWeight" : 1.0,
-    "y" : 1.0,
-    "text" : "Solvent<br><br>",
-    "fontSize" : 1.8
-  }, {
-    "xWeight" : 0.5,
-    "yWeight" : 0.5,
-    "x" : 0.784846308504421,
-    "y" : 0.5990389202749997,
-    "text" : "2 phases<br>(saturated liquid +<br>particular solid<br>solution of A and B)",
-    "fontSize" : 1.8
-  }, {
-    "xWeight" : 1.0,
-    "yWeight" : 0.5,
-    "x" : -0.10635353201751219,
-    "y" : 0.7376029848805099,
-    "text" : "P̃(X̃<sub>A</sub>,X̃<sub>B</sub>,X̃<sub>Solvent</sub>)",
-    "fontSize" : 1.8
-  }, {
-    "xWeight" : 0.5,
-    "yWeight" : 0.5,
-    "x" : -0.10142691740610488,
-    "y" : 0.9217223583974208,
-    "text" : "X̃<sub>A</sub>",
-    "fontSize" : 1.8
-  }, {
-    "xWeight" : 0.5,
-    "x" : 0.19420223460253272,
-    "y" : -0.03775512370204637,
-    "text" : "X̃<sub>B</sub>",
-    "fontSize" : 1.8
-  }, {
-    "yWeight" : 1.0,
-    "x" : 0.895478475834433,
-    "y" : 0.13911156504346878,
-    "text" : "X̃<sub>Solvent</sub>",
-    "fontSize" : 1.8
-  }, {
-    "xWeight" : 0.5,
-    "x" : 0.6241921933905727,
-    "y" : -0.08239257552470147,
-    "text" : "Q̃(X̃<sub>A</sub>,X̃<sub>B</sub>,X̃<sub>Solvent</sub> = 0)",
-    "fontSize" : 1.8
-  }, {
-    "xWeight" : 0.5,
-    "x" : 0.10877909139969322,
-    "y" : -0.1200595222278742,
-    "text" : "x",
-    "angle" : -0.0,
-    "fontSize" : 2.0
-  } ],
-  "arrows" : [ {
-    "x" : 0.255,
-    "y" : -0.034,
-    "size" : 0.0032,
-    "angle" : 0.0
-  }, {
-    "x" : 0.16002976111393707,
-    "y" : -0.1200595222278742,
-    "size" : 0.0032,
-    "angle" : 0.0
-  }, {
-    "x" : -0.171,
-    "y" : 0.342,
-    "size" : 0.0032,
-    "angle" : 2.0344439357957027
-  }, {
-    "x" : 0.799368961169938,
-    "y" : 0.23411506598633758,
-    "size" : 0.0032,
-    "angle" : 2.361938314504906
-  }, {
-    "x" : -0.04067451493187069,
-    "y" : 0.807352703121462,
-    "size" : 0.0032,
-    "angle" : -1.5645682706439124
-  }, {
-    "x" : 0.08612088069694235,
-    "y" : 0.8005063032962788,
-    "size" : 0.0032,
-    "angle" : 1.9749807897067262
-  }, {
-    "x" : 0.4283539964761649,
-    "y" : 0.0,
-    "size" : 0.0032,
-    "angle" : -1.1672554014278558
-  } ],
-  "tieLines" : [ {
-    "lineCnt" : 18,
-    "innerId" : 0,
-    "innerT1" : 0.0,
-    "innerT2" : 1.0,
-    "outerId" : 1,
-    "outerT1" : 0.0,
-    "outerT2" : 13.0,
-    "stroke" : "DASH",
-    "lineWidth" : 0.0024
-  } ],
   "diagramComponents" : [ "Solvent", null, "A", "B" ],
-  "originalFilename" : "C:\\eb\\workspace\\PEDEditor\\gov\\nist\\pededitor\\test\\ties.jpg",
+  "originalFilename" : "..\\test\\ties.jpg",
+  "axes" : [ {
+    "format" : {
+      "type" : "DecimalFormat",
+      "pattern" : "#0.0%"
+    },
+    "a" : -1.0,
+    "b" : -1.0,
+    "c" : 1.0,
+    "name" : "A"
+  }, {
+    "format" : {
+      "type" : "DecimalFormat",
+      "pattern" : "#0.0%"
+    },
+    "a" : 1.0,
+    "b" : 0.0,
+    "c" : 0.0,
+    "name" : "B"
+  }, {
+    "format" : {
+      "type" : "DecimalFormat",
+      "pattern" : "#0.0%"
+    },
+    "a" : 0.0,
+    "b" : 1.0,
+    "c" : 0.0,
+    "name" : "Solvent"
+  }, {
+    "format" : {
+      "type" : "DecimalFormat",
+      "pattern" : "#0.000"
+    },
+    "a" : 1.0,
+    "b" : 0.5,
+    "c" : 0.0,
+    "name" : "page X"
+  }, {
+    "format" : {
+      "type" : "DecimalFormat",
+      "pattern" : "#0.000"
+    },
+    "a" : 0.0,
+    "b" : -0.8660254037844386,
+    "c" : 0.8660254037844386,
+    "name" : "page Y"
+  } ],
   "usingWeightFraction" : false,
   "fontName" : "DejaVu LGC Sans PED",
   "keys" : {
   },
-  "curves" : [ {
+  "decorations" : [ {
+    "decoration" : "ruler",
+    "startPoint" : {
+      "x" : 1.0,
+      "y" : 0.0
+    },
+    "endPoint" : {
+      "x" : 0.0,
+      "y" : 1.0
+    },
+    "fontSize" : 0.03902439024390244,
+    "lineWidth" : 0.0032,
+    "labelAnchor" : "NONE",
+    "multiplier" : 100.0,
+    "textAngle" : 2.0943951023931953,
+    "tickPadding" : 3.0,
+    "bigTickDelta" : -1.0,
+    "tickDelta" : -1.0,
+    "suppressStartTick" : true,
+    "suppressStartLabel" : true,
+    "suppressEndTick" : true,
+    "suppressEndLabel" : true,
+    "tickType" : "V",
+    "axis" : "Solvent"
+  }, {
+    "decoration" : "ruler",
+    "startPoint" : {
+      "x" : 0.0,
+      "y" : 0.0
+    },
+    "endPoint" : {
+      "x" : 0.0,
+      "y" : 1.0
+    },
+    "fontSize" : 0.03902439024390244,
+    "lineWidth" : 0.0032,
+    "labelAnchor" : "NONE",
+    "multiplier" : 100.0,
+    "textAngle" : 1.0471975511965976,
+    "tickPadding" : 3.0,
+    "bigTickDelta" : -1.0,
+    "tickDelta" : -1.0,
+    "suppressStartTick" : true,
+    "suppressStartLabel" : true,
+    "suppressEndTick" : true,
+    "suppressEndLabel" : true,
+    "tickType" : "V",
+    "axis" : "Solvent"
+  }, {
+    "decoration" : "ruler",
+    "startPoint" : {
+      "x" : 0.0,
+      "y" : 0.0
+    },
+    "endPoint" : {
+      "x" : 1.0,
+      "y" : 0.0
+    },
+    "fontSize" : 0.07804878048780488,
+    "lineWidth" : 0.0064,
+    "labelAnchor" : "NONE",
+    "multiplier" : 100.0,
+    "tickPadding" : 3.0,
+    "bigTickDelta" : -1.0,
+    "tickDelta" : -1.0,
+    "suppressStartTick" : true,
+    "suppressStartLabel" : true,
+    "suppressEndTick" : true,
+    "suppressEndLabel" : true,
+    "tickType" : "V",
+    "axis" : "B"
+  }, {
+    "decoration" : "curve",
     "curve" : {
       "points" : [ {
 	"x" : 0.0,
@@ -258,6 +229,7 @@
     "lineStyle" : "SOLID",
     "id" : 1
   }, {
+    "decoration" : "curve",
     "curve" : {
       "points" : [ {
 	"x" : 1.0,
@@ -273,6 +245,7 @@
     "lineStyle" : "SOLID",
     "id" : 2
   }, {
+    "decoration" : "curve",
     "curve" : {
       "points" : [ {
 	"x" : 0.799368961169938,
@@ -288,6 +261,7 @@
     "lineStyle" : "SOLID",
     "id" : 3
   }, {
+    "decoration" : "curve",
     "curve" : {
       "points" : [ {
 	"x" : 0.40284690278507806,
@@ -303,6 +277,7 @@
     "lineStyle" : "SOLID",
     "id" : 4
   }, {
+    "decoration" : "curve",
     "curve" : {
       "points" : [ {
 	"x" : 0.0,
@@ -318,6 +293,7 @@
     "lineStyle" : "SOLID",
     "id" : 5
   }, {
+    "decoration" : "curve",
     "curve" : {
       "points" : [ {
 	"x" : 0.08612088069694235,
@@ -333,6 +309,7 @@
     "lineStyle" : "SOLID",
     "id" : 6
   }, {
+    "decoration" : "curve",
     "curve" : {
       "points" : [ {
 	"x" : 0.0,
@@ -348,6 +325,7 @@
     "lineStyle" : "SOLID",
     "id" : 0
   }, {
+    "decoration" : "curve",
     "curve" : {
       "points" : [ {
 	"x" : -0.171,
@@ -366,6 +344,7 @@
     "lineStyle" : "SOLID",
     "id" : 7
   }, {
+    "decoration" : "curve",
     "curve" : {
       "points" : [ {
 	"x" : 0.0,
@@ -381,6 +360,7 @@
     "lineStyle" : "SOLID",
     "id" : 8
   }, {
+    "decoration" : "curve",
     "curve" : {
       "points" : [ {
 	"x" : -0.04067451493187069,
@@ -396,6 +376,7 @@
     "lineStyle" : "SOLID",
     "id" : 9
   }, {
+    "decoration" : "curve",
     "curve" : {
       "points" : [ {
 	"x" : 0.0993390693891879,
@@ -411,6 +392,7 @@
     "lineStyle" : "SOLID",
     "id" : 10
   }, {
+    "decoration" : "curve",
     "curve" : {
       "points" : [ {
 	"x" : 0.5170782024436468,
@@ -426,6 +408,7 @@
     "lineStyle" : "SOLID",
     "id" : 11
   }, {
+    "decoration" : "curve",
     "curve" : {
       "points" : [ {
 	"x" : 0.035832202345082775,
@@ -441,6 +424,7 @@
     "lineStyle" : "SOLID",
     "id" : 12
   }, {
+    "decoration" : "curve",
     "curve" : {
       "points" : [ {
 	"x" : 0.5977904261761671,
@@ -456,6 +440,7 @@
     "lineStyle" : "SOLID",
     "id" : 13
   }, {
+    "decoration" : "curve",
     "curve" : {
       "points" : [ {
 	"x" : 0.16002976111393707,
@@ -473,121 +458,172 @@
     "lineWidth" : 0.0032,
     "lineStyle" : "SOLID",
     "id" : 14
-  } ],
-  "axes" : [ {
-    "format" : {
-      "type" : "DecimalFormat",
-      "pattern" : "#0.0%"
-    },
-    "a" : -1.0,
-    "b" : -1.0,
-    "c" : 1.0,
-    "name" : "A",
-    "rulers" : [ ]
   }, {
-    "format" : {
-      "type" : "DecimalFormat",
-      "pattern" : "#0.0%"
-    },
-    "a" : 1.0,
-    "b" : 0.0,
-    "c" : 0.0,
-    "name" : "B",
-    "rulers" : [ {
-      "startPoint" : {
-	"x" : 0.0,
-	"y" : 0.0
-      },
-      "endPoint" : {
-	"x" : 1.0,
-	"y" : 0.0
-      },
-      "fontSize" : 0.07804878048780488,
-      "lineWidth" : 0.0064,
-      "labelAnchor" : "NONE",
-      "multiplier" : 100.0,
-      "tickPadding" : 3.0,
-      "bigTickDelta" : -1.0,
-      "tickDelta" : -1.0,
-      "suppressStartTick" : true,
-      "suppressStartLabel" : true,
-      "suppressEndTick" : true,
-      "suppressEndLabel" : true,
-      "tickType" : "V"
-    } ]
+    "decoration" : "tie line",
+    "lineCnt" : 18,
+    "innerId" : 0,
+    "innerT1" : 0.0,
+    "innerT2" : 1.0,
+    "outerId" : 1,
+    "outerT1" : 0.0,
+    "outerT2" : 13.0,
+    "stroke" : "DASH",
+    "lineWidth" : 0.0024
   }, {
-    "format" : {
-      "type" : "DecimalFormat",
-      "pattern" : "#0.0%"
-    },
-    "a" : 0.0,
-    "b" : 1.0,
-    "c" : 0.0,
-    "name" : "Solvent",
-    "rulers" : [ {
-      "startPoint" : {
-	"x" : 0.0,
-	"y" : 0.0
-      },
-      "endPoint" : {
-	"x" : 0.0,
-	"y" : 1.0
-      },
-      "fontSize" : 0.03902439024390244,
-      "lineWidth" : 0.0032,
-      "labelAnchor" : "NONE",
-      "multiplier" : 100.0,
-      "textAngle" : 1.0471975511965976,
-      "tickPadding" : 3.0,
-      "bigTickDelta" : -1.0,
-      "tickDelta" : -1.0,
-      "suppressStartTick" : true,
-      "suppressStartLabel" : true,
-      "suppressEndTick" : true,
-      "suppressEndLabel" : true,
-      "tickType" : "V"
-    }, {
-      "startPoint" : {
-	"x" : 1.0,
-	"y" : 0.0
-      },
-      "endPoint" : {
-	"x" : 0.0,
-	"y" : 1.0
-      },
-      "fontSize" : 0.03902439024390244,
-      "lineWidth" : 0.0032,
-      "labelAnchor" : "NONE",
-      "multiplier" : 100.0,
-      "textAngle" : 2.0943951023931953,
-      "tickPadding" : 3.0,
-      "bigTickDelta" : -1.0,
-      "tickDelta" : -1.0,
-      "suppressStartTick" : true,
-      "suppressStartLabel" : true,
-      "suppressEndTick" : true,
-      "suppressEndLabel" : true,
-      "tickType" : "V"
-    } ]
+    "decoration" : "arrow",
+    "x" : 0.4283539964761649,
+    "y" : 0.0,
+    "size" : 0.0032,
+    "angle" : -1.1672554014278558
   }, {
-    "format" : {
-      "type" : "DecimalFormat",
-      "pattern" : "#0.000"
-    },
-    "a" : 1.0,
-    "b" : 0.5,
-    "c" : 0.0,
-    "name" : "page X",
-    "rulers" : [ ]
+    "decoration" : "arrow",
+    "x" : 0.08612088069694235,
+    "y" : 0.8005063032962788,
+    "size" : 0.0032,
+    "angle" : 1.9749807897067262
   }, {
-    "format" : {
-      "type" : "DecimalFormat",
-      "pattern" : "#0.000"
-    },
-    "a" : 0.0,
-    "b" : -0.8660254037844386,
-    "c" : 0.8660254037844386,
-    "name" : "page Y",
-    "rulers" : [ ]
+    "decoration" : "arrow",
+    "x" : -0.04067451493187069,
+    "y" : 0.807352703121462,
+    "size" : 0.0032,
+    "angle" : -1.5645682706439124
+  }, {
+    "decoration" : "arrow",
+    "x" : 0.799368961169938,
+    "y" : 0.23411506598633758,
+    "size" : 0.0032,
+    "angle" : 2.361938314504906
+  }, {
+    "decoration" : "arrow",
+    "x" : -0.171,
+    "y" : 0.342,
+    "size" : 0.0032,
+    "angle" : 2.0344439357957027
+  }, {
+    "decoration" : "arrow",
+    "x" : 0.16002976111393707,
+    "y" : -0.1200595222278742,
+    "size" : 0.0032,
+    "angle" : 0.0
+  }, {
+    "decoration" : "arrow",
+    "x" : 0.255,
+    "y" : -0.034,
+    "size" : 0.0032,
+    "angle" : 0.0
+  }, {
+    "decoration" : "label",
+    "text" : "B*",
+    "yWeight" : 0.5,
+    "x" : 0.4238078354083791,
+    "y" : 0.5972921120300037,
+    "fontSize" : 1.8
+  }, {
+    "decoration" : "label",
+    "text" : "A*",
+    "xWeight" : 1.0,
+    "yWeight" : 0.5,
+    "x" : -0.022513204802504294,
+    "y" : 0.5934958362873866,
+    "fontSize" : 1.8
+  }, {
+    "decoration" : "label",
+    "text" : "phase separation",
+    "xWeight" : 0.5,
+    "yWeight" : 1.0,
+    "x" : 0.24205499192592295,
+    "y" : 0.42658715374106027,
+    "angle" : 1.974594720965947,
+    "fontSize" : 1.8,
+    "opaque" : true
+  }, {
+    "decoration" : "label",
+    "text" : "y",
+    "xWeight" : 0.5,
+    "yWeight" : 0.5,
+    "x" : -0.1832391584491822,
+    "y" : 0.2771395244026603,
+    "angle" : -0.0,
+    "fontSize" : 2.0
+  }, {
+    "decoration" : "label",
+    "text" : "A",
+    "xWeight" : 1.0,
+    "x" : 0.017000000000000015,
+    "y" : -0.03400000000000003,
+    "fontSize" : 1.8
+  }, {
+    "decoration" : "label",
+    "text" : "B",
+    "x" : 1.0,
+    "fontSize" : 1.8
+  }, {
+    "decoration" : "label",
+    "text" : "1 phase<br>(unsaturated liquid)",
+    "xWeight" : 0.5,
+    "yWeight" : 0.5,
+    "x" : 0.6103034333605631,
+    "y" : 0.9410132448927588,
+    "fontSize" : 1.8
+  }, {
+    "decoration" : "label",
+    "text" : "Solvent<br><br>",
+    "xWeight" : 0.5,
+    "yWeight" : 1.0,
+    "y" : 1.0,
+    "fontSize" : 1.8
+  }, {
+    "decoration" : "label",
+    "text" : "2 phases<br>(saturated liquid +<br>particular solid<br>solution of A and B)",
+    "xWeight" : 0.5,
+    "yWeight" : 0.5,
+    "x" : 0.784846308504421,
+    "y" : 0.5990389202749997,
+    "fontSize" : 1.8
+  }, {
+    "decoration" : "label",
+    "text" : "P̃(X̃<sub>A</sub>,X̃<sub>B</sub>,X̃<sub>Solvent</sub>)",
+    "xWeight" : 1.0,
+    "yWeight" : 0.5,
+    "x" : -0.10635353201751219,
+    "y" : 0.7376029848805099,
+    "fontSize" : 1.8
+  }, {
+    "decoration" : "label",
+    "text" : "X̃<sub>A</sub>",
+    "xWeight" : 0.5,
+    "yWeight" : 0.5,
+    "x" : -0.10142691740610488,
+    "y" : 0.9217223583974208,
+    "fontSize" : 1.8
+  }, {
+    "decoration" : "label",
+    "text" : "X̃<sub>B</sub>",
+    "xWeight" : 0.5,
+    "x" : 0.19420223460253272,
+    "y" : -0.03775512370204637,
+    "fontSize" : 1.8
+  }, {
+    "decoration" : "label",
+    "text" : "X̃<sub>Solvent</sub>",
+    "yWeight" : 1.0,
+    "x" : 0.895478475834433,
+    "y" : 0.13911156504346878,
+    "fontSize" : 1.8
+  }, {
+    "decoration" : "label",
+    "text" : "Q̃(X̃<sub>A</sub>,X̃<sub>B</sub>,X̃<sub>Solvent</sub> = 0)",
+    "xWeight" : 0.5,
+    "x" : 0.6241921933905727,
+    "y" : -0.08239257552470147,
+    "fontSize" : 1.8
+  }, {
+    "decoration" : "label",
+    "text" : "x",
+    "xWeight" : 0.5,
+    "x" : 0.10877909139969322,
+    "y" : -0.1200595222278742,
+    "angle" : -0.0,
+    "fontSize" : 2.0
   } ]
 }
