@@ -3625,19 +3625,7 @@ public class Editor extends Diagram
     }
 
     @Override public void saveAsPED(Path file) throws IOException {
-        String oldFilename = getFilename();
-        try {
-            // Reset the filename before saving. This will
-            // re-relativize originalFilename so that it can still be
-            // found using a relative path even if the new filename is
-            // in a different directory from before.
-            setFilename(file.toAbsolutePath().toString());
-            super.saveAsPED(file);
-        } catch (IOException x) {
-            // Revert to the old filename;
-            setFilename(oldFilename);
-            throw x;
-        }
+        super.saveAsPED(file);
         // Now delete the auto-save file if it exists.
         if (autosaveFile != null) {
             try {
