@@ -1175,29 +1175,6 @@ public class Diagram extends Observable implements Printable {
         init();
     }
 
-    // OBSOLESCENT
-    @JsonProperty("curves") void setPaths(CuspFigure[] paths) {
-        ArrayList<Decoration> figs = new ArrayList<>();
-        for (CuspFigure path: paths) {
-            figs.add(decorate(path));
-        }
-        decorations.addAll(0, figs);
-    }
-
-    // OBSOLESCENT
-    @JsonProperty void setArrows(Arrow[] values) {
-        for (Arrow v: values) {
-            decorations.add(0, decorate(v));
-        }
-    }
-
-    // OBSOLESCENT
-    @JsonProperty void setLabels(AnchoredLabel[] values) {
-        for (AnchoredLabel v: values) {
-            decorations.add(decorate(v));
-        }
-    }
-
     CuspFigure idToCurve(int id) {
         for (CuspFigure path: paths()) {
             if (path.getJSONId() == id) {
@@ -2786,9 +2763,6 @@ public class Diagram extends Observable implements Printable {
         // the directory that filename belongs to into an absolute
         // path.
 
-        String res = Paths.get(Paths.get(filename).getParent().toString(),
-        		originalFilename)
-            .toAbsolutePath().toString();
         return Paths.get(Paths.get(filename).getParent().toString(), originalFilename)
             .toAbsolutePath().toString();
     }
@@ -3225,21 +3199,6 @@ public class Diagram extends Observable implements Printable {
     @JsonProperty("axes") void setAxes(ArrayList<LinearAxis> axes) {
         for (LinearAxis axis: axes) {
             add(axis);
-            // OBSOLESCENT
-            if (axis.rulers != null) {
-                for (LinearRuler r: axis.rulers) {
-                    decorations.add(0, decorate(r));
-                }
-                axis.rulers = null;
-            }
-        }
-    }
-
-    // OBSOLESCENT
-    @JsonProperty("tieLines")
-    void setTieLines(ArrayList<TieLine> tieLines) {
-        for (TieLine tie: tieLines) {
-            decorations.add(0, decorate(tie));
         }
     }
 
@@ -3317,11 +3276,21 @@ public class Diagram extends Observable implements Printable {
     }
 
     public void saveAsPED(Path path) throws IOException {
+        String oldFilename = getFilename();
         try (PrintWriter writer = new PrintWriter
              (Files.newBufferedWriter(path, StandardCharsets.UTF_8))) {
+                // Reset the filename before saving. This will
+                // re-relativize originalFilename so that it can still
+                // be found using a relative path even if the new
+                // filename is in a different directory from before.
+                setFilename(path.toAbsolutePath().toString());
                 writer.print(Tabify.tabify(getObjectMapper().writeValueAsString(this)));
                 setSaveNeeded(false);
-            }
+            } catch (IOException x) {
+            // Revert to the old filename;
+            setFilename(oldFilename);
+            throw x;
+        }
     }
 
     /** Remove every decoration that has at least one handle for which
@@ -4167,11 +4136,8 @@ public class Diagram extends Observable implements Printable {
 
             ser.addMixInAnnotations(Decorated.class,
                                     DecoratedAnnotations.class);
-            // OBSOLESCENT
-            /*
             des.addMixInAnnotations(Decorated.class,
                                     DecoratedAnnotations.class);
-            */
         }
 
         return objectMapper;

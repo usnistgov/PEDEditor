@@ -22,36 +22,50 @@
     "height" : 0.33966751000976564
   },
   "diagramType" : "OTHER",
-  "labels" : [ ],
-  "arrows" : [ ],
-  "tieLines" : [ ],
   "diagramComponents" : [ null, null, null, null ],
+  "axes" : [ {
+    "format" : {
+      "type" : "DecimalFormat",
+      "pattern" : "#0.0000"
+    },
+    "a" : 1.0,
+    "b" : 0.0,
+    "c" : 0.0,
+    "name" : "X"
+  }, {
+    "format" : {
+      "type" : "DecimalFormat",
+      "pattern" : "#0.0000"
+    },
+    "a" : 0.0,
+    "b" : 1.0,
+    "c" : 0.0,
+    "name" : "Y"
+  }, {
+    "format" : {
+      "type" : "DecimalFormat",
+      "pattern" : "#0.0000"
+    },
+    "a" : 1.0,
+    "b" : 0.0,
+    "c" : 0.0,
+    "name" : "page X"
+  }, {
+    "format" : {
+      "type" : "DecimalFormat",
+      "pattern" : "#0.0000"
+    },
+    "a" : 0.0,
+    "b" : -1.0,
+    "c" : 1.0,
+    "name" : "page Y"
+  } ],
   "usingWeightFraction" : false,
   "fontName" : "DejaVu LGC Sans PED",
   "keys" : {
   },
-  "curves" : [ {
-    "curve" : {
-      "points" : [ {
-	"x" : 0.04185231857534141,
-	"y" : 0.148391583863683
-      }, {
-	"x" : 0.3020149202013577,
-	"y" : 0.148391583863683
-      }, {
-	"x" : 0.3020149202013575,
-	"y" : 0.408554185489699
-      }, {
-	"x" : 0.0418523185753414,
-	"y" : 0.408554185489699
-      } ],
-      "smoothed" : [ false, false, false, false ],
-      "closed" : true
-    },
-    "lineWidth" : 0.0024,
-    "lineStyle" : "SOLID",
-    "id" : 0
-  }, {
+  "decorations" : [ {
+    "decoration" : "curve",
     "curve" : {
       "points" : [ {
 	"x" : 0.16542955434769913,
@@ -73,6 +87,7 @@
     "lineStyle" : "SOLID",
     "id" : 1
   }, {
+    "decoration" : "curve",
     "curve" : {
       "points" : [ {
 	"x" : 0.16542955434769913,
@@ -88,6 +103,7 @@
     "lineStyle" : "SOLID",
     "id" : 2
   }, {
+    "decoration" : "curve",
     "curve" : {
       "points" : [ {
 	"x" : 0.42559215597371525,
@@ -103,6 +119,7 @@
     "lineStyle" : "SOLID",
     "id" : 3
   }, {
+    "decoration" : "curve",
     "curve" : {
       "points" : [ {
 	"x" : 0.4255921559737154,
@@ -118,6 +135,7 @@
     "lineStyle" : "SOLID",
     "id" : 4
   }, {
+    "decoration" : "curve",
     "curve" : {
       "points" : [ {
 	"x" : 0.16542955434769913,
@@ -133,6 +151,7 @@
     "lineStyle" : "SOLID",
     "id" : 5
   }, {
+    "decoration" : "curve",
     "curve" : {
       "points" : [ {
 	"x" : 0.04185231857534143,
@@ -157,30 +176,7 @@
     "fillStyle" : "ALPHA25",
     "id" : 6
   }, {
-    "curve" : {
-      "points" : [ {
-	"x" : 0.16542955434769913,
-	"y" : 0.47847288467669113
-      }, {
-	"x" : 0.42559215597371525,
-	"y" : 0.47847288467669113
-      }, {
-	"x" : 0.3020149202013575,
-	"y" : 0.408554185489699
-      }, {
-	"x" : 0.04185231857534144,
-	"y" : 0.408554185489699
-      } ],
-      "smoothed" : [ false, false, false, false ],
-      "closed" : true
-    },
-    "color" : {
-      "rgb" : -65485
-    },
-    "lineWidth" : 0.0024,
-    "fillStyle" : "ALPHA50",
-    "id" : 7
-  }, {
+    "decoration" : "curve",
     "curve" : {
       "points" : [ {
 	"x" : 0.16542955434769913,
@@ -202,6 +198,7 @@
     "fillStyle" : "DD2_25",
     "id" : 8
   }, {
+    "decoration" : "curve",
     "curve" : {
       "points" : [ {
 	"x" : 0.16542955434769924,
@@ -226,6 +223,7 @@
     "fillStyle" : "X1_10",
     "id" : 9
   }, {
+    "decoration" : "curve",
     "curve" : {
       "points" : [ {
 	"x" : 0.16542955434769913,
@@ -250,6 +248,54 @@
     "fillStyle" : "SOLID",
     "id" : 10
   }, {
+    "decoration" : "curve",
+    "curve" : {
+      "points" : [ {
+	"x" : 0.05213042384270455,
+	"y" : 0.4534019060006856
+      }, {
+	"x" : 0.08569890473144186,
+	"y" : 0.45340190600068553
+      }, {
+	"x" : 0.08228516091224823,
+	"y" : 0.4630741801550675
+      }, {
+	"x" : 0.06919914293867266,
+	"y" : 0.4761601981286431
+      }, {
+	"x" : 0.05326833844910242,
+	"y" : 0.4613673082454707
+      } ],
+      "smoothed" : [ false, false, true, true, true ],
+      "closed" : true
+    },
+    "lineWidth" : 0.0024,
+    "fillStyle" : "V1_25",
+    "id" : 16
+  }, {
+    "decoration" : "curve",
+    "curve" : {
+      "points" : [ {
+	"x" : 0.04185231857534141,
+	"y" : 0.148391583863683
+      }, {
+	"x" : 0.3020149202013577,
+	"y" : 0.148391583863683
+      }, {
+	"x" : 0.3020149202013575,
+	"y" : 0.408554185489699
+      }, {
+	"x" : 0.0418523185753414,
+	"y" : 0.408554185489699
+      } ],
+      "smoothed" : [ false, false, false, false ],
+      "closed" : true
+    },
+    "lineWidth" : 0.0024,
+    "lineStyle" : "SOLID",
+    "id" : 0
+  }, {
+    "decoration" : "curve",
     "curve" : {
       "points" : [ {
 	"x" : 0.3020149202013575,
@@ -274,6 +320,32 @@
     "fillStyle" : "ALPHA50",
     "id" : 11
   }, {
+    "decoration" : "curve",
+    "curve" : {
+      "points" : [ {
+	"x" : 0.16542955434769913,
+	"y" : 0.47847288467669113
+      }, {
+	"x" : 0.42559215597371525,
+	"y" : 0.47847288467669113
+      }, {
+	"x" : 0.3020149202013575,
+	"y" : 0.408554185489699
+      }, {
+	"x" : 0.04185231857534144,
+	"y" : 0.408554185489699
+      } ],
+      "smoothed" : [ false, false, false, false ],
+      "closed" : true
+    },
+    "color" : {
+      "rgb" : -65485
+    },
+    "lineWidth" : 0.0024,
+    "fillStyle" : "SOLID",
+    "id" : 7
+  }, {
+    "decoration" : "curve",
     "curve" : {
       "points" : [ {
 	"x" : 0.36380353808753646,
@@ -292,72 +364,7 @@
       "closed" : true
     },
     "lineWidth" : 0.0024,
-    "fillStyle" : "ALPHA25",
+    "fillStyle" : "SOLID",
     "id" : 15
-  }, {
-    "curve" : {
-      "points" : [ {
-	"x" : 0.05213042384270455,
-	"y" : 0.4534019060006856
-      }, {
-	"x" : 0.08569890473144186,
-	"y" : 0.45340190600068553
-      }, {
-	"x" : 0.08228516091224823,
-	"y" : 0.4630741801550675
-      }, {
-	"x" : 0.06919914293867266,
-	"y" : 0.4761601981286431
-      }, {
-	"x" : 0.05326833844910242,
-	"y" : 0.4613673082454707
-      } ],
-      "smoothed" : [ false, false, true, true, true ],
-      "closed" : true
-    },
-    "lineWidth" : 0.0024,
-    "fillStyle" : "V1_25",
-    "id" : 16
-  } ],
-  "axes" : [ {
-    "format" : {
-      "type" : "DecimalFormat",
-      "pattern" : "#0.0000"
-    },
-    "a" : 1.0,
-    "b" : 0.0,
-    "c" : 0.0,
-    "name" : "X",
-    "rulers" : [ ]
-  }, {
-    "format" : {
-      "type" : "DecimalFormat",
-      "pattern" : "#0.0000"
-    },
-    "a" : 0.0,
-    "b" : 1.0,
-    "c" : 0.0,
-    "name" : "Y",
-    "rulers" : [ ]
-  }, {
-    "format" : {
-      "type" : "DecimalFormat",
-      "pattern" : "#0.0000"
-    },
-    "a" : 1.0,
-    "b" : 0.0,
-    "c" : 0.0,
-    "name" : "page X",
-    "rulers" : [ ]
-  }, {
-    "format" : {
-      "type" : "DecimalFormat",
-      "pattern" : "#0.0000"
-    },
-    "a" : 0.0,
-    "b" : -1.0,
-    "c" : 1.0,
-    "name" : "page Y",
-    "rulers" : [ ]
   } ]
 }

@@ -99,22 +99,9 @@ public class CuspFigure implements BoundedParameterizable2D, Decorated {
         jsonClosed = false;
     }
 
-    /** OBSOLESCENT Used only for deserializing an obsolete version of
-        the JSON PED format. */
-    @JsonProperty("closed") void setJsonClosed(boolean closed) {
-        if (curve == null) {
-            jsonClosed = closed;
-        } else setClosed(closed);
-    }
-
     public CuspFigure() { }
     public CuspFigure(CuspInterp2D curve) {
         this.curve = curve;
-    }
-
-    // OBSOLESCENT
-    CuspFigure(String shape, Point2D.Double[] points, boolean closed) {
-        this.curve = new CuspInterp2D(points, !shape.equals("polyline"), closed);
     }
 
     public CuspFigure(CuspInterp2D curve,
