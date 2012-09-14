@@ -2763,8 +2763,13 @@ public class Diagram extends Observable implements Printable {
         // the directory that filename belongs to into an absolute
         // path.
 
-        return Paths.get(Paths.get(filename).getParent().toString(), originalFilename)
-            .toAbsolutePath().toString();
+        Path absolute = Paths.get(Paths.get(filename).getParent().toString(),
+                                  originalFilename).toAbsolutePath();
+        try {
+            return absolute.toRealPath().toString();
+        } catch (IOException x) {
+            return absolute.toString(); // Settle for the unreal path.
+        }
     }
 
     /** @return the name of the image file that this diagram was
@@ -2908,7 +2913,8 @@ public class Diagram extends Observable implements Printable {
                 break;
             }
         }
-        if (commonCnt > 0) {
+        int parentCnt = pnc - 1 - commonCnt;
+        if (commonCnt > 0 && parentCnt <= 3) {
             ArrayList<String> names = new ArrayList<>();
             for (int i = commonCnt; i < pnc-1; ++i) {
                 names.add("..");
