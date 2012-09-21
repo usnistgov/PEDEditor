@@ -65,28 +65,16 @@ import Jama.Matrix;
 
 import org.codehaus.jackson.annotate.JsonIgnore;
 
-// TODO Allow users to turn off the connection to the original
-// diagram.
-
 // TODO Add checkbox to turn on/off editing capability.
-
-// TODO (mandatory, 2 days) Make regular open symbols look as nice as
-// the GRUMP-converted open symbols do. How? Construct a special
-// decoration type... what about size, color, et cetera? It's
-// basically a regular LabelDialog minus everything related to text
-// selection.
 
 // TODO (mandatory, 1 day): At this point, the rule that tie lines
 // have to end at vertexes of the diagram is no longer needed and not
 // difficult to eliminate. Tie lines ending on rulers without extra
 // steps could also be enabled (and the extra steps are unintuitive).
 
-// TODO (optional) Warn users when there exists an autosave version of
-// a file that is newer than the regular saved version.
-
-// TODO (optional? maybe so important as to be mandatory) Use relative
-// paths to locate source image files, so Chu's computer can be used
-// better
+// TODO (optional, seems to be important based on Chris and Will's
+// reaction) If there exists an autosave version of a file that is
+// newer than the regular version, ask whether to use that instead.
 
 // TODO Zoom-to-selection is kind of hokey, and if it requires opening
 // up scroll bars, you have to perform the operation twice before it
@@ -326,7 +314,7 @@ public class Editor extends Diagram
             if (saveNeeded) {
                 Path file = getAutosave();
                 try {
-                    saveAsPED(file);
+                    saveAsPED(file, false);
                     System.out.println("Saved '" + file + "'");
                     autosaveFile = file;
                 } catch (IOException x) {
@@ -416,7 +404,7 @@ public class Editor extends Diagram
 
     LabelDialog getLabelDialog() {
         if (labelDialog == null) {
-            labelDialog = new LabelDialog(editFrame, "Add label",
+            labelDialog = new LabelDialog(editFrame, "Add text",
                                           getFont().deriveFont(16.0f));
         }
         return labelDialog;
@@ -2304,7 +2292,7 @@ public class Editor extends Diagram
         if (label.getText().isEmpty()) {
             return false;
         }
-        if (label.getFontSize() <= 0) {
+        if (label.getScale() <= 0) {
             showError("Font size is not a positive number", "Cannot perform operation");
             return false;
         }
@@ -2315,7 +2303,7 @@ public class Editor extends Diagram
         AnchoredLabel label = labelInfo.label.clone();
         label.setAngle(principalToPageAngle(label.getAngle()));
         LabelDialog dog = getLabelDialog();
-        dog.setTitle("Edit Label");
+        dog.setTitle("Edit Text");
         dog.set(label);
         AnchoredLabel newLabel = dog.showModal();
         if (newLabel == null || !check(newLabel)) {
@@ -2327,6 +2315,7 @@ public class Editor extends Diagram
         newLabel.setY(label.getY());
         newLabel.setBaselineXOffset(label.getBaselineXOffset());
         newLabel.setBaselineYOffset(label.getBaselineYOffset());
+
         labelInfo.label = newLabel;
         propagateChange();
     }
@@ -2730,9 +2719,9 @@ public class Editor extends Diagram
                               Point2D.Double[] vertices) {
         boolean tracing = (vertices != null);
         try (UpdateSuppressor d = new UpdateSuppressor()) {
-                String ofn = getAbsoluteOriginalFilename();
                 clear();
-                setOriginalFilename(ofn);
+                setOriginalFilename(originalFilename);
+                revalidateZoomFrame();
 
                 add(defaultAxis(Side.RIGHT));
                 add(defaultAxis(Side.TOP));
@@ -3268,26 +3257,6 @@ public class Editor extends Diagram
         setMargin(side, margin);
     }
 
-    /** Invoked from the EditFrame menu */
-    public void openDiagram() {
-        if (!verifyCloseDiagram()) {
-            return;
-        }
-
-        File file = showOpenDialog("ped");
-        if (file == null) {
-            return;
-        }
-
-        try {
-            openDiagram(file);
-        } catch (IOException e) {
-            JOptionPane.showMessageDialog
-                (editFrame, "File load error: " + e);
-            return;
-        }
-    }
-
     @Override public void openDiagram(File file) throws IOException {
         super.openDiagram(file);
         initializeGUI();
@@ -3447,6 +3416,10 @@ public class Editor extends Diagram
     }
 
     public void showOpenDialog(Component parent) {
+        if (!verifyCloseDiagram()) {
+            return;
+        }
+
         File file = isEditable() ? openPEDOrImageFileDialog(parent)
             : openPEDFileDialog(parent);
         if (file == null) {
