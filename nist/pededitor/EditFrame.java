@@ -766,13 +766,14 @@ public class EditFrame extends JFrame
 
             JMenu mnLineWidth = new JMenu("Line width");
             mnLineWidth.setMnemonic(KeyEvent.VK_W);
-            mnLineWidth.add(new LineWidthMenuItem(0.0008));
+            mnLineWidth.add(new LineWidthMenuItem(0.0006));
+            mnLineWidth.add(new LineWidthMenuItem(0.0012));
             LineWidthMenuItem normalWidthItem = 
-                new LineWidthMenuItem(0.0016);
+                new LineWidthMenuItem(0.0024);
             normalWidthItem.setSelected(true);
             mnLineWidth.add(normalWidthItem);
-            mnLineWidth.add(new LineWidthMenuItem(0.0032));
-            mnLineWidth.add(new LineWidthMenuItem(0.0064));
+            mnLineWidth.add(new LineWidthMenuItem(0.0048));
+            mnLineWidth.add(new LineWidthMenuItem(0.0096));
             mnLineWidth.add
                 (new JRadioButtonMenuItem
                  (new AbstractAction("Custom...") {
@@ -809,7 +810,7 @@ public class EditFrame extends JFrame
                 });
 
             mnCurve.add(new Action
-                        ("Toggle point closure", KeyEvent.VK_C, "typed ,") {
+                        ("Toggle point smoothing", KeyEvent.VK_C, "typed ,") {
                     @Override public void actionPerformed(ActionEvent e) {
                         getParentEditor().toggleCusp();
                     }
@@ -1059,7 +1060,14 @@ public class EditFrame extends JFrame
                 (AbstractAction.ACCELERATOR_KEY,
                  KeyStroke.getKeyStroke("control H"));
             mnBackgroundImage.add(noBackgroundImage);
-
+            mnBackgroundImage.add
+                (new JRadioButtonMenuItem
+                 (new Action("Detach", KeyEvent.VK_E) {
+                         @Override public void actionPerformed(ActionEvent e) {
+                             getParentEditor().setOriginalFilename(null);
+                             getParentEditor().revalidateZoomFrame();
+                         }
+                     }));
             lightGrayBackgroundImage.setSelected(true);
             mnView.add(mnBackgroundImage);
         }
