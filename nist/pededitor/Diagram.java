@@ -17,6 +17,7 @@ import java.awt.Rectangle;
 import java.awt.RenderingHints;
 import java.awt.Shape;
 import java.awt.Stroke;
+import java.awt.font.FontRenderContext;
 import java.awt.geom.AffineTransform;
 import java.awt.geom.Ellipse2D;
 import java.awt.geom.Line2D;
@@ -1026,7 +1027,19 @@ public class Diagram extends Observable implements Printable {
     // metrics, but the bigger the font size, the less effect
     // grid-fitting has, and the less error it induces. So make the
     // Views big enough that grid-fitting is largely irrelevant.
+
+    // TODO The VIEW_MAGNIFICATION number is bogus on account of the
+    // "size: 100 px;" in the view style. That it's still present is
+    // only to compensate for an error induced by the assumption that
+    // the VIEW_MAGNIFICATION value is actually correct :(. I'd have
+    // to change the "scale" parameter of all existing .PED files to
+    // fix it. It wouldn't be enough to just change the base font size
+    // from 15 to something else, because the base font size is
+    // already used (correctly) to set rulers' font sizes.
+
+    // That's too ugly for words! Clean this up later!
     private static final int VIEW_MAGNIFICATION = 8;
+    private static float FONT_SIZE_FUDGE_FACTOR = 100.0f/120.0f;
     static protected final String defaultFontName = "DejaVu LGC Sans PED";
     static protected final Map<String,String> fontFiles
         = new HashMap<String, String>() {
@@ -2338,7 +2351,6 @@ public class Diagram extends Observable implements Printable {
 
     /** @param xWeight Used to determine how to justify rows of text. */
     View toView(String str, double xWeight, Color textColor) {
-        // System.out.println("toView('" + str + "', " + xWeight + ", " + textColor + ")");
         String style
             = "<style type=\"text/css\"><!--"
             + " body { font-size: 100 pt; } "
@@ -2368,8 +2380,8 @@ public class Diagram extends Observable implements Printable {
 
         JLabel bogus = new JLabel(str);
         Font f = getFont();
-        bogus.setFont(f.deriveFont((float) (f.getSize() * VIEW_MAGNIFICATION)));
-        // bogus.setFont(f);
+        // bogus.setFont(f.deriveFont((float) (f.getSize() * VIEW_MAGNIFICATION)));
+        bogus.setFont(f);
         bogus.setForeground(thisOrBlack(textColor));
         return (View) bogus.getClientProperty("html");
     }
@@ -2387,7 +2399,7 @@ public class Diagram extends Observable implements Printable {
 
     /** Regenerate the labelViews field from the labels field. */
     void initializeLabelInfo(LabelInfo labelInfo) {
-        if (labelInfo.view == null) {
+        if (!labelInfo.label.isCutout() && labelInfo.view == null) {
             labelInfo.view = toView(labelInfo.label);
         }
     }
@@ -3181,7 +3193,10 @@ public class Diagram extends Observable implements Printable {
                     pageBounds = new Rectangle2D.Double(0,0,1,1);
                 }
                 initializeDiagram();
-                decorations = other.decorations;
+                decorations = new ArrayList<>();
+                for (Decoration d: other.decorations) {
+                    decorations.add(decorate(d.getSerializationObject()));
+                }
                 setFontName(other.getFontName());
                 axes = other.axes;
                 componentElements = null;
@@ -3282,6 +3297,14 @@ public class Diagram extends Observable implements Printable {
     }
 
     public void saveAsPED(Path path) throws IOException {
+        saveAsPED(path, true);
+    }
+
+    /** @param updateFilename If true, set the diagram's filename to
+        correspond to the new path. If false, leave the filename
+        alone. The 'false' option is useful during autosaves, which
+        should not alter the file's real name. */
+    public void saveAsPED(Path path, boolean updateFilename) throws IOException {
         String oldFilename = getFilename();
         try (PrintWriter writer = new PrintWriter
              (Files.newBufferedWriter(path, StandardCharsets.UTF_8))) {
@@ -3291,6 +3314,9 @@ public class Diagram extends Observable implements Printable {
                 // filename is in a different directory from before.
                 setFilename(path.toAbsolutePath().toString());
                 writer.print(Tabify.tabify(getObjectMapper().writeValueAsString(this)));
+                if (!updateFilename) {
+                    setFilename(oldFilename);
+                }
                 setSaveNeeded(false);
             } catch (IOException x) {
             // Revert to the old filename;
@@ -3842,8 +3868,22 @@ public class Diagram extends Observable implements Printable {
         Point2D.Double point = toPage.transform(label.getX(), label.getY());
         double angle = principalToPageAngle(label.getAngle());
 
+        double width;
+        double height;
+        if (label.isCutout()) {
+            // TODO Does it save time to cache the big font?
+            Font font = getFont();
+            Rectangle2D bounds = font.getStringBounds
+                (label.getText(), new FontRenderContext(null, true, false));
+            width = bounds.getWidth() * FONT_SIZE_FUDGE_FACTOR;
+            height = bounds.getHeight() * FONT_SIZE_FUDGE_FACTOR;
+        } else {
+            width = view.getPreferredSpan(View.X_AXIS) / VIEW_MAGNIFICATION;
+            height = view.getPreferredSpan(View.Y_AXIS) / VIEW_MAGNIFICATION;
+        }
+
         return labelToScaledPage
-            (view, scale * label.getFontSize(), angle,
+            (width, height, scale * label.getScale(), angle,
              point.x * scale, point.y * scale,
              label.getXWeight(), label.getYWeight(),
              label.getBaselineXOffset(), label.getBaselineYOffset());
@@ -3864,7 +3904,7 @@ public class Diagram extends Observable implements Printable {
             }
             double angle = principalToPageAngle(label.getAngle());
             AffineTransform baselineToPage = AffineTransform.getRotateInstance(angle);
-            double textScale = label.getFontSize() / VIEW_MAGNIFICATION
+            double textScale = label.getScale() / VIEW_MAGNIFICATION
                 / BASE_SCALE;
             baselineToPage.scale(textScale, textScale);
             Point2D.Double offset = new Point2D.Double(bxo, byo);
@@ -3908,7 +3948,7 @@ public class Diagram extends Observable implements Printable {
 
     void draw(Graphics g0, LabelInfo labelInfo, double scale) {
         AnchoredLabel label = labelInfo.label;
-        if (label.getFontSize() == 0) {
+        if (label.getScale() == 0) {
             return;
         }
 
@@ -3932,16 +3972,43 @@ public class Diagram extends Observable implements Printable {
         Affine toPage = getPrincipalToAlignedPage();
         Point2D.Double point = toPage.transform(label.getX(), label.getY());
         double angle = principalToPageAngle(label.getAngle());
-        htmlDraw(g, view, scale * label.getFontSize(),
-                 angle, point.x * scale, point.y * scale,
+        if (label.isCutout()) {
+            double fudgedLabelScale = label.getScale() * FONT_SIZE_FUDGE_FACTOR;
+            Font oldFont = g.getFont();
+            double fs = scale * fudgedLabelScale * normalFontSize();
+            g.setFont(oldFont.deriveFont((float) fs));
+            g.setColor(Color.WHITE);
+            System.out.println(label.getText() + ": fs = " + fs + ", labelXMargin = "
+                               + (labelXMargin * scale * fudgedLabelScale/ BASE_SCALE));
+
+            // TODO The box margins still don't match up...
+            Shapes.drawString
+                (g, label.getText(), point.x * scale, point.y * scale,
                  label.getXWeight(), label.getYWeight(),
-                 label.getBaselineXOffset(), label.getBaselineYOffset());
+                 labelXMargin * scale * fudgedLabelScale / BASE_SCALE, 
+                 labelYMargin * scale * fudgedLabelScale / BASE_SCALE,
+                 angle, true);
+            g.setColor(thisOrBlack(label.getColor()));
+            Shapes.drawString
+                (g, label.getText(), point.x * scale, point.y * scale,
+                 label.getXWeight(), label.getYWeight(),
+                 labelXMargin * scale * fudgedLabelScale / BASE_SCALE, 
+                 labelYMargin * scale * fudgedLabelScale / BASE_SCALE,
+                 angle);
+            g.setFont(oldFont);
+        } else {
+            htmlDraw(g, view, scale * label.getScale(),
+                     angle, point.x * scale, point.y * scale,
+                     label.getXWeight(), label.getYWeight(),
+                     label.getBaselineXOffset(), label.getBaselineYOffset());
+        }
     }
 
-    void initializeLabelMargins() {
+    private void initializeLabelMargins() {
         if (Double.isNaN(labelXMargin)) {
             View em = toView("n", 0, Color.BLACK);
-            labelXMargin = em.getPreferredSpan(View.X_AXIS) / 3.0;
+            labelXMargin = em.getPreferredSpan(View.X_AXIS)
+                / 3.0 / VIEW_MAGNIFICATION;
             // labelYMargin = em.getPreferredSpan(View.Y_AXIS) / 5.0;
             labelYMargin = 0;
         }
@@ -3990,8 +4057,8 @@ public class Diagram extends Observable implements Printable {
         double baseWidth = view.getPreferredSpan(View.X_AXIS);
         double baseHeight = view.getPreferredSpan(View.Y_AXIS);
         initializeLabelMargins();
-        double width = baseWidth + labelXMargin * 2;
-        double height = baseHeight + labelYMargin * 2;
+        double width = baseWidth + VIEW_MAGNIFICATION * labelXMargin * 2;
+        double height = baseHeight + VIEW_MAGNIFICATION * labelYMargin * 2;
 
         Graphics2D g2d = (Graphics2D) g;
         double textScale = scale / BASE_SCALE;
@@ -4023,7 +4090,9 @@ public class Diagram extends Observable implements Printable {
             // of the text block.
 
             baselineToPage.transform
-                (new Point2D.Double(labelXMargin, labelYMargin), xpoint);
+                (new Point2D.Double(VIEW_MAGNIFICATION * labelXMargin,
+                                    VIEW_MAGNIFICATION * labelYMargin),
+                 xpoint);
             ax += xpoint.x;
             ay += xpoint.y;
         }
@@ -4062,13 +4131,13 @@ public class Diagram extends Observable implements Printable {
     /** @return a transformation that maps the unit square to the
         outline of this label in scaled page space. */
     AffineTransform labelToScaledPage
-        (View view, double scale, double angle,
+        (double width, double height, double scale, double angle,
          double ax, double ay, double xWeight, double yWeight,
          double baselineXOffset, double baselineYOffset) {
         initializeLabelMargins();
-        double width = view.getPreferredSpan(View.X_AXIS) + labelXMargin * 2;
-        double height = view.getPreferredSpan(View.Y_AXIS) + labelYMargin * 2;
-        double textScale = scale / BASE_SCALE / VIEW_MAGNIFICATION;
+        width += labelXMargin * 2;
+        height += labelYMargin * 2;
+        double textScale = scale / BASE_SCALE;
 
         AffineTransform res = AffineTransform.getTranslateInstance(ax, ay);
         res.rotate(angle);
