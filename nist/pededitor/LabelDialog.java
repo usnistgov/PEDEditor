@@ -12,8 +12,10 @@ import java.awt.GridLayout;
 import java.awt.Image;
 import java.awt.RenderingHints;
 import java.awt.event.ActionEvent;
+import java.awt.geom.AffineTransform;
 import java.awt.geom.Ellipse2D;
 import java.awt.geom.Line2D;
+import java.awt.geom.Point2D;
 import java.awt.geom.Rectangle2D;
 import java.awt.image.BufferedImage;
 
@@ -41,8 +43,9 @@ public class LabelDialog extends JDialog {
     double yWeight;
     JTextField textField = new JTextField(55);
 
-    JCheckBox mIsOpaque = new JCheckBox("Opaque background");
+    JCheckBox mIsOpaque = new JCheckBox("White text background");
     JCheckBox mIsBoxed = new JCheckBox("Box label");
+    JCheckBox mIsCutout = new JCheckBox("White character holes (no HTML allowed)");
     JTextField fontSize = new JTextField(10);
     JTextField codePoint = new JTextField("0000", 10);
 
@@ -82,6 +85,9 @@ public class LabelDialog extends JDialog {
     }
     public void setBoxed(boolean v) {
         mIsBoxed.setSelected(v);
+    }
+    public void setCutout(boolean v) {
+        mIsCutout.setSelected(v);
     }
 
     double getXWeight() { return xWeight; }
@@ -290,6 +296,8 @@ public class LabelDialog extends JDialog {
             boxMe.setBorder(BorderFactory.createLineBorder(Color.black));
 
             gb.endRowWith(boxMe);
+
+            gb.endRowWith(mIsCutout);
             mgb.endRowWith(panel);
         }
 
@@ -325,6 +333,7 @@ public class LabelDialog extends JDialog {
         setAngle(0);
         setOpaqueLabel(false);
         setBoxed(false);
+        setCutout(false);
     }
 
     /** Make the settings of this dialog reflect those of the given label. */
@@ -332,10 +341,11 @@ public class LabelDialog extends JDialog {
         setText(label.getText());
         setXWeight(label.getXWeight());
         setYWeight(label.getYWeight());
-        setFontSize(label.getFontSize());
+        setFontSize(label.getScale());
         setAngle(label.getAngle());
         setOpaqueLabel(label.isOpaque());
         setBoxed(label.isBoxed());
+        setCutout(label.isCutout());
     }
 
     BufferedImage createCompassImage() {
@@ -446,6 +456,7 @@ public class LabelDialog extends JDialog {
         al.setAngle(getAngle());
         al.setOpaque(isOpaqueLabel());
         al.setBoxed(mIsBoxed.isSelected());
+        al.setCutout(mIsCutout.isSelected());
         return al;
     }
 
@@ -490,7 +501,7 @@ public class LabelDialog extends JDialog {
             JOptionPane.showMessageDialog
                 (null, "Warning: font '" + fontName + "' not found.");
         }
-        LabelDialog dialog = new LabelDialog(null, "Labels test", font, false);
+        LabelDialog dialog = new LabelDialog(null, "Labels test", font);
         dialog.setFontSize(4.0/3);
         dialog.setAngle(Math.PI / 2);
         AnchoredLabel t = dialog.showModal();
