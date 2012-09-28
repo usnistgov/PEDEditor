@@ -175,6 +175,7 @@ class LinearRuler implements BoundedParameterizable2D, Decorated {
         o.suppressStartLabel = suppressStartLabel;
         o.suppressEndTick = suppressEndTick;
         o.suppressEndLabel = suppressEndLabel;
+        o.axisName = axisName;
         return o;
     }
 

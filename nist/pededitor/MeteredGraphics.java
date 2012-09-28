@@ -131,6 +131,9 @@ public class MeteredGraphics extends Graphics2D {
         Rectangle2D.Double b = PathParam2D.create
             (s.getPathIterator(getTransform(), getAccuracy()))
             .getBounds();
+        if (b == null) {
+            return;
+        }
         if (bounds == null) {
             bounds = b;
         } else {

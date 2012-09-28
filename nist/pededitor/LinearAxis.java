@@ -17,15 +17,6 @@ public class LinearAxis extends Axis {
     double b;
     double c;
 
-    // OBSOLESCENT
-    LinearRuler[] rulers = null;
-    @JsonProperty("rulers") void setRulers(LinearRuler[] values) {
-        for (LinearRuler r: values) {
-            r.axis = this;
-        }
-        rulers = values;
-    }
-
     /** Create a LinearAxisInfo for the formula a*x + b*y + c. */
     public LinearAxis(@JsonProperty("format") NumberFormat format,
                           @JsonProperty("a") double a,

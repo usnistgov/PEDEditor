@@ -73,7 +73,7 @@ public class Param2DBounder implements BoundedParam2D {
         if (bounds == null) {
             bounds = c.getBounds(t0, t1);
         }
-        return (Rectangle2D.Double) bounds.clone();
+        return (bounds == null) ? null : (Rectangle2D.Double) bounds.clone();
     }
 
     @Override public double[] getBounds (double xc, double yc) {

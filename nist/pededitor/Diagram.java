@@ -2605,7 +2605,14 @@ public class Diagram extends Observable implements Printable {
             decorations.add(decorate(o));
         }
         for (LinearRuler r: rulers()) {
+            if (r.axis != null) {
+                continue;
+            }
             String name = r.axisName;
+            if (name == null) {
+                throw new IllegalStateException
+                    ("No axis name assigned yet for " + r);
+            }
             for (LinearAxis axis: axes) {
                 if (axis.name.equals(name)) {
                     r.axis = axis;

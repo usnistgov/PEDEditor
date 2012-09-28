@@ -146,7 +146,7 @@ public class PathParam2D extends Param2DAdapter
             this.t0 = t0;
             this.t1 = t1;
             segNo = firstSegNo = getSegmentNo(t0);
-            lastSegNo = getSegmentNo(t1);
+            lastSegNo = (t1 == 0) ? -1 : getSegmentNo(t1);
         }
 
         /** @return the next segment of this path. */
@@ -253,7 +253,8 @@ public class PathParam2D extends Param2DAdapter
                 res.add(b);
             }
         }
-        return new Rectangle2D.Double
+        return (res == null) ? null
+            : new Rectangle2D.Double
             (res.getX(), res.getY(), 
              res.getWidth(), res.getHeight());
     }
