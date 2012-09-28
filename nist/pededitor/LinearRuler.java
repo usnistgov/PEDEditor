@@ -39,7 +39,21 @@ class LinearRuler implements BoundedParameterizable2D, Decorated {
     /** I recommend that fontSize be approximately 10 times the
         lineWidth -- 9X and 12X are fine, but 30X or 3X will look
         strange. */
-    @JsonProperty double fontSize;
+    double fontSize;
+
+    /** Fudge factor is used for kludgy historical reasons. It would
+        be nicer if I could get rid of the old save files that use the
+        "fontSize" property, and maybe I could... I 'd probably need to
+        use some name other than 'fontSize', though. */
+    private final double FONT_SIZE_FUDGE_FACTOR = 1.2;
+
+    @JsonProperty("fontSize") void setJSONFontSize(double v) {
+        fontSize = v * FONT_SIZE_FUDGE_FACTOR;
+    }
+    @JsonProperty("fontSize") double getJSONFontSize() {
+        return fontSize / FONT_SIZE_FUDGE_FACTOR;
+    }
+
     @JsonProperty double lineWidth;
     protected Color color = null;
 
