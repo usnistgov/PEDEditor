@@ -981,7 +981,7 @@ public class Diagram extends Observable implements Printable {
     /** Apply the NIST MML PED standard binary diagram axis style. */
     static LinearRuler defaultBinaryRuler() {
         LinearRuler r = new LinearRuler();
-        r.fontSize = normalFontSize();
+        r.fontSize = normalRulerFontSize();
         r.lineWidth = STANDARD_LINE_WIDTH;
         r.tickPadding = 3.0;
         r.drawSpine = true;
@@ -992,7 +992,7 @@ public class Diagram extends Observable implements Printable {
     /** Apply the NIST MML PED standard ternary diagram axis style. */
     static LinearRuler defaultTernaryRuler() {
         LinearRuler r = new LinearRuler();
-        r.fontSize = normalFontSize();
+        r.fontSize = normalRulerFontSize();
         r.lineWidth = STANDARD_LINE_WIDTH;
         r.tickPadding = 3.0;
         r.multiplier = 100.0;
@@ -1028,18 +1028,7 @@ public class Diagram extends Observable implements Printable {
     // grid-fitting has, and the less error it induces. So make the
     // Views big enough that grid-fitting is largely irrelevant.
 
-    // TODO The VIEW_MAGNIFICATION number is bogus on account of the
-    // "size: 100 px;" in the view style. That it's still present is
-    // only to compensate for an error induced by the assumption that
-    // the VIEW_MAGNIFICATION value is actually correct :(. I'd have
-    // to change the "scale" parameter of all existing .PED files to
-    // fix it. It wouldn't be enough to just change the base font size
-    // from 15 to something else, because the base font size is
-    // already used (correctly) to set rulers' font sizes.
-
-    // That's too ugly for words! Clean this up later!
-    private static final int VIEW_MAGNIFICATION = 8;
-    private static float FONT_SIZE_FUDGE_FACTOR = 100.0f/120.0f;
+    private static final int VIEW_MAGNIFICATION = 8; // = 100 px / 12.5 px
     static protected final String defaultFontName = "DejaVu LGC Sans PED";
     static protected final Map<String,String> fontFiles
         = new HashMap<String, String>() {
@@ -1128,7 +1117,8 @@ public class Diagram extends Observable implements Printable {
     protected double labelYMargin = Double.NaN;
 
     static final double STANDARD_LINE_WIDTH = 0.0024;
-    static final int STANDARD_FONT_SIZE = 15;
+    static final double STANDARD_FONT_SIZE = 12.5;
+    static final int STANDARD_RULER_FONT_SIZE = 15;
     protected String filename;
     private boolean usingWeightFraction = false;
     /** suppressUpdateCnt represents a count of the number of
@@ -2944,6 +2934,10 @@ public class Diagram extends Observable implements Printable {
         return STANDARD_FONT_SIZE / BASE_SCALE;
     }
 
+    protected static double normalRulerFontSize() {
+        return STANDARD_RULER_FONT_SIZE / BASE_SCALE;
+    }
+
     LinearAxis createLeftAxis() {
         LinearAxis axis = new LinearAxis
                 (STANDARD_PERCENT_FORMAT,
@@ -3875,8 +3869,8 @@ public class Diagram extends Observable implements Printable {
             Font font = getFont();
             Rectangle2D bounds = font.getStringBounds
                 (label.getText(), new FontRenderContext(null, true, false));
-            width = bounds.getWidth() * FONT_SIZE_FUDGE_FACTOR;
-            height = bounds.getHeight() * FONT_SIZE_FUDGE_FACTOR;
+            width = bounds.getWidth();
+            height = bounds.getHeight();
         } else {
             width = view.getPreferredSpan(View.X_AXIS) / VIEW_MAGNIFICATION;
             height = view.getPreferredSpan(View.Y_AXIS) / VIEW_MAGNIFICATION;
@@ -3973,27 +3967,27 @@ public class Diagram extends Observable implements Printable {
         Point2D.Double point = toPage.transform(label.getX(), label.getY());
         double angle = principalToPageAngle(label.getAngle());
         if (label.isCutout()) {
-            double fudgedLabelScale = label.getScale() * FONT_SIZE_FUDGE_FACTOR;
+            double labelScale = label.getScale();
             Font oldFont = g.getFont();
-            double fs = scale * fudgedLabelScale * normalFontSize();
+            double fs = scale * labelScale * normalFontSize();
             g.setFont(oldFont.deriveFont((float) fs));
             g.setColor(Color.WHITE);
             System.out.println(label.getText() + ": fs = " + fs + ", labelXMargin = "
-                               + (labelXMargin * scale * fudgedLabelScale/ BASE_SCALE));
+                               + (labelXMargin * scale * labelScale/ BASE_SCALE));
 
             // TODO The box margins still don't match up...
             Shapes.drawString
                 (g, label.getText(), point.x * scale, point.y * scale,
                  label.getXWeight(), label.getYWeight(),
-                 labelXMargin * scale * fudgedLabelScale / BASE_SCALE, 
-                 labelYMargin * scale * fudgedLabelScale / BASE_SCALE,
+                 labelXMargin * scale * labelScale / BASE_SCALE, 
+                 labelYMargin * scale * labelScale / BASE_SCALE,
                  angle, true);
             g.setColor(thisOrBlack(label.getColor()));
             Shapes.drawString
                 (g, label.getText(), point.x * scale, point.y * scale,
                  label.getXWeight(), label.getYWeight(),
-                 labelXMargin * scale * fudgedLabelScale / BASE_SCALE, 
-                 labelYMargin * scale * fudgedLabelScale / BASE_SCALE,
+                 labelXMargin * scale * labelScale / BASE_SCALE, 
+                 labelYMargin * scale * labelScale / BASE_SCALE,
                  angle);
             g.setFont(oldFont);
         } else {
@@ -4408,7 +4402,7 @@ public class Diagram extends Observable implements Printable {
         if (filename == null) {
             throw new IllegalArgumentException("Unrecognized font name '" + s + "'");
         }
-        embeddedFont = loadFont(filename, STANDARD_FONT_SIZE);
+        embeddedFont = loadFont(filename, (float) STANDARD_FONT_SIZE);
         for (LabelInfo labelInfo: labelInfos()) {
             labelInfo.view = null;
             labelInfo.setCenter(null);
