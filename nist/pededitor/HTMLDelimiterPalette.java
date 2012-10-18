@@ -6,7 +6,7 @@ public class HTMLDelimiterPalette extends DelimiterPalette {
     public HTMLDelimiterPalette() {
         super(new String[][] {
                 {"<sub>", "</sub>", prefix + "T<sub>sub</sub>" + suffix},
-                {"<sup>", "<s/up>", prefix + "T<sup>sup</sup>" + suffix},
+                {"<sup>", "</sup>", prefix + "T<sup>sup</sup>" + suffix},
                 {"<i>", "</i>", prefix + "<i>italic</i>" + suffix},
                 {"<b>", "</b>", prefix + "<b>bold</b>" + suffix},
                 {"<u>", "</u>", prefix + "<u>under</u>" + suffix},
