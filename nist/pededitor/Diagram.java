@@ -1,5 +1,6 @@
 package gov.nist.pededitor;
 
+import javax.imageio.ImageIO;
 import javax.print.attribute.HashPrintRequestAttributeSet;
 import javax.print.attribute.PrintRequestAttributeSet;
 import javax.print.attribute.standard.OrientationRequested;
@@ -25,6 +26,7 @@ import java.awt.geom.NoninvertibleTransformException;
 import java.awt.geom.Path2D;
 import java.awt.geom.Point2D;
 import java.awt.geom.Rectangle2D;
+import java.awt.image.BufferedImage;
 import java.awt.print.PageFormat;
 import java.awt.print.Printable;
 import java.awt.print.PrinterException;
@@ -375,9 +377,11 @@ public class Diagram extends Observable implements Printable {
 
         @Override public void move(Point2D dest) {
             Point2D.Double destAnchor = getAnchorLocation(dest);
-            AnchoredLabel item = getLabel();
-            item.setX(destAnchor.getX());
-            item.setY(destAnchor.getY());
+            LabelInfo item = getItem();
+            AnchoredLabel label = item.label;
+            label.setX(destAnchor.getX());
+            label.setY(destAnchor.getY());
+            item.center = null;
             propagateChange();
         }
 
@@ -3082,30 +3086,58 @@ public class Diagram extends Observable implements Printable {
         }
 
         res.setFilename(file.getAbsolutePath());
+        res.finishDeserialization();
+        return res;
+    }
+
+    static Diagram loadFrom(String jsonString) throws IOException {
+        Diagram res;
+
         try {
-            res.standardPageToPrincipal = res.principalToStandardPage.createInverse();
+            ObjectMapper mapper = getObjectMapper();
+            res = (Diagram) mapper.readValue(jsonString, Diagram.class);
+        } catch (Exception e) {
+            throw new IOException("File load error: " + e);
+        }
+
+        res.finishDeserialization();
+        return res;
+    }
+
+    /** Final setup steps to be taken after a Diagram in JSON format
+     * has been deserialized. */
+    void finishDeserialization() {
+        try {
+            standardPageToPrincipal = principalToStandardPage.createInverse();
         } catch (NoninvertibleTransformException e) {
             System.err.println("This transform is not invertible");
             System.exit(2);
         }
         
-        for (TieLine tie: res.tieLines()) {
-            tie.innerEdge = res.idToCurve(tie.innerId);
-            tie.outerEdge = res.idToCurve(tie.outerId);
+        for (TieLine tie: tieLines()) {
+            tie.innerEdge = idToCurve(tie.innerId);
+            tie.outerEdge = idToCurve(tie.outerId);
         }
-        if (res.pageBounds == null) {
-            res.computeMargins();
+        if (pageBounds == null) {
+            computeMargins();
         }
-        res.setSaveNeeded(false);
-        return res;
+        setSaveNeeded(false);
     }
 
     /** Invoked from the EditFrame menu */
     public void openDiagram(File file) throws IOException {
+        copyFrom(loadFrom(file));
+    }
+
+    public void openDiagram(String jsonString) throws IOException {
+        copyFrom(loadFrom(jsonString));
+    }
+
+    void copyFrom(Diagram d) throws IOException {
         setSaveNeeded(false);
         try (UpdateSuppressor us = new UpdateSuppressor()) {
                 clear();
-                cannibalize(loadFrom(file));
+                cannibalize(d);
             }
         propagateChange1();
     }
@@ -3237,6 +3269,25 @@ public class Diagram extends Observable implements Printable {
         doc.open();
         appendToPDF(doc, writer);
         doc.close();
+    }
+
+    /** Return a BufferedImage of this diagram such that its size
+        <i>no greater than</i> width x height. */
+    public BufferedImage createImage(int width, int height) {
+        Rescale r = new Rescale
+            (pageBounds.width, 0, width,
+             pageBounds.height,0,height);
+        BufferedImage im = new BufferedImage
+            ((int) (r.width + 1e-6),
+             (int) (r.height + 1e-6),
+             BufferedImage.TYPE_INT_RGB);
+        paintDiagram((Graphics2D) im.getGraphics(), r.t, Color.WHITE);
+        return im;
+    }
+
+    public void saveAsImage(File file, String format, int width, int height)
+        throws IOException {
+        ImageIO.write(createImage(width, height), format, file);
     }
 
     public byte[] toPDFByteArray() {
