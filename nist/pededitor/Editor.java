@@ -65,6 +65,20 @@ import Jama.Matrix;
 
 import org.codehaus.jackson.annotate.JsonIgnore;
 
+// TODO (optional, Will's suggestion, more or less) Maybe change
+// shift-P to act more like shift-L except by default grabbing beyond
+// the endpoint instead of exactly at the endpoint.
+
+// TODO (bug) Moving a label sometimes goes nuts and moves it to
+// completely the wrong place. There is a centering bug, so this is
+// probably related.
+
+// TODO (bug) medium darkness is like light for background
+
+// TODO (bug) Pressing arrow keys somehow ends up losing the grip on
+// the selected label. In other words, the selection moves the first
+// time, but not the second.
+
 // TODO Add checkbox to turn on/off editing capability.
 
 // TODO (mandatory, 1 day): At this point, the rule that tie lines
@@ -3262,6 +3276,11 @@ public class Editor extends Diagram
         initializeGUI();
     }
 
+    @Override public void openDiagram(String jsonString) throws IOException {
+        super.openDiagram(jsonString);
+        initializeGUI();
+    }
+
     /** Invoked from the EditFrame menu */
     public void reloadDiagram() {
         if (!verifyCloseDiagram()) {
@@ -3590,10 +3609,8 @@ public class Editor extends Diagram
             JOptionPane.showMessageDialog
                 (editFrame, "Saved '" + getFilename() + "'.");
         } catch (IOException e) {
-            // UNDO OBSOLESCENT
-            throw new RuntimeException(e);
-            // JOptionPane.showMessageDialog
-                // (editFrame, "File save error: " + e);
+            JOptionPane.showMessageDialog
+                (editFrame, "File save error: " + e);
         }
     }
 
@@ -4253,7 +4270,6 @@ public class Editor extends Diagram
             if (index >= 0 && index == lcase.length() - 4) {
                 try {
                     openDiagram(new File(filename));
-                    initializeGUI();
                 } catch (IOException e) {
                     JOptionPane.showMessageDialog
                         (null, filename + ": " + e,
