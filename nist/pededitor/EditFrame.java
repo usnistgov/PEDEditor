@@ -75,7 +75,7 @@ public class EditFrame extends JFrame
             lightGrayBackgroundImage.setSelected(true);
             break;
         case DARK_GRAY:
-            lightGrayBackgroundImage.setSelected(true);
+            darkGrayBackgroundImage.setSelected(true);
             break;
         case BLACK:
             blackBackgroundImage.setSelected(true);
