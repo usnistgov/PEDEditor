@@ -702,6 +702,7 @@ public class Editor extends Diagram
         LabelDecoration ldec = getSelectedLabel();
         if (ldec != null) {
             ldec.getLabel().setScale(getLabelDialog().getFontSize());
+            propagateChange();
         }
     }
 
