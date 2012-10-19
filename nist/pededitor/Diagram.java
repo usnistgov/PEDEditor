@@ -1,6 +1,8 @@
 package gov.nist.pededitor;
 
 import javax.imageio.ImageIO;
+import javax.print.attribute.HashPrintRequestAttributeSet;
+import javax.print.attribute.PrintRequestAttributeSet;
 import javax.swing.*;
 import javax.swing.text.View;
 
@@ -3533,16 +3535,15 @@ public class Diagram extends Observable implements Printable {
 
     /** Invoked from the EditFrame menu */
     public void print(PrinterJob job) throws PrinterException {
-        /* Disabled -- use default printer settings instead.
         PrintRequestAttributeSet aset 
             = new HashPrintRequestAttributeSet();
+        /* Disabled -- use default printer settings instead.
         aset.add
             ((pageBounds.width > pageBounds.height)
              ? OrientationRequested.LANDSCAPE
              : OrientationRequested.PORTRAIT);
-        job.print(aset);
         */
-        job.print();
+        job.print(aset);
     }
 
     @Override public int print(Graphics g0, PageFormat pf, int pageIndex)
