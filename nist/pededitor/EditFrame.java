@@ -602,6 +602,14 @@ public class EditFrame extends JFrame
                     }
                 });
 
+            mnEdit.add(new Action("Reset selection to current defaults",
+                                  KeyEvent.VK_F,
+                                  KeyStroke.getKeyStroke('d')) {
+                    @Override public void actionPerformed(ActionEvent e) {
+                        getParentEditor().resetSelectionToDefaultSettings();
+                    }
+                });
+
             mnEdit.add(new Action("Move selection only",
                                   KeyEvent.VK_V,
                                   KeyStroke.getKeyStroke('M')) {
