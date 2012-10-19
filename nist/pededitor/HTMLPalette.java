@@ -7,6 +7,7 @@ public class HTMLPalette extends StringPalette {
                 {"&lt;", "<"},
                 {"&gt;", ">"},
                 {"&amp;", "&"},
+                {"&nbsp;", "Hard space"},
             });
     }
 }
