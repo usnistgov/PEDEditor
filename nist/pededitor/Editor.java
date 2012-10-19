@@ -65,6 +65,8 @@ import Jama.Matrix;
 
 import org.codehaus.jackson.annotate.JsonIgnore;
 
+// TODO (optional) Allow marking of multiple objects.
+
 // TODO (optional, Will's suggestion, more or less) Maybe change
 // shift-P to act more like shift-L except by default grabbing beyond
 // the endpoint instead of exactly at the endpoint.
@@ -485,6 +487,7 @@ public class Editor extends Diagram
 
     protected transient double lineWidth = STANDARD_LINE_WIDTH;
     protected transient StandardStroke lineStyle = StandardStroke.SOLID;
+    protected transient Color color = Color.BLACK;
 
     static String[] tieLineStepStrings =
     { "<html><div width=\"200 px\"><p>"
@@ -680,6 +683,26 @@ public class Editor extends Diagram
     @Override public void removeTag(String tag) {
         super.removeTag(tag);
         editFrame.removeTag(tag);
+    }
+
+    public void resetSelectionToDefaultSettings() {
+        String errorTitle = "Cannot change settings";
+
+        if (selection == null) {
+            showError
+                ("You must select an item before choosing this operation.",
+                 errorTitle);
+            return;
+        }
+
+        Decoration dec = selection.getDecoration();
+        dec.setLineStyle(lineStyle);
+        dec.setColor(color);
+        dec.setLineWidth(lineWidth);
+        LabelDecoration ldec = getSelectedLabel();
+        if (ldec != null) {
+            ldec.getLabel().setScale(getLabelDialog().getFontSize());
+        }
     }
 
     public void put() {
@@ -942,16 +965,19 @@ public class Editor extends Diagram
             (editFrame, "Choose color", true, colorChooser,
              new ActionListener() {
                  @Override public void actionPerformed(ActionEvent e) {
-                     Editor.this.selection.getDecoration()
-                         .setColor(colorChooser.getColor());
+                     color = colorChooser.getColor();
+                     Editor.this.selection.getDecoration().setColor(color);
                  }
              },
              null);
             colorDialog.pack();
         }
 
-        Color c = thisOrBlack(selection.getDecoration().getColor());
-        colorChooser.setColor(c);
+        Color c = selection.getDecoration().getColor();
+        if (c != null) {
+            color = c;
+        }
+        colorChooser.setColor(color);
         colorDialog.setVisible(true);
     }
 
@@ -1503,6 +1529,11 @@ public class Editor extends Diagram
         }
 
         addArrow(mprin, lineWidth, pageToPrincipalAngle(theta));
+        resetLastDecorationColor();
+    }
+
+    private void resetLastDecorationColor() {
+        decorations.get(decorations.size()-1).setColor(color);
     }
 
     void tieLineCornerSelected() {
@@ -1552,6 +1583,7 @@ public class Editor extends Diagram
 
         TieLine tie = new TieLine(lineCnt, lineStyle);
         tie.lineWidth = lineWidth;
+        tie.setColor(color);
 
         tie.innerEdge = tieLineCorners.get(2).path;
         tie.it1 = tieLineCorners.get(2).t;
@@ -1605,12 +1637,13 @@ public class Editor extends Diagram
         LinearAxis axis = axes.get(0);
 
         LinearRuler r = new LinearRuler();
-        r.fontSize = currentFontSize();
+        r.fontSize = rulerFontSize();
         r.tickPadding = 0.0;
         r.labelAnchor = LinearRuler.LabelAnchor.NONE;
         r.drawSpine = true;
         r.lineWidth = lineWidth;
         r.axis = axis;
+        r.setColor(color);
 
         if (diagramType.isTernary()) {
             r.tickType = LinearRuler.TickType.V;
@@ -2295,6 +2328,7 @@ public class Editor extends Diagram
         newLabel.setAngle(pageToPrincipalAngle(newLabel.getAngle()));
         newLabel.setX(x);
         newLabel.setY(y);
+        newLabel.setColor(color);
         LabelDecoration d = new LabelDecoration(new LabelInfo(newLabel));
         decorations.add(d);
         selection = new LabelHandle(d, LabelHandleType.ANCHOR);
@@ -3086,8 +3120,12 @@ public class Editor extends Diagram
         propagateChange();
     }
 
-    protected double currentFontSize() {
+    protected double rulerFontSize() {
         return normalFontSize() * lineWidth / STANDARD_LINE_WIDTH;
+    }
+
+    public double currentFontSize() {
+        return getLabelDialog().getFontSize();
     }
 
     @Override protected void initializeDiagram() {
