@@ -2573,7 +2573,7 @@ public class Editor extends Diagram
         distance from principalFocus (if not null) or mprin (otherwise). */
     ArrayList<DecorationHandle> nearestHandles() {
         if (mprin == null) {
-            return null;
+            return new ArrayList<>();
         }
         if (principalFocus == null) {
             principalFocus = mprin;
