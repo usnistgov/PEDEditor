@@ -1118,6 +1118,8 @@ public class Diagram extends Observable implements Printable {
 
     protected double labelXMargin = Double.NaN;
     protected double labelYMargin = Double.NaN;
+    protected double boxedLabelXMargin = Double.NaN;
+    protected double boxedLabelYMargin = Double.NaN;
 
     static final double STANDARD_LINE_WIDTH = 0.0024;
     static final double STANDARD_FONT_SIZE = 12.5;
@@ -3939,7 +3941,8 @@ public class Diagram extends Observable implements Printable {
             (width, height, scale * label.getScale(), angle,
              point.x * scale, point.y * scale,
              label.getXWeight(), label.getYWeight(),
-             label.getBaselineXOffset(), label.getBaselineYOffset());
+             label.getBaselineXOffset(), label.getBaselineYOffset(),
+             label.isBoxed());
     }
 
     /** Take all labels that have nonzero baseline X/Y offsets
@@ -4031,23 +4034,22 @@ public class Diagram extends Observable implements Printable {
             double fs = scale * labelScale * normalFontSize();
             g.setFont(oldFont.deriveFont((float) fs));
             g.setColor(Color.WHITE);
-            System.out.println(label.getText() + ": fs = " + fs + ", labelXMargin = "
-                               + (labelXMargin * scale * labelScale/ BASE_SCALE));
+
+            double lx = (label.isBoxed() ? boxedLabelXMargin : labelXMargin)
+                * scale * labelScale / BASE_SCALE;
+            double ly = (label.isBoxed() ? boxedLabelYMargin : labelYMargin)
+                * scale * labelScale / BASE_SCALE;
 
             // TODO The box margins still don't match up...
             Shapes.drawString
                 (g, label.getText(), point.x * scale, point.y * scale,
                  label.getXWeight(), label.getYWeight(),
-                 labelXMargin * scale * labelScale / BASE_SCALE, 
-                 labelYMargin * scale * labelScale / BASE_SCALE,
-                 angle, true);
+                 lx, ly, angle, true);
             g.setColor(thisOrBlack(label.getColor()));
             Shapes.drawString
                 (g, label.getText(), point.x * scale, point.y * scale,
                  label.getXWeight(), label.getYWeight(),
-                 labelXMargin * scale * labelScale / BASE_SCALE, 
-                 labelYMargin * scale * labelScale / BASE_SCALE,
-                 angle);
+                 lx, ly, angle);
             g.setFont(oldFont);
         } else {
             htmlDraw(g, view, scale * label.getScale(),
@@ -4060,10 +4062,12 @@ public class Diagram extends Observable implements Printable {
     private void initializeLabelMargins() {
         if (Double.isNaN(labelXMargin)) {
             View em = toView("n", 0, Color.BLACK);
-            labelXMargin = em.getPreferredSpan(View.X_AXIS)
+            labelXMargin = boxedLabelXMargin
+                = em.getPreferredSpan(View.X_AXIS)
                 / 3.0 / VIEW_MAGNIFICATION;
-            // labelYMargin = em.getPreferredSpan(View.Y_AXIS) / 5.0;
             labelYMargin = 0;
+            boxedLabelYMargin = em.getPreferredSpan(View.Y_AXIS)
+                / 8.0 / VIEW_MAGNIFICATION;
         }
     }
 
@@ -4186,10 +4190,10 @@ public class Diagram extends Observable implements Printable {
     AffineTransform labelToScaledPage
         (double width, double height, double scale, double angle,
          double ax, double ay, double xWeight, double yWeight,
-         double baselineXOffset, double baselineYOffset) {
+         double baselineXOffset, double baselineYOffset, boolean boxed) {
         initializeLabelMargins();
-        width += labelXMargin * 2;
-        height += labelYMargin * 2;
+        width += (boxed ? boxedLabelXMargin : labelXMargin) * 2;
+        height += (boxed ? boxedLabelYMargin : labelYMargin) * 2;
         double textScale = scale / BASE_SCALE;
 
         AffineTransform res = AffineTransform.getTranslateInstance(ax, ay);
