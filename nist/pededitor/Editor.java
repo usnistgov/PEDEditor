@@ -1238,7 +1238,7 @@ public class Editor extends Diagram
         AnchoredLabel label = labelInfo.label;
 
         boolean isBoxed = label.isBoxed();
-        label.setBoxed(true);
+        // label.setBoxed(true);
         draw(g, labelInfo, scale);
 
         if (label.getXWeight() != 0.5 || label.getYWeight() != 0.5) {
