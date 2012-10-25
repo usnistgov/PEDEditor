@@ -774,14 +774,16 @@ public class EditFrame extends JFrame
 
             JMenu mnLineWidth = new JMenu("Line width");
             mnLineWidth.setMnemonic(KeyEvent.VK_W);
-            mnLineWidth.add(new LineWidthMenuItem(0.0006));
-            mnLineWidth.add(new LineWidthMenuItem(0.0012));
-            LineWidthMenuItem normalWidthItem = 
-                new LineWidthMenuItem(0.0024);
-            normalWidthItem.setSelected(true);
-            mnLineWidth.add(normalWidthItem);
-            mnLineWidth.add(new LineWidthMenuItem(0.0048));
-            mnLineWidth.add(new LineWidthMenuItem(0.0096));
+            double[] lineWidths = {0.0006, 0.0012, 0.0017, 0.0024, 0.0034,
+                                   0.0048, 0.0096};
+
+            for (int i = 0; i < lineWidths.length; ++i) {
+                LineWidthMenuItem item = new LineWidthMenuItem(lineWidths[i]);
+                if (i == 3) {
+                    item.setSelected(true);
+                }
+                mnLineWidth.add(item);
+            }
             mnLineWidth.add
                 (new JRadioButtonMenuItem
                  (new AbstractAction("Custom...") {
