@@ -280,7 +280,7 @@ public class EditFrame extends JFrame
         double lineWidth;
 
         LineWidthAction(double lineWidth) {
-            super(null, getLineWidthIcon(lineWidth));
+            super(String.format("%.4f", lineWidth), getLineWidthIcon(lineWidth));
             this.lineWidth = lineWidth;
         }
 
@@ -545,6 +545,14 @@ public class EditFrame extends JFrame
             });
 
         if (editable) {
+            mnEdit.add(new Action("Copy default settings from selection",
+                                  KeyEvent.VK_U,
+                                  KeyStroke.getKeyStroke('D')) {
+                    @Override public void actionPerformed(ActionEvent e) {
+                        getParentEditor().setDefaultSettingsFromSelection();
+                    }
+                });
+
             mnEdit.add(new Action("Delete", KeyEvent.VK_D, "DELETE") {
                     @Override public void actionPerformed(ActionEvent e) {
                         getParentEditor().removeSelection();
@@ -571,24 +579,24 @@ public class EditFrame extends JFrame
             mnLayer.add
                 (new LayerAction
                  ("Lower", KeyEvent.VK_L,
-                  KeyStroke.getKeyStroke("control typed ["), -1));
+                  KeyStroke.getKeyStroke("control typed -"), -1));
             mnLayer.add
                 (new LayerAction
                  ("Raise", KeyEvent.VK_R,
-                  KeyStroke.getKeyStroke("control typed ]"), +1));
+                  KeyStroke.getKeyStroke("control typed +"), +1));
             mnLayer.add
                 (new LayerAction
                  ("To bottom", KeyEvent.VK_B,
-                  KeyStroke.getKeyStroke("shift control typed ["), -1000000));
+                  KeyStroke.getKeyStroke("shift control typed -"), -1000000));
             mnLayer.add
                 (new LayerAction
                  ("To top", KeyEvent.VK_T,
-                  KeyStroke.getKeyStroke("shift control typed ]"), +1000000));
+                  KeyStroke.getKeyStroke("shift control typed +"), +1000000));
             mnEdit.add(mnLayer);
 
             mnEdit.add(new Action("Move",
-                                  KeyEvent.VK_M,
-                                  KeyStroke.getKeyStroke('m')) {
+                                  KeyEvent.VK_V,
+                                  KeyStroke.getKeyStroke('v')) {
                     @Override public void actionPerformed(ActionEvent e) {
                         getParentEditor().moveSelection(true);
                     }
@@ -602,19 +610,19 @@ public class EditFrame extends JFrame
                     }
                 });
 
-            mnEdit.add(new Action("Reset selection to current defaults",
-                                  KeyEvent.VK_F,
-                                  KeyStroke.getKeyStroke('d')) {
-                    @Override public void actionPerformed(ActionEvent e) {
-                        getParentEditor().resetSelectionToDefaultSettings();
-                    }
-                });
-
             mnEdit.add(new Action("Move selection only",
                                   KeyEvent.VK_V,
                                   KeyStroke.getKeyStroke('M')) {
                     @Override public void actionPerformed(ActionEvent e) {
                         getParentEditor().moveSelection(false);
+                    }
+                });
+
+            mnEdit.add(new Action("Reset selection to current defaults",
+                                  KeyEvent.VK_F,
+                                  KeyStroke.getKeyStroke('d')) {
+                    @Override public void actionPerformed(ActionEvent e) {
+                        getParentEditor().resetSelectionToDefaultSettings();
                     }
                 });
         }
@@ -654,7 +662,7 @@ public class EditFrame extends JFrame
         mnPosition.add(new Action
                        ("Nearest key point",
                         KeyEvent.VK_N,
-                        KeyStroke.getKeyStroke('p')) {
+                        KeyStroke.getKeyStroke('q')) {
                 @Override public void actionPerformed(ActionEvent e) {
                     getParentEditor().seekNearestPoint(false);
                 }
@@ -663,7 +671,7 @@ public class EditFrame extends JFrame
         mnPosition.add(new Action
                        ("Nearest line/curve",
                         KeyEvent.VK_L,
-                        KeyStroke.getKeyStroke('l')) {
+                        KeyStroke.getKeyStroke('w')) {
                 @Override public void actionPerformed(ActionEvent e) {
                     getParentEditor().seekNearestCurve(false);
                 }
@@ -673,7 +681,7 @@ public class EditFrame extends JFrame
             mnPosition.add(new Action
                            ("Select nearest key point",
                             KeyEvent.VK_S,
-                            KeyStroke.getKeyStroke('P')) {
+                            KeyStroke.getKeyStroke('Q')) {
                     @Override public void actionPerformed(ActionEvent e) {
                         getParentEditor().seekNearestPoint(true);
                     }
@@ -684,7 +692,7 @@ public class EditFrame extends JFrame
             mnPosition.add(new Action
                            ("Select nearest line/curve",
                             KeyEvent.VK_I,
-                            KeyStroke.getKeyStroke('L')) {
+                            KeyStroke.getKeyStroke('W')) {
                     @Override
                         public void actionPerformed(ActionEvent e) {
                         getParentEditor().seekNearestCurve(true);
@@ -764,7 +772,7 @@ public class EditFrame extends JFrame
                 mnDensity.setIcon(icon(StandardStroke.RAILROAD12, 54, 7, 1.0));
 
                 for (StandardStroke stroke:
-                         EnumSet.range(StandardStroke.RAILROAD1,
+                         EnumSet.range(StandardStroke.RAILROAD2,
                                        StandardStroke.RAILROAD24)) {
                     mnDensity.add(new LineStyleMenuItem(stroke, 104, 24, 2.0));
                 }
@@ -775,7 +783,7 @@ public class EditFrame extends JFrame
             JMenu mnLineWidth = new JMenu("Line width");
             mnLineWidth.setMnemonic(KeyEvent.VK_W);
             double[] lineWidths = {0.0006, 0.0012, 0.0017, 0.0024, 0.0034,
-                                   0.0048, 0.0096};
+                                   0.0048};
 
             for (int i = 0; i < lineWidths.length; ++i) {
                 LineWidthMenuItem item = new LineWidthMenuItem(lineWidths[i]);
