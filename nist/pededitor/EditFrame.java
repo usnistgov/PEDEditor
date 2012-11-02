@@ -595,7 +595,7 @@ public class EditFrame extends JFrame
             mnEdit.add(mnLayer);
 
             mnEdit.add(new Action("Move",
-                                  KeyEvent.VK_V,
+                                  KeyEvent.VK_M,
                                   KeyStroke.getKeyStroke('v')) {
                     @Override public void actionPerformed(ActionEvent e) {
                         getParentEditor().moveSelection(true);
@@ -612,7 +612,7 @@ public class EditFrame extends JFrame
 
             mnEdit.add(new Action("Move selection only",
                                   KeyEvent.VK_V,
-                                  KeyStroke.getKeyStroke('M')) {
+                                  KeyStroke.getKeyStroke('V')) {
                     @Override public void actionPerformed(ActionEvent e) {
                         getParentEditor().moveSelection(false);
                     }
