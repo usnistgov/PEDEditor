@@ -148,6 +148,14 @@ public class Diagram extends Observable implements Printable {
                     for (int i = 0; i < segments.size(); ++i) {
                         segments.set(i, (double) 0);
                     }
+                } else if (vertexNo == path.size()-1 && !path.isClosed()) {
+                    // Reset all t values greater than vertexNo-1 to vertexNo-1.
+                    for (int i = 0; i < segments.size(); ++i) {
+                        double t = segments.get(i);
+                        if (t > vertexNo-1) {
+                            segments.set(i, (double) (vertexNo-1));
+                        }
+                    }
                 } else {
                     int segCnt = path.getSegmentCnt();
 
@@ -163,6 +171,7 @@ public class Diagram extends Observable implements Printable {
                     int newSeg = (vertexNo > 0) ? (vertexNo - 1)
                         : path.isClosed() ? (segCnt - 2)
                         : 0;
+
                     // T values for segments prevSeg and nextSeg should be
                     // combined into a single segment newSeg.
 
@@ -260,6 +269,10 @@ public class Diagram extends Observable implements Printable {
         @Override public void setLineStyle(StandardStroke lineStyle) {
             getItem().setStroke(lineStyle);
             propagateChange();
+        }
+
+        @Override public StandardStroke getLineStyle() {
+            return getItem().getStroke();
         }
 
         @Override public void setColor(Color color) {
@@ -523,6 +536,10 @@ public class Diagram extends Observable implements Printable {
             // unnecessary to me
         }
 
+        @Override public StandardStroke getLineStyle() {
+            return null;
+        }
+
         @Override public void setColor(Color color) {
             LabelInfo labelInfo = getItem();
             labelInfo.label.setColor(color);
@@ -624,6 +641,10 @@ public class Diagram extends Observable implements Printable {
 
         @Override public void setLineStyle(StandardStroke lineStyle) {
             // Nothing to do here
+        }
+
+        @Override public StandardStroke getLineStyle() {
+            return null;
         }
 
         @JsonIgnore @Override public Point2D.Double getLocation() {
@@ -765,6 +786,10 @@ public class Diagram extends Observable implements Printable {
         @Override public void setLineStyle(StandardStroke lineStyle) {
             getItem().stroke = lineStyle;
             propagateChange();
+        }
+
+        @Override public StandardStroke getLineStyle() {
+            return getItem().stroke;
         }
 
         @Override public DecorationHandle remove() {
@@ -938,6 +963,10 @@ public class Diagram extends Observable implements Printable {
 
         @Override public void setLineStyle(StandardStroke lineStyle) {
             // Nothing to do here
+        }
+
+        @Override public StandardStroke getLineStyle() {
+            return StandardStroke.SOLID;
         }
 
         @Override public DecorationHandle remove() {
@@ -1467,7 +1496,8 @@ public class Diagram extends Observable implements Printable {
         fields from which they came. */
     void setPathSegments(CuspFigure path, ArrayList<Double> segments) {
         int index = 0;
-        for (TieLine tie: tieLines()) {
+        for (Iterator<TieLine> it = tieLines().iterator(); it.hasNext();) {
+            TieLine tie = it.next();
             if (tie.innerEdge == path) {
                 tie.it1 = segments.get(index++);
                 tie.it2 = segments.get(index++);
@@ -1475,6 +1505,9 @@ public class Diagram extends Observable implements Printable {
             if (tie.outerEdge == path) {
                 tie.ot1 = segments.get(index++);
                 tie.ot2 = segments.get(index++);
+            }
+            if (tie.it1 == tie.it2 && tie.ot1 == tie.ot2) {
+                it.remove();
             }
         }
     }
@@ -2107,11 +2140,17 @@ public class Diagram extends Observable implements Printable {
         return diagramType != null && diagramType.isTernary();
     }
 
-    public void setDiagramComponent(Side side, String str) {
+    public void setDiagramComponent(Side side, String str) throws DuplicateComponentException {
         componentElements = null;
         LinearAxis axis = getAxis(side);
         if (str != null && str.isEmpty()) {
             str = null;
+        }
+
+        for (Side aSide: Side.values()) {
+            if (aSide != side && diagramComponents[aSide.ordinal()].equals(str)) {
+                throw new DuplicateComponentException();
+            }
         }
 
         diagramComponents[side.ordinal()] = str;
@@ -3258,7 +3297,10 @@ public class Diagram extends Observable implements Printable {
     }
 
     public void saveAsPDF(File file) {
-        Document doc = new Document(PageSize.LETTER);
+        saveAsPDF(new Document(PageSize.LETTER), file);
+    }
+
+    public void saveAsPDF(Document doc, File file) {
         PdfWriter writer = null;
         try {
             writer = PdfWriter.getInstance(doc, new FileOutputStream(file));
@@ -3277,7 +3319,7 @@ public class Diagram extends Observable implements Printable {
     public BufferedImage createImage(int width, int height) {
         Rescale r = new Rescale
             (pageBounds.width, 0, width,
-             pageBounds.height,0,height);
+             pageBounds.height, 0, height);
         BufferedImage im = new BufferedImage
             ((int) (r.width + 1e-6),
              (int) (r.height + 1e-6),
@@ -3517,9 +3559,15 @@ public class Diagram extends Observable implements Printable {
                 || oldName.toLowerCase().equals(side.toString().toLowerCase())) {
                 String c = guessComponent(side);
                 if (c != null) {
-                    setDiagramComponent(side, c);
-                    System.out.println("Assigned " + side + " = " + c);
-                } else {
+                    try {
+                        setDiagramComponent(side, c);
+                        System.out.println("Assigned " + side + " = " + c);
+                    } catch (DuplicateComponentException x) {
+                        c = null;
+                    }
+                }
+
+                if (c == null) {
                     res = false;
                     System.out.println
                         ("Could not determine " + side
