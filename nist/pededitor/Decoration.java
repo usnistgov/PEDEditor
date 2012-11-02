@@ -12,6 +12,7 @@ public interface Decoration {
     void setLineWidth(double lineWidth);
     double getLineWidth();
     void setLineStyle(StandardStroke lineStyle);
+    StandardStroke getLineStyle();
     Color getColor();
     void setColor(Color color);
     DecorationHandle[] getHandles();
