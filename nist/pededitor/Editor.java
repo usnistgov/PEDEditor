@@ -67,19 +67,17 @@ import org.codehaus.jackson.annotate.JsonIgnore;
 
 // TODO (optional) Allow marking of multiple objects.
 
+// TODO (optional) Think about ways to improve the apparent evenness
+// of tie lines. In general it is difficult to improve upon even
+// angular spacing; consider corner cases like retrograde motion of
+// the edge as viewed from the convergence point, or tie lines that
+// enclose angles exceeding 180 degrees.
+
+// TODO (optional) show the line style in the tangent window
+
 // TODO (optional, Will's suggestion, more or less) Maybe change
 // shift-P to act more like shift-L except by default grabbing beyond
 // the endpoint instead of exactly at the endpoint.
-
-// TODO (bug) Moving a label sometimes goes nuts and moves it to
-// completely the wrong place. There is a centering bug, so this is
-// probably related.
-
-// TODO (bug) medium darkness is like light for background
-
-// TODO (bug) Pressing arrow keys somehow ends up losing the grip on
-// the selected label. In other words, the selection moves the first
-// time, but not the second.
 
 // TODO Add checkbox to turn on/off editing capability.
 
@@ -491,7 +489,7 @@ public class Editor extends Diagram
 
     static String[] tieLineStepStrings =
     { "<html><div width=\"200 px\"><p>"
-      + "Use the 'L' or 'P' short-cut keys to select an outside "
+      + "Use the 'Q' or 'W' short-cut keys to select an outside "
       + "corner of the tie line "
       + "display region. Make sure to select not just the right "
       + "point, but also the specific curve that forms the "
@@ -683,6 +681,33 @@ public class Editor extends Diagram
     @Override public void removeTag(String tag) {
         super.removeTag(tag);
         editFrame.removeTag(tag);
+    }
+
+    public void setDefaultSettingsFromSelection() {
+        String errorTitle = "Cannot change settings";
+
+        if (selection == null) {
+            showError
+                ("You must select an item before choosing this operation.",
+                 errorTitle);
+            return;
+        }
+
+        Decoration dec = selection.getDecoration();
+        StandardStroke ls = dec.getLineStyle();
+        if (ls != null) {
+            lineStyle = ls;
+        }
+
+        color = thisOrBlack(dec.getColor());
+        double lw = dec.getLineWidth();
+        if (lw != 0) {
+            lineWidth = lw;
+        }
+        LabelDecoration ldec = getSelectedLabel();
+        if (ldec != null) {
+            getLabelDialog().setFontSize(ldec.getLabel().getScale());
+        }
     }
 
     public void resetSelectionToDefaultSettings() {
@@ -1509,7 +1534,7 @@ public class Editor extends Diagram
         for (PathAndT pat: tieLineCorners) {
             if (pat.path == path) {
                 tieLineDialog.setVisible(false);
-                tieLineCorners = null;
+                tieLineCorners = new ArrayList<>();
                 break;
             }
         }
@@ -1578,7 +1603,7 @@ public class Editor extends Diagram
 
         if (lineCnt <= 0) {
             tieLineDialog.setVisible(false);
-            tieLineCorners = null;
+            tieLineCorners = new ArrayList<>();
             return;
         }
 
@@ -2120,7 +2145,7 @@ public class Editor extends Diagram
     }
 
     public void addTieLine() {
-        tieLineCorners = new ArrayList<PathAndT>();
+        tieLineCorners = new ArrayList<>();
         tieLineDialog.getLabel().setText(tieLineStepStrings[0]);
         tieLineDialog.pack();
         tieLineDialog.setVisible(true);
@@ -2291,7 +2316,11 @@ public class Editor extends Diagram
         }
         str = str.trim();
 
-        setDiagramComponent(side, str.isEmpty() ? null : str);
+        try {
+            setDiagramComponent(side, str.isEmpty() ? null : str);
+        } catch (DuplicateComponentException x) {
+            showError("Duplicate component '" + str + "'", "Cannot change diagram component");
+        }
     }
 
     
