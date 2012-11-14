@@ -835,13 +835,13 @@ public class EditFrame extends JFrame
                 });
         }
 
-        mnCurve.add(new Action("Select previous vertex", KeyEvent.VK_P) {
+        mnCurve.add(new Action("Select previous vertex", KeyEvent.VK_P, "typed [") {
                 @Override public void actionPerformed(ActionEvent e) {
                     getParentEditor().cycleActiveVertex(-1);
                 }
             });
 
-        mnCurve.add(new Action("Select next vertex", KeyEvent.VK_N) {
+        mnCurve.add(new Action("Select next vertex", KeyEvent.VK_N, "typed ]") {
                 @Override public void actionPerformed(ActionEvent e) {
                     getParentEditor().cycleActiveVertex(+1);
                 }
