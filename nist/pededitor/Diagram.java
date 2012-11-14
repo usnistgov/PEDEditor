@@ -3351,10 +3351,13 @@ public class Diagram extends Observable implements Printable {
     }
 
     public void appendToPDF(Document doc, PdfWriter writer) {
-        try {
-            doc.add(new Paragraph(getProvisionalTitle()));
-        } catch (DocumentException e) {
-            e.printStackTrace();
+        String title = getTitle();
+        if (title != null) {
+            try {
+                doc.add(new Paragraph(title));
+            } catch (DocumentException e) {
+                e.printStackTrace();
+            }
         }
 
         float topMargin = (float) (72 * 0.5);
