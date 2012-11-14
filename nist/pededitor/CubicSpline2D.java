@@ -88,6 +88,11 @@ final public class CubicSpline2D implements BoundedParameterizable2D {
             Point2D p = points[i];
             if (i > 0) {
                 double d = p.distance(points[i-1]);
+                if (d == 0) {
+                    throw new IllegalArgumentException
+                        ("Successive points must not coincide (#" + (i-1) + " and #" + i
+                         + " at " + Duh.toString(points[i]) + ")");
+                }
                 t += d;
             }
 
