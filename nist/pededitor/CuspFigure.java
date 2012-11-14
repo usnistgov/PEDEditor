@@ -201,7 +201,7 @@ public class CuspFigure implements BoundedParameterizable2D, Decorated {
         return getFill().getPaint(getColor(), 1.0);
     }
 
-    @Override public String toString() {
+    public String toJSONString() {
         try {
             return getClass().getCanonicalName()
                 + (new ObjectMapper()).writeValueAsString(this);
@@ -209,6 +209,25 @@ public class CuspFigure implements BoundedParameterizable2D, Decorated {
             System.err.println(e);
             return getClass().getCanonicalName() + "[ERROR]";
         }
+    }
+
+    @Override public String toString() {
+        StringBuilder res = new StringBuilder
+            (getClass().getSimpleName() + "[\n");
+        if (getCurve() != null) {
+            res.append("  curve: " + getCurve() + "\n");
+        }
+        if (getFill() != null) {
+            res.append("  fill: " + getFill() + "\n");
+        }
+        res.append
+            ("  stroke: " + getStroke()
+             + " lineWidth: " + getLineWidth());
+        if (getColor() != null) {
+            res.append("  color: " + getColor());
+        }
+        res.append("]");
+        return res.toString();
     }
 
     @JsonIgnore public boolean isClosed() {
