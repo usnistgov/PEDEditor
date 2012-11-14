@@ -65,6 +65,24 @@ import Jama.Matrix;
 
 import org.codehaus.jackson.annotate.JsonIgnore;
 
+// TODO (optional) Modified tie-line rules so that endpoints are
+// scattered at even distances along curve edges. Terrell's
+// suggestion: these can be handled manually, since they're not
+// common.
+
+// TODO (bug) If someone adds points A, B, A, C to a curve, then
+// deletes point B, they are left with A, A, C, which represents an
+// illegal state. Either modify CubicSpline1D and/or CubicSpline2D to
+// handle repetitions of the same point or modify the duplicated point
+// to disappear when this happens.
+
+// TODO (optional) Steps to make region marking easier: create the
+// smallest region containing a point, and append part of one curve to
+// another curve. The first one is probably most helpful. The
+// procedure would be something like: find the first decoration that
+// intersects a ray pointing in a random direction... etc. It's not
+// trivial.
+
 // TODO (optional) Allow marking of multiple objects.
 
 // TODO (optional) Think about ways to improve the apparent evenness
@@ -4057,7 +4075,7 @@ public class Editor extends Diagram
     }
 
     public void addVertex() {
-        if (principalToStandardPage == null) {
+        if (principalToStandardPage == null || mprin == null) {
             return;
         }
         if (mouseIsStuckAtSelection() && getVertexHandle() != null) {
