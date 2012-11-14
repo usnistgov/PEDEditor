@@ -319,8 +319,7 @@ public class TieLine implements Decorated {
         stroke.getStroke().draw(g, getPath(), scale * lineWidth);
     }
 
-    @Override
-	public String toString() {
+    @Override public String toString() {
         return "TieLines[lineCnt=" + lineCnt + ", stroke = " + stroke
             + ", lineWidth = " + lineWidth
             + ", inner = " + innerEdge + ",  outer = " + outerEdge
