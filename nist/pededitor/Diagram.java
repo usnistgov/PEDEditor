@@ -196,6 +196,13 @@ public class Diagram extends Observable implements Printable {
 
                 path.remove(vertexNo);
                 setPathSegments(path, segments);
+                if (vertexNo > 0 && vertexNo < path.size()) {
+                    Point2D.Double previous = path.get(vertexNo - 1);
+                    Point2D.Double next = path.get(vertexNo);
+                    if (previous.equals(next)) {
+                        return (new VertexHandle(decoration, vertexNo)).remove();
+                    }
+                }
                 propagateChange();
                 return new VertexHandle(decoration, 
                                         (vertexNo > 0) ? (vertexNo - 1) : 0);
@@ -2147,9 +2154,11 @@ public class Diagram extends Observable implements Printable {
             str = null;
         }
 
-        for (Side aSide: Side.values()) {
-            if (aSide != side && diagramComponents[aSide.ordinal()].equals(str)) {
-                throw new DuplicateComponentException();
+        if (str != null) {
+            for (Side aSide: Side.values()) {
+                if (aSide != side && str.equals(diagramComponents[aSide.ordinal()])) {
+                    throw new DuplicateComponentException();
+                }
             }
         }
 
