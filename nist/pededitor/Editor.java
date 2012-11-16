@@ -1222,11 +1222,10 @@ public class Editor extends Diagram
             Color oldColor = csel.getColor();
             csel.setColor(toColor(ap.position));
 
-            int vertexNo = getVertexHandle().vertexNo
-                + (insertBeforeSelection ? 0 : 1);
-            path.getCurve().add(vertexNo, extraVertex, smoothed);
+            int vip = vertexInsertionPosition();
+            path.getCurve().add(vip, extraVertex, smoothed);
             csel.draw(g, scale);
-            path.remove(vertexNo);
+            path.remove(vip);
             csel.setColor(oldColor);
         }
 
@@ -1509,24 +1508,25 @@ public class Editor extends Diagram
         }
     }
 
-    /** Return true if point p is the same as either the currently
-        selected vertex or the vertex that immediately follows them.
-        The reason to care is that SplinePolyline barfs if you pass
-        the same vertex twice in a row. */
+    /** Return true if, were point p inserted into the currently
+        selected curve at the current position, it would be the same
+        as the point preceding or following it. SplinePolyline barfs
+        on smoothing between a series of points where the same point
+        appears twice in a row, so inserting duplicate points is
+        bad. */
     boolean isDuplicate(Point2D p) {
         VertexHandle vhand = getVertexHandle();
         if (vhand == null) {
             return false;
         }
-        if (vhand.vertexNo == -1 || vhand.vertexNo > vhand.getItem().size()) {
-            System.out.println("vhand = " + vhand);
-        }
-        if (vhand.getLocation().equals(p)) {
-            return true;
-        }
-
         CuspFigure path = vhand.getItem();
-        return vhand.vertexNo < path.size() - 1 && p.equals(path.get(vhand.vertexNo + 1));
+        int vip = vertexInsertionPosition();
+        return (vip > 0 && principalCoordinatesMatch(p, path.get(vip-1), 1e-9))
+            || (vip < path.size() && principalCoordinatesMatch(p, path.get(vip), 1e-9));
+    }
+
+    int vertexInsertionPosition() {
+        return getVertexHandle().vertexNo + (insertBeforeSelection ? 0 : 1);
     }
 
     /** Add a point to getActiveCurve(). */
@@ -1536,8 +1536,7 @@ public class Editor extends Diagram
         }
         CuspFigure path = getCurveForAppend();
         VertexHandle vhand = getVertexHandle();
-        int addPos = vhand.vertexNo + (insertBeforeSelection ? -1 : 0 );
-        add(path, addPos, point, smoothed);
+        add(path, vertexInsertionPosition(), point, smoothed);
         if (!insertBeforeSelection) {
             ++vhand.vertexNo;
         }
