@@ -1329,10 +1329,9 @@ public class Diagram extends Observable implements Printable {
         return page1.distanceSq(page2) < 1e-12;
     }
 
-    /** Return true if p1 and p2 are equal to within reasonable
-        limits, where "reasonable limits" means the distance between
-        their transformations to the standard page is less than
-        1e-6. */
+    /** Return true if the distance between p1 and p2's
+        transformations to the standard page is less than
+        threshold. */
     public boolean principalCoordinatesMatch(Point2D p1, Point2D p2, double threshold) {
         Point2D.Double page1 = principalToStandardPage.transform(p1);
         Point2D.Double page2 = principalToStandardPage.transform(p2);
