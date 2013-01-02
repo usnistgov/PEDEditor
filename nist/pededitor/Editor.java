@@ -52,7 +52,6 @@ import java.text.NumberFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
-import java.util.Formatter;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Observable;
@@ -3055,6 +3054,9 @@ public class Editor extends Diagram
                             addTernaryBottomRuler(1.0 - bottomLength, 1.0);
                             addTernaryRightRuler(0.0, rightLength);
                             break;
+
+                        default:
+                            break;
                         }
 
                         if (tracing) {
@@ -4320,12 +4322,6 @@ public class Editor extends Diagram
     }
 
     EditPane getEditPane() { return editFrame.getEditPane(); }
-
-    static String format(double d, int decimalPoints) {
-        Formatter f = new Formatter();
-        f.format("%." + decimalPoints + "f", d);
-        return f.toString();
-    }
 
     /** Compress the brightness into the upper "frac" portion of the range
         0..255. */

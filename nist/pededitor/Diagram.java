@@ -1441,8 +1441,8 @@ public class Diagram extends Observable implements Printable {
         }
     }
 
-    /** Add a new vertex to path, located at point, and inserted just
-        after vertex vertexNo. */
+    /** Add a new vertex to path, located at point, and inserted as
+        vertex vertexNo. */
     public void add(CuspFigure path, int vertexNo,
                     Point2D.Double point, boolean smoothed) {
         if (path.size() == 0) {
@@ -1454,15 +1454,15 @@ public class Diagram extends Observable implements Printable {
         ArrayList<Double> segments = getPathSegments(path);
         int segCnt = path.getSegmentCnt();
 
-        double dist1 = (vertexNo == -1) ? 0
-            : point.distance(path.get(vertexNo));
+        double dist1 = (vertexNo == 0) ? 0
+            : point.distance(path.get(vertexNo-1));
         double dist2 = (vertexNo == segCnt) ? 0
-            : point.distance(path.get(vertexNo + 1));
+            : point.distance(path.get(vertexNo));
 
-        // For old segment vertexNo, map the t range [0, splitT] to
-        // new segment vertexNo range [0,1], and map the t range
-        // (splitT, 1] to new segment vertexNo+1 range [0,1]. If
-        // vertexNo == segCnt then segment vertexNo never existed
+        // For old segment vertexNo-1, map the t range [0, splitT] to
+        // new segment vertexNo-1 range [0,1], and map the t range
+        // (splitT, 1] to new segment vertexNo range [0,1]. If
+        // vertexNo == segCnt-1 then segment vertexNo-1 never existed
         // before, so it doesn't matter what splitT value we use.
         double splitT = dist1 / (dist1 + dist2);
 
@@ -1470,9 +1470,9 @@ public class Diagram extends Observable implements Printable {
             double t = segments.get(i);
             int segment = (int) Math.floor(t);
             double frac = t - segment;
-            if (segment > vertexNo) {
+            if (segment >= vertexNo) {
                 ++t;
-            } else if (segment == vertexNo) {
+            } else if (segment == vertexNo-1) {
                 if (frac <= splitT) {
                     t = segment + frac / splitT;
                 } else {
@@ -1482,7 +1482,7 @@ public class Diagram extends Observable implements Printable {
             segments.set(i, t);
         }
 
-        path.getCurve().add(vertexNo+1, point, smoothed);
+        path.getCurve().add(vertexNo, point, smoothed);
         setPathSegments(path, segments);
         propagateChange();
     }
@@ -2249,6 +2249,8 @@ public class Diagram extends Observable implements Printable {
             return getYAxis();
         case LEFT:
             return getLeftAxis();
+        default:
+            break;
         }
         return null;
     }

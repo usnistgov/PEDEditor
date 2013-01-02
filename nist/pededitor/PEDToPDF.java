@@ -25,7 +25,8 @@ import com.itextpdf.text.pdf.PdfReader;
 
 /** Wrapper class for conversion of PED files to PDF files. */
 public class PEDToPDF {
-    public final static String PED_DIR = "/eb/ped";
+    public final static String PED_DIR = "/ebdata/ped";
+    public final static String PED_DIR2 = "/ebdata/pedw";
 
     /** If the base filename contains a dot, then remove the last dot
         and everything after it. Otherwise, return the entire string.
@@ -60,7 +61,7 @@ public class PEDToPDF {
     }
 
     /** Return an unsorted list of all PED files in the given directory. */
-    static ArrayList<String> getInputFilenames(String dir)
+    static ArrayList<String> getInputFilenames0(String dir)
         throws DirectoryIteratorException, IOException {
         PathMatcher m = FileSystems.getDefault().getPathMatcher
             ("glob:**.ped");
@@ -78,7 +79,22 @@ public class PEDToPDF {
             // In this snippet, it can only be thrown by newDirectoryStream.
             System.err.println(x);
         }
+        return res;
+    }
+
+    /** Return an unsorted list of all PED files in the given directory. */
+    static ArrayList<String> getInputFilenames(String dir)
+        throws DirectoryIteratorException, IOException {
+        ArrayList<String> res = getInputFilenames0(dir);
         Collections.sort(res, new MixedIntegerStringComparator());
+        return res;
+    }
+
+    /** Return an unsorted list of all PED files in the given directory. */
+    static ArrayList<String> getInputFilenames1(String dir)
+        throws DirectoryIteratorException, IOException {
+        ArrayList<String> res = getInputFilenames0(dir);
+        Collections.sort(res);
         return res;
     }
 
@@ -103,8 +119,8 @@ public class PEDToPDF {
                 if (doc != null) {
                     doc.close();
                 }
-                ofn = (diagramsPerDocument == 0) ? "/eb/pdf/combined.pdf"
-                    : String.format("/eb/pdf/combined%04d.pdf", outFileCnt);
+                ofn = (diagramsPerDocument == 0) ? "/ebdata/pdf/combined.pdf"
+                    : String.format("/ebdata/pdf/combined%04d.pdf", outFileCnt);
                 System.out.println("Starting " + ofn);
                 doc = new Document(PageSize.LETTER);
                 try {
@@ -164,6 +180,37 @@ public class PEDToPDF {
         }
     }
 
+    /** Like convertAll, but doesn't create PDFs, just fixes the files
+        in /ebdata/pedw and places the output in /ebdata/pedw2. */
+    public static void convertAll2() {
+        ArrayList<String> filenames;
+
+        try {
+            filenames = getInputFilenames1(PED_DIR2);
+        } catch (IOException | DirectoryIteratorException x) {
+            // IOException can never be thrown by the iteration.
+            // In this snippet, it can only be thrown by newDirectoryStream.
+            System.err.println(x);
+            return;
+        }
+
+        for (String filename: filenames) {
+            try {
+                Diagram d = loadAndFix(filename, true);
+                int pedpos = filename.indexOf("\\pedw\\");
+                String pedout = filename.substring(0, pedpos) + "\\pedw2\\"
+                    + filename.substring(pedpos + 6);
+                System.out.println(filename + " -> " + pedout);
+                d.saveAsPED(Paths.get(pedout));
+            } catch (IOException x) {
+                // IOException can never be thrown by the iteration.
+                // In this snippet, it can only be thrown by newDirectoryStream.
+                System.err.println(x);
+            }
+        }
+        System.out.println("Batch conversion complete.");
+    }
+
     /** Convert all files under PED_DIR to PDFs. Also fix the files
         and place the fixed files in the ped2 directory. */
     public static void fixAll(String inDir, String outDir) {
@@ -180,7 +227,7 @@ public class PEDToPDF {
         }
     }
 
-    public static void main(String[] args) {
+    public static void oldMain(String[] args) {
         if (args.length == 2) {
             String ifn = args[0];
             String ofn = args[1];
@@ -195,5 +242,13 @@ public class PEDToPDF {
         } else {
             System.err.println("Expected 0 or 2 arguments");
         }
+    }
+
+    public static void alternateMain(String[] args) {
+        convertAll2();
+    }
+
+    public static void main(String[] args) {
+        oldMain(args);
     }
 }
