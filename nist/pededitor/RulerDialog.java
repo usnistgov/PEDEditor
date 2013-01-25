@@ -136,7 +136,9 @@ public class RulerDialog extends JDialog {
         cpgb.addWest(textAngle);
         cpgb.endRowWith(new JLabel("degrees"));
 
-        JLabel tickPaddingLabel = new JLabel("Extra padding between ticks:");
+        JLabel tickPaddingLabel = new JLabel
+            ("<html>Minimum white space between tick<br>"
+             + "labels, in multiples of letter height:");
         tickPaddingLabel.setLabelFor(tickPadding);
         cpgb.addWest(tickPaddingLabel);
         cpgb.endRowWith(tickPadding);
