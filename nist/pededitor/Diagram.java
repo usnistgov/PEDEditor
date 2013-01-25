@@ -2854,11 +2854,14 @@ public class Diagram extends Observable implements Printable {
 
     public void setTitle(String title) {
         put("title", title);
-        propagateChange();
     }
 
     @JsonIgnore public String getTitle() {
         return get("title");
+    }
+
+    public String removeTitle() {
+        return removeKey("title");
     }
 
     /** Like getTitle, but make up a title if no official title has been assigned. */
@@ -2943,6 +2946,15 @@ public class Diagram extends Observable implements Printable {
     public void setOriginalFilename(String filename) {
         originalFilename = filename;
         relativizeOriginalFilename();
+        propagateChange();
+    }
+
+    /** Remove the association between this diagram and the original
+        image, including the originalToPrincipal transform. */
+    public void detachOriginalImage() {
+        originalToPrincipal = null;
+        principalToOriginal = null;
+        setOriginalFilename(null);
         propagateChange();
     }
 
@@ -3920,13 +3932,27 @@ public class Diagram extends Observable implements Printable {
             }
         }
 
+        // The formula subscripts should be the numerators of the mole
+        // fractions when expressed using the common denominator,
+        // divided by the greatest common factor of those numerators.
+
+        long gcf = 0;
+        for (int i = 0; i < eltCnt; ++i) {
+            ContinuedFraction f = fracs.get(i);
+            if (f.numerator == 0) {
+                continue;
+            }
+            long num = f.numerator * (lcd / f.denominator);
+            gcf = (i == 0) ? num : ContinuedFraction.gcf(gcf, num);
+        }
+
         StringBuilder res = new StringBuilder();
         for (int i = 0; i < eltCnt; ++i) {
             ContinuedFraction f = fracs.get(i);
-            long num = f.numerator * (lcd / f.denominator);
-            if (num == 0) {
+            if (f.numerator == 0) {
                 continue;
             }
+            long num = f.numerator * (lcd / f.denominator) / gcf;
             res.append(diagramElements[i]);
             if (num > 1) {
                 res.append(num);
@@ -4360,6 +4386,8 @@ public class Diagram extends Observable implements Printable {
         r.textAngle = 0;
         r.tickLeft = true;
         r.labelAnchor = LinearRuler.LabelAnchor.RIGHT;
+        r.suppressStartLabel = diagramType != DiagramType.TERNARY_RIGHT;
+        r.suppressEndLabel = diagramType != DiagramType.TERNARY_LEFT;
 
         r.startPoint = new Point2D.Double(start, 0.0);
         r.endPoint = new Point2D.Double(end, 0);
@@ -4386,7 +4414,8 @@ public class Diagram extends Observable implements Printable {
             || diagramType == DiagramType.TERNARY_TOP;
         if (showLabels) {
             r.labelAnchor = LinearRuler.LabelAnchor.LEFT;
-            r.suppressEndLabel = diagramType != DiagramType.TERNARY_RIGHT;
+            r.suppressStartLabel = diagramType != DiagramType.TERNARY_TOP;
+            r.suppressEndLabel = diagramType != DiagramType.TERNARY_LEFT;
         } else {
             r.labelAnchor = LinearRuler.LabelAnchor.NONE;
         }
@@ -4399,10 +4428,8 @@ public class Diagram extends Observable implements Printable {
         // redundant with the tick label for the left end of the
         // bottom ruler unless this is a top partial ternary
         // diagram.
-        r.suppressStartLabel = (diagramType != DiagramType.TERNARY_TOP);
         r.suppressStartTick = (diagramType != DiagramType.TERNARY_TOP)
             || (start < 1e-6);
-        r.suppressEndLabel = (diagramType != DiagramType.TERNARY_TOP);
         r.suppressEndTick = (diagramType != DiagramType.TERNARY_LEFT)
             || (end > 1 - 1e-6);
         r.axis = getYAxis();
@@ -4421,6 +4448,7 @@ public class Diagram extends Observable implements Printable {
             || diagramType == DiagramType.TERNARY_TOP;
         if (showLabels) {
             r.labelAnchor = LinearRuler.LabelAnchor.RIGHT;
+            r.suppressStartLabel = diagramType != DiagramType.TERNARY_TOP;
             r.suppressEndLabel = diagramType != DiagramType.TERNARY_RIGHT;
         } else {
             r.labelAnchor = LinearRuler.LabelAnchor.NONE;
@@ -4428,7 +4456,7 @@ public class Diagram extends Observable implements Printable {
         r.suppressStartTick = diagramType != DiagramType.TERNARY_TOP
             || (start < 1e-6);
         r.suppressEndTick = diagramType != DiagramType.TERNARY_RIGHT
-            || (start > 1-1e-6);
+            || (end > 1-1e-6);
 
         r.startPoint = new Point2D.Double(1 - start, start);
         r.endPoint = new Point2D.Double(1 - end, end);
