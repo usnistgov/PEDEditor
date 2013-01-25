@@ -38,6 +38,7 @@ public class EditFrame extends JFrame
     protected JRadioButtonMenuItem blinkBackgroundImage;
     protected JRadioButtonMenuItem noBackgroundImage;
     protected Action setAspectRatio;
+
     protected JSeparator mnTagsSeparator = new JSeparator();
     protected JMenuItem mnRemoveTag = new JMenuItem("Delete");
     protected JMenu mnTags = new JMenu("Tags");
@@ -84,6 +85,16 @@ public class EditFrame extends JFrame
             blinkBackgroundImage.setSelected(true);
             break;
         }
+    }
+
+    /** setBackgroundTypeEnabled(false) disables all of the background
+        type menu items; (true) re-enables them. */
+    public void setBackgroundTypeEnabled(boolean enabled) {
+        noBackgroundImage.getAction().setEnabled(enabled);
+        lightGrayBackgroundImage.getAction().setEnabled(enabled);
+        darkGrayBackgroundImage.getAction().setEnabled(enabled);
+        blackBackgroundImage.getAction().setEnabled(enabled);
+        blinkBackgroundImage.getAction().setEnabled(enabled);
     }
 
     protected Action setLeftComponent = new Action
@@ -952,7 +963,7 @@ public class EditFrame extends JFrame
             for (Side side: Side.values()) {
                 mnMargins.add(new MarginAction(side));
             }
-            mnMargins.add(new Action("Compute", KeyEvent.VK_C) {
+            mnMargins.add(new Action("Auto-fit", KeyEvent.VK_A) {
                     @Override public void actionPerformed(ActionEvent e) {
                         getParentEditor().computeMargins();
                     }
@@ -994,6 +1005,12 @@ public class EditFrame extends JFrame
         }
 
         if (editable) {
+            mnProperties.add(new Action("Title", KeyEvent.VK_A) {
+                    @Override public void actionPerformed(ActionEvent e) {
+                        getParentEditor().setTitle();
+                    }
+                });
+
             mnVariables.setMnemonic(KeyEvent.VK_V);
             mnProperties.add(mnVariables);
             mnVariables.add(new Action("Add", KeyEvent.VK_A) {
@@ -1079,13 +1096,11 @@ public class EditFrame extends JFrame
                  KeyStroke.getKeyStroke("control H"));
             mnBackgroundImage.add(noBackgroundImage);
             mnBackgroundImage.add
-                (new JRadioButtonMenuItem
-                 (new Action("Detach", KeyEvent.VK_E) {
-                         @Override public void actionPerformed(ActionEvent e) {
-                             getParentEditor().setOriginalFilename(null);
-                             getParentEditor().revalidateZoomFrame();
-                         }
-                     }));
+                (new Action("Detach", KeyEvent.VK_E) {
+                        @Override public void actionPerformed(ActionEvent e) {
+                             getParentEditor().detachOriginalImage();
+                        }
+                    });
             lightGrayBackgroundImage.setSelected(true);
             mnView.add(mnBackgroundImage);
         }
