@@ -64,23 +64,23 @@ import Jama.Matrix;
 
 import org.codehaus.jackson.annotate.JsonIgnore;
 
+// TODO: Is there a fonts-based solution to improve nested subscript
+// rendering? The problem is that the subscripts don't sit below their
+// baselines.
+
+// TODO (optional): "Margin size as a fraction of the core diagram
+// height", for example, perhaps should be replaced by something like
+// "Minimum visible page X value", which is probably easier to
+// understand. This item's importance is reduced because the margins
+// can be expanded using Enter and choosing an off-screen value.
+
 // TODO (optional) Modified tie-line rules so that endpoints are
 // scattered at even distances along curve edges. Terrell's
 // suggestion: these can be handled manually, since they're not
 // common.
 
-// TODO (bug) If someone adds points A, B, A, C to a curve, then
-// deletes point B, they are left with A, A, C, which represents an
-// illegal state. Either modify CubicSpline1D and/or CubicSpline2D to
-// handle repetitions of the same point or modify the duplicated point
-// to disappear when this happens.
-
-// TODO (optional) Steps to make region marking easier: create the
-// smallest region containing a point, and append part of one curve to
-// another curve. The first one is probably most helpful. The
-// procedure would be something like: find the first decoration that
-// intersects a ray pointing in a random direction... etc. It's not
-// trivial.
+// TODO (optional) Option to identify the smallest region containing a
+// point. Unfortunately the math is of medium difficulty.
 
 // TODO (optional) Allow marking of multiple objects.
 
@@ -348,6 +348,7 @@ public class Editor extends Diagram
                     saveAsPED(file, false);
                     System.out.println("Saved '" + file + "'");
                     autosaveFile = file;
+                    majorSaveNeeded = true;
                 } catch (IOException x) {
                     System.err.println("Could not save '" + file + "': " + x);
                 }
@@ -452,6 +453,7 @@ public class Editor extends Diagram
     protected transient BufferedImage originalImage;
     protected transient boolean editorIsPacked = false;
     protected transient boolean smoothed = false;
+    protected transient boolean majorSaveNeeded = false;
 
     /** The item (vertex, label, etc.) that is selected, or null if nothing is. */
     protected transient DecorationHandle selection;
@@ -595,6 +597,7 @@ public class Editor extends Diagram
         tieLineCorners = new ArrayList<>();
         originalImage = null;
         triedToLoadOriginalImage = false;
+        majorSaveNeeded = false;
     }
 
     @Override void clear() {
@@ -1047,6 +1050,7 @@ public class Editor extends Diagram
         } else {
             selection.move(dest);
         }
+        propagateChange();
     }
 
     public void removeSelection() {
@@ -2262,7 +2266,7 @@ public class Editor extends Diagram
         }
 
         String[] columnNames =
-            {"Old " + axis.name + " value", "New " + axis.name + " value"};
+            {"Current " + axis.name + " value", "New " + axis.name + " value"};
 
         Object[][] data;
 
@@ -2720,6 +2724,7 @@ public class Editor extends Diagram
         super.setOriginalFilename(filename);
         originalImage = null;
         triedToLoadOriginalImage = false;
+        revalidateZoomFrame();
     }
 
     /** Launch the application. */
@@ -2764,6 +2769,7 @@ public class Editor extends Diagram
             return;
         }
 
+        majorSaveNeeded = false;
         setSaveNeeded(false);
         try (UpdateSuppressor us = new UpdateSuppressor()) {
                 DiagramType temp = (new DiagramDialog(null)).showModal();
@@ -3212,7 +3218,7 @@ public class Editor extends Diagram
         @return false if the user changes their mind and the diagram
         should not be closed. */
     boolean verifyCloseDiagram(Object[] options) {
-        if (!saveNeeded) {
+        if (!(saveNeeded || majorSaveNeeded)) {
             return true;
         }
 
@@ -3445,6 +3451,7 @@ public class Editor extends Diagram
     void revalidateZoomFrame() {
         BufferedImage im = getOriginalImage();
         if (im != null) {
+            editFrame.setBackgroundTypeEnabled(true);
             initializeZoomFrame();
             zoomFrame.setImage(im);
             initializeCrosshairs();
@@ -3458,7 +3465,12 @@ public class Editor extends Diagram
             if (zoomFrame != null) {
                 zoomFrame.setVisible(false);
             }
-            editFrame.mnBackgroundImage.setEnabled(false);
+            if (getOriginalFilename() == null) {
+                editFrame.mnBackgroundImage.setEnabled(false);
+            } else {
+                editFrame.setBackgroundTypeEnabled(false);
+                editFrame.mnBackgroundImage.setEnabled(true);
+            }
         }
     }
 
@@ -3589,6 +3601,13 @@ public class Editor extends Diagram
         cropFrame.setVisible(true);
     }
 
+    /** @return A File corresponding to getFilename() but with the
+        extension replaced by ".ext". */
+    public File defaultFile(String ext) {
+        String s = getFilename();
+        return (s == null) ? null : new File(removeExtension(s) + "." + ext);
+    }
+
     /** @return a File if the user selected one, or null otherwise.
 
         @param ext the extension to use with this file ("pdf" for
@@ -3597,8 +3616,12 @@ public class Editor extends Diagram
         String dir = getCurrentDirectory();
         JFileChooser chooser = new JFileChooser();
         chooser.setDialogTitle("Save as " + ext.toUpperCase());
+        File initial = defaultFile(ext);
         if (dir != null) {
             chooser.setCurrentDirectory(new File(dir));
+        }
+        if (initial != null) {
+            chooser.setSelectedFile(initial);
         }
         chooser.setFileFilter
             (new FileNameExtensionFilter(ext.toUpperCase(), ext));
@@ -3650,8 +3673,19 @@ public class Editor extends Diagram
         String separator = System.getProperty("file.separator");
         int lastSeparatorIndex = s.lastIndexOf(separator);
         int extensionIndex = s.lastIndexOf(".");
-        return (extensionIndex <= lastSeparatorIndex) ? null
+        return (extensionIndex <= lastSeparatorIndex + 1) ? null
             : s.substring(extensionIndex + 1).toLowerCase();
+    }
+
+    /** If the base filename contains a dot, then remove the last dot
+        and everything after it. Otherwise, return the entire string.
+        Modified from coobird's suggestion on Stack Overflow. */
+    public static String removeExtension(String s) {
+        String separator = System.getProperty("file.separator");
+        int lastSeparatorIndex = s.lastIndexOf(separator);
+        int extensionIndex = s.lastIndexOf(".");
+        return (extensionIndex <= lastSeparatorIndex + 1) ? s
+            : s.substring(0, extensionIndex);
     }
 
     /** Invoked from the EditFrame menu */
@@ -3718,6 +3752,7 @@ public class Editor extends Diagram
                 autosaveFile = null;
             }
         }
+        majorSaveNeeded = false;
     }
 
     /** Invoked from the EditFrame menu */
@@ -4090,6 +4125,18 @@ public class Editor extends Diagram
         diagram is read-only. */
     @JsonIgnore public boolean isEditable() {
         return true;
+    }
+
+    public void setTitle() {
+        String str = (String) JOptionPane.showInputDialog
+            (editFrame, "Title:", getTitle());
+        if (str != null) {
+            if ("".equals(str)) {
+                removeTitle();
+            } else {
+                setTitle(str);
+            }
+        }
     }
 
     /** @return true if the diagram is currently being traced from
@@ -4578,10 +4625,6 @@ public class Editor extends Diagram
             editFrame.setFontName(s);
         }
         return res;
-    }
-
-    public void setFillStyle(StandardFill fill) {
-        // TODO Auto-generated method stub
     }
 }
 
