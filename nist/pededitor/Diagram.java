@@ -3794,11 +3794,11 @@ public class Diagram extends Observable implements Printable {
     /** Apply the given transform to all coordinates defined in
         principal coordinates, but apply corresponding and inverse
         transformations to all transforms to and from principal
-        coordinates, with one exception: leave the x- and y-axes
-        alone. So the diagram looks the same as before except for (1)
-        principal component axis ticks and (2) principal coordinate
-        values as indicated in the status bar. For example, one might
-        use this method to convert a binary diagram's y-axis from one
+        coordinates, with one exception: leave the x-, y-, and (for
+        ternary diagrams) left axis alone. So the diagram looks the
+        same as before except for axis ticks and status bar coordinate
+        values for those two or three axes. For example, one might use
+        this method to convert a binary diagram's y-axis from one
         temperature scale to another, or from the default range 0-1 to
         the range you really want. */
     public void invisiblyTransformPrincipalCoordinates(AffineTransform trans) {
@@ -3831,7 +3831,7 @@ public class Diagram extends Observable implements Printable {
 
         // Convert all angles from page to the new principal coordinates.
         for (LinearAxis axis: axes) {
-            if (isXAxis(axis) || isYAxis(axis)) {
+            if (isXAxis(axis) || isYAxis(axis) || isLeftAxis(axis)) {
                 continue;
             }
             axis.concatenate(itrans);
@@ -3863,7 +3863,9 @@ public class Diagram extends Observable implements Printable {
     /** If the diagram has a full set of diagram components defined as
         compounds with integer subscripts (that is, the components sum
         to 1), and point "prin" nearly equals a round fraction, then
-        return the compound that "prin" represents. */
+        return the compound that "prin" represents. If it doesn't
+        nearly equal a round fraction, the express the compound using
+        floating point subscripts. */
     public String molePercentToCompound(Point2D.Double prin) {
         if (prin == null) {
             return null;
@@ -3918,44 +3920,63 @@ public class Diagram extends Observable implements Printable {
 
         ArrayList<ContinuedFraction> fracs = new ArrayList<>(eltCnt);
 
+        boolean roundNumbers = true;
         long lcd = 1;
         for (double d: quantities) {
             ContinuedFraction f = approximateFraction(d);
             if (f == null) {
-                return null;
+                roundNumbers = false;
+                break;
             }
             fracs.add(f);
             try {
                 lcd = ContinuedFraction.lcm(lcd, f.denominator);
             } catch (OverflowException e) {
-                return null;
+                roundNumbers = false;
+                break;
             }
-        }
-
-        // The formula subscripts should be the numerators of the mole
-        // fractions when expressed using the common denominator,
-        // divided by the greatest common factor of those numerators.
-
-        long gcf = 0;
-        for (int i = 0; i < eltCnt; ++i) {
-            ContinuedFraction f = fracs.get(i);
-            if (f.numerator == 0) {
-                continue;
-            }
-            long num = f.numerator * (lcd / f.denominator);
-            gcf = (i == 0) ? num : ContinuedFraction.gcf(gcf, num);
         }
 
         StringBuilder res = new StringBuilder();
-        for (int i = 0; i < eltCnt; ++i) {
-            ContinuedFraction f = fracs.get(i);
-            if (f.numerator == 0) {
-                continue;
+        if (roundNumbers) {
+            // The formula subscripts should be the numerators of the mole
+            // fractions when expressed using the common denominator,
+            // divided by the greatest common factor of those numerators.
+
+            long gcf = 0;
+            for (int i = 0; i < eltCnt; ++i) {
+                ContinuedFraction f = fracs.get(i);
+                if (f.numerator == 0) {
+                    continue;
+                }
+                long num = f.numerator * (lcd / f.denominator);
+                gcf = (i == 0) ? num : ContinuedFraction.gcf(gcf, num);
             }
-            long num = f.numerator * (lcd / f.denominator) / gcf;
-            res.append(diagramElements[i]);
-            if (num > 1) {
-                res.append(num);
+
+            for (int i = 0; i < eltCnt; ++i) {
+                ContinuedFraction f = fracs.get(i);
+                if (f.numerator == 0) {
+                    continue;
+                }
+                long num = f.numerator * (lcd / f.denominator) / gcf;
+                res.append(diagramElements[i]);
+                if (num > 1) {
+                    res.append(num);
+                }
+            }
+        } else {
+            // Express the formula in floating point.
+            double denom = 0;
+            for (double q: quantities) {
+                denom += q;
+            }
+            for (int i = 0; i < eltCnt; ++i) {
+                double q = quantities[i];
+                if (q == 0) {
+                    continue;
+                }
+                res.append(diagramElements[i]);
+                res.append(String.format("%.3f", q/denom));
             }
         }
         return res.toString();
