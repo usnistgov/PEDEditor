@@ -23,7 +23,9 @@ import java.awt.Robot;
 import java.awt.Shape;
 import java.awt.Stroke;
 import java.awt.Toolkit;
+import java.awt.datatransfer.DataFlavor;
 import java.awt.datatransfer.StringSelection;
+import java.awt.datatransfer.UnsupportedFlavorException;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.MouseEvent;
@@ -63,6 +65,13 @@ import java.util.prefs.Preferences;
 import Jama.Matrix;
 
 import org.codehaus.jackson.annotate.JsonIgnore;
+
+// TODO: Unify the ternary diagram interfaces to faciliate creation of
+// partial ternary diagrams, using a two-step process (identify the 3
+// corners of the system, then the 3 corners of the partial). Craig
+// and Will have identified major problems with the existing process
+// (for example, rescaling the X or Y axis causes the 3 components to
+// no longer sum to 1, which is usually not the intent).
 
 // TODO: Is there a fonts-based solution to improve nested subscript
 // rendering? The problem is that the subscripts don't sit below their
@@ -1401,23 +1410,30 @@ public class Editor extends Diagram
         // g.setColor(Color.GREEN);
         // highlightKeyPoints(g, scale);
 
-        if (getVertexHandle() == null && isShiftDown) {
-            AutoPositionHolder ap = new AutoPositionHolder();
-            Point2D.Double autop = getAutoPosition(ap);
+        if (getVertexHandle() == null) {
             Point2D.Double gmp = getMousePosition();
-            if (autop != null && gmp != null
-                && !principalCoordinatesMatch(autop, gmp)) {
-                // Paint a cross at autop.
-                Point2D.Double vPage = principalToScaledPage(scale)
-                    .transform(autop);
-                int r = 7;
-                g.setColor(toColor(ap.position));
-                int ix = (int) vPage.x;
-                int iy = (int) vPage.y;
-                g.drawLine(ix, iy - r, ix, iy + r);
-                g.drawLine(ix -r, iy, ix+r, iy);
+            g.setColor(new Color(0xb0c000));
+            if (isShiftDown) {
+                AutoPositionHolder ap = new AutoPositionHolder();
+                Point2D.Double autop = getAutoPosition(ap);
+                if (autop != null && gmp != null
+                    && !principalCoordinatesMatch(autop, gmp)) {
+                    paintCross(g, autop, scale);
+                }
+            } else if (mouseIsStuck) {
+                paintCross(g, mprin, scale);
             }
         }
+    }
+
+    /** Paint a cross at principal coordinate p. */
+    void paintCross(Graphics g, Point2D.Double p, double scale) {
+        Point2D.Double vPage = principalToScaledPage(scale).transform(p);
+        int r = 9;
+        int ix = (int) vPage.x;
+        int iy = (int) vPage.y;
+        g.drawLine(ix, iy - r, ix, iy + r);
+        g.drawLine(ix -r, iy, ix+r, iy);
     }
 
     /** @return a curve to which a vertex can be appended or inserted.
@@ -1945,13 +1961,8 @@ public class Editor extends Diagram
             }
         }
 
-        try {
-            StringSelection sel = new StringSelection(originalCompound);
-            Toolkit.getDefaultToolkit().getSystemClipboard().setContents
-                (sel, sel);
-        } catch (HeadlessException e) {
-            // Can't set the clipboard? Don't worry about it.
-        }
+        // Can't set the clipboard? Don't worry about it.
+        copyToClipboard(originalCompound, true);
 
         // Map from elements to indexes into diagramElements.
         String[] diagramElements = getDiagramElements();
@@ -2110,7 +2121,7 @@ public class Editor extends Diagram
             } else {
                 showError
                     ("You must first select a curve or label whose\ncoordinates "
-                     + "are to be copied.", "Cannot perform operation");
+                     + "are to be copied.");
                 return;
             }
         }
@@ -2120,48 +2131,115 @@ public class Editor extends Diagram
             sb.append(point.x + ", " + point.y + "\n");
         }
 
-        String res = sb.toString();
-        
+        copyToClipboard(sb.toString(), false);
+    }
+
+    public void copyCoordinatesFromClipboard() {
+        copyCoordinatesFromString(clipboardContents());
+    }
+
+    public static Point2D.Double[] stringToPoints(String pointsStr)
+    	throws NumberFormatException {
+        String[] lines = pointsStr.split("[\r\n]+");
+        Point2D.Double[] res = new Point2D.Double[lines.length];
+        for (int i = 0; i < lines.length; ++i) {
+            String line = lines[i];
+            String[] xAndYStr = line.split(",");
+            if (xAndYStr.length != 2) {
+                throw new NumberFormatException
+                    ("Line '" + line + "' does not have format 'x,y'");
+            }
+            double[] xAndY = {0.0, 0.0};
+            for (int j = 0; j < 2; ++j) {
+                String s = xAndYStr[j];
+                xAndY[j] = ContinuedFraction.parseDouble(s);
+            }
+            res[i] = new Point2D.Double(xAndY[0], xAndY[1]);
+        }
+        return res;
+    }
+
+    public void copyCoordinatesFromString(String lines) {
+        if (principalToStandardPage == null) {
+            return;
+        }
+        boolean haveLabel = getSelectedLabel() != null;
+        if (!haveLabel) {
+            deselectCurve();
+        }
+           
         try {
-            StringSelection sel = new StringSelection(res);
+            for (Point2D.Double point: stringToPoints(lines)) {
+                if (haveLabel) {
+                    selection.copy(point);
+                } else {
+                    add(point);
+                }
+            }
+        } catch (NumberFormatException x) {
+            JOptionPane.showMessageDialog(editFrame, x);
+            return;
+        }
+    }
+    
+    void copyToClipboard(String str, boolean ignoreFailure) {
+        try {
+            StringSelection sel = new StringSelection(str);
             Toolkit.getDefaultToolkit().getSystemClipboard().setContents
                 (sel, sel);
         } catch (HeadlessException e) {
+            if (!ignoreFailure) {
+                throw new IllegalArgumentException
+                    ("Can't call coordinatesToClipboard() in a headless environment:" + e);
+            }
+        }
+    }
+    
+    String clipboardContents() {
+        try {
+            return (String) Toolkit.getDefaultToolkit().getSystemClipboard()
+                .getData(DataFlavor.stringFlavor);
+        } catch (HeadlessException e) {
             throw new IllegalArgumentException
                 ("Can't call coordinatesToClipboard() in a headless environment:" + e);
+        } catch (UnsupportedFlavorException e) {
+            throw new IllegalStateException
+                ("StringFlavor unsupported (internal:" + e);
+        } catch (IOException e) {
+            throw new IllegalStateException
+                ("While getting clipboard: " + e);
         }
+    }
+
+    /** Copy the contents of the status bar to the clipboard. */
+    public void copyPositionToClipboard() {
+        if (mprin == null) {
+            showError
+                ("<html><p>Move the mouse to the target location. "
+                 + "Use the 'Control+C' shortcut key or keyboard menu controls "
+                 + "instead of selecting the menu item using the mouse."
+                 + "</p></html>",
+                 "Copy position error");
+        }
+        copyToClipboard(principalToPrettyString(mprin), false);
     }
 
     public void copyAllTextToClipboard() {
-        try {
-            StringBuilder res = new StringBuilder();
-            for (String s: getAllText()) {
-                res.append(s);
-                res.append("\n");
-            }
-            StringSelection sel = new StringSelection(res.toString());
-            Toolkit.getDefaultToolkit().getSystemClipboard().setContents
-                (sel, sel);
-        } catch (HeadlessException x) {
-            throw new IllegalArgumentException
-                ("Can't set clipboard in a headless environment:" + x);
+        StringBuilder res = new StringBuilder();
+        for (String s: getAllText()) {
+            res.append(s);
+            res.append("\n");
         }
+        copyToClipboard(res.toString(), false);
     }
 
     public void copyAllFormulasToClipboard() {
-        try {
-            StringBuilder res = new StringBuilder();
-            for (String s: getAllFormulas()) {
-                res.append(s);
-                res.append("\n");
-            }
-            StringSelection sel = new StringSelection(res.toString());
-            Toolkit.getDefaultToolkit().getSystemClipboard().setContents
-                (sel, sel);
-        } catch (HeadlessException x) {
-            throw new IllegalArgumentException
-                ("Can't set clipboard in a headless environment:" + x);
+        StringBuilder res = new StringBuilder();
+        for (String s: getAllFormulas()) {
+            res.append(s);
+            res.append("\n");
         }
+        copyToClipboard(res.toString(), false);
     }
 
     public void addTieLine() {
@@ -2391,7 +2469,7 @@ public class Editor extends Diagram
             return false;
         }
         if (label.getScale() <= 0) {
-            showError("Font size is not a positive number", "Cannot perform operation");
+            showError("Font size is not a positive number");
             return false;
         }
         return true;
@@ -2716,7 +2794,7 @@ public class Editor extends Diagram
         try {
             toggleCurveClosure(hand.getItem());
         } catch (IllegalArgumentException x) {
-            showError(x.toString(), "Cannot perform operation");
+            showError(x.toString());
         }
     }
 
@@ -3576,6 +3654,10 @@ public class Editor extends Diagram
         showError(editFrame, mess, title);
     }
 
+    void showError(String mess) {
+        showError(editFrame, mess, "Cannot perform operation");
+    }
+
     void showError(Component parent, String mess, String title) {
         JOptionPane.showMessageDialog
             (parent, mess, title, JOptionPane.ERROR_MESSAGE);
@@ -4246,15 +4328,13 @@ public class Editor extends Diagram
 
     @JsonIgnore Rectangle2D.Double getSelectionBounds() {
         if (selection == null) {
-            showError("You must first select something to perform this operation",
-                      "Cannot perform operation");
+            showError("You must first select something to perform this operation");
             return null;
         }
         Rectangle2D.Double res = bounds(selection.getDecoration());
         if (res.width == 0 || res.height == 0) {
             showError("The selection's width and/or height is too small. ("
-                      + Duh.toString(res) + ", " + selection.getDecoration() + ")",
-                      "Cannot perform operation");
+                      + Duh.toString(res) + ", " + selection.getDecoration() + ")");
             return null;
         }
         return res;
