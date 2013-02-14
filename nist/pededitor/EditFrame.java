@@ -555,6 +555,13 @@ public class EditFrame extends JFrame
                 }
             });
 
+        mnEdit.add(new Action("Copy coordinates from clipboard",
+                              KeyEvent.VK_P) {
+                @Override public void actionPerformed(ActionEvent e) {
+                    getParentEditor().copyCoordinatesFromClipboard();
+                }
+            });
+
         if (editable) {
             mnEdit.add(new Action("Copy default settings from selection",
                                   KeyEvent.VK_U,
@@ -589,20 +596,16 @@ public class EditFrame extends JFrame
             mnLayer.setMnemonic(KeyEvent.VK_L);
             mnLayer.add
                 (new LayerAction
-                 ("Lower", KeyEvent.VK_L,
-                  KeyStroke.getKeyStroke("control typed -"), -1));
+                 ("Lower", KeyEvent.VK_L, null, -1));
             mnLayer.add
                 (new LayerAction
-                 ("Raise", KeyEvent.VK_R,
-                  KeyStroke.getKeyStroke("control typed +"), +1));
+                 ("Raise", KeyEvent.VK_R, null, +1));
             mnLayer.add
                 (new LayerAction
-                 ("To bottom", KeyEvent.VK_B,
-                  KeyStroke.getKeyStroke("shift control typed -"), -1000000));
+                 ("To bottom", KeyEvent.VK_B, null, -1000000));
             mnLayer.add
                 (new LayerAction
-                 ("To top", KeyEvent.VK_T,
-                  KeyStroke.getKeyStroke("shift control typed +"), +1000000));
+                 ("To top", KeyEvent.VK_T, null, +1000000));
             mnEdit.add(mnLayer);
 
             mnEdit.add(new Action("Move",
@@ -653,8 +656,17 @@ public class EditFrame extends JFrame
             });
 
         mnPosition.add(new Action
+                       ("Copy status bar to clipboard",
+                        KeyEvent.VK_C,
+                        KeyStroke.getKeyStroke("control P")) {
+                @Override public void actionPerformed(ActionEvent e) {
+                    getParentEditor().copyPositionToClipboard();
+                }
+            });
+
+        mnPosition.add(new Action
                        ("Enter coordinates",
-                        KeyEvent.VK_T,
+                        KeyEvent.VK_E,
                         KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0)) {
                 @Override public void actionPerformed(ActionEvent e) {
                     getParentEditor().enterPosition();
