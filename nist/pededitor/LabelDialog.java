@@ -390,8 +390,8 @@ public class LabelDialog extends JDialog {
         double r = 3;
         g.setColor(new Color(0, 200, 0));
         g.fill(new Ellipse2D.Double(cx - r, cy - r, r*2, r*2));
-        g.setColor(Color.BLACK);
-        String str = highlight ? "(Label)" : "Label";
+        g.setColor(highlight ? Color.RED : Color.BLACK);
+        String str = "Label";
         drawString(g, str, cx, cy, xWeight, yWeight);
         return new AnchorAction(image, xWeight, yWeight);
     }
