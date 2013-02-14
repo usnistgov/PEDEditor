@@ -86,7 +86,7 @@ public class LinearAxis extends Axis {
 
     @Override public String toString() {
         return getClass().getSimpleName() + "['" + name + "', "
-            + a + " x " + b + " y " + c + ", fmt = " + format + "]";
+            + a + " x + " + b + " y + " + c + ", fmt = " + format + "]";
     }
 
     static NumberFormat getDefaultFormat() {
