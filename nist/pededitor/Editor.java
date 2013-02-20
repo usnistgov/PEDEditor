@@ -3,6 +3,8 @@ package gov.nist.pededitor;
 import gov.nist.pededitor.EditFrame.BackgroundImageType;
 
 import javax.imageio.ImageIO;
+import javax.print.attribute.HashPrintRequestAttributeSet;
+import javax.print.attribute.PrintRequestAttributeSet;
 import javax.swing.*;
 import javax.swing.filechooser.FileNameExtensionFilter;
 import java.awt.AWTException;
@@ -3796,6 +3798,46 @@ public class Editor extends Diagram
         }
     }
 
+    /** Invoked from the EditFrame menu */
+    public void saveAsImage(String ext) {
+        StringArrayDialog dog = new StringArrayDialog
+            (editFrame,
+             new String[] {"Width", "Height"},
+             new String[] {"800", "600"},
+             "<html><body width=\"200 px\"><p>"
+             + "Enter maximum values for the width and height of the "
+             + "image in pixels."
+             + "</p></body></html>");
+        dog.setTitle("Image size");
+        String[] values = dog.showModal();
+        int width;
+        try {
+            width = Integer.parseInt(values[0]);
+        } catch (NumberFormatException x) {
+            showError("Invalid width value '" + values[0] + "'");
+            return;
+        }
+        int height;
+        try {
+            height = Integer.parseInt(values[1]);
+        } catch (NumberFormatException x) {
+            showError
+                ("Invalid height value '" + values[1] + "'");
+            return;
+        }
+        
+        File file = showSaveDialog(ext);
+        if (file == null || !verifyOverwriteFile(file)) {
+            return;
+        }
+
+        try {
+            saveAsImage(file, ext, width, height);
+        } catch (IOException x) {
+            showError("File error: " + x);
+        }
+    }
+
     public void saveAsPED() {
         File file = showSaveDialog("ped");
         if (file == null || !verifyOverwriteFile(file)) {
@@ -3851,9 +3893,11 @@ public class Editor extends Diagram
     public void print() {
         PrinterJob job = PrinterJob.getPrinterJob();
         job.setPrintable(this);
-        if (job.printDialog()) {
+        PrintRequestAttributeSet aset 
+            = new HashPrintRequestAttributeSet();
+        if (job.printDialog(aset)) {
             try {
-                print(job);
+                print(job, aset);
                 JOptionPane.showMessageDialog
                     (editFrame, "Print job submitted.");
             } catch (PrinterException e) {
