@@ -3619,9 +3619,8 @@ public class Diagram extends Observable implements Printable {
     }
 
     /** Invoked from the EditFrame menu */
-    public void print(PrinterJob job) throws PrinterException {
-        PrintRequestAttributeSet aset 
-            = new HashPrintRequestAttributeSet();
+    public void print(PrinterJob job, PrintRequestAttributeSet aset)
+        throws PrinterException {
         /* Disabled -- use default printer settings instead.
         aset.add
             ((pageBounds.width > pageBounds.height)
