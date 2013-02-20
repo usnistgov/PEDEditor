@@ -246,6 +246,18 @@ public class EditFrame extends JFrame
         }
     }
 
+    class SaveImageAction extends Action {
+        String ext;
+        SaveImageAction(String ext) {
+            super(ext);
+            this.ext = ext;
+        }
+
+        @Override public void actionPerformed(ActionEvent e) {
+            getParentEditor().saveAsImage(ext);
+        }
+    }
+
     class FontAction extends Action {
         String fontName;
 
@@ -484,6 +496,10 @@ public class EditFrame extends JFrame
                     getParentEditor().saveAsPDF();
                 }
             });
+
+        for (String ext: new String[] {"PNG"}) {
+            mnSaveAs.add(new SaveImageAction(ext));
+        }
 
         mnSaveAs.add(new Action("SVG", KeyEvent.VK_S) {
                 @Override public void actionPerformed(ActionEvent e) {
