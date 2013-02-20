@@ -26,6 +26,8 @@ import javax.swing.JDialog;
 import javax.swing.JLabel;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
+import javax.swing.JScrollPane;
+import javax.swing.JTextArea;
 import javax.swing.JTextField;
 
 import org.codehaus.jackson.annotate.JsonIgnore;
@@ -39,7 +41,7 @@ public class LabelDialog extends JDialog {
     double xWeight;
     /** See AnchoredLabel.yWeight for the definition of this field. */
     double yWeight;
-    JTextField textField = new JTextField(55);
+    JTextArea textField = new JTextArea(6,55);
 
     JCheckBox mIsOpaque = new JCheckBox("White text background");
     JCheckBox mIsBoxed = new JCheckBox("Box label");
@@ -168,10 +170,14 @@ public class LabelDialog extends JDialog {
                 GridBagUtil gb = new GridBagUtil(panel);
 
                 JLabel textLabel = new JLabel("Text:");
+                TransferFocus.patch(textField);
+                JScrollPane sp = new JScrollPane(textField);
+                textField.setLineWrap(true);
+                textField.setWrapStyleWord(true);
                 textLabel.setLabelFor(textField);
                 textField.setFont(font.deriveFont(16f));
                 gb.addWest(textLabel);
-                gb.endRowWith(textField);
+                gb.endRowWith(sp);
                 cpgb.endRowWith(panel);
             }
 
