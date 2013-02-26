@@ -8,7 +8,7 @@
 digitize images of existing ones. It can also be used for general
 two-dimensional scientific drawing and digitization.</p>
 
-<h2>File operations</h2>
+<h2>File Menu</h2>
 
 <h3>New Diagram</h3>
 
@@ -16,11 +16,11 @@ two-dimensional scientific drawing and digitization.</p>
 scanned image of an existing diagram, use the
 <code><u>F</u>ile/<u>O</u>pen</code> option instead.</p>
 
-<p>You are presented with a selection of diagram types. If you need to
-use one of the ternary diagram types, you can probably recognize it.
-Select the "Binary" diagram type to draw a rectangular graph using a
-Cartesian coordinate system. Select the "Other/Schematic" type to draw
-free-form diagrams starting from a blank page.</p>
+<p>You are presented with a selection of diagram types. Select the
+"Binary" diagram type to draw a rectangular graph using a Cartesian
+coordinate system. Select the "Other/Schematic" type to draw free-form
+diagrams starting from a blank page. There are also various subtypes
+of ternary diagram, if you happen to need those.</p>
 
 <h3>Open</h3>
 
@@ -35,35 +35,46 @@ Diagram Selection Window's help menu option.</p>
 
 <h3>Save / Save As PED</h3>
 
-<p>Save a diagram as a file in this program's native PED format.</p>
+<p>Save a diagram as a file in this program's native PED format. This
+is the only choice that allows you to reload the diagram later in this
+program and continue where you left off.</p>
 
 <h3>Save as PDF</h3>
 
-<p>Save the diagram as an Adobe PDF document. Note that this program
-can only create PDF documents; it cannot read them.</p>
+<h3>Save as PNG</h3>
 
 <h3>Save as SVG</h3>
 
-<p>Save the diagram in Scalable Vector Graphics (SVG) format. Note
-that this program can only create SVG documents; it cannot read
-them.</p>
+<p>Save an image of the diagram. These formats are only intended to
+create files that other programs can read; they are not useful for
+saving and reloading diagrams in the PED editor. Diagrams saved as PDF
+or SVG tend to be of higher quality than diagrams saved as PNG.
 
 <h3>Print</h3>
 
-<p>Print the diagram to fit on a single sheet of paper (so a larger
-piece of paper will yield a larger diagram).</p>
+<p>Print the diagram. The image will be scaled so that its margins
+just fit on the sheet. You can make the printed image appear smaller
+or larger by adjusting the margins as defined
+under <u>P</u>roperties/<u>M</u>argins.
 
-<h2><a name="positioning">Position</a></h2>
+<h3>Reload</h3>
 
-<p>In addition to moving the mouse pointer, the following commands are available for diagram positioning:</p>
+<p>Reload the current diagram from disk if the diagram was
+previously opened or saved in PED format.
+
+<h2>Position Menu</h2>
+
+<p>In addition to moving the mouse pointer, the following commands are
+available for diagram positioning:</p>
 
 <ul>
 
 <li><p><b>Jump to selection</b> moves the mouse pointer to the
 currently selected item, if an item is selected.</p></li>
 
-<li><p>Move to ('q') or move to and select ('Q') the nearest key
-point. Key points include</p>
+<li>
+
+<b>Select nearest point</b> (<code>Shift+Q</code>) moves the mouse to and selects the nearest key point. Key points include
 
 <ul>
   <li>arrows</li>
@@ -71,32 +82,41 @@ point. Key points include</p>
   <li>label anchor points and centers</li>
   <li>corners of tie line regions</li>
   <li>ruler endpoints</li>
-  <li>segment midpoints</li>
 </ul>
 
-<p>In addition, the following key points may be moved to, but cannot
-be selected:</p>
+<p>If pressing <code>Shift+Q</code> once does not highlight the item you
+want, you may press it again and again to highlight other items
+located nearby.</p>
+
+<p><b>Nearest point</b> (<code>q</code>) moves the mouse to the
+nearest key point, but does not select it. <code>Nearest point</code>
+recognizes the following key points, in addition to those recognized
+by <code>Select nearest point</code>:
 
 <ul>
-  <li>curve and line intersections</li>
-  <li>corners of the diagram</li>
+  <li>curve and line intersections
+  <li>corners of the diagram
+  <li>segment midpoints
+  <li>If an item is selected, then the point on the curve nearest the
+    mouse that is nearest to the selection is also considered to be a
+    key point. (In other words, first identify the curve closest to
+    the mouse. The point on that curve that is closest to the
+    selection is a key point.)
 </ul>
 
-<p>If an item is selected, then the point on the curve nearest the
-mouse that is nearest to the selection is also considered to be a key
-point. (In other words, first identify the curve closest to the mouse.
-The point on that curve that is closest to the selection is a key
-point.)</p>
-
-<p>If pressing 'Q' once does not highlight the item you want, you may
-press it again and again to highlight other items located nearby.</p>
 </li>
 
-<li>Move to ('w') or move to and select ('W') the
-closest line segment or curve.</li>
+<li><b>Select nearest line/curve</b> (<code>Shift+W</code>) moves the
+mouse to the the nearest point on any ruler or curve, and it selects
+the nearest vertex on that ruler or curve.
 
-<li>Enter (the <code>Enter</code> key) coordinates in terms of any two
-variables.</li>
+<li><b>Nearest line/curve</b> (<code>w</code>) moves the mouse to the
+the nearest point on any ruler or curve.
+
+<li><b>Enter coordinates</b> (<code>Enter</code>) allows you to type
+in the coordinates you would like the mouse to move to. If you enter
+coordinates that are off the diagram page, the page will be enlarged
+to put the position on its edge.</li>
 
 <li>The arrow keys move the mouse pointer in one pixel in any
 direction. In addition, if the mouse is positioned on a selected item
@@ -105,8 +125,9 @@ which case it is highlighted in magenta), then that item and every
 other item located at the same position will move along with the mouse
 pointer.</li>
 
-<li><p>Auto-position the mouse ('A') or auto-position the mouse and
-add the mouse's new location (shift+left-click).</p>
+<li><p>Auto-position the mouse (<code>Shift+A</code>) or auto-position
+the mouse and add a point at the mouse's new location
+(<code>Shift+Left-Click</code> or <code>Shift+X</code>).</p>
 
 <p>Holding the shift key down while moving the mouse will reveal the
 auto-position location. All of the following are candidates for
@@ -137,89 +158,127 @@ attracts the mouse pointer.</p>
 </li>
 </ul>
 
-<p>The mouse will temporarily act as if stuck at the chosen point even
-if vibration or a hand twich causes the mouse pointer to move a couple
-pixels. When the mouse is "stuck", the pointer can move, but the
-coordinates displayed in the status bar do not change</p>
+<p>To protect users against involuntary mouse movenets, the cursor
+stays at the chosen position after you perform a mouse positioning
+command even if the mouse shifts by a couple pixels. The chosen
+position will be marked with a yellow cross if that position is
+different from the mouse position. Moving the mouse a larger distance
+or pressing <code>u</code> will cause the cursor to resume following
+the mouse pointer. In addition, the mouse may automatically become
+unstuck before you perform an operation that would otherwise be
+redundant, such as adding a second vertex to a curve in a row.
 
-<p>You may unstick the mouse pointer by moving it a longer distance or
-by pressing 'u'. In addition, the mouse may automatically become
-unstuck if you request an operation that would otherwise be redundant,
-such as adding a second vertex to a curve in a row.</p>
+<p>Pressing <code>Control+Shift+S</code> will copy the contents of the
+status bar (the gray bar at the bottom of the edit window) to the
+clipboard.
 
-<h2>Edit</h2>
+</ul>
 
-<p>The following editing commands may be applied to any selected item.
-An item must be selected (highlighted in <font
-color="green">green</font>) before these commands have any effect.</p>
+<h2>Edit Selection Menu</h2>
+
+<p>These commands all operate on the selection (highlighted
+in <font color="green">green</font>) if there is one. If there is not,
+some of these commands generate an error, while others fall back on
+operating on the nearest key point.
 
 <ul>
 
 <li>Press <code>Delete</code> to delete the selection.</li>
 
-<li>Press <code>End</code> to deselect the item. You may also
-right-click to perform this action.</li>
+<li>Press <code>End</code> or the right mouse button to deselect the
+item.</li>
 
-<li>Press <code>r</code> to change the selection's color. Since
-selected items are usually highlighted in green, the color change will
-not be visible until you deselect the item.</li>
+<li>Press <code>r</code> to change the selection's color. If the
+selection is highlighted in green, you may not notice the color change
+until you deselect the item.</li>
 
-<li>Press 'c' to create a copy to the selection at the current mouse
-position.</li>
-
-<li>Press 'e' to edit the selected item. Only labels, rulers, and sets
-of tie lines may be edited this way. If no item is selected, you may
-press <code>e</code> to edit the editable item closest to the current
-mouse position.</li>
-
-<li>If the selected item is a label, ruler, or set of lie lines, you
-can press <code>e</code> to edit it. If no item is selected, 'e' will
-edit the label, ruler, or set of tie lines that is closest to the
+<li>Press <code>c</code> to create a copy to the selection at the
 current mouse position.</li>
 
-<li>Press 'v' to move the selection point, including all other items
-that share that point. Press 'V' to move only the item in green while
-leaving all other items at that point unchanged. If a curve is
-selected, then the entire curve, and not just a single vertex is
-moved; to move a single vertex, press <code>Delete</code> to delete
-it, and press the left mouse button at the new location.</li>
+<li>Press 'e' to edit the selected item's properties. Only labels,
+rulers, and sets of tie lines may be edited this way.
+
+<li>Press <code>v</code> to move the selected vertex or item and all
+other items at the same location.
+
+<li>Press <code>Shift+V</code> to move the selected vertex or item
+only.
+
+<li>Press <code>Shift+R</code> to move the selected curve or ruler and
+all selectable key points that lie on or in that curve or ruler.
+
+<li>Press <code>d</code> to change the selected item's color, line thickness (if applicable), and line style (if applicable) to the current default values.
+
+<li>Press <code>Shift+D</code> to change the current default values
+for color, line thickness (if applicable), and line style (if
+applicable) to match the selected item. So
+pressing <code>Shift+D</code> on one item and then
+pressing <code>d</code> on others is a quick way to change many things
+to match the first thing.
 
 </ul>
 
 <h2>Curves and Vertexes</h2>
 
 <p>If a vertex (curve control point) is currently selected, then it is
-marked by a green disc. Other control points on the same curve are
-indicated by green circles.</p>
+marked by a small solid green circle. Other control points on the same
+curve are indicated by small open green circles.</p>
 
 <h3>Starting a new curve</h3>
 
-<p>If a curve is already highlighted, press <code>End</code> to
-deselect it. Then position the mouse at the desired location and press
-the left mouse button to place the curve's first endpoint.</p>
+<p>If a curve is already selected, press <code>End</code> or the right
+mouse button to deselect it.
 
-<h3>Selecting an existing curve</h3>
+<p>Position the mouse where the first vertex of the new curve belongs
+and press <code>x</code> or the left mouse button. To start a new
+curve at the auto-position location instead, hold down the shift key
+as you press <code>x</code> or the left mouse button.
 
-<p>Move the mouse pointer next to the curve and press 'L'. The nearest
-vertex of the nearest curve will be highlighted.</p>
+<p>As mentioned under <b>Position</b>, you may
+press <code>Shift+W</code> or <code>Shift+Q</code> to select a curve.
 
-<h3>Adding to an existing curve</h3>
+<p>A curve consisting of a single point is represented as a dot twice
+as wide as the current line width. It is possible to mark data points
+as 1-point curves that way, but labels provide more flexibility in
+marking data points.
 
-<p>Press the left mouse button to insert a new vertex after the
-previously selected vertex. The <font color="red">red</font> outline,
-if any, displays the curve that will be result from this
-operation.</p>
+<h3>Adding a point to a curve</h3>
 
-<h3>Curve smoothing and closure</h3>
+<p>As mentioned under <b>Position</b>, you may
+press <code>Shift+W</code> or <code>Shift+Q</code> to select a curve.
 
-<p>Press 's' to turn curve smoothing on or off for the currently selected
-curve.</p>
+<p>Position the mouse where the new vertex goes and
+press <code>x</code> or the left mouse button. To add a point at the
+auto-position location instead, hold down the shift key as you
+press <code>x</code> or the left mouse button.
 
-<p>Press 'o' to close the currently selected curve the close or open
-the currently selected curve. Closed curves loop back to their
-starting points. There is no need to explicitly repeat the starting
-vertex. Explicitly closing a smoothed curve usually gives better
-results than just repeating the starting vertex does.</p>
+<h3>Curve smoothing</h3>
+
+<p>Curve smoothing is initially turned off when you start the program.
+With curve smoothing off, curves consisting of three or more points
+are presented as a series of connected line segments or (for closed
+curves) a polygon.
+
+<p>Pressing 's' will turn smoothing on for all new vertexes in curves.
+The smoothing setting is global, so to turn on smoothing for all
+curves, it suffices to press 's' once when you start the program.
+Pressing 's' again will turn smoothing off.
+
+<p>Pressing 's' only changes the program's behavior when adding new
+vertexes. To toggle the smoothing setting of an existing vertex,
+select that vertex and press comma (,). If you need to change the
+smoothing setting for a whole curve, you will need to change the
+smoothing settings for each vertex individually. The bracket shortcut
+keys ('<code>[</code>' and '<code>]</code>'), which select the
+previous and next vertex in a curve, can help you do that faster, but
+it is fastest just to use '<code>s</code>' to get the smoothing
+setting right the first time.
+
+<h3>Curve closure</h3>
+
+<p>All curves start in the unclosed state. Pressing 'o' will toggle
+the currently selected curve between the unclosed and closed states.
+Closed curved return to their starting vertexes.
 
 <h3>Line styles</h3>
 
@@ -236,14 +295,14 @@ length of the dashes is also reduced by half.</p>
 the line width for the currently selected item (if any) and the
 initial line width of any subsequently created items.</p>
 
-<h3>Adding a cusp</h3>
+<h3>Fill styles</h3>
 
-<p>Press ',' to create a cusp (a location where a path is connected
-but not smooth). This is equivalent to adding a vertex to the
-currently selected curve at the current mouse position and then
-starting a separate curve from the same vertex.</p>
+<p>Use the <code><u>C</u>urve/<u>F</u>ill style</code> menu item and
+select your preferred fill style to fill the interior of a closed
+curve (you must turn on curve closure, using 'o', before you select a
+fill style) with the chosen pattern in the current default color.
 
-<h2>Decorations</h2>
+<h2>Decoration Menu</h2>
 
 <h3>Labels</h3>
 
@@ -262,23 +321,33 @@ to automatically add subscripts to chemical formulas.</p>
 a usable control. Edit the number in the text box to change the text
 angle.</p>
 
-<p>Press one of the nine anchor buttons when you are finished entering
-the other fields (text and font size) for this label. The anchor
-buttons determine whether the label will be centered at the anchor or
-will have a corner or center of one side located there. The anchors
-are relative to the text's frame of reference. For example, for a
-label whose text reads "Label", the portion of the text closest to the
-anchor will be the portion that is closest to the green circle on the
-button, regardless of the text angle.</p>
+<p>The nine anchor buttons determine whether the label will be
+centered at the anchor or will have a corner or center of one side
+located there. The anchors use the text's frame of reference: for
+example, if the label reads "Foo" and the lower right button is
+selected, then the corner of the F will lie closest to the anchor, no
+matter what text angle is selected.
+
+<p>If you check the box for <b>White label background</b>, a white
+rectangle will be printed behind the label. White label background only
+obscures decorations beneath the label, so you may need to use
+the <code><u>E</u>dit/<u>L</u>ayer/<u>t</u>o Top</code> command as
+well.
+
+<p>If you check the box for <b>White character holes</b>, the insides
+of hollow letters and characters will be painted white. This option is
+mostly useful for symbols, and it insures that a hollow circle plotted
+over a solid line is not mistaken for a solid circle. White character
+holes only obscure decorations beneath the label, so you may need to
+use the <code><u>E</u>dit/<u>L</u>ayer/<u>t</u>o Top</code> command as
+well.
+
+<p>If you check the box for <b>Label border</b>, the label will be surrounded
+by a thin border.
 
 <p>The copy command ('c') can be used to easily duplicate a symbol in
 many locations, such as when marking data points.</p>
 
-<h4>Dots</h4>
-
-<p>You can create solid circular dots like other symbols, but a curve
-with only one vertex is also shown as a dot. To change the dot size,
-adjust the line width: the dot radius equals twice the line width.</p>
 
 <h4>Arrowheads</h4>
 
@@ -291,9 +360,14 @@ determined by the line width indicated in the "Tangent" window.</p>
 
 <p>To create a ruler, first create a two-vertex line to mark the
 ruler's endpoints, then select <code><u>D</u>ecorations/Add
-r<u>u</u>ler</code>. A ruler edit window will open. Unfortunately, the
-current ruler setup is rather severely constrained because you can
-only show values of the standard variables.</p>
+r<u>u</u>ler</code>. A ruler edit window will open.</p>
+
+<p>There is currently no way to automatically generate a ruler that
+displays weight percent values in a mole-percent diagram or vice
+versa. All you can do is convert the entire diagram between the two
+states.</p>
+
+<p><b>TODO</b> The ruler behavior may be controlled by hidden variables. I need to add those variables to the dialog!
 
 <h4>Tie Lines</h4>
 
@@ -301,10 +375,13 @@ only show values of the standard variables.</p>
 <u>t</u>ie lines</code> and follow the instructions in the window that
 opens. </p>
 
-<p>Tie lines may start or end on non-straight curves, but tie lines
-that start or end on closed curves may not behave as expected.</p>
+<p>If tie lines connect two segments or curves, instead of connecting
+a curve to a point, then the two outermost tie lines had better
+intersect somewhere outside the region created by the tie lines, or
+else there will be trouble. It's hard to explain. That's another TODO
+item.</p>
 
-<h2>Properties</h2>
+<h2>Properties Menu</h2>
 
 <ul>
 
@@ -315,49 +392,159 @@ intersect may not quite do so anymore, or they may intersect at a
 slightly different location), so it is best to set the aspect ratio as
 early as possible.</li>
 
-<li><b>Components</b>: Identify the diagram components for binary and
-ternary diagrams. Binary diagrams whose X-axis is measured on a scale
-from (100% of substance A, 0% of B) have a left and right diagram
-component, while ternary diagrams have a left, right, and top
-component. A side effect of defining components is that axes will
-change to display percentage values.</li>
-
 <li><p><b>Font</b>: The program uses variants of the DejaVu LGC Serif and
 Sans Serif font families. <code>Serif (widely spaced lines)</code>
 exists for backwards compatibility; it is not recommended for use in
 new diagrams.</p>
 
 <p>This menu selection allows you to globally change the font
-selection among one of three choices. (Changing fonts for individual
-items is possible, but as yet there has been no demand for that
-feature.) The "Serif (Widely space lines)" font is not recommended for
-new diagrams; it exists solely to provide backwards compatibility with
-the previous version of the PED Editor.</p></li>
+selection among one of three choices. Changing fonts for individual
+items is not currently possible.
 
 <li><b>Key/Value Pairs</b>: Allows the user to store data that
-consists of a string key and a string value. The only key that is
-treated specially by the program is "title"; the value associated with
-the "title" key is shown in the diagram's title bar. Since a value of
-the empty string is taken to mean "delete this key", the empty string
+consists of a string key and a string value. A value of
+the empty string is taken to mean "delete this key", so the empty string
 cannot be stored as a value.</li>
 
 <li><b>Margins</b>: If you need to align your diagram in a specific
 way, or if you need to extend a diagram in any direction, you may set
 the left, right, top, and bottom margins using these menu options. The
-<code><u>C</u>ompute</code> option eliminates excess white space on
+<code><u>A</u>uto-fit</code> option eliminates excess white space on
 all sides. It is a good idea to allow generous margins while you are
-editing the diagram, and then select <code>Compute</code> when
+editing the diagram, and then select <code><u>A</u>uto-fit</code> when
 finished.</li>
 
 <li><b>Scale</b>: This option allows you to change the units of the X
 and Y axis, while the positions of items on the screen remains the
 same. This option is most often used to change the axes' initial
-ranges (0 to 1) to the values you really want, but it can also be used
-to change a diagram's range from Celsius to Kelvin, for example.</li>
+ranges to the values you really want, but it can also be used to
+change a diagram's range from Celsius to Kelvin, for example.</li>
 
-<li><b>Tags</b>: allow the user to store free-form string data. Apart
+<li><b>Tags</b>: Allow the user to store free-form string data. Apart
 from permitting the user to add, delete, and display tags, the program
 does nothing with these.</li>
+
+<li><b>Title</b>: Change the title of the diagram as displayed in the
+menu bar and in printouts. If you want no title, then change the title
+to the empty string so it will be deleted.</li>
+
+<li><b>Variables</b>: You can delete existing variables or add new
+ones that are affine transformations of the existing ones; that is,
+variables that have the form
+
+  <blockquote><code>a x + b y + c</code></blockquote>
+
+<p>New variables will be shown in the gray status bar at the bottom of
+the edit window and may be used to define ruler tick mark values.
+Select this menu item and then follow the instructions in the error
+message to learn how to do this.
+
+</ul>
+
+<h2>Digitize Menu</h2>
+
+<ul>
+
+<li><p><b>Copy all text to clipboard</b>: Copies all labels, key values, tags, and diagram components, with duplicates removed, to the clipboard, with each entry terminated by a newline.
+
+<li><p><b>Copy label or curve coordinates to clipboard</b>: If a curve
+is highlighted, then the principal coordinates (<code>x</code>
+and <code>y</code> coordinates for binary diagrams, and right
+component and top component values for ternary diagrams) of every
+point in the curve will be copied to the clipboard, one coordinate per
+line, with the x and y values separated by commas. If a label (usually
+a symbol that denotes a data point) is highlighted, then the
+coordinates of that label and every other label that shares the same
+text will be copied. For instance, if you have highlighted an open
+circle, then the coordinates of every open circle will be copied.
+
+<li><p><b>Copy label or curve coordinates from clipboard</b>: This is
+the reverse of the previous operation. If nothing is highlighted, a
+new curve will be created from the coordinates in the clipboard. If a
+curve is highlighted, then the points will be added to it. If a label
+is highlighted, then identical labels will be added at each
+coordinate.
+
+<li><p><b>Copy status bar to clipboard</b>
+(<code>Control+Shift+S</code>): This copies the text in the gray
+status bar at the bottom of the edit window to the clipboard. Since
+the contents depend on the current mouse position, you will probably
+need to use the keyboard shortcut to do this.
+
+</ul>
+
+<h2>Chemistry Menu</h2>
+
+<ul>
+
+<li><p><b>Components</b>: Identify the diagram components for binary and
+ternary diagrams. Binary diagrams whose X-axis is measured on a scale
+from (100% of substance A, 0% of B) have a left and right diagram
+component, while ternary diagrams have a left, right, and top
+component. In this context, the diagram components are the compounds
+that correspond to 0 and 100% of your independent variables, even if
+the displayed domain is a subset of that.
+
+<p>The program's chemistry functions cannot work unless you define the
+formulas for both (or all, in the case of ternary diagrams) diagram
+components. <code>Co(H2O)2</code> is an example of a formula the
+program can parse; <code>water</code> is not.
+
+<p>As soon as all diagram components are defined, the gray status bar
+will show additional information about points on the screen. If a
+position in the diagram corresponds precisely to a round formula, that
+formula will be shown; otherwise, a decimal estimation of the formula
+will be shown. Also, component values will be shown as a
+pair <code>mole percent/weight percent</code>.
+
+<p>The status bar is more useful if you enter coordinates precisely. A
+coordinate value of 1/3 Fe, 2/3 Al will be displayed as Al2Fe, but an
+approximate coordinate value of 33.3% Fe, 66.7% Al will not. Also,
+only if the coordinates in the diagram you create are precisely
+correct, users of the program can use <code>Shift+left mouse
+button</code> or <code>q</code> to find the exact chemical formula at
+any vertex or intersection.
+
+<p>Also pay attention to your percent symbols and to the <code>Use
+percentages in labels</code> check box. If you wish to show percentage
+values (that is, values that are 100 times greater than the proportion
+values) in a ruler, that box should be checked. Check the status bar:
+a vaolue of 77% should be displayed as either 0.77 or as 77%. A
+display value of "77" or "7700%" indicates the variable scale is
+wrong.
+
+<li><p><b>Proportions/Already displaying mole fraction</b>: The
+program doesn't know whether your input data are in mole percent or
+weight percent until you tell it. If the first element of the supposed
+mole percent/weight percent pair is actually showing the weight
+percent, then you need to check this box. If the second element of the
+pair is actually showing the mole percent, then you need to un-check
+this box.
+
+<li><p><b>Proportions/Convert to [weight/mole] fraction</b>: Only one
+of these operations will be enabled, because you cannot convert a
+diagram to display weight fraction, for example, if it already
+displays weight fraction. These operations transform the entire
+diagram between weight and mole fraction values.
+
+<p>There is no guarantee that every point on every curve of the
+diagram will be correct after you perform a conversion, and points
+outside the diagram may not line up very well at all. The diagram may
+look funny, especially if there is a wide divergence between the mole
+and weight percents.
+
+<li><p><b>Formula to mole/weight fraction</b> (also available by
+pressing the <code>%</code> key, that is (on US
+keyboards) <code>Shift+5</code>): Enter a chemical formula, and the
+mouse will move to the position in the diagram that that formula
+corresponds to. The next step may be to press 't' to put a label at
+that location and maybe (for Windows) press <code>Control-V</code> to
+label that location with the formula.
+
+<li><p><b>Copy all formulas to clipboard</b>: Copy all unique formulas
+in the diagram to the clipboard in alphabetical order, separated by
+newlines. For example, if there is a label that reads "I saw H2O", then the
+formula list will include "H2O" and "I", since I is the chemical formula for iodine.
 
 </ul>
 
@@ -374,10 +561,15 @@ so be patient. If the delay becomes excessive, you can turn the
 background image off with <code><u>V</u>iew/<u>B</u>ackground
 Image/<u>N</u>one</code>.</p>
 
+<p>Unfortunately, <code>Zoom to selection</code> and <code>Center
+mouse</code> do not work reliably. This may be an issue in Java Swing.
+
 <p>Use the <code>Background Image</code> submenu to select how to
 display the original image (if any) in the background of the new
 diagram: in light, faded colors (the default); blinking on and off; or
-not at all.</p>
+not at all. The <code>D<u>e</u>tach</code> option permanently removes
+the linkage between the original image and the diagram.</p>
+
 
 </body>
 </html>
