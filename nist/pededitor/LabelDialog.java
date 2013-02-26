@@ -20,6 +20,7 @@ import java.awt.image.BufferedImage;
 import javax.swing.AbstractAction;
 import javax.swing.BorderFactory;
 import javax.swing.ImageIcon;
+import javax.swing.InputMap;
 import javax.swing.JButton;
 import javax.swing.JCheckBox;
 import javax.swing.JDialog;
@@ -29,6 +30,7 @@ import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTextArea;
 import javax.swing.JTextField;
+import javax.swing.KeyStroke;
 
 import org.codehaus.jackson.annotate.JsonIgnore;
 
@@ -43,8 +45,8 @@ public class LabelDialog extends JDialog {
     double yWeight;
     JTextArea textField = new JTextArea(6,55);
 
-    JCheckBox mIsOpaque = new JCheckBox("White text background");
-    JCheckBox mIsBoxed = new JCheckBox("Box label");
+    JCheckBox mIsOpaque = new JCheckBox("White label background");
+    JCheckBox mIsBoxed = new JCheckBox("Label border");
     JCheckBox mIsCutout = new JCheckBox("White character holes (no HTML allowed)");
     JTextField fontSize = new JTextField(10);
     JTextField codePoint = new JTextField("0000", 10);
@@ -57,6 +59,12 @@ public class LabelDialog extends JDialog {
     ImagePane compassPane;
 
     JButton[][] anchorButtons = new JButton[3][3];
+    JButton okButton =  new JButton(new AbstractAction("OK") {
+            private static final long serialVersionUID = 7893219422446551863L;
+            @Override public void actionPerformed(ActionEvent e) {
+                normalExit();
+            }
+        });
 
     class AnchorAction extends AbstractAction {
         private static final long serialVersionUID = -4526429983591205919L;
@@ -72,9 +80,12 @@ public class LabelDialog extends JDialog {
         @Override public void actionPerformed(ActionEvent e) {
             setXWeight(xWeight);
             setYWeight(yWeight);
-            pressedOK = true;
-            setVisible(false);
         }
+    }
+
+    public void normalExit() {
+        pressedOK = true;
+        setVisible(false);
     }
 
     /** The funny method name is because isOpaque() is already taken by JDialog. */
@@ -110,9 +121,6 @@ public class LabelDialog extends JDialog {
         int y = (int) Math.round(yWeight * 2.0);
         anchorButtons[y][x].setAction
             (createAnchorAction(xWeight, yWeight, b));
-        if (b) {
-            getRootPane().setDefaultButton(anchorButtons[y][x]);
-        }
     }
 
     public void setText(String s) {
@@ -176,6 +184,14 @@ public class LabelDialog extends JDialog {
                 textField.setWrapStyleWord(true);
                 textLabel.setLabelFor(textField);
                 textField.setFont(font.deriveFont(16f));
+                InputMap im = textField.getInputMap();
+                im.put(KeyStroke.getKeyStroke("ENTER"),
+                       new AbstractAction("OK") {
+                           private static final long serialVersionUID = 197868896745807236L;
+                           @Override public void actionPerformed(ActionEvent e) {
+                               insertText("<br>\n");
+                           }
+                       });
                 gb.addWest(textLabel);
                 gb.endRowWith(sp);
                 cpgb.endRowWith(panel);
@@ -278,7 +294,7 @@ public class LabelDialog extends JDialog {
             JPanel panel = new JPanel();
             GridBagUtil gb = new GridBagUtil(panel);
 
-            JLabel textAngleLabel = new JLabel("Text angle:");
+            JLabel textAngleLabel = new JLabel("Label angle:");
             textAngleLabel.setLabelFor(angleField);
             gb.addWest(textAngleLabel);
             gb.addWest(angleField);
@@ -318,6 +334,8 @@ public class LabelDialog extends JDialog {
         }
 
         mgb.endRowWith(anchorPane);
+        getRootPane().setDefaultButton(okButton);
+        mgb.endRowWith(okButton);
         cpgb.endRowWith(miscPane);
 
         reset();
