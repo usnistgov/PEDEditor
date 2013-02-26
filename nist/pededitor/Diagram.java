@@ -1,7 +1,6 @@
 package gov.nist.pededitor;
 
 import javax.imageio.ImageIO;
-import javax.print.attribute.HashPrintRequestAttributeSet;
 import javax.print.attribute.PrintRequestAttributeSet;
 import javax.swing.*;
 import javax.swing.text.View;
