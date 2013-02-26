@@ -68,12 +68,14 @@ import Jama.Matrix;
 
 import org.codehaus.jackson.annotate.JsonIgnore;
 
-// TODO: Unify the ternary diagram interfaces to faciliate creation of
-// partial ternary diagrams, using a two-step process (identify the 3
-// corners of the system, then the 3 corners of the partial). Craig
-// and Will have identified major problems with the existing process
-// (for example, rescaling the X or Y axis causes the 3 components to
-// no longer sum to 1, which is usually not the intent).
+// TODO (optional, 1/2 day): Enable the "copy coordinates to/from the
+// clipboard" operations to allow use of other variables, if that's
+// something people want.
+
+// TODO (optional): Unify the ternary diagram interfaces to faciliate
+// creation of partial ternary diagrams, using a two-step process
+// (identify the 3 corners of the system, then the 3 corners of the
+// partial) and perhaps automatically adding the corner labels.
 
 // TODO: Is there a fonts-based solution to improve nested subscript
 // rendering? The problem is that the subscripts don't sit below their
@@ -380,6 +382,18 @@ public class Editor extends Diagram
         return hand instanceof LabelHandle
             || hand instanceof TieLineHandle
             || hand instanceof RulerHandle;
+    }
+
+    /** Set selection to the nearest DecorationHandle. Return true for
+        success, false if that was not possible. */
+    boolean selectSomething() {
+        for (DecorationHandle handle: nearestHandles()) {
+            selection = handle;
+            return true;
+        }
+
+        showError("There is nothing to select.");
+        return false;
     }
 
     public void editSelection() {
@@ -715,15 +729,11 @@ public class Editor extends Diagram
     }
 
     public void setDefaultSettingsFromSelection() {
-        String errorTitle = "Cannot change settings";
-
-        if (selection == null) {
-            showError
-                ("You must select an item before choosing this operation.",
-                 errorTitle);
+       boolean hadSelection = (selection != null);
+        if (!hadSelection && !selectSomething()) {
             return;
         }
-
+ 
         Decoration dec = selection.getDecoration();
         StandardStroke ls = dec.getLineStyle();
         if (ls != null) {
@@ -739,18 +749,17 @@ public class Editor extends Diagram
         if (ldec != null) {
             getLabelDialog().setFontSize(ldec.getLabel().getScale());
         }
+        if (!hadSelection) {
+            selection = null;
+        }
     }
 
     public void resetSelectionToDefaultSettings() {
-        String errorTitle = "Cannot change settings";
-
-        if (selection == null) {
-            showError
-                ("You must select an item before choosing this operation.",
-                 errorTitle);
+       boolean hadSelection = (selection != null);
+        if (!hadSelection && !selectSomething()) {
             return;
         }
-
+ 
         Decoration dec = selection.getDecoration();
         dec.setLineStyle(lineStyle);
         dec.setColor(color);
@@ -759,6 +768,9 @@ public class Editor extends Diagram
         if (ldec != null) {
             ldec.getLabel().setScale(getLabelDialog().getFontSize());
             propagateChange();
+        }
+        if (!hadSelection) {
+            selection = null;
         }
     }
 
@@ -1007,12 +1019,8 @@ public class Editor extends Diagram
 
     /** Change the selection's color. */
     public void colorSelection() {
-        String errorTitle = "Cannot change color";
-
-        if (selection == null) {
-            showError
-                ("You must select an item before you can change its color.",
-                 errorTitle);
+        boolean hadSelection = (selection != null);
+        if (!hadSelection && !selectSomething()) {
             return;
         }
 
@@ -1036,6 +1044,10 @@ public class Editor extends Diagram
         }
         colorChooser.setColor(color);
         colorDialog.setVisible(true);
+
+        if (!hadSelection) {
+            selection = null;
+        }
     }
 
     boolean mouseIsStuckAtSelection() {
@@ -1065,8 +1077,13 @@ public class Editor extends Diagram
     }
 
     public void removeSelection() {
-        if (selection != null) {
-            selection = selection.remove();
+        boolean hadSelection = (selection != null);
+        if (!hadSelection && !selectSomething()) {
+            return;
+        }
+        selection = selection.remove();
+        if (!hadSelection) {
+            selection = null;
         }
     }
 
@@ -1753,10 +1770,12 @@ public class Editor extends Diagram
         String errorTitle = "Cannot add variable";
         CuspFigure path = getActiveCurve();
         if (path == null || path.size() != 3) {
-            showError
-                ("<html><p>To create a new variable, you must "
-                 + "first select a curve consisting of exactly three "
-                 + "points.</p></html>",
+            showError(
+"<html><body width=\"250 px\"><p>Select a curve consisting of three vertexes which do not lie " + 
+"on a line. User variables must have the form<blockquote><code>a x + b y + c</code></blockquote> " + 
+"<p>where <code>x</code> and <code>y</code> are the principal variables of " + 
+"your diagram. The value of your variable at those three vertexes will " + 
+"determine its value everywhere else.</body>",
                  errorTitle);
             return;
         }
@@ -2223,7 +2242,7 @@ public class Editor extends Diagram
                  + "</p></html>",
                  "Copy position error");
         }
-        copyToClipboard(principalToPrettyString(mprin), false);
+        copyToClipboard(htmlToText(principalToPrettyString(mprin)), false);
     }
 
     public void copyAllTextToClipboard() {
@@ -4111,8 +4130,8 @@ public class Editor extends Diagram
         StringArrayDialog dog = new StringArrayDialog
             (editFrame, labels, oldValues,
              "<html><body width=\"200 px\"><p>"
-             + "Enter exactly two values. Fractions and percentages are "
-             + "allowed."
+             + "Enter values for exactly two variables and leave all others. "
+             + "Fractions and percentages are allowed."
              + "</p></body></html>");
         dog.setTitle("Set mouse position");
         String[] values = dog.showModal();
