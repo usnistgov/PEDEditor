@@ -248,8 +248,11 @@ public class EditFrame extends JFrame
 
     class SaveImageAction extends Action {
         String ext;
-        SaveImageAction(String ext) {
+        SaveImageAction(String ext, int mnemonic) {
             super(ext);
+            if (mnemonic != 0) {
+                putValue(MNEMONIC_KEY, new Integer(mnemonic));
+            }
             this.ext = ext;
         }
 
@@ -497,9 +500,7 @@ public class EditFrame extends JFrame
                 }
             });
 
-        for (String ext: new String[] {"PNG"}) {
-            mnSaveAs.add(new SaveImageAction(ext));
-        }
+        mnSaveAs.add(new SaveImageAction("PNG", KeyEvent.VK_G));
 
         mnSaveAs.add(new Action("SVG", KeyEvent.VK_S) {
                 @Override public void actionPerformed(ActionEvent e) {
@@ -531,14 +532,11 @@ public class EditFrame extends JFrame
                 }
             });
 
-
-        // "Edit" top-level menu
-        JMenu mnEdit = new JMenu("Edit");
-        mnEdit.setMnemonic(KeyEvent.VK_E);
-        menuBar.add(mnEdit);
-
         if (editable) {
-            mnEdit.add(new Action
+            JMenu mnSelection = new JMenu("Edit Selection");
+            menuBar.add(mnSelection);
+            mnSelection.setMnemonic(KeyEvent.VK_E);
+            mnSelection.add(new Action
                        ("Color...",
                         KeyEvent.VK_R,
                         KeyStroke.getKeyStroke('r')) {
@@ -547,64 +545,23 @@ public class EditFrame extends JFrame
                     }
                 });
 
-            mnEdit.add(new Action("Copy",
+            mnSelection.add(new Action("Copy",
                                   KeyEvent.VK_C,
                                   KeyStroke.getKeyStroke('c')) {
                     @Override public void actionPerformed(ActionEvent e) {
                         getParentEditor().copySelection();
                     }
                 });
-        }
 
-        mnEdit.add(new Action("Copy all text to clipboard",
-                              KeyEvent.VK_T) {
-                @Override public void actionPerformed(ActionEvent e) {
-                    getParentEditor().copyAllTextToClipboard();
-                }
-            });
-
-        mnEdit.add(new Action("Copy coordinates to clipboard",
-                              KeyEvent.VK_P,
-                              KeyStroke.getKeyStroke("control C")) {
-                @Override public void actionPerformed(ActionEvent e) {
-                    getParentEditor().copyCoordinatesToClipboard();
-                }
-            });
-
-        mnEdit.add(new Action("Copy coordinates from clipboard",
-                              KeyEvent.VK_P) {
-                @Override public void actionPerformed(ActionEvent e) {
-                    getParentEditor().copyCoordinatesFromClipboard();
-                }
-            });
-
-        if (editable) {
-            mnEdit.add(new Action("Copy default settings from selection",
-                                  KeyEvent.VK_U,
-                                  KeyStroke.getKeyStroke('D')) {
-                    @Override public void actionPerformed(ActionEvent e) {
-                        getParentEditor().setDefaultSettingsFromSelection();
-                    }
-                });
-
-            mnEdit.add(new Action("Delete", KeyEvent.VK_D, "DELETE") {
+            mnSelection.add(new Action("Delete", KeyEvent.VK_D, "DELETE") {
                     @Override public void actionPerformed(ActionEvent e) {
                         getParentEditor().removeSelection();
                     }
                 });
 
-            mnEdit.add(new Action("Deselect", KeyEvent.VK_S, "pressed END") {
+            mnSelection.add(new Action("Deselect", KeyEvent.VK_S, "pressed END") {
                     @Override public void actionPerformed(ActionEvent e) {
                         getParentEditor().deselectCurve();
-                    }
-                });
-
-            mnEdit.add(new Action
-                       ("Edit selection...",
-                        KeyEvent.VK_E,
-                        KeyStroke.getKeyStroke('e')) {
-                    @Override public void actionPerformed(ActionEvent e) {
-                        getParentEditor().editSelection();
                     }
                 });
 
@@ -622,9 +579,17 @@ public class EditFrame extends JFrame
             mnLayer.add
                 (new LayerAction
                  ("To top", KeyEvent.VK_T, null, +1000000));
-            mnEdit.add(mnLayer);
+            mnSelection.add(mnLayer);
 
-            mnEdit.add(new Action("Move",
+            mnSelection.add(new Action("Move selection only",
+                                  KeyEvent.VK_V,
+                                  KeyStroke.getKeyStroke('V')) {
+                    @Override public void actionPerformed(ActionEvent e) {
+                        getParentEditor().moveSelection(false);
+                    }
+                });
+ 
+           mnSelection.add(new Action("Move everything at selected point",
                                   KeyEvent.VK_M,
                                   KeyStroke.getKeyStroke('v')) {
                     @Override public void actionPerformed(ActionEvent e) {
@@ -632,7 +597,7 @@ public class EditFrame extends JFrame
                     }
                 });
 
-            mnEdit.add(new Action("Move region",
+            mnSelection.add(new Action("Move everything in selected region",
                                   KeyEvent.VK_R,
                                   KeyStroke.getKeyStroke('R')) {
                     @Override public void actionPerformed(ActionEvent e) {
@@ -640,19 +605,28 @@ public class EditFrame extends JFrame
                     }
                 });
 
-            mnEdit.add(new Action("Move selection only",
-                                  KeyEvent.VK_V,
-                                  KeyStroke.getKeyStroke('V')) {
+            mnSelection.add(new Action
+                       ("Properties...",
+                        KeyEvent.VK_P,
+                        KeyStroke.getKeyStroke('e')) {
                     @Override public void actionPerformed(ActionEvent e) {
-                        getParentEditor().moveSelection(false);
+                        getParentEditor().editSelection();
                     }
                 });
 
-            mnEdit.add(new Action("Reset selection to current defaults",
-                                  KeyEvent.VK_F,
+            mnSelection.add(new Action("Revert properties to default",
+                                  KeyEvent.VK_T,
                                   KeyStroke.getKeyStroke('d')) {
                     @Override public void actionPerformed(ActionEvent e) {
                         getParentEditor().resetSelectionToDefaultSettings();
+                    }
+                });
+
+            mnSelection.add(new Action("Make selection's properties the new default",
+                                  KeyEvent.VK_F,
+                                  KeyStroke.getKeyStroke('D')) {
+                    @Override public void actionPerformed(ActionEvent e) {
+                        getParentEditor().setDefaultSettingsFromSelection();
                     }
                 });
         }
@@ -668,15 +642,6 @@ public class EditFrame extends JFrame
                         KeyStroke.getKeyStroke('A')) {
                 @Override public void actionPerformed(ActionEvent e) {
                     getParentEditor().autoPosition();
-                }
-            });
-
-        mnPosition.add(new Action
-                       ("Copy status bar to clipboard",
-                        KeyEvent.VK_C,
-                        KeyStroke.getKeyStroke("control P")) {
-                @Override public void actionPerformed(ActionEvent e) {
-                    getParentEditor().copyPositionToClipboard();
                 }
             });
 
@@ -1057,6 +1022,42 @@ public class EditFrame extends JFrame
         if (mnProperties.getItemCount() > 0) {
             menuBar.add(mnProperties);
         }
+
+        // "Digitize" top-level menu
+        JMenu mnDigit = new JMenu("Digitize");
+        mnDigit.setMnemonic(KeyEvent.VK_I);
+        menuBar.add(mnDigit);
+
+        mnDigit.add(new Action("Copy all text to clipboard",
+                              KeyEvent.VK_T) {
+                @Override public void actionPerformed(ActionEvent e) {
+                    getParentEditor().copyAllTextToClipboard();
+                }
+            });
+
+        mnDigit.add(new Action("Copy label or curve coordinates to clipboard",
+                              KeyEvent.VK_P,
+                              KeyStroke.getKeyStroke("control C")) {
+                @Override public void actionPerformed(ActionEvent e) {
+                    getParentEditor().copyCoordinatesToClipboard();
+                }
+            });
+
+        mnDigit.add(new Action("Copy label or curve coordinates from clipboard",
+                              KeyEvent.VK_F) {
+                @Override public void actionPerformed(ActionEvent e) {
+                    getParentEditor().copyCoordinatesFromClipboard();
+                }
+            });
+
+        mnDigit.add(new Action
+                       ("Copy status bar to clipboard",
+                        KeyEvent.VK_S,
+                        KeyStroke.getKeyStroke("control shift S")) {
+                @Override public void actionPerformed(ActionEvent e) {
+                    getParentEditor().copyPositionToClipboard();
+                }
+            });
 
         // "Chemistry" top-level menu
         JMenu mnChem = new JMenu("Chemistry");
@@ -1442,8 +1443,10 @@ public class EditFrame extends JFrame
         g.setBackground(new Color(255, 255, 255, 0));
         g.clearRect(0, 0, im.getWidth(), im.getHeight());
         g.setColor(Color.BLACK);
+        g.setFont(g.getFont().deriveFont(9.0f));
+        LabelDialog.drawString(g, "Underlayer", width/2, height/2, 0.5, 0.5);
         g.drawRect(0, 0, im.getWidth() - 1, im.getHeight() - 1);
-        g.setPaint(fill.getPaint(Color.BLACK, 1));
+        g.setPaint(fill.getPaint(new Color(100, 100, 100), 1));
         g.fill(new Rectangle(0, 0, im.getWidth(), im.getHeight()));
         return new ImageIcon(im);
     }
