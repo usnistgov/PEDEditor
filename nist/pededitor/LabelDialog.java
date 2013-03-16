@@ -186,12 +186,7 @@ public class LabelDialog extends JDialog {
                 textField.setFont(font.deriveFont(16f));
                 InputMap im = textField.getInputMap();
                 im.put(KeyStroke.getKeyStroke("ENTER"),
-                       new AbstractAction("OK") {
-                           private static final long serialVersionUID = 197868896745807236L;
-                           @Override public void actionPerformed(ActionEvent e) {
-                               insertText("<br>\n");
-                           }
-                       });
+                       okButton.getAction());
                 gb.addWest(textLabel);
                 gb.endRowWith(sp);
                 cpgb.endRowWith(panel);
