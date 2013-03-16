@@ -2566,7 +2566,7 @@ public class Editor extends Diagram
         newLabel.setBaselineXOffset(label.getBaselineXOffset());
         newLabel.setBaselineYOffset(label.getBaselineYOffset());
 
-        labelInfo.label = newLabel;
+        labelInfo.setLabel(newLabel);
         propagateChange();
     }
 
