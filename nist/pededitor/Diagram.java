@@ -1127,6 +1127,12 @@ public class Diagram extends Observable implements Printable {
             this(label, null, null);
         }
 
+        public void setLabel(AnchoredLabel label) {
+            this.label = label;
+            this.center = null;
+            this.view = null;
+        }
+
         public LabelInfo(AnchoredLabel label, Point2D center,
                                  View view) {
             this.label = label;
