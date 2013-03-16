@@ -248,7 +248,7 @@ public class Diagram extends Observable implements Printable {
     }
 
     
-    class CurveDecoration implements Decoration, BoundedParameterizable2D {
+    class CurveDecoration implements ParameterizableDecoration {
         CuspFigure curve;
 
         CurveDecoration(CuspFigure curve) {
@@ -928,7 +928,7 @@ public class Diagram extends Observable implements Printable {
         }
     }
 
-    class RulerDecoration implements Decoration, BoundedParameterizable2D {
+    class RulerDecoration implements ParameterizableDecoration {
         LinearRuler item;
 
         RulerDecoration(LinearRuler item) {
@@ -2626,25 +2626,49 @@ public class Diagram extends Observable implements Printable {
         return res;
     }
 
-    /** @return a list of all key points in the diagram. Some
-        duplication is likely. */
-    public ArrayList<Point2D.Double> keyPoints() {
-        ArrayList<Point2D.Double> res = intersections();
+    /** @return a list of all key points in the diagram. Key points
+        that are not decoration handles are cast to type
+        NullDecorationHandle just to put a shell around the point type
+        (probably a hack, I know). Some duplication is likely. */
+    public ArrayList<DecorationHandle> keyPointHandles() {
+        ArrayList<DecorationHandle> res = new ArrayList<>();
+        for (Point2D.Double p: intersections()) {
+            res.add(new NullDecorationHandle(p));
+        }
 
         for (Point2D.Double p: principalToStandardPage.getInputVertices()) {
-            res.add(p);
+            res.add(new NullDecorationHandle(p));
         }
 
         for (DecorationHandle m: getDecorationHandles()) {
-            res.add(m.getLocation());
+            if (m instanceof VertexHandle) {
+                VertexHandle hand = (VertexHandle) m;
+                CuspInterp2D curve = hand.getItem().curve;
+                if (!curve.isEndpoint(hand.vertexNo)
+                    && curve.isSmoothed(hand.vertexNo)) {
+                    // This is a smoothed interior control point which
+                    // does not stand out as a key point.
+                    continue;
+                }
+            }
+            res.add(m);
         }
 
         // Add all segment midpoints.
         for (Line2D.Double s: getAllLineSegments()) {
-            res.add(new Point2D.Double((s.getX1() + s.getX2()) / 2,
-                                       (s.getY1() + s.getY2()) / 2));
+            res.add(new NullDecorationHandle
+                    ((s.getX1() + s.getX2()) / 2,
+                     (s.getY1() + s.getY2()) / 2));
         }
 
+        return res;
+    }
+
+    public ArrayList<Point2D.Double> keyPoints() {
+        ArrayList<Point2D.Double> res = new ArrayList<>();
+        for (DecorationHandle h: keyPointHandles()) {
+            res.add(h.getLocation());
+        }
         return res;
     }
 
@@ -2771,8 +2795,7 @@ public class Diagram extends Observable implements Printable {
                 BoundedParam2D param
                     = ((BoundedParameterizable2D) dec).getParameterization();
                 if (param.getMinT() == param.getMaxT()) {
-                    // That's a point, not a curve. If the user wanted
-                    // a point, they would have pressed 'p' instead.
+                    // That's a point, not a curve.
                     continue;
                 }
                 decs.add(dec);
@@ -3981,8 +4004,7 @@ public class Diagram extends Observable implements Printable {
     }
 
     /** @return an array of all straight line segments defined for
-        this diagram. 2-point SplinePols are actually straight, so
-        they are included. */
+        this diagram. */
     @JsonIgnore public Line2D.Double[] getAllLineSegments() {
         ArrayList<Line2D.Double> res = new ArrayList<>();
          
