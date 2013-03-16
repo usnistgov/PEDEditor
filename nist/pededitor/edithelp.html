@@ -18,7 +18,7 @@ scanned image of an existing diagram, use the
 
 <p>You are presented with a selection of diagram types. Select the
 "Binary" diagram type to draw a rectangular graph using a Cartesian
-coordinate system. Select the "Other/Schematic" type to draw free-form
+coordinate system. Select the "Schematic/Other" type to draw free-form
 diagrams starting from a blank page. There are also various subtypes
 of ternary diagram, if you happen to need those.</p>
 
@@ -28,10 +28,10 @@ of ternary diagram, if you happen to need those.</p>
 diagram that was previously saved in this program's native
 <code>PED</code> format.</p>
 
-<p>If you open an image file, you will be given the opportunity to
-select the boundary of a diagram within that file and then create a
-new diagram traced from the old one. For more details, consult the
-Diagram Selection Window's help menu option.</p>
+<p>If you open an image file, a window will open that allows you to
+select the boundary of a diagram within that image and then create a
+new diagram traced from the old one. That window has its own Help menu
+option which provides more information.</p>
 
 <h3>Save / Save As PED</h3>
 
@@ -69,12 +69,14 @@ available for diagram positioning:</p>
 
 <ul>
 
-<li><p><b>Jump to selection</b> moves the mouse pointer to the
-currently selected item, if an item is selected.</p></li>
+<li><p><b>Jump to selection</b> (<code>j</code>) moves the mouse
+pointer to the currently selected item, if an item is
+selected.</p></li>
 
 <li>
 
-<b>Select nearest point</b> (<code>Shift+Q</code>) moves the mouse to and selects the nearest key point. Key points include
+<b>Select nearest point</b> (<code>Shift+Q</code>) moves the mouse to
+and selects the nearest key point. Key points include
 
 <ul>
   <li>arrows</li>
@@ -88,6 +90,8 @@ currently selected item, if an item is selected.</p></li>
 want, you may press it again and again to highlight other items
 located nearby.</p>
 
+<li>
+
 <p><b>Nearest point</b> (<code>q</code>) moves the mouse to the
 nearest key point, but does not select it. <code>Nearest point</code>
 recognizes the following key points, in addition to those recognized
@@ -98,17 +102,17 @@ by <code>Select nearest point</code>:
   <li>corners of the diagram
   <li>segment midpoints
   <li>If an item is selected, then the point on the curve nearest the
-    mouse that is nearest to the selection is also considered to be a
-    key point. (In other words, first identify the curve closest to
-    the mouse. The point on that curve that is closest to the
-    selection is a key point.)
+    mouse that is nearest to the selection point is also considered to
+    be a key point. (In other words, first identify the curve closest
+    to the mouse. The point on that curve that is closest to the
+    selection point is a key point.)
 </ul>
 
 </li>
 
 <li><b>Select nearest line/curve</b> (<code>Shift+W</code>) moves the
-mouse to the the nearest point on any ruler or curve, and it selects
-the nearest vertex on that ruler or curve.
+mouse to the the nearest point on any ruler or curve and selects the
+nearest vertex on that ruler or curve.
 
 <li><b>Nearest line/curve</b> (<code>w</code>) moves the mouse to the
 the nearest point on any ruler or curve.
@@ -139,24 +143,26 @@ auto-positioning:</p>
 <li><b>Curves and rulers</b>: If no key point is nearby but a curve or
 ruler is, then the nearest point on it is selected in orange.</li>
 
-<li><p><b>Grid lines</b>: If an item is selected, then for purposes of
-identifying key points and curves, the program behaves as if the
-diagram contains grid lines through the selection location (and
-through the secondary selection, if there is one).</p>
+<li><p><b>Vertical and horizontal lines</b>: If an item is selected,
+then for purposes of identifying key points and curves, the program
+behaves as if the diagram contains horizontal and vertical lines
+through the selection, and through the secondary selection, if there
+is one.
 
-<p>Grid line orientations include the following: horizontal and
-vertical lines; the angle value indicated in the "Tangent" window; in
-ternary diagrams, lines that are at 60 and 120 degrees; and lines of
-zero change of user-defined variables created using
+<li><p>The program may also include lines through the selection
+at <b>other special angles</b>. These angles include the value
+indicated in the "Slope" window, lines in ternary diagrams at 60 or
+120 degrees, and lines of zero change for user-defined variables
+created using
 <code>P<u>r</u>operties/<u>V</u>ariables/<u>A</u>dd</code>.</p>
+</ul>
 
 <p>Sometimes the auto-positioning is attracted by a key point that
 prevents you from clicking on a curve or grid line instead. You may
-avoid this problem by pressing using '+' to zoom in until the screen
+sidestep this problem by pressing using '+' to zoom in until the screen
 distance to the key point becomes large enough that it no longer
 attracts the mouse pointer.</p>
 </li>
-</ul>
 
 <p>To protect users against involuntary mouse movenets, the cursor
 stays at the chosen position after you perform a mouse positioning
@@ -166,11 +172,7 @@ different from the mouse position. Moving the mouse a larger distance
 or pressing <code>u</code> will cause the cursor to resume following
 the mouse pointer. In addition, the mouse may automatically become
 unstuck before you perform an operation that would otherwise be
-redundant, such as adding a second vertex to a curve in a row.
-
-<p>Pressing <code>Control+Shift+S</code> will copy the contents of the
-status bar (the gray bar at the bottom of the edit window) to the
-clipboard.
+redundant, such as adding the same vertex to a curve twice in a row.
 
 </ul>
 
@@ -183,10 +185,11 @@ operating on the nearest key point.
 
 <ul>
 
-<li>Press <code>Delete</code> to delete the selection.</li>
+<li>Press <code>Delete</code> to delete the selection. Curves are
+deleted one point at a time.</li>
 
-<li>Press <code>End</code> or the right mouse button to deselect the
-item.</li>
+<li>Press <code>Escape</code> or the right mouse button to deselect
+the item.</li>
 
 <li>Press <code>r</code> to change the selection's color. If the
 selection is highlighted in green, you may not notice the color change
@@ -199,7 +202,7 @@ current mouse position.</li>
 rulers, and sets of tie lines may be edited this way.
 
 <li>Press <code>v</code> to move the selected vertex or item and all
-other items at the same location.
+other items at the same location to the current mouse position.
 
 <li>Press <code>Shift+V</code> to move the selected vertex or item
 only.
@@ -207,7 +210,9 @@ only.
 <li>Press <code>Shift+R</code> to move the selected curve or ruler and
 all selectable key points that lie on or in that curve or ruler.
 
-<li>Press <code>d</code> to change the selected item's color, line thickness (if applicable), and line style (if applicable) to the current default values.
+<li>Press <code>d</code> to change the selected item's color, line
+thickness (if applicable), and line style (if applicable) to the
+current default values.
 
 <li>Press <code>Shift+D</code> to change the current default values
 for color, line thickness (if applicable), and line style (if
@@ -218,7 +223,12 @@ to match the first thing.
 
 </ul>
 
-<h2>Curves and Vertexes</h2>
+<h2>Curve Menu</h2>
+
+<p>Position the mouse where the new vertex goes and
+press <code>x</code> or the left mouse button. To add a point at the
+auto-position location instead, hold down the shift key as you
+press <code>x</code> or the left mouse button.
 
 <p>If a vertex (curve control point) is currently selected, then it is
 marked by a small solid green circle. Other control points on the same
@@ -226,16 +236,13 @@ curve are indicated by small open green circles.</p>
 
 <h3>Starting a new curve</h3>
 
-<p>If a curve is already selected, press <code>End</code> or the right
+<p>If a curve is already selected, press <code>Escape</code> or the right
 mouse button to deselect it.
 
 <p>Position the mouse where the first vertex of the new curve belongs
 and press <code>x</code> or the left mouse button. To start a new
 curve at the auto-position location instead, hold down the shift key
 as you press <code>x</code> or the left mouse button.
-
-<p>As mentioned under <b>Position</b>, you may
-press <code>Shift+W</code> or <code>Shift+Q</code> to select a curve.
 
 <p>A curve consisting of a single point is represented as a dot twice
 as wide as the current line width. It is possible to mark data points
@@ -244,63 +251,78 @@ marking data points.
 
 <h3>Adding a point to a curve</h3>
 
-<p>As mentioned under <b>Position</b>, you may
-press <code>Shift+W</code> or <code>Shift+Q</code> to select a curve.
+<p>As described in the <code>Position Menu</code> section, you may
+press <code>Shift+W</code> or <code>Shift+Q</code> to select a place
+on the curve to add a new vertex.
 
-<p>Position the mouse where the new vertex goes and
-press <code>x</code> or the left mouse button. To add a point at the
-auto-position location instead, hold down the shift key as you
-press <code>x</code> or the left mouse button.
+<p>The program has both an idea of a selected vertex and, for curves
+of at least two points, a selected side of that vertex. For <code>Shift+W</code> or <code>Shift+Q</code> to select a place
 
-<h3>Curve smoothing</h3>
 
-<p>Curve smoothing is initially turned off when you start the program.
-With curve smoothing off, curves consisting of three or more points
-are presented as a series of connected line segments or (for closed
-curves) a polygon.
+hether a new vertex will be
+added between that vertex and the next one, or that vertex and the one on its left or the one on its right. (The 
 
-<p>Pressing 's' will turn smoothing on for all new vertexes in curves.
-The smoothing setting is global, so to turn on smoothing for all
-curves, it suffices to press 's' once when you start the program.
-Pressing 's' again will turn smoothing off.
+ before or after the selected one in the curve sequence.
+If the selected The <font color=red>red</font> outline shows how the curve will look
+after the next vertex is added.
 
-<p>Pressing 's' only changes the program's behavior when adding new
-vertexes. To toggle the smoothing setting of an existing vertex,
-select that vertex and press comma (,). If you need to change the
-smoothing setting for a whole curve, you will need to change the
-smoothing settings for each vertex individually. The bracket shortcut
-keys ('<code>[</code>' and '<code>]</code>'), which select the
-previous and next vertex in a curve, can help you do that faster, but
-it is fastest just to use '<code>s</code>' to get the smoothing
-setting right the first time.
+ which side of
+that vertex the next vertex added should go. If its 
 
-<h3>Curve closure</h3>
+If the program wants to add the new point in the wrong vertex
+sequence, you can shift the selected vertex and the selected side of
+that vertex using <code>Select left vertex</code> or <code>Select
+right vertex</code> in the <code>Curve</code> menu.
 
-<p>All curves start in the unclosed state. Pressing 'o' will toggle
-the currently selected curve between the unclosed and closed states.
-Closed curved return to their starting vertexes.
+<ul>
 
-<h3>Line styles</h3>
+<li><p>Select the <b>Smooth through new points</b> check box to turn
+on curve smoothing through each new vertex you add. You can also
+press <code>s</code>) to toggle this setting. Existing vertexes are
+not affected.
 
-<p>Use the <code><u>C</u>urve/Line style</code> menu item and select
-your preferred line style to change the style of the currently
-selected item (if any) and the initial style of any subsequently added
+<p>Unsmoothed curves of three or more points are presented as a series
+of connected line segments or (for closed curves) a polygon.
+
+<li><p><b>Toggle closure</b> (<code>o</code>) will change an open
+curve to a closed one or vice versa. All curves start in the open
+state. Closed curves have an extra segment looping back from the last
+vertex to the first. If that segment does not appear to be smoothed
+properly, you may need to go back and select <code>Toggle point
+smoothing</code> (see below) for one or both of the curve's endpoints.
+
+<li><p><b>Toggle point smoothing</b> (<code>,</code>) changes the
+smoothing setting for the selected vertex. To change the smoothing
+setting for a whole curve, toggle point smoothing for each vertex
+individually.
+
+<li><p><b>Line style</b> changes the line style for the currently
+selected item, if any, and the initial style of any subsequently added
 items. The spacing of dots and dashes is proportional to the line
 width: if you reduce the width of a dashed line by half, then the
 length of the dashes is also reduced by half.</p>
 
-<h3>Line widths</h3>
+<li><p><b>Line width</b> changes the line width for the currently
+selected item (if any) and the initial line width of any subsequently
+created items.</p>
 
-<p>Use the <code><u>C</u>urve/Line width</code> menu item to change
-the line width for the currently selected item (if any) and the
-initial line width of any subsequently created items.</p>
+<li><p><b>Fill style</b> fills the interior of a closed curve with the
+chosen pattern in the current default color. You must close the curve
+using <code>o</code> before you can fill it. See
+also <code><u>E</u>dit Selection/<u>L</u>ayer</code> to insure the
+fill pattern only obscures the right decorations.
 
-<h3>Fill styles</h3>
+<li><p><b>Select left vertex</b> (<code>[</code>) and <b>Select right
+vertex</b> (<code>]</code>) shift the vertex selection one vertex
+backward or forward depending on the curve's direction at the current
+selection. If the slope is vertical, <code>Select left vertex</code>
+will select the next vertex down while <code>Select right
+vertex</code> selects the next vertex up. If you are already at the
+endpoint of a closed curve and try to shift further in that direction,
+the selection will not change, but the xxx
 
-<p>Use the <code><u>C</u>urve/<u>F</u>ill style</code> menu item and
-select your preferred fill style to fill the interior of a closed
-curve (you must turn on curve closure, using 'o', before you select a
-fill style) with the chosen pattern in the current default color.
+ if you add a vertex later, that
+vertex will be placed beyond the curve's current endpoint.
 
 <h2>Decoration Menu</h2>
 
@@ -352,9 +374,9 @@ many locations, such as when marking data points.</p>
 <h4>Arrowheads</h4>
 
 <p>To draw an arrowhead that points at the angle indicated in the
-"Tangent" window, press '&gt;'. To draw an arrowhead that points in
+"Slope" window, press '&gt;'. To draw an arrowhead that points in
 the opposite direction, press '&lt;'. The size of the arrowhead is
-determined by the line width indicated in the "Tangent" window.</p>
+determined by the line width indicated in the "Slope" window.</p>
 
 <h4>Rulers</h4>
 
