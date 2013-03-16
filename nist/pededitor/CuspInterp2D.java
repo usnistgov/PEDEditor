@@ -77,6 +77,12 @@ public class CuspInterp2D extends PointsInterp2D {
         return smoothed.get(vertexNo);
     }
 
+    /** Return true if this point looks like an endpoint of the curve. */
+    public final boolean isEndpoint(int vertexNo) {
+        int s = size();
+        return s <= 2 || (!isClosed() && (vertexNo == 0 || vertexNo == s-1));
+    }
+
     @JsonProperty("smoothed") ArrayList<Boolean> getSmoothed() {
         return smoothed;
     }
