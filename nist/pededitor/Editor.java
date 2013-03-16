@@ -68,9 +68,14 @@ import Jama.Matrix;
 
 import org.codehaus.jackson.annotate.JsonIgnore;
 
+// TODO (bug?) 21-1B.ped is invalid. How did that happen? Also, Craig
+// managed to create a line with the same point repeated.
+
 // TODO (optional, 1/2 day): Enable the "copy coordinates to/from the
 // clipboard" operations to allow use of other variables, if that's
 // something people want.
+
+// TODO (optional): Remappable key bindings.
 
 // TODO (optional): Unify the ternary diagram interfaces to faciliate
 // creation of partial ternary diagrams, using a two-step process
@@ -397,6 +402,8 @@ public class Editor extends Diagram
     }
 
     public void editSelection() {
+       boolean hadSelection = (selection != null);
+
         String errorTitle = "Cannot edit selection";
         if (selection == null) {
             // Find the nearest editable item, and edit it.
@@ -423,7 +430,9 @@ public class Editor extends Diagram
         } else {
             showError("This item does not have a special edit function.",
                       errorTitle);
-            return;
+        }
+        if (!hadSelection) {
+            selection = null;
         }
     }
 
@@ -1087,11 +1096,25 @@ public class Editor extends Diagram
         }
     }
 
-    /** Cycle the currently active vertex.
+    public void select(DecorationHandle sel) {
+        selection = sel;
+        if (sel instanceof BoundedParam2DHandle) {
+            // Update the Slope window.
+            showTangent((BoundedParam2DHandle) sel);
+        }
+    }
 
-        @param delta if 1, then cycle forwards; if -1, then cycle
-        backwards. */
-    public void cycleActiveVertex(int delta) {
+    /** Select the vertex that comes after or before the currently
+        selected vertex.
+
+        @param rightward If rightward is true and the line tangent to
+        this curve at the currently selected vertex is not vertical,
+        then select the next vertex in the rightward direction. If
+        rightward is true and the tangent is vertical, select the next
+        vertex in the downward direction. If rightward is false,
+        select the next vertex in the other direction (left or
+        straight up). */
+    public void shiftActiveVertex(boolean rightward) {
         VertexHandle sel = getVertexHandle();
 
         if (sel == null) {
@@ -1100,6 +1123,20 @@ public class Editor extends Diagram
 
         CuspFigure path = getActiveCurve();
         int cnt = path.size();
+
+        Point2D.Double g = path.getParameterization().getDerivative
+            (sel.getT());
+
+        if (g == null) {
+            return; // Nothing to do.
+        }
+
+        // nextIsRight is true if the gradient points rightward or if
+        // the gradient points straight up (to within numeric
+        // error).
+        boolean nextIsRight = g.getX() > 0 ||
+            Math.abs(g.getX() * 1e12) < g.getY();
+        int delta = (nextIsRight == rightward) ? 1 : -1;
 
         if (path.isClosed()) {
             sel.vertexNo = (sel.vertexNo + cnt + delta) % cnt;
@@ -1114,6 +1151,7 @@ public class Editor extends Diagram
             }
         }
 
+        select(sel);
         redraw();
     }
 
@@ -1437,9 +1475,10 @@ public class Editor extends Diagram
                 Point2D.Double autop = getAutoPosition(ap);
                 if (autop != null && gmp != null
                     && !principalCoordinatesMatch(autop, gmp)) {
+                    g.setColor(toColor(ap.position));
                     paintCross(g, autop, scale);
                 }
-            } else if (mouseIsStuck) {
+            } else if (mouseIsStuck && mprin != null) {
                 paintCross(g, mprin, scale);
             }
         }
@@ -1520,27 +1559,36 @@ public class Editor extends Diagram
         showTangent(hand.getDecoration(), hand.getT());
     }
 
-    public void showTangent(Decoration dec, double t) {
+    public Point2D.Double derivative(BoundedParam2DHandle hand) {
+        return derivative(hand.getDecoration(), hand.getT());
+    }
+
+    public Point2D.Double derivative(Decoration dec, double t) {
         BoundedParam2D param = ((BoundedParameterizable2D) dec)
             .getParameterization();
         if (dec instanceof CurveDecoration) {
             CurveDecoration cdec = (CurveDecoration) dec;
             CuspFigure path = cdec.getItem();
             if (t == Math.floor(t) && !path.getCurve().isSmoothed((int) t)) {
-                // For polylines, insertBeforeSelection gives a
-                // hint which of the two segments adjoining a
-                // vertex is the one whose derivative we want.
+                // Cusps have different slopes depending on whether
+                // one approaches from the positive or negative t
+                // direction. insertBeforeSelection gives a hint which
+                // which side to approach from.
                 t = BoundedParam2Ds.constrainToDomain
-                    (param, t + (insertBeforeSelection ? -0.5 : 0.5));
+                    (param, t + 1e-10 * (insertBeforeSelection ? -1 : 1));
             }
         }
 
-        Point2D.Double g = param.getDerivative(t);
+        return param.getDerivative(t);
+    }
+
+    public void showTangent(Decoration dec, double t) {
+        Point2D.Double g = derivative(dec, t);
         if (g != null) {
             vertexInfo.setDerivative(g);
         }
 
-        double w = ((Decoration) dec).getLineWidth();
+        double w = dec.getLineWidth();
         if (w != 0) {
             vertexInfo.setLineWidth(w);
         }
@@ -2328,7 +2376,7 @@ public class Editor extends Diagram
                         }
                     }
                     throw new IllegalStateException(error);
-                } else if (matchCount == 1) {
+                } else {
                     for (int i = 0; i < points.size() - 1; ++i) {
                         if (selection.equals(points.get(i))) {
                             sel = points.get(i+1);
@@ -2338,10 +2386,15 @@ public class Editor extends Diagram
                 }
             }
 
-            selection = sel;
+            select(sel);
 
-            if (sel instanceof BoundedParam2DHandle) {
-                showTangent((BoundedParam2DHandle) sel);
+            if (sel instanceof VertexHandle) {
+                VertexHandle hand = getVertexHandle();
+                // You're more likely to want to add a point before
+                // vertex #0 than to insert a point between vertex #0
+                // and vertex #1.
+                insertBeforeSelection = (hand.vertexNo == 0)
+                    && (hand.getItem().size() >= 2);
             }
 
             point = sel.getLocation();
@@ -2730,20 +2783,30 @@ public class Editor extends Diagram
         return nearestHandles(principalFocus);
     }
 
-    /** @return a list of all key points in the diagram. Some
-        duplication is likely. */
-    @Override public ArrayList<Point2D.Double> keyPoints() {
-        ArrayList<Point2D.Double> res = super.keyPoints();
+    @Override public ArrayList<DecorationHandle> keyPointHandles() {
+        ArrayList<DecorationHandle> res = super.keyPointHandles();
+
+        CurveDecoration cdec = getSelectedCurve();
+        if (cdec != null) {
+            // Diagram.keyPointHandles() omits interior control points
+            // of smoothed arcs, but we want to include every control
+            // point of the selected curve.
+            for (DecorationHandle hand: cdec.getHandles()) {
+                res.add(hand);
+            }
+        }
 
         if (selection != null) {
             Point2D.Double p1 = selection.getLocation();
             Point2D.Double p2 = secondarySelectionLocation();
             if (p2 != null) {
                 // Add the doublings of segment p1p2.
-                res.add(new Point2D.Double(p1.getX() + (p1.getX() - p2.getX()),
-                                           p1.getY() + (p1.getY() - p2.getY())));
-                res.add(new Point2D.Double(p2.getX() + (p2.getX() - p1.getX()),
-                                           p2.getY() + (p2.getY() - p1.getY())));
+                res.add(new NullDecorationHandle
+                        (p1.getX() + (p1.getX() - p2.getX()),
+                         p1.getY() + (p1.getY() - p2.getY())));
+                res.add(new NullDecorationHandle
+                        (p2.getX() + (p2.getX() - p1.getX()),
+                         p2.getY() + (p2.getY() - p1.getY())));
             }
         }
         return res;
@@ -2820,10 +2883,14 @@ public class Editor extends Diagram
     }
 
     @Override public void setOriginalFilename(String filename) {
+        boolean isNew = (filename != originalFilename)
+            && (filename == null || !filename.equals(originalFilename));
         super.setOriginalFilename(filename);
-        originalImage = null;
-        triedToLoadOriginalImage = false;
-        revalidateZoomFrame();
+        if (isNew) {
+            originalImage = null;
+            triedToLoadOriginalImage = false;
+            revalidateZoomFrame();
+        }
     }
 
     /** Launch the application. */
@@ -3998,8 +4065,16 @@ public class Editor extends Diagram
         return getAutoPosition(null);
     }
 
+    @JsonIgnore public Point2D.Double getAutoPosition
+        (AutoPositionHolder ap) {
+        return getAutoPositionHandle(ap).getLocation();
+    }
+        
     /** Return the point in principal coordinates that
-        auto-positioning would move the mouse to.
+        auto-positioning would move the mouse to as a
+        DecorationHandle. This will be a NullDecorationHandle if the
+        location is associated with two or more handles or if it is
+        just an anonymous key point.
 
         @param ap If not null, ap.position will be set to
         AutoPositionType.NONE, AutoPositionType.CURVE, or
@@ -4007,7 +4082,8 @@ public class Editor extends Diagram
         the regular mouse position, the nearest curve, or the nearest
         key point.
     */
-    @JsonIgnore public Point2D.Double getAutoPosition(AutoPositionHolder ap) {
+    @JsonIgnore public DecorationHandle getAutoPositionHandle
+        (AutoPositionHolder ap) {
         if (ap == null) {
             ap = new AutoPositionHolder();
         }
@@ -4015,12 +4091,14 @@ public class Editor extends Diagram
 
         Point2D.Double mprin2 = getMousePosition();
         if (mprin2 == null) {
-            return mprin;
+            return new NullDecorationHandle(mprin);
         }
         Point2D.Double mousePage = principalToStandardPage.transform(mprin2);
 
-        // Location to move to. If null, no good candidate has been found yet.
+        DecorationHandle res = null;
+        // newPage == principalToStandardPage.transform(es.getLocation()).
         Point2D.Double newPage = null;
+        double pageDist = 1e100;
 
         try (UpdateSuppressor us = new UpdateSuppressor()) {
                 ArrayList<Point2D.Double> selections = new ArrayList<>();
@@ -4048,12 +4126,51 @@ public class Editor extends Diagram
                                          StandardStroke.INVISIBLE, 0)));
                 }
 
-                {
-                    Point2D.Double point = nearestPoint(mousePage);
-                    double keyPointDist = 1e6;
+                ArrayList<DecorationHandle> hands = keyPointHandles();
+                if (hands != null) {
+                    for (DecorationHandle h: hands) {
+                        Point2D.Double pagePt = principalToStandardPage
+                            .transform(h.getLocation());
+                        double dist = pagePt.distance(mousePage);
+                        if (dist < pageDist) {
+                            newPage = pagePt;
+                            res = h;
+                            pageDist = dist;
+                        }
+                    }
 
-                    if (point != null) {
-                        newPage = principalToStandardPage.transform(point);
+                    final double OVERLAP_DISTANCE = 1e-10;
+                    int parameterizableCnt = 0;
+                    for (DecorationHandle h: hands) {
+                        Point2D.Double pagePt = principalToStandardPage
+                            .transform(h.getLocation());
+                        if (pagePt.distance(newPage) > OVERLAP_DISTANCE) {
+                            continue;
+                        }
+                        
+                        // Two or more handles are in the same place,
+                        // so do nitpicky stuff to get the
+                        // parameterization right. If there's only one
+                        // parameterizable handle, use it. If there
+                        // are two or more, use neither of them,
+                        // because it's ambiguous.
+
+                        if (h instanceof BoundedParameterizable2D) {
+                            ++parameterizableCnt;
+                            if (parameterizableCnt > 1) {
+                                // If there are two or more, use
+                                // neither, because it's ambiguous.
+                                res = new NullDecorationHandle(h.getLocation());
+                                break;
+                            } else {
+                                // If there's only one parameterizable
+                                // handle, use it.
+                                res = h;
+                            }
+                        }
+                    }
+
+                    if (res != null) {
 
                         // Subtract keyPointPixelDist (converted to page
                         // coordinates) from keyPointDist before comparing
@@ -4061,28 +4178,33 @@ public class Editor extends Diagram
                         // key points over curves when the mouse is close to
                         // both.
                         double keyPointPixelDist = 10;
-                        keyPointDist = newPage.distance(mousePage)
-                            - keyPointPixelDist / scale;
+                        pageDist -= keyPointPixelDist / scale;
                         ap.position = AutoPositionType.POINT;
                     }
 
-                    // Only jump to the nearest curve if it is at least three
-                    // times closer than the nearest key point.
+                    // Only jump to the nearest curve if it is at
+                    // least three times closer than pageDist.
+
                     DecorationDistance nc;
-                    if (keyPointDist > 0
+                    if (pageDist > 0
                         && (nc = nearestCurve(mousePage)) != null
-                        && keyPointDist > 3 * nc.distance.distance) {
+                        && pageDist > 3 * nc.distance.distance) {
                         ap.position = AutoPositionType.CURVE;
                         newPage = nc.distance.point;
+                        pageDist = nc.distance.distance;
+                        res = new NullParameterizableHandle
+                            ((ParameterizableDecoration) nc.decoration,
+                             nc.distance.t, standardPageToPrincipal);
                     }
                 }
 
                 double maxMovePixels = 50; // Maximum number of pixels to
                 // move the mouse
                 if (newPage == null
-                    || newPage.distance(mousePage) * scale > maxMovePixels) {
+                    || pageDist * scale > maxMovePixels) {
                     ap.position = AutoPositionType.NONE;
                     newPage = mousePage; // Leave the mouse where it is.
+                    res = new NullDecorationHandle(mprin2);
                 }
 
                 while (decorations.size() > oldSize) {
@@ -4093,7 +4215,7 @@ public class Editor extends Diagram
             System.exit(1);
         }
 
-        return standardPageToPrincipal.transform(newPage);
+        return res;
     }
 
     /** Invoked from the EditFrame menu */
@@ -4102,9 +4224,12 @@ public class Editor extends Diagram
             unstickMouse();
         }
 
-        mprin = getAutoPosition();
-        if (mprin != null) {
-            moveMouse(mprin);
+        DecorationHandle h = getAutoPositionHandle(null);
+        if (h != null) {
+            moveMouse(h.getLocation());
+            if (h instanceof BoundedParam2DHandle) {
+                showTangent((BoundedParam2DHandle) h);
+            }
             mouseIsStuck = true;
             redraw();
         }
