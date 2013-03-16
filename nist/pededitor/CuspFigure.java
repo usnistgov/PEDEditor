@@ -198,7 +198,11 @@ public class CuspFigure implements BoundedParameterizable2D, Decorated {
     }
 
     @JsonIgnore public Paint getPaint() {
-        return getFill().getPaint(getColor(), 1.0);
+        Color c = getColor();
+        if (c == null) {
+            c = Color.BLACK;
+        }
+        return getFill().getPaint(c, 1.0);
     }
 
     public String toJSONString() {
