@@ -33,7 +33,7 @@ public class VertexInfoDialog extends JDialog {
     public JLabel lineWidth = new JLabel("0.00000");
 
     public VertexInfoDialog(Frame owner) {
-        super(owner, "Tangent", false);
+        super(owner, "Slope", false);
         setAngleDegrees(0);
         setSlope(0);
 
@@ -130,7 +130,7 @@ public class VertexInfoDialog extends JDialog {
         setAngle(Math.atan2(y, x));
     }
 
-    public double thetaToDegrees(double theta) {
+    static double thetaToDegrees(double theta) {
         // Semi-lame hack to turn values almost exactly equal to -90
         // degrees into 90 degrees so it's not a coin flip whether a
         // nearly-vertical line ends up being displayed as pointing
@@ -144,15 +144,15 @@ public class VertexInfoDialog extends JDialog {
         return deg;
     }
 
-    public double degreesToTheta(double deg) {
+    static public double degreesToTheta(double deg) {
         return -deg * Math.PI / 180;
     }
 
-    public double thetaToSlope(double theta) {
+    static public double thetaToSlope(double theta) {
         return Math.tan(theta);
     }
 
-    public double slopeToTheta(double s) {
+    static public double slopeToTheta(double s) {
         return -Math.atan2(s, 1);
     }
 
