@@ -559,7 +559,7 @@ public class EditFrame extends JFrame
                     }
                 });
 
-            mnSelection.add(new Action("Deselect", KeyEvent.VK_S, "pressed END") {
+            mnSelection.add(new Action("Deselect", KeyEvent.VK_S, "pressed ESCAPE") {
                     @Override public void actionPerformed(ActionEvent e) {
                         getParentEditor().deselectCurve();
                     }
@@ -832,22 +832,22 @@ public class EditFrame extends JFrame
                 });
 
             mnCurve.add(new Action
-                        ("Toggle point smoothing", KeyEvent.VK_C, "typed ,") {
+                        ("Toggle point smoothing", KeyEvent.VK_P, "typed ,") {
                     @Override public void actionPerformed(ActionEvent e) {
                         getParentEditor().toggleCusp();
                     }
                 });
         }
 
-        mnCurve.add(new Action("Select previous vertex", KeyEvent.VK_P, "typed [") {
+        mnCurve.add(new Action("Select left vertex", KeyEvent.VK_L, "typed [") {
                 @Override public void actionPerformed(ActionEvent e) {
-                    getParentEditor().cycleActiveVertex(-1);
+                    getParentEditor().shiftActiveVertex(false);
                 }
             });
 
-        mnCurve.add(new Action("Select next vertex", KeyEvent.VK_N, "typed ]") {
+        mnCurve.add(new Action("Select right vertex", KeyEvent.VK_R, "typed ]") {
                 @Override public void actionPerformed(ActionEvent e) {
-                    getParentEditor().cycleActiveVertex(+1);
+                    getParentEditor().shiftActiveVertex(true);
                 }
             });
 
