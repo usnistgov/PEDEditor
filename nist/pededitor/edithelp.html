@@ -145,16 +145,62 @@ ruler is, then the nearest point on it is selected in orange.</li>
 
 <li><p><b>Vertical and horizontal lines</b>: If an item is selected,
 then for purposes of identifying key points and curves, the program
-behaves as if the diagram contains horizontal and vertical lines
-through the selection, and through the secondary selection, if there
-is one.
+behaves as if the diagram contains invisible horizontal and vertical
+lines through the selection point, if any.
 
-<li><p>The program may also include lines through the selection
-at <b>other special angles</b>. These angles include the value
-indicated in the "Slope" window, lines in ternary diagrams at 60 or
-120 degrees, and lines of zero change for user-defined variables
+<li><p>The program may also include invisible lines through the
+selection at <b>other special angles</b>. These angles include the
+value indicated in the "Slope" window, lines in ternary diagrams at 60
+or 120 degrees, and lines of zero change for user-defined variables
 created using
 <code>P<u>r</u>operties/<u>V</u>ariables/<u>A</u>dd</code>.</p>
+
+<p>To create a rectangle using these features:</p>
+
+<ol>
+
+<li>If necessary, disable smoothing by unselecting
+  the <code>Curve/Smooth through new points</code> check box. Also, if
+  a curve is already selected, press <code>Escape</code> to unselect
+  it.
+
+<li>Add the bottom left corner of the rectangle using one of the
+  procedures described for "Starting a new curve" in the <code>Curve
+  Menu</code> section of this document.
+
+<li>Move the mouse near the intended bottom right corner and
+press <code>Shift+left mouse button</code>.
+
+<li>Move the mouse near the intended upper right corner and
+  press <code>Shift+left mouse button</code>.
+
+<li>Press <code>o</code> to make a closed polygon.
+
+<li>Move the mouse near the intended upper left corner and
+  press <code>Shift+left mouse button</code>.
+
+</ol>
+
+<p>To create a line segment parallel to an existing line segment:</o>
+
+<ol>
+
+<li>Add the first vertex of the line using one of the procedures
+already described. Let the new vertex remain selected.
+
+<li>Press <code>w</code> to select the line you want the new line to
+  be parallel to. This will enter the slope of that line in the Slope
+  window so auto-position will prefer points at the given slope with
+  respect to your first vertex.
+
+<li>Move the mouse near the other intended endpoint and
+  press <code>Shift+left mouse button</code>.
+
+</ol>
+
+<p>The secondary selection only applies when a ruler or curve with two
+or more vertexes is selected, and is always a vertex adjacent to the
+selected vertex.
 </ul>
 
 <p>Sometimes the auto-positioning is attracted by a key point that
@@ -198,11 +244,17 @@ until you deselect the item.</li>
 <li>Press <code>c</code> to create a copy to the selection at the
 current mouse position.</li>
 
-<li>Press 'e' to edit the selected item's properties. Only labels,
-rulers, and sets of tie lines may be edited this way.
+<li>Press <code>e</code> to edit the selected item's properties. Only
+labels, rulers, and sets of tie lines may be edited this way.
 
-<li>Press <code>v</code> to move the selected vertex or item and all
+<li><p>Press <code>v</code> to move the selected vertex or item and all
 other items at the same location to the current mouse position.
+
+<p>Special note for labels which are not anchored in the center: when
+moving labels, it matters whether you selected the label's center (the
+green circle is empty) or its anchor (the green circle is solid). If
+you select a label's center, then the center, not the anchor, will
+move to the current mouse position.
 
 <li>Press <code>Shift+V</code> to move the selected vertex or item
 only.
@@ -227,8 +279,8 @@ to match the first thing.
 
 <p>Position the mouse where the new vertex goes and
 press <code>x</code> or the left mouse button. To add a point at the
-auto-position location instead, hold down the shift key as you
-press <code>x</code> or the left mouse button.
+auto-position location instead, press <code>Shift+X</code>
+or <code>Shift+left mouse button</code>.
 
 <p>If a vertex (curve control point) is currently selected, then it is
 marked by a small solid green circle. Other control points on the same
@@ -255,31 +307,21 @@ marking data points.
 press <code>Shift+W</code> or <code>Shift+Q</code> to select a place
 on the curve to add a new vertex.
 
-<p>The program has both an idea of a selected vertex and, for curves
-of at least two points, a selected side of that vertex. For <code>Shift+W</code> or <code>Shift+Q</code> to select a place
-
-
-hether a new vertex will be
-added between that vertex and the next one, or that vertex and the one on its left or the one on its right. (The 
-
- before or after the selected one in the curve sequence.
-If the selected The <font color=red>red</font> outline shows how the curve will look
-after the next vertex is added.
-
- which side of
-that vertex the next vertex added should go. If its 
-
-If the program wants to add the new point in the wrong vertex
-sequence, you can shift the selected vertex and the selected side of
-that vertex using <code>Select left vertex</code> or <code>Select
-right vertex</code> in the <code>Curve</code> menu.
+<p>For curves, of at least two points, the program not only has a
+selected vertex but a selected side where new points will be added.
+The red line that follows the mouse should provide a hint which side
+of the vertex is selected; if the red line is twisted, then you
+probably want to move to the other side. You can shift the selected
+vertex and the selected side of that vertex using <code>Select left
+vertex</code> (<code>[</code>) or <code>Select right vertex</code>
+(<code>]</code>).
 
 <ul>
 
-<li><p>Select the <b>Smooth through new points</b> check box to turn
-on curve smoothing through each new vertex you add. You can also
-press <code>s</code>) to toggle this setting. Existing vertexes are
-not affected.
+<li><p>Select or unselect the <b>Smooth through new points</b> check
+box to turn on or off curve smoothing through each subsequently added
+vertex. You can also press <code>s</code> to toggle this setting.
+Existing vertexes are not affected.
 
 <p>Unsmoothed curves of three or more points are presented as a series
 of connected line segments or (for closed curves) a polygon.
@@ -313,16 +355,11 @@ also <code><u>E</u>dit Selection/<u>L</u>ayer</code> to insure the
 fill pattern only obscures the right decorations.
 
 <li><p><b>Select left vertex</b> (<code>[</code>) and <b>Select right
-vertex</b> (<code>]</code>) shift the vertex selection one vertex
+vertex</b> (<code>]</code>) shift the selection one vertex
 backward or forward depending on the curve's direction at the current
-selection. If the slope is vertical, <code>Select left vertex</code>
-will select the next vertex down while <code>Select right
-vertex</code> selects the next vertex up. If you are already at the
-endpoint of a closed curve and try to shift further in that direction,
-the selection will not change, but the xxx
+selection.
 
- if you add a vertex later, that
-vertex will be placed beyond the curve's current endpoint.
+</ul>
 
 <h2>Decoration Menu</h2>
 
@@ -371,14 +408,14 @@ by a thin border.
 many locations, such as when marking data points.</p>
 
 
-<h4>Arrowheads</h4>
+<h3>Arrowheads</h3>
 
 <p>To draw an arrowhead that points at the angle indicated in the
 "Slope" window, press '&gt;'. To draw an arrowhead that points in
 the opposite direction, press '&lt;'. The size of the arrowhead is
 determined by the line width indicated in the "Slope" window.</p>
 
-<h4>Rulers</h4>
+<h3>Rulers</h3>
 
 <p>To create a ruler, first create a two-vertex line to mark the
 ruler's endpoints, then select <code><u>D</u>ecorations/Add
@@ -389,9 +426,99 @@ displays weight percent values in a mole-percent diagram or vice
 versa. All you can do is convert the entire diagram between the two
 states.</p>
 
-<p><b>TODO</b> The ruler behavior may be controlled by hidden variables. I need to add those variables to the dialog!
+<p>Rulers display variable/component values. Instead of telling the
+system that you want the ruler to go from 0 to 1, you tell which
+variable you want to display. If there isn't one that goes from 0 to 1
+in the range you want, you can create a new variable
+using <code>Properties/Variables/Add</code>.
 
-<h4>Tie Lines</h4>
+<p><b>Tick labels</b>: Controls whether to show numbers next to big
+tick locations. (Small ticks are never labeled.) If you are facing in
+the direction of a vector from the first end of the ruler to the
+second, tick labels on the left side mean that the labels will be on
+the left side of that vector. If you don't remember or know which end
+of the ruler was first, then pick a side arbitrarily and switch if it
+turns out to be the wrong one. one, and if that doesn't work, try the
+other one.
+
+<p><b>Label angle with respect to axis</b>: A zero degree angle means
+that the labels are parallel to the ruler axis (which does not mean
+that the label text is horizontal unless the ruler itself is
+horizontal). Positive angles are clockwise with respect to that.
+
+<p>By default, the program will assign reasonable tick values and tick
+distances, but you can tweak these values in a number of ways.
+
+<p>When drawing two rulers that cross in the middle, such as for a
+Cartesian graph that displays four quadrants for the negative and
+positive X and Y values, there may be difficulties where the rulers
+cross (typically at the origin). The X-axis label at x=0 will
+typically be overstruck by the Y-axis, and the Y-axis label at y=0
+will typically be overstruck by the X-axis. A solution to that is to
+replace each individual ruler with two separate ones that lie along
+the same line and meet at the origin, and to check the boxes to
+suppress the rulers' start or end ticks and labels.
+
+<p><b>Minimum white space between tick labels, in multiples of label
+height</b>: If you do not explicitly tell the ruler where to put the
+ticks, the program tries to figure out on its own how close together
+the ticks can be without causing the labels to crowd each other. (That
+applies even if the labels are turned off.) You can increase the
+minimum separation between labels by entering larger values here. This
+is only a minimum value, and the actual tick step will be a round
+number large enough to exceed this minimum, which means that depending
+on specifics, a slight change to this value may not affect the actual
+tick step. Generally speaking, a value of 0 means that labels will be
+fairly close together, while a value of 3 means that the labels are
+more widely spaced.
+
+<p><b>Big tick step size (optional)</b>: You may specify what the
+difference between big ticks should be or leave this blank to allow
+the program to choose a reasonable value. On its own, the program will
+always choose values that are 1, 2, or 5 times a power of 10.
+
+<p><b>Small tick step size (optional)</b>: You may specify what the
+difference between big ticks should be or leave this blank to allow
+the program to choose a reasonable value (normally the next round
+number less than the big tick step size).
+
+<p><b>Minimum/maximum tick value (optional)</b>: Usually you want the
+ticks to extend the length of the ruler, possibly leaving out the
+start or endpoints. In that case, leave this blank. But if you want to
+explicitly specify the minimum and maximum tick values, you may do so
+here.
+
+<p><b>Left/right-side tick marks</b>: Check or uncheck to remove the
+tick marks on the left and right side of the axis. As elsewhere, if
+you don't know which side is left and which is right, use trial and
+error.
+
+<p><b>V-shaped tick marks</b> are used mainly for ternary diagrams.
+Check this box if you need them.
+
+<p><b>Use percentages in labels</b>: If you check this, the labels
+will display values that are 100 times greater than the underlying
+variable. As mentioned in the <code>Chemistry Menu</code> section, if
+you are showing percentage values, then you should insure this box is
+checked; and if the values you get look right even when the box is not
+checked, you should probably decrease the underlying variable by a
+factor of 100, especially if you hope to use any of the chemistry
+functions.
+
+<p><b>Start/End arrow</b>: Check this box to add an arrow at the
+ends of the axis.
+
+<p><b>Suppress start/end tick</b>: Check this box to suppress any tick
+marks that might otherwise appear at the start/end of the ruler. to be
+there.
+
+<p><b>Suppress start/end label</b>: Check this box to suppress any label
+that might otherwise appear at the start or end of the ruler.
+
+<p><b>Suppress small ticks:</b> Check this to prevent all small tick
+marks from being displayed.
+
+<h3>Tie Lines</h3>
 
 <p>To create a set of tie lines, select <code><u>D</u>ecorations/Add
 <u>t</u>ie lines</code> and follow the instructions in the window that
@@ -528,12 +655,12 @@ button</code> or <code>q</code> to find the exact chemical formula at
 any vertex or intersection.
 
 <p>Also pay attention to your percent symbols and to the <code>Use
-percentages in labels</code> check box. If you wish to show percentage
-values (that is, values that are 100 times greater than the proportion
-values) in a ruler, that box should be checked. Check the status bar:
-a vaolue of 77% should be displayed as either 0.77 or as 77%. A
-display value of "77" or "7700%" indicates the variable scale is
-wrong.
+percentages in labels</code> check box that appears in the "Edit
+Ruler" dialog. If you wish to show percentage values (that is, values
+that are 100 times greater than the proportion values) in a ruler,
+that box should be checked. Check the status bar: a vaolue of 77%
+should be displayed as either 0.77 or as 77%. A display value of "77"
+or "7700%" indicates the variable scale is wrong.
 
 <li><p><b>Proportions/Already displaying mole fraction</b>: The
 program doesn't know whether your input data are in mole percent or
