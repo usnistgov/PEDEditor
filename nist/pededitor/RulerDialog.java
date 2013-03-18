@@ -20,8 +20,7 @@ import javax.swing.JPanel;
 import javax.swing.JRadioButton;
 import javax.swing.JTextField;
 
-/** GUI for changing tickLeft/tickRight, startArrow, endArrow,
-    labelAnchor, and multiplier. */
+/** GUI for updating a LinearRuler. */
 
 public class RulerDialog extends JDialog {
     private static final long serialVersionUID = -2793746548149999804L;
@@ -85,6 +84,11 @@ public class RulerDialog extends JDialog {
     JCheckBox showPercentages = new JCheckBox("Use percentages in labels");
     JTextField tickPadding = new JTextField("0", 10);
     JTextField textAngle = new JTextField("0", 10);
+
+    JTextField bigTickDelta = new JTextField("", 10);
+    JTextField tickDelta = new JTextField("", 10);
+    JTextField tickStart = new JTextField("", 10);
+    JTextField tickEnd = new JTextField("", 10);
     JComboBox<String> variable;
 
     boolean pressedOK = false;
@@ -142,6 +146,36 @@ public class RulerDialog extends JDialog {
         tickPaddingLabel.setLabelFor(tickPadding);
         cpgb.addWest(tickPaddingLabel);
         cpgb.endRowWith(tickPadding);
+
+        {
+            JLabel label = new JLabel("Big tick delta (optional)");
+            label.setLabelFor(bigTickDelta);
+            cpgb.addWest(label);
+            cpgb.endRowWith(bigTickDelta);
+        }
+
+        {
+            JLabel label = new JLabel("Small tick delta (optional)");
+            label.setLabelFor(tickDelta);
+            cpgb.addWest(label);
+            cpgb.endRowWith(tickDelta);
+        }
+
+        {
+            JLabel label = new JLabel("Minimum tick value (optional)");
+            label.setLabelFor(tickStart);
+            cpgb.addWest(label);
+            cpgb.endRowWith(tickStart);
+        }
+
+        {
+            JLabel label = new JLabel("Maximum tick value (optional)");
+            label.setLabelFor(tickEnd);
+            cpgb.addWest(label);
+            cpgb.endRowWith(tickEnd);
+        }
+
+
         {
             JPanel panel = new JPanel();
             GridBagUtil gb = new GridBagUtil(panel);
@@ -218,6 +252,22 @@ public class RulerDialog extends JDialog {
         }
         showPercentages.setSelected(showPct);
 
+        double td;
+        td = ruler.bigTickDelta;
+        bigTickDelta.setText((Double.isNaN(td) || (td == 0)) ? "" :
+                             ContinuedFraction.toString
+                             (ruler.bigTickDelta / ruler.multiplier, showPct));
+        td = ruler.tickDelta;
+        tickDelta.setText((Double.isNaN(td) || td == 0) ? "" :
+                          ContinuedFraction.toString
+                          (ruler.tickDelta / ruler.multiplier, showPct));
+        tickStart.setText((ruler.tickStartD == null) ? "" :
+                          ContinuedFraction.toString
+                          (ruler.tickStartD / ruler.multiplier, showPct));
+        tickEnd.setText((ruler.tickEndD == null) ? "" :
+                          ContinuedFraction.toString
+                        (ruler.tickEndD / ruler.multiplier, showPct));
+
         suppressSmallTicks.setSelected(ruler.tickDelta == 0);
         textAngle.setText(String.format("%7.3f", ruler.textAngle * (-180 / Math.PI)));
         tickPadding.setText(ContinuedFraction.toString(ruler.tickPadding,
@@ -247,14 +297,77 @@ public class RulerDialog extends JDialog {
         dest.labelAnchor = labelAnchor;
         dest.tickType = tickTypeV.isSelected() ? LinearRuler.TickType.V
             : LinearRuler.TickType.NORMAL;
-        String padStr = tickPadding.getText();
+
+        String str;
+
+        str = tickPadding.getText();
         try {
-            dest.tickPadding = ContinuedFraction.parseDouble(padStr);
+            dest.tickPadding = ContinuedFraction.parseDouble(str);
         } catch (NumberFormatException e) {
             JOptionPane.showMessageDialog
                 (getOwner(),
                  "Warning: could not parse tick padding value '"
-                 + padStr + "'");
+                 + str + "'");
+        }
+
+        str = tickStart.getText().trim();
+        if (!str.equals("")) {
+            try {
+                dest.tickStartD = ContinuedFraction.parseDouble(str)
+                    * dest.multiplier;
+            } catch (NumberFormatException e) {
+                JOptionPane.showMessageDialog
+                    (getOwner(),
+                     "Warning: could not parse tick start value '"
+                     + str + "'");
+            }
+        } else {
+            dest.tickStartD = null;
+        }
+
+        str = tickEnd.getText().trim();
+        if (!str.equals("")) {
+            try {
+                dest.tickEndD = ContinuedFraction.parseDouble(str)
+                    * dest.multiplier;
+            } catch (NumberFormatException e) {
+                JOptionPane.showMessageDialog
+                    (getOwner(),
+                     "Warning: could not parse tick end value '"
+                     + str + "'");
+            }
+        } else {
+            dest.tickEndD = null;
+        }
+
+        str = bigTickDelta.getText().trim();
+        if (!str.equals("")) {
+            try {
+                dest.bigTickDelta = ContinuedFraction.parseDouble(str)
+                    * dest.multiplier;
+            } catch (NumberFormatException e) {
+                JOptionPane.showMessageDialog
+                    (getOwner(),
+                     "Warning: could not parse big tick delta value '"
+                     + str + "'");
+            }
+        } else {
+            dest.bigTickDelta = Double.NaN;
+        }
+
+        str = tickDelta.getText().trim();
+        if (!str.equals("")) {
+            try {
+                dest.tickDelta = ContinuedFraction.parseDouble(str)
+                    * dest.multiplier;
+            } catch (NumberFormatException e) {
+                JOptionPane.showMessageDialog
+                    (getOwner(),
+                     "Warning: could not parse small tick delta value '"
+                     + str + "'");
+            }
+        } else {
+            dest.tickDelta = Double.NaN;
         }
 
         String angleStr = textAngle.getText();
