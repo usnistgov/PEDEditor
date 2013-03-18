@@ -148,40 +148,31 @@ public class RulerDialog extends JDialog {
         cpgb.endRowWith(tickPadding);
 
         {
-            JLabel label = new JLabel("Big tick delta (optional)");
+            JLabel label = new JLabel("Big tick step size (optional):");
             label.setLabelFor(bigTickDelta);
             cpgb.addWest(label);
             cpgb.endRowWith(bigTickDelta);
         }
 
         {
-            JLabel label = new JLabel("Small tick delta (optional)");
+            JLabel label = new JLabel("Small tick step size (optional):");
             label.setLabelFor(tickDelta);
             cpgb.addWest(label);
             cpgb.endRowWith(tickDelta);
         }
 
         {
-            JLabel label = new JLabel("Minimum tick value (optional)");
+            JLabel label = new JLabel("Least tick value (optional):");
             label.setLabelFor(tickStart);
             cpgb.addWest(label);
             cpgb.endRowWith(tickStart);
         }
 
         {
-            JLabel label = new JLabel("Maximum tick value (optional)");
+            JLabel label = new JLabel("Greatest tick value (optional):");
             label.setLabelFor(tickEnd);
             cpgb.addWest(label);
             cpgb.endRowWith(tickEnd);
-        }
-
-
-        {
-            JPanel panel = new JPanel();
-            GridBagUtil gb = new GridBagUtil(panel);
-            gb.addWest(tickPaddingLabel);
-            gb.endRowWith(tickPadding);
-            cpgb.endRowWith(panel);
         }
 
         cpgb.addWest(tickLeft);
