@@ -68,6 +68,15 @@ import Jama.Matrix;
 
 import org.codehaus.jackson.annotate.JsonIgnore;
 
+// TODO (bug?) I think if you select one end of a curve with 'Q', then
+// move the mouse, then try to select the other end of the curve, it
+// will reject it as a repeat. Verify?
+
+// TODO (bug?) There's some funny thing where you're almost in the
+// right place, and you use Enter to specify the exactly correct
+// coordinates, and it refuses to go there. I think it only comes up
+// with old diagrams that are almost right, though.
+
 // TODO (bug?) 21-1B.ped is invalid. How did that happen? Also, Craig
 // managed to create a line with the same point repeated.
 
@@ -166,12 +175,6 @@ import org.codehaus.jackson.annotate.JsonIgnore;
 
 // TODO (optional, TV leave it alone and see if anyone complains) Make
 // it easier to edit multiple-line labels.
-
-// TODO (optional) Support of GRUMP-style explicit assignment of ruler
-// limits such as label skip, label density, and so on. The downside
-// of this is that it would make the interface even more complicated,
-// and people might get in the habit of doing explicit assignments
-// even though the automatic ones are pretty good.
 
 // TODO (optional) It should be easy to enable 'copy region' that is
 // analogous to 'move region'. Maybe the user should just be asked
@@ -4065,16 +4068,23 @@ public class Editor extends Diagram
         return getAutoPosition(null);
     }
 
-    @JsonIgnore public Point2D.Double getAutoPosition
-        (AutoPositionHolder ap) {
-        return getAutoPositionHandle(ap).getLocation();
+    public Point2D.Double getAutoPosition(AutoPositionHolder ap) {
+        DecorationHandle h = getAutoPositionHandle(ap);
+        return (h == null) ? null : h.getLocation();
     }
         
-    /** Return the point in principal coordinates that
-        auto-positioning would move the mouse to as a
-        DecorationHandle. This will be a NullDecorationHandle if the
-        location is associated with two or more handles or if it is
-        just an anonymous key point.
+    /** Return a DecorationHandle for the point in principal
+        coordinates that auto-positioning would move the mouse to -- a
+        nearby key point if possible, or a point on a nearby curve
+        otherwise, or where the mouse already is otherwise, or null if
+        the mouse is outside the panel containing the diagram. The
+        DecorationHandle will be a normal DecorationHandle if it is a
+        key point with exactly one decoration handle at that location;
+        it will be a NullParameterizableHandle if it is a random
+        location on a nearby curve; and it will be a
+        NullDecorationHandle if it is a key point associated with zero
+        or two or more decoration handles, or if nothing special was
+        found nearby.
 
         @param ap If not null, ap.position will be set to
         AutoPositionType.NONE, AutoPositionType.CURVE, or
@@ -4082,8 +4092,7 @@ public class Editor extends Diagram
         the regular mouse position, the nearest curve, or the nearest
         key point.
     */
-    @JsonIgnore public DecorationHandle getAutoPositionHandle
-        (AutoPositionHolder ap) {
+    DecorationHandle getAutoPositionHandle(AutoPositionHolder ap) {
         if (ap == null) {
             ap = new AutoPositionHolder();
         }
@@ -4091,7 +4100,7 @@ public class Editor extends Diagram
 
         Point2D.Double mprin2 = getMousePosition();
         if (mprin2 == null) {
-            return new NullDecorationHandle(mprin);
+            return (mprin == null) ? null : new NullDecorationHandle(mprin);
         }
         Point2D.Double mousePage = principalToStandardPage.transform(mprin2);
 
