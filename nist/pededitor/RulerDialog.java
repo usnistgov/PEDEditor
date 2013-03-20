@@ -162,14 +162,14 @@ public class RulerDialog extends JDialog {
         }
 
         {
-            JLabel label = new JLabel("Least tick value (optional):");
+            JLabel label = new JLabel("Minimum tick value (optional):");
             label.setLabelFor(tickStart);
             cpgb.addWest(label);
             cpgb.endRowWith(tickStart);
         }
 
         {
-            JLabel label = new JLabel("Greatest tick value (optional):");
+            JLabel label = new JLabel("Maximum tick value (optional):");
             label.setLabelFor(tickEnd);
             cpgb.addWest(label);
             cpgb.endRowWith(tickEnd);
