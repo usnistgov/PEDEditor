@@ -1038,7 +1038,6 @@ public class Diagram extends Observable implements Printable {
         r.tickType = LinearRuler.TickType.V;
         r.suppressStartTick = true;
         r.suppressEndTick = true;
-        r.tickDelta = 0;
 
         r.drawSpine = true;
         return r;
@@ -3470,15 +3469,16 @@ public class Diagram extends Observable implements Printable {
                 // re-relativize originalFilename so that it can still
                 // be found using a relative path even if the new
                 // filename is in a different directory from before.
-                setFilename(path.toAbsolutePath().toString());
-                writer.print(Tabify.tabify(getObjectMapper().writeValueAsString(this)));
-                if (!updateFilename) {
-                    setFilename(oldFilename);
+                if (updateFilename) {
+                    setFilename(path.toAbsolutePath().toString());
                 }
+                writer.print(Tabify.tabify(getObjectMapper().writeValueAsString(this)));
                 setSaveNeeded(false);
             } catch (IOException x) {
-            // Revert to the old filename;
-            setFilename(oldFilename);
+            if (updateFilename) {
+                // Revert to the old filename;
+                setFilename(oldFilename);
+            }
             throw x;
         }
     }
@@ -4433,8 +4433,6 @@ public class Diagram extends Observable implements Printable {
         r.textAngle = 0;
         r.tickLeft = true;
         r.labelAnchor = LinearRuler.LabelAnchor.RIGHT;
-        r.suppressStartLabel = diagramType != DiagramType.TERNARY_RIGHT;
-        r.suppressEndLabel = diagramType != DiagramType.TERNARY_LEFT;
 
         r.startPoint = new Point2D.Double(start, 0.0);
         r.endPoint = new Point2D.Double(end, 0);
