@@ -68,23 +68,24 @@ import Jama.Matrix;
 
 import org.codehaus.jackson.annotate.JsonIgnore;
 
-// TODO (bug?) I think if you select one end of a curve with 'Q', then
-// move the mouse, then try to select the other end of the curve, it
-// will reject it as a repeat. Verify?
+// TODO Make the program easier to install. Check whether that JAR
+// file bug is fixed or not.
 
 // TODO (bug?) There's some funny thing where you're almost in the
 // right place, and you use Enter to specify the exactly correct
-// coordinates, and it refuses to go there. I think it only comes up
-// with old diagrams that are almost right, though.
+// coordinates, and you press 'v' but the position does not change. I
+// can't reliably reproduce it.
 
 // TODO (bug?) 21-1B.ped is invalid. How did that happen? Also, Craig
 // managed to create a line with the same point repeated.
 
+// TODO (optional): Remappable key bindings.
+
+// TODO (optional) show the line style in the tangent window
+
 // TODO (optional, 1/2 day): Enable the "copy coordinates to/from the
 // clipboard" operations to allow use of other variables, if that's
 // something people want.
-
-// TODO (optional): Remappable key bindings.
 
 // TODO (optional): Unify the ternary diagram interfaces to faciliate
 // creation of partial ternary diagrams, using a two-step process
@@ -95,6 +96,27 @@ import org.codehaus.jackson.annotate.JsonIgnore;
 // rendering? The problem is that the subscripts don't sit below their
 // baselines.
 
+// TODO (mandatory, 1 day): At this point, the rule that tie lines
+// have to end at vertexes of the diagram is no longer needed and not
+// difficult to eliminate. Tie lines ending on rulers without extra
+// steps could also be enabled (and the extra steps are unintuitive).
+
+// TODO (2-3 weeks, mandatory) "Undo" option. Any good drawing program
+// has that feature, but making everything undoable would take a
+// couple weeks. (Every time an operation that changes the diagram is
+// completed, push the inverse operation onto a stack.)
+
+// TODO (optional, seems to be important based on Chris and Will's
+// reaction) If there exists an autosave version of a file that is
+// newer than the regular version, ask whether to use that instead.
+
+// TODO (optional, 2 weeks) Right-click popup menus. I don't think
+// experienced users (the digitizers) would make much use of them, but
+// occasional users might. Forcing the users to remember shortcuts
+// isn't very friendly, and you can't use the mouse to click on an
+// ordinary menu if you're already using the mouse to identify the
+// location the operation should apply to.
+
 // TODO (optional): "Margin size as a fraction of the core diagram
 // height", for example, perhaps should be replaced by something like
 // "Minimum visible page X value", which is probably easier to
@@ -104,35 +126,28 @@ import org.codehaus.jackson.annotate.JsonIgnore;
 // TODO (optional) Modified tie-line rules so that endpoints are
 // scattered at even distances along curve edges. Terrell's
 // suggestion: these can be handled manually, since they're not
-// common.
+// common. (It's not so easy to reliably improve upon even angular
+// spacing; consider corner cases like retrograde motion of the edge
+// as viewed from the convergence point, or tie lines that enclose
+// angles exceeding 180 degrees. However, retrograde motion is not a
+// common issue and isn't reliably handled now anyway.)
+
+// TODO (optional, TAV leave for now see if someone complains) weight
+// vs mole percent enhancements. Text at an angle gets distorted, and
+// that should really be fixed.
 
 // TODO (optional) Option to identify the smallest region containing a
 // point. Unfortunately the math is of medium difficulty.
 
+// DONTFIX? (minor bug) If you select one curve control point with
+// 'Q', then move close to a neighboring vertex that is still less
+// than the unstick distance away, then press 'Q' again, it will
+// reject it as a repeat. This is sort-of by design, though it seems a
+// bit odd sometimes.
+
 // TODO (optional) Allow marking of multiple objects.
 
-// TODO (optional) Think about ways to improve the apparent evenness
-// of tie lines. In general it is difficult to improve upon even
-// angular spacing; consider corner cases like retrograde motion of
-// the edge as viewed from the convergence point, or tie lines that
-// enclose angles exceeding 180 degrees.
-
-// TODO (optional) show the line style in the tangent window
-
-// TODO (optional, Will's suggestion, more or less) Maybe change
-// shift-P to act more like shift-L except by default grabbing beyond
-// the endpoint instead of exactly at the endpoint.
-
 // TODO Add checkbox to turn on/off editing capability.
-
-// TODO (mandatory, 1 day): At this point, the rule that tie lines
-// have to end at vertexes of the diagram is no longer needed and not
-// difficult to eliminate. Tie lines ending on rulers without extra
-// steps could also be enabled (and the extra steps are unintuitive).
-
-// TODO (optional, seems to be important based on Chris and Will's
-// reaction) If there exists an autosave version of a file that is
-// newer than the regular version, ask whether to use that instead.
 
 // TODO Zoom-to-selection is kind of hokey, and if it requires opening
 // up scroll bars, you have to perform the operation twice before it
@@ -152,10 +167,8 @@ import org.codehaus.jackson.annotate.JsonIgnore;
 // facilitate drawing straight lines whose slopes are defined in terms
 // of user variables.
 
-// TODO (Optional) Allow shift-L and/or shift-A to cycle around likely
-// candidates the same way that shift-P does. In other words, if
-// shift-L doesn't give you what you want the first time, just try it
-// again.
+// TODO (Optional) Allow shift-Q to cycle around likely
+// candidates the same way that shift-P does.
 
 // TODO (mandatory?, preexisting, 1 week) Apply a gradient to all control
 // points on a curve. Specifically, apply the following transformation
@@ -173,13 +186,6 @@ import org.codehaus.jackson.annotate.JsonIgnore;
 // TODO (optional) Grid lines might occasionally be nice. At one point
 // I would have liked to have them
 
-// TODO (optional, TV leave it alone and see if anyone complains) Make
-// it easier to edit multiple-line labels.
-
-// TODO (optional) It should be easy to enable 'copy region' that is
-// analogous to 'move region'. Maybe the user should just be asked
-// whether to move a region or just a single curve.
-
 // TODO (optional) Resize all labels at once by a given factor. This
 // is more useful during conversion from GRUMP to PED fonts.
 
@@ -194,13 +200,6 @@ import org.codehaus.jackson.annotate.JsonIgnore;
 // correct orientation). This is hardly a show-stopper; you can load
 // the image in MS-Paint and rotate it in a minute, and Chris said
 // that was a good solution.
-
-// TODO (optional, 2 weeks) Right-click popup menus. I don't think
-// experienced users (the digitizers) would make much use of them, but
-// occasional users might. Forcing the users to remember shortcuts
-// isn't very friendly, and you can't use the mouse to click on an
-// ordinary menu if you're already using the mouse to identify the
-// location the operation should apply to.
 
 // TODO (optional) Other commonly used shapes (equilateral triangle,
 // square, circle) whose scale and orientation are defined by
@@ -241,19 +240,10 @@ import org.codehaus.jackson.annotate.JsonIgnore;
 // better fit than 4 degrees of freedom does and not much worse than 7
 // degrees of freedom does, so the perfect ellipse is a good choice.)
 
-// TODO (2-3 weeks, optional) "Undo" option. Any good drawing program
-// has that feature, but making everything undoable would take a
-// couple weeks. (Every time an operation that changes the diagram is
-// completed, push the inverse operation onto a stack.)
-
 // TODO (optional) More compact representation for symbol sets in the
 // PED format.
 
 // TODO (preexisting in viewer) Periodic table integration.
-
-// TODO (optional, TAV leave for now see if someone complains) weight
-// vs mole percent enhancements. Text at an angle gets distorted, and
-// that should really be fixed.
 
 // TODO (preexisting but not mandatory) Smart line dash lengths. Peter
 // Schenk's PED Editor adjusts the segment length for dashed lines to
@@ -507,6 +497,7 @@ public class Editor extends Diagram
 
     protected transient boolean preserveMprin = false;
     protected transient boolean isShiftDown = false;
+    protected transient Point2D.Double statusPt = null;
 
     /** autosaveFile is null unless an autosave event happened and the
         resulting autosavefile has not been deleted by this program. */
@@ -868,13 +859,9 @@ public class Editor extends Diagram
         setBackgroundType(value == backgroundType ? oldBackgroundType : value);
     }
 
-    /** Reset the location of all vertices and labels that have the
-        same location as the selection to mprin.
-        
-        @param moveAll If true, all items located at the selected
-        point will move moved. If false, only the selected item itself
-        will be moved.
-    */
+    /** A curve should be selected -- usually, a closed curve.
+        Everything on or in the curve will be shifted by the vector
+        that moves the selected vertex to mprin. */
     public void moveRegion() {
         VertexHandle vhand = getVertexHandle();
         String errorTitle = "Cannot move region";
@@ -923,6 +910,74 @@ public class Editor extends Diagram
             if (inside) {
                 hand.move(new Point2D.Double(prin.getX() + delta.x,
                                              prin.getY() + delta.y));
+            }
+        }
+
+        propagateChange();
+    }
+
+    /** Like moveRegion(), but copy instead. All handles must be
+        inside the region for a decoration to be copied. */
+    public void copyRegion() {
+        VertexHandle vhand = getVertexHandle();
+        String errorTitle = "Cannot copy region";
+
+        if (vhand == null) {
+            showError
+                ("Draw a curve to identify the boundary of the region "
+                 + "to be moved.",
+                 errorTitle);
+            return;
+        }
+
+        if (mprin == null) {
+            showError
+                ("<html><p>Move the mouse to the target location. "
+                 + "Use the 'C' shortcut key or keyboard menu controls "
+                 + "instead of selecting the menu item using the mouse."
+                 + "</p></html>",
+                 errorTitle);
+            return;
+        }
+
+        if (mouseIsStuckAtSelection()) {
+            // Unstick the mouse so we're not just moving the mouse
+            // onto itself.
+            unstickMouse();
+        }
+
+        CuspFigure path = vhand.getDecoration().getItem();
+        Shape region = vhand.getDecoration().getShape();
+        Param2DBounder param = PathParam2D.create(region);
+
+        Point2D.Double delta = Duh.aMinusB(mprin, selection.getLocation());
+
+        for (Decoration d: new ArrayList<Decoration>(getDecorations())) {
+            boolean inside = true;
+            DecorationHandle hand = null;
+            Point2D prin = null;
+            for (DecorationHandle h: d.getHandles()) {
+                hand = h;
+                prin = hand.getLocation();
+                Point2D page = principalToStandardPage.transform(prin);
+                inside = path.isClosed() && region.contains(page);
+                if (!inside) {
+                    // Check if the point is very close to the path
+                    // border.
+                    CurveDistanceRange cdr = param.distance(page, 1e-6, 1000);
+                    inside = cdr != null && cdr.distance <= 1e-6;
+                }
+                if (!inside) {
+                    break;
+                }
+            }
+
+            if (inside) {
+                DecorationHandle s = hand.copy
+                    (new Point2D.Double(prin.getX() + delta.x, prin.getY() + delta.y));
+                if (hand.getDecoration().equals(vhand.getDecoration())) {
+                    selection = new VertexHandle(((VertexHandle) s).getItem(), vhand.vertexNo);
+                }
             }
         }
 
@@ -1278,12 +1333,14 @@ public class Editor extends Diagram
                            RenderingHints.VALUE_ANTIALIAS_OFF);
 
         AutoPositionHolder ap = new AutoPositionHolder();
-        Point2D.Double extraVertex
-            = isShiftDown ? getAutoPosition(ap)
-            : mouseIsStuckAtSelection()
-            ? getMousePosition() // Show the point that would be added
-                                 // if the mouse became unstuck.
-            : mprin;
+        Point2D.Double extraVertex = mprin;
+        if (isShiftDown) {
+            extraVertex = statusPt = getAutoPosition(ap);
+        } else if (mouseIsStuckAtSelection()) {
+            // Show the point that would be added if the mouse became
+            // unstuck.
+            extraVertex = getMousePosition();
+        }
 
         if (extraVertex != null && !isDuplicate(extraVertex)) {
             // Add the current mouse position to the path next to the
@@ -1438,6 +1495,7 @@ public class Editor extends Diagram
         }
 
         boolean showSel = selection != null;
+        statusPt = mprin;
 
         Decoration sel = showSel ? selection.getDecoration() : null;
         for (int dn = 0; dn < decorations.size(); ++dn) {
@@ -1472,18 +1530,25 @@ public class Editor extends Diagram
 
         if (getVertexHandle() == null) {
             Point2D.Double gmp = getMousePosition();
-            g.setColor(new Color(0xb0c000));
             if (isShiftDown) {
                 AutoPositionHolder ap = new AutoPositionHolder();
                 Point2D.Double autop = getAutoPosition(ap);
-                if (autop != null && gmp != null
-                    && !principalCoordinatesMatch(autop, gmp)) {
-                    g.setColor(toColor(ap.position));
-                    paintCross(g, autop, scale);
+                if (autop != null) {
+                    statusPt = autop;
+                    if (gmp != null && !principalCoordinatesMatch(autop, gmp)) {
+                        g.setColor(toColor(ap.position));
+                        paintCross(g, autop, scale);
+                    }
                 }
             } else if (mouseIsStuck && mprin != null) {
+                g.setColor(new Color(0xb0c000));
                 paintCross(g, mprin, scale);
             }
+
+        }
+
+        if (statusPt != null) {
+            editFrame.setStatus(principalToPrettyString(statusPt));
         }
     }
 
@@ -4455,8 +4520,6 @@ public class Editor extends Diagram
         }
 
         if (mprin != null) {
-            editFrame.setStatus(principalToPrettyString(mprin));
-            
             if (tracingImage()) {
                 try {
                     // Update image zoom frame.
