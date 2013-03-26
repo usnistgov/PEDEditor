@@ -2677,7 +2677,8 @@ public class Diagram extends Observable implements Printable {
         return res;
     }
 
-    /** @return a list of all possible selections. */
+    /** @return a list of all possible selections. Note that
+        modifications to the output will affect this object. */
     ArrayList<Decoration> getDecorations() {
         return decorations;
     }
