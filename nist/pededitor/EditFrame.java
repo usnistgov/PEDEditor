@@ -553,6 +553,14 @@ public class EditFrame extends JFrame
                     }
                 });
 
+            mnSelection.add(new Action("Copy everything in selected region",
+                                  KeyEvent.VK_O,
+                                  KeyStroke.getKeyStroke('C')) {
+                    @Override public void actionPerformed(ActionEvent e) {
+                        getParentEditor().copyRegion();
+                    }
+                });
+
             mnSelection.add(new Action("Delete", KeyEvent.VK_D, "DELETE") {
                     @Override public void actionPerformed(ActionEvent e) {
                         getParentEditor().removeSelection();
