@@ -59,7 +59,7 @@ public class ChemicalString {
         "(" + element + ")" + ion + "*(" + subscript + ")?" + ion + "*"
         + "(?![a-z])";
 
-    final static String subscriptNeeded = "((?:" + element + "|\\))" + ion + "*)"
+    final static String subscriptNeeded = "((?:" + element + "|[])])" + ion + "*)"
         + "(" + subscript + ")";
     final static String subscriptNeededReplacement = "$1<sub>$2</sub>";
     static Pattern subscriptNeededPattern = null;
@@ -161,8 +161,8 @@ public class ChemicalString {
 
     /* Add HTML subscript markers to numbers that appear to be
        subscripts of either elements or elemental groupings. (The
-       elemental grouping detection is a bit dodgy and may return
-       false positives.) */
+       elemental grouping detection is dodgy -- it doesn't actually
+       match up the parentheses -- and may return false positives.) */
     public static String autoSubscript(String s) {
         if (subscriptNeededPattern == null) {
             try {
@@ -286,17 +286,22 @@ public class ChemicalString {
         HashMap<String,Double> compo = new HashMap<>();
         res.composition = compo;
 
+        String leftDelimiters = "([";
+        String rightDelimiters = ")]";
+
         while (s.length() > 0) {
             char ch = s.charAt(0);
+            int delimiterNo = leftDelimiters.indexOf((int) ch);
 
-            if (ch == '(') {
+            if (delimiterNo >= 0) {
+                char rightDelimiter = rightDelimiters.charAt(delimiterNo);
                 s = s.subSequence(1, s.length());
                 Match submatch = composition(s);
                 if (submatch == null) {
                     return null;
                 }
                 s = s.subSequence(submatch.endIndex, s.length());
-                if (s.length() == 0 || s.charAt(0) != ')') {
+                if (s.length() == 0 || s.charAt(0) != rightDelimiter) {
                     return (res.endIndex > 0) ? res : null;
                 }
                 s = s.subSequence(1, s.length());
