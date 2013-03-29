@@ -227,7 +227,7 @@ redundant, such as adding the same vertex to a curve twice in a row.
 <h2>Edit Selection Menu</h2>
 
 <p>These commands all operate on the selection (highlighted
-in <div style="color:green;">green</div>) if there is one. If there is not,
+in <span style="color:green;">green</span>) if there is one. If there is not,
 some of these commands generate an error, while others fall back on
 operating on the nearest key point.
 
@@ -638,8 +638,38 @@ the displayed domain is a subset of that.
 
 <p>The program's chemistry functions cannot work unless you define the
 formulas for both (or all, in the case of ternary diagrams) diagram
-components. <code>Co(H2O)2</code> is an example of a formula the
-program can parse; <code>water</code> is not.
+components, and the formulas must be entered using the following
+syntax in order for the program to parse them correctly:
+
+<p><b><i><a id="chemical_syntax">Chemical formula syntax</a></i>:
+the program's chemistry functions cannot work unless you define the
+formulas for both (or all, in the case of ternary diagrams) diagram
+components. Currently, <code>[Co(H2O)2]1.5</code> is as complicated a
+formula as the program can understand; that is, the program
+understands element symbols, grouping with brackets or parentheses,
+and integer and fixed-point subscripts that follow either element
+symbols or groupings, but that is it. None of the following examples
+would work as intended:
+
+<ul>
+
+<li>"<code>water</code>" (not a chemical formula)
+
+<li>"<code>2 H2O</code>" (leading '2' is not understood)
+
+<li>"<code>H2O + Al</code>" (misintepreted as "<code>H2O</code>"
+because the program stops reading after the space, and it does not
+understand plus signs anyway)
+
+</ul>
+
+ -- leading numbers (2 H2O) and plus signs
+are not currently allowed, and anything after an embedded space is
+ignored.
+
+; <code>water</code> is not. The rules are strict and
+somewhat limited -- basically anything 
+
 
 <p>As soon as all diagram components are defined, the gray status bar
 will show additional information about points on the screen. If a
