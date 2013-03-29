@@ -23,6 +23,10 @@ public class HTMLDialog extends JDialog {
         editorPane.setEditable(false);
         try {
             editorPane.setPage(aboutURL);
+            String s = editorPane.getText();
+            editorPane.setContentType("text/html");
+            System.err.println(s);
+            editorPane.setText(s);
         } catch (IOException e) {
             throw new Error(e);
         }
