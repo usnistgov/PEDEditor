@@ -1,11 +1,14 @@
+<!DOCTYPE HTML>
 <html>
 <head>
 <title>PED Edit Window Help</title>
 </head>
 <body>
 
-<p>This program is used to create new phase equilibria diagrams or to
-digitize images of existing ones. It can also be used for general
+<h1>PED Edit Window Help</h1>
+
+<p>This program creates new phase equilibria diagrams and digitizes
+images of existing ones. It can also be used for general
 two-dimensional scientific drawing and digitization.</p>
 
 <h2>File Menu</h2>
@@ -14,7 +17,7 @@ two-dimensional scientific drawing and digitization.</p>
 
 <p>Create a new diagram from scratch. If you wish to digitize a
 scanned image of an existing diagram, use the
-<code><u>F</u>ile/<u>O</u>pen</code> option instead.</p>
+<a href="#open"><code>File/Open</code></a> option instead.</p>
 
 <p>You are presented with a selection of diagram types. Select the
 "Binary" diagram type to draw a rectangular graph using a Cartesian
@@ -22,7 +25,7 @@ coordinate system. Select the "Schematic/Other" type to draw free-form
 diagrams starting from a blank page. There are also various subtypes
 of ternary diagram, if you happen to need those.</p>
 
-<h3>Open</h3>
+<h3><a id="open">Open</a></h3>
 
 <p>Open either an image file saved in GIF, JPEG, or PNG format or a
 diagram that was previously saved in this program's native
@@ -153,7 +156,7 @@ selection at <b>other special angles</b>. These angles include the
 value indicated in the "Slope" window, lines in ternary diagrams at 60
 or 120 degrees, and lines of zero change for user-defined variables
 created using
-<code>P<u>r</u>operties/<u>V</u>ariables/<u>A</u>dd</code>.</p>
+<a href="#variable"><code>Properties/Variables/Add</code></a>.</p>
 
 <p>To create a rectangle using these features:</p>
 
@@ -181,7 +184,7 @@ press <code>Shift+left mouse button</code>.
 
 </ol>
 
-<p>To create a line segment parallel to an existing line segment:</o>
+<p>To create a line segment parallel to an existing line segment:</p>
 
 <ol>
 
@@ -208,9 +211,8 @@ prevents you from clicking on a curve or grid line instead. You may
 sidestep this problem by pressing using '+' to zoom in until the screen
 distance to the key point becomes large enough that it no longer
 attracts the mouse pointer.</p>
-</li>
 
-<p>To protect users against involuntary mouse movenets, the cursor
+<p>To protect users against involuntary mouse movements, the cursor
 stays at the chosen position after you perform a mouse positioning
 command even if the mouse shifts by a couple pixels. The chosen
 position will be marked with a yellow cross if that position is
@@ -225,7 +227,7 @@ redundant, such as adding the same vertex to a curve twice in a row.
 <h2>Edit Selection Menu</h2>
 
 <p>These commands all operate on the selection (highlighted
-in <font color="green">green</font>) if there is one. If there is not,
+in <div style="color:green;">green</div>) if there is one. If there is not,
 some of these commands generate an error, while others fall back on
 operating on the nearest key point.
 
@@ -331,7 +333,7 @@ curve to a closed one or vice versa. All curves start in the open
 state. Closed curves have an extra segment looping back from the last
 vertex to the first. If that segment does not appear to be smoothed
 properly, you may need to go back and select <code>Toggle point
-smoothing</code> (see below) for one or both of the curve's endpoints.
+smoothing</code> for one or both of the curve's endpoints.
 
 <li><p><b>Toggle point smoothing</b> (<code>,</code>) changes the
 smoothing setting for the selected vertex. To change the smoothing
@@ -365,9 +367,9 @@ selection.
 
 <h3>Labels</h3>
 
-<p>Press 't' to add text or a symbol anchored at the current mouse
-position. A window will open, permitting you to choose the text, font
-size, angle, and anchor orientation for the label.</p>
+<p>Press <code>t</code> to add text or a symbol anchored at the
+current mouse position. A window will open, permitting you to choose
+the text, font size, angle, and anchor orientation for the label.</p>
 
 <p>The standard font size has characters whose height is about 2% of
 the height of binary diagrams and 2% of the length of the longest side
@@ -430,7 +432,7 @@ states.</p>
 system that you want the ruler to go from 0 to 1, you tell which
 variable you want to display. If there isn't one that goes from 0 to 1
 in the range you want, you can create a new variable
-using <code>Properties/Variables/Add</code>.
+using <a href="#variable"><code>Properties/Variables/Add</code></a>.
 
 <p><b>Tick labels</b>: Controls whether to show numbers next to big
 tick locations. (Small ticks are never labeled.) If you are facing in
@@ -520,8 +522,8 @@ marks from being displayed.
 
 <h3>Tie Lines</h3>
 
-<p>To create a set of tie lines, select <code><u>D</u>ecorations/Add
-<u>t</u>ie lines</code> and follow the instructions in the window that
+<p>To create a set of tie lines, select <code>Decorations/Add
+tie lines</code> and follow the instructions in the window that
 opens. </p>
 
 <p>If tie lines connect two segments or curves, instead of connecting
@@ -577,7 +579,7 @@ does nothing with these.</li>
 menu bar and in printouts. If you want no title, then change the title
 to the empty string so it will be deleted.</li>
 
-<li><b>Variables</b>: You can delete existing variables or add new
+<li><b><a id="variable">Variables</a></b>: You can delete existing variables or add new
 ones that are affine transformations of the existing ones; that is,
 variables that have the form
 
@@ -611,8 +613,8 @@ circle, then the coordinates of every open circle will be copied.
 the reverse of the previous operation. If nothing is highlighted, a
 new curve will be created from the coordinates in the clipboard. If a
 curve is highlighted, then the points will be added to it. If a label
-is highlighted, then identical labels will be added at each
-coordinate.
+is highlighted, then the coordinates will be marked with labels like
+the highlighted one.
 
 <li><p><b>Copy status bar to clipboard</b>
 (<code>Control+Shift+S</code>): This copies the text in the gray
@@ -699,25 +701,26 @@ formula list will include "H2O" and "I", since I is the chemical formula for iod
 
 <h2>View Menu</h2>
 
-<p>Press '-' to zoom out, '+' to zoom in, and <code>Control-B</code>
+<p>Press '-' to zoom out, '+' to zoom in, and <code>Control+B</code>
 to obtain the best fit of the diagram to the edit window's current
-size. Press <code>Control-L</code> to center the screen at the current
+size. Press <code>Control+L</code> to center the screen at the current
 mouse position.</p>
+
+<p>Use the <b>View/Background Image</b> submenu to select how to
+display the original image (if any) in the background of the new
+diagram. <code>Control+H</b> changes the original image from visible
+to hidden and vice versa. <b>View/Background Image/Detach</b>
+permanently removes the linkage from the new diagram to the original
+image; the background image disappears and the Zoom window closes.
 
 <p>If an image is displayed in the background, then resizing the
 scanned image or moving around at high zoom level may take some time,
 so be patient. If the delay becomes excessive, you can turn the
-background image off with <code><u>V</u>iew/<u>B</u>ackground
-Image/<u>N</u>one</code>.</p>
+background image off with <b>View/Background
+Image/None</b>.</p>
 
-<p>Unfortunately, <code>Zoom to selection</code> and <code>Center
-mouse</code> do not work reliably. This may be an issue in Java Swing.
-
-<p>Use the <code>Background Image</code> submenu to select how to
-display the original image (if any) in the background of the new
-diagram: in light, faded colors (the default); blinking on and off; or
-not at all. The <code>D<u>e</u>tach</code> option permanently removes
-the linkage between the original image and the diagram.</p>
+<p>Unfortunately, <b>Zoom to selection</b> and <b>Center
+mouse</b> do not work reliably. This may be an issue in Java Swing.
 
 
 </body>
