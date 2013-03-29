@@ -68,16 +68,23 @@ import Jama.Matrix;
 
 import org.codehaus.jackson.annotate.JsonIgnore;
 
-// TODO Make the program easier to install. Check whether that JAR
-// file bug is fixed or not.
-
-// TODO (bug?) There's some funny thing where you're almost in the
+// TODO (bug) There's some funny thing where you're almost in the
 // right place, and you use Enter to specify the exactly correct
 // coordinates, and you press 'v' but the position does not change. I
 // can't reliably reproduce it.
 
-// TODO (bug?) 21-1B.ped is invalid. How did that happen? Also, Craig
+// TODO (bug) 21-1B.ped is invalid. How did that happen? Also, Craig
 // managed to create a line with the same point repeated.
+
+// TODO (mandatory, 1 day): At this point, the rule that tie lines
+// have to end at vertexes of the diagram is no longer needed and not
+// difficult to eliminate. Tie lines ending on rulers without extra
+// steps could also be enabled (and the extra steps are unintuitive).
+
+// TODO (2-3 weeks, mandatory) "Undo" option. Any good drawing program
+// has that feature, but making everything undoable would take a
+// couple weeks. (Every time an operation that changes the diagram is
+// completed, push the inverse operation onto a stack.)
 
 // TODO (optional): Remappable key bindings.
 
@@ -95,16 +102,6 @@ import org.codehaus.jackson.annotate.JsonIgnore;
 // TODO: Is there a fonts-based solution to improve nested subscript
 // rendering? The problem is that the subscripts don't sit below their
 // baselines.
-
-// TODO (mandatory, 1 day): At this point, the rule that tie lines
-// have to end at vertexes of the diagram is no longer needed and not
-// difficult to eliminate. Tie lines ending on rulers without extra
-// steps could also be enabled (and the extra steps are unintuitive).
-
-// TODO (2-3 weeks, mandatory) "Undo" option. Any good drawing program
-// has that feature, but making everything undoable would take a
-// couple weeks. (Every time an operation that changes the diagram is
-// completed, push the inverse operation onto a stack.)
 
 // TODO (optional, seems to be important based on Chris and Will's
 // reaction) If there exists an autosave version of a file that is
