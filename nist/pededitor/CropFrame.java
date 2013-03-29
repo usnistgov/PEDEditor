@@ -22,8 +22,6 @@ public class CropFrame extends ImageScrollFrame {
         time. */
     private static final String PREF_DIR = "dir";
 
-    static JDialog helpDialog = null;
-
     protected String filename = null;
     protected DiagramType diagramType = null;
     protected DiagramDialog diagramDialog = null;
@@ -213,12 +211,7 @@ public class CropFrame extends ImageScrollFrame {
     }
 
     protected void help() {
-        if (helpDialog == null) {
-            helpDialog = new HTMLDialog
-                (this, "crophelp.html", "Diagram Selection Help");
-        }
-        helpDialog.setVisible(true);
-        helpDialog.toFront();
+        ShowHTML.show("crophelp.html", this);
     }
 
     public CropPane getCropPane() {
