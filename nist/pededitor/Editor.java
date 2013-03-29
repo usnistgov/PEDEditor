@@ -76,6 +76,11 @@ import org.codehaus.jackson.annotate.JsonIgnore;
 // TODO (bug) 21-1B.ped is invalid. How did that happen? Also, Craig
 // managed to create a line with the same point repeated.
 
+// TODO: More helpful error messages if a chemical compound cannot be
+// parsed. Also, more flexible compound parsing, such as 2 AlFe + 3
+// SiO2 -- neither the leading numbers nor the plus signs are
+// understood.
+
 // TODO (mandatory, 1 day): At this point, the rule that tie lines
 // have to end at vertexes of the diagram is no longer needed and not
 // difficult to eliminate. Tie lines ending on rulers without extra
@@ -92,12 +97,26 @@ import org.codehaus.jackson.annotate.JsonIgnore;
 
 // TODO (optional, 1/2 day): Enable the "copy coordinates to/from the
 // clipboard" operations to allow use of other variables, if that's
-// something people want.
+// something people want. ZZZ
 
 // TODO (optional): Unify the ternary diagram interfaces to faciliate
 // creation of partial ternary diagrams, using a two-step process
 // (identify the 3 corners of the system, then the 3 corners of the
 // partial) and perhaps automatically adding the corner labels.
+
+// TODO (optional): Allow switching the pair of variables that are the
+// principal coordinates. This would help with inserting and
+// extracting data, and with copying data between diagrams. It would
+// also make the TODO item marked ZZZ unnecessary.
+
+// TODO (optional): Allow switching the pair of variables that are the
+// display coordinates. It would also be nice to automatically reverse
+// the text angle for labels that end up as leftward-pointing. This
+// would enable switching and mirroring axes and a number of other
+// tricks.
+
+// TODO (optional): Allow decorations to be copied to and from the
+// clipboard. (They would be written and read as PED format.)
 
 // TODO: Is there a fonts-based solution to improve nested subscript
 // rendering? The problem is that the subscripts don't sit below their
@@ -2041,8 +2060,9 @@ public class Editor extends Diagram
 
         if (sides.size() < 2) {
             StringBuilder message = new StringBuilder
-                ("The following diagram component(s) could not be parsed as "
-                 + "compounds:\n");
+                ("The following diagram component(s) were not successfully\n"
+                 + "parsed as compounds (see 'Chemical fomula syntax'\n"
+                 + "in the help menu for details):\n");
             int sideNo = -1;
             for (Side side: badSides) {
                 ++sideNo;
@@ -2051,6 +2071,7 @@ public class Editor extends Diagram
                 }
                 message.append(side.toString());
             }
+
             JOptionPane.showMessageDialog(editFrame, message.toString());
             return;
         }
@@ -3407,7 +3428,7 @@ public class Editor extends Diagram
     }
 
     protected double rulerFontSize() {
-        return normalFontSize() * lineWidth / STANDARD_LINE_WIDTH;
+        return normalRulerFontSize() * lineWidth / STANDARD_LINE_WIDTH;
     }
 
     public double currentFontSize() {
