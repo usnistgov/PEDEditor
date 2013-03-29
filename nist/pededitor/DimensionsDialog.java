@@ -41,13 +41,11 @@ public class DimensionsDialog extends JDialog {
         JPanel rows = new JPanel(new GridLayout(0, 2, 5, 0));
         textFields = new JTextField[labels.length];
 
-        String filename = "dimensionshelp.html";
         try {
-            String helpText = ShowHTML.resourceFileString(filename, this);
             JEditorPane textPane = new JEditorPane();
             textPane.setEditable(false);
-            textPane.setContentType("text/html");
-            textPane.setText(helpText);
+            JEditorPanes.setHTMLResource
+                (textPane, "dimensionshelp.html", getClass());
             contentPane.add(textPane, BorderLayout.PAGE_START);
         } catch (IOException x) {
             System.err.println(x);
