@@ -1,11 +1,20 @@
 package gov.nist.pededitor;
 
-import java.awt.*;
-import java.awt.event.*;
-import java.io.*;
-import java.net.*;
-import java.util.*;
-import javax.swing.*;
+import java.awt.BorderLayout;
+import java.awt.Dialog;
+import java.awt.Frame;
+import java.awt.GridLayout;
+import java.awt.event.ActionEvent;
+import java.io.IOException;
+import java.util.Arrays;
+
+import javax.swing.AbstractAction;
+import javax.swing.JButton;
+import javax.swing.JDialog;
+import javax.swing.JEditorPane;
+import javax.swing.JLabel;
+import javax.swing.JPanel;
+import javax.swing.JTextField;
 
 /** Dialog to ask for the length of two axes. */
 public class DimensionsDialog extends JDialog {
@@ -33,18 +42,16 @@ public class DimensionsDialog extends JDialog {
         textFields = new JTextField[labels.length];
 
         String filename = "dimensionshelp.html";
-        URL helpURL = getClass().getResource(filename);
-        if (helpURL == null) {
-            throw new Error("File " + filename + " not found");
-        }
-        JEditorPane editorPane = new JEditorPane();
-        editorPane.setEditable(false);
         try {
-            editorPane.setPage(helpURL);
-        } catch (IOException e) {
-            throw new Error(e);
+            String helpText = ShowHTML.resourceFileString(filename, this);
+            JEditorPane textPane = new JEditorPane();
+            textPane.setEditable(false);
+            textPane.setContentType("text/html");
+            textPane.setText(helpText);
+            contentPane.add(textPane, BorderLayout.PAGE_START);
+        } catch (IOException x) {
+            System.err.println(x);
         }
-        contentPane.add(editorPane, BorderLayout.PAGE_START);
 
         for (int i = 0; i < labels.length; ++i) {
             JLabel label = new JLabel(labels[i]);
