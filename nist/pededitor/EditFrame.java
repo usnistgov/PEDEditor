@@ -1,7 +1,14 @@
 package gov.nist.pededitor;
 
-import java.awt.*;
-import java.awt.event.*;
+import java.awt.BorderLayout;
+import java.awt.Color;
+import java.awt.Dimension;
+import java.awt.Graphics2D;
+import java.awt.Rectangle;
+import java.awt.RenderingHints;
+import java.awt.Shape;
+import java.awt.event.ActionEvent;
+import java.awt.event.KeyEvent;
 import java.awt.geom.Line2D;
 import java.awt.image.BufferedImage;
 import java.util.EnumSet;
@@ -9,13 +16,27 @@ import java.util.Enumeration;
 import java.util.Observable;
 import java.util.Observer;
 
-import javax.swing.*;
+import javax.swing.AbstractAction;
+import javax.swing.AbstractButton;
+import javax.swing.ButtonGroup;
+import javax.swing.Icon;
+import javax.swing.ImageIcon;
+import javax.swing.JCheckBoxMenuItem;
+import javax.swing.JFrame;
+import javax.swing.JLabel;
+import javax.swing.JMenu;
+import javax.swing.JMenuBar;
+import javax.swing.JMenuItem;
+import javax.swing.JOptionPane;
+import javax.swing.JPanel;
+import javax.swing.JRadioButtonMenuItem;
+import javax.swing.JScrollPane;
+import javax.swing.JSeparator;
+import javax.swing.KeyStroke;
 
 @SuppressWarnings("serial")
 public class EditFrame extends JFrame
     implements Observer {
-    static JDialog helpDialog = null;
-    static JDialog aboutDialog = null;
 
     protected JPanel contentPane;
     protected JScrollPane scrollPane;
@@ -1234,21 +1255,11 @@ public class EditFrame extends JFrame
     }
 
     protected void help() {
-        if (helpDialog == null) {
-            helpDialog = new HTMLDialog
-                (this, "edithelp.html", "PED Edit Window Help");
-        }
-        helpDialog.setVisible(true);
-        helpDialog.toFront();
+        ShowHTML.show("edithelp.html", this);
     }
 
     protected void about() {
-        if (aboutDialog == null) {
-            aboutDialog = new HTMLDialog
-                (this, "about.html", "About PED Editor");
-        }
-        aboutDialog.setVisible(true);
-        aboutDialog.toFront();
+        ShowHTML.show("about.html", this);
     }
 
     protected void setStatus(String s) {
