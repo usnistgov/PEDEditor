@@ -2634,8 +2634,14 @@ public class Diagram extends Observable implements Printable {
     /** @return a list of all key points in the diagram. Key points
         that are not decoration handles are cast to type
         NullDecorationHandle just to put a shell around the point type
-        (probably a hack, I know). Some duplication is likely. */
-    public ArrayList<DecorationHandle> keyPointHandles() {
+        (probably a hack, I know). Some duplication is likely.
+
+        @param includeSmoothingPoints If true, include smoothed
+        internal control points. If false, exclude such points.
+
+ */
+    public ArrayList<DecorationHandle> keyPointHandles
+        (boolean includeSmoothingPoints) {
         ArrayList<DecorationHandle> res = new ArrayList<>();
         for (Point2D.Double p: intersections()) {
             res.add(new NullDecorationHandle(p));
@@ -2649,7 +2655,7 @@ public class Diagram extends Observable implements Printable {
             if (m instanceof VertexHandle) {
                 VertexHandle hand = (VertexHandle) m;
                 CuspInterp2D curve = hand.getItem().curve;
-                if (!curve.isEndpoint(hand.vertexNo)
+                if (!includeSmoothingPoints && !curve.isEndpoint(hand.vertexNo)
                     && curve.isSmoothed(hand.vertexNo)) {
                     // This is a smoothed interior control point which
                     // does not stand out as a key point.
@@ -2669,9 +2675,9 @@ public class Diagram extends Observable implements Printable {
         return res;
     }
 
-    public ArrayList<Point2D.Double> keyPoints() {
+    public ArrayList<Point2D.Double> keyPoints(boolean includeSmoothingPoints) {
         ArrayList<Point2D.Double> res = new ArrayList<>();
-        for (DecorationHandle h: keyPointHandles()) {
+        for (DecorationHandle h: keyPointHandles(includeSmoothingPoints)) {
             res.add(h.getLocation());
         }
         return res;

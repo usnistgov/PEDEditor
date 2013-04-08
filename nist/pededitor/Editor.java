@@ -1393,9 +1393,7 @@ public class Editor extends Diagram
     }
 
 
-    /** Show the result if the mouse point were added to the currently
-        selected curve in red, and show the currently selected curve in
-        green. */
+    /** Mark every key point with a circle. */
     void highlightKeyPoints(Graphics2D g, double scale) {
         double r = 4.0;
         Point2D.Double xpoint = new Point2D.Double();
@@ -1404,7 +1402,7 @@ public class Editor extends Diagram
         Stroke oldStroke = g.getStroke();
         g.setStroke(new BasicStroke((float) (r / 4)));
 
-        for (Point2D.Double point: keyPoints()) {
+        for (Point2D.Double point: keyPoints(false)) {
             p2d.transform(point, xpoint);
             Shape shape = new Ellipse2D.Double
                 (xpoint.x - r, xpoint.y - r, r * 2, r * 2);
@@ -2417,7 +2415,7 @@ public class Editor extends Diagram
         Point2D.Double point;
 
         if (!select) {
-            point = nearestPoint();
+            point = nearestPoint(true);
             if (point == null) {
                 return;
             }
@@ -2800,17 +2798,19 @@ public class Editor extends Diagram
 
     /** @return the location in principal coordinates of the key
         point closest (by page distance) to mprin. */
-    Point2D.Double nearestPoint() {
+    Point2D.Double nearestPoint(boolean includeSmoothingPoints) {
         if (mprin == null) {
             return null;
         }
-        return nearestPoint(principalToStandardPage.transform(mprin));
+        return nearestPoint(principalToStandardPage.transform(mprin),
+                            includeSmoothingPoints);
     }
 
     /** @return the location in principal coordinates of the key point
         closest (by page distance) to pagePoint, where pagePoint is
         expressed in standard page coordinates. */
-    Point2D.Double nearestPoint(Point2D pagePoint) {
+    Point2D.Double nearestPoint(Point2D pagePoint,
+                                boolean includeSmoothingPoints) {
         if (pagePoint == null) {
             return null;
         }
@@ -2821,7 +2821,7 @@ public class Editor extends Diagram
         // examined so far, as measured in standard page coordinates.
         double minDistSq = 0;
 
-        ArrayList<Point2D.Double> points = keyPoints();
+        ArrayList<Point2D.Double> points = keyPoints(includeSmoothingPoints);
         if (selection != null && !mouseIsStuckAtSelection()) {
             // Add the point on (the curve closest to pagePoint) that
             // is closest to selection.
@@ -2869,8 +2869,10 @@ public class Editor extends Diagram
         return nearestHandles(principalFocus);
     }
 
-    @Override public ArrayList<DecorationHandle> keyPointHandles() {
-        ArrayList<DecorationHandle> res = super.keyPointHandles();
+    @Override public ArrayList<DecorationHandle> keyPointHandles
+        (boolean includeSmoothingPoints) {
+        ArrayList<DecorationHandle> res = super.keyPointHandles
+            (includeSmoothingPoints);
 
         CurveDecoration cdec = getSelectedCurve();
         if (cdec != null) {
@@ -4218,7 +4220,7 @@ public class Editor extends Diagram
                                          StandardStroke.INVISIBLE, 0)));
                 }
 
-                ArrayList<DecorationHandle> hands = keyPointHandles();
+                ArrayList<DecorationHandle> hands = keyPointHandles(false);
                 if (hands != null) {
                     for (DecorationHandle h: hands) {
                         Point2D.Double pagePt = principalToStandardPage
