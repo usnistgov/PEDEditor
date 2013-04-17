@@ -32,11 +32,9 @@ import java.awt.print.PrinterJob;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileOutputStream;
-import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.PrintWriter;
-import java.io.Writer;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -79,12 +77,6 @@ import org.codehaus.jackson.map.SerializationConfig;
 import org.codehaus.jackson.map.annotate.JsonDeserialize;
 import org.codehaus.jackson.map.annotate.JsonSerialize.Inclusion;
 import org.jsoup.Jsoup;
-
-import org.apache.batik.svggen.SVGGeneratorContext;
-import org.apache.batik.svggen.SVGGraphics2D;
-import org.apache.batik.dom.GenericDOMImplementation;
-
-import org.w3c.dom.DOMImplementation;
 
 /** Main class for Phase Equilibria Diagrams and their presentation,
     but not including GUI elements such as menus and windows. */
@@ -3444,20 +3436,6 @@ public class Diagram extends Observable implements Printable {
         paintDiagram(g2, deviceScale(g2, bounds), null);
         g2.dispose();
         cb.addTemplate(tp, doc.left(), doc.bottom());
-    }
-
-    /** Invoked from the EditFrame menu */
-    public void saveAsSVG(File file) throws IOException {
-        DOMImplementation imp = GenericDOMImplementation.getDOMImplementation();
-        org.w3c.dom.Document doc = imp.createDocument("http://www.w3.org/2000/svg", "svg", null);
-        SVGGeneratorContext ctx = SVGGeneratorContext.createDefault(doc);
-        ctx.setComment("PED Document exported using Batik SVG Generator");
-        ctx.setEmbeddedFontsOn(true);
-        SVGGraphics2D svgGen = new SVGGraphics2D(ctx, true);
-        paintDiagram(svgGen, BASE_SCALE, null);
-        Writer wr = new FileWriter(file);
-        svgGen.stream(wr);
-        wr.close();
     }
 
     public void saveAsPED(Path path) throws IOException {
