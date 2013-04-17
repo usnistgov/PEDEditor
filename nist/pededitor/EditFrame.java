@@ -590,12 +590,6 @@ public class EditFrame extends JFrame
 
         mnSaveAs.add(new SaveImageAction("PNG", KeyEvent.VK_G));
 
-        mnSaveAs.add(new Action("SVG", KeyEvent.VK_S) {
-                @Override public void actionPerformed(ActionEvent e) {
-                    getParentEditor().saveAsSVG();
-                }
-            });
-
         mnFile.add(mnSaveAs);
 
         mnFile.add(new Action("Reload", KeyEvent.VK_R) {
