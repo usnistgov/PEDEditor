@@ -2999,6 +2999,7 @@ public class Editor extends Diagram
                     }
 
                     try {
+                        StdOutErrRedirect.run();
                         Editor app = new Editor();
                         app.run(args.length == 1 ? args[0] : null);
                     } catch (Exception e) {
@@ -3954,22 +3955,6 @@ public class Editor extends Diagram
         }
 
         saveAsPDF(file);
-    }
-
-    /** Invoked from the EditFrame menu */
-    public void saveAsSVG() {
-        File file = showSaveDialog("svg");
-        if (file == null || !verifyOverwriteFile(file)) {
-            return;
-        }
-
-        try {
-            saveAsSVG(file);
-            JOptionPane.showMessageDialog
-                (editFrame, "Saved '" + file.getAbsolutePath() + "'.");
-        } catch (IOException e) {
-            JOptionPane.showMessageDialog(editFrame, "File save error: " + e);
-        }
     }
 
     /** Invoked from the EditFrame menu */
