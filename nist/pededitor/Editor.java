@@ -2,11 +2,6 @@ package gov.nist.pededitor;
 
 import gov.nist.pededitor.EditFrame.BackgroundImageType;
 
-import javax.imageio.ImageIO;
-import javax.print.attribute.HashPrintRequestAttributeSet;
-import javax.print.attribute.PrintRequestAttributeSet;
-import javax.swing.*;
-import javax.swing.filechooser.FileNameExtensionFilter;
 import java.awt.AWTException;
 import java.awt.BasicStroke;
 import java.awt.Color;
@@ -46,8 +41,13 @@ import java.awt.image.BufferedImage;
 import java.awt.print.PrinterException;
 import java.awt.print.PrinterJob;
 import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.OutputStream;
+import java.io.OutputStreamWriter;
 import java.net.URL;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.FileSystems;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -55,7 +55,6 @@ import java.text.DecimalFormat;
 import java.text.NumberFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Observable;
@@ -64,9 +63,22 @@ import java.util.Set;
 import java.util.Timer;
 import java.util.TimerTask;
 import java.util.prefs.Preferences;
-import Jama.Matrix;
+
+import javax.imageio.ImageIO;
+import javax.print.attribute.HashPrintRequestAttributeSet;
+import javax.print.attribute.PrintRequestAttributeSet;
+import javax.swing.AbstractAction;
+import javax.swing.JColorChooser;
+import javax.swing.JDialog;
+import javax.swing.JFileChooser;
+import javax.swing.JOptionPane;
+import javax.swing.JScrollPane;
+import javax.swing.WindowConstants;
+import javax.swing.filechooser.FileNameExtensionFilter;
 
 import org.codehaus.jackson.annotate.JsonIgnore;
+
+import Jama.Matrix;
 
 // TODO (bug) There's some funny thing where you're almost in the
 // right place, and you use Enter to specify the exactly correct
@@ -2256,47 +2268,109 @@ public class Editor extends Diagram
         }
     }
 
-    public void copyCoordinatesToClipboard() {
-        ArrayList<Point2D.Double> points = new ArrayList<>();
+    public String selectedCoordinatesToString(LinearAxis v1, LinearAxis v2) {
         CuspFigure path = getActiveCurve();
         if (path != null) {
-            points.addAll(Arrays.asList(path.getPoints()));
-        } else {
-            LabelDecoration ldec = getSelectedLabel();
-            if (ldec != null) {
-                String text = ldec.getLabel().getText();
-                for (AnchoredLabel label: labels()) {
-                    if (text.equals(label.getText())) {
-                        points.add(new Point2D.Double(label.getX(), label.getY()));
-                    }
-                }
-                Collections.sort(points, new OrderByXY());
-            } else {
-                showError
-                    ("You must first select a curve or label whose\ncoordinates "
-                     + "are to be copied.");
+            return coordinates(path, v1, v2);
+        } 
+
+        LabelDecoration ldec = getSelectedLabel();
+        if (ldec != null) {
+            return labelCoordinates(ldec.getLabel().getText(), v1, v2);
+        }
+
+        showError("You must first select a curve or label whose\n"
+                  + "coordinates are to be copied.");
+        return null;
+    }
+
+    /** Return a DigitizeDialog that can be polled for the specifics
+     * of how the data are to be exported, or null if the user
+     * canceled the operation. */
+    DigitizeDialog exportDialog() {
+        DigitizeDialog dig = new DigitizeDialog();
+        dig.setAxes(axes);
+        dig.setSelectedVariable(0, getXAxis());
+        dig.setSelectedVariable(1, getYAxis());
+        dig.setTitle("Export");
+        dig.getSourceLabel().setText("Destination");
+        if (!dig.showModal()) {
+            return null;
+        }
+
+        return dig;
+    }
+
+    /** Export the string s to the type of destination indicated in
+        variable dig's state information. dig should already have had
+        showModal() called on it. */
+
+    public void exportString(String s, DigitizeDialog dig) {
+        if (dig.getSourceType() == DigitizeDialog.SourceType.FILE) {
+            File of = getExportFile();
+            if (of == null) {
                 return;
             }
+            try (OutputStream ofs = new FileOutputStream(of)) {
+                    try (OutputStreamWriter w = new OutputStreamWriter
+                         (ofs, StandardCharsets.UTF_8)) {
+                            w.write(s, 0, s.length());
+                        }
+                }
+            catch (IOException x) {
+                showError(x.toString(), "Write Failed");
+                return;
+            }
+            JOptionPane.showMessageDialog
+                (editFrame, "Saved '" + of + "'.");
+        } else {
+            copyToClipboard(s, false);
         }
-
-        StringBuilder sb = new StringBuilder();
-        for (Point2D.Double point: points) {
-            sb.append(point.x + ", " + point.y + "\n");
-        }
-
-        copyToClipboard(sb.toString(), false);
     }
 
-    public void copyCoordinatesFromClipboard() {
-        copyCoordinatesFromString(clipboardContents());
+    public void exportAllCoordinates() {
+        DigitizeDialog dig = exportDialog();
+        if (dig == null) {
+            return;
+        }
+        exportString(allCoordinatesToString(dig.getVariable(0, axes), dig.getVariable(1, axes)),
+                     dig);
     }
 
-    public static Point2D.Double[] stringToPoints(String pointsStr)
+    public void exportSelectedCoordinates() {
+        DigitizeDialog dig = exportDialog();
+        if (dig == null) {
+            return;
+        }
+        exportString(selectedCoordinatesToString(dig.getVariable(0, axes), dig.getVariable(1, axes)),
+                     dig);
+    }
+
+    public void importCoordinates() {
+        String is = importString();
+        if (is != null) {
+            copyCoordinatesFromString(is);
+        }
+    }
+
+    public static Point2D.Double[][] stringToCurves(String pointsStr)
     	throws NumberFormatException {
-        String[] lines = pointsStr.split("[\r\n]+");
-        Point2D.Double[] res = new Point2D.Double[lines.length];
+        String[] lines = pointsStr.split("\r?\n");
+        ArrayList<ArrayList<Point2D.Double>> res = new ArrayList<>();
+        ArrayList<Point2D.Double> curve = new ArrayList<>();
         for (int i = 0; i < lines.length; ++i) {
-            String line = lines[i];
+            String line = lines[i].trim();
+            int sharp = line.indexOf('#');
+            if (sharp >= 0) {
+                line = line.substring(0, sharp).trim();
+            }
+            if (line.equals("")) {
+                if (curve.size() > 0) {
+                    res.add(curve);
+                    curve = new ArrayList<>();
+                }
+                continue;
+            }
             String[] xAndYStr = line.split(",");
             if (xAndYStr.length != 2) {
                 throw new NumberFormatException
@@ -2307,9 +2381,17 @@ public class Editor extends Diagram
                 String s = xAndYStr[j];
                 xAndY[j] = ContinuedFraction.parseDouble(s);
             }
-            res[i] = new Point2D.Double(xAndY[0], xAndY[1]);
+            curve.add(new Point2D.Double(xAndY[0], xAndY[1]));
         }
-        return res;
+        if (curve.size() > 0) {
+            res.add(curve);
+        }
+
+        Point2D.Double[][] res2 = new Point2D.Double[res.size()][];
+        for (int i = 0; i < res.size(); ++i) {
+            res2[i] = res.get(i).toArray(new Point2D.Double[0]);
+        }
+        return res2;
     }
 
     public void copyCoordinatesFromString(String lines) {
@@ -2317,17 +2399,20 @@ public class Editor extends Diagram
             return;
         }
         boolean haveLabel = getSelectedLabel() != null;
-        if (!haveLabel) {
-            deselectCurve();
-        }
            
         try {
-            for (Point2D.Double point: stringToPoints(lines)) {
-                if (haveLabel) {
-                    selection.copy(point);
-                } else {
-                    add(point);
+            for (Point2D.Double[] curve: stringToCurves(lines)) {
+                if (!haveLabel) {
+                    deselectCurve();
                 }
+                for (Point2D.Double point: curve) {
+                    if (haveLabel) {
+                        selection.copy(point);
+                    } else {
+                        add(point);
+                    }
+                }
+                haveLabel = false;
             }
         } catch (NumberFormatException x) {
             JOptionPane.showMessageDialog(editFrame, x);
@@ -2362,6 +2447,92 @@ public class Editor extends Diagram
             throw new IllegalStateException
                 ("While getting clipboard: " + e);
         }
+    }
+
+    /** Ask the user the name of a file to export data to. Return null
+        if they abort the process. */
+    File getExportFile() {
+        JFileChooser chooser = new JFileChooser();
+        chooser.setDialogTitle("Export");
+        chooser.setFileFilter
+            (new FileNameExtensionFilter("Text files",
+                                         new String[] {"txt", "csv"}));
+        String dir = getCurrentDirectory();
+        if (dir != null) {
+            chooser.setCurrentDirectory(new File(dir));
+        }
+       if (chooser.showSaveDialog(editFrame) == JFileChooser.APPROVE_OPTION) {
+           File file = chooser.getSelectedFile();
+           if (getExtension(file.getName()) == null) {
+               // Add the default extension
+               file = new File(file.getAbsolutePath() + ".txt");
+           }
+           setCurrentDirectory(file.getParent());
+           return file;
+       } else {
+           return null;
+       }
+    }
+    
+    /** Ask the user the name of a file to import data from. Return null
+        if they abort the process. */
+    File getImportFile() {
+        JFileChooser chooser = new JFileChooser();
+        chooser.setDialogTitle("Import text or CSV");
+        chooser.setFileFilter
+            (new FileNameExtensionFilter("Text files",
+                                         new String[] {"txt", "csv"}));
+        String dir = getCurrentDirectory();
+        if (dir != null) {
+            chooser.setCurrentDirectory(new File(dir));
+        }
+       if (chooser.showOpenDialog(editFrame) == JFileChooser.APPROVE_OPTION) {
+           File file = chooser.getSelectedFile();
+           setCurrentDirectory(file.getParent());
+           return file;
+       } else {
+           return null;
+       }
+    }
+    
+    /** Ask the user the name of a UTF-8 file to import data from, and
+        return the contents of that file. Return null if they abort
+        the process. */
+    String importStringFromFile() {
+        File file = getImportFile();
+        if (file == null) {
+            return null;
+        }
+
+        StringBuilder res = new StringBuilder();
+
+        try {
+            for (String line: Files.readAllLines(file.toPath(),
+                                                 StandardCharsets.UTF_8)) {
+                res.append(line);
+                res.append('\n');
+            }
+        } catch (IOException e) {
+            showError("Could not read file '" + file + "' : " + e);
+        }
+        return res.toString();
+    }
+    
+    /** Show a dialog asking the user where to import data in string
+        form from, and return that string. Return null if the process
+        is aborted. */
+    String importString() {
+        DigitizeDialog dig = new DigitizeDialog();
+        dig.setAxes(axes);
+        dig.setSelectedVariable(0, getXAxis());
+        dig.setSelectedVariable(1, getYAxis());
+        dig.setTitle("Import");
+        if (!dig.showModal()) {
+            return null;
+        }
+
+        return (dig.getSourceType() == DigitizeDialog.SourceType.FILE)
+            ? importStringFromFile() : clipboardContents();
     }
 
     /** Copy the contents of the status bar to the clipboard. */
@@ -3680,24 +3851,42 @@ public class Editor extends Diagram
         triedToLoadOriginalImage = true;
 
         File originalFile = new File(ofn);
-        if (Files.notExists(originalFile.toPath())) {
-            JOptionPane.showMessageDialog
-                (editFrame, "Warning: original file '" + ofn + "' not found");
-            return null;
-        }
-
-        try {
-            originalImage = ImageIO.read(originalFile);
-            if (originalImage == null) {
-                throw new IOException(filename + ": unknown image format");
+        boolean changedOriginal = false;
+        do {
+            try {
+                if (Files.notExists(originalFile.toPath())) {
+                    throw new FileNotFoundException(originalFile.toString());
+                }
+                originalImage = ImageIO.read(originalFile);
+                if (originalImage == null) {
+                    throw new IOException(filename + ": unknown image format");
+                }
+                if (changedOriginal) {
+                    setOriginalFilename(originalFile.getName());
+                }
+                return originalImage;
+            } catch (IOException e) {
+                if (JOptionPane.showOptionDialog
+                    (editFrame,
+                     "Original image unavailable: '" + ofn + "':\n" +  e.toString() + "\n"
+                     + "You may hide the original image or\ntry to locate a "
+                     + "readable copy of this file.",
+                     "Image load error",
+                     JOptionPane.YES_NO_OPTION,
+                     JOptionPane.WARNING_MESSAGE,
+                     null,
+                     new Object[] { "Hide original image", "Locate original image" },
+                     null) == JOptionPane.NO_OPTION) {
+                    originalFile = openImageFileDialog(editFrame);
+                    if (originalFile == null) {
+                        return null;
+                    }
+                    changedOriginal = true;
+                } else {
+                    return null;
+                }
             }
-        } catch (IOException e) {
-            JOptionPane.showMessageDialog
-                (editFrame,
-                 "Original image unavailable: '" + ofn + "': " +  e.toString());
-        }
-
-        return originalImage;
+        } while (true);
     }
 
     /** If the zoom frame is not needed, then then make sure it's null
@@ -3770,15 +3959,34 @@ public class Editor extends Diagram
         if (dir != null) {
             chooser.setCurrentDirectory(new File(dir));
         }
-        if (dir != null) {
-            chooser.setCurrentDirectory(new File(dir));
-        }
        chooser.setFileFilter
             (new FileNameExtensionFilter("PED and image files", allExts));
        chooser.addChoosableFileFilter
            (new FileNameExtensionFilter("PED files only", pedExts));
        chooser.addChoosableFileFilter
            (new FileNameExtensionFilter("Image files only", imageExts));
+       if (chooser.showOpenDialog(parent) == JFileChooser.APPROVE_OPTION) {
+           File file = chooser.getSelectedFile();
+           setCurrentDirectory(file.getParent());
+           return file;
+       } else {
+           return null;
+       }
+    }
+
+    public static File openImageFileDialog(Component parent) {
+        String[] imageExts = ImageIO.getReaderFileSuffixes();
+        JFileChooser chooser = new JFileChooser();
+        chooser.setDialogTitle("Open image file");
+        String dir = getCurrentDirectory();
+        if (dir != null) {
+            chooser.setCurrentDirectory(new File(dir));
+        }
+        if (dir != null) {
+            chooser.setCurrentDirectory(new File(dir));
+        }
+       chooser.setFileFilter
+           (new FileNameExtensionFilter("Image files", imageExts));
        if (chooser.showOpenDialog(parent) == JFileChooser.APPROVE_OPTION) {
            File file = chooser.getSelectedFile();
            setCurrentDirectory(file.getParent());
@@ -3840,7 +4048,6 @@ public class Editor extends Diagram
             (parent, mess, title, JOptionPane.ERROR_MESSAGE);
     }
 
-    /** Invoked from the EditFrame menu */
     public void openImage(String filename) {
         String title = (filename == null) ? "PED Editor" : filename;
         editFrame.setTitle(title);
