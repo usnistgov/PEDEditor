@@ -509,8 +509,7 @@ public class Editor extends Diagram
     protected transient boolean editorIsPacked = false;
     protected transient boolean smoothed = false;
     protected transient boolean majorSaveNeeded = false;
-    protected transient DigitizeDialog.SourceType defaultSourceType
-        = DigitizeDialog.SourceType.FILE;
+    protected transient DigitizeDialog digitizeDialog = null;
 
     /** The item (vertex, label, etc.) that is selected, or null if nothing is. */
     protected transient DecorationHandle selection;
@@ -2278,7 +2277,8 @@ public class Editor extends Diagram
         }
     }
 
-    public String selectedCoordinatesToString(LinearAxis v1, LinearAxis v2) {
+    public String selectedCoordinatesToString(LinearAxis v1, LinearAxis v2,
+                                              boolean addComments) {
         CuspFigure path = getActiveCurve();
         if (path != null) {
             return coordinates(path, v1, v2);
@@ -2298,19 +2298,15 @@ public class Editor extends Diagram
      * of how the data are to be exported, or null if the user
      * canceled the operation. */
     DigitizeDialog exportDialog() {
-        DigitizeDialog dig = new DigitizeDialog();
-        dig.setAxes(axes);
-        dig.setSelectedVariable(0, getXAxis());
-        dig.setSelectedVariable(1, getYAxis());
-        dig.setTitle("Export");
-        dig.getSourceLabel().setText("Destination");
-        dig.setSourceType(defaultSourceType);
-        if (!dig.showModal()) {
+        initializeDigitizeDialog();
+        digitizeDialog.setTitle("Export");
+        digitizeDialog.getSourceLabel().setText("Destination");
+        digitizeDialog.setCommentedCheckboxVisible(true);
+        digitizeDialog.pack();
+        if (!digitizeDialog.showModal()) {
             return null;
         }
-        defaultSourceType = dig.getSourceType();
-
-        return dig;
+        return digitizeDialog;
     }
 
     /** Export the string s to the type of destination indicated in
@@ -2345,7 +2341,9 @@ public class Editor extends Diagram
         if (dig == null) {
             return;
         }
-        exportString(allCoordinatesToString(dig.getVariable(0, axes), dig.getVariable(1, axes)),
+        exportString(allCoordinatesToString
+                     (dig.getVariable(0, axes), dig.getVariable(1, axes),
+                      dig.isCommented()),
                      dig);
     }
 
@@ -2354,7 +2352,9 @@ public class Editor extends Diagram
         if (dig == null) {
             return;
         }
-        exportString(selectedCoordinatesToString(dig.getVariable(0, axes), dig.getVariable(1, axes)),
+        exportString(selectedCoordinatesToString
+                     (dig.getVariable(0, axes), dig.getVariable(1, axes),
+                      dig.isCommented()),
                      dig);
     }
 
@@ -2560,23 +2560,27 @@ public class Editor extends Diagram
         }
         return res.toString();
     }
+
+    private void initializeDigitizeDialog() {
+        if (digitizeDialog == null) {
+            digitizeDialog = new DigitizeDialog();
+        }
+        digitizeDialog.setAxes(axes, new LinearAxis[] {getXAxis(), getYAxis()});
+    }
     
     /** Show a dialog asking the user where to import data in string
         form from, and return the dialog. Return null if the process
         is aborted. */
     DigitizeDialog importDialog() {
-        DigitizeDialog dig = new DigitizeDialog();
-        dig.setAxes(axes);
-        dig.setSelectedVariable(0, getXAxis());
-        dig.setSelectedVariable(1, getYAxis());
-        dig.setTitle("Import");
-        dig.setSourceType(defaultSourceType);
-        if (!dig.showModal()) {
+        initializeDigitizeDialog();
+        digitizeDialog.setTitle("Import");
+        digitizeDialog.getSourceLabel().setText("Source");
+        digitizeDialog.setCommentedCheckboxVisible(false);
+        digitizeDialog.pack();
+        if (!digitizeDialog.showModal()) {
             return null;
         }
-        defaultSourceType = dig.getSourceType();
-
-        return dig;
+        return digitizeDialog;
     }
 
     /** Copy the contents of the status bar to the clipboard. */
@@ -3700,7 +3704,7 @@ public class Editor extends Diagram
                     (-leftMargin, -topMargin, r.width + leftMargin + rightMargin,
                      r.height + topMargin + bottomMargin);
 
-                {
+                if (diagramType != DiagramType.OTHER) {
                     NumberFormat format = new DecimalFormat("0.0000");
                     LinearAxis pageXAxis = LinearAxis.createFromAffine
                         (format, principalToStandardPage, false);
