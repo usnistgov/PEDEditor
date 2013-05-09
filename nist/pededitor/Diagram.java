@@ -2225,6 +2225,75 @@ public class Diagram extends Observable implements Printable {
         return lines.toArray(new String[0]);
     }
 
+    /** Return a multi-line comma-separated-values string of the
+        coordinates for all control points of the given curve,
+        expressed in terms of variables v1 and v2 */
+    public String coordinates(CuspFigure path, LinearAxis v1, LinearAxis v2) {
+        StringBuilder sb = new StringBuilder();
+        /* int vertexNo = 0; */
+        for (Point2D.Double point: path.getPoints()) {
+            sb.append(v1.value(point) + ", " + v2.value(point));
+            /* if (path.curve.isSmoothed(vertexNo)) {
+                sb.append(" # smooth");
+                } */
+            sb.append('\n');
+            /* ++vertexNo; */
+        }
+        return sb.toString();
+    }
+
+    /** Return the coordinates for all labels whose text matches
+        string, expressed in terms of variables v1 and v2 */
+    public String labelCoordinates(String text,
+                                   LinearAxis v1, LinearAxis v2) {
+        ArrayList<Point2D.Double> points = new ArrayList<>();
+        for (AnchoredLabel label: labels()) {
+            if (text.equals(label.getText())) {
+                points.add(new Point2D.Double(label.getX(), label.getY()));
+            }
+            Collections.sort(points, new OrderByXY());
+        }
+
+        StringBuilder sb = new StringBuilder();
+        for (Point2D.Double point: points) {
+            sb.append(v1.value(point) + ", " + v2.value(point) + '\n');
+        }
+
+        return sb.toString();
+    }
+
+    /** Return the coordinates of all labels and curves, expressed in
+        terms of variables v1 and v2 */
+    @JsonIgnore public String allCoordinatesToString
+        (LinearAxis v1, LinearAxis v2) {
+        StringBuilder sb = new StringBuilder();
+
+        TreeSet<String> labelTexts = new TreeSet<>();
+        for (AnchoredLabel label: labels()) {
+            labelTexts.add(htmlToText(label.getText()));
+        }
+
+        for (String labelText: labelTexts) {
+            sb.append("# Label");
+            if (labelText.length() == 1) {
+                char ch = labelText.charAt(0);
+                if (ch > ' ') {
+                    sb.append(" " + ch);
+                }
+            }
+            sb.append('\n');
+            sb.append(labelCoordinates(labelText, v1, v2));
+        }
+
+        for (CuspFigure path: paths()) {
+            sb.append("# " + path.getStroke() + " LINE\n");
+            sb.append(coordinates(path, v1, v2));
+        }
+
+        
+        return sb.toString();
+    }
+
     /** Return all chemical formulas converted to Hill order.
         Duplicates are removed. */
     @JsonIgnore public String[] getAllFormulas() {
