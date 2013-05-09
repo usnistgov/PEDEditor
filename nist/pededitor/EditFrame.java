@@ -133,7 +133,7 @@ public class EditFrame extends JFrame
                 }
             });
     protected JMenuItem mnImportCoordinates = new JMenuItem
-        (new Action("Import label or curve coordinates",
+        (new Action("Import curve or label coordinates",
                     KeyEvent.VK_I) {
                 @Override public void actionPerformed(ActionEvent e) {
                     getParentEditor().importCoordinates();
@@ -530,7 +530,13 @@ public class EditFrame extends JFrame
         }
 
         @Override public void actionPerformed(ActionEvent e) {
-            getParentEditor().removeVariable(e.getActionCommand());
+            try {
+                getParentEditor().removeVariable(e.getActionCommand());
+            } catch (CannotDeletePrincipalVariableException x) {
+                getParentEditor().showError
+                    ("Cannot delete principal coordinate variable "
+                     + x.getVariable().name);
+            }
         }
     }
 
