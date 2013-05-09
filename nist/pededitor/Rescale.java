@@ -22,8 +22,7 @@ public class Rescale {
         height = yMargin + t * ySlope;
     }
 
-    @Override
-	public String toString() {
+    @Override public String toString() {
         return "t = " + t + ", w = " + width + ", h = " + height;
     }
 
