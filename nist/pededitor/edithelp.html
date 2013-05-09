@@ -227,14 +227,17 @@ redundant, such as adding the same vertex to a curve twice in a row.
 <h2>Edit Selection Menu</h2>
 
 <p>These commands all operate on the selection (highlighted
-in <span style="color:green;">green</span>) if there is one. If there is not,
-some of these commands generate an error, while others fall back on
-operating on the nearest key point.
+in <span style="color:green;">green</span>) if there is one. If
+nothing is selected, then some of these commands generate an error,
+while others will affect the nearest key point.
 
 <ul>
 
-<li>Press <code>Delete</code> to delete the selection. Curves are
-deleted one point at a time.</li>
+<li>Press <code>Delete</code> to delete the selection.</li>
+
+<li>Select the <code>Delete All</code> option to delete the entire
+selected curve (instead of a single point) or to delete all labels
+whose text matches the selected label.</li>
 
 <li>Press <code>Escape</code> or the right mouse button to deselect
 the item.</li>
@@ -255,8 +258,8 @@ other items at the same location to the current mouse position.
 <p>Special note for labels which are not anchored in the center: when
 moving labels, it matters whether you selected the label's center (the
 green circle is empty) or its anchor (the green circle is solid). If
-you select a label's center, then the center, not the anchor, will
-move to the current mouse position.
+you select a label by its center, then the center, not the anchor,
+will move to the current mouse position.
 
 <li>Press <code>Shift+V</code> to move the selected vertex or item
 only.
@@ -299,9 +302,9 @@ curve at the auto-position location instead, hold down the shift key
 as you press <code>x</code> or the left mouse button.
 
 <p>A curve consisting of a single point is represented as a dot twice
-as wide as the current line width. It is possible to mark data points
-as 1-point curves that way, but labels provide more flexibility in
-marking data points.
+as wide as the current line width. It may be tempting to mark data
+points this way, but for various reasons, it usually works better to
+mark data points using 1-character labels.
 
 <h3>Adding a point to a curve</h3>
 
@@ -596,31 +599,58 @@ message to learn how to do this.
 
 <ul>
 
-<li><p><b>Copy all text to clipboard</b>: Copies all labels, key values, tags, and diagram components, with duplicates removed, to the clipboard, with each entry terminated by a newline.
+<p>Files saved during export use the UTF-8 character encoding.</p>
 
-<li><p><b>Copy label or curve coordinates to clipboard</b>: If a curve
-is highlighted, then the principal coordinates (<code>x</code>
-and <code>y</code> coordinates for binary diagrams, and right
-component and top component values for ternary diagrams) of every
-point in the curve will be copied to the clipboard, one coordinate per
-line, with the x and y values separated by commas. If a label (usually
-a symbol that denotes a data point) is highlighted, then the
-coordinates of that label and every other label that shares the same
-text will be copied. For instance, if you have highlighted an open
-circle, then the coordinates of every open circle will be copied.
+<p>If you need to export data in ways that are more advanced than
+these menu items allow, you could work directly from the PED files,
+which are in human-readable JSON format. The PED file format does not
+have a formal specification and is subject to change, but just by
+looking at some PED files you can get some idea what is involved.</p>
 
-<li><p><b>Copy label or curve coordinates from clipboard</b>: This is
-the reverse of the previous operation. If nothing is highlighted, a
-new curve will be created from the coordinates in the clipboard. If a
-curve is highlighted, then the points will be added to it. If a label
-is highlighted, then the coordinates will be marked with labels like
-the highlighted one.
+<li><p><b>Export all text</b>: Export all labels, key values, tags,
+and diagram components, with duplicates removed. Each entry is
+terminated by a newline.
 
-<li><p><b>Copy status bar to clipboard</b>
-(<code>Control+Shift+S</code>): This copies the text in the gray
-status bar at the bottom of the edit window to the clipboard. Since
-the contents depend on the current mouse position, you will probably
-need to use the keyboard shortcut to do this.
+<li><p><b>Export selected curve or label's coordinates</b>: If a curve
+is highlighted, then the coordinates of every control point for that
+curve will be exported, one coordinate per line, with the x and y
+values separated by commas. If a label (usually a symbol that denotes
+a data point) is highlighted, then the coordinates of that label and
+every other label that shares the same text will be copied. For
+instance, if you have highlighted an open circle, then the coordinates
+of every open circle will be copied.
+
+<li><p><b>Export all curve and label coordinates</b>: Export the
+coordinates of all curve control points and all labels. Coordinates
+belonging to a single curve and labels that share the same text are
+grouped together; groups are separated from each other by comment
+lines that start with a sharp sign (#).
+
+<p>Checking the <code>Add comments</code> box will make the output
+easier to read but may make it harder to import the data into other
+programs.
+
+<li><p><b>Import curve or label coordinates</b>: This is the inverse
+of the two former operations. If a curve is highlighted, then points
+will be added to it. If a label is highlighted, then similar labels
+will be added. If nothing is highlighted, one or more new curves will
+be created, with empty lines or lines that contain only a comment
+(beginning with the sharp sign #) marking the beginning of a new
+curve.
+
+<p>Sometimes it can help to export and then immediately reimport data.
+For instance, if you have marked a set of data points using labels
+containing identical symbols, then you can select one of those
+symbols, choose <code>Export selected curve or label's
+coordinates</code>, press Escape to deselect them, then
+choose <code>Import label or curve coordinates</code> to create a
+curve between those points.
+
+<li><p><b>Copy status bar</b> (<code>Control+Shift+S</code>): This
+copies the text in the gray status bar at the bottom of the edit
+window to the clipboard. Since the contents depend on the current
+mouse position, you will probably need to use the keyboard shortcut to
+do this.
 
 </ul>
 
