@@ -3268,6 +3268,20 @@ public class Editor extends Diagram
         }
     }
 
+    StringArrayDialog trapezoidDialog(String[] values) {
+        String[] labels = {
+            "Minimum amount of top component ",
+            "Maximum amount of top component",
+            "Minimum amount of right component",
+            "Maximum amount of right component" };
+        return new StringArrayDialog
+            (editFrame, labels, values,
+             "<html><body width=\"300 px\"><p>"
+             + "Enter the range of compositions covered by this diagram. "
+             + "Fractions are allowed. For percentages, do not omit the "
+             +  "percent sign.");
+    }
+
     /** Start on a blank new diagram.
 
         @param originalFilename If not null, the filename of the
@@ -3280,7 +3294,7 @@ public class Editor extends Diagram
     protected void newDiagram(String originalFilename,
                               Point2D.Double[] vertices) {
         boolean tracing = (vertices != null);
-        try (UpdateSuppressor d = new UpdateSuppressor()) {
+        try (UpdateSuppressor us = new UpdateSuppressor()) {
                 clear();
                 setOriginalFilename(originalFilename);
                 revalidateZoomFrame();
@@ -3310,30 +3324,78 @@ public class Editor extends Diagram
                 switch (diagramType) {
                 case TERNARY_BOTTOM:
                     {
-                        double height;
-
                         double defaultHeight = !tracing ? 0.45
                             : (1.0
                                - (vertices[1].distance(vertices[2]) / 
                                   vertices[0].distance(vertices[3])));
                         String initialHeight = String.format
                             ("%.1f%%", defaultHeight * 100);
+                        String[] defaultValues = {
+                            "0%", initialHeight, "0%", "100%" };
+                        StringArrayDialog dog = trapezoidDialog(defaultValues);
+
+                        double minTop, maxTop, minRight, maxRight;
 
                         while (true) {
-                            String heightS = (String) JOptionPane.showInputDialog
-                                (editFrame,
-                                 "Enter the visual height of the diagram\n" +
-                                 "as a fraction of the full triangle height:",
-                                 initialHeight);
-                            if (heightS == null) {
-                                heightS = initialHeight;
+                            String[] values = dog.showModal();
+                            if (values == null) {
+                                values = defaultValues;
                             }
+                            ArrayList<Double> dvs = new ArrayList<>();
+                            String parseMe = null;
                             try {
-                                height = ContinuedFraction.parseDouble(heightS);
-                                break;
+                                boolean retry = false;
+                                for (String s: values) {
+                                    parseMe = s;
+                                    double d = ContinuedFraction.parseDouble(parseMe);
+                                    if (d < 0 || d > 1) {
+                                        JOptionPane.showMessageDialog
+                                            (editFrame,
+                                             "<html><div width=\"200 px\">"
+                                             + "Component density '" + parseMe + "' "
+                                             + "(equal to "
+                                             + String.format("%.2f%%", d * 100) + ") is "
+                                             + "not between 0% and 100%");
+                                        retry = true;
+                                        break;
+                                    }
+                                    dvs.add(d);
+                                }
+                                if (retry) {
+                                    continue;
+                                }
                             } catch (NumberFormatException e) {
-                                JOptionPane.showMessageDialog(editFrame, "Invalid number format.");
+                                JOptionPane.showMessageDialog
+                                    (editFrame,
+                                     "Invalid number format for '" + parseMe + "'.");
+                                continue;
                             }
+                            minTop = dvs.get(0);
+                            maxTop = dvs.get(1);
+                            if (minTop >= maxTop) {
+                                maxLessThanMinError
+                                    ("the top component", minTop, maxTop);
+                                continue;
+                            }
+                            minRight = dvs.get(2);
+                            maxRight = dvs.get(3);
+                            if (minRight >= maxRight) {
+                                maxLessThanMinError
+                                    ("the right component", minRight, maxRight);
+                                continue;
+                            }
+                            if (minTop + maxRight > 1 + 1e-12) {
+                                JOptionPane.showMessageDialog
+                                    (editFrame,
+                                     "<html><div width=\"200 px\">"
+                                     + "The sum of the min top component and the "
+                                     + "max right component ("
+                                     + String.format("%.2f%%", minTop * 100) + " + "
+                                     + String.format("%.2f%%", maxRight * 100)
+                                     + ") cannot exceed 100%.");
+                                continue;
+                            }
+                            break;
                         }
 
                         // The logical coordinates of the four legs of the
@@ -3348,33 +3410,43 @@ public class Editor extends Diagram
                         // left corner of the triangle.
 
                         Point2D.Double[] outputVertices =
-                            { new Point2D.Double(0.0, 0.0),
-                              new Point2D.Double(0.0, height),
-                              new Point2D.Double(1.0 - height, height),
-                              new Point2D.Double(1.0, 0.0) };
+                            { new Point2D.Double(minRight, minTop),
+                              new Point2D.Double(minRight, maxTop),
+                              new Point2D.Double(maxRight - (maxTop - minTop), maxTop),
+                              new Point2D.Double(maxRight, minTop) };
 
                         if (tracing) {
                             originalToPrincipal = new QuadToQuad(vertices, outputVertices);
                         }
 
-                        r = new Rescale(1.0, 0.0, maxDiagramWidth,
-                                        TriangleTransform.UNIT_TRIANGLE_HEIGHT * height,
-                                        0.0, maxDiagramHeight);
+                        double width = maxRight - minRight;
+                        double height = TriangleTransform.UNIT_TRIANGLE_HEIGHT
+                            * (maxTop - minTop);
+                        // The height of the triangle formed by
+                        // extending the nonparallel legs of the
+                        // trapezoid until they meet.
+                        double triangleHt = TriangleTransform.UNIT_TRIANGLE_HEIGHT
+                            * width;
+                        r = new Rescale(width, 0.0, maxDiagramWidth,
+                                        height, 0.0, maxDiagramHeight);
 
                         double rx = r.width;
                         double bottom = r.height;
 
                         Point2D.Double[] trianglePagePositions =
                             { new Point2D.Double(0.0, bottom),
-                              new Point2D.Double(rx/2,
-                                                 bottom - TriangleTransform.UNIT_TRIANGLE_HEIGHT * r.t),
+                              new Point2D.Double(rx/2, bottom - triangleHt * r.t),
                               new Point2D.Double(rx, bottom) };
                         principalToStandardPage = new TriangleTransform
-                            (principalTrianglePoints, trianglePagePositions);
+                            (new Point2D.Double[]
+                                { new Point2D.Double(minRight, minTop),
+                                  new Point2D.Double(minRight, maxRight + minTop),
+                                  new Point2D.Double(maxRight, minTop) },
+                             trianglePagePositions);
 
-                        addTernaryBottomRuler(0.0, 1.0);
-                        addTernaryLeftRuler(0.0, height);
-                        addTernaryRightRuler(0.0, height);
+                        addTernaryBottomRuler(minRight, maxRight, minTop);
+                        addTernaryLeftRuler(minTop, maxTop, minRight);
+                        addTernaryRightRuler(minTop, maxTop, maxRight);
                         break;
                     }
                 case BINARY:
@@ -3635,6 +3707,16 @@ public class Editor extends Diagram
                 initializeDiagram();
             }
         propagateChange();
+    }
+
+    private void maxLessThanMinError(String component, double min, double max) {
+        JOptionPane.showMessageDialog
+            (editFrame, 
+             "<html><div width=\"200 px\">"
+             + "The maximum amount of " + component + ", "
+             + String.format("%.2f%%", max * 100) + ", "
+             + "does not exceed the minimum amount "
+             + String.format("%.2f%%", min * 100) + ".");
     }
 
     protected double rulerFontSize() {
@@ -5003,6 +5085,22 @@ public class Editor extends Diagram
             }
         } else {
             initializeGUI();
+            Object[] options = {
+                "Load an image or PED file", "Create a new diagram"
+            };
+            if (JOptionPane.showOptionDialog
+                (editFrame,
+                 "Please select how to begin.",
+                 "Start",
+                 JOptionPane.YES_NO_OPTION,
+                 JOptionPane.QUESTION_MESSAGE,
+                 null,
+                 options,
+                 options[0]) == JOptionPane.YES_OPTION) {
+                showOpenDialog(editFrame);
+            } else {
+                newDiagram();
+            }
         }
     }
 
