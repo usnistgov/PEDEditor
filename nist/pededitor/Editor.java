@@ -509,6 +509,8 @@ public class Editor extends Diagram
     protected transient boolean editorIsPacked = false;
     protected transient boolean smoothed = false;
     protected transient boolean majorSaveNeeded = false;
+    protected transient DigitizeDialog.SourceType defaultSourceType
+        = DigitizeDialog.SourceType.FILE;
 
     /** The item (vertex, label, etc.) that is selected, or null if nothing is. */
     protected transient DecorationHandle selection;
@@ -2294,9 +2296,11 @@ public class Editor extends Diagram
         dig.setSelectedVariable(1, getYAxis());
         dig.setTitle("Export");
         dig.getSourceLabel().setText("Destination");
+        dig.setSourceType(defaultSourceType);
         if (!dig.showModal()) {
             return null;
         }
+        defaultSourceType = dig.getSourceType();
 
         return dig;
     }
@@ -2347,10 +2351,18 @@ public class Editor extends Diagram
     }
 
     public void importCoordinates() {
-        String is = importString();
-        if (is != null) {
-            copyCoordinatesFromString(is);
+        DigitizeDialog dig = importDialog();
+        if (dig == null) {
+            return;
         }
+
+        String str = (dig.getSourceType() == DigitizeDialog.SourceType.FILE)
+            ? importStringFromFile() : clipboardContents();
+        if (str == null) {
+            return;
+        }
+
+        copyCoordinatesFromString(str, dig.getVariable(0, axes), dig.getVariable(1, axes));
     }
 
     public static Point2D.Double[][] stringToCurves(String pointsStr)
@@ -2394,10 +2406,32 @@ public class Editor extends Diagram
         return res2;
     }
 
-    public void copyCoordinatesFromString(String lines) {
+    public void copyCoordinatesFromString(String lines,
+                                          LinearAxis v1, LinearAxis v2) {
         if (principalToStandardPage == null) {
             return;
         }
+
+        Affine xformi;
+
+        if (v1 == v2) {
+            JOptionPane.showMessageDialog
+                (editFrame, "Please choose two different variables.");
+            return;
+        }
+        try {
+            xformi = inverseTransform(v1, v2);
+        } catch (NoninvertibleTransformException e) {
+            JOptionPane.showMessageDialog
+                (editFrame,
+                 "<html><body width=\"200 px\"><p>" +
+                 "The combination of " + (String) v1.name + " and "
+                 + (String) v2.name + " cannot be used to  "
+                 + "uniquely identify points (the two variables "
+                 + "are not linearly independent).");
+            return;
+        }
+
         boolean haveLabel = getSelectedLabel() != null;
            
         try {
@@ -2406,10 +2440,11 @@ public class Editor extends Diagram
                     deselectCurve();
                 }
                 for (Point2D.Double point: curve) {
+                    Point2D.Double p2 = xformi.transform(point);
                     if (haveLabel) {
-                        selection.copy(point);
+                        selection.copy(p2);
                     } else {
-                        add(point);
+                        add(p2);
                     }
                 }
                 haveLabel = false;
@@ -2519,20 +2554,21 @@ public class Editor extends Diagram
     }
     
     /** Show a dialog asking the user where to import data in string
-        form from, and return that string. Return null if the process
+        form from, and return the dialog. Return null if the process
         is aborted. */
-    String importString() {
+    DigitizeDialog importDialog() {
         DigitizeDialog dig = new DigitizeDialog();
         dig.setAxes(axes);
         dig.setSelectedVariable(0, getXAxis());
         dig.setSelectedVariable(1, getYAxis());
         dig.setTitle("Import");
+        dig.setSourceType(defaultSourceType);
         if (!dig.showModal()) {
             return null;
         }
+        defaultSourceType = dig.getSourceType();
 
-        return (dig.getSourceType() == DigitizeDialog.SourceType.FILE)
-            ? importStringFromFile() : clipboardContents();
+        return dig;
     }
 
     /** Copy the contents of the status bar to the clipboard. */
@@ -4541,8 +4577,8 @@ public class Editor extends Diagram
         StringArrayDialog dog = new StringArrayDialog
             (editFrame, labels, oldValues,
              "<html><body width=\"200 px\"><p>"
-             + "Enter values for exactly two variables and leave all others. "
-             + "Fractions and percentages are allowed."
+             + "Enter values for exactly two variables and leave all others "
+             + "blank. Fractions and percentages are allowed."
              + "</p></body></html>");
         dog.setTitle("Set mouse position");
         String[] values = dog.showModal();
@@ -4591,18 +4627,11 @@ public class Editor extends Diagram
             return;
         }
 
-        // Solve the linear system to determine the pair of principal
-        // coordinates that corresponds to this pair of
-        // whatever-coordinates.
-        LinearAxis ax0 = axs.get(0);
-        LinearAxis ax1 = axs.get(1);
-        Affine xform = new Affine
-            (ax0.getA(), ax1.getA(),
-             ax0.getB(), ax1.getB(),
-             ax0.getC(), ax1.getC());
-
         try {
-            Affine xformi = xform.createInverse();
+            Affine xformi = inverseTransform(axs.get(0), axs.get(1));
+            // Solve the linear system to determine the pair of principal
+            // coordinates that corresponds to this pair of
+            // whatever-coordinates.
             Point2D.Double newMprin = xformi.transform(vs.get(0), vs.get(1));
             Point2D.Double newMousePage = principalToStandardPage
                 .transform(newMprin);
@@ -4642,6 +4671,19 @@ public class Editor extends Diagram
                  + "combined to identify a position.");
             return;
         }
+    }
+
+     /** Return the inverse transform from the (v0,v1) system to the
+         principal coordinate system. Throws an exception if the
+         inverse does not exist. */
+    Affine inverseTransform(LinearAxis v0, LinearAxis v1)
+        throws NoninvertibleTransformException {
+        Affine xform = new Affine
+            (v0.getA(), v1.getA(),
+             v0.getB(), v1.getB(),
+             v0.getC(), v1.getC());
+
+        return xform.createInverse();
     }
 
     @Override public void mouseDragged(MouseEvent e) {
