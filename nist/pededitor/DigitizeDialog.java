@@ -103,6 +103,14 @@ public class DigitizeDialog extends JDialog {
             : SourceType.CLIPBOARD;
     }
 
+    public void setSourceType(SourceType v) {
+        if (v == SourceType.FILE) {
+            fileSource.setSelected(true);
+        } else {
+            clipboardSource.setSelected(true);
+        }
+    }
+
     public JLabel getSourceLabel() {
         return sourceLabel;
     }
