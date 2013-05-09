@@ -1262,9 +1262,12 @@ public class Diagram extends Observable implements Printable {
         tags.remove(tag);
     }
 
-    public void removeVariable(String name) {
+    public void removeVariable(String name) throws CannotDeletePrincipalVariableException {
         for (LinearAxis axis: axes) {
             if (axis.name.equals(name)) {
+                if (axis == getXAxis() || axis == getYAxis()) {
+                    throw new CannotDeletePrincipalVariableException(axis);
+                }
                 remove(axis);
                 return;
             }
@@ -2284,7 +2287,7 @@ public class Diagram extends Observable implements Printable {
     /** Return the coordinates of all labels and curves, expressed in
         terms of variables v1 and v2 */
     @JsonIgnore public String allCoordinatesToString
-        (LinearAxis v1, LinearAxis v2) {
+        (LinearAxis v1, LinearAxis v2, boolean addComments) {
         StringBuilder sb = new StringBuilder();
 
         TreeSet<String> labelTexts = new TreeSet<>();
@@ -2293,11 +2296,13 @@ public class Diagram extends Observable implements Printable {
         }
 
         for (String labelText: labelTexts) {
-            sb.append("# Label");
-            if (labelText.length() == 1) {
-                char ch = labelText.charAt(0);
-                if (ch > ' ') {
-                    sb.append(" " + ch);
+            if (addComments) {
+                sb.append("# Label");
+                if (labelText.length() == 1) {
+                    char ch = labelText.charAt(0);
+                    if (ch > ' ') {
+                        sb.append(" " + ch);
+                    }
                 }
             }
             sb.append('\n');
@@ -2305,7 +2310,10 @@ public class Diagram extends Observable implements Printable {
         }
 
         for (CuspFigure path: paths()) {
-            sb.append("# " + path.getStroke() + " LINE\n");
+            if (addComments) {
+                sb.append("# " + path.getStroke() + " LINE");
+            }
+            sb.append('\n');
             sb.append(coordinates(path, v1, v2));
         }
 
