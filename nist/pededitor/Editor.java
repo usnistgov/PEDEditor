@@ -1709,8 +1709,12 @@ public class Editor extends Diagram
         }
         CuspFigure path = vhand.getItem();
         int vip = vertexInsertionPosition();
+        int s = path.size();
         return (vip > 0 && principalCoordinatesMatch(p, path.get(vip-1), 1e-9))
-            || (vip < path.size() && principalCoordinatesMatch(p, path.get(vip), 1e-9));
+            || (vip < s && principalCoordinatesMatch(p, path.get(vip), 1e-9))
+            || (path.isClosed() && s > 1 &&
+                ((vip == 0 && principalCoordinatesMatch(p, path.get(s-1), 1e-9))
+                 || (vip == s && principalCoordinatesMatch(p, path.get(0), 1e-9))));
     }
 
     int vertexInsertionPosition() {
@@ -3780,7 +3784,6 @@ public class Editor extends Diagram
                 pageBounds = new Rectangle2D.Double
                     (-leftMargin, -topMargin, r.width + leftMargin + rightMargin,
                      r.height + topMargin + bottomMargin);
-                System.out.println("PageBounds = " + pageBounds);
 
                 if (diagramType != DiagramType.OTHER) {
                     NumberFormat format = new DecimalFormat("0.0000");
