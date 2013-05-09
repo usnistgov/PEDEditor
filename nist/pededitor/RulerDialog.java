@@ -4,7 +4,6 @@ import java.awt.Dialog;
 import java.awt.Frame;
 import java.awt.event.ActionEvent;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Enumeration;
 
 import javax.swing.AbstractAction;
@@ -12,7 +11,6 @@ import javax.swing.AbstractButton;
 import javax.swing.ButtonGroup;
 import javax.swing.JButton;
 import javax.swing.JCheckBox;
-import javax.swing.JComboBox;
 import javax.swing.JDialog;
 import javax.swing.JLabel;
 import javax.swing.JOptionPane;
@@ -89,7 +87,7 @@ public class RulerDialog extends JDialog {
     JTextField tickDelta = new JTextField("", 10);
     JTextField tickStart = new JTextField("", 10);
     JTextField tickEnd = new JTextField("", 10);
-    JComboBox<String> variable;
+    VariableSelector variable = new VariableSelector();
 
     boolean pressedOK = false;
     LinearRuler.LabelAnchor labelAnchor = null;
@@ -126,7 +124,6 @@ public class RulerDialog extends JDialog {
         }
 
         {
-            variable = new JComboBox<String>();
             JLabel variableLabel = new JLabel("Display variable/component:");
             variableLabel.setLabelFor(variable);
             cpgb.addWest(variableLabel);
@@ -201,24 +198,8 @@ public class RulerDialog extends JDialog {
 
     public void set(LinearRuler ruler, ArrayList<LinearAxis> axes) {
         setLabelAnchor(ruler.labelAnchor); 
-        String[] variables = new String[axes.size()];
-        variable.removeAllItems();
-        int i = -1;
-        for (Axis axis: axes) {
-            ++i;
-            variables[i] = (String) axis.name;
-        }
-        Arrays.sort(variables);
-
-        i = -1;
-        String name = (String) ruler.axis.name;
-        for (String s: variables) {
-            ++i;
-            variable.addItem(s);
-            if (s.equals(name)) {
-                variable.setSelectedIndex(i);
-            }
-        }
+        variable.setAxes(axes);
+        variable.setSelected(ruler.axis);
 
         tickLeft.setSelected(ruler.tickLeft);
         tickRight.setSelected(ruler.tickRight);
@@ -375,13 +356,7 @@ public class RulerDialog extends JDialog {
                  + angleStr + "'");
         }
 
-        String name = (String) variable.getSelectedItem();
-        for (LinearAxis axis: axes) {
-            if (name.equals(axis.name)) {
-                dest.axis = axis;
-                break;
-            }
-        }
+        dest.axis = variable.getSelected(axes);
         if (suppressSmallTicks.isSelected()) {
             dest.tickDelta = 0;
         } else if (dest.tickDelta == 0) {
