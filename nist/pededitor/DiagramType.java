@@ -14,8 +14,8 @@ public enum DiagramType {
     TERNARY_TOP ("images/upangleicon.png",
                  "Partial ternary -- top corner", 3, true, 1),
     TERNARY_BOTTOM ("images/trianglebottomicon.png",
-                    "Partial ternary -- top corner missing", 4, true),
-        OTHER ("images/schematicicon.png", "Schematic/Other", 4, false);
+                    "Partial ternary -- trapezoid", 4, true),
+    OTHER ("images/schematicicon.png", "Free-form", 4, false);
 
     private final int mVertexCnt;
     private final URL mIconUrl;
