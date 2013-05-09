@@ -4482,14 +4482,18 @@ public class Diagram extends Observable implements Printable {
         g.fill(arr);
     }
 
-    void addTernaryBottomRuler(double start /* Z */, double end /* Z */) {
+    void addTernaryBottomRuler(double start /* Right */, double end /* Right */) {
+        addTernaryBottomRuler(start, end, 0.0);
+    }
+
+    void addTernaryBottomRuler(double start, double end, double y) {
         LinearRuler r = defaultTernaryRuler();
         r.textAngle = 0;
         r.tickLeft = true;
         r.labelAnchor = LinearRuler.LabelAnchor.RIGHT;
 
-        r.startPoint = new Point2D.Double(start, 0.0);
-        r.endPoint = new Point2D.Double(end, 0);
+        r.startPoint = new Point2D.Double(start, y);
+        r.endPoint = new Point2D.Double(end, y);
         r.startArrow = Math.abs(start) > 1e-8;
         r.endArrow = (Math.abs(end - 1) > 1e-4);
         r.suppressStartTick = (diagramType != DiagramType.TERNARY_RIGHT)
@@ -4501,6 +4505,10 @@ public class Diagram extends Observable implements Printable {
     }
 
     void addTernaryLeftRuler(double start /* Y */, double end /* Y */) {
+        addTernaryLeftRuler(start, end, 0.0);
+    }
+
+    void addTernaryLeftRuler(double start, double end, double right) {
         LinearRuler r = defaultTernaryRuler();
         r.textAngle = Math.PI / 3;
         r.tickRight = true;
@@ -4519,8 +4527,8 @@ public class Diagram extends Observable implements Printable {
             r.labelAnchor = LinearRuler.LabelAnchor.NONE;
         }
 
-        r.startPoint = new Point2D.Double(0.0, start);
-        r.endPoint = new Point2D.Double(0.0, end);
+        r.startPoint = new Point2D.Double(right, start);
+        r.endPoint = new Point2D.Double(right, end);
         r.startArrow = Math.abs(start) > 1e-8;
         r.endArrow = (Math.abs(end - 1) > 1e-4);
         // The tick label for the bottom of the left ruler is
@@ -4536,6 +4544,10 @@ public class Diagram extends Observable implements Printable {
     }
 
     void addTernaryRightRuler(double start /* Y */, double end /* Y */) {
+        addTernaryRightRuler(start, end, 1.0);
+    }
+
+    void addTernaryRightRuler(double start, double end, double right) {
         LinearRuler r = defaultTernaryRuler();
         r.textAngle = Math.PI * 2 / 3;
         r.tickLeft = true;
@@ -4557,8 +4569,8 @@ public class Diagram extends Observable implements Printable {
         r.suppressEndTick = diagramType != DiagramType.TERNARY_RIGHT
             || (end > 1-1e-6);
 
-        r.startPoint = new Point2D.Double(1 - start, start);
-        r.endPoint = new Point2D.Double(1 - end, end);
+        r.startPoint = new Point2D.Double(right, start);
+        r.endPoint = new Point2D.Double(right - (end - start), end);
         r.startArrow = Math.abs(start) > 1e-8;
         r.endArrow = (Math.abs(end - 1) > 1e-4);
         r.axis = getYAxis();
