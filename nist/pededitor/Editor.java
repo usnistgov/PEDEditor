@@ -905,10 +905,9 @@ public class Editor extends Diagram
 
         if (mprin == null) {
             showError
-                ("<html><p>Move the mouse to the target location. "
+                ("Move the mouse to the target location. "
                  + "Use the 'R' shortcut key or keyboard menu controls "
-                 + "instead of selecting the menu item using the mouse."
-                 + "</p></html>",
+                 + "instead of selecting the menu item using the mouse.",
                  errorTitle);
             return;
         }
@@ -1784,7 +1783,7 @@ public class Editor extends Diagram
         if ((oldCnt == 1 || oldCnt == 3)
             && pat.path != tieLineCorners.get(oldCnt-1).path) {
             showError
-                ("This selection must belong to the same\n" +
+                ("This selection must belong to the same " +
                  "curve as the previous selection.",
                  errorTitle);
             return;
@@ -1858,10 +1857,10 @@ public class Editor extends Diagram
         CuspFigure path = getActiveCurve();
         if (path == null || path.size() != 2) {
             showError
-                ("Before you can create a new ruler,\n"
-                 + "you must create and select a curve\n"
-                 + "consisting of exactly two vertices\n"
-                 + "which will become the rulers' endpoints.\n",
+                ("Before you can create a new ruler, "
+                 + "you must create and select a curve "
+                 + "consisting of exactly two vertices "
+                 + "which will become the rulers' endpoints.",
                  errorTitle);
             return;
         }
@@ -1922,7 +1921,7 @@ public class Editor extends Diagram
         CuspFigure path = getActiveCurve();
         if (path == null || path.size() != 3) {
             showError(
-"<html><body width=\"250 px\"><p>Select a curve consisting of three vertexes which do not lie " + 
+"Select a curve consisting of three vertexes which do not lie " + 
 "on a line. User variables must have the form<blockquote><code>a x + b y + c</code></blockquote> " + 
 "<p>where <code>x</code> and <code>y</code> are the principal variables of " + 
 "your diagram. The value of your variable at those three vertexes will " + 
@@ -2270,9 +2269,9 @@ public class Editor extends Diagram
         mouseIsStuck = true;
         if (!moveMouse(fractions)) {
             showError
-                ("<html>You requested the coordinates<br>"
+                ("You requested the coordinates<br>"
                  + principalToPrettyString(fractions)
-                 + "<br>which lie outside the boundary of the diagram.</html>",
+                 + "<br>which lie outside the boundary of the diagram.",
                  "Could not move mouse");
         }
     }
@@ -2289,7 +2288,7 @@ public class Editor extends Diagram
             return labelCoordinates(ldec.getLabel().getText(), v1, v2);
         }
 
-        showError("You must first select a curve or label whose\n"
+        showError("You must first select a curve or label whose "
                   + "coordinates are to be copied.");
         return null;
     }
@@ -2587,10 +2586,9 @@ public class Editor extends Diagram
     public void copyPositionToClipboard() {
         if (mprin == null) {
             showError
-                ("<html><p>Move the mouse to the target location. "
+                ("Move the mouse to the target location. "
                  + "Use the 'Control+C' shortcut key or keyboard menu controls "
-                 + "instead of selecting the menu item using the mouse."
-                 + "</p></html>",
+                 + "instead of selecting the menu item using the mouse.",
                  "Copy position error");
         }
         copyToClipboard(htmlToText(principalToPrettyString(mprin)), false);
@@ -2794,7 +2792,8 @@ public class Editor extends Diagram
         try {
             setDiagramComponent(side, str.isEmpty() ? null : str);
         } catch (DuplicateComponentException x) {
-            showError("Duplicate component '" + str + "'", "Cannot change diagram component");
+            showError("Duplicate component '" + str + "'",
+                      "Cannot change diagram component");
         }
     }
 
@@ -3218,7 +3217,7 @@ public class Editor extends Diagram
                     }
 
                     try {
-                        // UNDO StdOutErrRedirect.run();
+                        StdOutErrRedirect.run();
                         Editor app = new Editor();
                         app.run(args.length == 1 ? args[0] : null);
                     } catch (Exception e) {
@@ -3375,10 +3374,8 @@ public class Editor extends Diagram
                                     parseMe = s;
                                     double d = ContinuedFraction.parseDouble(parseMe);
                                     if (d < 0 || d > 1) {
-                                        JOptionPane.showMessageDialog
-                                            (editFrame,
-                                             "<html><div width=\"200 px\">"
-                                             + "Component density '" + parseMe + "' "
+                                        showError
+                                            ("Component density '" + parseMe + "' "
                                              + "(equal to "
                                              + String.format("%.2f%%", d * 100) + ") is "
                                              + "not between 0% and 100%");
@@ -3411,14 +3408,22 @@ public class Editor extends Diagram
                                 continue;
                             }
                             if (minTop + maxRight > 1 + 1e-12) {
-                                JOptionPane.showMessageDialog
-                                    (editFrame,
-                                     "<html><div width=\"200 px\">"
+                                showError
+                                    ("<html><div width=\"200 px\">"
                                      + "The sum of the min top component and the "
                                      + "max right component ("
                                      + String.format("%.2f%%", minTop * 100) + " + "
                                      + String.format("%.2f%%", maxRight * 100)
                                      + ") cannot exceed 100%.");
+                                continue;
+                            }
+                            if (maxTop - minTop >= maxRight - minRight - 1e-12) {
+                                showError
+                                    ("The difference between the maximum and "
+                                     + "minimum top component concentrations "
+                                     + " must be less than the difference between "
+                                     + "the maximum and minimum right component "
+                                     + "concentrations.");
                                 continue;
                             }
                             break;
@@ -4233,6 +4238,10 @@ public class Editor extends Diagram
     }
 
     void showError(Component parent, String mess, String title) {
+        if (!mess.startsWith("<html>")) {
+            mess = "<html><div width=\"250 px\"><p>" + mess;
+        }
+
         JOptionPane.showMessageDialog
             (parent, mess, title, JOptionPane.ERROR_MESSAGE);
     }
