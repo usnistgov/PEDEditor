@@ -39,8 +39,12 @@ public class VariableSelector extends JComboBox<String> {
     }
 
     public LinearAxis getSelected(ArrayList<LinearAxis> axes) {
-        String s = getItemAt(getSelectedIndex());
-        int cnt = getItemCount();
+        Object obj = getSelectedItem();
+        if (obj == null) {
+            return null;
+        }
+        String s = (String) obj;
+        int cnt = axes.size();
         for (int i = 0; i < cnt; ++i) {
             LinearAxis axis = axes.get(i);
             if (s.equals((String) axis.name)) {
