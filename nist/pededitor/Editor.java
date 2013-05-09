@@ -3218,7 +3218,7 @@ public class Editor extends Diagram
                     }
 
                     try {
-                        StdOutErrRedirect.run();
+                        // UNDO StdOutErrRedirect.run();
                         Editor app = new Editor();
                         app.run(args.length == 1 ? args[0] : null);
                     } catch (Exception e) {
@@ -3282,7 +3282,7 @@ public class Editor extends Diagram
 
     StringArrayDialog trapezoidDialog(String[] values) {
         String[] labels = {
-            "Minimum amount of top component ",
+            "Minimum amount of top component",
             "Maximum amount of top component",
             "Minimum amount of right component",
             "Maximum amount of right component" };
@@ -3292,6 +3292,20 @@ public class Editor extends Diagram
              + "Enter the range of compositions covered by this diagram. "
              + "Fractions are allowed. For percentages, do not omit the "
              +  "percent sign.");
+    }
+
+    StringArrayDialog cartesianDialog(String[] values) {
+        String[] labels = {
+            "Left X value",
+            "Right X value",
+            "Bottom Y value",
+            "Top Y value" };
+        return new StringArrayDialog
+            (editFrame, labels, values,
+             "<html><body width=\"300 px\"><p>"
+             + "Enter the diagram domain. Fractions are allowed. "
+             + "If you enter percentages, you must include the percent "
+             + "sign.");
     }
 
     /** Start on a blank new diagram.
@@ -3463,17 +3477,75 @@ public class Editor extends Diagram
                     }
                 case BINARY:
                     {
-                        addBinaryBottomRuler();
-                        addBinaryTopRuler();
-                        addBinaryLeftRuler();
-                        addBinaryRightRuler();
-                        // Fall through...
+                        String[] defaultValues = {
+                            "0%","100%", "0", "1" };
+                        StringArrayDialog dog = cartesianDialog(defaultValues);
+
+                        double bottom, top, left, right;
+
+                        while (true) {
+                            String[] values = dog.showModal();
+                            if (values == null) {
+                                values = defaultValues;
+                            }
+                            ArrayList<Double> dvs = new ArrayList<>();
+                            String parseMe = null;
+                            try {
+                                for (String s: values) {
+                                    parseMe = s;
+                                    double d = ContinuedFraction.parseDouble(parseMe);
+                                    dvs.add(d);
+                                }
+                            } catch (NumberFormatException e) {
+                                JOptionPane.showMessageDialog
+                                    (editFrame,
+                                     "Invalid number format for '" + parseMe + "'.");
+                                continue;
+                            }
+                            left = dvs.get(0);
+                            right = dvs.get(1);
+                            if (left == right) {
+                                showError("The left and right X values cannot be equal.");
+                            }
+                            bottom = dvs.get(2);
+                            top = dvs.get(3);
+                            if (bottom == top) {
+                                showError("The top and bottom Y values cannot be equal.");
+                                continue;
+                            }
+                            break;
+                        }
+
+                        addBinaryBottomRuler(left, right, bottom);
+                        addBinaryTopRuler(left, right, top);
+                        addBinaryLeftRuler(bottom, top, left);
+                        addBinaryRightRuler(bottom, top, right);
+
+                        Rectangle2D.Double principalBounds
+                            = new Rectangle2D.Double
+                            (left, bottom, right-left, top-bottom);
+
+                        if (tracing) {
+                            // Transform the input quadrilateral into a rectangle
+                            QuadToRect q = new QuadToRect();
+                            q.setVertices(vertices);
+                            q.setRectangle(principalBounds);
+                            originalToPrincipal = q;
+                        }
+
+                        r = new Rescale(1, 0, maxDiagramWidth,
+                                        1, 0, maxDiagramHeight);
+                        System.out.println("r = " + r);
+
+                        principalToStandardPage = new RectangleTransform
+                            (principalBounds,
+                             new Rectangle2D.Double(0.0, 1.0, 1.0, -1.0));
+                        break;
                     }
+
                 case OTHER:
                     {
-                        if (diagramType == DiagramType.OTHER) {
-                            leftMargin = rightMargin = topMargin = bottomMargin = 0.05;
-                        }
+                        leftMargin = rightMargin = topMargin = bottomMargin = 0.05;
                         Rectangle2D.Double principalBounds
                             = new Rectangle2D.Double(0.0, 0.0, 1.0, 1.0);
                         if (tracing) {
@@ -3703,6 +3775,7 @@ public class Editor extends Diagram
                 pageBounds = new Rectangle2D.Double
                     (-leftMargin, -topMargin, r.width + leftMargin + rightMargin,
                      r.height + topMargin + bottomMargin);
+                System.out.println("PageBounds = " + pageBounds);
 
                 if (diagramType != DiagramType.OTHER) {
                     NumberFormat format = new DecimalFormat("0.0000");
@@ -3722,13 +3795,11 @@ public class Editor extends Diagram
     }
 
     private void maxLessThanMinError(String component, double min, double max) {
-        JOptionPane.showMessageDialog
-            (editFrame, 
-             "<html><div width=\"200 px\">"
-             + "The maximum amount of " + component + ", "
-             + String.format("%.2f%%", max * 100) + ", "
-             + "does not exceed the minimum amount "
-             + String.format("%.2f%%", min * 100) + ".");
+        showError("<html><div width=\"200 px\">"
+                  + "The maximum amount of " + component + ", "
+                  + String.format("%.2f%%", max * 100) + ", "
+                  + "does not exceed the minimum amount "
+                  + String.format("%.2f%%", min * 100) + ".");
     }
 
     protected double rulerFontSize() {
@@ -4063,8 +4134,8 @@ public class Editor extends Diagram
     }
 
     public static File openPEDFileDialog(Component parent) {
-        return CropFrame.openFileDialog(parent, "PED files",
-                                        new String[] {"ped"});
+        return CropFrame.openFileDialog
+            (parent, "Open PED File", "PED files", new String[] {"ped"});
     }
 
     /** Return the default directory to save to and load from. */
@@ -4105,25 +4176,9 @@ public class Editor extends Diagram
     }
 
     public static File openImageFileDialog(Component parent) {
-        String[] imageExts = ImageIO.getReaderFileSuffixes();
-        JFileChooser chooser = new JFileChooser();
-        chooser.setDialogTitle("Open image file");
-        String dir = getCurrentDirectory();
-        if (dir != null) {
-            chooser.setCurrentDirectory(new File(dir));
-        }
-        if (dir != null) {
-            chooser.setCurrentDirectory(new File(dir));
-        }
-       chooser.setFileFilter
-           (new FileNameExtensionFilter("Image files", imageExts));
-       if (chooser.showOpenDialog(parent) == JFileChooser.APPROVE_OPTION) {
-           File file = chooser.getSelectedFile();
-           setCurrentDirectory(file.getParent());
-           return file;
-       } else {
-           return null;
-       }
+        return CropFrame.openFileDialog
+            (parent, "Open Image File", "Image files",
+             ImageIO.getReaderFileSuffixes());
     }
 
     public void showOpenDialog(Component parent) {
@@ -4133,6 +4188,10 @@ public class Editor extends Diagram
 
         File file = isEditable() ? openPEDOrImageFileDialog(parent)
             : openPEDFileDialog(parent);
+        showOpenDialog(parent, file);
+    }
+
+    public void showOpenDialog(Component parent, File file) {
         if (file == null) {
             return;
         }
@@ -5098,20 +5157,26 @@ public class Editor extends Diagram
         } else {
             initializeGUI();
             Object[] options = {
-                "Load an image or PED file", "Create a new diagram"
+                "Load image file", "Load .PED file", "Create new diagram"
             };
-            if (JOptionPane.showOptionDialog
-                (editFrame,
-                 "Please select how to begin.",
-                 "Start",
-                 JOptionPane.YES_NO_OPTION,
-                 JOptionPane.QUESTION_MESSAGE,
-                 null,
-                 options,
-                 options[0]) == JOptionPane.YES_OPTION) {
-                showOpenDialog(editFrame);
-            } else {
+            switch (JOptionPane.showOptionDialog
+                    (editFrame,
+                     "Please choose how to begin.",
+                     "Start",
+                     JOptionPane.YES_NO_CANCEL_OPTION,
+                     JOptionPane.QUESTION_MESSAGE,
+                     null,
+                     options,
+                     options[0])) {
+            case JOptionPane.YES_OPTION:
+                showOpenDialog(editFrame, openImageFileDialog(editFrame));
+                break;
+            case JOptionPane.NO_OPTION:
+                showOpenDialog(editFrame, openPEDFileDialog(editFrame));
+                break;
+            case JOptionPane.CANCEL_OPTION:
                 newDiagram();
+                break;
             }
         }
     }
