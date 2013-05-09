@@ -1524,6 +1524,24 @@ public class Diagram extends Observable implements Printable {
         }
     }
 
+    /** Remove decorations that are 'like' the given decoration by
+        some arbitrary standard ("do what the user wants"). */
+    public void removeLikeThis(Decoration d) {
+        if (d instanceof LabelDecoration) {
+            /* Remove all labels that share the same text. */
+            LabelDecoration ldec = (LabelDecoration) d;
+            String s = ldec.getLabel().getText();
+            for (Iterator<AnchoredLabel> it = labels().iterator(); it.hasNext();) {
+                AnchoredLabel label = it.next();
+                if (label.getText().equals(s)) {
+                    it.remove();
+                }
+            }
+            return;
+        }
+        d.remove();
+    }
+
     /** Add an arrow with the given location, line width, and angle
         (expressed in principal coordinates). */
     public void addArrow(Point2D prin, double lineWidth, double theta) {
@@ -1979,6 +1997,7 @@ public class Diagram extends Observable implements Printable {
                 --index;
             }
             decorations.remove(lastIndex);
+            propagateChange();
         }
 
         private final int nextIndex(int startIndex) {
