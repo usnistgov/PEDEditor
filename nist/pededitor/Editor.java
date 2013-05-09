@@ -1184,6 +1184,14 @@ public class Editor extends Diagram
         }
     }
 
+    public void removeLikeSelection() {
+        if (selection == null) {
+            return;
+        }
+        removeLikeThis(selection.getDecoration());
+        selection = null;
+    }
+
     public void select(DecorationHandle sel) {
         selection = sel;
         if (sel instanceof BoundedParam2DHandle) {
@@ -2433,10 +2441,11 @@ public class Editor extends Diagram
         }
 
         boolean haveLabel = getSelectedLabel() != null;
+        boolean haveCurve = getActiveCurve() != null;
            
         try {
             for (Point2D.Double[] curve: stringToCurves(lines)) {
-                if (!haveLabel) {
+                if (!haveLabel && !haveCurve) {
                     deselectCurve();
                 }
                 for (Point2D.Double point: curve) {
@@ -2447,7 +2456,6 @@ public class Editor extends Diagram
                         add(p2);
                     }
                 }
-                haveLabel = false;
             }
         } catch (NumberFormatException x) {
             JOptionPane.showMessageDialog(editFrame, x);
