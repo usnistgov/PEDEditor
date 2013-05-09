@@ -4605,48 +4605,64 @@ public class Diagram extends Observable implements Printable {
     }
 
     void addBinaryBottomRuler() {
+        addBinaryBottomRuler(0, 1, 0);
+    }
+
+    void addBinaryBottomRuler(double left, double right, double y) {
         LinearRuler r = defaultBinaryRuler();
         r.textAngle = 0;
         r.tickLeft = true;
         r.labelAnchor = LinearRuler.LabelAnchor.RIGHT;
-        r.startPoint = new Point2D.Double(0.0, 0.0);
-        r.endPoint = new Point2D.Double(1.0, 0.0);
+        r.startPoint = new Point2D.Double(left, y);
+        r.endPoint = new Point2D.Double(right, y);
         r.axis = getXAxis();
         add(r);
     }
 
     void addBinaryTopRuler() {
+        addBinaryTopRuler(0, 1, 1);
+    }
+
+    void addBinaryTopRuler(double left, double right, double y) {
         LinearRuler r = defaultBinaryRuler();
         r.textAngle = 0;
         r.tickRight = true;
         r.labelAnchor = LinearRuler.LabelAnchor.NONE;
 
-        r.startPoint = new Point2D.Double(0.0, 1.0);
-        r.endPoint = new Point2D.Double(1.0, 1.0);
+        r.startPoint = new Point2D.Double(left, y);
+        r.endPoint = new Point2D.Double(right, y);
         r.axis = getXAxis();
         add(r);
     }
 
     void addBinaryLeftRuler() {
+        addBinaryLeftRuler(0, 1, 0);
+    }
+
+    void addBinaryLeftRuler(double bottom, double top, double x) {
         LinearRuler r = defaultBinaryRuler();
         r.textAngle = Math.PI / 2;
         r.tickRight = true;
         r.labelAnchor = LinearRuler.LabelAnchor.LEFT;
 
-        r.startPoint = new Point2D.Double(0.0, 0.0);
-        r.endPoint = new Point2D.Double(0.0, 1.0);
+        r.startPoint = new Point2D.Double(x, bottom);
+        r.endPoint = new Point2D.Double(x, top);
         r.axis = getYAxis();
         add(r);
     }
 
     void addBinaryRightRuler() {
+        addBinaryRightRuler(0, 1, 1);
+    }
+
+    void addBinaryRightRuler(double bottom, double top, double x) {
         LinearRuler r = defaultBinaryRuler();
         r.textAngle = Math.PI / 2;
         r.tickLeft = true;
         r.labelAnchor = LinearRuler.LabelAnchor.NONE;
 
-        r.startPoint = new Point2D.Double(1.0, 0.0);
-        r.endPoint = new Point2D.Double(1.0, 1.0);
+        r.startPoint = new Point2D.Double(x, bottom);
+        r.endPoint = new Point2D.Double(x, top);
         r.axis = getYAxis();
         add(r);
     }
