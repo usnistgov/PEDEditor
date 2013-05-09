@@ -10,6 +10,7 @@ import javax.swing.BorderFactory;
 import javax.swing.BoxLayout;
 import javax.swing.ButtonGroup;
 import javax.swing.JButton;
+import javax.swing.JCheckBox;
 import javax.swing.JDialog;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
@@ -56,6 +57,8 @@ public class DigitizeDialog extends JDialog {
     VariablePanel[] variablePanels = {
         new VariablePanel("Column 1"),
         new VariablePanel("Column 2") };
+    JCheckBox commented
+        = new JCheckBox("Include comments in output");
     transient boolean pressedOK = false;
     transient boolean packed = false;
 
@@ -75,6 +78,7 @@ public class DigitizeDialog extends JDialog {
         }
         gb.endRowWith(variablePanels[variablePanels.length-1]);
 
+        gb.centerAndEndRow(commented);
         gb.centerAndEndRow(okButton);
         getRootPane().setDefaultButton(okButton);
     }
@@ -90,11 +94,20 @@ public class DigitizeDialog extends JDialog {
         return variablePanels[columnNo];
     }
 
+    /** Set to false to hide the "Include comments in output" checkbox. */
+    public void setCommentedCheckboxVisible(boolean v) {
+        commented.setVisible(v);
+    }
+
+    public boolean isCommented() {
+        return commented.isSelected();
+    }
+
     public LinearAxis getVariable(int columnNo, ArrayList<LinearAxis> axes) {
         return getPanel(columnNo).variable.getSelected(axes);
     }
 
-    public void setSelectedVariable(int columnNo, LinearAxis axis) {
+    public void setVariable(int columnNo, LinearAxis axis) {
         getPanel(columnNo).variable.setSelected(axis);
     }
 
@@ -132,9 +145,21 @@ public class DigitizeDialog extends JDialog {
         return pressedOK;
     }
 
-    public void setAxes(ArrayList<LinearAxis> axes) {
+    /* defaults are the values that are to be initiially selected for
+       the different variable columns. But if the previously selected
+       values, if any, for these columns are still accessible, then
+       those previous values take precedence over v1 and v2. */
+    public void setAxes(ArrayList<LinearAxis> axes,
+                        LinearAxis[] defaults) {
+        int columnNo = -1;
         for (VariablePanel p: variablePanels) {
+            ++columnNo;
+            LinearAxis v = getVariable(columnNo, axes);
+            if (v == null) {
+                v = defaults[columnNo];
+            }
             p.variable.setAxes(axes);
+            setVariable(columnNo, v);
         }
     }
 }
