@@ -647,6 +647,12 @@ public class EditFrame extends JFrame
                 }
             });
 
+        mnSelection.add(new Action("Delete All", KeyEvent.VK_A) {
+                @Override public void actionPerformed(ActionEvent e) {
+                    getParentEditor().removeLikeSelection();
+                }
+            });
+
         mnSelection.add(new Action("Deselect", KeyEvent.VK_S, "pressed ESCAPE") {
                 @Override public void actionPerformed(ActionEvent e) {
                     getParentEditor().deselectCurve();
