@@ -132,11 +132,11 @@ public class EditFrame extends JFrame
                     getParentEditor().setTitle();
                 }
             });
-    protected JMenuItem mnCopyCoordinatesFromClipboard = new JMenuItem
-        (new Action("Copy label or curve coordinates from clipboard",
-                    KeyEvent.VK_F) {
+    protected JMenuItem mnImportCoordinates = new JMenuItem
+        (new Action("Import label or curve coordinates",
+                    KeyEvent.VK_I) {
                 @Override public void actionPerformed(ActionEvent e) {
-                    getParentEditor().copyCoordinatesFromClipboard();
+                    getParentEditor().importCoordinates();
                 }
             });
     protected JMenu mnComponents = new JMenu("Components");
@@ -1034,22 +1034,29 @@ public class EditFrame extends JFrame
         mnDigit.setMnemonic(KeyEvent.VK_I);
         menuBar.add(mnDigit);
 
-        mnDigit.add(new Action("Copy all text to clipboard",
+        mnDigit.add(new Action("Export all text to clipboard",
                               KeyEvent.VK_T) {
                 @Override public void actionPerformed(ActionEvent e) {
                     getParentEditor().copyAllTextToClipboard();
                 }
             });
 
-        mnDigit.add(new Action("Copy label or curve coordinates to clipboard",
+        mnDigit.add(new Action("Export selected curve or label's coordinates",
                               KeyEvent.VK_P,
                               KeyStroke.getKeyStroke("control C")) {
                 @Override public void actionPerformed(ActionEvent e) {
-                    getParentEditor().copyCoordinatesToClipboard();
+                    getParentEditor().exportSelectedCoordinates();
                 }
             });
 
-        mnDigit.add(mnCopyCoordinatesFromClipboard);
+        mnDigit.add(new Action("Export all curve and label coordinates",
+                              KeyEvent.VK_A) {
+                @Override public void actionPerformed(ActionEvent e) {
+                    getParentEditor().exportAllCoordinates();
+                }
+            });
+
+        mnDigit.add(mnImportCoordinates);
 
         mnDigit.add(new Action
                        ("Copy status bar to clipboard",
@@ -1199,13 +1206,10 @@ public class EditFrame extends JFrame
         mnVariables.setVisible(b);
 
         mnProperties.setVisible(getVisibleItemCount(mnProperties) > 0);
-        mnCopyCoordinatesFromClipboard.setVisible(b);
+        mnImportCoordinates.setVisible(b);
         mnComponents.setVisible(b);
 
-        // TODO Verify that usingWeightFraction works right.
         usingWeightFraction.setVisible(b);
-
-        // TODO "Enable editing features" item under Properties
         mnBackgroundImage.setVisible(b);
 
         if (editingEnabled.isSelected() != b) {
