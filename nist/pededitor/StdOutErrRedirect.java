@@ -16,10 +16,11 @@ public class StdOutErrRedirect
         JScrollPane sp = new JScrollPane(textComponent);
         sp.setPreferredSize(new Dimension(600, 400));
         f.getContentPane().add(sp);
-        MessageConsole mc = new MessageConsole(textComponent);
+        MessageConsole mc = new MessageConsole(textComponent, true);
+        mc.setRemoveFromEnd(false);
         mc.redirectOut();
         mc.redirectErr(Color.RED, null);
-        mc.setMessageLines(600);
+        mc.setMessageLines(1000);
         f.pack();
         f.setVisible(true);
         System.out.println("Standard output redirected.");
