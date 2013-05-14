@@ -32,11 +32,18 @@ public class MessageConsole
     private JTextComponent textComponent;
     private Document document;
     private boolean isAppend;
+    private boolean removeFromEnd;
     private DocumentListener limitLinesListener;
+    private int linesLimit;
 
     public MessageConsole(JTextComponent textComponent)
     {
         this(textComponent, true);
+    }
+
+    public int getLimitLines()
+    {
+        return linesLimit;
     }
 
     /*
@@ -51,6 +58,7 @@ public class MessageConsole
         this.textComponent = textComponent;
         this.document = textComponent.getDocument();
         this.isAppend = isAppend;
+        this.removeFromEnd = isAppend;
         textComponent.setEditable( false );
     }
 
@@ -105,11 +113,19 @@ public class MessageConsole
      */
     public void setMessageLines(int lines)
     {
+        linesLimit = lines;
         if (limitLinesListener != null)
             document.removeDocumentListener( limitLinesListener );
 
-        limitLinesListener = new LimitLinesDocumentListener(lines, isAppend);
+        limitLinesListener = new LimitLinesDocumentListener(lines, removeFromEnd);
         document.addDocumentListener( limitLinesListener );
+    }
+
+    public void setRemoveFromEnd(boolean removeFromEnd) {
+        this.removeFromEnd = removeFromEnd;
+        if (linesLimit != 0) {
+            setMessageLines(linesLimit);
+        }
     }
 
     /*
