@@ -56,7 +56,6 @@ public class LabelDialog extends JDialog {
     JTextField angleField = new JTextField(7);
     transient boolean pressedOK = false;
     transient boolean packed = false;
-    ImagePane compassPane;
 
     JButton[][] anchorButtons = new JButton[3][3];
     JButton okButton =  new JButton(new AbstractAction("OK") {
@@ -177,17 +176,14 @@ public class LabelDialog extends JDialog {
                 JPanel panel = new JPanel();
                 GridBagUtil gb = new GridBagUtil(panel);
 
-                JLabel textLabel = new JLabel("Text:");
                 TransferFocus.patch(textField);
                 JScrollPane sp = new JScrollPane(textField);
                 textField.setLineWrap(true);
                 textField.setWrapStyleWord(true);
-                textLabel.setLabelFor(textField);
                 textField.setFont(font.deriveFont(16f));
                 InputMap im = textField.getInputMap();
                 im.put(KeyStroke.getKeyStroke("ENTER"),
                        okButton.getAction());
-                gb.addWest(textLabel);
                 gb.endRowWith(sp);
                 cpgb.endRowWith(panel);
             }
@@ -292,11 +288,8 @@ public class LabelDialog extends JDialog {
             JLabel textAngleLabel = new JLabel("Label angle:");
             textAngleLabel.setLabelFor(angleField);
             gb.addWest(textAngleLabel);
-            gb.addWest(angleField);
-            gb.addWest(new JLabel("degrees"));
-
-            compassPane = new ImagePane(createCompassImage());
-            gb.endRowWith(compassPane);
+            gb.endRowWith(angleField);
+            gb.endRowWith(new JLabel("(degrees counterclockwise from east)"));
             mgb.endRowWith(panel);
         }
 
@@ -365,45 +358,17 @@ public class LabelDialog extends JDialog {
         setCutout(label.isCutout());
     }
 
-    BufferedImage createCompassImage() {
-        int cr = 60;
-        int cmargin = 30;
-        Compass c = new Compass(cr + cmargin, cr + cmargin, cr);
-        int width = cr * 2 + cmargin * 2;
-        int height = width;
-
-        BufferedImage cim = new BufferedImage
-            (width, height, BufferedImage.TYPE_INT_RGB);
-        Graphics2D g = (Graphics2D) cim.getGraphics();
-        g.setColor(Color.WHITE);
-        g.fillRect(0, 0, width, height);
-        g.setColor(Color.BLACK);
-        g.setRenderingHint(RenderingHints.KEY_ANTIALIASING,
-                           RenderingHints.VALUE_ANTIALIAS_ON);
-        g.setFont(new Font(null, Font.BOLD, 12));
-        c.drawTickedCircle(g);
-        g.setColor(new Color(0x707000));
-        c.drawHand(g, getAngleDegrees());
-
-        // TODO Change as you change the value...
-
-        return cim;
-    }
-
     public AnchorAction createAnchorAction(double xWeight,
                                            double yWeight,
                                            boolean highlight) {
-        int width = 100;
-        int height = 50;
+        int width = 55;
+        int height = 35;
         int margin = 10;
         BufferedImage image = new BufferedImage
-            (width, height, BufferedImage.TYPE_INT_RGB);
-        Graphics2D g = (Graphics2D) image.getGraphics();
-        g.setColor(Color.WHITE);
-        g.fillRect(0, 0, width, height);
-        g.setColor(Color.BLACK);
-        g.setRenderingHint(RenderingHints.KEY_ANTIALIASING,
-                           RenderingHints.VALUE_ANTIALIAS_ON);
+            (width, height, BufferedImage.TYPE_INT_ARGB);
+        Graphics2D g = image.createGraphics();
+        g.setBackground(new Color(255, 255, 255, 0));
+        g.clearRect(0, 0, image.getWidth(), image.getHeight());
         double cx = margin + (width - 2 * margin) * xWeight;
         double cy = margin + (height - 2 * margin) * yWeight;
         double r = 3;
@@ -495,7 +460,6 @@ public class LabelDialog extends JDialog {
         // Avoid the stupid behavior where negative zero is displayed
         // as -0.0
         angleField.setText(String.format("%.1f", (deg == 0 ? 0 : deg)));
-        compassPane.setImage(createCompassImage());
     }
 
     public static void main(String[] args) {
