@@ -107,19 +107,13 @@ import Jama.Matrix;
 
 // TODO (optional) show the line style in the tangent window
 
-// TODO (optional, 1/2 day): Enable the "copy coordinates to/from the
-// clipboard" operations to allow use of other variables, if that's
-// something people want. ZZZ
-
 // TODO (optional): Unify the ternary diagram interfaces to faciliate
 // creation of partial ternary diagrams, using a two-step process
 // (identify the 3 corners of the system, then the 3 corners of the
 // partial) and perhaps automatically adding the corner labels.
 
 // TODO (optional): Allow switching the pair of variables that are the
-// principal coordinates. This would help with inserting and
-// extracting data, and with copying data between diagrams. It would
-// also make the TODO item marked ZZZ unnecessary.
+// principal coordinates.
 
 // TODO (optional): Allow switching the pair of variables that are the
 // display coordinates. It would also be nice to automatically reverse
@@ -175,11 +169,8 @@ import Jama.Matrix;
 
 // TODO (optional) Allow marking of multiple objects.
 
-// TODO Add checkbox to turn on/off editing capability.
-
-// TODO Zoom-to-selection is kind of hokey, and if it requires opening
-// up scroll bars, you have to perform the operation twice before it
-// takes.
+// TODO (bug) Zoom-to-selection is not reliable. I don't know what the
+// problem is.
 
 // TODO (optional, easy?) Add "Print visible region" as an alternative
 // to "Print". (You can always collapse the margins to the region you
@@ -234,7 +225,9 @@ import Jama.Matrix;
 // selecting two points. Ideally the changes would be visible in real
 // time as you move the mouse around. (Auto-positioning has made this
 // slightly less important than before; squares, rectangles, and
-// equilateral triangles are easy if one side is horizontal.)
+// equilateral triangles are easy if one side is horizontal.) A
+// complicating issue: what frame of reference defines equal lengths?
+// Should changing the aspect ratio turn a circle into an ellipse?
 
 // TODO (optional) Eutectic and peritectic points.
 
@@ -2884,20 +2877,64 @@ public class Editor extends Diagram
         }
     }
 
+    /** Return true if point pageP is inside pageR or nearly so. */
+    boolean roughlyInside(Point2D pageP, Rectangle2D pageR) {
+        if (pageR.contains(pageP)) {
+            return true;
+        }
+
+        return Duh.distance(pageP, pageR)
+            < 1e-10 * (pageBounds.width + pageBounds.height +
+            Math.abs(pageBounds.x) + Math.abs(pageBounds.y));
+    }
+
     /** Move the mouse pointer so its position corresponds to the
         given location in principal coordinates. Return true if it was
         possible to go to that location. */
     boolean moveMouse(Point2D point) {
+        System.out.println("moveMouse(" + point + ")");
         mprin = new Point2D.Double(point.getX(), point.getY());
         if (principalToStandardPage == null) {
             return false;
         }
 
-        Point mpos = Duh.floorPoint
-            (principalToScaledPage(scale).transform(mprin));
-        
+        Point2D.Double mposd = principalToScaledPage(scale).transform(mprin);
         JScrollPane spane = editFrame.getScrollPane();
         Rectangle view = spane.getViewport().getViewRect();
+        Point mpos = Duh.floorPoint(mposd);
+
+        // If mposd is on the view's boundary, then bump it inside.
+        // This avoids a potential infinite loop where the mouse is
+        // placed precisely on the page border and the page border
+        // corresponds with the view border, but because of round-off
+        // error, the mouse position is determined to sit just
+        // outside, so it's recomputed to put it just on the border,
+        // and the cycle repeats.
+        if (mpos.x < view.x && mposd.x + 1e-8 > view.x) {
+            mpos.x = view.x;
+        } else if (mpos.x >= view.x + view.width
+                   && mposd.x - 1e-8 < view.x + view.width) {
+            mpos.x = view.x + view.width - 1;
+        }
+        if (mpos.y < view.y && mposd.y + 1e-8 > view.y) {
+            mpos.y = view.y;
+        } else if (mpos.y >= view.y + view.height
+                   && mposd.y - 1e-8 < view.y + view.height) {
+            mpos.y = view.y + view.height - 1;
+        }
+
+        if (mpos.x < view.x && mposd.x + 1e-8 > view.x) {
+            mpos.x = view.x;
+        } else if (mpos.x >= view.x + view.width
+                   && mposd.x - 1e-8 < view.x + view.width) {
+            mpos.x = view.x + view.width - 1;
+        }
+        if (mpos.y < view.y && mposd.y + 1e-8 > view.y) {
+            mpos.y = view.y;
+        } else if (mpos.y >= view.y + view.height
+                   && mposd.y - 1e-8 < view.y + view.height) {
+            mpos.y = view.y + view.height - 1;
+        }
 
         if (view.contains(mpos)) {
             Point topCorner = spane.getLocationOnScreen();
@@ -2924,7 +2961,7 @@ public class Editor extends Diagram
         } else {
             Point2D.Double mousePage = principalToStandardPage
                 .transform(mprin);
-            if (pageBounds.contains(mousePage.x, mousePage.y)) {
+            if (roughlyInside(mousePage, pageBounds)) {
                 centerMouse();
             } else {
                 // mprin can't be both off-screen and off-page at the
@@ -2967,9 +3004,9 @@ public class Editor extends Diagram
     }
 
     /** Adjust the viewport to place principal coordinates point prin
-        at the given position within the viewport of the scroll pane,
-        unless that would require bringing off-page regions into view.
-    */
+        as close to the given position within the viewport of the
+        scroll pane as possible without bringing extra dead off-page
+        space into view. */
     public void setViewportRelation(Point2D prin,
                                     Point viewportPoint) {
         ++paintSuppressionRequestCnt;
@@ -3007,6 +3044,9 @@ public class Editor extends Diagram
         // Java 1.6_29 needs to be told twice which viewport to
         // use. It seems to get the Y scrollbar right the first
         // time, and the X scrollbar right the second time.
+
+        // I haven't checked whether the double-call is still needed
+        // since I made the scrollbars always-on.
         preserveMprin = true;
         spane.getViewport().setViewPosition(viewPosition);
         spane.getViewport().setViewPosition(viewPosition);
@@ -3306,9 +3346,11 @@ public class Editor extends Diagram
         return new StringArrayDialog
             (editFrame, labels, values,
              "<html><body width=\"300 px\"><p>"
-             + "Enter the diagram domain. Fractions are allowed. "
+             + "Enter the graph domain. Fractions are allowed. "
              + "If you enter percentages, you must include the percent "
-             + "sign.");
+             + "sign."
+             + "<p>You can also change the domain later, using the "
+             + "<code>Properties/Scale</code> menu.");
     }
 
     /** Start on a blank new diagram.
@@ -5043,9 +5085,9 @@ public class Editor extends Diagram
         }
 
         JScrollPane spane = editFrame.getScrollPane();
-        Dimension bounds = spane.getSize(null);
-        bounds.width -= 3;
-        bounds.height -= 3;
+        Rectangle bounds = spane.getViewport().getViewRect();
+        bounds.width -= 1;
+        bounds.height -= 1;
         Rescale r = new Rescale(pageBounds.width, 0, (double) bounds.width,
                                 pageBounds.height, 0, (double) bounds.height);
         setScale(r.t);
