@@ -33,6 +33,7 @@ import javax.swing.JRadioButtonMenuItem;
 import javax.swing.JScrollPane;
 import javax.swing.JSeparator;
 import javax.swing.KeyStroke;
+import javax.swing.ScrollPaneConstants;
 
 @SuppressWarnings("serial")
 public class EditFrame extends JFrame
@@ -551,7 +552,16 @@ public class EditFrame extends JFrame
         contentPane = new JPanel(new BorderLayout());
         setContentPane(contentPane);
         imagePane = new EditPane(this);
-        scrollPane = new JScrollPane(imagePane);
+        // This is a workaround for an apparent Swing bug. When there
+        // isn't room for a horizontal scrollbar and a horizontal
+        // expansion forces a horizontal scrollbar to be added, so a
+        // vertical scrollbar becomes necessary too, it seems to screw
+        // up the process so that setViewPosition() doesn't work right
+        // the first time out.
+        scrollPane = new JScrollPane
+            (imagePane,
+             ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS,
+             ScrollPaneConstants.HORIZONTAL_SCROLLBAR_ALWAYS);
         scrollPane.setPreferredSize
             (new Dimension(preferredWidth, preferredHeight));
         contentPane.add(scrollPane, BorderLayout.CENTER);
