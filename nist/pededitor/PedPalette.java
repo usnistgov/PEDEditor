@@ -7,26 +7,6 @@ public class PedPalette extends StringPalette {
                 { 
                     // Quickies
                     new Object[][] {
-                        { "\u207a", "C\u207a" } /* superscript plus */,
-                        {"\u207b", "C\u207b" } /* superscript minus */,
-                        {"<sub>1</sub>", "<html>C<sub>1</sub></html>"},
-                        {"<sub>2</sub>", "<html>C<sub>2</sub></html>"},
-                        {"<sub>3</sub>", "<html>C<sub>3</sub></html>"},
-                        {"<sub>4</sub>", "<html>C<sub>4</sub></html>"},
-                        {"<sub>5</sub>", "<html>C<sub>5</sub></html>"},
-                        {"<sub>6</sub>", "<html>C<sub>6</sub></html>"},
-                        null,
-                    },
-
-                    // Diacriticals
-                    new Object[][] {
-                        {"\u0300", "o\u0300"},
-                        {"\u0301", "o\u0301"},
-                        {"\u0302", "o\u0302"},
-                        {"\u0303", "o\u0303"},
-                        {"\u0304", "o\u0304"},
-                        {"\u0307", "o\u0307"},
-                        {"\u0308", "o\u0308"},
                         null,
                     },
 
@@ -45,16 +25,18 @@ public class PedPalette extends StringPalette {
                     null,
 
                     // Miscellaneous
+                    new Object[][] {
+                        { "\u207a", "C\u207a" } /* superscript plus */,
+                        {"\u207b", "C\u207b" } /* superscript minus */,
+                        {"\u00b7",  "C\u00b7C"} /* dot */,
+                    },
                     "\u00b0" /* degree */,
-                    new Object[] { "\u00b7",  "C\u00b7C" } /* dot */,
-                    "\u221A" /* square root/radical */,
                     "\u2192" /* right arrow */, "\u2190" /* left arrow */,
                     "\u00b1" /* plus-minus */, "\u2245" /* approximately equal */,
                     "\u2264" /* <= */, "\u2265" /* >= */, "\u2260" /* != */,
                     "\u2261" /* congruent */,
                     "\u221E" /* infinity */, "\u21cc" /* right-over-left harpoon */,
                     "\u2207" /* nabla / gradient symbol */, "\u222b" /* integral */,
-                    "\u2202" /* partial differential */,
                     null,
 
                     // Greek lowercase
