@@ -5,11 +5,6 @@ public class PedPalette extends StringPalette {
         super
             (new Object[]
                 { 
-                    // Quickies
-                    new Object[][] {
-                        null,
-                    },
-
                     // Plotting symbols
                     "\u25cb" /* white circle */, "\u25cf" /* black circle */,
                     "\u25d3" /* lower-half-filled circle */,
@@ -30,7 +25,7 @@ public class PedPalette extends StringPalette {
                         {"\u207b", "C\u207b" } /* superscript minus */,
                         {"\u00b7",  "C\u00b7C"} /* dot */,
                     },
-                    "\u00b0" /* degree */,
+                    "\u221A" /* square root/radical */,
                     "\u2192" /* right arrow */, "\u2190" /* left arrow */,
                     "\u00b1" /* plus-minus */, "\u2245" /* approximately equal */,
                     "\u2264" /* <= */, "\u2265" /* >= */, "\u2260" /* != */,

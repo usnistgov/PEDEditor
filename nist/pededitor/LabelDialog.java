@@ -10,7 +10,6 @@ import java.awt.Graphics2D;
 import java.awt.GraphicsEnvironment;
 import java.awt.GridLayout;
 import java.awt.Image;
-import java.awt.RenderingHints;
 import java.awt.event.ActionEvent;
 import java.awt.geom.Ellipse2D;
 import java.awt.geom.Line2D;
@@ -43,7 +42,7 @@ public class LabelDialog extends JDialog {
     double xWeight;
     /** See AnchoredLabel.yWeight for the definition of this field. */
     double yWeight;
-    JTextArea textField = new JTextArea(6,55);
+    JTextArea textField = new JTextArea(6,45);
 
     JCheckBox mIsOpaque = new JCheckBox("White label background");
     JCheckBox mIsBoxed = new JCheckBox("Label border");
@@ -185,12 +184,6 @@ public class LabelDialog extends JDialog {
                 im.put(KeyStroke.getKeyStroke("ENTER"),
                        okButton.getAction());
                 gb.endRowWith(sp);
-                cpgb.endRowWith(panel);
-            }
-
-            {
-                JPanel panel = new JPanel();
-                GridBagUtil gb = new GridBagUtil(panel);
 
                 DelimiterEventListener dlisten = new DelimiterEventListener() {
                         @Override public void actionPerformed(DelimiterEvent e) {
@@ -202,6 +195,12 @@ public class LabelDialog extends JDialog {
                     (new HTMLDelimiterPalette(), 7, font);
                 dpal.addListener(dlisten);
                 gb.endRowWith(dpal);
+                cpgb.endRowWith(panel);
+            }
+
+            {
+                JPanel panel = new JPanel();
+                GridBagUtil gb = new GridBagUtil(panel);
 
                 StringPalettePanel pal;
                 StringEventListener listen = new StringEventListener() {
@@ -210,7 +209,7 @@ public class LabelDialog extends JDialog {
                         }
                     };
 
-                pal = new StringPalettePanel(new HTMLPalette(), 5, font);
+                pal = new StringPalettePanel(new HTMLPalette(), 6, font);
                 pal.addListener(listen);
                 gb.endRowWith(pal);
 
