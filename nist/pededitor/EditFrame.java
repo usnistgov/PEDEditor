@@ -102,7 +102,7 @@ public class EditFrame extends JFrame
                     KeyEvent.VK_U,
                     KeyStroke.getKeyStroke('u')) {
                 @Override public void actionPerformed(ActionEvent e) {
-                    getParentEditor().unstickMouse();
+                    getParentEditor().setMouseStuck(false);
                     repaint();
                 }
             });

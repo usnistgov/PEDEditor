@@ -607,6 +607,57 @@ public class Editor extends Diagram
         identify what the next-closest point may be. */
     protected transient Point2D.Double principalFocus = null;
 
+    final static class MousePress {
+        /** The mousePressed event that created this. */
+        MouseEvent e;
+        /** Principal coordinates of the point that will be added
+            unless this ends up being a drag operation. */
+        Point2D.Double prin;
+
+        public MousePress(MouseEvent e, Point2D.Double prin) {
+            this.e = e;
+            this.prin = prin;
+        }
+
+        @Override public String toString() {
+            return getClass().getSimpleName() + "[" + e + ", "
+                + Duh.toString(prin) + "]";
+        }
+    }
+
+    final static class MouseTravel {
+        int lastX;
+        int lastY;
+        int travel = 0; /* In pixels */
+
+        public MouseTravel(int x0, int y0) {
+            lastX = x0;
+            lastY = y0;
+        }
+
+        public void travel(MouseEvent e) {
+            travel += Math.abs(e.getX() - lastX) + Math.abs(e.getY() - lastY);
+            lastX = e.getX();
+            lastY = e.getY();
+        }
+
+        public int getTravel() { return travel; }
+    }
+
+    /** Until the mouse is released, we can't tell whether the user is
+        dragging a box to zoom or clicking to add a point. Use
+        mousePress to store the mousePressed event and the position of
+        the point that will be added if that's what we end up
+        doing. */
+    protected transient MousePress mousePress = null;
+
+    /** mouseTravel logs the distance in pixels that the mouse has
+        moved either since the button was depressed (to discriminate
+        between clicks and drags) or since the mouse was explicitly
+        positioned (to determine whether to unstick the mouse from
+        that position). */
+    protected transient MouseTravel mouseTravel = null;
+
     public Editor() {
         init();
         tieLineDialog.setFocusableWindowState(false);
@@ -641,6 +692,9 @@ public class Editor extends Diagram
         vertexInfo.setSlope(0);
         vertexInfo.setLineWidth(lineWidth);
         mouseIsStuck = false;
+        mouseTravel = null;
+        mousePress = null;
+        principalFocus = null;
         paintSuppressionRequestCnt = 0;
         setBackgroundType(EditFrame.BackgroundImageType.LIGHT_GRAY);
         tieLineDialog.setVisible(false);
@@ -908,7 +962,7 @@ public class Editor extends Diagram
         if (mouseIsStuckAtSelection()) {
             // Unstick the mouse so we're not just moving the mouse
             // onto itself.
-            unstickMouse();
+            setMouseStuck(false);
         }
 
         CuspFigure path = vhand.getDecoration().getItem();
@@ -964,7 +1018,7 @@ public class Editor extends Diagram
         if (mouseIsStuckAtSelection()) {
             // Unstick the mouse so we're not just moving the mouse
             // onto itself.
-            unstickMouse();
+            setMouseStuck(false);
         }
 
         CuspFigure path = vhand.getDecoration().getItem();
@@ -1030,11 +1084,11 @@ public class Editor extends Diagram
         }
 
         if (mouseIsStuckAtSelection()) {
-            unstickMouse();
+            setMouseStuck(false);
         }
 
         moveSelection(mprin, moveAll);
-        mouseIsStuck = true;
+        setMouseStuck(true);
     }
 
     /** Copy the selection, moving it to mprin. */
@@ -1057,7 +1111,7 @@ public class Editor extends Diagram
         }
 
         if (mouseIsStuckAtSelection()) {
-            unstickMouse();
+            setMouseStuck(false);
         }
 
         selection = selection.copy(mprin);
@@ -1097,7 +1151,7 @@ public class Editor extends Diagram
                  layer += ((delta > 0) ? 1 : -1)) {
                 Decoration jumpedPast = decorations.get(layer);
                 if (Duh.distanceSq(selectionBounds, bounds(jumpedPast))
-                		< 1e-12) {
+                    < 1e-12) {
                     break;
                 }
             }
@@ -1280,7 +1334,7 @@ public class Editor extends Diagram
         }
         mprin = p;
         moveMouse(mprin);
-        mouseIsStuck = true;
+        setMouseStuck(true);
     }
 
     /** Most of the information required to paint the EditPane is part
@@ -1341,6 +1395,13 @@ public class Editor extends Diagram
             : new Color(0xb0c000); // Yellow
     }
 
+    /** Return true if the user is currently selecting a region to
+        zoom to. */
+    boolean isZoomMode() {
+        return mousePress != null && mouseTravel != null
+            && mouseTravel.getTravel() >= MOUSE_UNSTICK_DISTANCE;
+    }
+
 
     /** Show the result if the mouse point were added to the currently
         selected curve in red, and show the currently selected curve in
@@ -1363,12 +1424,14 @@ public class Editor extends Diagram
 
         AutoPositionHolder ap = new AutoPositionHolder();
         Point2D.Double extraVertex = mprin;
-        if (isShiftDown) {
+        if (isZoomMode()) {
+            extraVertex = null;
+        } else if (isShiftDown) {
             extraVertex = statusPt = getAutoPosition(ap);
         } else if (mouseIsStuckAtSelection()) {
             // Show the point that would be added if the mouse became
             // unstuck.
-            extraVertex = getMousePosition();
+            extraVertex = getMousePrincipal();
         }
 
         if (extraVertex != null && !isDuplicate(extraVertex)) {
@@ -1556,7 +1619,7 @@ public class Editor extends Diagram
         // highlightKeyPoints(g, scale);
 
         if (getVertexHandle() == null) {
-            Point2D.Double gmp = getMousePosition();
+            Point2D.Double gmp = getMousePrincipal();
             if (isShiftDown) {
                 AutoPositionHolder ap = new AutoPositionHolder();
                 Point2D.Double autop = getAutoPosition(ap);
@@ -1572,6 +1635,15 @@ public class Editor extends Diagram
                 paintCross(g, mprin, scale);
             }
 
+        }
+
+        if (isZoomMode()) {
+            Point mpos = getEditPane().getMousePosition();
+            if (mpos != null) {
+                g.setColor(Color.RED);
+                g.draw(Duh.bounds
+                       (new Point[] { mpos, mousePress.e.getPoint() }));
+            }
         }
 
         if (statusPt != null) {
@@ -1748,7 +1820,7 @@ public class Editor extends Diagram
         rightward (or downward if the curve is vertical). */
     public void addArrow(boolean rightward) {
         if (mouseIsStuckAtSelection() && getSelectedArrow() != null) {
-            unstickMouse();
+            setMouseStuck(false);
         }
 
         double theta = vertexInfo.getAngle();
@@ -2263,7 +2335,7 @@ public class Editor extends Diagram
             fractions = moleToWeightFraction(fractions);
         }
 
-        mouseIsStuck = true;
+        setMouseStuck(true);
         if (!moveMouse(fractions)) {
             showError
                 ("You requested the coordinates<br>"
@@ -2366,11 +2438,12 @@ public class Editor extends Diagram
             return;
         }
 
-        copyCoordinatesFromString(str, dig.getVariable(0, axes), dig.getVariable(1, axes));
+        copyCoordinatesFromString(str, dig.getVariable(0, axes),
+                                  dig.getVariable(1, axes));
     }
 
     public static Point2D.Double[][] stringToCurves(String pointsStr)
-    	throws NumberFormatException {
+        throws NumberFormatException {
         String[] lines = pointsStr.split("\r?\n");
         ArrayList<ArrayList<Point2D.Double>> res = new ArrayList<>();
         ArrayList<Point2D.Double> curve = new ArrayList<>();
@@ -2623,7 +2696,7 @@ public class Editor extends Diagram
         the point that is returned. */
     public void seekNearestPoint(boolean select) {
         if (mouseIsStuck && principalFocus == null) {
-            unstickMouse();
+            setMouseStuck(false);
         }
 
         Point2D.Double point;
@@ -2699,7 +2772,7 @@ public class Editor extends Diagram
         }
 
         moveMouse(point);
-        mouseIsStuck = true;
+        setMouseStuck(true);
     }
 
     public void scaleXUnits() {
@@ -2811,7 +2884,7 @@ public class Editor extends Diagram
         }
 
         if (mouseIsStuckAtSelection() && getSelectedLabel() != null) {
-            unstickMouse();
+            setMouseStuck(false);
         }
         double x = mprin.x;
         double y = mprin.y;
@@ -2833,7 +2906,7 @@ public class Editor extends Diagram
         LabelDecoration d = new LabelDecoration(new LabelInfo(newLabel));
         decorations.add(d);
         selection = new LabelHandle(d, LabelHandleType.ANCHOR);
-        mouseIsStuck = true;
+        setMouseStuck(true);
         propagateChange();
     }
 
@@ -2933,6 +3006,7 @@ public class Editor extends Diagram
         possible to go to that location. */
     boolean moveMouse(Point2D prin) {
         mprin = new Point2D.Double(prin.getX(), prin.getY());
+        mouseTravel = null;
         if (principalToStandardPage == null) {
             return false;
         }
@@ -3008,7 +3082,7 @@ public class Editor extends Diagram
         }
         mprin = selection.getLocation();
         centerMouse();
-        mouseIsStuck = true;
+        setMouseStuck(true);
     }
 
     /** Adjust the viewport to place principal coordinates point prin
@@ -3179,7 +3253,7 @@ public class Editor extends Diagram
         curve. */
     public void seekNearestCurve(boolean select) {
         if (mouseIsStuck) {
-            unstickMouse();
+            setMouseStuck(false);
         }
 
         if (mprin == null) {
@@ -3222,7 +3296,7 @@ public class Editor extends Diagram
             }
         }
         moveMouse(standardPageToPrincipal.transform(minDist.point));
-        mouseIsStuck = true;
+        setMouseStuck(true);
         showTangent(dec, t);
     }
 
@@ -4626,7 +4700,7 @@ public class Editor extends Diagram
         }
         ap.position = AutoPositionType.NONE;
 
-        Point2D.Double mprin2 = getMousePosition();
+        Point2D.Double mprin2 = getMousePrincipal();
         if (mprin2 == null) {
             return (mprin == null) ? null : new NullDecorationHandle(mprin);
         }
@@ -4758,7 +4832,7 @@ public class Editor extends Diagram
     /** Invoked from the EditFrame menu */
     public void autoPosition() {
         if (mouseIsStuck) {
-            unstickMouse();
+            setMouseStuck(false);
         }
 
         DecorationHandle h = getAutoPositionHandle(null);
@@ -4767,7 +4841,7 @@ public class Editor extends Diagram
             if (h instanceof BoundedParam2DHandle) {
                 showTangent((BoundedParam2DHandle) h);
             }
-            mouseIsStuck = true;
+            setMouseStuck(true);
             redraw();
         }
     }
@@ -4878,7 +4952,7 @@ public class Editor extends Diagram
 
             mprin = newMprin;
             moveMouse(newMprin);
-            mouseIsStuck = true;
+            setMouseStuck(true);
         } catch (NoninvertibleTransformException e) {
             JOptionPane.showMessageDialog
                 (editFrame,
@@ -4905,33 +4979,45 @@ public class Editor extends Diagram
         mouseMoved(e);
     }
 
-    public void unstickMouse() {
-        mouseIsStuck = false;
-        principalFocus = null;
-        updateMousePosition();
+    public void setMouseStuck(boolean b) {
+        mouseIsStuck = b;
+        if (b) {
+            mouseTravel = null;
+        } else {
+            principalFocus = null;
+            updateMousePosition();
+        }
     }
 
     @Override public void mousePressed(MouseEvent e) {
-        if (e.getButton() == MouseEvent.BUTTON2 
-            || e.getButton() == MouseEvent.BUTTON3) {
+        if (e.getButton() == MouseEvent.BUTTON1) {
+            mousePress = new MousePress
+                (e, getVertexAddMousePosition(e.getPoint()));
+            mouseTravel = null;
+        } else {
             deselectCurve();
-            return;
         }
-        if (e.isShiftDown()) {
-            autoPosition();
+    }
+
+    Point2D.Double getVertexAddMousePosition(Point panep) {
+        if (mprin == null ||
+            (getVertexHandle() != null &&
+             mouseIsStuckAtSelection())) {
+            // It doesn't make sense to add the same point twice,
+            // so use the mouse's current position instead of the
+            // stuck position.
+            return paneToPrincipal(panep);
+        } else {
+            return mprin;
         }
-        addVertex();
     }
 
     public void addVertex() {
         if (principalToStandardPage == null || mprin == null) {
             return;
         }
-        if (mouseIsStuckAtSelection() && getVertexHandle() != null) {
-            unstickMouse();
-        }
-        add(mprin);
-        mouseIsStuck = true;
+        add(getVertexAddMousePosition(getEditPane().getMousePosition()));
+        setMouseStuck(true);
     }
 
     /** @return true if diagram editing is enabled, or false if the
@@ -4963,28 +5049,44 @@ public class Editor extends Diagram
         the position in the zoom window,. */
     @Override public void mouseMoved(MouseEvent e) {
         isShiftDown = e.isShiftDown();
+        if (mouseTravel == null) {
+            mouseTravel = new MouseTravel(e.getX(), e.getY());
+        } else {
+            mouseTravel.travel(e);
+        }
         redraw();
     }
 
     /** Update mprin to reflect the mouse's current position unless
-        mouseIsStuck is true and mprin is less than
-        MOUSE_UNSTICK_DISTANCE away from the mouse position. That
+        mouseIsStuck is true and the mouse has traveled less than
+        MOUSE_UNSTICK_DISTANCE pixels since the mouse got stuck. That
         restriction insures that a slight hand twitch will not cause
         the user to lose their place after an operation such as
         seekNearestPoint(). */
     public void updateMousePosition() {
+        Point p = (mousePress != null) ? mousePress.e.getPoint()
+            : getEditPane().getMousePosition();
+        updateMousePosition(p);
+    }
+
+    /** Update mprin to reflect the mouse being positioned at edit
+        panel position mpos unless mouseIsStuck is true and the mouse
+        has traveled less than MOUSE_UNSTICK_DISTANCE since it got
+        stuck. That restriction insures that a slight hand twitch will
+        not cause the user to lose their place after an operation such
+        as seekNearestPoint(). */
+    public void updateMousePosition(Point mpos) {
         if (principalToStandardPage == null) {
             return;
         }
 
-        Point mpos = getEditPane().getMousePosition();
         if (mpos != null && !preserveMprin) {
             if (!mouseIsStuck || mprin == null
-                || (principalToScaledPage(scale).transform(mprin)
-                    .distance(mpos) >= MOUSE_UNSTICK_DISTANCE)) {
+                || (mouseTravel != null
+                    && mouseTravel.getTravel() >= MOUSE_UNSTICK_DISTANCE)) {
                 mouseIsStuck = false;
                 principalFocus = null;
-                mprin = getMousePosition();
+                mprin = paneToPrincipal(mpos);
             }
         }
 
@@ -5003,19 +5105,18 @@ public class Editor extends Diagram
         }
     }
 
-    /** Return the actual mouse position in principal coordinates. For
-        most purposes, you should use mprin instead of this function.
-        If mouseIsStuck is true, then getMousePosition() will be
-        different from mprin, but mprin (the location that the mouse
-        is notionally stuck at, as opposed to the mouse pointer's true
-        location) is more useful. */
-    Point2D.Double getMousePosition() {
-        if (principalToStandardPage == null) {
-            return null;
+    Point2D.Double getMousePrincipal() {
+        if (mousePress == null) {
+            return paneToPrincipal(getEditPane().getMousePosition());
+        } else {
+            return mousePress.prin;
         }
+    }
 
-        Point mpos = getEditPane().getMousePosition();
-        if (mpos == null) {
+    /** Convert a position on the edit pane to standard page
+        coordinates. */
+    Point2D.Double paneToStandardPage(Point2D mpos) {
+        if (principalToStandardPage == null || mpos == null) {
             return null;
         }
 
@@ -5035,8 +5136,15 @@ public class Editor extends Diagram
 
         double sx = mpos.getX() + ABOUT_HALF;
         double sy = mpos.getY() + ABOUT_HALF;
+        return new Point2D.Double
+            (sx/scale + pageBounds.x, sy/scale + pageBounds.y);
+    }
 
-        return scaledPageToPrincipal(scale).transform(sx,sy);
+    /** Convert a position on the edit pane to principal
+        coordinates. */
+    Point2D.Double paneToPrincipal(Point mpos) {
+        Point2D p = paneToStandardPage(mpos);
+        return (p == null) ? null : standardPageToPrincipal.transform(p);
     }
 
     /** Set the default line width for lines added in the future.
@@ -5055,6 +5163,9 @@ public class Editor extends Diagram
         setScale(getScale() * factor);
     }
 
+    /** Return the bounds of the selection on the standard page,
+        augmented by a slight margin for error (1/400th of the
+        bounding rectangle's perimeter). */
     @JsonIgnore Rectangle2D.Double getSelectionBounds() {
         if (selection == null) {
             showError("You must first select something to perform this operation");
@@ -5082,29 +5193,40 @@ public class Editor extends Diagram
         return spane.getViewport().getViewRect();
     }
 
+    void zoom(Point pane1, Point pane2) {
+        Point2D.Double page1 = paneToStandardPage(pane1);
+        Point2D.Double page2 = paneToStandardPage(pane2);
+        mprin = null;
+        zoom(Duh.bounds(new Point2D.Double[] { page1, page2 }));
+    }
+
     void zoomToSelection() {
-        Rectangle2D.Double sbounds = getSelectionBounds();
-        if (sbounds == null) {
+        zoom(getSelectionBounds());
+    }
+
+    void zoom(Rectangle2D pageBounds) {
+        if (pageBounds == null) {
             return;
         }
 
         Dimension size = getViewportSize();
-        Rescale r = new Rescale(sbounds.width, 0, (double) size.width,
-                                sbounds.height, 0, (double) size.height);
+        Rescale r = new Rescale(pageBounds.getWidth(), 0, (double) size.width,
+                                pageBounds.getHeight(), 0, (double) size.height);
         setScale(r.t);
         Point2D.Double center = new Point2D.Double
-            (sbounds.getCenterX(), sbounds.getCenterY());
+            (pageBounds.getCenterX(), pageBounds.getCenterY());
         standardPageToPrincipal.transform(center, center);
 
         // If mprin is in the new window, leave it be. If mprin is not
         // in the new window, move it to the center of the new window.
         if ((mprin == null)
             || !roughlyInside(principalToStandardPage.transform(mprin),
-                              sbounds)) {
+                              pageBounds)) {
             mprin = center;
             mouseIsStuck = false;
         }
         centerPoint(center);
+        propagateChange();
     }
 
     /** Adjust the scale so that the page just fits in the edit frame. */
@@ -5279,7 +5401,23 @@ public class Editor extends Diagram
     }
 
     @Override public void mouseClicked(MouseEvent e) {}
-    @Override public void mouseReleased(MouseEvent e) {}
+
+    @Override public void mouseReleased(MouseEvent e) {
+        if (e.getButton() == MouseEvent.BUTTON1) {
+            if (mouseTravel != null
+                && mouseTravel.getTravel() > MOUSE_UNSTICK_DISTANCE) {
+                zoom(mousePress.e.getPoint(), e.getPoint());
+                setMouseStuck(false);
+                mouseTravel = null;
+            } else if (principalToStandardPage != null
+                       && mprin != null
+                       && mousePress != null) {
+                add(mousePress.prin);
+                setMouseStuck(true);
+            }
+            mousePress = null;
+        }
+    }
     @Override public void mouseEntered(MouseEvent e) {}
 
     @Override public void mouseExited(MouseEvent e) {
