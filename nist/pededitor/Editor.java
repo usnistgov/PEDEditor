@@ -471,6 +471,7 @@ public class Editor extends Diagram
     private static final long AUTO_SAVE_DELAY = 5 * 60 * 1000; // 5 minutes
 
     static final protected double MOUSE_UNSTICK_DISTANCE = 30; /* pixels */
+    static final protected double MOUSE_DRAG_DISTANCE = 80; /* pixels */
     static protected Image crosshairs = null;
 
     protected CropFrame cropFrame = new CropFrame();
@@ -1399,7 +1400,7 @@ public class Editor extends Diagram
         zoom to. */
     boolean isZoomMode() {
         return mousePress != null && mouseTravel != null
-            && mouseTravel.getTravel() >= MOUSE_UNSTICK_DISTANCE;
+            && mouseTravel.getTravel() >= MOUSE_DRAG_DISTANCE;
     }
 
 
@@ -5404,8 +5405,7 @@ public class Editor extends Diagram
 
     @Override public void mouseReleased(MouseEvent e) {
         if (e.getButton() == MouseEvent.BUTTON1) {
-            if (mouseTravel != null
-                && mouseTravel.getTravel() > MOUSE_UNSTICK_DISTANCE) {
+            if (isZoomMode()) {
                 zoom(mousePress.e.getPoint(), e.getPoint());
                 setMouseStuck(false);
                 mouseTravel = null;
