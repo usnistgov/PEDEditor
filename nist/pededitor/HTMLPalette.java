@@ -5,10 +5,10 @@ public class HTMLPalette extends StringPalette {
         super(new Object[] {
                 "\u00b0" /* degree */,
                 new Object[][] {
-                    {"<br>\n", "<html>line <br> break</html>"},
                     {"&lt;", "<"},
                     {"&gt;", ">"},
                     {"&amp;", "&"},
+                    {"<br>\n", "<html><span style=\"font-size: 65%;\">line<br>break</span>"},
                     {"&nbsp;", "Hard space"},
                 }
             });
