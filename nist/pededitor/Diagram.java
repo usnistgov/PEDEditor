@@ -3375,7 +3375,9 @@ public class Diagram extends Observable implements Printable {
         setPageBounds(bounds);
     }
 
-    /** Return the bounds of d on the aligned page. */
+    /** Return the bounds of d on the standard page, augmented by a
+        slight margin for error (1/400th of the bounding rectangle's
+        perimeter). */
     public Rectangle2D.Double bounds(Decoration d) {
         if (pageBounds == null) {
             setPageBounds(new Rectangle2D.Double(0, 0, 1, 1));
