@@ -326,6 +326,7 @@ public class LabelDialog extends JDialog {
         cpgb.endRowWith(miscPane);
 
         reset();
+        setResizable(false);
     }
 
     LabelDialog(Frame owner, String title, AnchoredLabel label, Font font) {
@@ -465,8 +466,6 @@ public class LabelDialog extends JDialog {
         // String fontName = "Free Serif";
         // String fontName = "Arial Unicode MS";
         String fontName = "Lucida Sans Unicode";
-        // Font font = new Font(fontName, 0, 14);
-        // Font font = new Font(null, 0, 14);
         Font font = (new Editor()).getFont();
         boolean foundFont = false;
         for (Font f: GraphicsEnvironment.getLocalGraphicsEnvironment()
