@@ -2346,16 +2346,18 @@ public class Editor extends Diagram
         }
     }
 
-    public String selectedCoordinatesToString(LinearAxis v1, LinearAxis v2,
-                                              boolean addComments) {
+    public String selectedCoordinatesToString
+        (LinearAxis v1, RealFunction f1,
+         LinearAxis v2, RealFunction f2, boolean addComments) {
         CuspFigure path = getActiveCurve();
         if (path != null) {
-            return coordinates(path, v1, v2);
-        } 
+            return toString(Arrays.asList(path.getPoints()), v1, f1, v2, f2);
+        }
 
         LabelDecoration ldec = getSelectedLabel();
         if (ldec != null) {
-            return labelCoordinates(ldec.getLabel().getText(), v1, v2);
+            return toString(labelCoordinates(ldec.getLabel().getText()),
+                            v1, f1, v2, f2);
         }
 
         showError("You must first select a curve or label whose "
@@ -2411,7 +2413,8 @@ public class Editor extends Diagram
             return;
         }
         exportString(allCoordinatesToString
-                     (dig.getVariable(0, axes), dig.getVariable(1, axes),
+                     (dig.getVariable(0, axes), dig.getFunction(0),
+                      dig.getVariable(1, axes), dig.getFunction(1),
                       dig.isCommented()),
                      dig);
     }
@@ -2422,7 +2425,8 @@ public class Editor extends Diagram
             return;
         }
         exportString(selectedCoordinatesToString
-                     (dig.getVariable(0, axes), dig.getVariable(1, axes),
+                     (dig.getVariable(0, axes), dig.getFunction(0),
+                      dig.getVariable(1, axes), dig.getFunction(1),
                       dig.isCommented()),
                      dig);
     }
@@ -2439,8 +2443,10 @@ public class Editor extends Diagram
             return;
         }
 
-        copyCoordinatesFromString(str, dig.getVariable(0, axes),
-                                  dig.getVariable(1, axes));
+        copyCoordinatesFromString
+            (str,
+             dig.getVariable(0, axes), dig.getFunction(0),
+             dig.getVariable(1, axes), dig.getFunction(1));
     }
 
     public static Point2D.Double[][] stringToCurves(String pointsStr)
@@ -2484,8 +2490,10 @@ public class Editor extends Diagram
         return res2;
     }
 
-    public void copyCoordinatesFromString(String lines,
-                                          LinearAxis v1, LinearAxis v2) {
+    public void copyCoordinatesFromString
+        (String lines,
+         LinearAxis v1, RealFunction f1,
+         LinearAxis v2, RealFunction f2) {
         if (principalToStandardPage == null) {
             return;
         }
@@ -2519,7 +2527,7 @@ public class Editor extends Diagram
                     deselectCurve();
                 }
                 for (Point2D.Double point: curve) {
-                    Point2D.Double p2 = xformi.transform(point);
+                    Point2D.Double p2 = xformi.transform(transform(point, f1, f2));
                     if (haveLabel) {
                         selection.copy(p2);
                     } else {

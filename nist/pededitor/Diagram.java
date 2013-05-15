@@ -2264,60 +2264,92 @@ public class Diagram extends Observable implements Printable {
         return sb.toString();
     }
 
-    /** Return the coordinates for all labels whose text matches
-        string, expressed in terms of variables v1 and v2 */
-    public String labelCoordinates(String text,
-                                   LinearAxis v1, LinearAxis v2) {
-        ArrayList<Point2D.Double> points = new ArrayList<>();
+    /** Return the coordinates for all labels that match text. */
+    public ArrayList<Point2D.Double> labelCoordinates(String text) {
+        ArrayList<Point2D.Double> res = new ArrayList<>();
         for (AnchoredLabel label: labels()) {
             if (text.equals(label.getText())) {
-                points.add(new Point2D.Double(label.getX(), label.getY()));
+                res.add(new Point2D.Double(label.getX(), label.getY()));
             }
-            Collections.sort(points, new OrderByXY());
         }
+        Collections.sort(res, new OrderByXY());
+        return res;
+    }
 
-        StringBuilder sb = new StringBuilder();
-        for (Point2D.Double point: points) {
-            sb.append(v1.value(point) + ", " + v2.value(point) + '\n');
-        }
+    Point2D.Double transform(Point2D.Double p, LinearAxis v1, LinearAxis v2) {
+        return new Point2D.Double(v1.value(p), v2.value(p));
+    }
 
-        return sb.toString();
+    Point2D.Double transform(Point2D.Double p, RealFunction f1, RealFunction f2) {
+        return new Point2D.Double(f1.value(p.getX()), f2.value(p.getY()));
     }
 
     /** Return the coordinates of all labels and curves, expressed in
-        terms of variables v1 and v2 */
+        terms of f1(v1) and f2(v2) */
     @JsonIgnore public String allCoordinatesToString
-        (LinearAxis v1, LinearAxis v2, boolean addComments) {
-        StringBuilder sb = new StringBuilder();
+        (LinearAxis v1, RealFunction f1, LinearAxis v2, RealFunction f2,
+         boolean addComments) {
+        ArrayList<String> groupStartTags = new ArrayList<>();
+        ArrayList<ArrayList<Point2D.Double>> rawCoordinateGroups
+            = new ArrayList<>();
 
         TreeSet<String> labelTexts = new TreeSet<>();
         for (AnchoredLabel label: labels()) {
-            labelTexts.add(htmlToText(label.getText()));
+            labelTexts.add(label.getText());
         }
 
         for (String labelText: labelTexts) {
+            String plaintext = htmlToText(labelText);
+            String groupStartTag = null;
             if (addComments) {
-                sb.append("# Label");
-                if (labelText.length() == 1) {
-                    char ch = labelText.charAt(0);
+                StringBuilder s = new StringBuilder();
+                s.append("# Label");
+                if (plaintext.length() == 1) {
+                    char ch = plaintext.charAt(0);
                     if (ch > ' ') {
-                        sb.append(" " + ch);
+                        s.append(" " + ch);
                     }
+                    s.append("\n");
+                    groupStartTag = s.toString();
                 }
             }
-            sb.append('\n');
-            sb.append(labelCoordinates(labelText, v1, v2));
+            groupStartTags.add(groupStartTag);
+            rawCoordinateGroups.add(labelCoordinates(labelText));
         }
 
         for (CuspFigure path: paths()) {
+            String groupStartTag = null;
             if (addComments) {
-                sb.append("# " + path.getStroke() + " LINE");
+                groupStartTag = "# " + path.getStroke() + " LINE\n";
             }
-            sb.append('\n');
-            sb.append(coordinates(path, v1, v2));
+            groupStartTags.add(groupStartTag);
+            rawCoordinateGroups.add
+                (new ArrayList<Point2D.Double>
+                 (Arrays.asList(path.getPoints())));
         }
 
-        
+        StringBuilder sb = new StringBuilder();
+        int i = -1;
+        for (ArrayList<Point2D.Double> g: rawCoordinateGroups) {
+            ++i;
+            String s = groupStartTags.get(i);
+            if (s != null) {
+                sb.append(s);
+            } else if (i > 0) {
+                sb.append("\n");
+            }
+            sb.append(toString(g, v1, f1, v2, f2));
+        }
+        return sb.toString();
+    }
+
+    String toString(Iterable<Point2D.Double> g,
+                    LinearAxis v1, RealFunction f1, LinearAxis v2, RealFunction f2) {
+        StringBuilder sb = new StringBuilder();
+        for (Point2D.Double p: g) {
+            p = transform(transform(p, v1, v2), f1, f2);
+            sb.append(p.getX() + ", " + p.getY() + '\n');
+        }
         return sb.toString();
     }
 

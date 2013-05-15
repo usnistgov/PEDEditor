@@ -29,6 +29,7 @@ public class DigitizeDialog extends JDialog {
 
         JLabel variableLabel = new JLabel();
         VariableSelector variable = new VariableSelector();
+        FunctionSelector function = new FunctionSelector();
 
         {
             setBorder(BorderFactory.createLineBorder(Color.BLACK));
@@ -36,6 +37,10 @@ public class DigitizeDialog extends JDialog {
             variableLabel.setLabelFor(variable);
             add(variableLabel);
             add(variable);
+            JLabel lab = new JLabel("Transform");
+            lab.setLabelFor(function);
+            add(lab);
+            add(function);
         }
 
         VariablePanel(String text) {
@@ -109,6 +114,14 @@ public class DigitizeDialog extends JDialog {
 
     public void setVariable(int columnNo, LinearAxis axis) {
         getPanel(columnNo).variable.setSelected(axis);
+    }
+
+    public RealFunction getFunction(int columnNo) {
+        return getPanel(columnNo).function.getSelected();
+    }
+
+    public void setFunction(int columnNo, StandardRealFunction f) {
+        getPanel(columnNo).function.setSelected(f);
     }
 
     public SourceType getSourceType() {
