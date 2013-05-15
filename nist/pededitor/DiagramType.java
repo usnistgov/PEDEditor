@@ -6,6 +6,7 @@ import javax.swing.*;
 /** IDs and icons for different types of PEDs */
 public enum DiagramType {
     BINARY ("images/binaryicon.png", "Binary or Cartesian", 4, false),
+    OTHER ("images/schematicicon.png", "Free-form", 4, false),
     TERNARY ("images/triangleicon.png", "Ternary", 3, true),
     TERNARY_LEFT ("images/leftangleicon.png",
                   "Partial Ternary -- bottom left corner", 3, true, 0),
@@ -14,8 +15,7 @@ public enum DiagramType {
     TERNARY_TOP ("images/upangleicon.png",
                  "Partial ternary -- top corner", 3, true, 1),
     TERNARY_BOTTOM ("images/trianglebottomicon.png",
-                    "Partial ternary -- trapezoid", 4, true),
-    OTHER ("images/schematicicon.png", "Free-form", 4, false);
+                    "Partial ternary -- trapezoid", 4, true);
 
     private final int mVertexCnt;
     private final URL mIconUrl;
