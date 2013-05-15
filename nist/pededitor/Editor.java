@@ -2888,55 +2888,60 @@ public class Editor extends Diagram
             Math.abs(pageBounds.x) + Math.abs(pageBounds.y));
     }
 
-    /** Move the mouse pointer so its position corresponds to the
-        given location in principal coordinates. Return true if it was
-        possible to go to that location. */
-    boolean moveMouse(Point2D point) {
-        System.out.println("moveMouse(" + point + ")");
-        mprin = new Point2D.Double(point.getX(), point.getY());
+    /** Return null if principal coordinates point prin is not within
+        the viewport or extremely close to it, or return the the
+        point's location in scaled page coordinates if it is. */
+    Point viewPosition(Point2D prin) {
         if (principalToStandardPage == null) {
-            return false;
+            return null;
         }
 
-        Point2D.Double mposd = principalToScaledPage(scale).transform(mprin);
+        Point2D.Double pointd = principalToScaledPage(scale).transform(mprin);
         JScrollPane spane = editFrame.getScrollPane();
         Rectangle view = spane.getViewport().getViewRect();
-        Point mpos = Duh.floorPoint(mposd);
+        Point point = Duh.floorPoint(pointd);
 
-        // If mposd is on the view's boundary, then bump it inside.
+        // If pointd is on the view's boundary, then bump it inside.
         // This avoids a potential infinite loop where the mouse is
         // placed precisely on the page border and the page border
         // corresponds with the view border, but because of round-off
         // error, the mouse position is determined to sit just
         // outside, so it's recomputed to put it just on the border,
         // and the cycle repeats.
-        if (mpos.x < view.x && mposd.x + 1e-8 > view.x) {
-            mpos.x = view.x;
-        } else if (mpos.x >= view.x + view.width
-                   && mposd.x - 1e-8 < view.x + view.width) {
-            mpos.x = view.x + view.width - 1;
+        if (point.x < view.x && pointd.x + 1e-8 > view.x) {
+            point.x = view.x;
+        } else if (point.x >= view.x + view.width
+                   && pointd.x - 1e-8 < view.x + view.width) {
+            point.x = view.x + view.width - 1;
         }
-        if (mpos.y < view.y && mposd.y + 1e-8 > view.y) {
-            mpos.y = view.y;
-        } else if (mpos.y >= view.y + view.height
-                   && mposd.y - 1e-8 < view.y + view.height) {
-            mpos.y = view.y + view.height - 1;
-        }
-
-        if (mpos.x < view.x && mposd.x + 1e-8 > view.x) {
-            mpos.x = view.x;
-        } else if (mpos.x >= view.x + view.width
-                   && mposd.x - 1e-8 < view.x + view.width) {
-            mpos.x = view.x + view.width - 1;
-        }
-        if (mpos.y < view.y && mposd.y + 1e-8 > view.y) {
-            mpos.y = view.y;
-        } else if (mpos.y >= view.y + view.height
-                   && mposd.y - 1e-8 < view.y + view.height) {
-            mpos.y = view.y + view.height - 1;
+        if (point.y < view.y && pointd.y + 1e-8 > view.y) {
+            point.y = view.y;
+        } else if (point.y >= view.y + view.height
+                   && pointd.y - 1e-8 < view.y + view.height) {
+            point.y = view.y + view.height - 1;
         }
 
-        if (view.contains(mpos)) {
+        if (!view.contains(point)) {
+            return null;
+        }
+
+        return point;
+    }
+
+    /** Move the mouse pointer so its position corresponds to the
+        given location in principal coordinates. Return true if it was
+        possible to go to that location. */
+    boolean moveMouse(Point2D prin) {
+        mprin = new Point2D.Double(prin.getX(), prin.getY());
+        if (principalToStandardPage == null) {
+            return false;
+        }
+
+        Point spoint = viewPosition(prin);
+
+        if (spoint != null) {
+            JScrollPane spane = editFrame.getScrollPane();
+            Rectangle view = spane.getViewport().getViewRect();
             Point topCorner = spane.getLocationOnScreen();
 
             // For whatever reason (Java bug?), I need to add 1 to the x
@@ -2944,13 +2949,13 @@ public class Editor extends Diagram
 
             // getEditPane().getMousePosition() == original mpos value.
 
-            mpos.x += topCorner.x - view.x + 1;
-            mpos.y += topCorner.y - view.y + 1;
+            spoint.x += topCorner.x - view.x + 1;
+            spoint.y += topCorner.y - view.y + 1;
 
             try {
                 ++paintSuppressionRequestCnt;
                 Robot robot = new Robot();
-                robot.mouseMove(mpos.x, mpos.y);
+                robot.mouseMove(spoint.x, spoint.y);
             } catch (AWTException e) {
                 throw new RuntimeException(e);
             } finally {
@@ -2987,10 +2992,13 @@ public class Editor extends Diagram
         centerPoint(mprin);
     }
 
-    public void centerPoint(Point2D point) {
+    /** Place principal coordinates point prin in the center of the
+        view, subject to the restriction that off-page space should be
+        minimized within the view and mprin must be visible. */
+    public void centerPoint(Point2D prin) {
         JScrollPane spane = editFrame.getScrollPane();
         Rectangle view = spane.getViewport().getViewRect();
-        setViewportRelation(point, new Point(view.width/2, view.height/2));
+        setViewportRelation(prin, new Point(view.width/2, view.height/2));
     }
 
     /** Move the mouse to the selection and center it. */
@@ -5061,21 +5069,42 @@ public class Editor extends Diagram
         return res;
     }
 
+    Dimension getViewportSize() {
+        JScrollPane spane = editFrame.getScrollPane();
+        Dimension size = spane.getViewport().getExtentSize();
+        size.width -= 1;
+        size.height -= 1;
+        return size;
+    }
+
+    Rectangle getViewRect() {
+        JScrollPane spane = editFrame.getScrollPane();
+        return spane.getViewport().getViewRect();
+    }
+
     void zoomToSelection() {
         Rectangle2D.Double sbounds = getSelectionBounds();
         if (sbounds == null) {
             return;
         }
-        JScrollPane spane = editFrame.getScrollPane();
-        Dimension bounds = spane.getSize(null);
-        bounds.width -= 13;
-        bounds.height -= 13;
-        Rescale r = new Rescale(sbounds.width, 0, (double) bounds.width,
-                                sbounds.height, 0, (double) bounds.height);
+
+        Dimension size = getViewportSize();
+        Rescale r = new Rescale(sbounds.width, 0, (double) size.width,
+                                sbounds.height, 0, (double) size.height);
         setScale(r.t);
-        Point2D center = new Point2D.Double
+        Point2D.Double center = new Point2D.Double
             (sbounds.getCenterX(), sbounds.getCenterY());
-        centerPoint(standardPageToPrincipal.transform(center, center));
+        standardPageToPrincipal.transform(center, center);
+
+        // If mprin is in the new window, leave it be. If mprin is not
+        // in the new window, move it to the center of the new window.
+        if ((mprin == null)
+            || !roughlyInside(principalToStandardPage.transform(mprin),
+                              sbounds)) {
+            mprin = center;
+            mouseIsStuck = false;
+        }
+        centerPoint(center);
     }
 
     /** Adjust the scale so that the page just fits in the edit frame. */
@@ -5084,12 +5113,9 @@ public class Editor extends Diagram
             return;
         }
 
-        JScrollPane spane = editFrame.getScrollPane();
-        Rectangle bounds = spane.getViewport().getViewRect();
-        bounds.width -= 1;
-        bounds.height -= 1;
-        Rescale r = new Rescale(pageBounds.width, 0, (double) bounds.width,
-                                pageBounds.height, 0, (double) bounds.height);
+        Dimension size = getViewportSize();
+        Rescale r = new Rescale(pageBounds.width, 0, (double) size.width,
+                                pageBounds.height, 0, (double) size.height);
         setScale(r.t);
     }
 
@@ -5109,9 +5135,7 @@ public class Editor extends Diagram
 
         // Keep the center of the viewport where it was if the center
         // was a part of the image.
-
-        JScrollPane spane = editFrame.getScrollPane();
-        Rectangle view = spane.getViewport().getViewRect();
+        Rectangle view = getViewRect();
 
         // Adjust the viewport to allow prin in principal coordinates
         // to remain located at offset viewportPoint from the upper
@@ -5264,8 +5288,7 @@ public class Editor extends Diagram
     }
 
     synchronized ScaledCroppedImage getScaledOriginalImage() {
-        JScrollPane spane = editFrame.getScrollPane();
-        Rectangle viewBounds = spane.getViewport().getViewRect();
+        Rectangle viewBounds = getViewRect();
         Rectangle imageBounds = scaledPageBounds(scale);
         Rectangle imageViewBounds = viewBounds.intersection(imageBounds);
 
