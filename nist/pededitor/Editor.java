@@ -3440,7 +3440,10 @@ public class Editor extends Diagram
              + "Enter the graph domain. Fractions are allowed. "
              + "If you enter percentages, you must include the percent "
              + "sign."
-             + "<p>You can also change the domain later, using the "
+             + "<p>For logarithmic axes, enter the range of logarithms "
+             + "(e.g. -2&nbsp;to&nbsp;2 for "
+             + "10<sup>-2</sup>&nbsp;to&nbsp;10<sup>2</sup>)."
+             + "<p>You can also set the domain later, using the "
              + "<code>Properties/Scale</code> menu.");
     }
 
@@ -3620,7 +3623,7 @@ public class Editor extends Diagram
                 case BINARY:
                     {
                         String[] defaultValues = {
-                            "0%","100%", "0", "1" };
+                            "0","1", "0", "1" };
                         StringArrayDialog dog = cartesianDialog(defaultValues);
 
                         double bottom, top, left, right;
