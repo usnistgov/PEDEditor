@@ -9,7 +9,7 @@ enum StandardRealFunction {
         }, "None"),
     LOG_10 (new RealFunction() {
             @Override public double value(double x) {
-                return Math.log(x);
+                return Math.log10(x);
             }
         }, "f(<var>v</var>) = log<sub>10</sub> <var>v</var>"),
     EXP_10 (new RealFunction() {
