@@ -80,6 +80,8 @@ public class RulerDialog extends JDialog {
     JCheckBox suppressSmallTicks = new JCheckBox("Suppress small ticks");
 
     JCheckBox showPercentages = new JCheckBox("Use percentages in labels");
+    JCheckBox displayLog10 = new JCheckBox
+        ("<html>Display 10<sup><var>x</var></sup> in labels");
     JTextField tickPadding = new JTextField("0", 10);
     JTextField textAngle = new JTextField("0", 10);
 
@@ -174,8 +176,9 @@ public class RulerDialog extends JDialog {
 
         cpgb.addWest(tickLeft);
         cpgb.endRowWith(tickRight);
-        cpgb.addWest(tickTypeV);
-        cpgb.endRowWith(showPercentages);
+        cpgb.endRowWith(tickTypeV);
+        cpgb.addWest(showPercentages);
+        cpgb.endRowWith(displayLog10);
 
         cpgb.addWest(startArrow);
         cpgb.endRowWith(endArrow);
@@ -210,6 +213,7 @@ public class RulerDialog extends JDialog {
         suppressStartLabel.setSelected(ruler.suppressStartLabel);
         suppressEndTick.setSelected(ruler.suppressEndTick);
         suppressEndLabel.setSelected(ruler.suppressEndLabel);
+        displayLog10.setSelected(ruler.displayLog10);
 
         boolean showPct;
 
@@ -265,6 +269,7 @@ public class RulerDialog extends JDialog {
         dest.suppressStartLabel = suppressStartLabel.isSelected();
         dest.suppressEndTick = suppressEndTick.isSelected();
         dest.suppressEndLabel = suppressEndLabel.isSelected();
+        dest.displayLog10 = displayLog10.isSelected();
         dest.multiplier = showPercentages.isSelected() ? 100.0 : 1.0;
         dest.labelAnchor = labelAnchor;
         dest.tickType = tickTypeV.isSelected() ? LinearRuler.TickType.V
