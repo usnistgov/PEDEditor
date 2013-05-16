@@ -7,6 +7,16 @@ enum StandardRealFunction {
                 return x;
             }
         }, "None"),
+    LOG_10 (new RealFunction() {
+            @Override public double value(double x) {
+                return Math.log(x);
+            }
+        }, "f(<var>v</var>) = log<sub>10</sub> <var>v</var>"),
+    EXP_10 (new RealFunction() {
+            @Override public double value(double x) {
+                return Math.pow(10, x);
+            }
+        }, "f(<var>v</var>) = 10<sup><var>v</var></sup>"),
     LOG (new RealFunction() {
             @Override public double value(double x) {
                 return Math.log(x);
@@ -17,16 +27,16 @@ enum StandardRealFunction {
                 return Math.exp(x);
             }
         }, "f(<var>v</var>) = e<sup><var>v</var></sup>"),
-    LOG_10 (new RealFunction() {
+    C_TO_K (new RealFunction() {
             @Override public double value(double x) {
-                return Math.log(x);
+                return x + 273.15;
             }
-        }, "f(<var>v</var>) = log<sub>10</sub> <var>v</var>"),
-    EXP_10 (new RealFunction() {
+        }, "\u00b0C to K"),
+    K_TO_C (new RealFunction() {
             @Override public double value(double x) {
-                return Math.pow(10, x);
+                return x - 273.15;
             }
-        }, "f(<var>v</var>) = 10<sup><var>v</var></sup>");
+        }, "K to \u00b0C");
 
     private final RealFunction f;
     private final String text;
