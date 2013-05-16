@@ -71,6 +71,9 @@ class LinearRuler implements BoundedParameterizable2D, Decorated {
         without a percent sign. */
     @JsonProperty double multiplier = 1.0;
 
+    /** If true, use pow(10, x) for tick marks. */
+    @JsonProperty boolean displayLog10 = false;
+
     /** To simplify axis rotations, textAngle indicates the angle of
         the text relative to the ray from startPoint to endPoint. So
         for a vertical upwards-pointing axis, textAngle = 0 would mean
@@ -163,6 +166,7 @@ class LinearRuler implements BoundedParameterizable2D, Decorated {
         o.axis = axis;
         o.labelAnchor = labelAnchor;
         o.multiplier = multiplier;
+        o.displayLog10 = displayLog10;
         o.textAngle = textAngle;
         o.tickRight = tickRight;
         o.tickLeft = tickLeft;
@@ -202,13 +206,27 @@ class LinearRuler implements BoundedParameterizable2D, Decorated {
         this.color = color;
     }
 
+    /** The multiplier is handled differently depending on whether
+        displayLog10 is set. If it is set, then a multiplier value of
+        100 means that the value -1 is treated like 1 (i.e., 10^-1 is
+        treated as 10%). If it is not set, then the multiplier really
+        is a multiplier. */
+    private double mungeValue(double d) {
+        if (displayLog10) {
+            return d + Math.log10(multiplier);
+        } else {
+            return d * multiplier;
+        }
+    }
+
     /** Start of range of logical values covered by this axis. */
     double getStart() {
-        return axis.value(startPoint) * multiplier;
+        return mungeValue(axis.value(startPoint));
     }
+
     /** End of range of logical values covered by this axis. */
     double getEnd() {
-        return axis.value(endPoint) * multiplier;
+        return mungeValue(axis.value(endPoint));
     }
 
     CuspFigure spinePolyline() {
@@ -289,9 +307,22 @@ class LinearRuler implements BoundedParameterizable2D, Decorated {
                      double scale) {
         Point2D.Double pageStartPoint = new Point2D.Double();
         Point2D.Double pageEndPoint = new Point2D.Double();
+        AffineTransform xform = AffineTransform.getScaleInstance(scale, scale);
+        xform.concatenate(originalToSquarePixel);
+        xform.transform(startPoint, pageStartPoint);
+        xform.transform(endPoint, pageEndPoint);
+
+        Stroke oldStroke = g.getStroke();
+        g.setStroke(new BasicStroke((float) (scale * lineWidth)));
+        
+        if (drawSpine) {
+            g.draw(new Line2D.Double(pageStartPoint, pageEndPoint));
+        }
+
         double start = getStart();
         double end = getEnd();
         if (start == end) {
+            g.setStroke(oldStroke);
             return; // Weird corner case.
         }
 
@@ -301,11 +332,6 @@ class LinearRuler implements BoundedParameterizable2D, Decorated {
         double ws[] = weights();
         double xWeight = ws[0];
         double yWeight = ws[1];
-
-        AffineTransform xform = AffineTransform.getScaleInstance(scale, scale);
-        xform.concatenate(originalToSquarePixel);
-        xform.transform(startPoint, pageStartPoint);
-        xform.transform(endPoint, pageEndPoint);
 
         Font oldFont = g.getFont();
         g.setFont(oldFont.deriveFont((float) (fontSize * scale)));
@@ -331,22 +357,33 @@ class LinearRuler implements BoundedParameterizable2D, Decorated {
         // '888.88'. We'll also add two spaces to insure there is some
         // space between ticks.
 
-        int[] limits = RulerTick.digitSpaceNeeded
-            (start, end, RulerTick.roundCeil(minBigTickDelta));
-        int units = limits[0];
-        int decimals = limits[1];
-        StringBuilder longestLabel = new StringBuilder("  ");
-        for (int i = 0; i < units; ++i) {
-            longestLabel.append('8');
-        }
-        if (decimals > 0) {
-            longestLabel.append('.');
-            for (int i = 0; i < decimals; ++i) {
-                longestLabel.append('8');
+        String longestLabel;
+
+        if (displayLog10) {
+            double minPow10 = Math.ceil(astart - 1e-6);
+            double maxPow10 = Math.floor(aend + 1e-6);
+            String lo = LogRulerTick.pow10String(minPow10);
+            String hi = LogRulerTick.pow10String(maxPow10);
+            longestLabel = (lo.length() > hi.length()) ? lo : hi;
+        } else {
+            int[] limits = RulerTick.digitSpaceNeeded
+                (astart, aend, RulerTick.roundCeil(minBigTickDelta));
+            int units = limits[0];
+            int decimals = limits[1];
+            StringBuilder longestLabelB = new StringBuilder();
+            for (int i = 0; i < units; ++i) {
+                longestLabelB.append('8');
             }
+            if (decimals > 0) {
+                longestLabelB.append('.');
+                for (int i = 0; i < decimals; ++i) {
+                    longestLabelB.append('8');
+                }
+            }
+            longestLabel = longestLabelB.toString();
         }
-        Rectangle2D labelBounds
-            = fm.getStringBounds(longestLabel.toString(), g);
+        
+        Rectangle2D labelBounds = fm.getStringBounds("  " + longestLabel, g);
         double padding = labelBounds.getHeight() * tickPadding;
         Rectangle2D.Double lb = new Rectangle2D.Double
             (labelBounds.getX(), labelBounds.getY(),
@@ -368,22 +405,22 @@ class LinearRuler implements BoundedParameterizable2D, Decorated {
             minBigTickDelta = (aend - astart) * 100; // Close enough to infinity
         }
 
-        double bigTickD = Double.isNaN(bigTickDelta)
-            ? RulerTick.roundCeil(minBigTickDelta)
-            : bigTickDelta;
+        double bigTickD = bigTickDelta;
+        if (Double.isNaN(bigTickDelta)) {
+            bigTickD = RulerTick.roundCeil(minBigTickDelta);
+            if (labelAnchor != LabelAnchor.NONE && displayLog10
+                && bigTickD < 1) {
+                // I can only format log 10 labels for integer powers
+                // of 10.
+                bigTickD = 1;
+            }
+        }
 
         // tickD = change in logical coordinates between
         // neighboring ticks.
         double tickD = Double.isNaN(tickDelta)
             ? RulerTick.nextSmallerRound(bigTickD)
             : tickDelta;
-
-        Stroke oldStroke = g.getStroke();
-        g.setStroke(new BasicStroke((float) (scale * lineWidth)));
-        
-        if (drawSpine) {
-            g.draw(new Line2D.Double(pageStartPoint, pageEndPoint));
-        }
 
         g.setStroke(new BasicStroke((float) (scale * lineWidth),
                                     BasicStroke.CAP_BUTT, BasicStroke.JOIN_BEVEL));
@@ -429,6 +466,8 @@ class LinearRuler implements BoundedParameterizable2D, Decorated {
         boolean set = endArrow || suppressEndTick;
 
         if (Math.abs(tickD) >= minTickDelta && tickD != 0 && tickStart != tickEnd) {
+            // Draw small ticks (if requested)
+
             double smallTickEnd = tickEnd
                 + 1e-6 * (tickEnd - tickStart) / Math.abs(tickD);
 
@@ -478,20 +517,14 @@ class LinearRuler implements BoundedParameterizable2D, Decorated {
         tickVOffset.x *= 2;
         tickVOffset.y *= 2;
 
-        String formatString = RulerTick.formatString(start, end, bigTickD);
+        String formatString = displayLog10 ? null
+            : RulerTick.formatString(astart, aend, bigTickD);
 
         if (bigTickD != 0 && tickStart != tickEnd) {
+            // Draw big ticks and labels (if requested)
 
             actualTickStart = (tickStartD != null) ? tickStartD
                 : (bigTickD * Math.ceil((tickStart - 1e-6 * (aend - astart)) / bigTickD));
-
-            if (actualTickStart <= 0
-                && actualTickStart >= -Math.abs(bigTickD) * 1e-6) {
-                // Sidestep stupid Java 6 behavior where tiny values
-                // less than 0 are formatted as "-0.0" instead of
-                // "0.0".
-                actualTickStart = 0;
-            }
 
             AffineTransform oldTransform = g.getTransform();
 
@@ -563,7 +596,9 @@ class LinearRuler implements BoundedParameterizable2D, Decorated {
                          location.y + mul * tickOffset.y);
 
                     g.rotate(theta + textAngle, anchor.x, anchor.y);
-                    String s = String.format(formatString, logical).trim();
+                    String s = displayLog10
+                        ? LogRulerTick.pow10String(logical)
+                        : String.format(formatString, logical).trim();
                     if (minusZeroPattern.matcher(s).lookingAt()) {
                         // Java annoyingly formats -0 as "-0". Remove the minus.
                         s = s.substring(1);
