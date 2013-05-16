@@ -35,7 +35,6 @@ public class VertexInfoDialog extends JDialog {
     public VertexInfoDialog(Frame owner) {
         super(owner, "Slope", false);
         setAngleDegrees(0);
-        setSlope(0);
 
         slope.getDocument().addDocumentListener
             (new DocumentListener() {
@@ -46,13 +45,11 @@ public class VertexInfoDialog extends JDialog {
                             return;
                         }
                         try {
-                            selfModifying = true;
-                            sloped = ContinuedFraction.parseDouble(slope.getText());
-                            setAngle(slopeToTheta(sloped));
+                            setSlope
+                                (ContinuedFraction.parseDouble(slope.getText()),
+                                 false);
                         } catch (NumberFormatException ex) {
                             return;
-                        } finally {
-                            selfModifying = false;
                         }
                     }
 
@@ -74,13 +71,11 @@ public class VertexInfoDialog extends JDialog {
                             return;
                         }
                         try {
-                            selfModifying = true;
-                            angled = ContinuedFraction.parseDouble(angle.getText());
-                            setSlope(thetaToSlope(degreesToTheta(angled)));
+                            setAngleDegrees
+                                (ContinuedFraction.parseDouble(angle.getText()),
+                                 false);
                         } catch (NumberFormatException ex) {
                             return;
-                        } finally {
-                            selfModifying = false;
                         }
                     }
 
@@ -161,9 +156,25 @@ public class VertexInfoDialog extends JDialog {
     }
 
     public void setAngleDegrees(double deg) {
+        setAngleDegrees(deg, true);
+    }
+
+    protected void setAngleDegrees(double deg, boolean changeDegreeText) {
+        try {
+            selfModifying = true;
+            basicSetAngleDegrees(deg, changeDegreeText);
+            basicSetSlope(thetaToSlope(degreesToTheta(deg)), true);
+            repaint();
+        } finally {
+            selfModifying = false;
+        }
+    }
+
+    protected void basicSetAngleDegrees(double deg, boolean changeText) {
         angled = deg;
-        angle.setText(String.format("%.2f", deg));
-        repaint();
+        if (changeText) {
+            angle.setText(String.format("%.2f", deg));
+        }
     }
 
     @JsonIgnore public double getAngleDegrees() {
@@ -177,17 +188,33 @@ public class VertexInfoDialog extends JDialog {
     }
 
     public void setSlope(double m) {
+        setSlope(m, true);
+    }
+
+    protected void setSlope(double m, boolean changeSlopeText) {
+        try {
+            selfModifying = true;
+            basicSetSlope(m, changeSlopeText);
+            basicSetAngleDegrees(thetaToDegrees(slopeToTheta(m)), true);
+            repaint();
+        } finally {
+            selfModifying = false;
+        }
+    }
+
+    protected void basicSetSlope(double m, boolean changeText) {
         sloped = -m;
-        double mabs = Math.abs(m);
-        String format =
-            (mabs < 1e-12) ? "%.0f"
-            : (mabs < 1e-4) ? "%.4e"
-            : (mabs < 1) ? "%.6f"
-            : (mabs < 1e5) ? "%.4f"
-            : (mabs < 1e9) ? "%.0f"
-            : "%.6e";
-        slope.setText(String.format(format, -m));
-        repaint();
+        if (changeText) {
+            double mabs = Math.abs(sloped);
+            String format =
+                (mabs < 1e-12) ? "%.0f"
+                : (mabs < 1e-4) ? "%.4e"
+                : (mabs < 1) ? "%.6f"
+                : (mabs < 1e5) ? "%.4f"
+                : (mabs < 1e9) ? "%.0f"
+                : "%.6e";
+            slope.setText(String.format(format, sloped));
+        }
     }
 
     public void setSlopeLabel(String label) {
