@@ -4605,7 +4605,7 @@ public class Diagram extends Observable implements Printable {
     }
 
     void addTernaryRightRuler(double start /* Y */, double end /* Y */) {
-        addTernaryRightRuler(start, end, 1.0);
+        addTernaryRightRuler(start, end, 1.0 - Math.min(start, end));
     }
 
     void addTernaryRightRuler(double start, double end, double right) {
