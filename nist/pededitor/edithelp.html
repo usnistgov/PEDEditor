@@ -572,7 +572,10 @@ finished.</li>
 and Y axis, while the positions of items on the screen remains the
 same. This option is most often used to change the axes' initial
 ranges to the values you really want, but it can also be used to
-change a diagram's range from Celsius to Kelvin, for example.</li>
+change a diagram's range from Celsius to Kelvin, for example.
+
+<p>If you highlight a ruler or line segment before choosing this
+operation, the dialog will be initialized with its endpoints.
 
 <li><b>Tags</b>: Allow the user to store free-form string data. Apart
 from permitting the user to add, delete, and display tags, the program
@@ -671,7 +674,7 @@ formulas for both (or all, in the case of ternary diagrams) diagram
 components, and the formulas must be entered using the following
 syntax in order for the program to parse them correctly:
 
-<p><b><i><a id="chemical_syntax">Chemical formula syntax</a></i>:
+<p><i><a id="chemical_syntax">Chemical formula syntax</a></i>:
 the program's chemistry functions cannot work unless you define the
 formulas for both (or all, in the case of ternary diagrams) diagram
 components. Currently, <code>[Co(H2O)2]1.5</code> is as complicated a
@@ -692,14 +695,6 @@ because the program stops reading after the space, and it does not
 understand plus signs anyway)
 
 </ul>
-
- -- leading numbers (2 H2O) and plus signs
-are not currently allowed, and anything after an embedded space is
-ignored.
-
-; <code>water</code> is not. The rules are strict and
-somewhat limited -- basically anything 
-
 
 <p>As soon as all diagram components are defined, the gray status bar
 will show additional information about points on the screen. If a
