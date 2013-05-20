@@ -1185,13 +1185,6 @@ public class EditFrame extends JFrame
                 }
             });
 
-        mnView.add(new Action("Zoom to selection", KeyEvent.VK_S,
-                              KeyStroke.getKeyStroke("control Z")) {
-                @Override public void actionPerformed(ActionEvent e) {
-                    getParentEditor().zoomToSelection();
-                }
-            });
-
         JMenu mnHelp = new JMenu("Help");
         mnHelp.setMnemonic(KeyEvent.VK_H);
         menuBar.add(mnHelp);
