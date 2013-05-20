@@ -50,6 +50,18 @@ public class LabelDialog extends JDialog {
     JTextField fontSize = new JTextField(10);
     JTextField codePoint = new JTextField("0000", 10);
 
+    {
+        String layerUp = "You may need to raise this object to the top layer "
+            + "to see the effect.";
+        mIsCutout.setToolTipText
+            ("Helps data markers with holes stand out against dark backgrounds. "
+             + layerUp);
+        mIsBoxed.setToolTipText
+            ("Place a box around this label.");
+        mIsOpaque.setToolTipText
+            ("Helps labels stand out against dark backgrounds. " + layerUp);
+    }
+
     /** Text angle in degrees, where 0 = left-to-right and 90 =
         bottom-to-top. */
     JTextField angleField = new JTextField(7);
@@ -258,9 +270,9 @@ public class LabelDialog extends JDialog {
             GridBagUtil gb = new GridBagUtil(panel);
 
             if (modifiableText) {
-                gb.endRowWith
-                    (new JButton(new AbstractAction
-                                 ("H2SO4 \u2192 H\u2082SO\u2084") {
+                JButton autoSubscriptButton = new JButton
+                    (new AbstractAction
+                     ("H2SO4 \u2192 H\u2082SO\u2084") {
                             private static final long serialVersionUID
                                 = 197868896745807236L;
 
@@ -268,7 +280,10 @@ public class LabelDialog extends JDialog {
                                 textField.setText(ChemicalString.autoSubscript
                                                   (textField.getText()));
                             }
-                        }));
+                        });
+                autoSubscriptButton.setToolTipText
+                    ("Automatically add subscripts to chemical formulas.");
+                gb.endRowWith(autoSubscriptButton);
             }
 
             JLabel fontSizeLabel = new JLabel("Font size:");
@@ -288,7 +303,7 @@ public class LabelDialog extends JDialog {
             textAngleLabel.setLabelFor(angleField);
             gb.addWest(textAngleLabel);
             gb.endRowWith(angleField);
-            gb.endRowWith(new JLabel("(degrees counterclockwise from east)"));
+            angleField.setToolTipText("(degrees counterclockwise from east)");
             mgb.endRowWith(panel);
         }
 
