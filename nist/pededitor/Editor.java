@@ -88,11 +88,6 @@ import Jama.Matrix;
 // TODO (bug) 21-1B.ped is invalid. How did that happen? Also, Craig
 // managed to create a line with the same point repeated.
 
-// TODO: More helpful error messages if a chemical compound cannot be
-// parsed. Also, more flexible compound parsing, such as 2 AlFe + 3
-// SiO2 -- neither the leading numbers nor the plus signs are
-// understood.
-
 // TODO (mandatory, 1 day): At this point, the rule that tie lines
 // have to end at vertexes of the diagram is no longer needed and not
 // difficult to eliminate. Tie lines ending on rulers without extra
@@ -104,6 +99,8 @@ import Jama.Matrix;
 // completed, push the inverse operation onto a stack.)
 
 // TODO (optional): Remappable key bindings.
+
+// TODO (optional) User-defined character palettes
 
 // TODO (optional) show the line style in the tangent window
 
@@ -128,9 +125,12 @@ import Jama.Matrix;
 // rendering? The problem is that the subscripts don't sit below their
 // baselines.
 
-// TODO (optional, seems to be important based on Chris and Will's
-// reaction) If there exists an autosave version of a file that is
-// newer than the regular version, ask whether to use that instead.
+// TODO: More helpful error messages if a chemical compound cannot be
+// parsed. Also, more flexible compound parsing, such as 2 AlFe + 3
+// SiO2 -- neither the leading numbers nor the plus signs are
+// understood.
+
+// TODO (optional) More help when users start the program up.
 
 // TODO (optional, 2 weeks) Right-click popup menus. I don't think
 // experienced users (the digitizers) would make much use of them, but
@@ -139,6 +139,14 @@ import Jama.Matrix;
 // ordinary menu if you're already using the mouse to identify the
 // location the operation should apply to.
 
+// TODO (optional) Tool tips. It makes the user's life much easier if
+// help automatically pops up when they hover over a control or label
+// than if they have to go to the help file and search for where that
+// particular control is described.
+
+// TODO (optional) If there exists an autosave version of a file that
+// is newer than the regular version, ask whether to use that instead.
+
 // TODO (optional): "Margin size as a fraction of the core diagram
 // height", for example, perhaps should be replaced by something like
 // "Minimum visible page X value", which is probably easier to
@@ -146,20 +154,21 @@ import Jama.Matrix;
 // can be expanded using Enter and choosing an off-screen value.
 
 // TODO (optional) Modified tie-line rules so that endpoints are
-// scattered at even distances along curve edges. Terrell's
+// scattered at even curve lengths along curve edges. Terrell's
 // suggestion: these can be handled manually, since they're not
-// common. (It's not so easy to reliably improve upon even angular
-// spacing; consider corner cases like retrograde motion of the edge
-// as viewed from the convergence point, or tie lines that enclose
-// angles exceeding 180 degrees. However, retrograde motion is not a
-// common issue and isn't reliably handled now anyway.)
+// common, but they're not that uncommon either -- issues come up
+// fairly regularly. (Consider corner cases like retrograde motion of
+// the edge as viewed from the convergence point or tie lines that
+// enclose angles exceeding 180 degrees. However, retrograde motion is
+// not a common issue and isn't reliably handled now anyway.)
 
 // TODO (optional, TAV leave for now see if someone complains) weight
 // vs mole percent enhancements. Text at an angle gets distorted, and
 // that should really be fixed.
 
 // TODO (optional) Option to identify the smallest region containing a
-// point. Unfortunately the math is of medium difficulty.
+// point, to make it easier to change the fill for that region.
+// Unfortunately the math is not trivial.
 
 // DONTFIX? (minor bug) If you select one curve control point with
 // 'Q', then move close to a neighboring vertex that is still less
@@ -168,9 +177,6 @@ import Jama.Matrix;
 // bit odd sometimes.
 
 // TODO (optional) Allow marking of multiple objects.
-
-// TODO (bug) Zoom-to-selection is not reliable. I don't know what the
-// problem is.
 
 // TODO (optional, easy?) Add "Print visible region" as an alternative
 // to "Print". (You can always collapse the margins to the region you
@@ -186,8 +192,8 @@ import Jama.Matrix;
 // facilitate drawing straight lines whose slopes are defined in terms
 // of user variables.
 
-// TODO (Optional) Allow shift-Q to cycle around likely
-// candidates the same way that shift-P does.
+// TODO (Optional) Allow line selection to cycle around likely
+// candidates the same way that point selection does.
 
 // TODO (mandatory?, preexisting, 1 week) Apply a gradient to all control
 // points on a curve. Specifically, apply the following transformation
@@ -2800,25 +2806,44 @@ public class Editor extends Diagram
         String[] columnNames =
             {"Current " + axis.name + " value", "New " + axis.name + " value"};
 
-        Object[][] data;
 
         boolean isX = axis.isXAxis();
+        if (!isX && !axis.isYAxis()) {
+            throw new IllegalStateException("Only x and y units are adjustable");
+        }
 
         Rectangle2D.Double principalBounds = getPrincipalBounds();
 
-        if (isX) {
-            data = new Object[][]
-                {{principalBounds.x, principalBounds.x},
-                 {principalBounds.x+principalBounds.width,
-                  principalBounds.x+principalBounds.width}};
-        } else if (axis.isYAxis()) {
-            data = new Object[][]
-                {{principalBounds.y, principalBounds.y},
-                 {principalBounds.y+principalBounds.height,
-                  principalBounds.y+principalBounds.height}};
+        Point2D.Double p1 = null;
+        Point2D.Double p2 = null;
+
+        CuspFigure path = getActiveCurve();
+        if (path != null && path.size() == 2) {
+            p1 = path.curve.getStart();
+            p2 = path.curve.getEnd();
         } else {
-            throw new IllegalStateException("Only x and y units are adjustable");
+            RulerDecoration rdec = getSelectedRuler();
+            if (rdec != null) {
+                BoundedParam2D p = rdec.getItem().getParameterization();
+                p1 = p.getStart();
+                p2 = p.getEnd();
+            }
         }
+
+        double v1 = isX ? principalBounds.x : principalBounds.y;
+        double v2 = isX ? principalBounds.x + principalBounds.width
+            : principalBounds.y + principalBounds.height;
+        if (p1 != null) {
+            if (isX) {
+                v1 = p1.getX();
+                v2 = p2.getX();
+            } else {
+                v1 = p1.getY();
+                v2 = p2.getY();
+            }
+        }
+
+        Object[][] data = {{v1, v1}, {v2, v2}};
 
         TableDialog dog = new TableDialog(editFrame, data, columnNames);
         dog.setTitle("Scale " + axis.name + " units");
