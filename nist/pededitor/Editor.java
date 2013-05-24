@@ -5028,8 +5028,10 @@ public class Editor extends Diagram
 
     @Override public void mousePressed(MouseEvent e) {
         if (e.getButton() == MouseEvent.BUTTON1) {
-            mousePress = new MousePress
-                (e, getVertexAddMousePosition(e.getPoint()));
+            Point2D.Double p =  e.isShiftDown() ?
+                getAutoPositionHandle(null).getLocation() :
+                getVertexAddMousePosition(e.getPoint());
+            mousePress = new MousePress(e,p);
             mouseTravel = null;
         } else {
             deselectCurve();
