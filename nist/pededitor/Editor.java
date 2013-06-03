@@ -2631,16 +2631,20 @@ public class Editor extends Diagram
             return null;
         }
 
-        StringBuilder res = new StringBuilder();
-
         try {
-            for (String line: Files.readAllLines(file.toPath(),
-                                                 StandardCharsets.UTF_8)) {
-                res.append(line);
-                res.append('\n');
-            }
+            return importStringFromFile(file);
         } catch (IOException e) {
             showError("Could not read file '" + file + "' : " + e);
+            return null;
+        }
+    }
+
+    String importStringFromFile(File file) throws IOException {
+        StringBuilder res = new StringBuilder();
+        for (String line: Files.readAllLines(file.toPath(),
+                                             StandardCharsets.UTF_8)) {
+            res.append(line);
+            res.append('\n');
         }
         return res.toString();
     }
@@ -5270,11 +5274,11 @@ public class Editor extends Diagram
 
     /** Adjust the scale so that the page just fits in the edit frame. */
     void bestFit() {
-        if (pageBounds == null) {
+        Dimension size = getViewportSize();
+        if (pageBounds == null || size.width < 0) {
             return;
         }
 
-        Dimension size = getViewportSize();
         Rescale r = new Rescale(pageBounds.width, 0, (double) size.width,
                                 pageBounds.height, 0, (double) size.height);
         setScale(r.t);
