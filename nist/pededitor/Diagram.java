@@ -3330,6 +3330,20 @@ public class Diagram extends Observable implements Printable {
         return res;
     }
 
+    static Diagram loadFrom(InputStream is) throws IOException {
+        Diagram res;
+
+        try {
+            ObjectMapper mapper = getObjectMapper();
+            res = (Diagram) mapper.readValue(is, Diagram.class);
+        } catch (Exception e) {
+            throw new IOException("File load error: " + e);
+        }
+
+        res.finishDeserialization();
+        return res;
+    }
+
     /** Final setup steps to be taken after a Diagram in JSON format
      * has been deserialized. */
     void finishDeserialization() {
