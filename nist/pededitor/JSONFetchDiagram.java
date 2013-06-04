@@ -19,12 +19,14 @@ public class JSONFetchDiagram {
     }
 
     public static void run(String id) {
+        URL url = null;
+
         try {
             String prefix = resourceToString("ped-fetch-url-prefix.txt");
             String suffix = resourceToString("ped-fetch-url-suffix.txt");
 
             // Sanitize the id argument.
-            URL url = new URL(prefix + Integer.parseInt(id) + suffix);
+            url = new URL(prefix + Integer.parseInt(id) + suffix);
             URLConnection connection = url.openConnection();
             connection.setDoInput(true);
             Diagram d = Diagram.loadFrom(connection.getInputStream());
@@ -35,6 +37,9 @@ public class JSONFetchDiagram {
             e.bestFit();
             e.editFrame.setEditable(false);
         } catch (IOException x) {
+            if (url != null) {
+                System.err.println("While connecting to " + url + ":");
+            }
             System.err.println("Error " + x);
             return;
         } catch (NumberFormatException x) {
