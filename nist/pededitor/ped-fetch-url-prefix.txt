@@ -1,1 +1,1 @@
-http://localhost:8080/crystal/
+http://localhost:7000/diagrams/Diagram/
