@@ -2639,7 +2639,8 @@ public class Editor extends Diagram
         }
     }
 
-    String importStringFromFile(File file) throws IOException {
+    /** Read the given UTF-8 file and return the contents as a string. */
+    static String importStringFromFile(File file) throws IOException {
         StringBuilder res = new StringBuilder();
         for (String line: Files.readAllLines(file.toPath(),
                                              StandardCharsets.UTF_8)) {
