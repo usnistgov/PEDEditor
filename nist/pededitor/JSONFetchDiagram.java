@@ -22,17 +22,23 @@ public class JSONFetchDiagram {
         try {
             String prefix = resourceToString("ped-fetch-url-prefix.txt");
             String suffix = resourceToString("ped-fetch-url-suffix.txt");
-            URL url = new URL(prefix + id + suffix);
+
+            // Sanitize the id argument.
+            URL url = new URL(prefix + Integer.parseInt(id) + suffix);
             URLConnection connection = url.openConnection();
             connection.setDoInput(true);
             Diagram d = Diagram.loadFrom(connection.getInputStream());
             Editor e = new Editor();
             e.copyFrom(d);
             e.initializeGUI();
+            e.editFrame.setReloadVisible(false);
             e.bestFit();
             e.editFrame.setEditable(false);
         } catch (IOException x) {
             System.err.println("Error " + x);
+            return;
+        } catch (NumberFormatException x) {
+            System.err.println("Cannot parse ID '" + id + "'");
             return;
         }
     }
