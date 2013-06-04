@@ -80,6 +80,12 @@ public class EditFrame extends JFrame
                     getParentEditor().saveAsPED();
                 }
             });
+    protected JMenuItem mnReload = new JMenuItem
+        (new Action("Reload", KeyEvent.VK_R) {
+                @Override public void actionPerformed(ActionEvent e) {
+                    getParentEditor().reloadDiagram();
+                }
+            });
     protected JMenuItem mnSelectNearestPoint = new JMenuItem
         (new Action("Select nearest key point",
                     KeyEvent.VK_S,
@@ -607,12 +613,7 @@ public class EditFrame extends JFrame
         mnSaveAs.add(new SaveImageAction("PNG", KeyEvent.VK_G));
 
         mnFile.add(mnSaveAs);
-
-        mnFile.add(new Action("Reload", KeyEvent.VK_R) {
-                @Override public void actionPerformed(ActionEvent e) {
-                    getParentEditor().reloadDiagram();
-                }
-            });
+        mnFile.add(mnReload);
 
         // "Print" menu item
         mnFile.add(new Action("Print", KeyEvent.VK_P) {
@@ -1203,7 +1204,11 @@ public class EditFrame extends JFrame
         setEditable(true);
     }
 
-    void setEditable(boolean b) {
+    public void setReloadVisible(boolean b) {
+        mnReload.setVisible(b);
+    }
+
+    public void setEditable(boolean b) {
         mnSave.setVisible(b);
         mnSaveAsPED.setVisible(b);
         mnSelection.setVisible(b);
