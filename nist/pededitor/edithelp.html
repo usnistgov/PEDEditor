@@ -46,12 +46,10 @@ program and continue where you left off.</p>
 
 <h3>Save as PNG</h3>
 
-<h3>Save as SVG</h3>
-
 <p>Save an image of the diagram. These formats are only intended to
 create files that other programs can read; they are not useful for
 saving and reloading diagrams in the PED editor. Diagrams saved as PDF
-or SVG tend to be of higher quality than diagrams saved as PNG.
+tend to be of higher quality than diagrams saved as PNG.
 
 <h3>Print</h3>
 
@@ -141,7 +139,7 @@ auto-position location. All of the following are candidates for
 auto-positioning:</p>
 
 <ul>
-<li><b>Key points</b>: Key points are highlighted in yellow.</li>
+<li><b>Key points</b>: Key points are highlighted in olive.</li>
 
 <li><b>Curves and rulers</b>: If no key point is nearby but a curve or
 ruler is, then the nearest point on it is selected in orange.</li>
@@ -208,9 +206,9 @@ selected vertex.
 
 <p>Sometimes the auto-positioning is attracted by a key point that
 prevents you from clicking on a curve or grid line instead. You may
-sidestep this problem by pressing using '+' to zoom in until the screen
-distance to the key point becomes large enough that it no longer
-attracts the mouse pointer.</p>
+sidestep this problem by dragging the mouse to select a rectangle to
+zoom into. Once the screen distance becomes large enough, the key
+point will no longer attract the mouse pointer.</p>
 
 <p>To protect users against involuntary mouse movements, the cursor
 stays at the chosen position after you perform a mouse positioning
@@ -626,12 +624,12 @@ of every open circle will be copied.
 <li><p><b>Export all curve and label coordinates</b>: Export the
 coordinates of all curve control points and all labels. Coordinates
 belonging to a single curve and labels that share the same text are
-grouped together; groups are separated from each other by comment
-lines that start with a sharp sign (#).
+grouped together; groups are separated from each other by empty lines
+or comments.
 
 <p>Checking the <code>Add comments</code> box will make the output
-easier to read but may make it harder to import the data into other
-programs.
+easier to interpret but may make it harder to import the data into
+other programs. Comments begin with the sharp sign (#).
 
 <li><p><b>Import curve or label coordinates</b>: This is the inverse
 of the two former operations. If a curve is highlighted, then points
@@ -649,11 +647,8 @@ coordinates</code>, press Escape to deselect them, then
 choose <code>Import label or curve coordinates</code> to create a
 curve between those points.
 
-<li><p><b>Copy status bar</b> (<code>Control+Shift+S</code>): This
-copies the text in the gray status bar at the bottom of the edit
-window to the clipboard. Since the contents depend on the current
-mouse position, you will probably need to use the keyboard shortcut to
-do this.
+<li>Press <code>Control+Shift+S</code> to copy the text in the gray
+status bar at the bottom of the edit window to the clipboard.
 
 </ul>
 
@@ -727,11 +722,8 @@ percent, then you need to check this box. If the second element of the
 pair is actually showing the mole percent, then you need to un-check
 this box.
 
-<li><p><b>Proportions/Convert to [weight/mole] fraction</b>: Only one
-of these operations will be enabled, because you cannot convert a
-diagram to display weight fraction, for example, if it already
-displays weight fraction. These operations transform the entire
-diagram between weight and mole fraction values.
+<li><p><b>Proportions/Convert to [weight/mole] fraction</b>: Transform
+the entire diagram between weight and mole fraction values.
 
 <p>There is no guarantee that every point on every curve of the
 diagram will be correct after you perform a conversion, and points
@@ -748,24 +740,24 @@ that location and maybe (for Windows) press <code>Control-V</code> to
 label that location with the formula.
 
 <li><p><b>Copy all formulas to clipboard</b>: Copy all unique formulas
-in the diagram to the clipboard in alphabetical order, separated by
-newlines. For example, if there is a label that reads "I saw H2O", then the
-formula list will include "H2O" and "I", since I is the chemical formula for iodine.
+in the diagram to the clipboard in alphabetical order, one per line.
+For example, if there is a label that reads "I saw H2O", then the
+formula list will include "H2O" and "I", since I is the chemical
+formula for iodine.
 
 </ul>
 
 <h2>View Menu</h2>
 
-<p>Press the left button and drag the mouse to zoom in.
-Press <code>Control+B</code> (best fit) to exactly fill the edit
-window with the diagram.
+<p>To zoom in, press the left button and drag the mouse until a red
+rectangle forms. Press <code>Control+B</code> (best fit) to exactly
+fill the edit window with the diagram.
 
 <p>Alternatively, you can press '-' to zoom out and '+' to zoom in.
 
 <p><b>Center mouse</b> (<code>Control+L</code>) brings the part of the
 diagram under the mouse towards the center of the edit window. (The
-mouse may not end up in the center if that would require moving the
-edge of the diagram inside the edit window.)
+mouse may not end up in the center if that would bring empty space into view.)
 
 <p>Use the <b>View/Background Image</b> submenu to select how to
 display the original image (if any) in the background of the new
@@ -773,9 +765,6 @@ diagram. <code>Control+H</b> changes the original image from visible
 to hidden and vice versa. <b>View/Background Image/Detach</b>
 permanently removes the linkage from the new diagram to the original
 image; the background image disappears and the Zoom window closes.
-
-<p><b>Zoom to selection</b> (<code>Control+Z</code>) causes the
-currently selected item, if any, to fill the edit window.
 
 </body>
 </html>
