@@ -34,6 +34,7 @@ public class JSONFetchDiagram {
             e.copyFrom(d);
             e.initializeGUI();
             e.editFrame.setReloadVisible(false);
+            e.detachOriginalImage();
             e.bestFit();
             e.editFrame.setEditable(false);
         } catch (IOException x) {
