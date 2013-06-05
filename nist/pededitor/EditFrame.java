@@ -1231,10 +1231,19 @@ public class EditFrame extends JFrame
 
         usingWeightFraction.setVisible(b);
         mnBackgroundImage.setVisible(b);
-
-        if (editingEnabled.isSelected() != b) {
-            editingEnabled.setSelected(b);
+        
+        if (isEditingEnabled() != b) {
+            setEditingEnabled(b);
         }
+    }
+
+
+    public boolean isEditingEnabled() {
+        return editingEnabled.isSelected();
+    }
+
+    public void setEditingEnabled(boolean b) {
+        editingEnabled.setSelected(b);
     }
 
     /** Return the number of visible items in the menu. */
@@ -1293,7 +1302,11 @@ public class EditFrame extends JFrame
     }
 
     protected void help() {
-        ShowHTML.show("edithelp.html", this);
+        if (isEditingEnabled()) {
+            ShowHTML.show("edithelp.html", this);
+        } else {
+            ShowHTML.show("viewhelp.html", this);
+        }
     }
 
     protected void about() {
