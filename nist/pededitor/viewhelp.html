@@ -1,0 +1,118 @@
+<!DOCTYPE HTML>
+<html>
+<head>
+<title>PED Viewer Help</title>
+</head>
+<body>
+
+<h1>PED Viewer Help</h1>
+
+<p><i>Note</i>: This help file only describes the functions most
+likely to be useful to viewers of PED diagrams. For access to advanced
+features, select the <code>Properties</code> menu and check the box
+next to <code>Show Editing Options</code>. Afterwards, you can re-open
+the Help file to obtain a more complete description of these features
+as well as descriptions of additional features.
+
+<h2>File Menu</h2>
+
+<h3>Save as PDF</h3>
+
+<h3>Save as PNG</h3>
+
+<p>Save an image of the diagram. Diagrams saved as PDF tend to be of
+higher quality than diagrams saved as PNG.
+
+<h3>Print</h3>
+
+<p>Print the diagram. The image will be scaled so that its margins
+just fit on the sheet.
+
+<h2>Position Menu</h2>
+
+<p>In addition to moving the mouse pointer, the following commands are
+available for diagram positioning:</p>
+
+<ul>
+
+<li><b>Nearest point</b> (<code>q</code>) moves the mouse to the
+nearest point of special interest such as curve and line intersections
+and endpoints and label and data point locations.
+
+<li><b>Nearest line/curve</b> (<code>w</code>) moves the mouse to the
+the nearest point on any ruler or curve.
+
+<li><b>Enter coordinates</b> (<code>Enter</code>) allows you to type
+in the coordinates you would like the mouse to move to.</li>
+
+</ul>
+
+<p>Holding the shift key down while moving the mouse will cause the
+mouse to be attracted to nearby curves and points of special
+interest.</p>
+
+</ul>
+
+<h2>Digitize Menu</h2>
+
+<ul>
+
+<p>Files saved during export use the UTF-8 character encoding.</p>
+
+<li><p><b>Export all text</b>: Export all labels, key values, tags,
+and diagram components, with duplicates removed. Each entry is
+terminated by a newline.
+
+<li><p><b>Export all curve and label coordinates</b>: Export the
+coordinates of all curve control points and all labels. Coordinates
+belonging to a single curve and labels that share the same text are
+grouped together; groups are separated from each other by empty lines
+or comments.
+
+<p>Checking the <code>Add comments</code> box will make the output
+easier to interpret but may make it harder to import the data into
+other programs. Comments begin with the sharp sign (#).
+
+<li>Press <code>Control+Shift+S</code> to copy the text in the gray
+status bar at the bottom of the edit window to the clipboard.
+
+</ul>
+
+<h2>Chemistry Menu</h2>
+
+<ul>
+
+<li><p><b>Proportions/Convert to [weight/mole] fraction</b>: Transform
+the diagram between weight and mole fraction values.
+
+<p>There is no guarantee that every point on every curve of the
+diagram will be correct after you perform a conversion, and points
+outside the diagram may not line up very well at all. The diagram may
+look funny, especially if there is a wide divergence between the mole
+and weight percents.
+
+<li><p><b>Formula to mole/weight fraction</b> (also available by
+pressing the <code>%</code> key, that is (on US
+keyboards) <code>Shift+5</code>): Enter a chemical formula, and the
+mouse will move to the position in the diagram that that formula
+corresponds to.
+
+<li><p><b>Copy all formulas to clipboard</b>: Copy all unique formulas
+in the diagram to the clipboard in alphabetical order, one per line.
+
+</ul>
+
+<h2>View Menu</h2>
+
+<p>To zoom in, press the left button and drag the mouse until a red
+rectangle forms. Press <code>Control+B</code> (best fit) to exactly
+fill the edit window with the diagram.
+
+<p>Alternatively, you can press '-' to zoom out and '+' to zoom in.
+
+<p><b>Center mouse</b> (<code>Control+L</code>) brings the part of the
+diagram under the mouse towards the center of the edit window. (The
+mouse may not end up in the center if that would bring empty space into view.)
+
+</body>
+</html>
