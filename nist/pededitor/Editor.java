@@ -3710,7 +3710,6 @@ public class Editor extends Diagram
 
                         r = new Rescale(1, 0, maxDiagramWidth,
                                         1, 0, maxDiagramHeight);
-                        System.out.println("r = " + r);
 
                         principalToStandardPage = new RectangleTransform
                             (principalBounds,
@@ -5060,7 +5059,7 @@ public class Editor extends Diagram
         if (principalToStandardPage == null || mprin == null) {
             return;
         }
-        add(getVertexAddMousePosition(getEditPane().getMousePosition()));
+        add(mprin = getVertexAddMousePosition(getEditPane().getMousePosition()));
         setMouseStuck(true);
     }
 
@@ -5455,7 +5454,7 @@ public class Editor extends Diagram
             } else if (principalToStandardPage != null
                        && mprin != null
                        && mousePress != null) {
-                add(mousePress.prin);
+                add(mprin = mousePress.prin);
                 setMouseStuck(true);
             }
             mousePress = null;
