@@ -85,9 +85,6 @@ import Jama.Matrix;
 // coordinates, and you press 'v' but the position does not change. I
 // can't reliably reproduce it.
 
-// TODO (bug) 21-1B.ped is invalid. How did that happen? Also, Craig
-// managed to create a line with the same point repeated.
-
 // TODO (mandatory, 1 day): At this point, the rule that tie lines
 // have to end at vertexes of the diagram is no longer needed and not
 // difficult to eliminate. Tie lines ending on rulers without extra
@@ -2034,8 +2031,19 @@ public class Editor extends Diagram
                 continue;
             }
 
-            double[] dvs = new double[3];
             boolean ok = true;
+            for (LinearAxis axis: axes) {
+                if (values[0].equals(axis.name)) {
+                    showError("You cannot reuse the name of an existing variable.");
+                    ok = false;
+                    break;
+                }
+            }
+            if (!ok) {
+                continue;
+            }
+
+            double[] dvs = new double[3];
             boolean maybePercentage = true;
             for (int i = 0; i < dvs.length; ++i) {
                 try {
