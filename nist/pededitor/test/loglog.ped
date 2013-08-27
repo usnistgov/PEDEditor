@@ -1,0 +1,283 @@
+{
+  "tags" : [ ],
+  "principalToStandardPage" : {
+    "transform" : "RectangleTransform",
+    "input" : {
+      "x" : 0.0,
+      "y" : 0.0,
+      "width" : 2.0,
+      "height" : 2.0
+    },
+    "output" : {
+      "x" : 0.0,
+      "y" : 1.0,
+      "width" : 1.0,
+      "height" : -1.0
+    }
+  },
+  "pageBounds" : {
+    "x" : -0.09843820912823348,
+    "y" : -0.0962424357627996,
+    "width" : 1.1289935039888497,
+    "height" : 1.1868491475768357
+  },
+  "diagramType" : "BINARY",
+  "diagramComponents" : [ null, null, null, null ],
+  "axes" : [ {
+    "format" : {
+      "type" : "DecimalFormat",
+      "pattern" : "#0.0000"
+    },
+    "a" : 1.0,
+    "b" : 0.0,
+    "c" : 0.0,
+    "name" : "X"
+  }, {
+    "format" : {
+      "type" : "DecimalFormat",
+      "pattern" : "#0.0000"
+    },
+    "a" : 0.0,
+    "b" : 1.0,
+    "c" : 0.0,
+    "name" : "Y"
+  }, {
+    "format" : {
+      "type" : "DecimalFormat",
+      "pattern" : "#0.0000"
+    },
+    "a" : 0.5,
+    "b" : 0.0,
+    "c" : 0.0,
+    "name" : "page X"
+  }, {
+    "format" : {
+      "type" : "DecimalFormat",
+      "pattern" : "#0.0000"
+    },
+    "a" : 0.0,
+    "b" : -0.5,
+    "c" : 1.0,
+    "name" : "page Y"
+  } ],
+  "usingWeightFraction" : false,
+  "fontName" : "DejaVu LGC Sans PED",
+  "keys" : {
+  },
+  "decorations" : [ {
+    "decoration" : "ruler",
+    "startPoint" : {
+      "x" : 0.0,
+      "y" : 0.0
+    },
+    "endPoint" : {
+      "x" : 2.0,
+      "y" : 0.0
+    },
+    "lineWidth" : 0.0024,
+    "labelAnchor" : "RIGHT",
+    "displayLog10" : true,
+    "tickRight" : true,
+    "tickPadding" : 3.0,
+    "axis" : "X",
+    "fontSize" : 0.020325203252032523
+  }, {
+    "decoration" : "ruler",
+    "startPoint" : {
+      "x" : 0.0,
+      "y" : 2.0
+    },
+    "endPoint" : {
+      "x" : 2.0,
+      "y" : 2.0
+    },
+    "lineWidth" : 0.0024,
+    "labelAnchor" : "NONE",
+    "displayLog10" : true,
+    "tickLeft" : true,
+    "tickPadding" : 3.0,
+    "axis" : "X",
+    "fontSize" : 0.020325203252032523
+  }, {
+    "decoration" : "ruler",
+    "startPoint" : {
+      "x" : 0.0,
+      "y" : 0.0
+    },
+    "endPoint" : {
+      "x" : 0.0,
+      "y" : 2.0
+    },
+    "lineWidth" : 0.0024,
+    "labelAnchor" : "LEFT",
+    "displayLog10" : true,
+    "textAngle" : 1.5707963267948966,
+    "tickLeft" : true,
+    "tickPadding" : 3.0,
+    "axis" : "Y",
+    "fontSize" : 0.020325203252032523
+  }, {
+    "decoration" : "ruler",
+    "startPoint" : {
+      "x" : 2.0,
+      "y" : 0.0
+    },
+    "endPoint" : {
+      "x" : 2.0,
+      "y" : 2.0
+    },
+    "lineWidth" : 0.0024,
+    "labelAnchor" : "NONE",
+    "displayLog10" : true,
+    "textAngle" : 1.5707963267948966,
+    "tickRight" : true,
+    "tickPadding" : 3.0,
+    "axis" : "Y",
+    "fontSize" : 0.020325203252032523
+  }, {
+    "decoration" : "curve",
+    "curve" : {
+      "points" : [ {
+	"x" : 0.0,
+	"y" : 0.0
+      }, {
+	"x" : 0.3010299956639812,
+	"y" : 0.6020599913279624
+      }, {
+	"x" : 0.47712125471966244,
+	"y" : 0.9542425094393249
+      }, {
+	"x" : 0.6020599913279624,
+	"y" : 1.2041199826559248
+      }, {
+	"x" : 0.6989700043360189,
+	"y" : 1.3979400086720377
+      }, {
+	"x" : 0.7781512503836436,
+	"y" : 1.5563025007672873
+      }, {
+	"x" : 0.8450980400142568,
+	"y" : 1.6901960800285136
+      }, {
+	"x" : 0.9030899869919435,
+	"y" : 1.806179973983887
+      }, {
+	"x" : 0.9542425094393249,
+	"y" : 1.9084850188786497
+      }, {
+	"x" : 1.0,
+	"y" : 2.0
+      } ],
+      "smoothed" : [ false, false, false, false, false, false, false, false, false, false ],
+      "closed" : false
+    },
+    "lineWidth" : 0.0024,
+    "lineStyle" : "SOLID",
+    "id" : 0
+  }, {
+    "decoration" : "label",
+    "text" : "Log/log plot for points on a parabola",
+    "xWeight" : 0.5,
+    "yWeight" : 1.0,
+    "x" : 1.0,
+    "y" : 2.0884245886672987,
+    "scale" : 2.0,
+    "color" : {
+      "rgb" : -16777216
+    }
+  }, {
+    "decoration" : "label",
+    "text" : "●",
+    "xWeight" : 0.5,
+    "yWeight" : 0.5,
+    "scale" : 0.75
+  }, {
+    "decoration" : "label",
+    "text" : "●",
+    "xWeight" : 0.5,
+    "yWeight" : 0.5,
+    "x" : 0.3010299956639812,
+    "y" : 0.6020599913279624,
+    "scale" : 0.75
+  }, {
+    "decoration" : "label",
+    "text" : "●",
+    "xWeight" : 0.5,
+    "yWeight" : 0.5,
+    "x" : 0.47712125471966244,
+    "y" : 0.9542425094393249,
+    "scale" : 0.75
+  }, {
+    "decoration" : "label",
+    "text" : "●",
+    "xWeight" : 0.5,
+    "yWeight" : 0.5,
+    "x" : 0.6020599913279624,
+    "y" : 1.2041199826559248,
+    "scale" : 0.75
+  }, {
+    "decoration" : "label",
+    "text" : "●",
+    "xWeight" : 0.5,
+    "yWeight" : 0.5,
+    "x" : 0.6989700043360189,
+    "y" : 1.3979400086720377,
+    "scale" : 0.75
+  }, {
+    "decoration" : "label",
+    "text" : "●",
+    "xWeight" : 0.5,
+    "yWeight" : 0.5,
+    "x" : 0.7781512503836436,
+    "y" : 1.5563025007672873,
+    "scale" : 0.75
+  }, {
+    "decoration" : "label",
+    "text" : "●",
+    "xWeight" : 0.5,
+    "yWeight" : 0.5,
+    "x" : 0.8450980400142568,
+    "y" : 1.6901960800285136,
+    "scale" : 0.75
+  }, {
+    "decoration" : "label",
+    "text" : "●",
+    "xWeight" : 0.5,
+    "yWeight" : 0.5,
+    "x" : 0.9030899869919435,
+    "y" : 1.806179973983887,
+    "scale" : 0.75
+  }, {
+    "decoration" : "label",
+    "text" : "●",
+    "xWeight" : 0.5,
+    "yWeight" : 0.5,
+    "x" : 0.9542425094393249,
+    "y" : 1.9084850188786497,
+    "scale" : 0.75
+  }, {
+    "decoration" : "label",
+    "text" : "●",
+    "xWeight" : 0.5,
+    "yWeight" : 0.5,
+    "x" : 1.0,
+    "y" : 2.0,
+    "scale" : 0.75
+  }, {
+    "decoration" : "label",
+    "text" : "<i>x</i>",
+    "xWeight" : 0.5,
+    "yWeight" : 0.5,
+    "x" : 1.0,
+    "y" : -0.13046030341903503,
+    "scale" : 2.0
+  }, {
+    "decoration" : "label",
+    "text" : "<i>y</i>",
+    "xWeight" : 0.5,
+    "yWeight" : 0.5,
+    "x" : -0.149215955573764,
+    "y" : 1.0,
+    "scale" : 2.0
+  } ]
+}
