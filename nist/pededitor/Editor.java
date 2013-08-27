@@ -3390,7 +3390,7 @@ public class Editor extends Diagram
                     }
 
                     try {
-                        StdOutErrRedirect.run();
+                        // StdOutErrRedirect.run();
                         Editor app = new Editor();
                         app.run(args.length == 1 ? args[0] : null);
                     } catch (Exception e) {
