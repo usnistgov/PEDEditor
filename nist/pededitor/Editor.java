@@ -56,6 +56,7 @@ import java.text.NumberFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
 import java.util.Observable;
 import java.util.Observer;
@@ -396,7 +397,15 @@ public class Editor extends Diagram
                                 implements WindowListener
     {
         @Override public void windowClosing(WindowEvent e) {
-            close();
+            verifyThenClose();
+        }
+    }
+
+    class VertexInfoDialogCloseListener extends WindowAdapter
+        implements WindowListener
+    {
+        @Override public void windowClosing(WindowEvent e) {
+            editFrame.showSlopeWindow.setSelected(false);
         }
     }
 
@@ -476,6 +485,7 @@ public class Editor extends Diagram
     static final protected double MOUSE_UNSTICK_DISTANCE = 30; /* pixels */
     static final protected double MOUSE_DRAG_DISTANCE = 80; /* pixels */
     static protected Image crosshairs = null;
+    static HashSet<Editor> openEditors = new HashSet<>();
 
     protected CropFrame cropFrame = new CropFrame();
     protected EditFrame editFrame = new EditFrame(this);
@@ -499,6 +509,12 @@ public class Editor extends Diagram
             rulerDialog = new RulerDialog(editFrame, "Add ruler");
         }
         return rulerDialog;
+    }
+
+    /** Return a Set of all open Editor objects (including hidden
+        ones). */
+    public static Set<Editor> getOpenEditors() {
+        return new HashSet<Editor>(openEditors);
     }
 
     protected transient double scale;
@@ -666,7 +682,8 @@ public class Editor extends Diagram
         init();
         tieLineDialog.setFocusableWindowState(false);
         vertexInfo.setDefaultCloseOperation
-            (WindowConstants.DO_NOTHING_ON_CLOSE);
+            (WindowConstants.HIDE_ON_CLOSE);
+        vertexInfo.addWindowListener(new VertexInfoDialogCloseListener());
         editFrame.setDefaultCloseOperation
             (WindowConstants.DO_NOTHING_ON_CLOSE);
         editFrame.addWindowListener(new CloseListener());
@@ -676,6 +693,7 @@ public class Editor extends Diagram
             (WindowConstants.HIDE_ON_CLOSE);
         cropFrame.addCropEventListener(this);
         addObserver(this);
+        openEditors.add(this);
     }
 
     public void initializeZoomFrame() {
@@ -719,11 +737,47 @@ public class Editor extends Diagram
         init();
     }
 
-    public void close() {
+    public void verifyThenClose() {
         if (verifyCloseDiagram
             (new Object[] {"Save and quit", "Quit without saving", "Cancel"})) {
-            System.exit(0);
+            close();
         }
+    }
+
+    /** close() irrevocably closes this Editor object. The results of
+        any further method calls except isClosed() will be
+        undefined.
+
+        The use of openEditors() is hazardous, because if somehow an
+        editor gets closed without close() actually being called, the
+        openEditors list will prevent garbage collection. But the only
+        way I can see that happening is if a program does the closing
+        -- user methods to close the window get redirected to close()
+        as here. So if you're going to close the Editor in your
+        program, call close() or verifyThenClose() to do it.
+    */
+    public void close() {
+        if (!isClosed()) {
+            if (editFrame != null) {
+                editFrame.dispose();
+                editFrame.parentEditor = null;
+                editFrame = null;
+            }
+            if (zoomFrame != null) {
+                zoomFrame.dispose();
+                zoomFrame = null;
+            }
+            if (vertexInfo != null) {
+                vertexInfo.dispose();
+                vertexInfo = null;
+            }
+            redraw();
+            openEditors.remove(this);
+        }
+    }
+
+    public boolean isClosed() {
+        return editFrame == null;
     }
 
     @JsonIgnore VertexHandle getVertexHandle() {
