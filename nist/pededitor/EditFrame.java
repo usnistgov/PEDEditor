@@ -312,6 +312,15 @@ public class EditFrame extends JFrame
                 }
             });
 
+    protected JCheckBoxMenuItem showSlopeWindow
+        = new JCheckBoxMenuItem
+        (new Action("Show slope window", KeyEvent.VK_S) {
+                @Override public void actionPerformed(ActionEvent e) {
+                    getParentEditor().vertexInfo.setVisible
+                        (showSlopeWindow.isSelected());
+                }
+            });
+
     public Editor getParentEditor() { return parentEditor; }
 
     abstract class Action extends AbstractAction {
@@ -1185,6 +1194,8 @@ public class EditFrame extends JFrame
                     getParentEditor().zoomBy(1 / 1.5);
                 }
             });
+        mnView.add(showSlopeWindow);
+        showSlopeWindow.setSelected(true);
 
         JMenu mnHelp = new JMenu("Help");
         mnHelp.setMnemonic(KeyEvent.VK_H);
@@ -1260,8 +1271,11 @@ public class EditFrame extends JFrame
     }
 
     @Override public void update(Observable o, Object arg) {
-        setTitle(getParentEditor().getProvisionalTitle());
-        repaint();
+        Editor e = getParentEditor();
+        if (e != null) {
+            setTitle(e.getProvisionalTitle());
+            repaint();
+        }
     }
 
     /** This method is assumed to be a passive receiver of information
