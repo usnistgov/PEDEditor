@@ -636,7 +636,7 @@ public class EditFrame extends JFrame
         // "Exit" menu item
         mnFile.add(new Action("Exit", KeyEvent.VK_X) {
                 @Override public void actionPerformed(ActionEvent e) {
-                    getParentEditor().close();
+                    getParentEditor().verifyThenClose();
                 }
             });
 
