@@ -60,6 +60,9 @@ public class EditFrame extends JFrame
     protected JRadioButtonMenuItem blinkBackgroundImage;
     protected JRadioButtonMenuItem noBackgroundImage;
     protected Action setAspectRatio;
+    protected String longHelpFile = "edithelp.html";
+    protected String shortHelpFile = "viewhelp.html";
+
 
     JMenu mnSelection = new JMenu("Edit Selection");
     JMenu mnCurve = new JMenu("Curve");
@@ -68,6 +71,18 @@ public class EditFrame extends JFrame
     JMenu mnFont = new JMenu("Font");
     JMenu mnMargins = new JMenu("Margins");
 
+    protected JMenuItem mnNewDiagram = new JMenuItem
+        (new Action("New Diagram", KeyEvent.VK_N) {
+                @Override public void actionPerformed(ActionEvent e) {
+                    getParentEditor().newDiagram();
+                }
+            });
+    protected JMenuItem mnOpen = new JMenuItem
+        (new Action("Open", KeyEvent.VK_O) {
+                @Override public void actionPerformed(ActionEvent e) {
+                    getParentEditor().showOpenDialog(EditFrame.this);
+                }
+            });
     protected JMenuItem mnSave = new JMenuItem
         (new Action("Save", KeyEvent.VK_S) {
                 @Override public void actionPerformed(ActionEvent e) {
@@ -86,12 +101,58 @@ public class EditFrame extends JFrame
                     getParentEditor().reloadDiagram();
                 }
             });
+    JMenuItem mnNextFile = new JMenuItem
+        (new Action("Next", KeyEvent.VK_R) {
+                @Override public void actionPerformed(ActionEvent e) {
+                    getParentEditor().nextFile();
+                }
+            });
+    {
+        mnNextFile.setVisible(false); // Hidden by default
+    }
+
+    JMenuItem mnAutoPosition = new JMenuItem
+        (new Action("Auto-position",
+                    KeyEvent.VK_A,
+                    KeyStroke.getKeyStroke('A')) {
+                @Override public void actionPerformed(ActionEvent e) {
+                    getParentEditor().autoPosition();
+                }
+            });
+
+    JMenuItem mnJumpToSelection = new JMenuItem
+        (new Action("Jump to selection",
+                    KeyEvent.VK_J,
+                    KeyStroke.getKeyStroke('j')) {
+                @Override public void actionPerformed(ActionEvent e) {
+                    getParentEditor().centerSelection();
+                }
+            });
+    
+    JMenuItem mnNearestPoint = new JMenuItem
+        (new Action("Nearest key point",
+                    KeyEvent.VK_N,
+                    KeyStroke.getKeyStroke('q')) {
+                @Override public void actionPerformed(ActionEvent e) {
+                    getParentEditor().seekNearestPoint(false, "q");
+                }
+            });
+
+    JMenuItem mnNearestCurve = new JMenuItem
+        (new Action("Nearest line/curve",
+                    KeyEvent.VK_L,
+                    KeyStroke.getKeyStroke('w')) {
+                @Override public void actionPerformed(ActionEvent e) {
+                    getParentEditor().seekNearestCurve(false, "w");
+                }
+            });
+
     protected JMenuItem mnSelectNearestPoint = new JMenuItem
         (new Action("Select nearest key point",
                     KeyEvent.VK_S,
                     KeyStroke.getKeyStroke('Q')) {
                 @Override public void actionPerformed(ActionEvent e) {
-                    getParentEditor().seekNearestPoint(true);
+                    getParentEditor().seekNearestPoint(true, "Shift+Q");
                 }
             });
     protected JMenuItem mnSelectNearestCurve = new JMenuItem
@@ -100,7 +161,7 @@ public class EditFrame extends JFrame
                     KeyStroke.getKeyStroke('W')) {
                 @Override
                 public void actionPerformed(ActionEvent e) {
-                    getParentEditor().seekNearestCurve(true);
+                    getParentEditor().seekNearestCurve(true, "Shift+W");
                 }
             });
     protected JMenuItem mnUnstickMouse = new JMenuItem
@@ -112,6 +173,7 @@ public class EditFrame extends JFrame
                     repaint();
                 }
             });
+    JMenu mnKeys = new JMenu("Key/value pairs");
     protected JMenuItem mnAddKey = new JMenuItem
         (new Action("Add", KeyEvent.VK_A) {
                 @Override public void actionPerformed(ActionEvent e) {
@@ -122,7 +184,7 @@ public class EditFrame extends JFrame
 
     protected JSeparator mnTagsSeparator = new JSeparator();
     protected JMenuItem mnRemoveTag = new JMenuItem("Delete");
-    protected JMenu mnTags = new JMenu("Tags");
+    JMenu mnTags = new JMenu("Tags");
     protected JSeparator mnVariablesSeparator = new JSeparator();
     protected JMenuItem mnRemoveVariable = new JMenuItem("Delete");
     protected JMenu mnVariables = new JMenu("Variables");
@@ -139,6 +201,12 @@ public class EditFrame extends JFrame
                     getParentEditor().setTitle();
                 }
             });
+    protected JMenuItem mnExportText = new JMenuItem
+        (new Action("Export all text to clipboard", KeyEvent.VK_T) {
+                @Override public void actionPerformed(ActionEvent e) {
+                    getParentEditor().copyAllTextToClipboard();
+                }
+            });
     protected JMenuItem mnImportCoordinates = new JMenuItem
         (new Action("Import curve or label coordinates",
                     KeyEvent.VK_I) {
@@ -148,6 +216,28 @@ public class EditFrame extends JFrame
             });
     protected JMenu mnComponents = new JMenu("Components");
 
+    JMenuItem mnCopyFormulas = new JMenuItem
+        (new Action
+         ("Copy all formulas to clipboard", KeyEvent.VK_O) {
+                @Override public void actionPerformed(ActionEvent e) {
+                    getParentEditor().copyAllFormulasToClipboard();
+                }
+            });
+
+    JMenuItem mnZoomIn = new JMenuItem
+        (new Action("Zoom in", KeyEvent.VK_I,
+                    "typed +") {
+                @Override public void actionPerformed(ActionEvent e) {
+                    getParentEditor().zoomBy(1.5);
+                }
+            });
+    JMenuItem mnZoomOut = new JMenuItem
+        (new Action("Zoom out", KeyEvent.VK_O,
+                    "typed -") {
+                @Override public void actionPerformed(ActionEvent e) {
+                    getParentEditor().zoomBy(1 / 1.5);
+                }
+            });
 
     protected transient BackgroundImageType backgroundType = null;
     protected transient BackgroundImageType oldBackgroundType = null;
@@ -595,17 +685,8 @@ public class EditFrame extends JFrame
         mnFile.setMnemonic(KeyEvent.VK_F);
         menuBar.add(mnFile);
 
-        mnFile.add(new Action("New Diagram", KeyEvent.VK_N) {
-                @Override public void actionPerformed(ActionEvent e) {
-                    getParentEditor().newDiagram();
-                }
-            });
-
-        mnFile.add(new Action("Open", KeyEvent.VK_O) {
-                @Override public void actionPerformed(ActionEvent e) {
-                    getParentEditor().showOpenDialog(EditFrame.this);
-                }
-            });
+        mnFile.add(mnNewDiagram);
+        mnFile.add(mnOpen);
         mnFile.add(mnSave);
 
         // "Save As" submenu
@@ -623,6 +704,7 @@ public class EditFrame extends JFrame
 
         mnFile.add(mnSaveAs);
         mnFile.add(mnReload);
+        mnFile.add(mnNextFile);
 
         // "Print" menu item
         mnFile.add(new Action("Print", KeyEvent.VK_P) {
@@ -754,15 +836,7 @@ public class EditFrame extends JFrame
         JMenu mnPosition = new JMenu("Position");
         mnPosition.setMnemonic(KeyEvent.VK_P);
         menuBar.add(mnPosition);
-
-        mnPosition.add(new Action
-                       ("Auto-position",
-                        KeyEvent.VK_A,
-                        KeyStroke.getKeyStroke('A')) {
-                @Override public void actionPerformed(ActionEvent e) {
-                    getParentEditor().autoPosition();
-                }
-            });
+        mnPosition.add(mnAutoPosition);
 
         mnPosition.add(new Action
                        ("Enter coordinates",
@@ -773,33 +847,9 @@ public class EditFrame extends JFrame
                 }
             });
 
-        mnPosition.add(new Action
-                       ("Jump to selection",
-                        KeyEvent.VK_J,
-                        KeyStroke.getKeyStroke('j')) {
-                @Override public void actionPerformed(ActionEvent e) {
-                    getParentEditor().centerSelection();
-                }
-            });
-
-        mnPosition.add(new Action
-                       ("Nearest key point",
-                        KeyEvent.VK_N,
-                        KeyStroke.getKeyStroke('q')) {
-                @Override public void actionPerformed(ActionEvent e) {
-                    getParentEditor().seekNearestPoint(false);
-                }
-            });
-
-        mnPosition.add(new Action
-                       ("Nearest line/curve",
-                        KeyEvent.VK_L,
-                        KeyStroke.getKeyStroke('w')) {
-                @Override public void actionPerformed(ActionEvent e) {
-                    getParentEditor().seekNearestCurve(false);
-                }
-            });
-
+        mnPosition.add(mnJumpToSelection);
+        mnPosition.add(mnNearestPoint);
+        mnPosition.add(mnNearestCurve);
         mnPosition.add(mnSelectNearestPoint);
         mnPosition.add(mnSelectNearestCurve);
         mnPosition.add(mnUnstickMouse);
@@ -999,7 +1049,6 @@ public class EditFrame extends JFrame
 
         mnProperties.add(mnFont);
 
-        JMenu mnKeys = new JMenu("Key/value pairs");
         mnKeys.setMnemonic(KeyEvent.VK_K);
         mnKeys.add(mnAddKey);
 
@@ -1065,13 +1114,7 @@ public class EditFrame extends JFrame
         JMenu mnDigit = new JMenu("Digitize");
         mnDigit.setMnemonic(KeyEvent.VK_I);
         menuBar.add(mnDigit);
-
-        mnDigit.add(new Action("Export all text to clipboard",
-                              KeyEvent.VK_T) {
-                @Override public void actionPerformed(ActionEvent e) {
-                    getParentEditor().copyAllTextToClipboard();
-                }
-            });
+        mnDigit.add(mnExportText);
 
         mnDigit.add(new Action("Export selected curve or label's coordinates",
                               KeyEvent.VK_P,
@@ -1119,14 +1162,7 @@ public class EditFrame extends JFrame
             mnProp.add(usingWeightFraction);
             mnChem.add(mnProp);
         }
-
-        mnChem.add(new Action
-                   ("Copy all formulas to clipboard", KeyEvent.VK_O) {
-                @Override public void actionPerformed(ActionEvent e) {
-                    getParentEditor().copyAllFormulasToClipboard();
-                }
-            });
-
+        mnChem.add(mnCopyFormulas);
         mnChem.add(new Action
                    ("Formula to mole/weight fraction", KeyEvent.VK_M,
                     KeyStroke.getKeyStroke('%')) {
@@ -1181,19 +1217,8 @@ public class EditFrame extends JFrame
                     getParentEditor().centerMouse();
                 }
             });
-
-        mnView.add(new Action("Zoom in", KeyEvent.VK_I,
-                              "typed +") {
-                @Override public void actionPerformed(ActionEvent e) {
-                    getParentEditor().zoomBy(1.5);
-                }
-            });
-        mnView.add(new Action("Zoom out", KeyEvent.VK_O,
-                              "typed -") {
-                @Override public void actionPerformed(ActionEvent e) {
-                    getParentEditor().zoomBy(1 / 1.5);
-                }
-            });
+        mnView.add(mnZoomIn);
+        mnView.add(mnZoomOut);
         mnView.add(showSlopeWindow);
         showSlopeWindow.setSelected(true);
 
@@ -1217,6 +1242,20 @@ public class EditFrame extends JFrame
 
     public void setReloadVisible(boolean b) {
         mnReload.setVisible(b);
+    }
+
+    public void setNewDiagramVisible(boolean b) {
+        mnNewDiagram.setVisible(b);
+    }
+
+    public void setOpenVisible(boolean b) {
+        mnOpen.setVisible(b);
+    }
+
+    /* Set whether the Slope window is visible or not. */
+    public void setVertexInfoVisible(boolean b) {
+        getParentEditor().vertexInfo.setVisible(b);
+        showSlopeWindow.setSelected(b);
     }
 
     public void setEditable(boolean b) {
@@ -1317,9 +1356,9 @@ public class EditFrame extends JFrame
 
     protected void help() {
         if (isEditingEnabled()) {
-            ShowHTML.show("edithelp.html", this);
+            ShowHTML.show(longHelpFile, this);
         } else {
-            ShowHTML.show("viewhelp.html", this);
+            ShowHTML.show(shortHelpFile, this);
         }
     }
 
