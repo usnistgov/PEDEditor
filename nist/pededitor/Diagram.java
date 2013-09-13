@@ -3985,7 +3985,7 @@ public class Diagram extends Observable implements Printable {
         principalToStandardPage.concatenate(itrans);
         standardPageToPrincipal.preConcatenate(atrans);
 
-        // Convert all angles from page to the new principal coordinates.
+        // Convert all axes from page to the new principal coordinates.
         for (LinearAxis axis: axes) {
             if (isXAxis(axis) || isYAxis(axis) || isLeftAxis(axis)) {
                 continue;
