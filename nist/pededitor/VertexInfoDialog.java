@@ -1,6 +1,5 @@
 package gov.nist.pededitor;
 
-import java.awt.Frame;
 import java.awt.geom.Point2D;
 
 import javax.swing.JDialog;
@@ -27,13 +26,15 @@ public class VertexInfoDialog extends JDialog {
     protected double angled = 0;
     protected double sloped = 0;
     protected double lineWidthd = 0;
+    protected Editor parentEditor = null;
 
     public boolean selfModifying = false;
-    JLabel slopeLabel;
+    JLabel slopeLabel = new JLabel("d####.../d####....");
     public JLabel lineWidth = new JLabel("0.00000");
 
-    public VertexInfoDialog(Frame owner) {
-        super(owner, "Slope", false);
+    public VertexInfoDialog(Editor parentEditor) {
+        super(parentEditor.editFrame, "Slope", false);
+        this.parentEditor = parentEditor;
         setAngleDegrees(0);
 
         slope.getDocument().addDocumentListener
@@ -94,7 +95,7 @@ public class VertexInfoDialog extends JDialog {
         gb.addWest(angle);
         gb.endRowWith(new JLabel("\u00B0") /* degree symbol */);
 
-        gb.addEast(new JLabel("Slope:"));
+        gb.addEast(slopeLabel);
         gb.endRowWith(slope);
 
         gb.addEast(new JLabel("Line width:"));
@@ -102,6 +103,19 @@ public class VertexInfoDialog extends JDialog {
         pack();
         setDerivative(null);
         setLineWidth(0.0);
+    }
+
+    public Editor getParentEditor() { return parentEditor; }
+
+    /** Like setDerivative(), but the derivative is expressed in
+     standard page coordinates, not principal coordinates. */
+    public void setScreenDerivative(Point2D p) {
+        Affine af = getParentEditor().standardPageToPrincipal;
+        if (af == null) {
+            setDerivative(p);
+        } else {
+            setDerivative(af.deltaTransform(p, new Point2D.Double()));
+        }
     }
 
     public void setDerivative(Point2D point) {
@@ -122,7 +136,9 @@ public class VertexInfoDialog extends JDialog {
             setSlope(y/x);
         }
 
-        setAngle(Math.atan2(y, x));
+        Point2D.Double p = new Point2D.Double();
+        getParentEditor().principalToStandardPage.deltaTransform(point, p);
+        setAngle(Math.atan2(p.y, p.x));
     }
 
     static double thetaToDegrees(double theta) {
@@ -143,12 +159,23 @@ public class VertexInfoDialog extends JDialog {
         return -deg * Math.PI / 180;
     }
 
-    static public double thetaToSlope(double theta) {
-        return Math.tan(theta);
+    public double thetaToSlope(double theta) {
+        Point2D.Double p = new Point2D.Double(Math.cos(theta),
+                                              Math.sin(theta));
+        Affine af = getParentEditor().standardPageToPrincipal;
+        if (af != null) {
+            af.deltaTransform(p, p);
+        }
+        return p.y/p.x;
     }
 
-    static public double slopeToTheta(double s) {
-        return -Math.atan2(s, 1);
+    public double slopeToTheta(double s) {
+        Point2D.Double p = new Point2D.Double(1.0, s);
+        Affine af = getParentEditor().principalToStandardPage;
+        if (af != null) {
+            af.deltaTransform(p, p);
+        }
+        return Math.atan2(p.y, p.x);
     }
 
     public void setAngle(double theta) {
@@ -203,7 +230,7 @@ public class VertexInfoDialog extends JDialog {
     }
 
     protected void basicSetSlope(double m, boolean changeText) {
-        sloped = -m;
+        sloped = m;
         if (changeText) {
             double mabs = Math.abs(sloped);
             String format =
@@ -219,7 +246,27 @@ public class VertexInfoDialog extends JDialog {
 
     public void setSlopeLabel(String label) {
         slopeLabel.setText(label + ":");
-        repaint();
+        slopeLabel.repaint();
+    }
+
+    static String truncatedName(LinearAxis ax, String defaultName) {
+        String s = defaultName;
+        if (ax != null && ax.name != null) {
+            s = (String) ax.name;
+        }
+        if (s.length() >= 6) {
+            return s.substring(0,4) + "...";
+        } else {
+            return s;
+        }
+    }
+
+    /** Set the slope label automatically from the parent Editor's
+        settings. */
+    public void setSlopeLabel() {
+        Editor e = getParentEditor();
+        setSlopeLabel("d" + truncatedName(e.getYAxis(), "y")
+                      + "/d" + truncatedName(e.getXAxis(), "x"));
     }
 
     public double getSlope() {
