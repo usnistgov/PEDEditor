@@ -1,0 +1,136 @@
+<!DOCTYPE HTML>
+<html>
+<head>
+<title>PED Viewer Help</title>
+</head>
+<body>
+
+<h1>PED Viewer Help</h1>
+
+<p>Some boilerplate about finding the Editor at 
+<a href="http://www.nist.gov/srd/nist31.cfm">the NIST site</a>.
+
+<h2>File Menu</h2>
+
+<h3>Save as PDF</h3>
+
+<h3>Save as PNG</h3>
+
+<p>Save an image of the diagram. This can be done for all diagrams,
+including old ones for which PDF-format output was not previously
+available. Diagrams saved as PDF stay sharp at high magnifications,
+but diagrams saved as PNG do not.
+
+<h3>Print</h3>
+
+<p>Print the diagram. The image will be scaled so that its margins
+just fit on the sheet.
+
+<h2>Position Menu</h2>
+
+<p>In addition to moving the mouse pointer, the following commands are
+available for diagram positioning:</p>
+
+<ul>
+
+<li><b>Select nearest point</b> (<code>Shift+Q</code>) moves the mouse
+to the nearest point of special interest such as curve intersections,
+curve endpoints, and label and data point locations.
+
+<li><b>Select nearest line/curve</b> (<code>Shift+W</code>) moves the
+mouse to the the nearest point on any ruler or curve.
+
+<li><b>Enter coordinates</b> (<code>Enter</code>) allows you to type
+in the coordinates you would like the mouse to move to.</li>
+
+</ul>
+
+<p>Holding the shift key down while moving the mouse will cause the
+mouse to be attracted to nearby curves and points of special
+interest.</p>
+
+</ul>
+
+<h2>Digitize Menu</h2>
+
+<ul>
+
+<p>Files saved during export use the UTF-8 character encoding.</p>
+
+<li><p><b>Export selected curve or label's coordinates</b>: Export the
+coordinates of all curve control points and all labels to a file or to
+the clipboard. Coordinates
+
+<li><p><b>Export all curve and label coordinates</b>: Export the
+coordinates of all curve control points and all labels to a file or to the clipboard. Coordinates
+belonging to a single curve and labels that share the same text are
+grouped together; groups are separated from each other by empty lines
+or comments.
+
+<p>Checking the <code>Add comments</code> box will make the output
+easier to interpret but may make it harder to import the data into
+other programs. Comments begin with the sharp sign (#).
+
+<li>Press <code>Control+Shift+S</code> to copy the text in the gray
+status bar at the bottom of the edit window to the clipboard.
+
+</ul>
+
+<h2>Chemistry Menu</h2>
+
+<ul>
+
+<li><p><b>Proportions/Convert to [weight/mole] fraction</b>: Transform
+the diagram between weight and mole fraction values.
+
+<p>This function works only for binary or ternary diagrams whose
+diagram components and extreme values have been entered correctly.
+
+<li><p><b>Formula to mole/weight fraction</b> (also available by
+pressing the <code>%</code> key, that is (on US
+keyboards) <code>Shift+5</code>): Enter a chemical formula, and the
+mouse will move to the position in the diagram that that formula
+corresponds to.
+
+</ul>
+
+<h2>View Menu</h2>
+
+<p>To zoom in, press the left button and drag the mouse until a red
+rectangle forms. Press <code>Control+B</code> (best fit) to exactly
+fill the edit window with the diagram.
+
+<p><b>Center mouse</b> (<code>Control+L</code>) brings the part of the
+diagram under the mouse towards the center of the edit window. (The
+mouse may not end up in the center if that would bring empty space into view.)
+
+<p><b>Show slope window</b> If checked, opens a window displaying the
+angle in screen coordinates and slope in principal coordinates (y/x
+for binary diagrams, top component over right compoentn for ternary
+diagrams) at the most recently selected location in the diagram.
+
+<h2>Features Modified or Removed Since Version 3.4</h2>
+
+<ul>
+
+<li><b>Zoom out</b>: Use <code>Control+B</code> or <code>View/Best Fit</code>.
+
+<li><b>Curve Follow</b>: Replaced by <i>Select nearest line/curve</i>
+(<code>Shift+W</code>), though in some cases <i>Select nearest
+point</i> (<code>Shift+Q</code>) is more appropriate. You can use the
+arrow keys to move the mouse a small distance further along the curve
+and then press <code>Shift+W</code> again.
+
+<li><b>Lever Rule, Overlay, Reflection, and Rotate Axes</b>: These
+features are no longer available with version 4.0.
+
+<li><p><b>Mole-to-Weight %</b> and <b>Weight-to-Mole %</b>: For binary
+and ternary diagrams whose components have been entered as formulas
+and whose axes are set up correctly, the gray status bar at the bottom
+of the viewer displays both mole and weight percent at all times for
+the chosen location. Converting a diagram from one form to the other
+is a one-step operation. For other kinds of diagrams, these features
+are not available
+
+</body>
+</html>
