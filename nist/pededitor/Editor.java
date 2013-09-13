@@ -484,13 +484,14 @@ public class Editor extends Diagram
 
     static final protected double MOUSE_UNSTICK_DISTANCE = 30; /* pixels */
     static final protected double MOUSE_DRAG_DISTANCE = 80; /* pixels */
+    protected double mouseDragDistance = MOUSE_DRAG_DISTANCE;
     static protected Image crosshairs = null;
     static HashSet<Editor> openEditors = new HashSet<>();
 
     protected CropFrame cropFrame = new CropFrame();
     protected EditFrame editFrame = new EditFrame(this);
     protected ImageZoomFrame zoomFrame = null;
-    protected VertexInfoDialog vertexInfo = new VertexInfoDialog(editFrame);
+    protected VertexInfoDialog vertexInfo = new VertexInfoDialog(this);
     protected LabelDialog labelDialog = null;
     protected RulerDialog rulerDialog = null;
     protected JColorChooser colorChooser = null;
@@ -564,7 +565,7 @@ public class Editor extends Diagram
 
     /** Because rescaling an image is slow, keep a cache of locations
         and sizes that have been rescaled. */
-    protected ArrayList<ScaledCroppedImage> scaledOriginalImages;
+    protected transient ArrayList<ScaledCroppedImage> scaledOriginalImages;
     /** This is the darkened version of the original image, or null if
         no darkened version exists. At most one dark image is kept in
         memory at a time. */
@@ -612,7 +613,7 @@ public class Editor extends Diagram
     // (In retrospect, it would have been simpler to create the
     // TieLine with dummy values and fill the corners in as they are
     // added, but whatever, this works.)
-    ArrayList<PathAndT> tieLineCorners;
+    protected transient ArrayList<PathAndT> tieLineCorners;
 
     /** Current mouse position expressed in principal coordinates.
      It's not always sufficient to simply read the mouse position in
@@ -677,6 +678,10 @@ public class Editor extends Diagram
         positioned (to determine whether to unstick the mouse from
         that position). */
     protected transient MouseTravel mouseTravel = null;
+
+    /** Array of filename to open, if any. */
+    File[] filesList = null;
+    int fileNo = -1;
 
     public Editor() {
         init();
@@ -776,7 +781,7 @@ public class Editor extends Diagram
         }
     }
 
-    public boolean isClosed() {
+    @JsonIgnore public boolean isClosed() {
         return editFrame == null;
     }
 
@@ -1457,7 +1462,7 @@ public class Editor extends Diagram
         zoom to. */
     boolean isZoomMode() {
         return mousePress != null && mouseTravel != null
-            && mouseTravel.getTravel() >= MOUSE_DRAG_DISTANCE;
+            && mouseTravel.getTravel() >= mouseDragDistance;
     }
 
 
@@ -1810,7 +1815,7 @@ public class Editor extends Diagram
     public void showTangent(Decoration dec, double t) {
         Point2D.Double g = derivative(dec, t);
         if (g != null) {
-            vertexInfo.setDerivative(g);
+            vertexInfo.setScreenDerivative(g);
         }
 
         double w = dec.getLineWidth();
@@ -2428,8 +2433,7 @@ public class Editor extends Diagram
                             v1, f1, v2, f2);
         }
 
-        showError("You must first select a curve or label whose "
-                  + "coordinates are to be copied.");
+        nothingToExportError();
         return null;
     }
 
@@ -2453,6 +2457,9 @@ public class Editor extends Diagram
         showModal() called on it. */
 
     public void exportString(String s, DigitizeDialog dig) {
+        if (s == null) {
+            return;
+        }
         if (dig.getSourceType() == DigitizeDialog.SourceType.FILE) {
             File of = getExportFile();
             if (of == null) {
@@ -2487,7 +2494,16 @@ public class Editor extends Diagram
                      dig);
     }
 
+    void nothingToExportError() {
+        showError("You must first select a curve or label whose "
+                  + "coordinates are to be copied.");
+    }
+
     public void exportSelectedCoordinates() {
+        if (selection == null) {
+            nothingToExportError();
+            return;
+        }
         DigitizeDialog dig = exportDialog();
         if (dig == null) {
             return;
@@ -2775,8 +2791,13 @@ public class Editor extends Diagram
     /** Move the mouse to the nearest key point.
 
         @param select If true, exclude unselectable points, and select
-        the point that is returned. */
-    public void seekNearestPoint(boolean select) {
+        the point that is returned.
+
+        @param key A String describing the key combination used to
+        invoke this function; this parameter is used to display an
+        error to the user if the mouse is off-screen.
+    */
+    public void seekNearestPoint(boolean select, String key) {
         if (mouseIsStuck && principalFocus == null) {
             setMouseStuck(false);
         }
@@ -2962,6 +2983,7 @@ public class Editor extends Diagram
 
         try {
             setDiagramComponent(side, str.isEmpty() ? null : str);
+            vertexInfo.setSlopeLabel();
         } catch (DuplicateComponentException x) {
             showError("Duplicate component '" + str + "'",
                       "Cannot change diagram component");
@@ -3241,6 +3263,14 @@ public class Editor extends Diagram
         redraw();
     }
 
+    boolean mouseMissing(String key) {
+        if (mprin == null) {
+            showError("Place the mouse in the desired location and press " + key);
+            return true;
+        }
+        return false;
+    }
+
     /** @return the location in principal coordinates of the key
         point closest (by page distance) to mprin. */
     Point2D.Double nearestPoint(boolean includeSmoothingPoints) {
@@ -3351,8 +3381,16 @@ public class Editor extends Diagram
 
         @param select If true, select the nearer of the two
         DecorationHandles that neighbor the selected point on the
-        curve. */
-    public void seekNearestCurve(boolean select) {
+        curve.
+
+        @param key A String describing the key combination used to
+        invoke this function; this parameter is used to display an
+        error to the user if the mouse is off-screen.
+    */
+    public void seekNearestCurve(boolean select, String key) {
+        if (mouseMissing(key)) {
+            return;
+        }
         if (mouseIsStuck) {
             setMouseStuck(false);
         }
@@ -3446,7 +3484,7 @@ public class Editor extends Diagram
                     try {
                         // StdOutErrRedirect.run();
                         Editor app = new Editor();
-                        app.run(args.length == 1 ? args[0] : null);
+                        app.run(args);
                     } catch (Exception e) {
                         e.printStackTrace();
                     }
@@ -3463,12 +3501,19 @@ public class Editor extends Diagram
         propagateChange();
     }
 
+    void clearFileList() {
+        filesList = null;
+        editFrame.mnNextFile.setVisible(true);
+        fileNo = -1;
+    }
+
     /** Start on a blank new diagram. */
     public void newDiagram() {
         if (!verifyCloseDiagram()) {
             return;
         }
 
+        clearFileList();
         majorSaveNeeded = false;
         setSaveNeeded(false);
         try (UpdateSuppressor us = new UpdateSuppressor()) {
@@ -4070,6 +4115,7 @@ public class Editor extends Diagram
         } else {
             vertexInfo.setLocation(rect.x + rect.width, rect.y);
         }
+        vertexInfo.setSlopeLabel();
         vertexInfo.setVisible(true);
         editFrame.setVisible(true);
     }
@@ -4368,8 +4414,8 @@ public class Editor extends Diagram
         return result;
     }
 
-    public static File openPEDFileDialog(Component parent) {
-        return CropFrame.openFileDialog
+    public static File[] openPEDFilesDialog(Component parent) {
+        return openFilesDialog
             (parent, "Open PED File", "PED files", new String[] {"ped"});
     }
 
@@ -4385,12 +4431,13 @@ public class Editor extends Diagram
             .put(PREF_DIR,  dir);
     }
 
-    public static File openPEDOrImageFileDialog(Component parent) {
+    public static File[] openPEDOrImageFilesDialog(Component parent) {
         String[] pedExts = { "ped" };
         String[] imageExts = ImageIO.getReaderFileSuffixes();
         String[] allExts = concat(pedExts, imageExts);
         JFileChooser chooser = new JFileChooser();
         chooser.setDialogTitle("Open PED or image file");
+        chooser.setMultiSelectionEnabled(true);
         String dir = getCurrentDirectory();
         if (dir != null) {
             chooser.setCurrentDirectory(new File(dir));
@@ -4402,18 +4449,50 @@ public class Editor extends Diagram
        chooser.addChoosableFileFilter
            (new FileNameExtensionFilter("Image files only", imageExts));
        if (chooser.showOpenDialog(parent) == JFileChooser.APPROVE_OPTION) {
-           File file = chooser.getSelectedFile();
-           setCurrentDirectory(file.getParent());
-           return file;
+           File[] files = chooser.getSelectedFiles();
+           setCurrentDirectory(files[0].getParent());
+           return files;
        } else {
            return null;
        }
     }
 
-    public static File openImageFileDialog(Component parent) {
-        return CropFrame.openFileDialog
+    public static File[] openFilesDialog(Component parent, String title,
+                                      String filterName, String[] suffixes) {
+        Preferences prefs = Preferences.userNodeForPackage(CropFrame.class);
+        String dir = prefs.get(PREF_DIR,  null);
+        JFileChooser chooser = new JFileChooser();
+        chooser.setDialogTitle(title);
+        chooser.setMultiSelectionEnabled(true);
+        if (dir != null) {
+            chooser.setCurrentDirectory(new File(dir));
+        }
+        chooser.setFileFilter
+            (new FileNameExtensionFilter(filterName, suffixes));
+        if (chooser.showOpenDialog(parent) == JFileChooser.APPROVE_OPTION) {
+           File[] files = chooser.getSelectedFiles();
+           if (files != null) {
+               setCurrentDirectory(files[0].getParent());
+           }
+           return files;
+        } else {
+            return null;
+        }
+    }
+
+
+    public static File[] openImageFilesDialog(Component parent) {
+        return openFilesDialog
             (parent, "Open Image File", "Image files",
              ImageIO.getReaderFileSuffixes());
+    }
+
+    public static File openImageFileDialog(Component parent) {
+        File[] res = openImageFilesDialog(parent);
+        if (res != null && res.length == 1) {
+            return res[0];
+        }
+        return null;
     }
 
     public void showOpenDialog(Component parent) {
@@ -4421,9 +4500,22 @@ public class Editor extends Diagram
             return;
         }
 
-        File file = isEditable() ? openPEDOrImageFileDialog(parent)
-            : openPEDFileDialog(parent);
-        showOpenDialog(parent, file);
+        clearFileList();
+        filesList = isEditable() ? openPEDOrImageFilesDialog(parent)
+            : openPEDFilesDialog(parent);
+        showOpenDialog(parent, filesList);
+    }
+
+    public void showOpenDialog(Component parent, File[] files) {
+        if (files == null) {
+            return;
+        }
+        filesList = files;
+        fileNo = 0;
+        if (files.length > 1) {
+            editFrame.mnNextFile.setVisible(true);
+        }
+        showOpenDialog(parent, files[0]);
     }
 
     public void showOpenDialog(Component parent, File file) {
@@ -5444,21 +5536,44 @@ public class Editor extends Diagram
     }
 
     public void run(String filename) {
-        if (filename != null) {
-            String lcase = filename.toLowerCase();
-            int index = lcase.lastIndexOf(".ped");
-            if (index >= 0 && index == lcase.length() - 4) {
-                try {
-                    openDiagram(new File(filename));
-                } catch (IOException e) {
-                    JOptionPane.showMessageDialog
-                        (null, filename + ": " + e,
-                         "File load error", JOptionPane.ERROR_MESSAGE);
-                    return;
-                }
-            } else {
-                openImage(filename);
+        if (filename == null) {
+            run(new String[] {});
+        } else {
+            run(new String[] { filename });
+        }
+    }
+
+    public void nextFile() {
+        File file = filesList[++fileNo];
+        System.err.println("Onto file # " + fileNo);
+        if (fileNo+1 >= filesList.length) {
+            editFrame.mnNextFile.setVisible(false);
+        }
+        String filename = file.toString();
+        String lcase = filename.toLowerCase();
+        int index = lcase.lastIndexOf(".ped");
+        if (index >= 0 && index == lcase.length() - 4) {
+            try {
+                openDiagram(file);
+            } catch (IOException e) {
+                JOptionPane.showMessageDialog
+                    (null, filename + ": " + e,
+                     "File load error", JOptionPane.ERROR_MESSAGE);
+                return;
             }
+        } else {
+            openImage(filename);
+        }
+    }
+
+    public void run(String[] args) {
+        if (args.length > 0) {
+            filesList = new File[args.length];
+            for (int i = 0; i < args.length; ++i) {
+                filesList[i] = new File(args[i]);
+            }
+            editFrame.mnNextFile.setVisible(true);
+            nextFile();
         } else {
             initializeGUI();
             Object[] options = {
@@ -5474,10 +5589,10 @@ public class Editor extends Diagram
                      options,
                      options[0])) {
             case JOptionPane.YES_OPTION:
-                showOpenDialog(editFrame, openImageFileDialog(editFrame));
+                showOpenDialog(editFrame, openImageFilesDialog(editFrame));
                 break;
             case JOptionPane.NO_OPTION:
-                showOpenDialog(editFrame, openPEDFileDialog(editFrame));
+                showOpenDialog(editFrame, openPEDFilesDialog(editFrame));
                 break;
             case JOptionPane.CANCEL_OPTION:
                 newDiagram();
@@ -5510,9 +5625,13 @@ public class Editor extends Diagram
     @Override public void mouseReleased(MouseEvent e) {
         if (e.getButton() == MouseEvent.BUTTON1) {
             if (isZoomMode()) {
-                zoom(mousePress.e.getPoint(), e.getPoint());
-                setMouseStuck(false);
-                mouseTravel = null;
+                Point p1 = mousePress.e.getPoint();
+                Point p2 = e.getPoint();
+                if (!p1.equals(p2)) {
+                    zoom(mousePress.e.getPoint(), e.getPoint());
+                    setMouseStuck(false);
+                    mouseTravel = null;
+                }
             } else if (principalToStandardPage != null
                        && mprin != null
                        && mousePress != null) {
