@@ -98,6 +98,7 @@ public class JSONFetchDiagram2 {
             ef.shortHelpFile = "viewhelp1.html";
             e.mouseDragDistance = 0;
             e.detachOriginalImage();
+            e.setEditable(false);
             try {
                 e.removeVariable("page X");
             } catch (CannotDeletePrincipalVariableException e1) {
