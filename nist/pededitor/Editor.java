@@ -524,6 +524,7 @@ public class Editor extends Diagram
     protected transient boolean smoothed = false;
     protected transient boolean majorSaveNeeded = false;
     protected transient DigitizeDialog digitizeDialog = null;
+    protected boolean mEditable = true;
 
     /** The item (vertex, label, etc.) that is selected, or null if nothing is. */
     protected transient DecorationHandle selection;
@@ -743,7 +744,7 @@ public class Editor extends Diagram
     }
 
     public void verifyThenClose() {
-        if (verifyCloseDiagram
+        if (!isEditable() || verifyCloseDiagram
             (new Object[] {"Save and quit", "Quit without saving", "Cancel"})) {
             close();
         }
@@ -1487,7 +1488,7 @@ public class Editor extends Diagram
 
         AutoPositionHolder ap = new AutoPositionHolder();
         Point2D.Double extraVertex = mprin;
-        if (isZoomMode()) {
+        if (isZoomMode() || !isEditable()) {
             extraVertex = null;
         } else if (isShiftDown) {
             extraVertex = statusPt = getAutoPosition(ap);
@@ -2798,6 +2799,9 @@ public class Editor extends Diagram
         error to the user if the mouse is off-screen.
     */
     public void seekNearestPoint(boolean select, String key) {
+        if (mouseMissing(key)) {
+            return;
+        }
         if (mouseIsStuck && principalFocus == null) {
             setMouseStuck(false);
         }
@@ -3471,8 +3475,9 @@ public class Editor extends Diagram
             System.setProperty("sun.java2d.d3d", "false");
             // TODO UNDO?
             // UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
-        } catch (Exception e) {
-            throw new Error(e);
+        } catch (Exception x) {
+            // Success is not critical.
+            System.err.println("System settings: " + x);
         }
         EventQueue.invokeLater(new ArgsRunnable(args) {
                 @Override public void run() {
@@ -3484,6 +3489,7 @@ public class Editor extends Diagram
                     try {
                         // StdOutErrRedirect.run();
                         Editor app = new Editor();
+                        // app.setEditable(false); // UNDO
                         app.run(args);
                     } catch (Exception e) {
                         e.printStackTrace();
@@ -5220,7 +5226,11 @@ public class Editor extends Diagram
     /** @return true if diagram editing is enabled, or false if the
         diagram is read-only. */
     @JsonIgnore public boolean isEditable() {
-        return true;
+        return mEditable;
+    }
+
+    @JsonIgnore public void setEditable(boolean b) {
+        mEditable = b;
     }
 
     public void setTitle() {
@@ -5632,7 +5642,7 @@ public class Editor extends Diagram
                     setMouseStuck(false);
                     mouseTravel = null;
                 }
-            } else if (principalToStandardPage != null
+            } else if (isEditable() && principalToStandardPage != null
                        && mprin != null
                        && mousePress != null) {
                 add(mprin = mousePress.prin);
