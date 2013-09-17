@@ -189,6 +189,32 @@ public class ChemicalString {
             return s.substring(beginIndex, endIndex);
         }
 
+        /** Merge o into this. */
+        public void merge(Match o) {
+            merge(o, 1.0);
+        }
+
+        public boolean isEmpy() {
+            return beginIndex == endIndex;
+        }
+
+        /** Merge o times count into this. */
+        public void merge(Match o, double count) {
+            for (Map.Entry<String, Double> pair:
+                     o.composition.entrySet()) {
+                String key = pair.getKey();
+                Double d = composition.get(key);
+                if (d == null) {
+                    d = (double) 0;
+                }
+                double newCount = d + pair.getValue() * count;
+                if (newCount == 0) {
+                    continue;
+                }
+                composition.put(key, newCount);
+            }
+        }
+
         /** Return this Match expressed as a Hill order chemical
             formula. */
         @Override public String toString() {
@@ -275,13 +301,148 @@ public class ChemicalString {
         }
     }
 
+    /** I need a Scanner variant that keeps track of the number of
+        characters scanned and that doesn't rely on a fixed
+        delimiter. */
+    static class SimpleScanner implements Cloneable {
+        final static String whitespace = "\\s*";
+        static Pattern whitespacePattern = null;
+
+        CharSequence s;
+        int pos;
+
+        SimpleScanner(CharSequence s) {
+            this.s = s;
+            this.pos = 0;
+        }
+
+        SimpleScanner(CharSequence s, int pos) {
+            this.s = s;
+            this.pos = pos;
+        }
+
+        @Override public SimpleScanner clone() {
+            return new SimpleScanner(s, pos);
+        }
+
+        boolean hasNext() {
+            return s.length() > 0;
+        }
+
+        boolean skip(Pattern p) {
+            Matcher m = p.matcher(s);
+            if (m.lookingAt()) {
+                skip(m.end());
+                return true;
+            }
+            return false;
+        }
+
+        void skip(int charCnt) {
+            pos += charCnt;
+            s = s.subSequence(charCnt, s.length());
+        }
+
+        boolean skip(char ch) {
+            if (s.charAt(0) == ch) {
+                skip(1);
+                return true;
+            }
+            return false;
+        }
+
+        boolean skipWhitespace() {
+            if (whitespacePattern == null) {
+                whitespacePattern = Pattern.compile(whitespace);
+            }
+            return skip(whitespacePattern);
+        }
+
+        int getPosition() {
+            return pos;
+        }
+
+        CharSequence getSequence() {
+            return s;
+        }
+
+        String next(Pattern p) {
+            Matcher m = p.matcher(s);
+            if (m.lookingAt()) {
+                String res = getSequence().subSequence(0, m.end()).toString();
+                skip(m.end());
+                return res;
+            }
+            return null;
+        }
+    }
+
     /** Read the longest leading sequence of s that can be interpreted
         as a chemical formula, and return a Match indicating the
         number of elements of each type. Return null if no leading
         sequence resembles a compound name. Note that spaces are not
         ignored. The beginIndex field will always equal 0 for this
-        call. */
+        call.
+
+        <composition> = ((<spaces>|)(<number>|)(<spaces>|)
+          <simple_composition>(<spaces>|)\+)*
+          ((<spaces>|)(<number>|)(<spaces>|)
+          <simple_composition>(<spaces>|)
+
+        So composition() understands expressions like
+
+          5 (KF)2OH + 2 HCl
+
+        Otherwise this behaves like simpleComposition. */
     public static Match composition(CharSequence s) {
+        Match res = new Match();
+        res.composition = new HashMap<String,Double>();
+
+        SimpleScanner oldScan = new SimpleScanner(s);
+        Pattern numberMatcher = getSubscriptPattern();
+        
+        while (oldScan.hasNext()) {
+            SimpleScanner scan = oldScan.clone();
+            if (scan.getPosition() > 0) {
+                // This isn't the first chemical formula, so we need a
+                // + here.
+                if (!scan.skip('+')) {
+                    break;
+                }
+            }
+
+            scan.skipWhitespace();
+            String num = scan.next(numberMatcher);
+            double count = 1.0;
+            if (num != null) {
+                try {
+                    count = Double.parseDouble(num);
+                } catch (Exception e) {
+                    throw new IllegalStateException
+                        ("'" + num + "' does not parse as a double!");
+                }
+                scan.skipWhitespace();
+            }
+            
+            Match simple = simpleComposition(scan.getSequence());
+            if (simple == null) {
+                break;
+            }
+            scan.skip(simple.endIndex);
+            res.merge(simple, count);
+            scan.skipWhitespace();
+            oldScan = scan;
+        }
+
+        res.endIndex = oldScan.getPosition();
+        return (res.endIndex > 0) ? res : null;
+    }
+
+    /** Sub-function of composition() for parsing the element names,
+        parentheses, and subscripts in chemical formulas. So
+        "Ca(NO3)2.5" would be understood, but anything more
+        complicated would not be. */
+    static Match simpleComposition(CharSequence s) {
         Match res = new Match();
         HashMap<String,Double> compo = new HashMap<>();
         res.composition = compo;
@@ -327,19 +488,7 @@ public class ChemicalString {
 
                 // Merge this sub-compound with the existing
                 // composition.
-                for (Map.Entry<String, Double> pair:
-                         submatch.composition.entrySet()) {
-                    String key = pair.getKey();
-                    Double d = compo.get(key);
-                    if (d == null) {
-                        d = (double) 0;
-                    }
-                    double newCount = d + pair.getValue() * count;
-                    if (newCount == 0) {
-                        continue;
-                    }
-                    compo.put(key, newCount);
-                }
+                res.merge(submatch, count);
                 continue;
             }
 
