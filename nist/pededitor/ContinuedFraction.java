@@ -31,14 +31,15 @@ public class ContinuedFraction {
     public static long lcm(long a, long b) throws OverflowException {
         a = Math.abs(a);
         b = Math.abs(b);
-        long gc = gcf(a,b);
-        if (gc == 0) {
+        long cf = gcf(a,b);
+        if (cf == 0) {
             return 0;
         }
-        if (((double) a) * (b / gc) > Long.MAX_VALUE) {
+        long bocf = b/cf;
+        if (((double) a) * bocf > Long.MAX_VALUE) {
             throw new OverflowException();
         }
-        return a * (b/gc);
+        return a * bocf;
     }
 
     /* Return the least common (nonnegative) multiple of values, or
@@ -186,11 +187,20 @@ public class ContinuedFraction {
         return output;
     }
 
+    public int countDigits(long v) {
+        v = Math.abs(v);
+        int res = 1;
+        for (; v > 10; v /= 10) {
+            ++res;
+        }
+        return res;
+    }
+
     /** Return true if this fraction equals and looks better as a
         terminating decimal. For example, 7/50 looks nicer as 0.14
         (true), but 1/8 looks nicer than 0.125 (false). */
     public boolean looksLikeDecimal() {
-        if (Math.abs(numerator) <= 1) {
+        if (denominator == 1 || Math.abs(numerator) <= 1) {
             return false;
         }
 
@@ -206,7 +216,18 @@ public class ContinuedFraction {
             deno /= 5;
         }
 
-        return (deno == 1 && fives >= 1 && fives * 2 >= twos);
+        if (deno > 1) {
+            return false;
+        }
+
+        if (denominator > numerator) {
+            return fives >= 1 && fives * 2 >= twos;
+        }
+
+        int fracDigits = 1 + countDigits(numerator) + countDigits(denominator);
+        int decDigits = 1 + Math.max(fives,twos)
+            + countDigits(numerator / denominator);
+        return decDigits <= fracDigits + 1;
     }
 
     @Override public String toString() {
