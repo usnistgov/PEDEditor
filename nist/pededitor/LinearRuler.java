@@ -22,7 +22,13 @@ import org.codehaus.jackson.map.annotate.JsonSerialize.Inclusion;
 @JsonSerialize(include = Inclusion.NON_DEFAULT)
 class LinearRuler implements BoundedParameterizable2D, Decorated {
     public static enum LabelAnchor { NONE, LEFT, RIGHT };
-    private static Pattern minusZeroPattern = Pattern.compile("-0\\.?0*\\z");
+    private static Pattern minusZeroPattern = Pattern.compile("-0+\\.?0*\\z");
+
+    /** Remove the leading minus sign from minus zero ("-0") and its
+        fixed-point variants. Leave other strings unchanged. */
+    public static String fixMinusZero(String s) {
+        return minusZeroPattern.matcher(s).lookingAt() ? s.substring(1) : s;
+    }
 
     /** Most applications use straight tick marks, but ternary
         diagrams use V-shaped tick marks (probably because internal
@@ -313,10 +319,37 @@ class LinearRuler implements BoundedParameterizable2D, Decorated {
         xform.transform(endPoint, pageEndPoint);
 
         Stroke oldStroke = g.getStroke();
-        g.setStroke(new BasicStroke((float) (scale * lineWidth)));
+        double scaledLineWidth = scale * lineWidth;
+        // CAP_SQUARE is not appropriate at endpoints that have arrows
+        // (the arrows get ugly square noses), but it is appropriate
+        // for endpoints that have no arrows, and no cap type is
+        // appropriate for lines that have an arrow at just one of the
+        // two ends. The solution is to use CAP_BUTT and move the
+        // endpoint to simulate CAP_SQUARE when necessary.
+        g.setStroke(new BasicStroke((float) scaledLineWidth,
+                                    BasicStroke.CAP_BUTT,
+                                    BasicStroke.JOIN_MITER));
         
         if (drawSpine) {
-            g.draw(new Line2D.Double(pageStartPoint, pageEndPoint));
+            Point2D.Double vec = Duh.normalize
+                (new Point2D.Double
+                 (pageEndPoint.x - pageStartPoint.x,
+                  (pageEndPoint.y - pageStartPoint.y)));
+            vec.x *= scaledLineWidth / 2;
+            vec.y *= scaledLineWidth / 2;
+            Point2D.Double psp = (Point2D.Double) pageStartPoint.clone();
+            if (!startArrow) {
+                // Extend the endpoint to simulate CAP_SQUARE.
+                psp.x -= vec.x;
+                psp.y -= vec.y;
+            }
+            Point2D.Double pep = (Point2D.Double) pageEndPoint.clone();
+            if (!endArrow) {
+                // Extend the endpoint to simulate CAP_SQUARE.
+                pep.x += vec.x;
+                pep.y += vec.y;
+            }
+            g.draw(new Line2D.Double(psp, pep));
         }
 
         double start = getStart();
@@ -599,11 +632,7 @@ class LinearRuler implements BoundedParameterizable2D, Decorated {
                     String s = displayLog10
                         ? LogRulerTick.pow10String(logical)
                         : String.format(formatString, logical).trim();
-                    if (minusZeroPattern.matcher(s).lookingAt()) {
-                        // Java annoyingly formats -0 as "-0". Remove the minus.
-                        s = s.substring(1);
-                    }
-                    s = " " + s + " ";
+                    s = " " + LinearRuler.fixMinusZero(s) + " ";
                     LabelDialog.drawString
                         (g, s, anchor.x, anchor.y, xWeight, yWeight);
                     g.setTransform(oldTransform);
