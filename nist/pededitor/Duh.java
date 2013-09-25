@@ -40,8 +40,7 @@ public class Duh {
             this.center = center;
         }
 
-        @Override
-		public int compare(Point2D.Double o1, Point2D.Double o2) {
+        @Override public int compare(Point2D.Double o1, Point2D.Double o2) {
             double diff = Duh.toAngle(Duh.aMinusB(o2, center)) -
                 Duh.toAngle(Duh.aMinusB(o1, center));
             return (diff > 0) ? 1 : (diff == 0) ? 0 : -1;
@@ -73,6 +72,11 @@ public class Duh {
     public static Point floorPoint(Point2D point) {
         return new Point((int) Math.floor(point.getX()),
                          (int) Math.floor(point.getY()));
+    }
+
+    public static Point2D.Double midpoint(Point2D p1, Point2D p2) {
+        return new Point2D.Double((p1.getX() + p2.getX()) / 2,
+                                  (p1.getY() + p2.getY()) / 2);
     }
 
     public static Point toPoint(Point2D.Double point) {
