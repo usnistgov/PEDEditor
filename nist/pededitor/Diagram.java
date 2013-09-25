@@ -1,10 +1,5 @@
 package gov.nist.pededitor;
 
-import javax.imageio.ImageIO;
-import javax.print.attribute.PrintRequestAttributeSet;
-import javax.swing.*;
-import javax.swing.text.View;
-
 import java.awt.BasicStroke;
 import java.awt.Color;
 import java.awt.Font;
@@ -56,14 +51,10 @@ import java.util.Set;
 import java.util.TreeMap;
 import java.util.TreeSet;
 
-import com.itextpdf.text.Document;
-import com.itextpdf.text.DocumentException;
-import com.itextpdf.text.PageSize;
-import com.itextpdf.text.Paragraph;
-import com.itextpdf.text.pdf.DefaultFontMapper;
-import com.itextpdf.text.pdf.PdfContentByte;
-import com.itextpdf.text.pdf.PdfTemplate;
-import com.itextpdf.text.pdf.PdfWriter;
+import javax.imageio.ImageIO;
+import javax.print.attribute.PrintRequestAttributeSet;
+import javax.swing.JLabel;
+import javax.swing.text.View;
 
 import org.codehaus.jackson.annotate.JsonIgnore;
 import org.codehaus.jackson.annotate.JsonIgnoreProperties;
@@ -76,7 +67,15 @@ import org.codehaus.jackson.map.ObjectMapper;
 import org.codehaus.jackson.map.SerializationConfig;
 import org.codehaus.jackson.map.annotate.JsonDeserialize;
 import org.codehaus.jackson.map.annotate.JsonSerialize.Inclusion;
-import org.jsoup.Jsoup;
+
+import com.itextpdf.text.Document;
+import com.itextpdf.text.DocumentException;
+import com.itextpdf.text.PageSize;
+import com.itextpdf.text.Paragraph;
+import com.itextpdf.text.pdf.DefaultFontMapper;
+import com.itextpdf.text.pdf.PdfContentByte;
+import com.itextpdf.text.pdf.PdfTemplate;
+import com.itextpdf.text.pdf.PdfWriter;
 
 /** Main class for Phase Equilibria Diagrams and their presentation,
     but not including GUI elements such as menus and windows. */
@@ -414,6 +413,13 @@ public class Diagram extends Observable implements Printable {
                 return getDecoration().getCenterLocation();
             }
             return null;
+        }
+
+        /** Return true if this handle is at the center of the
+         * label. */
+        @JsonIgnore public boolean isCentered() {
+            return (handle == LabelHandleType.CENTER ||
+                    (getLabel().getXWeight() == 0.5 && getLabel().getYWeight() == 0.5));
         }
 
         @Override public boolean equals(Object other) {
@@ -1638,7 +1644,7 @@ public class Diagram extends Observable implements Printable {
         ArrayList<StringComposition> scs = new ArrayList<>();
 
         for (Side side: Side.values()) {
-            String dc = htmlToText(diagramComponents[side.ordinal()]);
+            String dc = HtmlToText.htmlToText(diagramComponents[side.ordinal()]);
             if (dc == null) {
                 continue;
             }
@@ -1881,16 +1887,16 @@ public class Diagram extends Observable implements Printable {
         fraction, if the information necessary to do so is available.
         Return true if the conversion was carried out.
 
-        IMPORTANT BUGS:
+        Bugs/limitations:
 
-        1. In ternary diagrams, the conversion from mole percent to
-        weight percent should distort many straight lines into curves.
-        What this routine actually (and incorrectly) does is to
-        convert the endpoints only, incorrectly drawing a straight
-        line between them.
+        1. Curves can be distorted, because control points are
+        translated, not the curves themselves. This would be hard to
+        fix.
 
         2. Angle values are not converted. This will screw up labels
-        that follow isotherms, for example.
+        that follow isotherms, for example. This is fixable, though
+        for the reason listed under (1), isotherm labels *still* might
+        not end up quite parallel to their curves.
     */
     protected boolean moleToWeightFraction() {
         if (!haveComponentCompositions()) {
@@ -1909,9 +1915,7 @@ public class Diagram extends Observable implements Printable {
         fraction, if the information necessary to do so is available.
         Return true if the conversion was carried out.
 
-        IMPORTANT BUGS:
-
-        1. Angle values are not converted.
+        @see moleToWeightFraction() for bugs/limitations.
     */
     protected boolean weightToMoleFraction() {
         if (!haveComponentCompositions()) {
@@ -1972,10 +1976,10 @@ public class Diagram extends Observable implements Printable {
     class DecorationIterator<T extends Decoration> implements Iterator<T> {
         int lastIndex = -1;
         int index;
-        Decoration singleton;
+        Class<? extends Decoration> klass;
 
         public DecorationIterator(T singleton) {
-            this.singleton = singleton;
+            this.klass = singleton.getClass();
             index = nextIndex(0);
         }
 
@@ -2006,7 +2010,7 @@ public class Diagram extends Observable implements Printable {
         private final int nextIndex(int startIndex) {
             for (int i = startIndex; i < decorations.size(); ++i) {
                 Decoration d = decorations.get(i);
-                if (singleton.getClass().isInstance(d)) {
+                if (klass.isInstance(d)) {
                     return i;
                 }
             }
@@ -2174,7 +2178,8 @@ public class Diagram extends Observable implements Printable {
         return diagramType != null && diagramType.isTernary();
     }
 
-    public void setDiagramComponent(Side side, String str) throws DuplicateComponentException {
+    public void setDiagramComponent(Side side, String str)
+        throws DuplicateComponentException {
         componentElements = null;
         LinearAxis axis = getAxis(side);
         if (str != null && str.isEmpty()) {
@@ -2192,9 +2197,7 @@ public class Diagram extends Observable implements Printable {
         diagramComponents[side.ordinal()] = str;
 
         if (axis != null) {
-            if (str == null) {
-                remove(axis);
-            } else {
+            if (str != null) {
                 rename(axis, str);
                 axis.format = STANDARD_PERCENT_FORMAT;
             }
@@ -2212,26 +2215,12 @@ public class Diagram extends Observable implements Printable {
         add(axis);
     }
 
-    public static String htmlToText(String html) {
-        if (html == null) {
-            return null;
-        }
-        String text = Jsoup.parse(html).text();
-        // Convert #0a (non-breaking-space) into ordinary spaces.
-        StringBuilder res = new StringBuilder();
-        for (int i = 0; i < text.length(); ++i) {
-            char ch = text.charAt(i);
-            res.append((ch == '\u00a0') ? ' ' : ch);
-        }
-        return res.toString().trim();
-    }
-
     /** Return the plain text of all labels, tags, key values, and
         diagram components. Duplicates are removed. */
     @JsonIgnore public String[] getAllText() {
         TreeSet<String> lines = new TreeSet<>();
         for (AnchoredLabel label: labels()) {
-            lines.add(htmlToText(label.getText()));
+            lines.add(HtmlToText.htmlToText(label.getText()));
         }
         for (String s: tags) {
             lines.add(s.trim());
@@ -2299,7 +2288,7 @@ public class Diagram extends Observable implements Printable {
         }
 
         for (String labelText: labelTexts) {
-            String plaintext = htmlToText(labelText);
+            String plaintext = HtmlToText.htmlToText(labelText);
             String groupStartTag = null;
             if (addComments) {
                 StringBuilder s = new StringBuilder();
@@ -2714,30 +2703,37 @@ public class Diagram extends Observable implements Printable {
         return res;
     }
 
-    /** Like nearestHandles(p), but return only handles of the given type. */
+    /** Like nearestHandles(p), but return only handles of the given type.
+
+        @param oneHandleOnly If true, return only the closest handle. */
     @SuppressWarnings("unchecked")
-        <T> ArrayList<T> nearestHandles(Point2D.Double p, T handleType) {
+    <T> ArrayList<T> nearestHandles(Point2D.Double p, T handleType, boolean oneHandleOnly) {
         Point2D.Double pagePoint = principalToStandardPage.transform(p);
 
         ArrayList<HandleAndDistance> hads = new ArrayList<>();
         Class<? extends Object> c = handleType.getClass();
         for (Decoration d: getDecorations()) {
-            double minDistSq = 0;
-            DecorationHandle nearestHandle = null;
+            HandleAndDistance nearestHandle = null;
             for (DecorationHandle h: d.getHandles()) {
                 if (!c.isInstance(h)) {
                     continue;
                 }
                 Point2D.Double p2 = h.getLocation();
                 p2 = principalToStandardPage.transform(p2);
-                double distSq = pagePoint.distanceSq(p2);
-                if (nearestHandle == null || distSq < minDistSq) {
-                    nearestHandle = h;
-                    minDistSq = distSq;
+                HandleAndDistance had = new HandleAndDistance
+                    (h, pagePoint.distanceSq(p2));
+
+                if (oneHandleOnly) {
+                    if (nearestHandle == null
+                        || had.distance < nearestHandle.distance) {
+                        nearestHandle = had;
+                    }
+                } else {
+                    hads.add(had);
                 }
             }
             if (nearestHandle != null) {
-                hads.add(new HandleAndDistance(nearestHandle, minDistSq));
+                hads.add(nearestHandle);
             }
         }
 
@@ -3638,95 +3634,259 @@ public class Diagram extends Observable implements Printable {
         return res;
     }
 
-    /** Look at labels within the diagram in an attempt to guess what
-     * the name of the diagram component is. For ternary diagrams,
-     * look for compounds close to the appropriate corner (left,
-     * right, or top). For binary diagrams, look for compound names
-     * close to the lower left or lower right. */
-    public String guessComponent(Side side) {
-        boolean ternary = isTernary();
+    /** Return the plain text of the chemical-formula label closest to
+        prin and no farther than maxPageDist away in standard page
+        coordinates, or null if none is found. */
+    public String nearestChemical(Point2D.Double prin,
+                                  double maxPageDist) {
+        double maxDistanceSq = maxPageDist * maxPageDist;
+        Point2D.Double page = principalToStandardPage
+            .transform(prin);
 
-        Point2D.Double left = null;
-        Point2D.Double right = null;
-        Point2D.Double top = null;
-        double rd = -1e50;
-        double td = -1e50;
-        double ld = -1e50;
-
-        for (Point2D.Double p: principalToStandardPage.getOutputVertices()) {
-            double trd;
-            double ttd;
-            double tld;
-
-            if (ternary) {
-                trd = p.x;
-                ttd = -p.y;
-                tld = 1 - p.x + p.y;
-            } else {
-                trd = p.x + p.y;
-                tld = -p.x + p.y;
-                ttd = 0;
+        for (LabelHandle hand: nearestHandles(prin, new LabelHandle(), false)) {
+            if (!hand.isCentered()) {
+                continue;
             }
-
-            if (trd > rd) {
-                rd = trd;
-                right = p;
-            }
-            if (tld > ld) {
-                ld = tld;
-                left = p;
-            }
-            if (ttd > td) {
-                td = ttd;
-                top = p;
-            }
-        }
-
-        Point2D.Double cornerPage = (side == Side.LEFT) ? left
-            : (side == Side.RIGHT) ? right : top;
-
-        if (ternary && side == Side.TOP && keyValues != null) {
-            // The location of the top corner may be stored in the
-            // x3,y3 coordinates, which in the case of bottom
-            // ternaries may differ from the top corner of the diagram
-            // itself.
-
-            String x3 = get("x3");
-            String y3 = get("y3");
-            if (x3 != null && y3 != null) {
-                try {
-                    Point2D.Double p = new Point2D.Double
-                        (ContinuedFraction.parseDouble(x3),
-                         ContinuedFraction.parseDouble(y3));
-                    cornerPage = principalToStandardPage.transform(p);
-                } catch (NumberFormatException e) { }
-            }
-        }
-
-        double maxDistance = (pageBounds.width + pageBounds.height) / 8;
-        double maxDistanceSq = maxDistance * maxDistance;
-        Point2D.Double corner = standardPageToPrincipal.transform(cornerPage);
-
-        for (LabelHandle hand: nearestHandles(corner, new LabelHandle())) {
-            Point2D.Double page = principalToStandardPage.transform
+            Point2D.Double handPage = principalToStandardPage.transform
                 (hand.getLocation());
-            if (page.distanceSq(cornerPage) > maxDistanceSq) {
-                return null;
+            if (handPage.distanceSq(page) > maxDistanceSq) {
+                break;
             }
-            String text = htmlToText(hand.getLabel().getText());
-            ChemicalString.Match match = ChemicalString.maybeQuotedComposition(text);
+            String text = HtmlToText.htmlToText(hand.getLabel().getText());
+            ChemicalString.Match match = ChemicalString
+                .maybeQuotedComposition(text);
             if (match != null) {
-                return match.within(text);
+                return match.within(text).trim();
             }
         }
 
         return null;
     }
 
+    /** These rulers are defined by principal coordinates. That means
+        getRuler(Side.LEFT) might return the left axis of a ternary
+        diagram, for instance. Also, the "BOTTOM" axis represents the
+        one with the least principal-coordinates value, but that might
+        in fact lie at the top of the screen. Similarly, the "LEFT"
+        axis has the least principal coordinates, but it might lie to
+        the right of the "RIGHT" one. Finally if only one horizontal
+        ruler exists, then the BOTTOM and TOP versions will be the
+        same thing.
+
+        Returns null if a suitable axis was not found. */
+    @JsonIgnore public LinearRuler getRuler(Side side) {
+        double cx = 0;
+        double cy = 0;
+        switch (side) {
+        case LEFT:
+            cx = -1;
+            break;
+        case RIGHT:
+            cx = 1;
+            if (isTernary()) {
+                // For typical ternary diagrams, right-side rulers are
+                // oriented along a line such the that quantity of the
+                // right component plus the quantity of the top
+                // component is maximized for the diagram domain.
+                cy = 1;
+            }
+            break;
+        case TOP:
+            cy = 1;
+            break;
+        case BOTTOM:
+            cy = -1;
+            break;
+        }
+
+        LinearRuler res = null;
+        double maxv = 0;
+        for (LinearRuler r: rulers()) {
+            Point2D.Double s = r.startPoint;
+            Point2D.Double e = r.endPoint;
+            double v = s.x * cx + s.y * cy + e.x * cx + e.y * cy;
+            if (res == null || v > maxv) {
+                res = r;
+                maxv = v;
+            }
+        }
+
+        if (res == null) {
+            return null;
+        }
+
+        // OK, we know which ruler lies furthest in the direction this
+        // ruler is supposed to lie in, but if that ruler isn't
+        // oriented correctly then we still have to return null.
+
+        // A roughly correct orientation requires that the dot product
+        // of the delta with the coefficient vector be a lot smaller
+        // than the cross product.
+
+        Point2D.Double ray = Duh.aMinusB(res.endPoint, res.startPoint);
+        double dot = cx * ray.x + cy * ray.y;
+        double cross = cx * ray.y - cy * ray.x;
+        if (Math.abs(dot * 4) > Math.abs(cross)) {
+            return null;
+        }
+
+        return res;
+    }
+
+    /** Look at labels within the diagram in an attempt to guess what
+     * the name of the diagram component is. For ternary diagrams,
+     * look for compounds close to the appropriate corner (left,
+     * right, or top). For binary diagrams, look for compound names
+     * close to the lower left or lower right. */
+    public String guessComponent(Side side) {
+        LinearRuler left = getRuler(Side.LEFT);
+        LinearRuler right = getRuler(Side.RIGHT);
+        LinearRuler bottom = getRuler(Side.BOTTOM);
+
+        // Lower left ... upper right corners. For ternary diagrams,
+        // only one of the upper-left or upper-right corners may
+        // exist, or they may be the same point (simply the top of the
+        // diagram).
+        Point2D.Double ll = null;
+        Point2D.Double lr = null;
+        Point2D.Double ul = null;
+        Point2D.Double ur = null;
+
+        double lh = 0; // height of left ruler
+        double rh = 0; // height of right ruler
+        double bw = 0; // width of bottom ruler
+        if (bottom != null) {
+            bw = bottom.endPoint.x - bottom.startPoint.x;
+            if (bw > 0) {
+                ll = bottom.startPoint;
+                lr = bottom.endPoint;
+            } else {
+                lr = bottom.startPoint;
+                ll = bottom.endPoint;
+            }
+            bw = Math.abs(bw);
+        }
+
+        if (left != null) {
+            lh = left.endPoint.y - left.startPoint.y;
+            if (lh > 0) {
+                ll = left.startPoint;
+                ul = left.endPoint;
+            } else {
+                ul = left.startPoint;
+                ll = left.endPoint;
+            }
+            lh = Math.abs(lh);
+        }
+
+        if (right != null) {
+            rh = right.endPoint.y - right.startPoint.y;
+            if (rh > 0) {
+                lr = right.startPoint;
+                ur = right.endPoint;
+            } else {
+                ur = right.startPoint;
+                lr = right.endPoint;
+            }
+            rh = Math.abs(rh);
+        }
+
+        double diagonal = 0;
+        if (ur != null && ll != null) {
+            diagonal = principalToStandardPage.transform(ll)
+                .distance(principalToStandardPage.transform(ur));
+        } else if (ul != null && lr != null) {
+            diagonal = principalToStandardPage.transform(ul)
+                .distance(principalToStandardPage.transform(lr));
+        } else {
+            return null;
+        }
+        double maxDist = diagonal / 11;
+
+        Point2D.Double target;
+        double margin = 0.03;
+
+        switch (side) {
+
+        case LEFT:
+            target = Duh.toPoint2DDouble(ll);
+            if (target == null) {
+                return null;
+            }
+            if (left != null) {
+                target.y -= lh * margin;
+            }
+            if (bottom != null) {
+                target.x -= bw * margin;
+            }
+            return nearestChemical(target, maxDist);
+
+        case RIGHT:
+            target = Duh.toPoint2DDouble(lr);
+            if (target == null) {
+                return null;
+            }
+            if (right != null) {
+                target.y -= lh * margin;
+            }
+            if (bottom != null) {
+                target.x += bw * margin;
+            }
+            return nearestChemical(target, maxDist);
+
+        case TOP:
+
+            Point2D.Double ltarget = null;
+            String lchem = null;
+            if (left != null) {
+                ltarget = Duh.toPoint2DDouble(ul);
+                ltarget.y += lh * margin;
+                lchem = nearestChemical(ltarget, maxDist);
+            }
+
+            if (right == null) {
+                return lchem;
+            }
+
+            Point2D.Double rtarget = Duh.toPoint2DDouble(ur);
+            rtarget.y += rh * margin;
+            rtarget.x -= rh * margin;
+            String rchem = nearestChemical(rtarget, maxDist);
+
+            if (left == null) {
+                return rchem;
+            }
+
+            // For some bottom partial ternary diagrams, the top
+            // component is labeled just beyond the ends of the left
+            // and right axes. If this is the case, nearestChemical()
+            // should return the same thing on both sides.
+
+            if (lchem != null && lchem.equals(rchem)) {
+                return lchem;
+            }
+
+            // For others, the top compoonent is labeled near the
+            // midpoint between those two.
+
+            // For full ternary diagrams, checking the two different
+            // positions above is a waste of time, but it shouldn't
+            // hurt anything.
+            return nearestChemical(Duh.midpoint(ltarget, rtarget), maxDist);
+            
+		default:
+			throw new IllegalArgumentException("No such component 'BOTTOM'");
+        }
+    }
+
     /** Fill in all undefined diagram components with best guesses.
         Return false if it appears that some components still need to
-        be added, or true otherwise. */
-    public boolean guessComponents() {
+        be added, or true otherwise.
+
+        @param force If false, do not change components that have
+        already been assigned nontrivial names (names like "Left" and
+        "Right" are considered trivial). */
+    public boolean guessComponents(boolean force) {
         String code;
         if (diagramType == DiagramType.OTHER
             || (((code = get("diagram code")) != null)
@@ -3747,23 +3907,19 @@ public class Diagram extends Observable implements Printable {
         for (Side side: sides) {
             int i = side.ordinal();
             String oldName = diagramComponents[i];
-            if (oldName == null
-                || oldName.toLowerCase().equals(side.toString().toLowerCase())) {
+            boolean componentExisted = oldName != null;
+            boolean ok = !force && componentExisted
+                && !oldName.toLowerCase().equals(side.toString().toLowerCase());
+            if (!ok) {
                 String c = guessComponent(side);
-                if (c != null) {
+                if (c == null) {
+                    res = false;
+                } else {
                     try {
                         setDiagramComponent(side, c);
-                        System.out.println("Assigned " + side + " = " + c);
                     } catch (DuplicateComponentException x) {
                         c = null;
                     }
-                }
-
-                if (c == null) {
-                    res = false;
-                    System.out.println
-                        ("Could not determine " + side
-                         + " diagram component in " + getFilename());
                 }
             }
         }
