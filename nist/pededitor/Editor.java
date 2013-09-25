@@ -86,6 +86,10 @@ import Jama.Matrix;
 // coordinates, and you press 'v' but the position does not change. I
 // can't reliably reproduce it.
 
+// TODO (bug) Somehow, the "nearest point on curve" can get stuck at
+// control points, which implies the nearest point isn't actually
+// being computed correctly.
+
 // TODO (mandatory, 1 day): At this point, the rule that tie lines
 // have to end at vertexes of the diagram is no longer needed and not
 // difficult to eliminate. Tie lines ending on rulers without extra
@@ -124,11 +128,13 @@ import Jama.Matrix;
 // baselines.
 
 // TODO: More helpful error messages if a chemical compound cannot be
-// parsed. Also, more flexible compound parsing, such as 2 AlFe + 3
-// SiO2 -- neither the leading numbers nor the plus signs are
-// understood.
+// parsed.
 
 // TODO (optional) More help when users start the program up.
+
+// TODO (optional) Allow wildcards in formula fits. This would, for
+// instance, allow the oxygen levels to be automatically adjusted to
+// the correct values.
 
 // TODO (optional, 2 weeks) Right-click popup menus. I don't think
 // experienced users (the digitizers) would make much use of them, but
@@ -136,11 +142,6 @@ import Jama.Matrix;
 // isn't very friendly, and you can't use the mouse to click on an
 // ordinary menu if you're already using the mouse to identify the
 // location the operation should apply to.
-
-// TODO (optional) Tool tips. It makes the user's life much easier if
-// help automatically pops up when they hover over a control or label
-// than if they have to go to the help file and search for where that
-// particular control is described.
 
 // TODO (optional) If there exists an autosave version of a file that
 // is newer than the regular version, ask whether to use that instead.
@@ -182,13 +183,9 @@ import Jama.Matrix;
 // to undo.)
 
 // TODO (optional but in my opinion super useful for general
-// digitization tasks, 3 days) Currently the tangent dialog displays a
-// slope value that is just the tangent of the angle and frankly is
-// not very useful. The user could select the rise and run variables
-// instead, so, for example, the slope could show the derivative of
-// the liquidus with respect to composition. This would also
-// facilitate drawing straight lines whose slopes are defined in terms
-// of user variables.
+// digitization tasks, 3 days) Let the user select the rise and run
+// variables of the slope window. This would also facilitate drawing
+// straight lines whose slopes are defined in terms of user variables.
 
 // TODO (Optional) Allow line selection to cycle around likely
 // candidates the same way that point selection does.
@@ -394,7 +391,7 @@ public class Editor extends Diagram
     }
 
     class CloseListener extends WindowAdapter
-                                implements WindowListener
+        implements WindowListener
     {
         @Override public void windowClosing(WindowEvent e) {
             verifyThenClose();
@@ -496,6 +493,7 @@ public class Editor extends Diagram
     protected RulerDialog rulerDialog = null;
     protected JColorChooser colorChooser = null;
     protected JDialog colorDialog = null;
+    protected FormulaDialog formulaDialog = null;
 
     LabelDialog getLabelDialog() {
         if (labelDialog == null) {
@@ -503,6 +501,13 @@ public class Editor extends Diagram
                                           getFont().deriveFont(16.0f));
         }
         return labelDialog;
+    }
+
+    FormulaDialog getFormulaDialog() {
+        if (formulaDialog == null) {
+            formulaDialog = new FormulaDialog(editFrame);
+        }
+        return formulaDialog;
     }
 
     RulerDialog getRulerDialog() {
@@ -716,8 +721,7 @@ public class Editor extends Diagram
         scale = BASE_SCALE;
         mprin = null;
         scaledOriginalImages = null;
-        vertexInfo.setAngle(0);
-        vertexInfo.setSlope(0);
+        vertexInfo.refresh();
         vertexInfo.setLineWidth(lineWidth);
         mouseIsStuck = false;
         mouseTravel = null;
@@ -2199,18 +2203,30 @@ public class Editor extends Diagram
         mole fractions.
     */
     public void computeFraction(boolean isWeight) {
+        FormulaDialog dog = getFormulaDialog();
+        String compound = dog.showModal();
+        if (compound == null) {
+            return;
+        }
+
+        // Can't set the clipboard? Don't worry about it.
+        copyToClipboard(dog.getFormula().trim(), true);
+
         String errorTitle = "Could not compute component ratios";
+        String nonEditableError = "This diagram does not support that feature.";
         double[][] componentElements = getComponentElements();
 
         ArrayList<Side> sides = new ArrayList<>();
         ArrayList<Side> badSides = new ArrayList<>();
         for (Side side: sidesThatCanHaveComponents()) {
             if (diagramComponents[side.ordinal()] == null) {
-                JOptionPane.showMessageDialog
-                    (editFrame,
-                     "The " + side + " diagram component is not defined.\n"
-                     + "Define it with the \"Chemistry/Components/Set "
-                     + side.toString().toLowerCase() + " component\" menu item.");
+                if (isEditable()) {
+                    showError("The " + side + " diagram component is not defined. "
+                              + "Define it with the \"Chemistry/Components/Set "
+                              + side.toString().toLowerCase() + " component\" menu item.");
+                } else {
+                    showError(nonEditableError);
+                }
                 return;
             }
             if (componentElements[side.ordinal()] == null) {
@@ -2220,66 +2236,26 @@ public class Editor extends Diagram
             }
         }
 
-        if (sides.size() < 2) {
-            StringBuilder message = new StringBuilder
-                ("The following diagram component(s) were not successfully\n"
-                 + "parsed as compounds (see 'Chemical fomula syntax'\n"
-                 + "in the help menu for details):\n");
-            int sideNo = -1;
-            for (Side side: badSides) {
-                ++sideNo;
-                if (sideNo > 0) {
-                    message.append(", ");
+        if (sides.size() < 2 + (isTernary() ? 1 : 0)) {
+            if (!isEditable()) {
+                showError(nonEditableError);
+            } else {
+                StringBuilder message = new StringBuilder
+                    ("The following diagram component(s) were not successfully\n"
+                     + "parsed as compounds:\n");
+                int sideNo = -1;
+                for (Side side: badSides) {
+                    ++sideNo;
+                    if (sideNo > 0) {
+                        message.append(", ");
+                    }
+                    message.append(side.toString());
                 }
-                message.append(side.toString());
-            }
 
-            JOptionPane.showMessageDialog(editFrame, message.toString());
+                showError(message.toString());
+            }
             return;
         }
-
-        ChemicalString.Match m = null;
-        String originalCompound = null;
-        String compound = null;
-        for (;;) { // Keep trying until user aborts or enters valid input
-            originalCompound = JOptionPane.showInputDialog
-                (editFrame,
-                 "The string you enter will be placed in the clipboard.\n"
-                 + "In Windows, you may press Control-V later to paste\n"
-                 + "the text into a label's text box.\n"
-                 + "Chemical formula:",
-                 "Compute mole/weight fraction", JOptionPane.PLAIN_MESSAGE);
-            if (originalCompound == null) {
-                return;
-            }
-            originalCompound = originalCompound.trim();
-            
-            // Attempt to convert the input from HTML to regular text.
-            // This should be mostly harmless even if it was regular
-            // text to begin with, since normal chemical formulas
-            // don't include <, >, or & anyhow.
-            compound = htmlToText(originalCompound);
-            if (compound.isEmpty()) {
-                return;
-            }
-            m = ChemicalString.composition(compound);
-            if (m == null) {
-                JOptionPane.showMessageDialog
-                    (editFrame, "Parse error in formula");
-                continue;
-            } else if (m.endIndex < compound.length()) {
-                JOptionPane.showMessageDialog
-                    (editFrame, "Parse error at <<HERE in '"
-                     + compound.substring(0, m.endIndex)
-                     + "<<HERE" + compound.substring(m.endIndex) + "'");
-                continue;
-            } else {
-                break;
-            }
-        }
-
-        // Can't set the clipboard? Don't worry about it.
-        copyToClipboard(originalCompound, true);
 
         // Map from elements to indexes into diagramElements.
         String[] diagramElements = getDiagramElements();
@@ -2301,13 +2277,12 @@ public class Editor extends Diagram
         }
 
         double[] coefs = new double[eltCnt];
-        for (Map.Entry<String, Double> pair: m.composition.entrySet()) {
+        for (Map.Entry<String, Double> pair: dog.getComposition().entrySet()) {
             String element = pair.getKey();
             Integer i = elementIndexes.get(element);
             if (i == null) {
-                JOptionPane.showMessageDialog
-                    (editFrame, "No parseable diagram component contains "
-                     + element + ".");
+                showError("This diagram does not contain "
+                          + element + ".");
                 return;
             }
             coefs[i] = pair.getValue();
@@ -2345,11 +2320,16 @@ public class Editor extends Diagram
                                         // error in element counts and
                                         // the total number of atoms
         if (totalError > totalAtoms * maxRelativeError) {
-                JOptionPane.showMessageDialog
-                    (editFrame,
-                     "Showing the best fit, which has a relative error of "
-                     + String.format("%.2f%%",
-                                     100 * totalError / totalAtoms));
+            String s = "<p>Showing the best fit, which has a relative error of "
+                + String.format("%.2f%%", 100 * totalError / totalAtoms) + ".";
+            if (totalError > 0.02) {
+                s = s + "<p>The formula you entered is not an approximate "
+                    + "linear combination of the diagram components. "
+                    + "Note that this program will not adjust the "
+                    + "subscript of oxygen to balance the equation. "
+                    + "So this fit is probably worthless.";
+            }
+            showError(s);
         }
 
         Point2D.Double fractions;
@@ -2586,20 +2566,16 @@ public class Editor extends Diagram
         Affine xformi;
 
         if (v1 == v2) {
-            JOptionPane.showMessageDialog
-                (editFrame, "Please choose two different variables.");
+            showError("Please choose two different variables.");
             return;
         }
         try {
             xformi = inverseTransform(v1, v2);
         } catch (NoninvertibleTransformException e) {
-            JOptionPane.showMessageDialog
-                (editFrame,
-                 "<html><body width=\"200 px\"><p>" +
-                 "The combination of " + (String) v1.name + " and "
-                 + (String) v2.name + " cannot be used to  "
-                 + "uniquely identify points (the two variables "
-                 + "are not linearly independent).");
+            showError("The combination of " + (String) v1.name + " and "
+                      + (String) v2.name + " cannot be used to  "
+                      + "uniquely identify points (the two variables "
+                      + "are not linearly independent).");
             return;
         }
 
@@ -2756,11 +2732,11 @@ public class Editor extends Diagram
         if (mprin == null) {
             showError
                 ("Move the mouse to the target location. "
-                 + "Use the 'Control+C' shortcut key or keyboard menu controls "
+                 + "Use the 'Control+Shift+S' shortcut key or keyboard menu controls "
                  + "instead of selecting the menu item using the mouse.",
                  "Copy position error");
         }
-        copyToClipboard(htmlToText(principalToPrettyString(mprin)), false);
+        copyToClipboard(HtmlToText.htmlToText(principalToPrettyString(mprin)), false);
     }
 
     public void copyAllTextToClipboard() {
@@ -2954,10 +2930,8 @@ public class Editor extends Diagram
         double y2 = (Double) output[1][1];
 
         if (x1 == x2 || y1 == y2) {
-            JOptionPane.showMessageDialog
-                (editFrame,
-                 "Please choose two different old values\n"
-                 + "and two different new values.");
+            showError("Please choose two different old values "
+                      + "and two different new values.");
             return;
         }
 
@@ -2987,7 +2961,7 @@ public class Editor extends Diagram
 
         try {
             setDiagramComponent(side, str.isEmpty() ? null : str);
-            vertexInfo.setSlopeLabel();
+            vertexInfo.refresh();
         } catch (DuplicateComponentException x) {
             showError("Duplicate component '" + str + "'",
                       "Cannot change diagram component");
@@ -3481,7 +3455,7 @@ public class Editor extends Diagram
         }
         EventQueue.invokeLater(new ArgsRunnable(args) {
                 @Override public void run() {
-                    if (args.length > 1) {
+                    if (args.length == 1 && args[0].charAt(0) == '-') {
                         printHelp();
                         System.exit(2);
                     }
@@ -3509,7 +3483,7 @@ public class Editor extends Diagram
 
     void clearFileList() {
         filesList = null;
-        editFrame.mnNextFile.setVisible(true);
+        editFrame.mnNextFile.setVisible(false);
         fileNo = -1;
     }
 
@@ -4121,7 +4095,7 @@ public class Editor extends Diagram
         } else {
             vertexInfo.setLocation(rect.x + rect.width, rect.y);
         }
-        vertexInfo.setSlopeLabel();
+        vertexInfo.refresh();
         vertexInfo.setVisible(true);
         editFrame.setVisible(true);
     }
@@ -4197,7 +4171,7 @@ public class Editor extends Diagram
             try {
                 String aspectRatioStr = JOptionPane.showInputDialog
                     (editFrame,
-                     "Enter the width-to-height ratio for the core diagram.\n"
+                     "Enter the width-to-height ratio for the diagram.\n"
                      + "(Most diagrams in the database uses a ratio of 80%.)",
                      ContinuedFraction.toString(oldValue, true));
                 if (aspectRatioStr == null) {
@@ -5555,7 +5529,6 @@ public class Editor extends Diagram
 
     public void nextFile() {
         File file = filesList[++fileNo];
-        System.err.println("Onto file # " + fileNo);
         if (fileNo+1 >= filesList.length) {
             editFrame.mnNextFile.setVisible(false);
         }
@@ -5627,7 +5600,7 @@ public class Editor extends Diagram
     } 
 
     public static void printHelp() {
-        System.err.println("Usage: java Editor [<filename>]");
+        System.err.println("Usage: java -jar PEDEditor.jar [<filename> ...]");
     }
 
     @Override public void mouseClicked(MouseEvent e) {}
