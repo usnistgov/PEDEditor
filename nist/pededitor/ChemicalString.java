@@ -54,7 +54,7 @@ public class ChemicalString {
         + "(?![a-z]))";
 
     final static String ion = "[\u207a\u207b]"; // superscript+ or superscript-
-    final static String subscript = "\\d+(?:\\.\\d+)?";
+    final static String subscript = "(?:\\.\\d+|\\d+\\.\\d*|\\d+/\\d+|\\d+)%?";
     final static String elementCount =
         "(" + element + ")" + ion + "*(" + subscript + ")?" + ion + "*"
         + "(?![a-z])";
@@ -81,15 +81,15 @@ public class ChemicalString {
     }
 
     /** Return the standard atomic weight for the given element
-        number, or 0 if no standard weight is defined for that
+        number, or Double.NaN if no standard weight is defined for that
         element. */
     public static double elementWeight(int i) {
-        return (i > weights.length) ? 0 : weights[i];
+        return (i >= weights.length) ? Double.NaN : weights[i];
     }
 
     /** Return the standard atomic weight for the given element
-        symbol, or 0 if no standard weight is defined for that
-        element. */
+        symbol, or Double.NaN if no standard weight is defined for
+        that element. */
     public static double elementWeight(String symbol) {
         return elementWeight(symbolToNumber(symbol));
     }
@@ -183,10 +183,19 @@ public class ChemicalString {
         /** Exclusive index of end of match into input CharSquence --
             like String#substring(). */
         int endIndex;
+        boolean mIsWholeStringMatch;
         Map<String,Double> composition;
 
         public String within(String s) {
             return s.substring(beginIndex, endIndex);
+        }
+
+        public boolean isWholeStringMatch() {
+            return mIsWholeStringMatch;
+        }
+
+        public void setWholeStringMatch(boolean b) {
+            mIsWholeStringMatch = b;
         }
 
         /** Merge o into this. */
@@ -218,24 +227,42 @@ public class ChemicalString {
         /** Return this Match expressed as a Hill order chemical
             formula. */
         @Override public String toString() {
-            String[] elements = composition.keySet().toArray(new String[0]);
-            ChemicalString.hillSort(elements);
-            StringBuilder res = new StringBuilder();
-            for (String element: elements) {
-                res.append(element);
-                double quantity = composition.get(element);
-                long approx = Math.round(quantity);
-                if (quantity - approx < 1e-4) {
-                    if (approx != 1) {
-                        //res.append(Long.toString(approx));
-                        res.append(approx);
-                    }
-                } else {
-                    res.append(String.format("%.3f", quantity));
-                }
-            }
-            return res.toString();
+            return hillSystemFormula(composition);
         }
+
+        /** Return this Match expressed as a Hill order chemical
+            formula. */
+        public double getWeight() {
+            return weight(composition);
+        }
+    }
+
+    /** Return the Hill system chemical formula. */
+    public static String hillSystemFormula(Map<String,Double> composition) {
+        String[] elements = composition.keySet().toArray(new String[0]);
+        hillSort(elements);
+        StringBuilder res = new StringBuilder();
+        for (String element: elements) {
+            res.append(element);
+            double quantity = composition.get(element);
+            if (Math.abs(quantity-1) > 1e-10) {
+                res.append(ContinuedFraction.toString(quantity, false));
+            }
+        }
+        return res.toString();
+    }
+
+    /** Return the molecular weight, or Double.NaN if that is not
+        defined (either because of nonexistent symbols or because one
+        or more elements has undefined standard weight. */
+    public static double weight(Map<String,Double> composition) {
+        double tot = 0;
+        for (Map.Entry<String,Double> entry: composition.entrySet()) {
+            String element = entry.getKey();
+            double quantity = entry.getValue();
+            tot += elementWeight(element) * quantity;
+        }
+        return tot;
     }
 
     /** Return an array of all maximal-length chemical formulas that
@@ -289,11 +316,18 @@ public class ChemicalString {
             }
 
             int start = quotedMatcher.start(1);
+            CharSequence oldS = s;
             s = s.subSequence(start, quotedMatcher.end(1));
+            
             Match c = composition(s);
             if (c != null) {
                 c.beginIndex += start;
                 c.endIndex += start;
+                if (c.isWholeStringMatch()) {
+                    String str = oldS.subSequence(quotedMatcher.end(),
+                                                  oldS.length()).toString();
+                    c.setWholeStringMatch(str.trim().isEmpty());
+                }
             }
             return c;
         } else {
@@ -385,9 +419,12 @@ public class ChemicalString {
         call.
 
         <composition> = ((<spaces>|)(<number>|)(<spaces>|)
-          <simple_composition>(<spaces>|)\+)*
+          <simple_composition>(<spaces>|)[+:,[[:space:]]])*
           ((<spaces>|)(<number>|)(<spaces>|)
           <simple_composition>(<spaces>|)
+
+        Detail: if the comma or no-delimiter approaches are used, then
+        a number must start the next expression.
 
         So composition() understands expressions like
 
@@ -399,29 +436,36 @@ public class ChemicalString {
         res.composition = new HashMap<String,Double>();
 
         SimpleScanner oldScan = new SimpleScanner(s);
-        Pattern numberMatcher = getSubscriptPattern();
-        
-        while (oldScan.hasNext()) {
+        Pattern numberPattern = getSubscriptPattern(); 
+
+        for (;;) {
+            if (!oldScan.hasNext()) {
+                res.setWholeStringMatch(true);
+                break;
+            }
             SimpleScanner scan = oldScan.clone();
+            boolean numberNeeded = false;
             if (scan.getPosition() > 0) {
-                // This isn't the first chemical formula, so we need a
-                // + here.
-                if (!scan.skip('+')) {
-                    break;
+                // This isn't the first chemical formula, so a join
+                // character is allowed, but not required.
+                if (!(scan.skip('+') || scan.skip(':'))) {
+                    numberNeeded = true;
+                    scan.skip(',');
                 }
             }
 
             scan.skipWhitespace();
-            String num = scan.next(numberMatcher);
+            String num = scan.next(numberPattern);
             double count = 1.0;
             if (num != null) {
                 try {
-                    count = Double.parseDouble(num);
-                } catch (Exception e) {
-                    throw new IllegalStateException
-                        ("'" + num + "' does not parse as a double!");
+                    count = ContinuedFraction.parseDouble(num);
+                } catch (NumberFormatException e) {
+                    break;
                 }
                 scan.skipWhitespace();
+            } else if (numberNeeded) {
+                break;
             }
             
             Match simple = simpleComposition(scan.getSequence());
@@ -450,7 +494,11 @@ public class ChemicalString {
         String leftDelimiters = "([";
         String rightDelimiters = ")]";
 
-        while (s.length() > 0) {
+        for (;;) {
+            if (s.length() == 0) {
+                res.setWholeStringMatch(true);
+                break;
+            }
             char ch = s.charAt(0);
             int delimiterNo = leftDelimiters.indexOf((int) ch);
 
@@ -459,11 +507,11 @@ public class ChemicalString {
                 s = s.subSequence(1, s.length());
                 Match submatch = composition(s);
                 if (submatch == null) {
-                    return null;
+                    break;
                 }
                 s = s.subSequence(submatch.endIndex, s.length());
                 if (s.length() == 0 || s.charAt(0) != rightDelimiter) {
-                    return (res.endIndex > 0) ? res : null;
+                    break;
                 }
                 s = s.subSequence(1, s.length());
                 res.endIndex += 2 + submatch.endIndex;
@@ -477,10 +525,9 @@ public class ChemicalString {
                     // Successfully matched a trailing subscript
                     String substr = subscriptMatcher.group();
                     try {
-                        count = Double.parseDouble(substr);
-                    } catch (Exception e) {
-                        throw new IllegalStateException
-                            ("'" + substr + "' does not parse as a double!");
+                        count = ContinuedFraction.parseDouble(substr);
+                    } catch (NumberFormatException e) {
+                        break;
                     }
                     s = s.subSequence(subscriptMatcher.end(), s.length());
                     res.endIndex += subscriptMatcher.end();
@@ -504,10 +551,9 @@ public class ChemicalString {
                 double count = 1;
                 if (countStr != null) {
                     try {
-                        count = Double.parseDouble(countStr);
-                    } catch (Exception e) {
-                        throw new IllegalStateException
-                            ("'" + countStr + "' does not parse as a double!");
+                        count = ContinuedFraction.parseDouble(countStr);
+                    } catch (NumberFormatException e) {
+                        break;
                     }
                 }
 
@@ -542,12 +588,11 @@ public class ChemicalString {
         BufferedReader read
             = new BufferedReader(new InputStreamReader(System.in));
         while (true) {
-            System.out.println("Formula: ");
+            System.out.print("Formula: ");
             String line;
             try {
                 line = read.readLine();
             } catch (IOException e) {
-                // TODO Auto-generated catch block
                 break;
             }
             System.out.println("Auto-subscripted: " + autoSubscript(line));
@@ -555,21 +600,9 @@ public class ChemicalString {
             if (match == null) {
                 System.out.println("No leading compound found");
             } else {
-                Map<String,Double> c = match.composition;
-                int s = c.size();
-                String[] elements = new String[s];
-                int i = 0;
-                for (String element: c.keySet()) {
-                    elements[i++] = element;
-                }
-                Arrays.sort(elements);
-
-                System.out.println("Composition: ");
-                for (String element: elements) {
-                    System.out.print(element + c.get(element));
-                }
-                System.out.println();
-
+                System.out.println((match.isWholeStringMatch() ? "Full" : "Partial") + " match found.");
+                System.out.println("Hill Order: " + match);
+                System.out.println("Weight: " + match.getWeight());
                 System.out.println("Trimmed = " + match.within(line));
             }
         }
