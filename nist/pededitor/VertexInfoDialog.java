@@ -15,8 +15,6 @@ import org.codehaus.jackson.annotate.JsonIgnore;
 public class VertexInfoDialog extends JDialog {
     private static final long serialVersionUID = 1686051698640332170L;
 
-    // TODO Use diagram components to determine slope.
-
     protected JTextField angle = new JTextField(9);
     protected JTextField slope = new JTextField(12);
 
@@ -159,13 +157,36 @@ public class VertexInfoDialog extends JDialog {
         return -deg * Math.PI / 180;
     }
 
+    /** Return true if v1 and v2 are so close to parallel that they approach the limits of double precision floating point numbers. */
+    static boolean nearlyParallel(Point2D.Double v1, Point2D.Double v2) {
+        return 1e13 * Math.abs(v1.x * v2.y - v1.y * v2.x) < Math.abs(v1.x * v2.x + v1.y * v2.y);
+    }
+
     public double thetaToSlope(double theta) {
-        Point2D.Double p = new Point2D.Double(Math.cos(theta),
-                                              Math.sin(theta));
+        Point2D.Double p = new Point2D.Double
+            (Math.cos(theta), Math.sin(theta));
         Affine af = getParentEditor().standardPageToPrincipal;
-        if (af != null) {
-            af.deltaTransform(p, p);
+        if (af == null) {
+            return Double.NaN;
         }
+
+        // Don't show values like -5.7e16 when the slope is +/-
+        // infinity to the limits of precision.
+        Affine afInverse = getParentEditor().principalToStandardPage;
+        Point2D.Double vert = new Point2D.Double(0, 1);
+        afInverse.deltaTransform(vert, vert);
+        if (nearlyParallel(p, vert)) { // Nearly vertical
+            return Double.NaN;
+        }
+        // Don't show values like -5.7e-16 when the slope is zero to
+        // the limits of precision.
+        Point2D.Double horiz = new Point2D.Double(1, 0);
+        afInverse.deltaTransform(horiz, horiz);
+        if (nearlyParallel(p, vert)) { // Nearly horizontal
+            return 0;
+        }
+
+        af.deltaTransform(p, p);
         return p.y/p.x;
     }
 
@@ -200,7 +221,7 @@ public class VertexInfoDialog extends JDialog {
     protected void basicSetAngleDegrees(double deg, boolean changeText) {
         angled = deg;
         if (changeText) {
-            angle.setText(String.format("%.2f", deg));
+            angle.setText(LinearRuler.fixMinusZero(String.format("%.2f", deg)));
         }
     }
 
@@ -232,15 +253,19 @@ public class VertexInfoDialog extends JDialog {
     protected void basicSetSlope(double m, boolean changeText) {
         sloped = m;
         if (changeText) {
-            double mabs = Math.abs(sloped);
-            String format =
-                (mabs < 1e-12) ? "%.0f"
-                : (mabs < 1e-4) ? "%.4e"
-                : (mabs < 1) ? "%.6f"
-                : (mabs < 1e5) ? "%.4f"
-                : (mabs < 1e9) ? "%.0f"
-                : "%.6e";
-            slope.setText(String.format(format, sloped));
+            if (Double.isNaN(m)) {
+                slope.setText("");
+            } else {
+                double mabs = Math.abs(sloped);
+                String format =
+                    (mabs < 1e-12) ? "%.0f"
+                    : (mabs < 1e-4) ? "%.4e"
+                    : (mabs < 1) ? "%.6f"
+                    : (mabs < 1e5) ? "%.4f"
+                    : (mabs < 1e9) ? "%.0f"
+                    : "%.6e";
+                slope.setText(LinearRuler.fixMinusZero(String.format(format, sloped)));
+            }
         }
     }
 
@@ -263,10 +288,17 @@ public class VertexInfoDialog extends JDialog {
 
     /** Set the slope label automatically from the parent Editor's
         settings. */
-    public void setSlopeLabel() {
+    void setSlopeLabel() {
         Editor e = getParentEditor();
         setSlopeLabel("d" + truncatedName(e.getYAxis(), "y")
                       + "/d" + truncatedName(e.getXAxis(), "x"));
+    }
+
+    /** Set the slope label automatically from the parent Editor's
+        settings. */
+    public void refresh() {
+        setSlopeLabel();
+        setAngle(0);
     }
 
     public double getSlope() {
