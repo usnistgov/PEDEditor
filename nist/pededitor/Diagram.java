@@ -2507,12 +2507,22 @@ public class Diagram extends Observable implements Printable {
                 return axis;
             }
         }
+        for (LinearAxis axis: axes) {
+            if (axis.isXAxis()) {
+                return axis;
+            }
+        }
         return null;
     }
 
     @JsonIgnore public LinearAxis getYAxis() {
         for (LinearAxis axis: axes) {
             if (isYAxis(axis)) {
+                return axis;
+            }
+        }
+        for (LinearAxis axis: axes) {
+            if (axis.isYAxis()) {
                 return axis;
             }
         }
