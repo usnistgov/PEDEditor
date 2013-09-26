@@ -2172,19 +2172,61 @@ public class Editor extends Diagram
         editFrame.setUsingWeightFraction(b);
     }
 
-    @Override protected boolean moleToWeightFraction() {
-        boolean res = super.moleToWeightFraction();
+    int convertLabels() {
+        return JOptionPane.showConfirmDialog
+            (editFrame,
+             "Convert diagram labels? The conversion "
+             + "is not guaranteed to be correct or reversible.",
+             "Convert diagram labels",
+             JOptionPane.YES_NO_CANCEL_OPTION,
+             JOptionPane.QUESTION_MESSAGE);
+    }
+
+    /** Open a dialog asking whether to convert labels, and pass the
+        user's answer along to moleToWeightFraction(boolean). */
+    public boolean moleToWeightFraction() {
+         switch (convertLabels()) {
+        case JOptionPane.YES_OPTION:
+            return moleToWeightFraction(true);
+
+         case JOptionPane.NO_OPTION:
+             return moleToWeightFraction(false);
+
+         default:
+             return false;
+         }
+    }
+
+    @Override public boolean moleToWeightFraction(boolean convertLabels) {
+        boolean res = super.moleToWeightFraction(convertLabels);
         if (res && mprin != null) {
             moveMouse(moleToWeightFraction(mprin));
         }
+        bestFit();
         return res;
     }
 
-    @Override protected boolean weightToMoleFraction() {
-        boolean res = super.weightToMoleFraction();
+    /** Open a dialog asking whether to convert labels, and pass the
+        user's answer along to weightToMoleFraction(boolean). */
+    public boolean weightToMoleFraction() {
+         switch (convertLabels()) {
+        case JOptionPane.YES_OPTION:
+            return weightToMoleFraction(true);
+
+         case JOptionPane.NO_OPTION:
+             return weightToMoleFraction(false);
+
+         default:
+             return false;
+         }
+    }
+
+    @Override public boolean weightToMoleFraction(boolean convertLabels) {
+        boolean res = super.weightToMoleFraction(convertLabels);
         if (res && mprin != null) {
             moveMouse(weightToMoleFraction(mprin));
         }
+        bestFit();
         return res;
     }
 
@@ -5547,6 +5589,7 @@ public class Editor extends Diagram
         } else {
             openImage(filename);
         }
+        bestFit();
     }
 
     public void run(String[] args) {
