@@ -1393,6 +1393,61 @@ public class Editor extends Diagram
             (standardPageToPrincipal.transform(mousePage));
     }
 
+    /** Like move(), but move in the given direction until you run
+        into a line. If there are no lines past this one, then do
+        nothing.
+    */
+    public void jump(int dx, int dy) {
+        if (mprin == null) {
+            return;
+        }
+
+        Point2D.Double mousePage = principalToStandardPage.transform(mprin);
+
+        double bigBump = pageBounds.width + pageBounds.height +
+                Math.abs(pageBounds.x) + Math.abs(pageBounds.y);
+        double smallBump = bigBump * 1e-5;
+        // Bump p1 over a bit so we don't end up hitting the same
+        // point we started at. The bump should be small, but not
+        // smaller than the precision of the intersection computation.
+
+        // Bump p2 in the same direction a larger distance -- clear
+        // outside the diagram, to make sure the segment isn't too
+        // small.
+
+        Line2D.Double seg = new Line2D.Double
+            (mousePage.x + dx * smallBump, mousePage.y + dy * smallBump,
+             mousePage.x + dx * bigBump, mousePage.y + dy * bigBump);
+        Point2D p1 = seg.getP1();
+
+        double minDistSq = 0;
+        Decoration closeDec = null;
+        double closeDecT = 0;
+        Point2D.Double res = null;
+        for (Decoration dec: getDecorations()) {
+            if (dec instanceof BoundedParameterizable2D) {
+                BoundedParam2D b
+                    = ((BoundedParameterizable2D) dec).getParameterization();
+                for (double t: b.segIntersections(seg)) {
+                    Point2D.Double p = b.getLocation(t);
+                    double distSq = p1.distanceSq(p);
+                    if (res == null || distSq < minDistSq) {
+                        minDistSq = distSq;
+                        closeDec = dec;
+                        closeDecT = t;
+                        res = p;
+                    }
+                }
+            }
+        }
+
+        if (res != null) {
+            moveMouse(standardPageToPrincipal.transform(res));
+            showTangent(closeDec, closeDecT);
+            setMouseStuck(true);
+        }
+    }
+
     /** Move the mouse to position p (defined in principal
         coordinates). If the mouse is stuck at the selection, then
         move everything at the mouse to the new position as well. */
@@ -3093,15 +3148,21 @@ public class Editor extends Diagram
         }
     }
 
+    /** Return a value that's small compared to the page size but
+        still big enough to avoid getting swallowed by loss of
+        precision. */
+    double pagePrecision() {
+        return 1e-10 * (pageBounds.width + pageBounds.height +
+                        Math.abs(pageBounds.x) + Math.abs(pageBounds.y));
+    }
+
     /** Return true if point pageP is inside pageR or nearly so. */
     boolean roughlyInside(Point2D pageP, Rectangle2D pageR) {
         if (pageR.contains(pageP)) {
             return true;
         }
 
-        return Duh.distance(pageP, pageR)
-            < 1e-10 * (pageBounds.width + pageBounds.height +
-            Math.abs(pageBounds.x) + Math.abs(pageBounds.y));
+        return Duh.distance(pageP, pageR) < pagePrecision();
     }
 
     /** Return null if principal coordinates point prin is not within
