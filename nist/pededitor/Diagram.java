@@ -1897,8 +1897,12 @@ public class Diagram extends Observable implements Printable {
         that follow isotherms, for example. This is fixable, though
         for the reason listed under (1), isotherm labels *still* might
         not end up quite parallel to their curves.
+
+        @param convertLabels If true, attempt to convert appearances of
+        variants of the words "mole" and "atomic" to "weight" in all
+        labels.
     */
-    protected boolean moleToWeightFraction() {
+    public boolean moleToWeightFraction(boolean convertLabels) {
         if (!haveComponentCompositions()) {
             return false;
         }
@@ -1906,7 +1910,45 @@ public class Diagram extends Observable implements Printable {
         for (DecorationHandle hand: movementHandles()) {
             hand.move(moleToWeightFraction(hand.getLocation()));
         }
+        if (convertLabels) {
+            for (LabelInfo labelInfo: labelInfos()) {
+                AnchoredLabel label = labelInfo.label;
+                label.setText(MoleWeightString.moleToWeight(label.getText()));
+                labelInfo.setLabel(label);
+            }
+        }
         setUsingWeightFraction(true);
+        computeMargins();
+
+        return true;
+    }
+
+    /** @return true if all diagram components are single elements: O, not O2 or NaCl. */
+    @JsonIgnore public boolean isAtomic() {
+        double[][] componentElements = getComponentElements();
+        if (componentElements == null) {
+            return true;
+        }
+        for (Side side: Side.values()) {
+            double[] quants = componentElements[side.ordinal()];
+            if (quants == null) {
+                continue;
+            }
+            int nonzeroCnt = 0;
+            int onesCnt = 0;
+            for (double d: quants) {
+                if (d > 0) {
+                    nonzeroCnt++;
+                }
+                if (Math.abs(d - 1) < 1e-6) {
+                    onesCnt++;
+                }
+            }
+
+            if (nonzeroCnt > 1 || nonzeroCnt > onesCnt) {
+                return false;
+            }
+        }
 
         return true;
     }
@@ -1916,8 +1958,12 @@ public class Diagram extends Observable implements Printable {
         Return true if the conversion was carried out.
 
         @see moleToWeightFraction() for bugs/limitations.
-    */
-    protected boolean weightToMoleFraction() {
+
+        @param convertLabels If true, attempt to convert appearances of
+        variants of the word "weight" to variants of either "mole" or
+        "atomic", depending on whether all diagram components consist
+        of just a single element. */
+    public boolean weightToMoleFraction(boolean convertLabels) {
         if (!haveComponentCompositions()) {
             return false;
         }
@@ -1925,7 +1971,18 @@ public class Diagram extends Observable implements Printable {
         for (DecorationHandle hand: movementHandles()) {
             hand.move(weightToMoleFraction(hand.getLocation()));
         }
+        if (convertLabels) {
+            boolean isAtom = isAtomic();
+            for (LabelInfo labelInfo: labelInfos()) {
+                AnchoredLabel label = labelInfo.label;
+                String s = label.getText();
+                label.setText(isAtom ? MoleWeightString.weightToAtomic(s)
+                              : MoleWeightString.weightToMole(s));
+                labelInfo.setLabel(label);
+            }
+        }
         setUsingWeightFraction(false);
+        computeMargins();
 
         return true;
     }
@@ -4155,9 +4212,6 @@ public class Diagram extends Observable implements Printable {
         for (AnchoredLabel item: labels()) {
             item.setAngle(pageToPrincipalAngle(item.getAngle()));
         }
-
-
-
     }
 
     ContinuedFraction approximateFraction(double d) {
