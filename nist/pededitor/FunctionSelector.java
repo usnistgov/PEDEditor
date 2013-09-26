@@ -1,7 +1,5 @@
 package gov.nist.pededitor;
 
-import java.util.EnumSet;
-
 import javax.swing.JComboBox;
 
 /** A simple ComboBox to list variables. */
@@ -10,7 +8,7 @@ public class FunctionSelector extends JComboBox<String> {
     private static final long serialVersionUID = -6731864317879982175L;
 
     {
-        for (StandardRealFunction f: EnumSet.allOf(StandardRealFunction.class)) {
+        for (StandardRealFunction f: StandardRealFunction.values()) {
             addItem("<html>" + f.getText());
         }
     }
@@ -36,7 +34,7 @@ public class FunctionSelector extends JComboBox<String> {
             return null;
         }
         String s = (String) obj;
-        for (StandardRealFunction f: EnumSet.allOf(StandardRealFunction.class)) {
+        for (StandardRealFunction f: StandardRealFunction.values()) {
             if (s.equals("<html>" + f.getText())) {
                 return f.getFunction();
             }
