@@ -16,7 +16,8 @@ public class MoleWeightString {
             .replace("Atomic", "Weight")
             .replaceAll("\\batomic\\b", "weight")
             .replace("At.", "Wt.")
-            .replace("At %", "Wt %");
+            .replace("At %", "Wt %")
+            .replace("At&nbsp;%", "Wt&nbsp;%");
     }
 
     /** Replace variants of the word "weight" with the corresponding
@@ -73,7 +74,6 @@ public class MoleWeightString {
             try {
                 line = read.readLine();
             } catch (IOException e) {
-                // TODO Auto-generated catch block
                 break;
             }
             if (hasMole(line) || hasAtomic(line)) {
