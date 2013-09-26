@@ -45,18 +45,18 @@ public class PEDToPDF {
         (which are artifacts from the GRUMP conversion). */
     public static Diagram loadAndFix(String filename, boolean crop) throws IOException {
         Diagram d = Diagram.loadFrom(new File(filename));
+        d.zeroBaselineOffsets();
         Rectangle2D bounds = new Rectangle2D.Double(-0.5, -0.5, 2.0, 2.0);
         if (crop && d.crop(bounds)) {
             System.err.println(filename + " did not fit in the normal page bounds.");
             d.computeMargins();
         }
-        if (!d.guessComponents()) {
+        if (!d.guessComponents(true)) {
             d.addTag("WARN missing diagram component");
         }
         d.removeKey("diagram code");
         d.removeKey("x3");
         d.removeKey("y3");
-        d.zeroBaselineOffsets();
         return d;
     }
 
