@@ -2507,12 +2507,17 @@ public class Diagram extends Observable implements Printable {
                 return axis;
             }
         }
+        LinearAxis res = null;
         for (LinearAxis axis: axes) {
             if (axis.isXAxis()) {
-                return axis;
+                if ("page X".equals(axis.name)) {
+                    res = axis;
+                } else {
+                    return axis;
+                }
             }
         }
-        return null;
+        return res;
     }
 
     @JsonIgnore public LinearAxis getYAxis() {
@@ -2521,12 +2526,17 @@ public class Diagram extends Observable implements Printable {
                 return axis;
             }
         }
+        LinearAxis res = null;
         for (LinearAxis axis: axes) {
             if (axis.isYAxis()) {
-                return axis;
+                if ("page Y".equals(axis.name)) {
+                    res = axis;
+                } else {
+                    return axis;
+                }
             }
         }
-        return null;
+        return res;
     }
 
     public boolean isLeftAxis(LinearAxis axis) {
