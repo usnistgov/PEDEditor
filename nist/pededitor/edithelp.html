@@ -669,27 +669,14 @@ formulas for both (or all, in the case of ternary diagrams) diagram
 components, and the formulas must be entered using the following
 syntax in order for the program to parse them correctly:
 
-<p><i><a id="chemical_syntax">Chemical formula syntax</a></i>:
-the program's chemistry functions cannot work unless you define the
+<p><i><a id="chemical_syntax">Chemical formula syntax</a></i>: the
+program's chemistry functions cannot work unless you define the
 formulas for both (or all, in the case of ternary diagrams) diagram
-components. Currently, <code>[Co(H2O)2]1.5</code> is as complicated a
-formula as the program can understand; that is, the program
-understands element symbols, grouping with brackets or parentheses,
-and integer and fixed-point subscripts that follow either element
-symbols or groupings, but that is it. None of the following examples
-would work as intended:
-
-<ul>
-
-<li>"<code>water</code>" (not a chemical formula)
-
-<li>"<code>2 H2O</code>" (leading '2' is not understood)
-
-<li>"<code>H2O + Al</code>" (misintepreted as "<code>H2O</code>"
-because the program stops reading after the space, and it does not
-understand plus signs anyway)
-
-</ul>
+components. The program understands simple chemical formulas, possibly
+including parentheses or square brackets, as well as simple chemical
+formulas combined with leading coefficients and plus signs or colons
+(for example: <code>CO:6H<sub>2</sub>O</code>). Numbers may be entered
+as integers, fractions, fixed-point decimals, or percentages.
 
 <p>As soon as all diagram components are defined, the gray status bar
 will show additional information about points on the screen. If a
