@@ -53,7 +53,13 @@ public class FormulaDialog extends JDialog {
         gb.centerAndEndRow(descr);
         gb.addEast(new JLabel("Formula:"));
         gb.endRowWith(formula);
-        gb.addEast(new JLabel("Hill system:"));
+        JLabel hillLabel = new JLabel("Hill system:");
+        {
+            String tt = "A simple standard chemical formula notation";
+            hillLabel.setToolTipText(tt);
+            hillFormula.setToolTipText(tt);
+        }
+        gb.addEast(hillLabel);
         gb.endRowWith(hillFormula);
         gb.addEast(new JLabel("Weight:"));
         gb.endRowWith(weight);
@@ -94,7 +100,7 @@ public class FormulaDialog extends JDialog {
                 res = "<html>" + ChemicalString.autoSubscript(m.toString());
                 double wt = m.getWeight();
                 if (!Double.isNaN(wt)) {
-                    weight.setText(String.format("%.3f", wt));
+                    weight.setText(String.format("%.4f", wt));
                 }
             } else {
                 int endIndex = (m == null) ? 0 : m.endIndex;
