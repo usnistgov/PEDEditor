@@ -14,6 +14,7 @@ import javax.jnlp.ServiceManager;
 import javax.jnlp.SingleInstanceListener;
 import javax.jnlp.SingleInstanceService;
 import javax.jnlp.UnavailableServiceException;
+import javax.swing.AbstractAction;
 
 /** Class to start the PED Editor as a PED Viewer. The differences are
     that the editable flag is off by default, and the PED file is
@@ -76,6 +77,7 @@ public class JSONFetchDiagram2 {
                 d.setTitle(title);
             }
             Editor e = new Editor();
+            e.setRightClickMenu(new ViewerRightClickMenu(e));
             e.copyFrom(d);
 
             // Cut out all the functions that the viewer doesn't need.
@@ -92,22 +94,21 @@ public class JSONFetchDiagram2 {
             ef.mnZoomOut.setVisible(false);
             ef.mnExportText.setVisible(false);
             ef.mnCopyFormulas.setVisible(false);
-            ef.actAutoPosition.setEnabled(false);
             ef.mnJumpToSelection.setVisible(false);
-            ef.mnUnstickMouse.getAction().setEnabled(false);
-            ef.mnUnstickMouse.setVisible(false);
             ef.shortHelpFile = "viewhelp1.html";
 
-            ef.actNearestPoint.setEnabled(false);
-            ef.actNearestCurve.setEnabled(false);
-            ef.actAddVertex.setEnabled(false);
-            ef.actAddAutoPositionedVertex.setEnabled(false);
-            ef.actText.setEnabled(false);
-            ef.actLeftArrow.setEnabled(false);
-            ef.actRightArrow.setEnabled(false);
-            ef.actMoveSelection.setEnabled(false);
-            ef.actMovePoint.setEnabled(false);
-            ef.actMoveRegion.setEnabled(false);
+            disappear(e, (AbstractAction) ef.mnUnstickMouse.getAction());
+            disappear(e, ef.actAutoPosition);
+            disappear(e, ef.actNearestPoint);
+            disappear(e, ef.actNearestCurve);
+            disappear(e, ef.actAddVertex);
+            disappear(e, ef.actAddAutoPositionedVertex);
+            disappear(e, ef.actText);
+            disappear(e, ef.actLeftArrow);
+            disappear(e, ef.actRightArrow);
+            disappear(e, ef.actMoveSelection);
+            disappear(e, ef.actMovePoint);
+            disappear(e, ef.actMoveRegion);
             
             e.mouseDragDistance = 20;
             e.detachOriginalImage();
@@ -137,6 +138,12 @@ public class JSONFetchDiagram2 {
         } catch (PatternSyntaxException x) {
             throw new IllegalStateException("Pattern could not compile: " + x);
         }
+    }
+
+    /** Make the given action vanish from the interface. */
+    static void disappear(Editor e, AbstractAction act) {
+        act.setEnabled(false);
+        e.setVisible(act, false);
     }
 
     static String resourceToString(String path) throws IOException {
