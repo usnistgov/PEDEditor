@@ -14,7 +14,6 @@ public class PositionMenu extends JMenu {
     public PositionMenu(Editor editor) {
         super("Position");
         mEditor = editor;
-        System.out.println(mEditor.editFrame);
         add(getEditFrame().actAutoPosition);
         add(getEditFrame().actNearestPoint);
         add(getEditFrame().actNearestCurve);
