@@ -416,7 +416,7 @@ public class Editor extends Diagram
         success, false if that was not possible. */
     boolean selectSomething() {
         for (DecorationHandle handle: nearestHandles()) {
-            selection = handle;
+            setSelection(handle);
             return true;
         }
 
@@ -433,7 +433,7 @@ public class Editor extends Diagram
 
             for (DecorationHandle handle: nearestHandles()) {
                 if (editable(handle)) {
-                    selection = handle;
+                    setSelection(handle);
                     break;
                 }
             }
@@ -455,7 +455,7 @@ public class Editor extends Diagram
                       errorTitle);
         }
         if (!hadSelection) {
-            selection = null;
+            clearSelection();
         }
     }
 
@@ -487,6 +487,7 @@ public class Editor extends Diagram
 
     protected CropFrame cropFrame = new CropFrame();
     protected EditFrame editFrame = new EditFrame(this);
+    protected RightClickMenu mnRightClick = new RightClickMenu(this);
     protected ImageZoomFrame zoomFrame = null;
     protected VertexInfoDialog vertexInfo = new VertexInfoDialog(this);
     protected LabelDialog labelDialog = null;
@@ -494,6 +495,14 @@ public class Editor extends Diagram
     protected JColorChooser colorChooser = null;
     protected JDialog colorDialog = null;
     protected FormulaDialog formulaDialog = null;
+
+    @JsonIgnore public DecorationHandle getSelection() {
+        return selection;
+    }
+
+    RightClickMenu getRightClickMenu() {
+        return mnRightClick;
+    }
 
     LabelDialog getLabelDialog() {
         if (labelDialog == null) {
@@ -643,7 +652,7 @@ public class Editor extends Diagram
 
         public MousePress(MouseEvent e, Point2D.Double prin) {
             this.e = e;
-            this.prin = prin;
+            this.prin = new Point2D.Double(prin.getX(), prin.getY());
         }
 
         @Override public String toString() {
@@ -677,6 +686,7 @@ public class Editor extends Diagram
         the point that will be added if that's what we end up
         doing. */
     protected transient MousePress mousePress = null;
+    protected transient MousePress rightClick = null;
 
     /** mouseTravel logs the distance in pixels that the mouse has
         moved either since the button was depressed (to discriminate
@@ -726,6 +736,7 @@ public class Editor extends Diagram
         mouseIsStuck = false;
         mouseTravel = null;
         mousePress = null;
+        rightClick = null;
         principalFocus = null;
         paintSuppressionRequestCnt = 0;
         setBackgroundType(EditFrame.BackgroundImageType.LIGHT_GRAY);
@@ -737,7 +748,7 @@ public class Editor extends Diagram
     }
 
     @Override void clear() {
-        selection = null;
+        clearSelection();
         if (fileSaver != null) {
             fileSaver.cancel();
             fileSaver = null;
@@ -846,7 +857,7 @@ public class Editor extends Diagram
 
     /** @return The currently selected GeneralPolyline, or null if no
         curve is selected. */
-    @JsonIgnore public CuspFigure getActiveCurve() {
+    @JsonIgnore public CuspFigure getSelectedCuspFigure() {
         CurveDecoration sel = getSelectedCurve();
         return (sel == null) ? null : sel.getItem();
     }
@@ -897,7 +908,7 @@ public class Editor extends Diagram
             getLabelDialog().setFontSize(ldec.getLabel().getScale());
         }
         if (!hadSelection) {
-            selection = null;
+            clearSelection();
         }
     }
 
@@ -917,7 +928,7 @@ public class Editor extends Diagram
             propagateChange();
         }
         if (!hadSelection) {
-            selection = null;
+            clearSelection();
         }
     }
 
@@ -1119,7 +1130,7 @@ public class Editor extends Diagram
                 DecorationHandle s = hand.copy
                     (new Point2D.Double(prin.getX() + delta.x, prin.getY() + delta.y));
                 if (hand.getDecoration().equals(vhand.getDecoration())) {
-                    selection = new VertexHandle(((VertexHandle) s).getItem(), vhand.vertexNo);
+                    setSelection(new VertexHandle(((VertexHandle) s).getItem(), vhand.vertexNo));
                 }
             }
         }
@@ -1182,7 +1193,7 @@ public class Editor extends Diagram
             setMouseStuck(false);
         }
 
-        selection = selection.copy(mprin);
+        setSelection(selection.copy(mprin));
     }
 
     /** Move the selection closer to the front(drawn later/positive
@@ -1256,7 +1267,7 @@ public class Editor extends Diagram
         colorDialog.setVisible(true);
 
         if (!hadSelection) {
-            selection = null;
+            clearSelection();
         }
     }
 
@@ -1291,9 +1302,9 @@ public class Editor extends Diagram
         if (!hadSelection && !selectSomething()) {
             return;
         }
-        selection = selection.remove();
+        setSelection(selection.remove());
         if (!hadSelection) {
-            selection = null;
+            clearSelection();
         }
     }
 
@@ -1302,15 +1313,7 @@ public class Editor extends Diagram
             return;
         }
         removeLikeThis(selection.getDecoration());
-        selection = null;
-    }
-
-    public void select(DecorationHandle sel) {
-        selection = sel;
-        if (sel instanceof BoundedParam2DHandle) {
-            // Update the Slope window.
-            showTangent((BoundedParam2DHandle) sel);
-        }
+        clearSelection();
     }
 
     /** Select the vertex that comes after or before the currently
@@ -1330,7 +1333,7 @@ public class Editor extends Diagram
             return; // Nothing to do.
         }
 
-        CuspFigure path = getActiveCurve();
+        CuspFigure path = getSelectedCuspFigure();
         int cnt = path.size();
 
         Point2D.Double g = path.getParameterization().getDerivative
@@ -1360,7 +1363,7 @@ public class Editor extends Diagram
             }
         }
 
-        select(sel);
+        setSelection(sel);
         redraw();
     }
 
@@ -1784,36 +1787,30 @@ public class Editor extends Diagram
         g.drawLine(ix -r, iy, ix+r, iy);
     }
 
-    /** @return a curve to which a vertex can be appended or inserted.
-        If a curve was already selected, then that will be the return
-        value; if no curve is selected, then start a new curve and
-        return that. */
-    @JsonIgnore public CuspFigure getCurveForAppend() {
-        if (principalToStandardPage == null) {
-            return null;
-        }
+    public void clearSelection() {
+        setSelection(null);
+    }
 
-        CuspFigure c = getActiveCurve();
-        if (c != null) {
-            return c;
+    public void setSelection(DecorationHandle hand) {
+        if (selection == hand) {
+            return;
         }
-
-        c = new CuspFigure(new CuspInterp2D(false), lineStyle, lineWidth);
-        CurveDecoration d = new CurveDecoration(c);
-        decorations.add(d);
-        selection = new VertexHandle(d, -1);
-        insertBeforeSelection = false;
-        return c;
+        selection = hand;
+        getEditFrame().mnDeselect.getAction().setEnabled(hand != null);
+        if (hand instanceof BoundedParam2DHandle) {
+            // Update the Slope window.
+            showTangent((BoundedParam2DHandle) hand);
+        }
+        redraw();
     }
 
     public void deselectCurve() {
-        selection = null;
-        redraw();
+        clearSelection();
     }
 
     public void setFill(StandardFill fill) {
         String errorTitle = "Cannot change fill settings";
-        CuspFigure path = getActiveCurve();
+        CuspFigure path = getSelectedCuspFigure();
         if (path == null) {
             showError
                 ("Fill settings can only be changed when a curve is selected.",
@@ -1909,18 +1906,31 @@ public class Editor extends Diagram
         return getVertexHandle().vertexNo + (insertBeforeSelection ? 0 : 1);
     }
 
-    /** Add a point to getActiveCurve(). */
+    /** Add a point to getActiveCurve(), or create and select a new
+        curve if no curve is currently selected. */
     public void add(Point2D.Double point) {
-        if (isDuplicate(point)) {
+        if (isDuplicate(point) || principalToStandardPage == null) {
             return; // Adding the same point twice causes problems.
         }
-        CuspFigure path = getCurveForAppend();
-        VertexHandle vhand = getVertexHandle();
-        add(path, vertexInsertionPosition(), point, smoothed);
-        if (!insertBeforeSelection) {
-            ++vhand.vertexNo;
+        CuspFigure path = getSelectedCuspFigure();
+        if (path == null) {
+            // Start a new curve consisting of a single point, and
+            // make it the new selection.
+            path = new CuspFigure(new CuspInterp2D(false), lineStyle, lineWidth);
+            CurveDecoration d = new CurveDecoration(path);
+            decorations.add(d);
+            add(path, 0, point, smoothed);
+            setSelection(new VertexHandle(d, 0));
+            insertBeforeSelection = false;
+        } else {
+            // Add a new point to the currently selected curve.
+            VertexHandle vhand = getVertexHandle();
+            add(path, vertexInsertionPosition(), point, smoothed);
+            if (!insertBeforeSelection) {
+                ++vhand.vertexNo;
+            }
+            showTangent(vhand);
         }
-        showTangent(vhand);
     }
 
     @Override public void remove(CuspFigure path) {
@@ -1942,6 +1952,11 @@ public class Editor extends Diagram
         tangent to the curve at that location and that points
         rightward (or downward if the curve is vertical). */
     public void addArrow(boolean rightward) {
+        if (mprin == null) {
+            showError("The mouse must be inside the diagram.");
+            return;
+        }
+
         if (mouseIsStuckAtSelection() && getSelectedArrow() != null) {
             setMouseStuck(false);
         }
@@ -2017,7 +2032,7 @@ public class Editor extends Diagram
         tie.ot2 = tieLineCorners.get(1).t;
 
         TieLineDecoration d = new TieLineDecoration(tie);
-        selection = new TieLineHandle(d, TieLineHandleType.OUTER2);
+        setSelection(new TieLineHandle(d, TieLineHandleType.OUTER2));
         addDecoration(d);
     }
 
@@ -2046,7 +2061,7 @@ public class Editor extends Diagram
 
     public void addRuler() {
         String errorTitle = "Cannot create ruler";
-        CuspFigure path = getActiveCurve();
+        CuspFigure path = getSelectedCuspFigure();
         if (path == null || path.size() != 2) {
             showError
                 ("Before you can create a new ruler, "
@@ -2083,7 +2098,7 @@ public class Editor extends Diagram
         vhand.getDecoration().remove();
         RulerDecoration d = new RulerDecoration(r);
         addDecoration(d);
-        selection = new RulerHandle(d, RulerHandleType.END);
+        setSelection(new RulerHandle(d, RulerHandleType.END));
     }
 
     @Override public void rename(LinearAxis axis, String name) {
@@ -2102,7 +2117,7 @@ public class Editor extends Diagram
     @Override public void remove(LinearAxis axis) {
         RulerDecoration rdec = getSelectedRuler();
         if (rdec != null && axis == rdec.getItem().axis) {
-            selection = null;
+            clearSelection();
         }
         super.remove(axis);
         editFrame.removeVariable((String) axis.name);
@@ -2110,7 +2125,7 @@ public class Editor extends Diagram
 
     public void addVariable() {
         String errorTitle = "Cannot add variable";
-        CuspFigure path = getActiveCurve();
+        CuspFigure path = getSelectedCuspFigure();
         if (path == null || path.size() != 3) {
             showError(
 "Select a curve consisting of three vertexes which do not lie " + 
@@ -2500,7 +2515,7 @@ public class Editor extends Diagram
     public String selectedCoordinatesToString
         (LinearAxis v1, RealFunction f1,
          LinearAxis v2, RealFunction f2, boolean addComments) {
-        CuspFigure path = getActiveCurve();
+        CuspFigure path = getSelectedCuspFigure();
         if (path != null) {
             return toString(Arrays.asList(path.getPoints()), v1, f1, v2, f2);
         }
@@ -2677,7 +2692,7 @@ public class Editor extends Diagram
         }
 
         boolean haveLabel = getSelectedLabel() != null;
-        boolean haveCurve = getActiveCurve() != null;
+        boolean haveCurve = getSelectedCuspFigure() != null;
            
         try {
             for (Point2D.Double[] curve: stringToCurves(lines)) {
@@ -2937,7 +2952,7 @@ public class Editor extends Diagram
                 }
             }
 
-            select(sel);
+            setSelection(sel);
 
             if (sel instanceof VertexHandle) {
                 VertexHandle hand = getVertexHandle();
@@ -2982,7 +2997,7 @@ public class Editor extends Diagram
         Point2D.Double p1 = null;
         Point2D.Double p2 = null;
 
-        CuspFigure path = getActiveCurve();
+        CuspFigure path = getSelectedCuspFigure();
         if (path != null && path.size() == 2) {
             p1 = path.curve.getStart();
             p2 = path.curve.getEnd();
@@ -3103,7 +3118,7 @@ public class Editor extends Diagram
         newLabel.setColor(color);
         LabelDecoration d = new LabelDecoration(new LabelInfo(newLabel));
         decorations.add(d);
-        selection = new LabelHandle(d, LabelHandleType.ANCHOR);
+        setSelection(new LabelHandle(d, LabelHandleType.ANCHOR));
         setMouseStuck(true);
         propagateChange();
     }
@@ -3508,9 +3523,9 @@ public class Editor extends Diagram
         }
 
         if (select) {
-            selection = handle;
+            setSelection(handle);
             if (selection instanceof VertexHandle) {
-                CuspFigure path = getActiveCurve();
+                CuspFigure path = getSelectedCuspFigure();
                 insertBeforeSelection = closerToNext
                     || (path.size() >= 2 && t == 0);
             }
@@ -3564,9 +3579,7 @@ public class Editor extends Diagram
                     }
 
                     try {
-                        // StdOutErrRedirect.run();
                         Editor app = new Editor();
-                        // app.setEditable(false); // UNDO
                         app.run(args);
                     } catch (Exception e) {
                         e.printStackTrace();
@@ -4399,7 +4412,7 @@ public class Editor extends Diagram
         for (LinearAxis axis: axes) {
             editFrame.addVariable((String) axis.name);
         }
-        selection = null;
+        clearSelection();
     }
 
     @JsonIgnore public BufferedImage getOriginalImage() {
@@ -5267,15 +5280,20 @@ public class Editor extends Diagram
         }
     }
 
+    protected EditFrame getEditFrame() {
+        return editFrame;
+    }
+    
     @Override public void mousePressed(MouseEvent e) {
+        Point2D.Double p =  e.isShiftDown() ?
+            getAutoPositionHandle(null).getLocation() :
+            getVertexAddMousePosition(e.getPoint());
+        MousePress mp = new MousePress(e,p);
         if (e.getButton() == MouseEvent.BUTTON1) {
-            Point2D.Double p =  e.isShiftDown() ?
-                getAutoPositionHandle(null).getLocation() :
-                getVertexAddMousePosition(e.getPoint());
-            mousePress = new MousePress(e,p);
+            mousePress = mp;
             mouseTravel = null;
         } else {
-            deselectCurve();
+            getRightClickMenu().show(mp);
         }
     }
 
@@ -5332,6 +5350,9 @@ public class Editor extends Diagram
         in the edit window status bar, repaint the diagram, and update
         the position in the zoom window,. */
     @Override public void mouseMoved(MouseEvent e) {
+        if (rightClick != null) {
+            return;
+        }
         isShiftDown = e.isShiftDown();
         if (mouseTravel == null) {
             mouseTravel = new MouseTravel(e.getX(), e.getY());
@@ -5349,6 +5370,7 @@ public class Editor extends Diagram
         seekNearestPoint(). */
     public void updateMousePosition() {
         Point p = (mousePress != null) ? mousePress.e.getPoint()
+            : (rightClick != null) ? rightClick.e.getPoint()
             : getEditPane().getMousePosition();
         updateMousePosition(p);
     }
@@ -5390,10 +5412,12 @@ public class Editor extends Diagram
     }
 
     Point2D.Double getMousePrincipal() {
-        if (mousePress == null) {
-            return paneToPrincipal(getEditPane().getMousePosition());
-        } else {
+        if (mousePress != null) {
             return mousePress.prin;
+        } else if (rightClick != null) {
+            return rightClick.prin;
+        } else {
+            return paneToPrincipal(getEditPane().getMousePosition());
         }
     }
 
@@ -5574,7 +5598,7 @@ public class Editor extends Diagram
     }
 
     double getLineWidth() {
-        CuspFigure path = getActiveCurve();
+        CuspFigure path = getSelectedCuspFigure();
         if (path != null) {
             return path.getLineWidth();
         }
@@ -5728,11 +5752,14 @@ public class Editor extends Diagram
             mousePress = null;
         }
     }
-    @Override public void mouseEntered(MouseEvent e) {}
+    @Override public void mouseEntered(MouseEvent e) {
+    }
 
     @Override public void mouseExited(MouseEvent e) {
-        mprin = null;
-        redraw();
+        if (rightClick == null) {
+            mprin = null;
+            redraw();
+        }
     }
 
     synchronized ScaledCroppedImage getScaledOriginalImage() {
