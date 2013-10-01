@@ -27,7 +27,6 @@ import javax.swing.JLabel;
 import javax.swing.JMenu;
 import javax.swing.JMenuBar;
 import javax.swing.JMenuItem;
-import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JRadioButtonMenuItem;
 import javax.swing.JScrollPane;
@@ -74,110 +73,250 @@ public class EditFrame extends JFrame
     protected JMenuItem mnNewDiagram = new JMenuItem
         (new Action("New Diagram", KeyEvent.VK_N) {
                 @Override public void actionPerformed(ActionEvent e) {
-                    getParentEditor().newDiagram();
+                    getEditor().newDiagram();
                 }
             });
     protected JMenuItem mnOpen = new JMenuItem
         (new Action("Open", KeyEvent.VK_O) {
                 @Override public void actionPerformed(ActionEvent e) {
-                    getParentEditor().showOpenDialog(EditFrame.this);
+                    getEditor().showOpenDialog(EditFrame.this);
                 }
             });
     protected JMenuItem mnSave = new JMenuItem
         (new Action("Save", KeyEvent.VK_S) {
                 @Override public void actionPerformed(ActionEvent e) {
-                    getParentEditor().save();
+                    getEditor().save();
                 }
             });
-    protected JMenuItem mnSaveAsPED = new JMenuItem
+    protected JMenuItem mnSaveAsPED = toMenuItem
         (new Action("PED", KeyEvent.VK_P) {
+                { 
+                    putValue(SHORT_DESCRIPTION,
+                             "Save diagram in PED Editor's native format");
+                }
                 @Override public void actionPerformed(ActionEvent e) {
-                    getParentEditor().saveAsPED();
+                    getEditor().saveAsPED();
                 }
             });
-    protected JMenuItem mnReload = new JMenuItem
+    protected JMenuItem mnSaveAsPDF = toMenuItem
+        (new Action("PDF", KeyEvent.VK_F) {
+                { 
+                    putValue(SHORT_DESCRIPTION,
+                             "Save diagram in Adobe PDF format");
+                }
+                @Override public void actionPerformed(ActionEvent e) {
+                    getEditor().saveAsPDF();
+                }
+            });
+    protected JMenuItem mnSaveAsPNG = toMenuItem
+        (new SaveImageAction("PNG", KeyEvent.VK_G));
+    protected JMenuItem mnReload = toMenuItem
         (new Action("Reload", KeyEvent.VK_R) {
+                { 
+                    putValue(SHORT_DESCRIPTION,
+                             "Reload the current diagram");
+                }
                 @Override public void actionPerformed(ActionEvent e) {
-                    getParentEditor().reloadDiagram();
+                    getEditor().reloadDiagram();
                 }
             });
-    JMenuItem mnNextFile = new JMenuItem
+    JMenuItem mnNextFile = toMenuItem
         (new Action("Next", KeyEvent.VK_R) {
+                { 
+                    putValue(SHORT_DESCRIPTION,
+                             "Show next diagram");
+                }
                 @Override public void actionPerformed(ActionEvent e) {
-                    getParentEditor().nextFile();
+                    getEditor().nextFile();
                 }
             });
     {
         mnNextFile.setVisible(false); // Hidden by default
     }
 
-    JMenuItem mnAutoPosition = new JMenuItem
-        (new Action("Auto-position",
-                    KeyEvent.VK_A,
-                    KeyStroke.getKeyStroke('A')) {
+    Action actDeselect = new Action
+        ("Deselect", KeyEvent.VK_S, "pressed ESCAPE") {
+            { setEnabled(false); }
+            @Override public void actionPerformed(ActionEvent e) {
+                getEditor().deselectCurve();
+                finishEvent();
+            }
+        };
+    JMenuItem mnDeselect = toMenuItem(actDeselect);
+
+    Action actMoveSelection = new Action
+        ("Move selection only", KeyEvent.VK_V,
+         KeyStroke.getKeyStroke('V')) {
+            @Override public void actionPerformed(ActionEvent e) {
+                getEditor().moveSelection(false);
+                finishEvent();
+            }
+        };
+    Action actMovePoint = new Action
+        ("Move everything at selected point",
+         KeyEvent.VK_M, KeyStroke.getKeyStroke('v')) {
+            @Override public void actionPerformed(ActionEvent e) {
+                getEditor().moveSelection(true);
+                finishEvent();
+            }
+        };
+    Action actMoveRegion = new Action
+        ("Move everything in selected region",
+         KeyEvent.VK_R, KeyStroke.getKeyStroke('R')) {
+            @Override public void actionPerformed(ActionEvent e) {
+                getEditor().moveRegion();
+                finishEvent();
+            }
+        };
+
+    Action actAutoPosition = new Action
+        ("Auto-position",
+         KeyEvent.VK_A, KeyStroke.getKeyStroke('A')) {
+            { 
+                putValue(SHORT_DESCRIPTION,
+                         "Move the mouse to the closest key point or curve");
+            }
+            @Override public void actionPerformed(ActionEvent e) {
+                getEditor().autoPosition();
+                finishEvent();
+            }
+        };
+
+    JMenuItem mnEnterCoordinates = toMenuItem
+        (new Action("Enter coordinates",
+                    KeyEvent.VK_E,
+                    KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0)) {
                 @Override public void actionPerformed(ActionEvent e) {
-                    getParentEditor().autoPosition();
+                    getEditor().enterPosition();
+                    finishEvent();
                 }
             });
 
-    JMenuItem mnJumpToSelection = new JMenuItem
+    JMenuItem mnJumpToSelection = toMenuItem
         (new Action("Jump to selection",
                     KeyEvent.VK_J,
                     KeyStroke.getKeyStroke('j')) {
+                { 
+                    putValue(SHORT_DESCRIPTION,
+                             "Move the mouse to the selected item");
+                }
                 @Override public void actionPerformed(ActionEvent e) {
-                    getParentEditor().centerSelection();
+                    getEditor().centerSelection();
+                    finishEvent();
                 }
             });
     
-    JMenuItem mnNearestPoint = new JMenuItem
-        (new Action("Nearest key point",
-                    KeyEvent.VK_N,
-                    KeyStroke.getKeyStroke('q')) {
-                @Override public void actionPerformed(ActionEvent e) {
-                    getParentEditor().seekNearestPoint(false, "q");
-                }
-            });
-
-    JMenuItem mnNearestCurve = new JMenuItem
-        (new Action("Nearest line/curve",
-                    KeyEvent.VK_L,
-                    KeyStroke.getKeyStroke('w')) {
-                @Override public void actionPerformed(ActionEvent e) {
-                    getParentEditor().seekNearestCurve(false, "w");
-                }
-            });
-
-    protected JMenuItem mnSelectNearestPoint = new JMenuItem
-        (new Action("Select nearest key point",
-                    KeyEvent.VK_S,
-                    KeyStroke.getKeyStroke('Q')) {
-                @Override public void actionPerformed(ActionEvent e) {
-                    getParentEditor().seekNearestPoint(true, "Shift+Q");
-                }
-            });
-    protected JMenuItem mnSelectNearestCurve = new JMenuItem
-        (new Action("Select nearest line/curve",
-                    KeyEvent.VK_I,
-                    KeyStroke.getKeyStroke('W')) {
-                @Override
-                public void actionPerformed(ActionEvent e) {
-                    getParentEditor().seekNearestCurve(true, "Shift+W");
-                }
-            });
-    protected JMenuItem mnUnstickMouse = new JMenuItem
+    Action actNearestPoint = new Action
+        ("Nearest key point",
+         KeyEvent.VK_N, KeyStroke.getKeyStroke('q')) {
+            { 
+                putValue(SHORT_DESCRIPTION,
+                         "Move the mouse to the nearest data point, label, "
+                         + "arrow, curve endpoint, curve intersection, etc.");
+            }
+            @Override public void actionPerformed(ActionEvent e) {
+                getEditor().seekNearestPoint(false, "q");
+                finishEvent();
+            }
+        };
+    Action actNearestCurve = new Action
+        ("Nearest line/curve",
+         KeyEvent.VK_L, KeyStroke.getKeyStroke('w')) {
+            { 
+                putValue(SHORT_DESCRIPTION,
+                         "Move the mouse to the nearest point on any curve "
+                         + "or ruler.");
+            }
+            @Override public void actionPerformed(ActionEvent e) {
+                getEditor().seekNearestCurve(false, "w");
+                finishEvent();
+            }
+        };
+    Action actSelectNearestPoint = new Action
+        ("Select nearest key point",
+         KeyEvent.VK_S, KeyStroke.getKeyStroke('Q')) {
+            @Override public void actionPerformed(ActionEvent e) {
+                getEditor().seekNearestPoint(true, "Shift+Q");
+                finishEvent();
+            }
+        };
+    Action actSelectNearestCurve = new Action
+        ("Select nearest line/curve",
+         KeyEvent.VK_I, KeyStroke.getKeyStroke('W')) {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                getEditor().seekNearestCurve(true, "Shift+W");
+                finishEvent();
+            }
+        };
+    protected JMenuItem mnUnstickMouse = toMenuItem
         (new Action("Unstick mouse",
                     KeyEvent.VK_U,
                     KeyStroke.getKeyStroke('u')) {
                 @Override public void actionPerformed(ActionEvent e) {
-                    getParentEditor().setMouseStuck(false);
+                    getEditor().setMouseStuck(false);
                     repaint();
+                    finishEvent();
                 }
             });
+
+    JMenu mnPosition = new JMenu("Position");
+    {
+        mnPosition.setMnemonic(KeyEvent.VK_P);
+    }
+
+    JMenu mnMove = new JMenu("Move");
+    JMenu mnJump = new JMenu("Jump");
+
+    Action actAddVertex = new Action
+        ("Add vertex", KeyEvent.VK_X,
+         KeyStroke.getKeyStroke('x')) {
+            @Override public void actionPerformed(ActionEvent e) {
+                getEditor().addVertex();
+                finishEvent();
+            }
+        };
+    Action actAddAutoPositionedVertex = new Action
+        ("Add auto-positioned vertex", KeyEvent.VK_A,
+         KeyStroke.getKeyStroke('X')) {
+            @Override public void actionPerformed(ActionEvent e) {
+                getEditor().autoPosition();
+                getEditor().addVertex();
+                finishEvent();
+            }
+        };
+
+    Action actText = new Action
+        ("Add text...",
+         KeyEvent.VK_T, KeyStroke.getKeyStroke('t')) {
+            @Override public void actionPerformed(ActionEvent e) {
+                getEditor().addLabel();
+                finishEvent();
+            }
+        };
+    Action actLeftArrow = new Action
+        ("Add left arrowhead",
+         KeyEvent.VK_L, KeyStroke.getKeyStroke('<')) {
+            @Override public void actionPerformed(ActionEvent e) {
+                getEditor().addArrow(false);
+                finishEvent();
+            }
+        };
+    Action actRightArrow = new Action
+        ("Add right arrowhead",
+         KeyEvent.VK_R, KeyStroke.getKeyStroke('>')) {
+            @Override public void actionPerformed(ActionEvent e) {
+                getEditor().addArrow(true);
+                finishEvent();
+            }
+        };
+
     JMenu mnKeys = new JMenu("Key/value pairs");
-    protected JMenuItem mnAddKey = new JMenuItem
+    protected JMenuItem mnAddKey = toMenuItem
         (new Action("Add", KeyEvent.VK_A) {
                 @Override public void actionPerformed(ActionEvent e) {
-                    getParentEditor().put();
+                    getEditor().put();
+                    finishEvent();
                 }
             });
 
@@ -192,26 +331,30 @@ public class EditFrame extends JFrame
     protected JMenuItem mnAddTag = new JMenuItem
         (new Action("Add", KeyEvent.VK_A) {
                 @Override public void actionPerformed(ActionEvent e) {
-                    getParentEditor().addTag();
+                    getEditor().addTag();
+                    finishEvent();
                 }
             });
     protected JMenuItem mnSetTitle = new JMenuItem
         (new Action("Title", KeyEvent.VK_T) {
                 @Override public void actionPerformed(ActionEvent e) {
-                    getParentEditor().setTitle();
+                    getEditor().setTitle();
+                    finishEvent();
                 }
             });
     protected JMenuItem mnExportText = new JMenuItem
         (new Action("Export all text to clipboard", KeyEvent.VK_T) {
                 @Override public void actionPerformed(ActionEvent e) {
-                    getParentEditor().copyAllTextToClipboard();
+                    getEditor().copyAllTextToClipboard();
+                    finishEvent();
                 }
             });
     protected JMenuItem mnImportCoordinates = new JMenuItem
         (new Action("Import curve or label coordinates",
                     KeyEvent.VK_I) {
                 @Override public void actionPerformed(ActionEvent e) {
-                    getParentEditor().importCoordinates();
+                    getEditor().importCoordinates();
+                    finishEvent();
                 }
             });
     protected JMenu mnComponents = new JMenu("Components");
@@ -220,24 +363,44 @@ public class EditFrame extends JFrame
         (new Action
          ("Copy all formulas to clipboard", KeyEvent.VK_O) {
                 @Override public void actionPerformed(ActionEvent e) {
-                    getParentEditor().copyAllFormulasToClipboard();
+                    getEditor().copyAllFormulasToClipboard();
                 }
             });
+
+    Action actCopyStatusBar = new Action
+        ("Copy coordinates to clipboard",
+         KeyEvent.VK_S, KeyStroke.getKeyStroke("control shift S")) {
+            @Override public void actionPerformed(ActionEvent e) {
+                getEditor().copyPositionToClipboard();
+                finishEvent();
+            }
+        };
 
     JMenuItem mnZoomIn = new JMenuItem
         (new Action("Zoom in", KeyEvent.VK_I,
                     "typed +") {
                 @Override public void actionPerformed(ActionEvent e) {
-                    getParentEditor().zoomBy(1.5);
+                    getEditor().zoomBy(1.5);
+                    finishEvent();
                 }
             });
     JMenuItem mnZoomOut = new JMenuItem
         (new Action("Zoom out", KeyEvent.VK_O,
                     "typed -") {
                 @Override public void actionPerformed(ActionEvent e) {
-                    getParentEditor().zoomBy(1 / 1.5);
+                    getEditor().zoomBy(1 / 1.5);
+                    finishEvent();
                 }
             });
+
+    Action actCenterMouse = new Action
+        ("Center mouse",
+         KeyEvent.VK_C, KeyStroke.getKeyStroke("control L")) {
+            @Override public void actionPerformed(ActionEvent e) {
+                getEditor().centerMouse();
+                finishEvent();
+            }
+        };
 
     protected transient BackgroundImageType backgroundType = null;
     protected transient BackgroundImageType oldBackgroundType = null;
@@ -294,35 +457,48 @@ public class EditFrame extends JFrame
     protected Action setLeftComponent = new Action
         ("Set left component", KeyEvent.VK_L) {
             @Override public void actionPerformed(ActionEvent e) {
-                getParentEditor().setDiagramComponent(Side.LEFT);
+                getEditor().setDiagramComponent(Side.LEFT);
+                finishEvent();
             }
         };
 
     protected Action setRightComponent = new Action
         ("Set right component", KeyEvent.VK_R) {
             @Override public void actionPerformed(ActionEvent e) {
-                getParentEditor().setDiagramComponent(Side.RIGHT);
+                getEditor().setDiagramComponent(Side.RIGHT);
+                finishEvent();
             }
         };
 
     protected Action setTopComponent = new Action
         ("Set top component", KeyEvent.VK_T) {
             @Override public void actionPerformed(ActionEvent e) {
-                getParentEditor().setDiagramComponent(Side.TOP);
+                getEditor().setDiagramComponent(Side.TOP);
+                finishEvent();
+            }
+        };
+
+    protected Action guessComponents = new Action
+        ("Guess components", KeyEvent.VK_G) {
+            @Override public void actionPerformed(ActionEvent e) {
+                getEditor().guessComponents(false);
+                finishEvent();
             }
         };
 
     protected Action scaleXUnits = new Action
         ("X axis/right component", KeyEvent.VK_X) {
             @Override public void actionPerformed(ActionEvent e) {
-                getParentEditor().scaleXUnits();
+                getEditor().scaleXUnits();
+                finishEvent();
             }
         };
 
     protected Action scaleYUnits = new Action
         ("Y axis/top component", KeyEvent.VK_Y) {
             @Override public void actionPerformed(ActionEvent e) {
-                getParentEditor().scaleYUnits();
+                getEditor().scaleYUnits();
+                finishEvent();
             }
         };
 
@@ -341,16 +517,16 @@ public class EditFrame extends JFrame
     }
 
     void conversionError() {
-        JOptionPane.showMessageDialog
-            (this,
-             "<html><p>The conversion could not be performed.</p>"
-             + "<p>Conversions can only be performed on "
-             + "diagrams for which the left, right, and (for ternary diagrams) "
-             + "top components are defined (using the "
-             + "<code>Che<u>m</u>istry/<u>C</u>omponents</code> "
-             + "menu) as simple chemical formulas such as \"Ca\" or "
-             + "\"Pb3(PO4)2\".</p>"
-             + "</html>");
+        String msg = getEditor().isEditable()
+            ? ("<p>The conversion could not be performed."
+               + "<p>Conversions can only be performed on "
+               + "diagrams for which the left, right, and (for ternary diagrams) "
+               + "top components are defined (using the "
+               + "<code>Chemistry/Components</code> "
+               + "menu) in elemental formulas such as \"Ca + Mg\" or "
+               + "\"Pb3(PO4)2\".")
+            : "<p>This diagram does not support mole&lt;-&gt;weight conversions.";
+        getEditor().showError(msg);
     }
 
     protected Action convertToMole = new Action
@@ -359,18 +535,20 @@ public class EditFrame extends JFrame
                 setEnabled(false);
             }
             @Override public void actionPerformed(ActionEvent e) {
-                if (!getParentEditor().weightToMoleFraction()) {
+                if (!getEditor().weightToMoleFraction()) {
                     conversionError();
                 }
+                finishEvent();
             }
         };
 
     protected Action convertToWeight = new Action
         ("Convert to weight fraction", KeyEvent.VK_C) {
             @Override public void actionPerformed(ActionEvent e) {
-                if (!getParentEditor().moleToWeightFraction()) {
+                if (!getEditor().moleToWeightFraction()) {
                     conversionError();
                 }
+                finishEvent();
             }
         };
 
@@ -379,8 +557,9 @@ public class EditFrame extends JFrame
         (new Action
          ("Already displaying weight fraction", KeyEvent.VK_W) {
                 @Override public void actionPerformed(ActionEvent e) {
-                    getParentEditor().setUsingWeightFraction
+                    getEditor().setUsingWeightFraction
                         (usingWeightFraction.isSelected());
+                    finishEvent();
                 }
             });
 
@@ -389,6 +568,7 @@ public class EditFrame extends JFrame
         (new Action("Show editing options", KeyEvent.VK_W) {
                 @Override public void actionPerformed(ActionEvent e) {
                     setEditable(editingEnabled.isSelected());
+                    finishEvent();
                 }
             });
 
@@ -398,7 +578,8 @@ public class EditFrame extends JFrame
          ("Smooth through new points", KeyEvent.VK_S,
           KeyStroke.getKeyStroke('s')) {
                 @Override public void actionPerformed(ActionEvent e) {
-                    getParentEditor().setSmoothed(smoothed.isSelected());
+                    getEditor().setSmoothed(smoothed.isSelected());
+                    finishEvent();
                 }
             });
 
@@ -406,12 +587,13 @@ public class EditFrame extends JFrame
         = new JCheckBoxMenuItem
         (new Action("Show slope window", KeyEvent.VK_S) {
                 @Override public void actionPerformed(ActionEvent e) {
-                    getParentEditor().vertexInfo.setVisible
+                    getEditor().vertexInfo.setVisible
                         (showSlopeWindow.isSelected());
+                    finishEvent();
                 }
             });
 
-    public Editor getParentEditor() { return parentEditor; }
+    public Editor getEditor() { return parentEditor; }
 
     abstract class Action extends AbstractAction {
         Action(String name, int mnemonic, KeyStroke accelerator) {
@@ -453,7 +635,8 @@ public class EditFrame extends JFrame
         }
 
         @Override public void actionPerformed(ActionEvent e) {
-            getParentEditor().setMargin(side);
+            getEditor().setMargin(side);
+            finishEvent();
         }
     }
 
@@ -465,10 +648,14 @@ public class EditFrame extends JFrame
                 putValue(MNEMONIC_KEY, new Integer(mnemonic));
             }
             this.ext = ext;
+
+            putValue(SHORT_DESCRIPTION,
+                     "Save diagram in the " + ext + " image format");
         }
 
         @Override public void actionPerformed(ActionEvent e) {
-            getParentEditor().saveAsImage(ext);
+            getEditor().saveAsImage(ext);
+            finishEvent();
         }
     }
 
@@ -481,8 +668,9 @@ public class EditFrame extends JFrame
         }
 
         @Override public void actionPerformed(ActionEvent e) {
-            getParentEditor().setFontName(fontName);
+            getEditor().setFontName(fontName);
             repaint();
+            finishEvent();
         }
     }
 
@@ -496,8 +684,9 @@ public class EditFrame extends JFrame
         }
 
         @Override public void actionPerformed(ActionEvent e) {
-            getParentEditor().changeLayer(layerDelta);
+            getEditor().changeLayer(layerDelta);
             repaint();
+            finishEvent();
         }
     }
 
@@ -522,7 +711,8 @@ public class EditFrame extends JFrame
         }
 
         @Override public void actionPerformed(ActionEvent e) {
-            getParentEditor().setLineWidth(lineWidth);
+            getEditor().setLineWidth(lineWidth);
+            finishEvent();
         }
     }
 
@@ -542,7 +732,8 @@ public class EditFrame extends JFrame
         }
 
         @Override public void actionPerformed(ActionEvent e) {
-            getParentEditor().setLineStyle(lineStyle);
+            getEditor().setLineStyle(lineStyle);
+            finishEvent();
         }
     }
 
@@ -555,7 +746,8 @@ public class EditFrame extends JFrame
         }
 
         @Override public void actionPerformed(ActionEvent e) {
-            getParentEditor().setFill(fill);
+            getEditor().setFill(fill);
+            finishEvent();
         }
     }
 
@@ -589,7 +781,8 @@ public class EditFrame extends JFrame
         }
 
         @Override public void actionPerformed(ActionEvent e) {
-            getParentEditor().toggleBackgroundType(value);
+            getEditor().toggleBackgroundType(value);
+            finishEvent();
         }
     }
 
@@ -616,7 +809,33 @@ public class EditFrame extends JFrame
         }
 
         @Override public void actionPerformed(ActionEvent e) {
-            getParentEditor().move(dx, dy);
+            getEditor().move(dx, dy);
+            finishEvent();
+        }
+    }
+
+    /** Class for fine-grain adjustments of the last vertex added. */
+    class JumpAction extends Action {
+        int dx;
+        int dy;
+
+        JumpAction(String name, int mnemonic, String accelerator,
+                     int dx, int dy) {
+            super(name, mnemonic, accelerator);
+            this.dx = dx;
+            this.dy = dy;
+        }
+
+        JumpAction(String name, int mnemonic, KeyStroke stroke,
+                     int dx, int dy) {
+            super(name, mnemonic, stroke);
+            this.dx = dx;
+            this.dy = dy;
+        }
+
+        @Override public void actionPerformed(ActionEvent e) {
+            getEditor().jump(dx, dy);
+            finishEvent();
         }
     }
 
@@ -626,7 +845,8 @@ public class EditFrame extends JFrame
         }
 
         @Override public void actionPerformed(ActionEvent e) {
-            getParentEditor().removeTag(e.getActionCommand());
+            getEditor().removeTag(e.getActionCommand());
+            finishEvent();
         }
     }
 
@@ -637,12 +857,13 @@ public class EditFrame extends JFrame
 
         @Override public void actionPerformed(ActionEvent e) {
             try {
-                getParentEditor().removeVariable(e.getActionCommand());
+                getEditor().removeVariable(e.getActionCommand());
             } catch (CannotDeletePrincipalVariableException x) {
-                getParentEditor().showError
+                getEditor().showError
                     ("Cannot delete principal coordinate variable "
                      + x.getVariable().name);
             }
+            finishEvent();
         }
     }
 
@@ -656,6 +877,7 @@ public class EditFrame extends JFrame
         setLocation(0, 0);
         contentPane = new JPanel(new BorderLayout());
         setContentPane(contentPane);
+
         imagePane = new EditPane(this);
         // This is a workaround for an apparent Swing bug. When there
         // isn't room for a horizontal scrollbar and a horizontal
@@ -694,13 +916,8 @@ public class EditFrame extends JFrame
         mnSaveAs.setMnemonic(KeyEvent.VK_A);
         mnFile.add(mnSaveAs);
         mnSaveAs.add(mnSaveAsPED);
-        mnSaveAs.add(new Action("PDF", KeyEvent.VK_F) {
-                @Override public void actionPerformed(ActionEvent e) {
-                    getParentEditor().saveAsPDF();
-                }
-            });
-
-        mnSaveAs.add(new SaveImageAction("PNG", KeyEvent.VK_G));
+        mnSaveAs.add(mnSaveAsPDF);
+        mnSaveAs.add(mnSaveAsPNG);
 
         mnFile.add(mnSaveAs);
         mnFile.add(mnReload);
@@ -709,7 +926,8 @@ public class EditFrame extends JFrame
         // "Print" menu item
         mnFile.add(new Action("Print", KeyEvent.VK_P) {
                 @Override public void actionPerformed(ActionEvent e) {
-                    getParentEditor().print();
+                    getEditor().print();
+                    finishEvent();
                 }
             });
 
@@ -718,7 +936,8 @@ public class EditFrame extends JFrame
         // "Exit" menu item
         mnFile.add(new Action("Exit", KeyEvent.VK_X) {
                 @Override public void actionPerformed(ActionEvent e) {
-                    getParentEditor().verifyThenClose();
+                    getEditor().verifyThenClose();
+                    finishEvent();
                 }
             });
 
@@ -729,7 +948,8 @@ public class EditFrame extends JFrame
                          KeyEvent.VK_R,
                          KeyStroke.getKeyStroke('r')) {
                 @Override public void actionPerformed(ActionEvent e) {
-                    getParentEditor().colorSelection();
+                    getEditor().colorSelection();
+                    finishEvent();
                 }
             });
 
@@ -737,7 +957,8 @@ public class EditFrame extends JFrame
                                    KeyEvent.VK_C,
                                    KeyStroke.getKeyStroke('c')) {
                 @Override public void actionPerformed(ActionEvent e) {
-                    getParentEditor().copySelection();
+                    getEditor().copySelection();
+                    finishEvent();
                 }
             });
 
@@ -745,27 +966,26 @@ public class EditFrame extends JFrame
                                    KeyEvent.VK_O,
                                    KeyStroke.getKeyStroke('C')) {
                 @Override public void actionPerformed(ActionEvent e) {
-                    getParentEditor().copyRegion();
+                    getEditor().copyRegion();
+                    finishEvent();
                 }
             });
 
         mnSelection.add(new Action("Delete", KeyEvent.VK_D, "DELETE") {
                 @Override public void actionPerformed(ActionEvent e) {
-                    getParentEditor().removeSelection();
+                    getEditor().removeSelection();
+                    finishEvent();
                 }
             });
 
         mnSelection.add(new Action("Delete All", KeyEvent.VK_A) {
                 @Override public void actionPerformed(ActionEvent e) {
-                    getParentEditor().removeLikeSelection();
+                    getEditor().removeLikeSelection();
+                    finishEvent();
                 }
             });
 
-        mnSelection.add(new Action("Deselect", KeyEvent.VK_S, "pressed ESCAPE") {
-                @Override public void actionPerformed(ActionEvent e) {
-                    getParentEditor().deselectCurve();
-                }
-            });
+        mnSelection.add(mnDeselect);
 
         JMenu mnLayer = new JMenu("Layer");
         mnLayer.setMnemonic(KeyEvent.VK_L);
@@ -783,36 +1003,13 @@ public class EditFrame extends JFrame
              ("To top", KeyEvent.VK_T, null, +1000000));
         mnSelection.add(mnLayer);
 
-        mnSelection.add(new Action("Move selection only",
-                                   KeyEvent.VK_V,
-                                   KeyStroke.getKeyStroke('V')) {
-                @Override public void actionPerformed(ActionEvent e) {
-                    getParentEditor().moveSelection(false);
-                }
-            });
- 
-        mnSelection.add(new Action("Move everything at selected point",
-                                   KeyEvent.VK_M,
-                                   KeyStroke.getKeyStroke('v')) {
-                @Override public void actionPerformed(ActionEvent e) {
-                    getParentEditor().moveSelection(true);
-                }
-            });
-
-        mnSelection.add(new Action("Move everything in selected region",
-                                   KeyEvent.VK_R,
-                                   KeyStroke.getKeyStroke('R')) {
-                @Override public void actionPerformed(ActionEvent e) {
-                    getParentEditor().moveRegion();
-                }
-            });
-
         mnSelection.add(new Action
                         ("Properties...",
                          KeyEvent.VK_P,
                          KeyStroke.getKeyStroke('e')) {
                 @Override public void actionPerformed(ActionEvent e) {
-                    getParentEditor().editSelection();
+                    getEditor().editSelection();
+                    finishEvent();
                 }
             });
 
@@ -820,7 +1017,8 @@ public class EditFrame extends JFrame
                                    KeyEvent.VK_T,
                                    KeyStroke.getKeyStroke('d')) {
                 @Override public void actionPerformed(ActionEvent e) {
-                    getParentEditor().resetSelectionToDefaultSettings();
+                    getEditor().resetSelectionToDefaultSettings();
+                    finishEvent();
                 }
             });
 
@@ -828,42 +1026,18 @@ public class EditFrame extends JFrame
                                    KeyEvent.VK_F,
                                    KeyStroke.getKeyStroke('D')) {
                 @Override public void actionPerformed(ActionEvent e) {
-                    getParentEditor().setDefaultSettingsFromSelection();
+                    getEditor().setDefaultSettingsFromSelection();
+                    finishEvent();
                 }
             });
 
         // "Position" top-level menu
-        JMenu mnPosition = new JMenu("Position");
-        mnPosition.setMnemonic(KeyEvent.VK_P);
-        menuBar.add(mnPosition);
-        mnPosition.add(mnAutoPosition);
 
-        mnPosition.add(new Action
-                       ("Enter coordinates",
-                        KeyEvent.VK_E,
-                        KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0)) {
-                @Override public void actionPerformed(ActionEvent e) {
-                    getParentEditor().enterPosition();
-                }
-            });
-
+        mnPosition.add(mnEnterCoordinates);
         mnPosition.add(mnJumpToSelection);
-        mnPosition.add(mnNearestPoint);
-        mnPosition.add(mnNearestCurve);
-        mnPosition.add(mnSelectNearestPoint);
-        mnPosition.add(mnSelectNearestCurve);
         mnPosition.add(mnUnstickMouse);
 
-        mnPosition.addSeparator();
-
-        AdjustAction[] arrows =
-            { new AdjustAction("Up", KeyEvent.VK_U, "UP", 0, -1),
-              new AdjustAction("Down", KeyEvent.VK_D, "DOWN", 0, 1),
-              new AdjustAction("Left", KeyEvent.VK_L, "LEFT", -1, 0),
-              new AdjustAction("Right", KeyEvent.VK_R, "RIGHT", 1, 0) };
-        for (AdjustAction a : arrows) {
-            mnPosition.add(a);
-        }
+        menuBar.add(mnPosition);
 
         // "Curve" top-level menu
         mnCurve.setMnemonic(KeyEvent.VK_C);
@@ -935,7 +1109,8 @@ public class EditFrame extends JFrame
             (new JRadioButtonMenuItem
              (new AbstractAction("Custom...") {
                      @Override public void actionPerformed(ActionEvent e) {
-                         getParentEditor().customLineWidth();
+                         getEditor().customLineWidth();
+                         finishEvent();
                      }
                  }));
         mnCurve.add(mnLineWidth);
@@ -945,43 +1120,30 @@ public class EditFrame extends JFrame
                                KeyEvent.VK_O,
                                KeyStroke.getKeyStroke('o')) {
                 @Override public void actionPerformed(ActionEvent e) {
-                    getParentEditor().toggleCurveClosure();
-                }
-            });
-
-        mnCurve.add(new Action
-                    ("Add vertex", KeyEvent.VK_X,
-                     KeyStroke.getKeyStroke('x')) {
-                @Override public void actionPerformed(ActionEvent e) {
-                    getParentEditor().addVertex();
-                }
-            });
-
-        mnCurve.add(new Action
-                    ("Add auto-positioned vertex", KeyEvent.VK_A,
-                     KeyStroke.getKeyStroke('X')) {
-                @Override public void actionPerformed(ActionEvent e) {
-                    getParentEditor().autoPosition();
-                    getParentEditor().addVertex();
+                    getEditor().toggleCurveClosure();
+                    finishEvent();
                 }
             });
 
         mnCurve.add(new Action
                     ("Toggle point smoothing", KeyEvent.VK_P, "typed ,") {
                 @Override public void actionPerformed(ActionEvent e) {
-                    getParentEditor().toggleCusp();
+                    getEditor().toggleCusp();
+                    finishEvent();
                 }
             });
 
         mnCurve.add(new Action("Select left vertex", KeyEvent.VK_L, "typed [") {
                 @Override public void actionPerformed(ActionEvent e) {
-                    getParentEditor().shiftActiveVertex(false);
+                    getEditor().shiftActiveVertex(false);
+                    finishEvent();
                 }
             });
 
         mnCurve.add(new Action("Select right vertex", KeyEvent.VK_R, "typed ]") {
                 @Override public void actionPerformed(ActionEvent e) {
-                    getParentEditor().shiftActiveVertex(true);
+                    getEditor().shiftActiveVertex(true);
+                    finishEvent();
                 }
             });
 
@@ -989,42 +1151,20 @@ public class EditFrame extends JFrame
 
         // "Decorations" top-level menu
         mnDecorations.setMnemonic(KeyEvent.VK_D);
-        mnDecorations.add(new Action
-                          ("Text...",
-                           KeyEvent.VK_T,
-                           KeyStroke.getKeyStroke('t')) {
-                @Override public void actionPerformed(ActionEvent e) {
-                    getParentEditor().addLabel();
-                }
-            });
-
-        mnDecorations.add(new Action("Left arrowhead",
-                                     KeyEvent.VK_L,
-                                     KeyStroke.getKeyStroke('<')) {
-                @Override public void actionPerformed(ActionEvent e) {
-                    getParentEditor().addArrow(false);
-                }
-            });
-
-        mnDecorations.add(new Action("Right arrowhead",
-                                     KeyEvent.VK_R,
-                                     KeyStroke.getKeyStroke('>')) {
-                @Override public void actionPerformed(ActionEvent e) {
-                    getParentEditor().addArrow(true);
-                }
-            });
 
         mnDecorations.add(new Action
                           ("Ruler", KeyEvent.VK_U) {
                 @Override public void actionPerformed(ActionEvent e) {
-                    getParentEditor().addRuler();
+                    getEditor().addRuler();
+                    finishEvent();
                 }
             });
 
         mnDecorations.add(new Action
                           ("Tie lines", KeyEvent.VK_I) {
                 @Override public void actionPerformed(ActionEvent e) {
-                    getParentEditor().addTieLine();
+                    getEditor().addTieLine();
+                    finishEvent();
                 }
             });
         menuBar.add(mnDecorations);
@@ -1035,7 +1175,8 @@ public class EditFrame extends JFrame
         setAspectRatio = new Action
             ("Aspect ratio", KeyEvent.VK_A) {
                 @Override public void actionPerformed(ActionEvent e) {
-                    getParentEditor().setAspectRatio();
+                    getEditor().setAspectRatio();
+                    finishEvent();
                 }
             };
         setAspectRatio.setEnabled(false);
@@ -1054,7 +1195,8 @@ public class EditFrame extends JFrame
 
         mnKeys.add(new Action("List", KeyEvent.VK_L) {
                 @Override public void actionPerformed(ActionEvent e) {
-                    getParentEditor().listKeyValues();
+                    getEditor().listKeyValues();
+                    finishEvent();
                 }
             });
         mnProperties.add(mnKeys);
@@ -1065,12 +1207,14 @@ public class EditFrame extends JFrame
         }
         mnMargins.add(new Action("Auto-fit", KeyEvent.VK_A) {
                 @Override public void actionPerformed(ActionEvent e) {
-                    getParentEditor().computeMargins();
+                    getEditor().computeMargins();
+                    finishEvent();
                 }
             });
         mnMargins.add(new Action("Crop to selection", KeyEvent.VK_P) {
                 @Override public void actionPerformed(ActionEvent e) {
-                    getParentEditor().cropToSelection();
+                    getEditor().cropToSelection();
+                    finishEvent();
                 }
             });
 
@@ -1098,7 +1242,8 @@ public class EditFrame extends JFrame
         mnProperties.add(mnVariables);
         mnVariables.add(new Action("Add", KeyEvent.VK_A) {
                 @Override public void actionPerformed(ActionEvent e) {
-                    getParentEditor().addVariable();
+                    getEditor().addVariable();
+                    finishEvent();
                 }
             });
         mnVariables.add(mnVariablesSeparator);
@@ -1120,27 +1265,20 @@ public class EditFrame extends JFrame
                               KeyEvent.VK_P,
                               KeyStroke.getKeyStroke("control C")) {
                 @Override public void actionPerformed(ActionEvent e) {
-                    getParentEditor().exportSelectedCoordinates();
+                    getEditor().exportSelectedCoordinates();
+                    finishEvent();
                 }
             });
 
         mnDigit.add(new Action("Export all curve and label coordinates",
                               KeyEvent.VK_A) {
                 @Override public void actionPerformed(ActionEvent e) {
-                    getParentEditor().exportAllCoordinates();
+                    getEditor().exportAllCoordinates();
+                    finishEvent();
                 }
             });
 
         mnDigit.add(mnImportCoordinates);
-
-        mnDigit.add(new Action
-                       ("Copy status bar to clipboard",
-                        KeyEvent.VK_S,
-                        KeyStroke.getKeyStroke("control shift S")) {
-                @Override public void actionPerformed(ActionEvent e) {
-                    getParentEditor().copyPositionToClipboard();
-                }
-            });
 
         // "Chemistry" top-level menu
         JMenu mnChem = new JMenu("Chemistry");
@@ -1152,6 +1290,7 @@ public class EditFrame extends JFrame
         mnComponents.add(setLeftComponent);
         mnComponents.add(setRightComponent);
         mnComponents.add(setTopComponent);
+        mnComponents.add(guessComponents);
         mnChem.add(mnComponents);
 
         {
@@ -1167,7 +1306,8 @@ public class EditFrame extends JFrame
                    ("Formula to mole/weight fraction", KeyEvent.VK_M,
                     KeyStroke.getKeyStroke('%')) {
                 @Override public void actionPerformed(ActionEvent e) {
-                    getParentEditor().computeFraction();
+                    getEditor().computeFraction();
+                    finishEvent();
                 }
             });
 
@@ -1199,7 +1339,8 @@ public class EditFrame extends JFrame
         mnBackgroundImage.add
             (new Action("Detach", KeyEvent.VK_E) {
                     @Override public void actionPerformed(ActionEvent e) {
-                        getParentEditor().detachOriginalImage();
+                        getEditor().detachOriginalImage();
+                        finishEvent();
                     }
                 });
         lightGrayBackgroundImage.setSelected(true);
@@ -1208,13 +1349,8 @@ public class EditFrame extends JFrame
         mnView.add(new Action("Best fit", KeyEvent.VK_B,
                               KeyStroke.getKeyStroke("control B")) {
                 @Override public void actionPerformed(ActionEvent e) {
-                    getParentEditor().bestFit();
-                }
-            });
-        mnView.add(new Action("Center mouse", KeyEvent.VK_C,
-                              KeyStroke.getKeyStroke("control L")) {
-                @Override public void actionPerformed(ActionEvent e) {
-                    getParentEditor().centerMouse();
+                    getEditor().bestFit();
+                    finishEvent();
                 }
             });
         mnView.add(mnZoomIn);
@@ -1228,14 +1364,55 @@ public class EditFrame extends JFrame
         mnHelp.add(new Action("Help", KeyEvent.VK_H, "F1") {
                 @Override public void actionPerformed(ActionEvent e) {
                     help();
+                    finishEvent();
                 }
             });
 
         mnHelp.add(new Action("About", KeyEvent.VK_A) {
                 @Override public void actionPerformed(ActionEvent e) {
                     about();
+                    finishEvent();
                 }
             });
+
+        // Enable shortcuts for actions that do not appear in the top
+        // menu because they are position-sensitive.
+        for (Action act: new Action[]
+            { actAutoPosition,
+              actNearestPoint,
+              actNearestCurve,
+              actSelectNearestPoint,
+              actSelectNearestCurve }) {
+            enable(act);
+        }
+
+        JumpAction[] arrows1 =
+            { new JumpAction("Up", KeyEvent.VK_U, "shift UP", 0, -1),
+              new JumpAction("Down", KeyEvent.VK_D, "shift DOWN", 0, 1),
+              new JumpAction("Left", KeyEvent.VK_L, "shift LEFT", -1, 0),
+              new JumpAction("Right", KeyEvent.VK_R, "shift RIGHT", 1, 0) };
+        for (JumpAction a : arrows1) {
+            mnJump.add(a);
+            enable(a);
+        }
+        AdjustAction[] arrows =
+            { new AdjustAction("Up", KeyEvent.VK_U, "UP", 0, -1),
+              new AdjustAction("Down", KeyEvent.VK_D, "DOWN", 0, 1),
+              new AdjustAction("Left", KeyEvent.VK_L, "LEFT", -1, 0),
+              new AdjustAction("Right", KeyEvent.VK_R, "RIGHT", 1, 0) };
+        for (AdjustAction a : arrows) {
+            mnMove.add(a);
+            enable(a);
+        }
+        enable(actMoveSelection);
+        enable(actMovePoint);
+        enable(actMoveRegion);
+        enable(actAddVertex);
+        enable(actAddAutoPositionedVertex);
+        enable(actText);
+        enable(actLeftArrow);
+        enable(actRightArrow);
+        enable(actCopyStatusBar);
 
         setEditable(true);
     }
@@ -1254,7 +1431,7 @@ public class EditFrame extends JFrame
 
     /* Set whether the Slope window is visible or not. */
     public void setVertexInfoVisible(boolean b) {
-        getParentEditor().vertexInfo.setVisible(b);
+        getEditor().vertexInfo.setVisible(b);
         showSlopeWindow.setSelected(b);
     }
 
@@ -1309,8 +1486,20 @@ public class EditFrame extends JFrame
         return cnt;
     }
 
+    /** The event indicating that a JPopupMenu will close may precede
+        the action that the menu selection triggered, which makes it
+        hard to create a self-contained solution of how to determine
+        when to go back to letting the logical diagram position track
+        the mouse instead of having the logical diagram position be
+        the position where the popup menu was last triggered. My
+        solution is to have all events that may be triggered by
+        right-clicks end by calling finishEvent(). */
+    void finishEvent() {
+        getEditor().rightClick = null;
+    }
+
     @Override public void update(Observable o, Object arg) {
-        Editor e = getParentEditor();
+        Editor e = getEditor();
         if (e != null) {
             setTitle(e.getProvisionalTitle());
             repaint();
@@ -1587,5 +1776,38 @@ public class EditFrame extends JFrame
                            RenderingHints.VALUE_ANTIALIAS_ON);
         stroke.getStroke().draw(g, line, lineWidth);
         return new ImageIcon(im);
+    }
+
+    static JMenuItem toMenuItem(Action act) {
+        JMenuItem it = new JMenuItem(act);
+        Object o = act.getValue(Action.SHORT_DESCRIPTION);
+        if (o != null) {
+            it.setToolTipText((String) o);
+        }
+        return it;
+    }
+
+    /** Enable the keyboard accelerator for the given action. This
+        should enable the accelerator in much the same way, or maybe
+        even precisely the same way, as happens when you add the
+        action to the frame's menu. */
+    void enable(AbstractAction act) {
+        // Avoid name duplication.
+        String name = "_KEY137" + (++actionId);
+        KeyStroke accel = (KeyStroke) act.getValue(Action.ACCELERATOR_KEY);
+        if (name != null && accel != null) {
+            JPanel cp = (JPanel) getContentPane();
+            cp.getInputMap().put(accel, name);
+            cp.getActionMap().put(name, act);
+        }
+    }
+
+    private static int actionId = 0;
+
+    void enable(JMenuItem it) {
+        AbstractAction act = (AbstractAction) it.getAction();
+        if (act != null) {
+            enable(act);
+        }
     }
 }
