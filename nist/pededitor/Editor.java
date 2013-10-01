@@ -72,8 +72,11 @@ import javax.swing.AbstractAction;
 import javax.swing.JColorChooser;
 import javax.swing.JDialog;
 import javax.swing.JFileChooser;
+import javax.swing.JMenuItem;
 import javax.swing.JOptionPane;
+import javax.swing.JPopupMenu;
 import javax.swing.JScrollPane;
+import javax.swing.MenuElement;
 import javax.swing.WindowConstants;
 import javax.swing.filechooser.FileNameExtensionFilter;
 
@@ -487,7 +490,7 @@ public class Editor extends Diagram
 
     protected CropFrame cropFrame = new CropFrame();
     protected EditFrame editFrame = new EditFrame(this);
-    protected RightClickMenu mnRightClick = new RightClickMenu(this);
+    protected JPopupMenu mnRightClick = new RightClickMenu(this);
     protected ImageZoomFrame zoomFrame = null;
     protected VertexInfoDialog vertexInfo = new VertexInfoDialog(this);
     protected LabelDialog labelDialog = null;
@@ -500,7 +503,11 @@ public class Editor extends Diagram
         return selection;
     }
 
-    RightClickMenu getRightClickMenu() {
+    void setRightClickMenu(JPopupMenu menu) {
+        mnRightClick = menu;
+    }
+
+    JPopupMenu getRightClickMenu() {
         return mnRightClick;
     }
 
@@ -5293,7 +5300,7 @@ public class Editor extends Diagram
             mousePress = mp;
             mouseTravel = null;
         } else {
-            getRightClickMenu().show(mp);
+            showPopupMenu(mp);
         }
     }
 
@@ -5947,6 +5954,32 @@ public class Editor extends Diagram
         }
         return res;
     }
+
+    /** Recursively hunt for menu items whose action is act, and call setVisible(b) on them. */
+    static void setVisible(AbstractAction act, MenuElement menu, boolean b) {
+        for (MenuElement me: menu.getSubElements()) {
+            if (me instanceof JMenuItem) {
+                JMenuItem mi = (JMenuItem) me;
+                if (mi.getAction() == act) {
+                    mi.setVisible(false);
+                }
+            }
+            setVisible(act, me, b);
+        }
+    }
+
+    void setVisible(AbstractAction act, boolean b) {
+        setVisible(act, getEditFrame().getJMenuBar(), b);
+        setVisible(act, getRightClickMenu(), b);
+    }
+
+    void showPopupMenu(MousePress mp) {
+        if (rightClick == null) {
+            rightClick = mp;
+        }
+        mnRightClick.show(mp.e.getComponent(), mp.e.getX(), mp.e.getY());
+    }
+ 
 }
 
 class ScaledCroppedImage {
