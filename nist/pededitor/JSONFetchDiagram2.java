@@ -51,14 +51,14 @@ public class JSONFetchDiagram2 {
     }
 
     public static void run(String[] args) {
-        if (args.length != 1) {
+        if (args.length < 1 || args.length > 2) {
             throw new IllegalArgumentException
-                ("run() via JWS takes exactly 1 argument");
+                ("run() via JWS takes 1 or 2 arguments");
         }
-        run(args[0]);
+        run(args[0], (args.length > 1) ? args[1] : null);
     }
 
-    public static Editor run(String urlStr) {
+    public static Editor run(String urlStr, String title) {
         URL url = null;
 
         try {
@@ -70,9 +70,11 @@ public class JSONFetchDiagram2 {
                     ("URL " + urlStr + ": illegal URL syntax");
             }
             url = new URL(urlStr);
-            URLConnection connection = url.openConnection();
-            connection.setDoInput(true);
-            Diagram d = Diagram.loadFrom(connection.getInputStream());
+            URLConnection conn = url.openConnection();
+            Diagram d = Diagram.loadFrom(conn.getInputStream());
+            if (title != null) {
+                d.setTitle(title);
+            }
             Editor e = new Editor();
             e.copyFrom(d);
 
@@ -90,13 +92,24 @@ public class JSONFetchDiagram2 {
             ef.mnZoomOut.setVisible(false);
             ef.mnExportText.setVisible(false);
             ef.mnCopyFormulas.setVisible(false);
-            ef.mnAutoPosition.setVisible(false);
+            ef.actAutoPosition.setEnabled(false);
             ef.mnJumpToSelection.setVisible(false);
-            ef.mnNearestPoint.setVisible(false);
-            ef.mnNearestCurve.setVisible(false);
+            ef.mnUnstickMouse.getAction().setEnabled(false);
             ef.mnUnstickMouse.setVisible(false);
             ef.shortHelpFile = "viewhelp1.html";
-            e.mouseDragDistance = 0;
+
+            ef.actNearestPoint.setEnabled(false);
+            ef.actNearestCurve.setEnabled(false);
+            ef.actAddVertex.setEnabled(false);
+            ef.actAddAutoPositionedVertex.setEnabled(false);
+            ef.actText.setEnabled(false);
+            ef.actLeftArrow.setEnabled(false);
+            ef.actRightArrow.setEnabled(false);
+            ef.actMoveSelection.setEnabled(false);
+            ef.actMovePoint.setEnabled(false);
+            ef.actMoveRegion.setEnabled(false);
+            
+            e.mouseDragDistance = 20;
             e.detachOriginalImage();
             e.setEditable(false);
             try {
@@ -113,6 +126,7 @@ public class JSONFetchDiagram2 {
             e.initializeGUI();
             ef.setVertexInfoVisible(false);
             e.bestFit();
+            e.editFrame.toFront();
             return e;
         } catch (IOException x) {
             if (url != null) {
