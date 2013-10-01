@@ -47,6 +47,6 @@ public class EditPane extends JPanel {
 
     @Override public void paintComponent(Graphics g) {
         super.paintComponent(g);
-        getParentFrame().getParentEditor().paintEditPane(g);
+        getParentFrame().getEditor().paintEditPane(g);
     }
 }
