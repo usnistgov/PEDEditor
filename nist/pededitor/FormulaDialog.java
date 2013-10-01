@@ -65,6 +65,7 @@ public class FormulaDialog extends JDialog {
         gb.endRowWith(weight);
         gb.centerAndEndRow(okButton);
         getRootPane().setDefaultButton(okButton);
+        setResizable(false);
     }
 
     public void normalExit() {
