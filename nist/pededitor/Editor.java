@@ -799,6 +799,10 @@ public class Editor extends Diagram
                 vertexInfo.dispose();
                 vertexInfo = null;
             }
+            if (formulaDialog != null) {
+                formulaDialog.dispose();
+                formulaDialog = null;
+            }
             redraw();
             openEditors.remove(this);
         }
@@ -1733,12 +1737,10 @@ public class Editor extends Diagram
                         dec.setColor(highlight);
                         if (selection instanceof VertexHandle) {
                             paintSelectedCurve(g, scale);
+                        } else if (selection instanceof LabelHandle) {
+                           paintSelectedLabel(g, scale);
                         } else {
-                            if (selection instanceof LabelHandle) {
-                                paintSelectedLabel(g, scale);
-                            } else {
-                                sel.draw(g, scale);
-                            }
+                           sel.draw(g, scale);
                         }
                         dec.setColor(oldColor);
                     }
@@ -2850,11 +2852,10 @@ public class Editor extends Diagram
     public void copyPositionToClipboard() {
         if (mprin == null) {
             showError
-                ("Move the mouse to the target location. "
-                 + "Use the 'Control+Shift+S' shortcut key or keyboard menu controls "
-                 + "instead of selecting the menu item using the mouse.",
-                 "Copy position error");
+                ("The mouse is outside the diagram.");
         }
+        moveMouse(mprin);
+        setMouseStuck(true);
         copyToClipboard(HtmlToText.htmlToText(principalToPrettyString(mprin)), false);
     }
 
@@ -4219,7 +4220,7 @@ public class Editor extends Diagram
             vertexInfo.setLocation(rect.x + rect.width, rect.y);
         }
         vertexInfo.refresh();
-        vertexInfo.setVisible(true);
+        editFrame.setVertexInfoVisible(true);
         editFrame.setVisible(true);
     }
 
@@ -5290,17 +5291,25 @@ public class Editor extends Diagram
     protected EditFrame getEditFrame() {
         return editFrame;
     }
+
+   public void setShiftDown(boolean b) {
+      isShiftDown = b;
+      setMouseStuck(false);
+      redraw();
+   }
     
     @Override public void mousePressed(MouseEvent e) {
-        Point2D.Double p =  e.isShiftDown() ?
-            getAutoPositionHandle(null).getLocation() :
-            getVertexAddMousePosition(e.getPoint());
-        MousePress mp = new MousePress(e,p);
-        if (e.getButton() == MouseEvent.BUTTON1) {
-            mousePress = mp;
-            mouseTravel = null;
+        if (e.isPopupTrigger() || e.getButton() != MouseEvent.BUTTON1) {
+           if (e.isShiftDown()) {
+              mprin = getAutoPosition();
+           }
+            showPopupMenu(new MousePress(e,mprin));
         } else {
-            showPopupMenu(mp);
+           Point2D.Double p =  e.isShiftDown() ?
+              getAutoPositionHandle(null).getLocation() :
+              getVertexAddMousePosition(e.getPoint());
+            mousePress = new MousePress(e,p);
+            mouseTravel = null;
         }
     }
 
@@ -5376,10 +5385,11 @@ public class Editor extends Diagram
         the user to lose their place after an operation such as
         seekNearestPoint(). */
     public void updateMousePosition() {
-        Point p = (mousePress != null) ? mousePress.e.getPoint()
-            : (rightClick != null) ? rightClick.e.getPoint()
-            : getEditPane().getMousePosition();
-        updateMousePosition(p);
+        if (rightClick != null || mousePress != null) {
+            return; // Don't update the mouse position while the
+                   // right-click menu is active.
+        }
+        updateMousePosition(getEditPane().getMousePosition());
     }
 
     /** Update mprin to reflect the mouse being positioned at edit
