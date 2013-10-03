@@ -1268,7 +1268,7 @@ public class Diagram extends Observable implements Printable {
         tags.remove(tag);
     }
 
-    public void removeVariable(String name) throws CannotDeletePrincipalVariableException {
+    public void removeVariable(String name) throws CannotDeletePrincipalVariableException, NoSuchVariableException {
         for (LinearAxis axis: axes) {
             if (axis.name.equals(name)) {
                 if (axis == getXAxis() || axis == getYAxis()) {
@@ -1278,7 +1278,7 @@ public class Diagram extends Observable implements Printable {
                 return;
             }
         }
-        throw new IllegalStateException("Variable '" + name + "' + not found.");
+        throw new NoSuchVariableException(name);
     }
 
     @JsonIgnore public void setSaveNeeded(boolean b) {
