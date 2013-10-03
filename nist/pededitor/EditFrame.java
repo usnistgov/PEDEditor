@@ -61,6 +61,7 @@ public class EditFrame extends JFrame
     protected Action setAspectRatio;
     protected String longHelpFile = "edithelp.html";
     protected String shortHelpFile = "viewhelp.html";
+    protected String helpAboutFile = "about.html";
 
 
     JMenu mnSelection = new JMenu("Edit Selection");
@@ -133,6 +134,22 @@ public class EditFrame extends JFrame
     {
         mnNextFile.setVisible(false); // Hidden by default
     }
+
+   Action actShiftPressed = new Action
+       ("Shift Pressed", 0, "pressed SHIFT") {
+         @Override public void actionPerformed(ActionEvent e) {
+            getEditor().setShiftDown(true);
+            finishEvent();
+         }
+      };
+
+   Action actShiftReleased = new Action
+       ("Shift Released", 0, "released SHIFT") {
+         @Override public void actionPerformed(ActionEvent e) {
+            getEditor().setShiftDown(false);
+            finishEvent();
+         }
+      };
 
     Action actDeselect = new Action
         ("Deselect", KeyEvent.VK_S, "pressed ESCAPE") {
@@ -368,8 +385,7 @@ public class EditFrame extends JFrame
             });
 
     Action actCopyStatusBar = new Action
-        ("Copy coordinates to clipboard",
-         KeyEvent.VK_S, KeyStroke.getKeyStroke("control shift S")) {
+        ("Copy coordinates to clipboard", KeyEvent.VK_S) {
             @Override public void actionPerformed(ActionEvent e) {
                 getEditor().copyPositionToClipboard();
                 finishEvent();
@@ -862,6 +878,8 @@ public class EditFrame extends JFrame
                 getEditor().showError
                     ("Cannot delete principal coordinate variable "
                      + x.getVariable().name);
+            } catch (NoSuchVariableException x) {
+                throw new IllegalStateException(x);
             }
             finishEvent();
         }
@@ -1404,6 +1422,8 @@ public class EditFrame extends JFrame
             mnMove.add(a);
             enable(a);
         }
+        enable(actShiftPressed);
+        enable(actShiftReleased);
         enable(actMoveSelection);
         enable(actMovePoint);
         enable(actMoveRegion);
@@ -1495,7 +1515,10 @@ public class EditFrame extends JFrame
         solution is to have all events that may be triggered by
         right-clicks end by calling finishEvent(). */
     void finishEvent() {
-        getEditor().rightClick = null;
+        Editor e = getEditor();
+        if (e != null) {
+            e.rightClick = null;
+        }
     }
 
     @Override public void update(Observable o, Object arg) {
@@ -1552,7 +1575,7 @@ public class EditFrame extends JFrame
     }
 
     protected void about() {
-        ShowHTML.show("about.html", this);
+        ShowHTML.show(helpAboutFile, this);
     }
 
     protected void setStatus(String s) {
