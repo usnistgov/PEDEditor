@@ -59,6 +59,62 @@ public class JSONFetchDiagram2 {
         run(args[0], (args.length > 1) ? args[1] : null);
     }
 
+    /** Convert the given Editor to viewer mode. */
+    public static void makeViewer(Editor e) {
+        e.setRightClickMenu(new ViewerRightClickMenu(e));
+        
+        // Cut out all the functions that the viewer doesn't need.
+
+        EditFrame ef = e.editFrame;
+        ef.setNewDiagramVisible(false);
+        ef.setOpenVisible(false);
+        ef.setReloadVisible(false);
+        ef.setEditable(false);
+        ef.editingEnabled.setVisible(false);
+        ef.mnTags.setVisible(false);
+        ef.mnKeys.setVisible(false);
+        ef.mnZoomIn.setVisible(false);
+        ef.mnZoomOut.setVisible(false);
+        ef.mnExportText.setVisible(false);
+        ef.mnCopyFormulas.setVisible(false);
+        ef.mnJumpToSelection.setVisible(false);
+        ef.shortHelpFile = "viewhelp1.html";
+        ef.helpAboutFile = "viewabout.html";
+
+        disappear(e, (AbstractAction) ef.mnUnstickMouse.getAction());
+        disappear(e, ef.actAutoPosition);
+        disappear(e, ef.actNearestPoint);
+        disappear(e, ef.actNearestCurve);
+        disappear(e, ef.actAddVertex);
+        disappear(e, ef.actAddAutoPositionedVertex);
+        disappear(e, ef.actText);
+        disappear(e, ef.actLeftArrow);
+        disappear(e, ef.actRightArrow);
+        disappear(e, ef.actMoveSelection);
+        disappear(e, ef.actMovePoint);
+        disappear(e, ef.actMoveRegion);
+            
+        e.detachOriginalImage();
+        e.setEditable(false);
+        try {
+            e.removeVariable("page X");
+        } catch (CannotDeletePrincipalVariableException
+                 |NoSuchVariableException e1) {
+            // OK, let it be
+        }
+        try {
+            e.removeVariable("page Y");
+        } catch (CannotDeletePrincipalVariableException
+                 |NoSuchVariableException e1) {
+            // OK, let it be
+        }
+        e.setSaveNeeded(false);
+        e.initializeGUI();
+        ef.setVertexInfoVisible(false);
+        e.bestFit();
+        e.editFrame.toFront();
+    }
+
     public static Editor run(String urlStr, String title) {
         URL url = null;
 
@@ -77,57 +133,8 @@ public class JSONFetchDiagram2 {
                 d.setTitle(title);
             }
             Editor e = new Editor();
-            e.setRightClickMenu(new ViewerRightClickMenu(e));
             e.copyFrom(d);
-
-            // Cut out all the functions that the viewer doesn't need.
-
-            EditFrame ef = e.editFrame;
-            ef.setNewDiagramVisible(false);
-            ef.setOpenVisible(false);
-            ef.setReloadVisible(false);
-            ef.setEditable(false);
-            ef.editingEnabled.setVisible(false);
-            ef.mnTags.setVisible(false);
-            ef.mnKeys.setVisible(false);
-            ef.mnZoomIn.setVisible(false);
-            ef.mnZoomOut.setVisible(false);
-            ef.mnExportText.setVisible(false);
-            ef.mnCopyFormulas.setVisible(false);
-            ef.mnJumpToSelection.setVisible(false);
-            ef.shortHelpFile = "viewhelp1.html";
-
-            disappear(e, (AbstractAction) ef.mnUnstickMouse.getAction());
-            disappear(e, ef.actAutoPosition);
-            disappear(e, ef.actNearestPoint);
-            disappear(e, ef.actNearestCurve);
-            disappear(e, ef.actAddVertex);
-            disappear(e, ef.actAddAutoPositionedVertex);
-            disappear(e, ef.actText);
-            disappear(e, ef.actLeftArrow);
-            disappear(e, ef.actRightArrow);
-            disappear(e, ef.actMoveSelection);
-            disappear(e, ef.actMovePoint);
-            disappear(e, ef.actMoveRegion);
-            
-            e.mouseDragDistance = 20;
-            e.detachOriginalImage();
-            e.setEditable(false);
-            try {
-                e.removeVariable("page X");
-            } catch (CannotDeletePrincipalVariableException e1) {
-                // OK, let it be
-            }
-            try {
-                e.removeVariable("page Y");
-            } catch (CannotDeletePrincipalVariableException e1) {
-                // OK, let it be
-            }
-            e.setSaveNeeded(false);
-            e.initializeGUI();
-            ef.setVertexInfoVisible(false);
-            e.bestFit();
-            e.editFrame.toFront();
+            makeViewer(e);
             return e;
         } catch (IOException x) {
             if (url != null) {
