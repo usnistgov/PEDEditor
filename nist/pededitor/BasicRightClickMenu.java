@@ -30,4 +30,13 @@ public class BasicRightClickMenu extends JPopupMenu {
     protected EditFrame getEditFrame() {
         return getEditor().getEditFrame();
     }
+
+    /** Call this when the user selects or deselects something. */
+    public void setHasSelection(boolean b) {
+    }
+
+    /** Call this when the user checks or unchecks the "Show Editing
+        Options" box. */
+    public void setEditable(boolean b) {
+    }
 }
