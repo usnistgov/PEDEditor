@@ -19,6 +19,8 @@ public class RightClickMenu extends BasicRightClickMenu {
         add(ef.actMovePoint);
         add(ef.actMoveRegion);
         addSeparator();
+        // If one does shift right-click, then the following two items
+        // are identical, which can get a bit confusing.
         add(ef.actAddVertex);
         add(ef.actAddAutoPositionedVertex);
         addSeparator();
