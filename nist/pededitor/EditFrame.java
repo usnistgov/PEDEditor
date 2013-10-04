@@ -83,22 +83,22 @@ public class EditFrame extends JFrame
                     getEditor().showOpenDialog(EditFrame.this);
                 }
             });
-    protected JMenuItem mnSave = new JMenuItem
-        (new Action("Save", KeyEvent.VK_S) {
-                @Override public void actionPerformed(ActionEvent e) {
-                    getEditor().save();
-                }
-            });
-    protected JMenuItem mnSaveAsPED = toMenuItem
-        (new Action("PED", KeyEvent.VK_P) {
-                { 
-                    putValue(SHORT_DESCRIPTION,
-                             "Save diagram in PED Editor's native format");
-                }
-                @Override public void actionPerformed(ActionEvent e) {
-                    getEditor().saveAsPED();
-                }
-            });
+    protected Action actSave = new Action("Save", KeyEvent.VK_S) {
+            @Override public void actionPerformed(ActionEvent e) {
+                getEditor().save();
+            }
+        };
+    protected JMenuItem mnSave = toMenuItem(actSave);
+    protected Action actSaveAsPED = new Action("PED", KeyEvent.VK_P) {
+            { 
+                putValue(SHORT_DESCRIPTION,
+                         "Save diagram in PED Editor's native format");
+            }
+            @Override public void actionPerformed(ActionEvent e) {
+                getEditor().saveAsPED();
+            }
+        };
+    protected JMenuItem mnSaveAsPED = toMenuItem(actSaveAsPED);
     protected JMenuItem mnSaveAsPDF = toMenuItem
         (new Action("PDF", KeyEvent.VK_F) {
                 { 
@@ -346,15 +346,13 @@ public class EditFrame extends JFrame
         };
 
     JMenu mnKeys = new JMenu("Key/value pairs");
-    protected JMenuItem mnAddKey = toMenuItem
-        (new Action("Add", KeyEvent.VK_A) {
-                @Override public void actionPerformed(ActionEvent e) {
-                    getEditor().put();
-                    finishEvent();
-                }
-            });
-
-
+    Action actAddKey = new Action("Add", KeyEvent.VK_A) {
+            @Override public void actionPerformed(ActionEvent e) {
+                getEditor().put();
+                finishEvent();
+            }
+        };
+    protected JMenuItem mnAddKey = toMenuItem(actAddKey);
     protected JSeparator mnTagsSeparator = new JSeparator();
     protected JMenuItem mnRemoveTag = new JMenuItem("Delete");
     JMenu mnTags = new JMenu("Tags");
@@ -362,20 +360,20 @@ public class EditFrame extends JFrame
     protected JMenuItem mnRemoveVariable = new JMenuItem("Delete");
     protected JMenu mnVariables = new JMenu("Variables");
     protected JMenu mnScale = new JMenu("Scale");
-    protected JMenuItem mnAddTag = new JMenuItem
-        (new Action("Add", KeyEvent.VK_A) {
-                @Override public void actionPerformed(ActionEvent e) {
-                    getEditor().addTag();
-                    finishEvent();
-                }
-            });
-    protected JMenuItem mnSetTitle = new JMenuItem
-        (new Action("Title", KeyEvent.VK_T) {
-                @Override public void actionPerformed(ActionEvent e) {
-                    getEditor().setTitle();
-                    finishEvent();
-                }
-            });
+    Action actAddTag = new Action("Add", KeyEvent.VK_A) {
+            @Override public void actionPerformed(ActionEvent e) {
+                getEditor().addTag();
+                finishEvent();
+            }
+        };
+    protected JMenuItem mnAddTag = new JMenuItem(actAddTag);
+    Action actSetTitle = new Action("Title", KeyEvent.VK_T) {
+            @Override public void actionPerformed(ActionEvent e) {
+                getEditor().setTitle();
+                finishEvent();
+            }
+        };
+    protected JMenuItem mnSetTitle = new JMenuItem(actSetTitle);
     protected JMenuItem mnExportText = new JMenuItem
         (new Action("Export all text to clipboard", KeyEvent.VK_T) {
                 @Override public void actionPerformed(ActionEvent e) {
@@ -600,7 +598,7 @@ public class EditFrame extends JFrame
         = new JCheckBoxMenuItem
         (new Action("Show editing options", KeyEvent.VK_W) {
                 @Override public void actionPerformed(ActionEvent e) {
-                    setEditable(editingEnabled.isSelected());
+                    getEditor().setEditable(editingEnabled.isSelected());
                     finishEvent();
                 }
             });
@@ -1435,8 +1433,6 @@ public class EditFrame extends JFrame
               actCopyRegion }) {
             enable(act);
         }
-
-        setEditable(true);
     }
 
     public void setReloadVisible(boolean b) {
@@ -1458,20 +1454,21 @@ public class EditFrame extends JFrame
     }
 
     public void setEditable(boolean b) {
-        mnSave.setVisible(b);
-        mnSaveAsPED.setVisible(b);
+        Editor e = getEditor();
+        e.setVisible(actSave, b);
+        e.setVisible(actSaveAsPED, b);
         mnSelection.setVisible(b);
         mnUnstickMouse.setVisible(b);
         mnCurve.setVisible(b);
         mnDecorations.setVisible(b);
         mnFont.setVisible(b);
-        mnAddKey.setVisible(b);
+        e.setVisible(actAddKey, b);
         mnMargins.setVisible(b);
         mnScale.setVisible(b);
-        mnAddTag.setVisible(b);
+        e.setVisible(actAddTag, b);
         // TODO Make the tag menu invisible if not editable and no
         // tags; also make it so the deletion part doesn't delete. Yuck!
-        mnSetTitle.setVisible(b);
+        e.setVisible(actSetTitle, b);
         mnVariables.setVisible(b);
 
         mnProperties.setVisible(getVisibleItemCount(mnProperties) > 0);
@@ -1480,10 +1477,26 @@ public class EditFrame extends JFrame
 
         usingWeightFraction.setVisible(b);
         mnBackgroundImage.setVisible(b);
+
+        for (Action act: new Action[]
+            { actNearestPoint,
+              actNearestCurve,
+              actMoveSelection,
+              actMovePoint,
+              actMoveRegion,
+              actAddVertex,
+              actAddAutoPositionedVertex,
+              actText,
+              actLeftArrow,
+              actRightArrow}) {
+            act.setEnabled(b);
+        }
         
         if (isEditingEnabled() != b) {
             setEditingEnabled(b);
         }
+
+        mnTags.setVisible(b || firstTagIndex() < mnTags.getItemCount());
     }
 
 
