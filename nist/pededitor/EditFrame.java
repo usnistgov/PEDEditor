@@ -1433,6 +1433,7 @@ public class EditFrame extends JFrame
         enable(actLeftArrow);
         enable(actRightArrow);
         enable(actCopyStatusBar);
+        enable(actCenterMouse);
 
         setEditable(true);
     }
