@@ -74,7 +74,6 @@ import javax.swing.JDialog;
 import javax.swing.JFileChooser;
 import javax.swing.JMenuItem;
 import javax.swing.JOptionPane;
-import javax.swing.JPopupMenu;
 import javax.swing.JScrollPane;
 import javax.swing.MenuElement;
 import javax.swing.WindowConstants;
@@ -490,7 +489,7 @@ public class Editor extends Diagram
 
     protected CropFrame cropFrame = new CropFrame();
     protected EditFrame editFrame = new EditFrame(this);
-    protected JPopupMenu mnRightClick = new RightClickMenu(this);
+    protected BasicRightClickMenu mnRightClick = new RightClickMenu(this);
     protected ImageZoomFrame zoomFrame = null;
     protected VertexInfoDialog vertexInfo = new VertexInfoDialog(this);
     protected LabelDialog labelDialog = null;
@@ -503,11 +502,11 @@ public class Editor extends Diagram
         return selection;
     }
 
-    void setRightClickMenu(JPopupMenu menu) {
+    void setRightClickMenu(BasicRightClickMenu menu) {
         mnRightClick = menu;
     }
 
-    JPopupMenu getRightClickMenu() {
+    BasicRightClickMenu getRightClickMenu() {
         return mnRightClick;
     }
 
@@ -707,6 +706,7 @@ public class Editor extends Diagram
     int fileNo = -1;
 
     public Editor() {
+        setEditable(true);
         init();
         tieLineDialog.setFocusableWindowState(false);
         vertexInfo.setDefaultCloseOperation
@@ -1805,7 +1805,9 @@ public class Editor extends Diagram
             return;
         }
         selection = hand;
-        getEditFrame().mnDeselect.getAction().setEnabled(hand != null);
+        boolean haveSel = (hand != null);
+        getEditFrame().actDeselect.setEnabled(haveSel);
+        mnRightClick.setHasSelection(haveSel);
         if (hand instanceof BoundedParam2DHandle) {
             // Update the Slope window.
             showTangent((BoundedParam2DHandle) hand);
@@ -4304,10 +4306,12 @@ public class Editor extends Diagram
 
                 aspectRatio = ContinuedFraction.parseDouble(aspectRatioStr);
                 if (aspectRatio <= 0) {
-                    JOptionPane.showMessageDialog
-                        (editFrame, "Enter a positive number.");
+                    showError("Enter a positive number.");
+                } else if (aspectRatio >= 20) {
+                    showError("That's a very big ratio. Maybe you need to include "
+                              + "a percent sign in the value?");
                 } else {
-                    break;
+                    break; // OK value
                 }
             } catch (NumberFormatException e) {
                 JOptionPane.showMessageDialog
@@ -4318,6 +4322,7 @@ public class Editor extends Diagram
         super.setAspectRatio(aspectRatio);
         getEditPane().setPreferredSize(scaledPageBounds(scale).getSize());
         getEditPane().revalidate();
+        bestFit();
         scaledOriginalImages = null;
     }
 
@@ -5234,7 +5239,11 @@ public class Editor extends Diagram
                      "Coordinates out of bounds");
                 return;
             } else if (d > 1e-6) {
-                if (JOptionPane.showConfirmDialog
+                if (!isEditable()) {
+                    showError("The point you selected lies beyond the edge "
+                              + "of the diagram.");
+                    return;
+                } else if (JOptionPane.showConfirmDialog
                     (editFrame,
                      "<html><body width = \"300 px\""
                      + "<p>The coordinates you selected lie beyond the edge "
@@ -5292,10 +5301,10 @@ public class Editor extends Diagram
         return editFrame;
     }
 
-   public void setShiftDown(boolean b) {
-      isShiftDown = b;
-   }
-    
+    public void setShiftDown(boolean b) {
+        isShiftDown = b;
+    }
+
     @Override public void mousePressed(MouseEvent e) {
         if (e.isPopupTrigger() || e.getButton() != MouseEvent.BUTTON1) {
            if (e.isShiftDown()) {
@@ -5303,9 +5312,9 @@ public class Editor extends Diagram
            }
             showPopupMenu(new MousePress(e,mprin));
         } else {
-           Point2D.Double p =  e.isShiftDown() ?
-              getAutoPositionHandle(null).getLocation() :
-              getVertexAddMousePosition(e.getPoint());
+            Point2D.Double p =  e.isShiftDown() ?
+                getAutoPositionHandle(null).getLocation() :
+                getVertexAddMousePosition(e.getPoint());
             mousePress = new MousePress(e,p);
             mouseTravel = null;
         }
@@ -5341,6 +5350,8 @@ public class Editor extends Diagram
 
     @JsonIgnore public void setEditable(boolean b) {
         mEditable = b;
+        editFrame.setEditable(b);
+        mnRightClick.setEditable(b);
     }
 
     public void setTitle() {
@@ -5964,13 +5975,14 @@ public class Editor extends Diagram
         return res;
     }
 
-    /** Recursively hunt for menu items whose action is act, and call setVisible(b) on them. */
+    /** Recursively hunt for menu items whose action is act, and call
+        setVisible(b) on them. */
     static void setVisible(AbstractAction act, MenuElement menu, boolean b) {
         for (MenuElement me: menu.getSubElements()) {
             if (me instanceof JMenuItem) {
                 JMenuItem mi = (JMenuItem) me;
                 if (mi.getAction() == act) {
-                    mi.setVisible(false);
+                    mi.setVisible(b);
                 }
             }
             setVisible(act, me, b);
