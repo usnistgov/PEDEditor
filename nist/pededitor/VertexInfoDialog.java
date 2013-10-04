@@ -145,9 +145,9 @@ public class VertexInfoDialog extends JDialog {
         // nearly-vertical line ends up being displayed as pointing
         // upwards (90 degrees) or downwards (-90).
         double deg = -theta * 180 / Math.PI;
-        if (deg < -90 + 1e-10) {
+        if (deg < -90 - 1e-10) {
             deg += 180;
-        } else if (deg > 90 + 1e-10) {
+        } else if (deg > 90 - 1e-10) {
             deg -= 180;
         }
         return deg;
