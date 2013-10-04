@@ -151,6 +151,23 @@ public class EditFrame extends JFrame
          }
       };
 
+   Action actCopy = new Action
+       ("Copy selection", KeyEvent.VK_C, KeyStroke.getKeyStroke('c')) {
+           @Override public void actionPerformed(ActionEvent e) {
+               getEditor().copySelection();
+               finishEvent();
+           }
+       };
+
+   Action actCopyRegion = new Action
+       ("Copy everything in selected region",
+        KeyEvent.VK_O, KeyStroke.getKeyStroke('C')) {
+           @Override public void actionPerformed(ActionEvent e) {
+               getEditor().copyRegion();
+               finishEvent();
+           }
+       };
+
     Action actDeselect = new Action
         ("Deselect", KeyEvent.VK_S, "pressed ESCAPE") {
             { setEnabled(false); }
@@ -971,24 +988,6 @@ public class EditFrame extends JFrame
                 }
             });
 
-        mnSelection.add(new Action("Copy",
-                                   KeyEvent.VK_C,
-                                   KeyStroke.getKeyStroke('c')) {
-                @Override public void actionPerformed(ActionEvent e) {
-                    getEditor().copySelection();
-                    finishEvent();
-                }
-            });
-
-        mnSelection.add(new Action("Copy everything in selected region",
-                                   KeyEvent.VK_O,
-                                   KeyStroke.getKeyStroke('C')) {
-                @Override public void actionPerformed(ActionEvent e) {
-                    getEditor().copyRegion();
-                    finishEvent();
-                }
-            });
-
         mnSelection.add(new Action("Delete", KeyEvent.VK_D, "DELETE") {
                 @Override public void actionPerformed(ActionEvent e) {
                     getEditor().removeSelection();
@@ -1393,17 +1392,6 @@ public class EditFrame extends JFrame
                 }
             });
 
-        // Enable shortcuts for actions that do not appear in the top
-        // menu because they are position-sensitive.
-        for (Action act: new Action[]
-            { actAutoPosition,
-              actNearestPoint,
-              actNearestCurve,
-              actSelectNearestPoint,
-              actSelectNearestCurve }) {
-            enable(act);
-        }
-
         JumpAction[] arrows1 =
             { new JumpAction("Up", KeyEvent.VK_U, "shift UP", 0, -1),
               new JumpAction("Down", KeyEvent.VK_D, "shift DOWN", 0, 1),
@@ -1422,18 +1410,31 @@ public class EditFrame extends JFrame
             mnMove.add(a);
             enable(a);
         }
-        enable(actShiftPressed);
-        enable(actShiftReleased);
-        enable(actMoveSelection);
-        enable(actMovePoint);
-        enable(actMoveRegion);
-        enable(actAddVertex);
-        enable(actAddAutoPositionedVertex);
-        enable(actText);
-        enable(actLeftArrow);
-        enable(actRightArrow);
-        enable(actCopyStatusBar);
-        enable(actCenterMouse);
+
+        // Enable shortcuts for actions that do not appear in the top
+        // menu because they are position-sensitive.
+        for (Action act: new Action[]
+            { actAutoPosition,
+              actNearestPoint,
+              actNearestCurve,
+              actSelectNearestPoint,
+              actSelectNearestCurve,
+              actShiftPressed,
+              actShiftReleased,
+              actMoveSelection,
+              actMovePoint,
+              actMoveRegion,
+              actAddVertex,
+              actAddAutoPositionedVertex,
+              actText,
+              actLeftArrow,
+              actRightArrow,
+              actCopyStatusBar,
+              actCenterMouse,
+              actCopy,
+              actCopyRegion }) {
+            enable(act);
+        }
 
         setEditable(true);
     }
