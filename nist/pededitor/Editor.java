@@ -5294,8 +5294,6 @@ public class Editor extends Diagram
 
    public void setShiftDown(boolean b) {
       isShiftDown = b;
-      setMouseStuck(false);
-      redraw();
    }
     
     @Override public void mousePressed(MouseEvent e) {
@@ -5331,6 +5329,7 @@ public class Editor extends Diagram
             return;
         }
         add(mprin = getVertexAddMousePosition(getEditPane().getMousePosition()));
+        moveMouse(mprin);
         setMouseStuck(true);
     }
 
