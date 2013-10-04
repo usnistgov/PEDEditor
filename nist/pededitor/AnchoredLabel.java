@@ -44,6 +44,7 @@ public class AnchoredLabel extends TransformedShape {
         output.setCutout(isCutout());
         output.setBaselineXOffset(getBaselineXOffset());
         output.setBaselineYOffset(getBaselineYOffset());
+        output.setColor(getColor());
         return output;
     }
 
