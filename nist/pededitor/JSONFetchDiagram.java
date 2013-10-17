@@ -171,7 +171,7 @@ public class JSONFetchDiagram {
             listen.newActivation(args);
         } catch(UnavailableServiceException x) {
             // I guess we're not running via JWS...
-            JSONFetchDiagram.run(args);
+            run(args);
         }
     }
 }
