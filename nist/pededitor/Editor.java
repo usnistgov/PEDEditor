@@ -543,6 +543,8 @@ public class Editor extends Diagram
     protected transient boolean editorIsPacked = false;
     protected transient boolean smoothed = false;
     protected transient boolean majorSaveNeeded = false;
+    protected transient Dimension oldViewportSize = null;
+    protected transient boolean autoRescale = false;
     protected transient DigitizeDialog digitizeDialog = null;
     protected boolean mEditable = true;
 
@@ -1479,6 +1481,14 @@ public class Editor extends Diagram
         here. */
     public void paintEditPane(Graphics g) {
         updateMousePosition();
+        Dimension size = getViewportSize();
+        if (oldViewportSize == null
+            || (size != null && !size.equals(oldViewportSize))) {
+            oldViewportSize = size;
+            if (autoRescale || scale < minScale()) {
+                bestFit();
+            }
+        }
         paintDiagramWithSelection((Graphics2D) g, scale);
     }
 
@@ -5564,16 +5574,26 @@ public class Editor extends Diagram
         propagateChange();
     }
 
-    /** Adjust the scale so that the page just fits in the edit frame. */
-    void bestFit() {
+    /** Return the minimum scale that does not waste screen real
+        estate, or 0 if that is not defined. */
+    double minScale() {
         Dimension size = getViewportSize();
         if (pageBounds == null || size.width < 0) {
-            return;
+            return 0;
         }
 
         Rescale r = new Rescale(pageBounds.width, 0, (double) size.width,
                                 pageBounds.height, 0, (double) size.height);
-        setScale(r.t);
+        return r.t;
+    }
+
+    /** Adjust the scale so that the page just fits in the edit frame. */
+    void bestFit() {
+        double s = minScale();
+        if (s != 0) {
+            setScale(s);
+            autoRescale = true;
+        }
     }
 
     /** @return the screen scale of this image relative to a standard
@@ -5584,6 +5604,7 @@ public class Editor extends Diagram
         displayed image will be "value" pixels, assuming that the
         default transform for the screen uses 1 unit = 1 pixel. */
     void setScale(double value) {
+        autoRescale = false;
         double oldScale = scale;
         scale = value;
         if (principalToStandardPage == null) {
