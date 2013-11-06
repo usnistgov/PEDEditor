@@ -112,7 +112,7 @@ public class EditFrame extends JFrame
     protected JMenuItem mnSaveAsPNG = toMenuItem
         (new SaveImageAction("PNG", KeyEvent.VK_G));
     protected JMenuItem mnReload = toMenuItem
-        (new Action("Reload", KeyEvent.VK_R) {
+        (new Action("Refresh", KeyEvent.VK_R) {
                 { 
                     putValue(SHORT_DESCRIPTION,
                              "Reload the current diagram");
@@ -953,8 +953,6 @@ public class EditFrame extends JFrame
         mnSaveAs.add(mnSaveAsPNG);
 
         mnFile.add(mnSaveAs);
-        mnFile.add(mnReload);
-        mnFile.add(mnNextFile);
 
         // "Print" menu item
         mnFile.add(new Action("Print", KeyEvent.VK_P) {
@@ -963,6 +961,9 @@ public class EditFrame extends JFrame
                     finishEvent();
                 }
             });
+
+        mnFile.add(mnNextFile);
+        mnFile.add(mnReload);
 
         mnFile.addSeparator();
 
