@@ -101,6 +101,7 @@ public class VertexInfoDialog extends JDialog {
         pack();
         setDerivative(null);
         setLineWidth(0.0);
+        setResizable(false);
     }
 
     public Editor getParentEditor() { return parentEditor; }
