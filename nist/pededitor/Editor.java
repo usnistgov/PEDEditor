@@ -543,8 +543,9 @@ public class Editor extends Diagram
     protected transient boolean editorIsPacked = false;
     protected transient boolean smoothed = false;
     protected transient boolean majorSaveNeeded = false;
-    protected transient Dimension oldViewportSize = null;
+    protected transient Dimension oldFrameSize = null;
     protected transient boolean autoRescale = false;
+    protected transient boolean allowRobotToMoveMouse = true;
     protected transient DigitizeDialog digitizeDialog = null;
     protected boolean mEditable = true;
 
@@ -1481,12 +1482,18 @@ public class Editor extends Diagram
         here. */
     public void paintEditPane(Graphics g) {
         updateMousePosition();
-        Dimension size = getViewportSize();
-        if (oldViewportSize == null
-            || (size != null && !size.equals(oldViewportSize))) {
-            oldViewportSize = size;
+        Dimension size = editFrame.getSize();
+        if (oldFrameSize == null
+            || (size != null && !size.equals(oldFrameSize))) {
+            oldFrameSize = size;
             if (autoRescale || scale < minScale()) {
-                bestFit();
+                boolean oart = allowRobotToMoveMouse;
+                try {
+                    allowRobotToMoveMouse = false;
+                    bestFit();
+                } finally {
+                    allowRobotToMoveMouse = oart;
+                }
             }
         }
         paintDiagramWithSelection((Graphics2D) g, scale);
@@ -3244,6 +3251,9 @@ public class Editor extends Diagram
         given location in principal coordinates. Return true if it was
         possible to go to that location. */
     boolean moveMouse(Point2D prin) {
+        if (!allowRobotToMoveMouse) {
+            return false;
+        }
         mprin = new Point2D.Double(prin.getX(), prin.getY());
         mouseTravel = null;
         if (principalToStandardPage == null) {
@@ -4330,10 +4340,13 @@ public class Editor extends Diagram
         }
 
         super.setAspectRatio(aspectRatio);
-        getEditPane().setPreferredSize(scaledPageBounds(scale).getSize());
-        getEditPane().revalidate();
         bestFit();
         scaledOriginalImages = null;
+    }
+
+    void scaleEditPane() {
+        getEditPane().setPreferredSize(scaledPageBounds(scale).getSize());
+        getEditPane().revalidate();
     }
 
 
@@ -4423,8 +4436,7 @@ public class Editor extends Diagram
 
     @Override public void setPageBounds(Rectangle2D rect) {
         super.setPageBounds(rect);
-        getEditPane().setPreferredSize(scaledPageBounds(scale).getSize());
-        getEditPane().revalidate();
+        scaleEditPane();
         scaledOriginalImages = null;
     }
 
@@ -5590,7 +5602,7 @@ public class Editor extends Diagram
     /** Adjust the scale so that the page just fits in the edit frame. */
     void bestFit() {
         double s = minScale();
-        if (s != 0) {
+        if (s > 0) {
             setScale(s);
             autoRescale = true;
         }
@@ -5631,8 +5643,8 @@ public class Editor extends Diagram
             Point2D.Double mousePage = principalToScaledPage(oldScale)
                 .transform(mprin);
             viewportPoint =
-                new Point((int) Math.floor(mousePage.x * oldScale) - view.x,
-                          (int) Math.floor(mousePage.y * oldScale) - view.y);
+                new Point((int) Math.floor(mousePage.x) - view.x,
+                          (int) Math.floor(mousePage.y) - view.y);
         } else {
             // Preserve the center of the viewport.
             viewportPoint = new Point(view.x + view.width / 2,
@@ -5640,8 +5652,7 @@ public class Editor extends Diagram
             prin = scaledPageToPrincipal(oldScale).transform(viewportPoint);
         }
 
-        getEditPane().setPreferredSize(scaledPageBounds(scale).getSize());
-        getEditPane().revalidate();
+        scaleEditPane();
         setViewportRelation(prin, viewportPoint);
     }
 
