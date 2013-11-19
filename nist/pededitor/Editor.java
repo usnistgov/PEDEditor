@@ -83,10 +83,22 @@ import org.codehaus.jackson.annotate.JsonIgnore;
 
 import Jama.Matrix;
 
+// TODO (bug) Copying a single point using Copy Region doesn't work.
+// The basic reason is, more or less, the line in PathParam2D.java
+// that specifies that lastSegNo = -1 if t1 == 0, but I'm concerned
+// that changing that could have side effects and I don't have time to
+// check that.
+
+// TODO (serious bug) Sometimes the quickie keys just stop working. I
+// don't know why.
+
 // TODO (bug) There's some funny thing where you're almost in the
 // right place, and you use Enter to specify the exactly correct
 // coordinates, and you press 'v' but the position does not change. I
 // can't reliably reproduce it.
+
+// TODO When you print a cropped diagram, the portion outside the
+// cropped region shows up too.
 
 // TODO (bug) Somehow, the "nearest point on curve" can get stuck at
 // control points, which implies the nearest point isn't actually
@@ -1099,12 +1111,7 @@ public class Editor extends Diagram
         }
 
         if (mprin == null) {
-            showError
-                ("<html><p>Move the mouse to the target location. "
-                 + "Use the 'C' shortcut key or keyboard menu controls "
-                 + "instead of selecting the menu item using the mouse."
-                 + "</p></html>",
-                 errorTitle);
+            showError("Move the mouse to the target location.", errorTitle);
             return;
         }
 
@@ -1144,7 +1151,9 @@ public class Editor extends Diagram
                 DecorationHandle s = hand.copy
                     (new Point2D.Double(prin.getX() + delta.x, prin.getY() + delta.y));
                 if (hand.getDecoration().equals(vhand.getDecoration())) {
-                    setSelection(new VertexHandle(((VertexHandle) s).getItem(), vhand.vertexNo));
+                    VertexHandle newHand = new VertexHandle
+                        (((VertexHandle) s).getDecoration(), vhand.vertexNo);
+                    setSelection(newHand);
                 }
             }
         }
@@ -1210,21 +1219,23 @@ public class Editor extends Diagram
         setSelection(selection.copy(mprin));
     }
 
+    public void changeLayer(int delta) {
+        boolean hadSelection = (selection != null);
+        if (!hadSelection && !selectSomething()) {
+            return;
+        }
+        changeLayer0(delta);
+        if (!hadSelection) {
+            clearSelection();
+        }
+    }
+
     /** Move the selection closer to the front(drawn later/positive
         delta) or back (drawn earlier/negative delta). If the selection
         cannot be raised or lowered by the given amount because there
         are not enough layers above/below it, then raise/lower it to
         the top/bottom. */
-    public void changeLayer(int delta) {
-        String errorTitle = "Cannot change layer";
-
-        if (selection == null) {
-            showError
-                ("You must select an item before you can change its layer.",
-                 errorTitle);
-            return;
-        }
-
+    void changeLayer0(int delta) {
         Decoration d = selection.getDecoration();
         int layer = getLayer(d);
         if (layer < 0) {
@@ -1323,11 +1334,14 @@ public class Editor extends Diagram
     }
 
     public void removeLikeSelection() {
-        if (selection == null) {
+        boolean hadSelection = (selection != null);
+        if (!hadSelection && !selectSomething()) {
             return;
         }
         removeLikeThis(selection.getDecoration());
-        clearSelection();
+        if (!hadSelection) {
+            clearSelection();
+        }
     }
 
     /** Select the vertex that comes after or before the currently
@@ -1744,7 +1758,7 @@ public class Editor extends Diagram
         Decoration sel = showSel ? selection.getDecoration() : null;
         for (int dn = 0; dn < decorations.size(); ++dn) {
             Decoration decoration = decorations.get(dn);
-            if (decoration == sel) {
+            if (decoration.equals(sel)) {
                 try (UpdateSuppressor us = new UpdateSuppressor()) {
                         Decoration dec = selection.getDecoration();
                         Color oldColor = dec.getColor();
@@ -4347,6 +4361,7 @@ public class Editor extends Diagram
     void scaleEditPane() {
         getEditPane().setPreferredSize(scaledPageBounds(scale).getSize());
         getEditPane().revalidate();
+        redraw();
     }
 
 
@@ -6026,9 +6041,18 @@ public class Editor extends Diagram
         setVisible(act, getRightClickMenu(), b);
     }
 
+    String formatCoordinates(Point2D prin) {
+        if (prin == null) {
+            return "";
+        }
+        return "(" + getXAxis().valueAsString(prin) + ", "
+            + getYAxis().valueAsString(prin) + ")";
+    }
+
     void showPopupMenu(MousePress mp) {
         if (rightClick == null) {
             rightClick = mp;
+            mnRightClick.setCoordinates(formatCoordinates(mp.prin));
         }
         mnRightClick.show(mp.e.getComponent(), mp.e.getX(), mp.e.getY());
     }
