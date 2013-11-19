@@ -73,26 +73,36 @@ public class JSONFetchDiagram {
         ef.editingEnabled.setVisible(false);
         ef.mnTags.setVisible(false);
         ef.mnKeys.setVisible(false);
-        ef.mnZoomIn.setVisible(false);
-        ef.mnZoomOut.setVisible(false);
         ef.mnExportText.setVisible(false);
         ef.mnCopyFormulas.setVisible(false);
         ef.mnJumpToSelection.setVisible(false);
         ef.shortHelpFile = "viewhelp1.html";
         ef.helpAboutFile = "viewabout.html";
 
-        disappear(e, (AbstractAction) ef.mnUnstickMouse.getAction());
-        disappear(e, ef.actAutoPosition);
-        disappear(e, ef.actNearestPoint);
-        disappear(e, ef.actNearestCurve);
-        disappear(e, ef.actAddVertex);
-        disappear(e, ef.actAddAutoPositionedVertex);
-        disappear(e, ef.actText);
-        disappear(e, ef.actLeftArrow);
-        disappear(e, ef.actRightArrow);
-        disappear(e, ef.actMoveSelection);
-        disappear(e, ef.actMovePoint);
-        disappear(e, ef.actMoveRegion);
+        for (AbstractAction act: new AbstractAction[]
+            { (AbstractAction) ef.mnUnstickMouse.getAction(),
+                 ef.actAutoPosition,
+                 ef.actNearestPoint,
+                 ef.actNearestCurve,
+                 ef.actAddVertex,
+                 ef.actAddAutoPositionedVertex,
+                 ef.actText,
+                 ef.actLeftArrow,
+                 ef.actRightArrow,
+                 ef.actRuler,
+                 ef.actTieLine,
+                 ef.actMoveSelection,
+                 ef.actMovePoint,
+                 ef.actMoveRegion,
+                 ef.actEditSelection,
+                 ef.actResetToDefault,
+                 ef.actMakeDefault,
+                 ef.actColor,
+                 ef.actRemoveSelection,
+                 ef.actRemoveAll
+            }) {
+            disappear(e, act);
+        }
             
         e.detachOriginalImage();
         e.setEditable(false);
