@@ -1,48 +1,104 @@
 package gov.nist.pededitor;
 
+import java.awt.Component;
+import java.awt.event.KeyEvent;
+
+import javax.swing.Action;
+import javax.swing.JLabel;
 import javax.swing.JMenu;
 
 
 /** PED Editor popup menu. */
 @SuppressWarnings("serial")
 public class RightClickMenu extends BasicRightClickMenu {
-    Editor mEditor;
-    JMenu mnEdit = new JMenu("Edit Selection");
+    JMenu mnEditSel = new JMenu("Edit selection");
+    { mnEditSel.setMnemonic(KeyEvent.VK_E); }
+    JMenu mnEditNear = new JMenu("Edit nearest item");
+    { mnEditNear.setMnemonic(KeyEvent.VK_E); }
+    JMenu mnDecorations;
+    JLabel coordinates = new JLabel();
 
     public RightClickMenu(Editor editor) {
         super(editor);
         EditFrame ef = getEditFrame();
         add(ef.actDeselect);
-        mnEdit.setEnabled(false);
-        mnEdit.add(ef.actCopy);
-        mnEdit.add(ef.actCopyRegion);
-        mnEdit.add(ef.actMoveSelection);
-        mnEdit.add(ef.actMovePoint);
-        mnEdit.add(ef.actMoveRegion);
-        add(mnEdit);
+
+        for (Object obj: new Object[]
+            { ef.actColor,
+              ef.actCopy,
+              ef.actCopyRegion,
+              ef.actRemoveSelection,
+              ef.actRemoveAll,
+              ef.createLayerMenu(),
+              ef.actMoveSelection,
+              ef.actMovePoint,
+              ef.actMoveRegion,
+              ef.actEditSelection,
+              ef.actResetToDefault,
+              ef.actMakeDefault }) {
+            if (obj instanceof Action) {
+                mnEditSel.add((Action) obj);
+            } else {
+                mnEditSel.add((Component) obj);
+            }
+        }
+
+        for (Object obj: new Object[]
+            { ef.actColor,
+              ef.actRemoveSelection,
+              ef.actRemoveAll,
+              ef.createLayerMenu(),
+              ef.actEditSelection,
+              ef.actResetToDefault,
+              ef.actMakeDefault }) {
+            if (obj instanceof Action) {
+                mnEditNear.add((Action) obj);
+            } else {
+                mnEditNear.add((Component) obj);
+            }
+        }
+
         addSeparator();
-        add(ef.mnJump);
-        add(ef.mnMove);
         add(new PositionMenu(getEditor()));
+        add(ef.mnJump);
+        add(ef.mnStep);
+
+        JMenu mnView = new JMenu("View");
+        mnView.setMnemonic(KeyEvent.VK_V);
+        mnView.add(ef.actZoomIn);
+        mnView.add(ef.actZoomOut);
+        mnView.add(ef.actCenterMouse);
+        add(mnView);
+
         addSeparator();
         // If one does shift right-click, then the following two items
         // are identical, which can get a bit confusing.
         add(ef.actAddVertex);
         add(ef.actAddAutoPositionedVertex);
+        add(mnDecorations = ef.createDecorationsMenu());
+        add(mnEditSel);
+        add(mnEditNear);
         addSeparator();
-        add(ef.actText);
-        add(ef.actLeftArrow);
-        add(ef.actRightArrow);
-        addSeparator();
+        coordinates = createCoordinatesLabel();
         add(ef.actCopyStatusBar);
-        add(ef.actCenterMouse);
+        add(coordinates);
+
+        setHasSelection(false);
     }
 
     @Override public void setHasSelection(boolean b) {
-        mnEdit.setEnabled(b);
+        if (getEditor().isEditable()) {
+            mnEditSel.setVisible(b);
+            mnEditNear.setVisible(!b);
+        }
+    }
+
+    @Override public void setCoordinates(String s) {
+        coordinates.setText(mungeCoordinates(s));
     }
 
     @Override public void setEditable(boolean b) {
-        mnEdit.setVisible(b);
+        mnDecorations.setVisible(b);
+        setHasSelection(getEditor().getSelection() != null);
     }
 }
