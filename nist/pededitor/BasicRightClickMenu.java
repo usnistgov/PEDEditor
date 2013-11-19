@@ -1,5 +1,8 @@
 package gov.nist.pededitor;
 
+import java.awt.Font;
+
+import javax.swing.JLabel;
 import javax.swing.JPopupMenu;
 import javax.swing.event.PopupMenuEvent;
 import javax.swing.event.PopupMenuListener;
@@ -38,5 +41,18 @@ public class BasicRightClickMenu extends JPopupMenu {
     /** Call this when the user checks or unchecks the "Show Editing
         Options" box. */
     public void setEditable(boolean b) {
+    }
+
+    String mungeCoordinates(String s) {
+        return "  " + s;
+    }
+
+    public JLabel createCoordinatesLabel() {
+        JLabel res = new JLabel();
+        res.setFont(res.getFont().deriveFont(Font.PLAIN));
+        return res;
+    }
+
+    public void setCoordinates(String coord) {
     }
 }
