@@ -13,6 +13,7 @@ public class PositionMenu extends JMenu {
 
     public PositionMenu(Editor editor) {
         super("Position");
+        setMnemonic(KeyEvent.VK_P);
         mEditor = editor;
         add(getEditFrame().actAutoPosition);
         add(getEditFrame().actNearestPoint);
@@ -20,7 +21,6 @@ public class PositionMenu extends JMenu {
         add(getEditFrame().actSelectNearestPoint);
         add(getEditFrame().actSelectNearestCurve);
     }
-
 
     public Editor getParentEditor() {
         return mEditor;
@@ -30,9 +30,6 @@ public class PositionMenu extends JMenu {
         return getParentEditor().getEditFrame();
     }
 
-    {
-        setMnemonic(KeyEvent.VK_P);
-    }
 
     void add(AbstractAction act) {
         add(new JMenuItem(act));
