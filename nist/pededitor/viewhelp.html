@@ -1,12 +1,18 @@
 <!DOCTYPE HTML>
 <html>
 <head>
-<title>PED Viewer Help</title>
+<title>PED Edit Window Help</title>
 <link rel="stylesheet" href="http://nist.gov/style/nist-styles.css">
 </head>
 <body>
 
-<h1>PED Viewer Help</h1>
+<h1>PED Edit Window Help</h1>
+
+<p><i>Please note that this file will open using the default browser
+you have chosen for your computer, either full- or partial-screen,
+according to its last usage. If the last view was not full screen, the
+PED Figure Search interface will remain partially visible
+underneath.</i>
 
 <p><i>Note</i>: This help file only describes the functions most
 likely to be useful to viewers of PED diagrams. For access to advanced
@@ -15,99 +21,309 @@ next to <code>Show Editing Options</code>. Afterwards, you can re-open
 the Help file to obtain a more complete description of these features
 as well as descriptions of additional features.
 
-<h2>File Menu</h2>
+<p>The PED (Phase Equilibria Diagram) Editor was written by Eric
+Boesch to digitize phase diagrams for the PED Data Center. The editor
+can also be used for general scientifc drawing and two-dimensional
+visualization. The latest version is available for downloading as
+freeware with some restrictions;
+see <a href="http://www.nist.gov/srd/nist31.cfm">http://www.nist.gov/srd/nist31.cfm</a>.
+
+<p>Some features may be accessed through the menu bar along the top
+edge of the Viewer screen, while others are accessed through a menu
+that is raised by pressing the right mouse button (if your mouse does
+not have a right button, use whatever control you normally use to
+raise popup menus). These functions (and their keyboard shortcuts) are
+described below.
+
+<ul>
+
+<li><a href="#File">File</a>
+
+<li><a href="#Position">Position</a>
+
+<li><a href="#Properties">Properties</a>
+
+<li><a href="#Digitize">Digitize</a>
+
+<li><a href="#Chemistry">Chemistry</a>
+
+<li><a href="#View">View</a>
+
+<li><a href="#Popup">Popup menu</a>
+
+  <ul>
+
+    <li><a href="#PositionPopup">Position</a>
+
+    <li><a href="#PositionPopup">View</a>
+
+    <li><a href="#AddDecoration">Add decoration</a>
+
+      <ul>
+        <li><a href="#Label">Label</a>
+        <li><a href="#Arrowhead">Arrowhead</a>
+        <li><a href="#Ruler">Ruler</a>
+        <li><a href="#TieLines">Tie Lines</a>
+      </ul>
+
+    <li><a href="#Edit">Edit selection / Edit nearest item</a>
+
+  </ul>
+
+</ul>
+
+<h2><a id="File">File</a></h2>
+
+<h3>New Diagram</h3>
+
+<p>Create a new diagram from scratch. If you wish to digitize a
+scanned image of an existing diagram, use the
+<a href="#open"><code>File/Open</code></a> option instead.</p>
+
+<p>You are presented with a selection of diagram types. Select the
+"Binary or Cartesian" type for Cartesian graphs, binary diagrams,
+quaternary diagrams, and all other diagrams based on a rectangular
+graph. For ternary diagrams, select one of the "Ternary" subtypes. If
+none of the given categories apply, select the "Free-form" type to
+start with a blank page.
+
+<h3><a id="open">Open</a></h3>
+
+<p>Open either an image file saved in GIF, JPEG, or PNG format or a
+diagram that was previously saved in this program's native PED
+format.</p>
+
+<p>If you open an image file, a window will open that allows you to
+select the boundary of a diagram within that image and then create a
+new diagram traced from the old one. That window has its own Help menu
+option which provides more information.</p>
 
 <h3>Save as PDF</h3>
 
 <h3>Save as PNG</h3>
 
-<p>Save an image of the diagram. Diagrams saved as PDF tend to be of
-higher quality than diagrams saved as PNG.
+<p>Save an image of the diagram. Diagrams saved as PDF stay sharp at
+higher magnification, but diagrams saved as PNG do not.
 
 <h3>Print</h3>
 
 <p>Print the diagram. The image will be scaled so that its margins
 just fit on the sheet.
 
-<h2>Position Menu</h2>
+<h3>Next File</h3>
 
-<p>In addition to moving the mouse pointer, the following commands are
-available for diagram positioning:</p>
+<p>Switch to the next selected diagram, if any. This option is only
+enabled if you opened multiple files at once.
 
-<ul>
+<p><a href="#Top">Return to top</a>
 
-<li><b>Nearest point</b> (<code>q</code>) moves the mouse to the
-nearest point of special interest such as curve and line intersections
-and endpoints and label and data point locations.
+<h2><a id="Position">Position</a></h2>
 
-<li><b>Nearest line/curve</b> (<code>w</code>) moves the mouse to the
-the nearest point on any ruler or curve.
+<p>This menu includes functions to move the mouse pointer within the diagram.
 
-<li><b>Enter coordinates</b> (<code>Enter</code>) allows you to type
-in the coordinates you would like the mouse to move to.</li>
+<h3 id=Autoposition>Auto-positioning</h3>
 
-</ul>
-
-<p>Holding the shift key down while moving the mouse will cause the
-mouse to be attracted to nearby curves and points of special
-interest.</p>
-
-</ul>
-
-<h2>Digitize Menu</h2>
+<p>Holding the shift key down while moving the mouse causes the mouse
+to be attracted to nearby curves and points of special interest.
 
 <ul>
 
-<p>Files saved during export use the UTF-8 character encoding.</p>
+<li><b><a id="Enter">Enter coordinates</a></b> (<code>Enter</code>)
+allows you to type in the coordinates you would like the mouse to move
+to. If you enter coordinates that are off the diagram page, the page
+will be enlarged to put the position on its edge.
 
-<li><p><b>Export all text</b>: Export all labels, key values, tags,
-and diagram components, with duplicates removed. Each entry is
-terminated by a newline.
+<li><p><b>Jump to selection</b> (<code>j</code>) moves the mouse
+pointer to the currently selected item, if an item is
+selected.</p></li>
+
+</ul>
+
+<p><a href="#Top">Return to top</a>
+
+<h2><a id=Properties>Properties</a></h2>
+
+<ul>
+
+<li><p>Check the <b>Show editing options</b> box to reveal diagram
+editing options and less commonly used features.
+
+</ul>
+
+<p><a href="#Top">Return to top</a>
+
+<h2><a id=Digitize>Digitize</a></h2>
+
+<ul>
+
+<li><p><b>Export all text to clipboard</b>: Export all labels, key
+values, tags, and diagram components to the clipboard, with duplicates
+removed. Each entry is terminated by a newline.
+
+<li><p><b>Export selected curve or label's coordinates</b>: You must
+already have selected a <a href="#SelectCurve">curve</a>
+or <a href="#SelectPoint">label or data point</a>. If you selected a
+curve, this will export the coordinates of all of its control points
+to a file or to the clipboard. If you selected a label or data point,
+this will export the coordinates of all similar labels or data points.
 
 <li><p><b>Export all curve and label coordinates</b>: Export the
-coordinates of all curve control points and all labels. Coordinates
-belonging to a single curve and labels that share the same text are
-grouped together; groups are separated from each other by empty lines
-or comments.
+coordinates of all curve control points and all labels to a file or to
+the clipboard. Coordinates belonging to a single curve and labels that
+share the same text are grouped together; groups are separated from
+each other by empty lines or comments.
 
 <p>Checking the <code>Add comments</code> box will make the output
 easier to interpret but may make it harder to import the data into
 other programs. Comments begin with the sharp sign (#).
 
-<li>Press <code>Control+Shift+S</code> to copy the text in the gray
-status bar at the bottom of the edit window to the clipboard.
-
 </ul>
 
-<h2>Chemistry Menu</h2>
+<h3>Digitization format</h3>
+
+<p>All data imported from or exported to a file use the UTF-8
+character encoding. If you export coordinates without comments,
+however, the output file will contain ASCII characters only, so most
+programs capable of reading plain text will be able to read and
+display the file. (Do not, however, use Windows Notepad. Use WordPad
+instead.)
+
+<p><a href="#Top">Return to top</a>
+
+<h2><a id=Chemistry>Chemistry</a></h2>
 
 <ul>
 
 <li><p><b>Proportions/Convert to [weight/mole] fraction</b>: Transform
-the diagram between weight and mole fraction values.
+the entire diagram between weight and mole fraction values.
+
+<p>There is no guarantee that every point on every curve of the
+diagram will be correct after you perform a conversion, and points
+outside the diagram may not line up very well at all. The diagram may
+look funny, especially if there is a wide divergence between the mole
+and weight percents. Also, text angles may be wrong after conversion.
 
 <li><p><b>Formula to mole/weight fraction</b> (also available by
-pressing the <code>%</code> key, that is (on US
-keyboards) <code>Shift+5</code>): Enter a chemical formula, and the
-mouse will move to the position in the diagram that that formula
-corresponds to.
+pressing the <code>%</code> key, that is <code>Shift+5</code> on US
+keyboards): Enter a chemical formula, and the molecular weight of the
+that formula and its representation in the Hill system will be
+displayed. You can also use this to check whether the program can
+parse the expression for use as a diagram component.
 
-<li><p><b>Copy all formulas to clipboard</b>: Copy all unique formulas
-in the diagram to the clipboard in alphabetical order, one per line.
+<p>If the diagram components are properly defined and the formula
+corresponds to a point inside the diagram, you may press the <b>Locate
+compound in diagram</b> button to go there. A final step might be
+to <a href="#Label">create a label</a> at that point. In Microsoft
+Windows, you can press <code>Control-V</code> to paste your formula
+into the text window.
 
 </ul>
 
-<h2>View Menu</h2>
+<p><a href="#Top">Return to top</a>
 
-<p>To zoom in, press the left button and drag the mouse until a red
-rectangle forms. Press <code>Control+B</code> (best fit) to exactly
-fill the edit window with the diagram.
+<h2><a id=View>View</a></h2>
 
-<p>Alternatively, you can press '-' to zoom out and '+' to zoom in.
+<p><a id=DragToZoom>Usually, the easiest way to zoom in is to press
+the left button and drag the mouse until a red zoom rectangle
+forms.</a>
 
-<p><b>Center mouse</b> (<code>Control+L</code>) brings the part of the
-diagram under the mouse towards the center of the edit window. (The
-mouse may not end up in the center if that would bring empty space into view.)
+<p>Once you have zoomed in, you can use <b id=BestFit>Best fit</b>
+(<code>Control+B</code>) to zoom all the way back out again.
+
+<p>The <b>Show slope window</b> checkbox can be used to close or
+reopen the slope window, which shows the slope of the second principal
+variable with respect to the first one at the most recently selected
+point on a curve.
+
+<p><a href="#Top">Return to top</a>
+
+<h2><a id="Popup">Popup Menu</a></h2>
+
+<p>To open the popup menu, press the right mouse button while the
+mouse is inside the diagram. If you hold down the <code>Shift</code>
+key as you do this, the operation will apply
+to <a href="#Autoposition">the nearest point of special interest</a>.
+Otherwise, the operation will apply to the current mouse position.
+
+<ul>
+
+<li>If you previously <a href="#SelectPoint">selected an item</a>
+(usually highlighted in <span style="color:green;">green</span>),
+then <b>Deselect</b> (<code>Escape</code>) will un-highlight the item.
+
+<li><h3 id=PositionPopup>Position popup menu</h3>
+
+    <ul>
+
+      <li><b>Auto-position</b> moves the mouse
+      to <a href="#Autoposition">the nearest point of special
+      interest</a>.
+
+      <li><b id=SelectPoint>Select nearest point</b>
+        (<code>Shift+Q</code>) moves the mouse to decoration anchors
+        and curve vertexes, including
+
+        <ul>
+          <li>arrows
+          <li>curve vertex
+          <li>label anchors and label centers
+          <li>tie line region corners
+          <li>ruler endpoints
+        </ul>
+
+        <p>If this operation does not highlight the item you want the
+          first time, you may use the <code>Shift+Q</code> shortcut
+          again and again to highlight other items located nearby.</p>
+
+      <li><b>Select nearest line/curve</b> (<code>Shift+W</code>)
+        moves the mouse pointer to and selects the nearest vertex of
+        the nearest ruler or curve.
+
+    </ul>
+
+<p><a href="#Top">Return to top</a>
+
+<li><b>Jump Up, Down, Left,</b> or <b>Right</b>
+(<code>Shift+Up/Down/Left/Right</code> arrow) moves the mouse to the
+closest curve in the given direction. For example, in binary
+temperature/composition diagrams, <code>Shift+Left</code>
+and <code>Shift+Right</code> allow you to see each phase transition
+for a fixed temperature, while <code>Shift+Up</code>
+and <code>Shift+Down</code> allow you to see each phase transition for
+a fixed composition.
+
+<li><b>Step Up, Down, Left,</b> or <b> Right</b>
+(<code>Up/Down/Left/Right</code> arrow) moves the mouse in small
+increments.
+
+<li><h3>View popup menu</h3>
+
+  <ul>
+    <li><b>Zoom in</b> (<code>Control++</code>, press <code>+</code>
+    (shift is not needed) while holding down the <code>Control</code>
+    key) zooms in by a fixed increment. This is an alternative to
+    zooming in by <a href="#DragToZoom">dragging the mouse</a>.
+
+    <li><b>Zoom out</b> (<code>Control+-</code>, press <code>-</code>
+    while holding down the <code>Control</code> key)
+    (<code>Control-Minus</code>) zooms out by a fixed increment. This
+    is an alternative to <a href="#BestFit">Best fit</a>.
+
+    <li><p><b>Center mouse</b> (<code>Control+L</code>) brings the
+        part of the diagram under the mouse towards the center of the
+        edit window. This has no effectd unless the diagram is zoomed
+        in.
+  </ul>
+
+<p><a href="#Top">Return to top</a></p>
+
+<li><p><b>Copy coordinates to clipboard</b> copies all of the
+    coordinate information in the gray status bar at the bottom of the
+    Editor screen to the clipboard.</p>
+
+</ul>
+
+<p><a href="#Top">Return to top</a>
 
 </body>
 </html>

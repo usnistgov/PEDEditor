@@ -514,22 +514,21 @@ outside the diagram may not line up very well at all. The diagram may
 look funny, especially if there is a wide divergence between the mole
 and weight percents. Also, text angles may be wrong after conversion.
 
+<li><p><b>Copy all formulas to clipboard</b>: Copy all unique formulas
+in the diagram to the clipboard in alphabetical order, one per line.
+For example, if there is a label that reads "Salt In H2O", then the
+formula list will include "In", for Indium, and "H2O".
+
 <li><p><b>Formula to mole/weight fraction</b> (also available by
 pressing the <code>%</code> key, that is <code>Shift+5</code> on US
-keyboards ): Enter a chemical formula, and the molecular weight of the
+keyboards): Enter a chemical formula, and the molecular weight of the
 that formula and its representation in the Hill system will be
 displayed. You can also use this to check whether the program can
 parse the expression for use as a diagram component.
 
-<li><p><b>Copy all formulas to clipboard</b>: Copy all unique formulas
-in the diagram to the clipboard in alphabetical order, one per line.
-For example, if there is a label that reads "I saw H2O", then the
-formula list will include "H2O" and "I", since I is the chemical
-formula for iodine.
-
 <p>If the diagram components are properly defined and the formula
-corresponds to a point inside the diagram, you can press <b>Locate
-compound in diagram</b> to go there. A final step might be
+corresponds to a point inside the diagram, you may press the <b>Locate
+compound in diagram</b> button to go there. A final step might be
 to <a href="#Label">create a label</a> at that point. In Microsoft
 Windows, you can press <code>Control-V</code> to paste your formula
 into the text window.
@@ -554,6 +553,11 @@ in the background of the new diagram. <b>Hide</b>
 hidden and vice versa. <b>Detach</b> permanently removes the linkage
 from the new diagram to the original image; the background image
 disappears and the Zoom window closes.
+
+<p>The <b>Show slope window</b> checkbox can be used to close or
+reopen the slope window, which shows the slope of the second principal
+variable with respect to the first one at the most recently selected
+point on a curve.
 
 <p><a href="#Top">Return to top</a>
 
@@ -580,46 +584,45 @@ then <b>Deselect</b> (<code>Escape</code>) will un-highlight the item.
       interest</a>.
 
       <li><p><b id=NearestPoint>Nearest point</b> (<code>q</code>)
-          moves the mouse to the nearest key point, including
+          moves the mouse to the nearest key point, including</p>
 
-          <ul>
-            <li>decoration anchors and curve vertexes, as
-              for <a href="#SelectPoint">Select nearest point</a>
-            <li>curve and line intersections
-            <li>corners of the diagram
-            <li>segment midpoints
-            <li>If an item is selected, then the point on the curve
-              nearest the mouse that is nearest to the selection point
-              is also considered to be a key point. (In other words,
-              first identify the curve closest to the mouse. The point
-              on that curve that is closest to the selection point is
-              a key point.)
-          </ul>
+        <ul>
+          <li>decoration anchors and curve vertexes, as
+            for <a href="#SelectPoint">Select nearest point</a>
+          <li>curve and line intersections
+          <li>corners of the diagram
+          <li>segment midpoints
+          <li>If an item is selected, then the point on the curve
+            nearest the mouse that is nearest to the selection point
+            is also considered to be a key point. (In other words,
+            first identify the curve closest to the mouse. The point
+            on that curve that is closest to the selection point is a
+            key point.)
+        </ul>
 
-          <li><b>Nearest line/curve</b> (<code>w</code>) moves the
-            mouse to the the nearest point on any ruler or curve and
-            selects the nearest vertex on that ruler or curve.
+      <li><b>Nearest line/curve</b> (<code>w</code>) moves the mouse
+        to the the nearest point on any ruler or curve and selects the
+        nearest vertex on that ruler or curve.
 
-          <li><b id=SelectPoint>Select nearest point</b>
-            (<code>Shift+Q</code>) moves the mouse to decoration
-            anchors and curve vertexes, including
+      <li><b id=SelectPoint>Select nearest point</b>
+        (<code>Shift+Q</code>) moves the mouse to decoration anchors
+        and curve vertexes, including
 
-            <ul>
-              <li>arrows
-              <li>curve vertex
-              <li>label anchors and label centers
-              <li>tie line region corners
-              <li>ruler endpoints
-            </ul>
+        <ul>
+          <li>arrows
+          <li>curve vertex
+          <li>label anchors and label centers
+          <li>tie line region corners
+          <li>ruler endpoints
+        </ul>
 
-            <p>If this operation does not highlight the item you want
-              the first time, you may use the <code>Shift+Q</code>
-              shortcut again and again to highlight other items
-              located nearby.
+        <p>If this operation does not highlight the item you want the
+          first time, you may use the <code>Shift+Q</code> shortcut
+          again and again to highlight other items located nearby.</p>
 
-          <li><b>Select nearest line/curve</b> (<code>Shift+W</code>)
-            moves the mouse pointer to and selects the nearest vertex
-            of the nearest ruler or curve.
+      <li><b>Select nearest line/curve</b> (<code>Shift+W</code>)
+        moves the mouse pointer to and selects the nearest vertex of
+        the nearest ruler or curve.
 
     </ul>
 
@@ -858,7 +861,7 @@ increments.
     currently selected item, usually highlighted
     in <span style="color:green;">green</span>. If no item is
     selected, the <b>Edit nearest item</b> menu allows you to apply
-    some of these operations to the item closest to the mouse pointer.
+    some of these operations to the item closest to the mouse pointer.</p>
 
     <ul>
 
@@ -955,11 +958,9 @@ increments.
           many things to match the first thing.</p>
     </ul>
 
-    <li><p><b>Copy coordinates to clipboard</b> copies all of the
-        coordinate information in the gray status bar at the bottom of
-        the Editor screen to the clipboard. If all you want is an
-        (x,y) value, the <a href="#Digitize">Digitize</a> features are
-        usually more useful for that anyway.</p>
+<li><p><b>Copy coordinates to clipboard</b> copies all of the
+    coordinate information in the gray status bar at the bottom of the
+    Editor screen to the clipboard.</p>
 
 </ul>
 
