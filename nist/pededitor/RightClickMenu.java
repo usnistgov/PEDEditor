@@ -100,5 +100,9 @@ public class RightClickMenu extends BasicRightClickMenu {
     @Override public void setEditable(boolean b) {
         mnDecorations.setVisible(b);
         setHasSelection(getEditor().getSelection() != null);
+        if (!b) {
+            mnEditSel.setVisible(false);
+            mnEditNear.setVisible(false);
+        }
     }
 }
