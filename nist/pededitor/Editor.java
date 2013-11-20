@@ -83,26 +83,22 @@ import org.codehaus.jackson.annotate.JsonIgnore;
 
 import Jama.Matrix;
 
-// TODO (bug) Copying a single point using Copy Region doesn't work.
+// TODO (bug, 5/10) Somehow, the "nearest point on curve" can get stuck at
+// control points, which implies the nearest point isn't actually
+// being computed correctly.
+
+// TODO (bug 2/10) Copying a single point using Copy Region doesn't work.
 // The basic reason is, more or less, the line in PathParam2D.java
 // that specifies that lastSegNo = -1 if t1 == 0, but I'm concerned
 // that changing that could have side effects and I don't have time to
 // check that.
 
-// TODO (serious bug) Sometimes the quickie keys just stop working. I
-// don't know why.
+// TODO (bug 2/10) When you print a cropped diagram, the portion
+// outside the cropped region shows up too.
 
-// TODO (bug) There's some funny thing where you're almost in the
-// right place, and you use Enter to specify the exactly correct
-// coordinates, and you press 'v' but the position does not change. I
-// can't reliably reproduce it.
-
-// TODO When you print a cropped diagram, the portion outside the
-// cropped region shows up too.
-
-// TODO (bug) Somehow, the "nearest point on curve" can get stuck at
-// control points, which implies the nearest point isn't actually
-// being computed correctly.
+// TODO (bug-ish, minor but easy) The nearestPoint() feature marked
+// XYZZY is not available during auto-positionning, for no good
+// reason, but the help implies that it is.
 
 // TODO (mandatory, 1 day): At this point, the rule that tie lines
 // have to end at vertexes of the diagram is no longer needed and not
@@ -3444,6 +3440,8 @@ public class Editor extends Diagram
             // In this case, we don't really need the precision that
             // nearestCurve() provides -- all we need is a good guess
             // for what the closest curve is -- but whatever...
+
+            // This feature XYZZY should also be available for auto-positioning.
             DecorationDistance nc = nearestCurve(pagePoint);
             if (nc != null) {
                 if (nc.decoration instanceof BoundedParameterizable2D) {
@@ -5048,7 +5046,6 @@ public class Editor extends Diagram
         Point2D.Double mousePage = principalToStandardPage.transform(mprin2);
 
         DecorationHandle res = null;
-        // newPage == principalToStandardPage.transform(es.getLocation()).
         Point2D.Double newPage = null;
         double pageDist = 1e100;
 
