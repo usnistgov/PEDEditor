@@ -24,6 +24,7 @@ import javax.swing.Icon;
 import javax.swing.ImageIcon;
 import javax.swing.InputMap;
 import javax.swing.JCheckBoxMenuItem;
+import javax.swing.JComponent;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JMenu;
@@ -1465,6 +1466,8 @@ public class EditFrame extends JFrame
         mnUnstickMouse.setVisible(b);
         mnCurve.setVisible(b);
         mnFont.setVisible(b);
+        e.setVisible(setAspectRatio, b);
+        mnKeys.setVisible(b);
         e.setVisible(actAddKey, b);
         mnMargins.setVisible(b);
         mnScale.setVisible(b);
@@ -1837,7 +1840,7 @@ public class EditFrame extends JFrame
         KeyStroke accel = (KeyStroke) act.getValue(Action.ACCELERATOR_KEY);
         if (name != null && accel != null) {
             JPanel cp = (JPanel) getContentPane();
-            cp.getInputMap().put(accel, name);
+            cp.getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW).put(accel, name);
             cp.getActionMap().put(name, act);
         }
     }
@@ -1847,7 +1850,7 @@ public class EditFrame extends JFrame
         https://forums.oracle.com/thread/1356291... */
     void enableZoom() {
         JPanel cp = (JPanel) getContentPane();
-        InputMap imap = cp.getInputMap();
+        InputMap imap = cp.getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW);
         ActionMap amap = cp.getActionMap();
         Object amapPlus  = "ctrl+";
         Object amapMinus = "ctrl-";
