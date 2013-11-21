@@ -87,19 +87,6 @@ import Jama.Matrix;
 // control points, which implies the nearest point isn't actually
 // being computed correctly.
 
-// TODO (bug 2/10) Copying a single point using Copy Region doesn't work.
-// The basic reason is, more or less, the line in PathParam2D.java
-// that specifies that lastSegNo = -1 if t1 == 0, but I'm concerned
-// that changing that could have side effects and I don't have time to
-// check that.
-
-// TODO (bug 2/10) When you print a cropped diagram, the portion
-// outside the cropped region shows up too.
-
-// TODO (bug-ish, minor but easy) The nearestPoint() feature marked
-// XYZZY is not available during auto-positionning, for no good
-// reason, but the help implies that it is.
-
 // TODO (mandatory, 1 day): At this point, the rule that tie lines
 // have to end at vertexes of the diagram is no longer needed and not
 // difficult to eliminate. Tie lines ending on rulers without extra
@@ -109,6 +96,21 @@ import Jama.Matrix;
 // has that feature, but making everything undoable would take a
 // couple weeks. (Every time an operation that changes the diagram is
 // completed, push the inverse operation onto a stack.)
+
+// TODO (bug 2/10) Copying a single point using Copy Region doesn't work.
+// The basic reason is, more or less, the line in PathParam2D.java
+// that specifies that lastSegNo = -1 if t1 == 0, but I'm concerned
+// that changing that could have side effects and I don't have time to
+// check that.
+
+// TODO (bug 2/10) The text in the text box will be serif if the box is first opened in serif mode, and sans if the box was first opened in sans mode, which is odd.
+
+// TODO (bug 2/10) When you print a cropped diagram, the portion
+// outside the cropped region shows up too.
+
+// TODO (bug-ish, minor but easy) The nearestPoint() feature marked
+// XYZZY is not available during auto-positionning, for no good
+// reason, but the help implies that it is.
 
 // TODO (optional): Remappable key bindings.
 
@@ -505,6 +507,7 @@ public class Editor extends Diagram
     protected JColorChooser colorChooser = null;
     protected JDialog colorDialog = null;
     protected FormulaDialog formulaDialog = null;
+    protected DigitizeDialog digitizeDialog = null;
 
     @JsonIgnore public DecorationHandle getSelection() {
         return selection;
@@ -554,7 +557,6 @@ public class Editor extends Diagram
     protected transient Dimension oldFrameSize = null;
     protected transient boolean autoRescale = false;
     protected transient boolean allowRobotToMoveMouse = true;
-    protected transient DigitizeDialog digitizeDialog = null;
     protected boolean mEditable = true;
 
     /** The item (vertex, label, etc.) that is selected, or null if nothing is. */
@@ -802,6 +804,10 @@ public class Editor extends Diagram
                 editFrame.parentEditor = null;
                 editFrame = null;
             }
+            if (cropFrame != null) {
+                cropFrame.dispose();
+                cropFrame = null;
+            }
             if (zoomFrame != null) {
                 zoomFrame.dispose();
                 zoomFrame = null;
@@ -810,11 +816,31 @@ public class Editor extends Diagram
                 vertexInfo.dispose();
                 vertexInfo = null;
             }
+            if (labelDialog != null) {
+                labelDialog.dispose();
+                labelDialog = null;
+            }
+            if (rulerDialog != null) {
+                rulerDialog.dispose();
+                rulerDialog = null;
+            }
+            if (colorDialog != null) {
+                colorDialog.dispose();
+                colorDialog = null;
+            }
             if (formulaDialog != null) {
                 formulaDialog.dispose();
                 formulaDialog = null;
             }
-            redraw();
+            if (digitizeDialog != null) {
+                digitizeDialog.dispose();
+                digitizeDialog = null;
+            }
+            if (tieLineDialog != null) {
+                tieLineDialog.dispose();
+                tieLineDialog = null;
+            }
+
             openEditors.remove(this);
         }
     }
@@ -2221,8 +2247,7 @@ public class Editor extends Diagram
                     maybePercentage = maybePercentage &&
                         (dvs[i] >= 0 && dvs[i] <= 1);
                 } catch (NumberFormatException e) {
-                    JOptionPane.showMessageDialog
-                        (editFrame, "Invalid number format '" + values[i+1] + "'");
+                    showError("Invalid number format '" + values[i+1] + "'");
                     ok = false;
                     break;
                 }
@@ -2257,9 +2282,8 @@ public class Editor extends Diagram
                 add(axis);
                 return;
             } catch (RuntimeException e) {
-                JOptionPane.showMessageDialog
-                    (editFrame,
-                     "These points are colinear and cannot be used to define an axis."
+                showError
+                    ("These points are colinear and cannot be used to define an axis."
                      + e + ", " + xform);
                 return;
             }
@@ -2745,7 +2769,7 @@ public class Editor extends Diagram
                 }
             }
         } catch (NumberFormatException x) {
-            JOptionPane.showMessageDialog(editFrame, x);
+            showError(x.toString());
             return;
         }
     }
@@ -3124,9 +3148,8 @@ public class Editor extends Diagram
         }
 
         if (mprin == null) {
-            JOptionPane.showMessageDialog
-                (editFrame,
-                 "Position the mouse where the label belongs,\n"
+            showError
+                ("Position the mouse where the label belongs, "
                  + "then press 't' to add the label.");
             return;
         }
@@ -3801,9 +3824,8 @@ public class Editor extends Diagram
                                     continue;
                                 }
                             } catch (NumberFormatException e) {
-                                JOptionPane.showMessageDialog
-                                    (editFrame,
-                                     "Invalid number format for '" + parseMe + "'.");
+                                showError
+                                    ("Invalid number format for '" + parseMe + "'.");
                                 continue;
                             }
                             minTop = dvs.get(0);
@@ -3915,9 +3937,8 @@ public class Editor extends Diagram
                                     dvs.add(d);
                                 }
                             } catch (NumberFormatException e) {
-                                JOptionPane.showMessageDialog
-                                    (editFrame,
-                                     "Invalid number format for '" + parseMe + "'.");
+                                showError
+                                    ("Invalid number format for '" + parseMe + "'.");
                                 continue;
                             }
                             left = dvs.get(0);
@@ -4267,7 +4288,7 @@ public class Editor extends Diagram
         }
 
         switch (JOptionPane.showOptionDialog
-                (editFrame,
+                (null,
                  "This file has changed. Would you like to save it?",
                  "Confirm close diagram",
                  JOptionPane.YES_NO_CANCEL_OPTION,
@@ -4344,8 +4365,7 @@ public class Editor extends Diagram
                     break; // OK value
                 }
             } catch (NumberFormatException e) {
-                JOptionPane.showMessageDialog
-                    (editFrame, "Invalid number format.");
+                showError("Invalid number format.");
             }
         }
 
@@ -4408,7 +4428,7 @@ public class Editor extends Diagram
                 margin = ContinuedFraction.parseDouble(marginStr);
                 break;
             } catch (NumberFormatException e) {
-                JOptionPane.showMessageDialog(editFrame, "Invalid number format.");
+                showError("Invalid number format.");
             }
         }
 
@@ -4439,8 +4459,7 @@ public class Editor extends Diagram
         try {
             openDiagram(new File(filename));
         } catch (IOException e) {
-            JOptionPane.showMessageDialog
-                (editFrame, "File load error: " + e);
+            showError("File load error: " + e);
             return;
         }
     }
@@ -4720,8 +4739,7 @@ public class Editor extends Diagram
             try {
                 cropFrame.setFilename(filename);
             } catch (IOException e) {
-                JOptionPane.showMessageDialog
-                    (editFrame, "Could not load file '" + filename + "': " + e);
+                showError("Could not load file '" + filename + "': " + e);
             }
         }
 
@@ -4882,8 +4900,7 @@ public class Editor extends Diagram
             JOptionPane.showMessageDialog
                 (editFrame, "Saved '" + getFilename() + "'.");
         } catch (IOException e) {
-            JOptionPane.showMessageDialog
-                (editFrame, "File save error: " + e);
+            showError("File save error: " + e);
         }
     }
 
@@ -4929,7 +4946,7 @@ public class Editor extends Diagram
                 JOptionPane.showMessageDialog
                     (editFrame, "Print job submitted.");
             } catch (PrinterException e) {
-                JOptionPane.showMessageDialog(editFrame, e.toString());
+                showError(e.toString());
             }
         } else {
             JOptionPane.showMessageDialog(editFrame, "Print job canceled.");
@@ -5242,13 +5259,12 @@ public class Editor extends Diagram
                 axs.add(axis);
             }
         } catch (NumberFormatException e) {
-            JOptionPane.showMessageDialog(editFrame, e.getMessage());
+            showError(e.getMessage());
             return;
         }
 
         if (vs.size() != 2) {
-            JOptionPane.showMessageDialog
-                (editFrame, "You did not enter exactly two values.");
+            showError("You did not enter exactly two values.");
             return;
         }
 
@@ -5294,9 +5310,8 @@ public class Editor extends Diagram
             moveMouse(newMprin);
             setMouseStuck(true);
         } catch (NoninvertibleTransformException e) {
-            JOptionPane.showMessageDialog
-                (editFrame,
-                 "The two variables you entered cannot be\n"
+            showError
+                ("The two variables you entered cannot be "
                  + "combined to identify a position.");
             return;
         }
@@ -5687,7 +5702,7 @@ public class Editor extends Diagram
                 setLineWidth(ContinuedFraction.parseDouble(str));
                 return;
             } catch (NumberFormatException e) {
-                JOptionPane.showMessageDialog(editFrame, "Invalid number format.");
+                showError("Invalid number format.");
             }
         }
     }
