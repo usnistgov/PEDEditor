@@ -81,9 +81,6 @@ public class JSONFetchDiagram {
 
         for (AbstractAction act: new AbstractAction[]
             { (AbstractAction) ef.mnUnstickMouse.getAction(),
-                 ef.actAutoPosition,
-                 ef.actNearestPoint,
-                 ef.actNearestCurve,
                  ef.actAddVertex,
                  ef.actAddAutoPositionedVertex,
                  ef.actText,
@@ -101,7 +98,20 @@ public class JSONFetchDiagram {
                  ef.actRemoveSelection,
                  ef.actRemoveAll
             }) {
-            disappear(e, act);
+            // Make these actions vanish from the interface.
+            act.setEnabled(false);
+            e.setVisible(act, false);
+        }
+
+        for (AbstractAction act: new AbstractAction[]
+            { (AbstractAction) ef.mnUnstickMouse.getAction(),
+                 ef.actAutoPosition,
+                 ef.actNearestPoint,
+                 ef.actNearestCurve,
+            }) {
+            // Remove the actions from the interface, but there's no
+            // harm in leaving them enabled.
+            e.setVisible(act, false);
         }
             
         e.detachOriginalImage();
@@ -157,11 +167,6 @@ public class JSONFetchDiagram {
         }
     }
 
-    /** Make the given action vanish from the interface. */
-    static void disappear(Editor e, AbstractAction act) {
-        act.setEnabled(false);
-        e.setVisible(act, false);
-    }
 
     static String resourceToString(String path) throws IOException {
         URL url = JSONFetchDiagram.class.getResource(path);
