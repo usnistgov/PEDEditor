@@ -1396,6 +1396,7 @@ public class EditFrame extends JFrame
               actShiftPressed,
               actShiftReleased,
               actColor,
+              actDeselect,
               actRemoveSelection,
               actRemoveAll,
               actMoveSelection,
