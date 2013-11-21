@@ -56,7 +56,6 @@ import java.text.NumberFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Map;
 import java.util.Observable;
 import java.util.Observer;
@@ -495,7 +494,7 @@ public class Editor extends Diagram
     static final protected double MOUSE_DRAG_DISTANCE = 80; /* pixels */
     protected double mouseDragDistance = MOUSE_DRAG_DISTANCE;
     static protected Image crosshairs = null;
-    static HashSet<Editor> openEditors = new HashSet<>();
+    static int openEditorCnt = 0;
 
     protected CropFrame cropFrame = new CropFrame();
     protected EditFrame editFrame = new EditFrame(this);
@@ -543,12 +542,6 @@ public class Editor extends Diagram
         return rulerDialog;
     }
 
-    /** Return a Set of all open Editor objects (including hidden
-        ones). */
-    public static Set<Editor> getOpenEditors() {
-        return new HashSet<Editor>(openEditors);
-    }
-
     protected transient double scale;
     protected transient BufferedImage originalImage;
     protected transient boolean editorIsPacked = false;
@@ -558,6 +551,7 @@ public class Editor extends Diagram
     protected transient boolean autoRescale = false;
     protected transient boolean allowRobotToMoveMouse = true;
     protected boolean mEditable = true;
+    protected boolean exitOnClose = true;
 
     /** The item (vertex, label, etc.) that is selected, or null if nothing is. */
     protected transient DecorationHandle selection;
@@ -734,7 +728,7 @@ public class Editor extends Diagram
             (WindowConstants.HIDE_ON_CLOSE);
         cropFrame.addCropEventListener(this);
         addObserver(this);
-        openEditors.add(this);
+        ++openEditorCnt;
     }
 
     public void initializeZoomFrame() {
@@ -799,11 +793,6 @@ public class Editor extends Diagram
     */
     public void close() {
         if (!isClosed()) {
-            if (editFrame != null) {
-                editFrame.dispose();
-                editFrame.parentEditor = null;
-                editFrame = null;
-            }
             if (cropFrame != null) {
                 cropFrame.dispose();
                 cropFrame = null;
@@ -840,9 +829,32 @@ public class Editor extends Diagram
                 tieLineDialog.dispose();
                 tieLineDialog = null;
             }
+            if (mnRightClick != null) {
+                mnRightClick = null;
+            }
 
-            openEditors.remove(this);
+            if (editFrame != null) {
+                editFrame.dispose();
+                editFrame.parentEditor = null;
+                editFrame = null;
+            }
+            --openEditorCnt;
+            if (isExitOnClose()) {
+                System.exit(0);
+            }
         }
+    }
+
+    public void setExitOnClose(boolean b) {
+        exitOnClose = b;
+    }
+
+    public boolean isExitOnClose() {
+        return exitOnClose;
+    }
+
+    public static int getOpenEditorCnt() {
+        return openEditorCnt;
     }
 
     @JsonIgnore public boolean isClosed() {
@@ -4288,7 +4300,7 @@ public class Editor extends Diagram
         }
 
         switch (JOptionPane.showOptionDialog
-                (null,
+                (editFrame,
                  "This file has changed. Would you like to save it?",
                  "Confirm close diagram",
                  JOptionPane.YES_NO_CANCEL_OPTION,
