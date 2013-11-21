@@ -1335,9 +1335,7 @@ public class Editor extends Diagram
             return;
         }
         removeLikeThis(selection.getDecoration());
-        if (!hadSelection) {
-            clearSelection();
-        }
+        clearSelection();
     }
 
     /** Select the vertex that comes after or before the currently
