@@ -29,7 +29,7 @@ public class JSONFetchDiagram {
         any Editors are open. */
     static class ShutdownChecker extends TimerTask {
         @Override public void run() {
-            int cnt = Editor.getOpenEditors().size();
+            int cnt = Editor.getOpenEditorCnt();
             if (cnt == 0) {
                 System.exit(0);
             }
@@ -153,6 +153,7 @@ public class JSONFetchDiagram {
                 d.setTitle(title);
             }
             Editor e = new Editor();
+            e.setExitOnClose(false);
             e.copyFrom(d);
             makeViewer(e);
             return e;
