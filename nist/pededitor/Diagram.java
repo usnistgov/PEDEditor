@@ -2624,7 +2624,6 @@ public class Diagram extends Observable implements Printable {
 
         JLabel bogus = new JLabel(str);
         Font f = getFont();
-        // bogus.setFont(f.deriveFont((float) (f.getSize() * VIEW_MAGNIFICATION)));
         bogus.setFont(f);
         bogus.setForeground(thisOrBlack(textColor));
         return (View) bogus.getClientProperty("html");
@@ -2633,13 +2632,6 @@ public class Diagram extends Observable implements Printable {
     View toView(AnchoredLabel label) {
         return toView(label.getText(), label.getXWeight(), label.getColor());
     }
-
-    /** Regenerate the labelViews field from the labels field. */
-    /* void initializeLabelViews() {
-        for (LabelInfo labelInfo: labelz()) {
-            initializeLabelInfo(labelInfo);
-        }
-        } */
 
     /** Regenerate the labelViews field from the labels field. */
     void initializeLabelInfo(LabelInfo labelInfo) {
