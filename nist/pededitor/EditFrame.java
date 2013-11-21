@@ -1175,7 +1175,10 @@ public class EditFrame extends JFrame
         mnProperties.add(setAspectRatio);
 
         mnFont.setMnemonic(KeyEvent.VK_F);
-        mnFont.add(new FontMenuItem("Sans", "DejaVu LGC Sans PED"));
+        FontMenuItem sans = new FontMenuItem
+            ("Sans", "DejaVu LGC Sans PED");
+        mnFont.add(sans);
+        sans.setSelected(true);
         mnFont.add(new FontMenuItem("Serif", "DejaVu LGC Serif PED"));
         mnFont.add(new FontMenuItem("Sans (Widely-spaced lines)",
                                     "DejaVu LGC Sans GRUMP"));
@@ -1486,9 +1489,7 @@ public class EditFrame extends JFrame
         mnBackgroundImage.setVisible(b);
 
         for (Action act: new Action[]
-            { actNearestPoint,
-              actNearestCurve,
-              actMoveSelection,
+            { actMoveSelection,
               actMovePoint,
               actMoveRegion,
               actAddVertex,
