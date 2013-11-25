@@ -70,61 +70,172 @@ public class RulerTick {
     }
 
 
-    /** Return a 2-element array { before, after } representing the
-        number of characters before and after the decimal point that
-        are needed to display v with 1 significant digit. */
-    public static int[] digitSpaceNeeded(double v) {
+    /** Return a 2-element array { pow10High, pow10Low } representing
+        the exponents of ten needed to show the most and least
+        significant figures of v, respectively. If v is not an even
+        multiple of a power of 10, use 3 significant digits.
+
+        Return null if v equals 0. */
+    public static int[] pow10Range(double v) {
         if (v == 0) {
-            return new int[] {1,0};
+            return null;
         }
-        boolean isNegative = (v < 0);
-        if (isNegative) {
+
+        if (v < 0) {
             v = -v;
         }
 
-        int pow10 = (int) Math.floor(Math.log10(v * 1.00001));
-        int negint = isNegative ? 1 : 0;
-        if (pow10 >= 0) {
-            return new int[] {negint + pow10 + 1, 0};
-        } else {
-            return new int[] {negint + 1, -pow10};
+        // Bump up v's magnitude a tiny bit so afterward we only have
+        // to worry about rounding down, not up.
+        v *= 1 + 1e-12;
+
+        // Greatest power of ten with absolute value equal to or less than v.
+        int pow10High = (int) Math.floor(Math.log10(v));
+        // Greatest power of ten with absolute value equal to or less
+        // than the least significant digit of v.
+        int pow10Low = pow10High;
+        for (pow10Low = pow10High; ; --pow10Low) {
+            if (pow10Low == pow10High - 6) {
+                // Fall back on 3 significant digits.
+                pow10Low = pow10High - 2;
+                break;
+            }
+            double vScaled = v / Math.pow(10, pow10Low);
+            vScaled -= Math.floor(vScaled);
+            if (vScaled < 1e-8) {
+                break; // Nearly perfect approximation.
+            }
         }
+
+        return new int[] { pow10High, pow10Low };
     }
 
-    /** Return a fixed-point Formatter format string with sufficient
+    /** Return a 2-element array { pow10High, pow10Low } representing
+        the exponents of ten needed to show the most and least
+        significant figures of all terms. If any of those values do
+        not represent even powers of 10, then use 3 significant
+        digits.
+
+        Return [0,0] if all values equal 0. */
+    public static int[] pow10Range(double... terms) {
+        if (terms.length == 0) {
+            return null;
+        }
+        int[] limits = pow10Range(terms[0]);
+        for (int i = 1; i < terms.length; ++i) {
+            double v = terms[i];
+            int[] limits2 = pow10Range(v);
+            if (limits2 == null) {
+                continue;
+            }
+            if (limits == null) {
+                limits = limits2;
+            } else {
+                limits[0] = Math.max(limits[0], limits2[0]);
+                limits[1] = Math.min(limits[1], limits2[1]);
+            }
+        }
+
+        return (limits == null) ? new int[2] : limits;
+    }
+
+    /** Return a Formatter format string with sufficient
         precision and capacity to display all values in range [min,
-        max] with the given absolute precision. For example,
-        formatString(-37.001, 5, 0.1) equals "%5.1f" since that format can
-        represent all the values {-37.0, -36.9, ..., 5.0}.
+        max] with the given step size. For example,
+        formatString(-37.001, 5, 0.1) equals "%5.1f" since that format
+        can represent all the values {-37.0, -36.9, ..., 5.0}.
     */
-    public static String formatString(double min, double max, double precision) {
-        int[] limits = digitSpaceNeeded(min, max, precision);
-        int before = limits[0];
-        int after = limits[1];
-
-        int width = before + after;
-        if (after > 0) {
-            ++width;
+    public static String formatString(double... terms) {
+        int[] limits = pow10Range(terms);
+        if (limits == null) {
+            limits = new int[] {0,0};
         }
-        return "%" + width + '.' + after + 'f';
+
+        int maxPow10 = limits[0];
+        int minPow10 = limits[1];
+
+        boolean minus = false;
+        for (double d: terms) {
+            if (d < 0) {
+                minus = true;
+            }
+        }
+        int minusPlace = minus ? 1 : 0;
+
+        if (maxPow10 < -4 || minPow10 > 5 || maxPow10 > 7 ) {
+            // Allow 4 extra spots for the E, the exponent sign, and
+            // two digits of exponent.
+            int decimalPlace = (maxPow10 > minPow10) ? 1 : 0;
+            return "%" + (minusPlace + decimalPlace + 4
+                          + 1 + maxPow10 - minPow10)
+                + '.' + (maxPow10 - minPow10) + 'E';
+        } else {
+            int units = 1 + Math.max(0, maxPow10);
+            int decimals = Math.max(0, -minPow10);
+            int decimalPlace = decimals > 0 ? 1 : 0;
+            return "%"
+                + (minusPlace + units + decimalPlace + decimals)
+                + '.' + decimals + 'f';
+        }
     }
 
-    /** Return a 2-element array { before, after } representing the
-        number of characters before and after the decimal point that
-        are needed to display all values in range [min, max] to the
-        given absolute precision. */
-    public static int[] digitSpaceNeeded(double min, double max,
-                                         double precision) {
-        int[] limits = digitSpaceNeeded(precision);
-        int after = limits[1];
+    /** Return a string that is about as wide as any that might be
+        returned by formatString(terms) applied to any value in the given range. */
+    public static String longestString(double... terms) {
+        int[] limits = pow10Range(terms);
+        if (limits == null) {
+            return "0";
+        }
+        String format = formatString(terms);
+        int maxPow10 = limits[0];
+        int minPow10 = limits[1];
+        StringBuilder res= new StringBuilder();
 
-        limits = digitSpaceNeeded(min);
-        int before = limits[0];
+        boolean minus = false;
+        for (double d: terms) {
+            if (d < 0) {
+                minus = true;
+            }
+        }
+        if (minus) {
+            res.append('-');
+        }
+        if (maxPow10 >= 0) {
+            for (int i = maxPow10; i >= 0; --i) {
+                res.append('8');
+            }
+            if (minPow10 < 0) {
+                res.append('.');
+                for (int i = -1; i >= minPow10; --i) {
+                    res.append('8');
+                }
+            }
+        } else {
+            res.append("0.");
+            int i;
+            for (i = -1; i > maxPow10; --i) {
+                res.append('0');
+            }
+            for (; i >= minPow10; --i) {
+                res.append('8');
+            }
+        }
+        return String.format(format, Double.parseDouble(res.toString()));
+    }
 
-        limits = digitSpaceNeeded(max);
-        limits[0] = Math.max(before, limits[0]);
-        limits[1] = after;
-
-        return limits;
+    public static void main(String[] args) {
+        for (double d: new double[]
+            {1e4, 1e-2, 2.5, 2.5237489220, -2e17, 3e-12 }) {
+                int[] limits = pow10Range(d);
+                System.out.println(d);
+                for (int i: limits) {
+                    System.out.println(i);
+                }
+                String format = formatString(d);
+                System.out.println(format);
+                System.out.println(String.format(format, d));
+                System.out.println(longestString(d));
+                System.out.println();
+            }
     }
 }
