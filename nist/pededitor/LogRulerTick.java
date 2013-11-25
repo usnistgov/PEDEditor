@@ -18,6 +18,9 @@ public class LogRulerTick {
     /** Return a string representation of 10^Math.round(x). */
     public static String pow10String(double x) {
         int p10 = (int) Math.round(x);
+        if (p10 > 5 || p10 < -5) {
+            return "1E" + p10;
+        }
         StringBuilder s = new StringBuilder();
         if (p10 >= 0) {
             s.append('1');
