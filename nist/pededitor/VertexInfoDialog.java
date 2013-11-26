@@ -259,7 +259,7 @@ public class VertexInfoDialog extends JDialog {
             } else {
                 double mabs = Math.abs(sloped);
                 String format =
-                    (mabs < 1e-12) ? "%.0f"
+                    (mabs == 0) ? "%.0f"
                     : (mabs < 1e-4) ? "%.4e"
                     : (mabs < 1) ? "%.6f"
                     : (mabs < 1e5) ? "%.4f"
