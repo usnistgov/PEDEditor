@@ -84,6 +84,7 @@ public class StringArrayDialog extends JDialog {
         JButton okButton = new JButton(okAction);
         getRootPane().setDefaultButton(okButton);
         add(okButton, gb, wholeRow);
+        setResizable(false);
     }
 
     /** Set the dimensions strings. The user may change these values
