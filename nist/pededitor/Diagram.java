@@ -2272,6 +2272,33 @@ public class Diagram extends Observable implements Printable {
         add(axis);
     }
 
+    /** Return { min, max } representing the range of values that ax
+        can take within the standard page. Assumes that the extremes
+        are represented by corners of the page. */
+    public double[] getRange(Axis ax) {
+        if (principalToStandardPage == null) {
+            return new double[] { 0, 0 };
+        }
+        int pointCnt = 0;
+        double min = 0;
+        double max = 0;
+        for (double x: new double[]
+            { pageBounds.getMinX(), pageBounds.getMaxX() }) {
+            for (double y: new double[]
+                { pageBounds.getMinY(), pageBounds.getMaxY() }) {
+                double v = ax.value(standardPageToPrincipal.transform(x,y));
+                ++pointCnt;
+                if (pointCnt == 1) {
+                    min = max = v;
+                } else {
+                    min = Math.min(min, v);
+                    max = Math.max(max, v);
+                }
+            }
+        }
+        return new double[] { min, max };
+    }
+
     /** Return the plain text of all labels, tags, key values, and
         diagram components. Duplicates are removed. */
     @JsonIgnore public String[] getAllText() {
@@ -3304,6 +3331,7 @@ public class Diagram extends Observable implements Printable {
         }
 
         setOriginalFilename(getOriginalFilename());
+        fixAxisFormats();
     }
 
     /** Invoked from the EditFrame menu */
@@ -4224,6 +4252,34 @@ public class Diagram extends Observable implements Printable {
         for (AnchoredLabel item: labels()) {
             item.setAngle(pageToPrincipalAngle(item.getAngle()));
         }
+
+        fixAxisFormats();
+    }
+
+    /** Make sure that the axis formats still make sense after a
+        rescaling or change to the page bounds. */
+    void fixAxisFormats() {
+        for (Axis axis: getAxes()) {
+            double[] range = getRange(axis);
+            boolean percentP = ((DecimalFormat) (axis.format)).getMultiplier() == 100;
+            double max = Math.max(-range[0], range[1]);
+            if (percentP) {
+                if (max < 0.01) {
+                    axis.format = new DecimalFormat("0.000E0%");
+                } else {
+                    axis.format = STANDARD_PERCENT_FORMAT;
+                }
+            } else {
+                if (max < 0.01 || max > 1e7) {
+                    axis.format = new DecimalFormat("0.000E0");
+                } else if (max < 1e4) {
+                    axis.format = new DecimalFormat("0.0000");
+                } else {
+                    axis.format = new DecimalFormat("0");
+                }
+            }
+        }
+        propagateChange();
     }
 
     ContinuedFraction approximateFraction(double d) {
