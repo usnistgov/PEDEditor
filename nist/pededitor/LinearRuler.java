@@ -27,7 +27,7 @@ class LinearRuler implements BoundedParameterizable2D, Decorated {
     /** Remove the leading minus sign from minus zero ("-0") and its
         fixed-point variants. Leave other strings unchanged. */
     public static String fixMinusZero(String s) {
-        return minusZeroPattern.matcher(s).lookingAt() ? s.substring(1) : s;
+        return minusZeroPattern.matcher(s).lookingAt() ? "0" : s;
     }
 
     /** Most applications use straight tick marks, but ternary
