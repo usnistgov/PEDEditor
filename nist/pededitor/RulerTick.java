@@ -1,16 +1,21 @@
 package gov.nist.pededitor;
 
 /** Class and utility routines for figuring out natural spacing and
-    formatting of tick marks and tick mark labels. */
+    formatting of tick marks and tick mark labels.
+ */
 
-public class RulerTick {
-    public double min;
-    public double max;
-    /** Change in value between ticks. */
-    public double tickDelta;
-    /** Change in value between labeled ticks. */
-    public double textDelta;
-    public String formatString;
+public class RulerTick implements Cloneable {
+    Integer pow10High = null;
+    Integer pow10Low = null;
+    boolean haveMinus = false;
+
+    @Override public RulerTick clone() {
+        RulerTick res = new RulerTick();
+        res.pow10High = pow10High;
+        res.pow10Low = pow10Low;
+        res.haveMinus = haveMinus;
+		return res;
+    }
 
     /** Return the greatest round number that is no larger than x plus
         a tiny fudge factor. Round numbers equal 1, 2, or 5 times a
@@ -69,19 +74,28 @@ public class RulerTick {
         return (Math.abs(r - Math.rint(r)) < 1e-10);
     }
 
+    /** Require this number format to permit representation of
+        values at least as large as v in absolute value, but do not
+        require sufficient precision to represent v precisely. */
+    public void mergeHigh(double v) {
+        merge(v, false);
+    }
 
-    /** Return a 2-element array { pow10High, pow10Low } representing
-        the exponents of ten needed to show the most and least
-        significant figures of v, respectively. If v is not an even
-        multiple of a power of 10, use 3 significant digits.
+    /** Require this number format to permit representation of v
+        precisely, unless v is not an even multiple of powers of 10.
+        In that case, require the format to represent v to 3
+        significant digits. */
+    public void merge(double v) {
+        merge(v, true);
+    }
 
-        Return null if v equals 0. */
-    public static int[] pow10Range(double v) {
+    void merge(double v, boolean mergeLow) {
         if (v == 0) {
-            return null;
+            return;
         }
 
         if (v < 0) {
+            haveMinus = true;
             v = -v;
         }
 
@@ -90,88 +104,58 @@ public class RulerTick {
         v *= 1 + 1e-12;
 
         // Greatest power of ten with absolute value equal to or less than v.
-        int pow10High = (int) Math.floor(Math.log10(v));
-        // Greatest power of ten with absolute value equal to or less
-        // than the least significant digit of v.
-        int pow10Low = pow10High;
-        for (pow10Low = pow10High; ; --pow10Low) {
-            if (pow10Low == pow10High - 6) {
-                // Fall back on 3 significant digits.
-                pow10Low = pow10High - 2;
-                break;
-            }
-            double vScaled = v / Math.pow(10, pow10Low);
-            vScaled -= Math.floor(vScaled);
-            if (vScaled < 1e-8) {
-                break; // Nearly perfect approximation.
-            }
+        int high = (int) Math.floor(Math.log10(v));
+        if (pow10High == null || high > pow10High) {
+            pow10High = high;
         }
 
-        return new int[] { pow10High, pow10Low };
+        if (mergeLow) {
+            // Greatest power of ten with absolute value equal to or less
+            // than the least significant digit of v.
+            int low = high;
+            for (low = high; ; --low) {
+                if (low == high - 6) {
+                    // Fall back on 3 significant digits.
+                    low = high - 2;
+                    break;
+                }
+                double vScaled = v / Math.pow(10, low);
+                vScaled -= Math.floor(vScaled);
+                if (vScaled < 1e-8) {
+                    break; // Nearly perfect approximation.
+                }
+            }
+
+            if (pow10Low == null || low < pow10Low) {
+                pow10Low = low;
+            }
+        }
     }
 
-    /** Return a 2-element array { pow10High, pow10Low } representing
-        the exponents of ten needed to show the most and least
-        significant figures of all terms. If any of those values do
-        not represent even powers of 10, then use 3 significant
-        digits.
-
-        Return [0,0] if all values equal 0. */
-    public static int[] pow10Range(double... terms) {
-        if (terms.length == 0) {
-            return null;
-        }
-        int[] limits = pow10Range(terms[0]);
-        for (int i = 1; i < terms.length; ++i) {
-            double v = terms[i];
-            int[] limits2 = pow10Range(v);
-            if (limits2 == null) {
-                continue;
-            }
-            if (limits == null) {
-                limits = limits2;
-            } else {
-                limits[0] = Math.max(limits[0], limits2[0]);
-                limits[1] = Math.min(limits[1], limits2[1]);
-            }
-        }
-
-        return (limits == null) ? new int[2] : limits;
-    }
-
-    /** Return a Formatter format string with sufficient
-        precision and capacity to display all values in range [min,
-        max] with the given step size. For example,
-        formatString(-37.001, 5, 0.1) equals "%5.1f" since that format
-        can represent all the values {-37.0, -36.9, ..., 5.0}.
+    /** Return a Formatter format string with sufficient precision and
+        capacity to represent all mergeHigh() values precisely and
+        values at least as large as all merge() values imprecisely.
     */
-    public static String formatString(double... terms) {
-        int[] limits = pow10Range(terms);
-        if (limits == null) {
-            limits = new int[] {0,0};
+    public String formatString() {
+        if (pow10High == null) {
+            return "%d";
         }
+        // Knowing whether a minus sign is needed is hard, so just
+        // assume one is needed.
 
-        int maxPow10 = limits[0];
-        int minPow10 = limits[1];
+        int minusPlace = haveMinus ? 1 : 0;
+        int low = (pow10Low == null) ? pow10High : pow10Low;
 
-        boolean minus = false;
-        for (double d: terms) {
-            if (d < 0) {
-                minus = true;
-            }
-        }
-        int minusPlace = minus ? 1 : 0;
-
-        if (maxPow10 < -4 || minPow10 > 5 || maxPow10 > 7 ) {
-            // Allow 4 extra spots for the E, the exponent sign, and
-            // two digits of exponent.
-            int decimalPlace = (maxPow10 > minPow10) ? 1 : 0;
+        if (pow10High < -4 || low > 5 || pow10High > 7 ) {
+            // Use floating point. Allow 4 extra spots for the E, the
+            // exponent sign, and two digits of exponent.
+            int decimalPlace = (pow10High > low) ? 1 : 0;
             return "%" + (minusPlace + decimalPlace + 4
-                          + 1 + maxPow10 - minPow10)
-                + '.' + (maxPow10 - minPow10) + 'E';
+                          + 1 + pow10High - low)
+                + '.' + (pow10High - low) + 'E';
         } else {
-            int units = 1 + Math.max(0, maxPow10);
-            int decimals = Math.max(0, -minPow10);
+            int units = 1 + Math.max(0, pow10High);
+            int decimals = Math.max(0, -low);
             int decimalPlace = decimals > 0 ? 1 : 0;
             return "%"
                 + (minusPlace + units + decimalPlace + decimals)
@@ -179,63 +163,56 @@ public class RulerTick {
         }
     }
 
-    /** Return a string that is about as wide as any that might be
-        returned by formatString(terms) applied to any value in the given range. */
-    public static String longestString(double... terms) {
-        int[] limits = pow10Range(terms);
-        if (limits == null) {
+    /** Return a string that is as wide as any that might be returned
+        by String.format(formatString(), v) for any value v in the
+        range passed in through merge() or mergeHigh(). */
+    public String longestString() {
+        if (pow10High == null) {
             return "0";
         }
-        String format = formatString(terms);
-        int maxPow10 = limits[0];
-        int minPow10 = limits[1];
+
         StringBuilder res= new StringBuilder();
 
-        boolean minus = false;
-        for (double d: terms) {
-            if (d < 0) {
-                minus = true;
-            }
-        }
-        if (minus) {
+        int low = (pow10Low == null) ? pow10High : pow10Low;
+
+        if (haveMinus) {
             res.append('-');
         }
-        if (maxPow10 >= 0) {
-            for (int i = maxPow10; i >= 0; --i) {
+        if (pow10High >= 0) {
+            for (int i = pow10High; i >= 0; --i) {
                 res.append('8');
             }
-            if (minPow10 < 0) {
+            if (low < 0) {
                 res.append('.');
-                for (int i = -1; i >= minPow10; --i) {
+                for (int i = -1; i >= low; --i) {
                     res.append('8');
                 }
             }
         } else {
             res.append("0.");
             int i;
-            for (i = -1; i > maxPow10; --i) {
+            for (i = -1; i > pow10High; --i) {
                 res.append('0');
             }
-            for (; i >= minPow10; --i) {
+            for (; i >= low; --i) {
                 res.append('8');
             }
         }
-        return String.format(format, Double.parseDouble(res.toString()));
+        return String.format(formatString(),
+                             Double.parseDouble(res.toString()));
     }
 
     public static void main(String[] args) {
         for (double d: new double[]
             {1e4, 1e-2, 2.5, 2.5237489220, -2e17, 3e-12 }) {
-                int[] limits = pow10Range(d);
-                System.out.println(d);
-                for (int i: limits) {
-                    System.out.println(i);
-                }
-                String format = formatString(d);
-                System.out.println(format);
-                System.out.println(String.format(format, d));
-                System.out.println(longestString(d));
-                System.out.println();
-            }
+            RulerTick rt = new RulerTick();
+            rt.merge(d);
+            System.out.println(d + ":" + rt.pow10Low + ", " + rt.pow10High);
+            String format = rt.formatString();
+            System.out.println(format);
+            System.out.println(String.format(format, d));
+            System.out.println(rt.longestString());
+            System.out.println();
+        }
     }
 }
