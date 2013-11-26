@@ -22,7 +22,7 @@ import org.codehaus.jackson.map.annotate.JsonSerialize.Inclusion;
 @JsonSerialize(include = Inclusion.NON_DEFAULT)
 class LinearRuler implements BoundedParameterizable2D, Decorated {
     public static enum LabelAnchor { NONE, LEFT, RIGHT };
-    private static Pattern minusZeroPattern = Pattern.compile("-0+\\.?0*\\z");
+    private static Pattern minusZeroPattern = Pattern.compile("-0+\\.?0*(E|\\z)");
 
     /** Remove the leading minus sign from minus zero ("-0") and its
         fixed-point variants. Leave other strings unchanged. */
@@ -392,6 +392,14 @@ class LinearRuler implements BoundedParameterizable2D, Decorated {
 
         String longestLabel;
 
+        RulerTick rt = new RulerTick();
+        if (tickStartD != null) {
+            rt.merge(tickStartD);
+        } else {
+            rt.mergeHigh(start);
+        }
+        rt.mergeHigh(end);
+
         if (displayLog10) {
             double minPow10 = Math.ceil(astart - 1e-6);
             double maxPow10 = Math.floor(aend + 1e-6);
@@ -399,21 +407,9 @@ class LinearRuler implements BoundedParameterizable2D, Decorated {
             String hi = LogRulerTick.pow10String(maxPow10);
             longestLabel = (lo.length() > hi.length()) ? lo : hi;
         } else {
-            int[] limits = RulerTick.digitSpaceNeeded
-                (astart, aend, RulerTick.roundCeil(minBigTickDelta));
-            int units = limits[0];
-            int decimals = limits[1];
-            StringBuilder longestLabelB = new StringBuilder();
-            for (int i = 0; i < units; ++i) {
-                longestLabelB.append('8');
-            }
-            if (decimals > 0) {
-                longestLabelB.append('.');
-                for (int i = 0; i < decimals; ++i) {
-                    longestLabelB.append('8');
-                }
-            }
-            longestLabel = longestLabelB.toString();
+            RulerTick rt2 = rt.clone();
+            rt2.mergeHigh(minBigTickDelta);
+            longestLabel = rt2.longestString();
         }
         
         Rectangle2D labelBounds = fm.getStringBounds("  " + longestLabel, g);
@@ -454,6 +450,7 @@ class LinearRuler implements BoundedParameterizable2D, Decorated {
         double tickD = Double.isNaN(tickDelta)
             ? RulerTick.nextSmallerRound(bigTickD)
             : tickDelta;
+        rt.merge(tickD);
 
         g.setStroke(new BasicStroke((float) (scale * lineWidth),
                                     BasicStroke.CAP_BUTT, BasicStroke.JOIN_BEVEL));
@@ -501,8 +498,7 @@ class LinearRuler implements BoundedParameterizable2D, Decorated {
         if (Math.abs(tickD) >= minTickDelta && tickD != 0 && tickStart != tickEnd) {
             // Draw small ticks (if requested)
 
-            double smallTickEnd = tickEnd
-                + 1e-6 * (tickEnd - tickStart) / Math.abs(tickD);
+            double smallTickEnd = tickEnd + 1e-6 * (tickEnd - tickStart);
 
             for (double logical = actualTickStart;
                  (logical < smallTickEnd) == (tickD > 0);
@@ -550,8 +546,6 @@ class LinearRuler implements BoundedParameterizable2D, Decorated {
         tickVOffset.x *= 2;
         tickVOffset.y *= 2;
 
-        String formatString = displayLog10 ? null
-            : RulerTick.formatString(astart, aend, bigTickD);
 
         if (bigTickD != 0 && tickStart != tickEnd) {
             // Draw big ticks and labels (if requested)
@@ -559,10 +553,11 @@ class LinearRuler implements BoundedParameterizable2D, Decorated {
             actualTickStart = (tickStartD != null) ? tickStartD
                 : (bigTickD * Math.ceil((tickStart - 1e-6 * (aend - astart)) / bigTickD));
 
+            String formatString = displayLog10 ? null : rt.formatString();
             AffineTransform oldTransform = g.getTransform();
 
             double bigTickEnd = tickEnd
-                + 1e-6 * (tickEnd - tickStart) / Math.abs(bigTickD);
+                + 1e-6 * (tickEnd - tickStart);
             for (double logical = actualTickStart;
                  (logical < bigTickEnd) == (bigTickD > 0);
                  logical += bigTickD) {
