@@ -79,6 +79,7 @@ import com.itextpdf.text.pdf.PdfWriter;
 
 /** Main class for Phase Equilibria Diagrams and their presentation,
     but not including GUI elements such as menus and windows. */
+@JsonIgnoreProperties({"exitOnClose"})
 public class Diagram extends Observable implements Printable {
     static ObjectMapper objectMapper = null;
     protected static final DecimalFormat STANDARD_PERCENT_FORMAT
