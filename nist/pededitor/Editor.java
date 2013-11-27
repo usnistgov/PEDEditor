@@ -102,7 +102,9 @@ import Jama.Matrix;
 // that changing that could have side effects and I don't have time to
 // check that.
 
-// TODO (bug 2/10) The text in the text box will be serif if the box is first opened in serif mode, and sans if the box was first opened in sans mode, which is odd.
+// TODO (bug 2/10) The text in the text box will be serif if the box
+// is first opened in serif mode, and sans if the box was first opened
+// in sans mode, which is odd.
 
 // TODO (bug 2/10) When you print a cropped diagram, the portion
 // outside the cropped region shows up too.
@@ -110,6 +112,11 @@ import Jama.Matrix;
 // TODO (bug-ish, minor but easy) The nearestPoint() feature marked
 // XYZZY is not available during auto-positionning, for no good
 // reason, but the help implies that it is.
+
+// TODO (1/10) The Properties/Scale dialog isn't very good generally
+// but is especially bad for values near 0, which get rounded to 0
+// until you try to edit them and can see their actual values, so it
+// appears the scale goes from 0 to 0.
 
 // TODO (optional): Remappable key bindings.
 
@@ -845,11 +852,11 @@ public class Editor extends Diagram
         }
     }
 
-    public void setExitOnClose(boolean b) {
+    @JsonIgnore public void setExitOnClose(boolean b) {
         exitOnClose = b;
     }
 
-    public boolean isExitOnClose() {
+    @JsonIgnore public boolean isExitOnClose() {
         return exitOnClose;
     }
 
@@ -2523,7 +2530,7 @@ public class Editor extends Diagram
         } else if (mprin != null) {
             fractions = new Point2D.Double(0,mprin.y);
         } else {
-            Rectangle2D b = principalToStandardPage.outputBounds();
+            Rectangle2D b = principalToStandardPage.inputBounds();
             fractions = new Point2D.Double(0, b.getMaxY());
         }
 
@@ -4285,6 +4292,7 @@ public class Editor extends Diagram
             vertexInfo.setLocation(rect.x + rect.width, rect.y);
         }
         vertexInfo.refresh();
+        editFrame.setStatus("");
         editFrame.setVertexInfoVisible(true);
         editFrame.setVisible(true);
     }
