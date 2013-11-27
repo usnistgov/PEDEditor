@@ -161,7 +161,7 @@ public class EditFrame extends JFrame
 
    Action actCopyRegion = new Action
        ("Copy everything in selected region",
-        KeyEvent.VK_O, KeyStroke.getKeyStroke('C')) {
+        KeyEvent.VK_O, KeyStroke.getKeyStroke("shift C")) {
            @Override public void actionPerformed(ActionEvent e) {
                getEditor().copyRegion();
                finishEvent();
@@ -220,7 +220,7 @@ public class EditFrame extends JFrame
 
     Action actMakeDefault = new Action
         ("Make selection's properties the new default",
-         KeyEvent.VK_F, KeyStroke.getKeyStroke('D')) {
+         KeyEvent.VK_F, KeyStroke.getKeyStroke("shift D")) {
             @Override public void actionPerformed(ActionEvent e) {
                 getEditor().setDefaultSettingsFromSelection();
                 finishEvent();
@@ -229,7 +229,7 @@ public class EditFrame extends JFrame
 
     Action actMoveSelection = new Action
         ("Move selection only", KeyEvent.VK_V,
-         KeyStroke.getKeyStroke('V')) {
+         KeyStroke.getKeyStroke("shift V")) {
             @Override public void actionPerformed(ActionEvent e) {
                 getEditor().moveSelection(false);
                 finishEvent();
@@ -245,7 +245,7 @@ public class EditFrame extends JFrame
         };
     Action actMoveRegion = new Action
         ("Move everything in selected region",
-         KeyEvent.VK_R, KeyStroke.getKeyStroke('R')) {
+         KeyEvent.VK_R, KeyStroke.getKeyStroke("shift R")) {
             @Override public void actionPerformed(ActionEvent e) {
                 getEditor().moveRegion();
                 finishEvent();
@@ -254,7 +254,7 @@ public class EditFrame extends JFrame
 
     Action actAutoPosition = new Action
         ("Auto-position",
-         KeyEvent.VK_A, KeyStroke.getKeyStroke('A')) {
+         KeyEvent.VK_A, KeyStroke.getKeyStroke("shift A")) {
             { 
                 putValue(SHORT_DESCRIPTION,
                          "Move the mouse to the closest key point or curve");
@@ -317,7 +317,7 @@ public class EditFrame extends JFrame
         };
     Action actSelectNearestPoint = new Action
         ("Select nearest key point",
-         KeyEvent.VK_S, KeyStroke.getKeyStroke('Q')) {
+         KeyEvent.VK_S, KeyStroke.getKeyStroke("shift Q")) {
             @Override public void actionPerformed(ActionEvent e) {
                 getEditor().seekNearestPoint(true, "Shift+Q");
                 finishEvent();
@@ -325,7 +325,7 @@ public class EditFrame extends JFrame
         };
     Action actSelectNearestCurve = new Action
         ("Select nearest line/curve",
-         KeyEvent.VK_I, KeyStroke.getKeyStroke('W')) {
+         KeyEvent.VK_I, KeyStroke.getKeyStroke("shift W")) {
             @Override
             public void actionPerformed(ActionEvent e) {
                 getEditor().seekNearestCurve(true, "Shift+W");
@@ -361,7 +361,7 @@ public class EditFrame extends JFrame
         };
     Action actAddAutoPositionedVertex = new Action
         ("Add auto-positioned vertex", KeyEvent.VK_A,
-         KeyStroke.getKeyStroke('X')) {
+         KeyStroke.getKeyStroke("shift X")) {
             @Override public void actionPerformed(ActionEvent e) {
                 getEditor().autoPosition();
                 getEditor().addVertex();
