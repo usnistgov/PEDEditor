@@ -81,22 +81,25 @@ public class JSONFetchDiagram {
 
         for (AbstractAction act: new AbstractAction[]
             { (AbstractAction) ef.mnUnstickMouse.getAction(),
-                 ef.actAddVertex,
-                 ef.actAddAutoPositionedVertex,
-                 ef.actText,
-                 ef.actLeftArrow,
-                 ef.actRightArrow,
-                 ef.actRuler,
-                 ef.actTieLine,
-                 ef.actMoveSelection,
-                 ef.actMovePoint,
-                 ef.actMoveRegion,
-                 ef.actEditSelection,
-                 ef.actResetToDefault,
-                 ef.actMakeDefault,
-                 ef.actColor,
-                 ef.actRemoveSelection,
-                 ef.actRemoveAll
+              ef.actColor,
+              ef.actRemoveSelection,
+              ef.actRemoveAll,
+              ef.actMoveSelection,
+              ef.actEditSelection,
+              ef.actResetToDefault,
+              ef.actMakeDefault,
+              ef.actMovePoint,
+              ef.actMoveRegion,
+              ef.actAddVertex,
+              ef.actAddAutoPositionedVertex,
+              ef.actText,
+              ef.actLeftArrow,
+              ef.actRightArrow,
+              ef.actRuler,
+              ef.actTieLine,
+              ef.actMoveSelection,
+              ef.actCopy,
+              ef.actCopyRegion
             }) {
             // Make these actions vanish from the interface.
             act.setEnabled(false);
