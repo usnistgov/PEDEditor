@@ -179,10 +179,6 @@ import Jama.Matrix;
 // enclose angles exceeding 180 degrees. However, retrograde motion is
 // not a common issue and isn't reliably handled now anyway.)
 
-// TODO (optional, TAV leave for now see if someone complains) weight
-// vs mole percent enhancements. Text at an angle gets distorted, and
-// that should really be fixed.
-
 // TODO (optional) Option to identify the smallest region containing a
 // point, to make it easier to change the fill for that region.
 // Unfortunately the math is not trivial.
@@ -1878,9 +1874,8 @@ public class Editor extends Diagram
         boolean haveSel = (hand != null);
         getEditFrame().actDeselect.setEnabled(haveSel);
         mnRightClick.setHasSelection(haveSel);
-        if (hand instanceof BoundedParam2DHandle) {
-            // Update the Slope window.
-            showTangent((BoundedParam2DHandle) hand);
+        if (selection != null) {
+            showTangent(selection);
         }
         redraw();
     }
@@ -1921,16 +1916,26 @@ public class Editor extends Diagram
         propagateChange();
     }
 
-    /** Update the tangency information to display the slope at the
-        given vertex. */
-    public void showTangent(BoundedParam2DHandle hand) {
-        showTangent(hand.getDecoration(), hand.getT());
+    /** Update the Slope window to show whatever information is
+        available for the given handle. */
+    public void showTangent(DecorationHandle hand) {
+        if (hand instanceof BoundedParam2DHandle) {
+            BoundedParam2DHandle bp = (BoundedParam2DHandle) hand;
+            showTangent(bp.getDecoration(), bp.getT());
+        } else {
+            showTangent(hand.getDecoration());
+        }
     }
+            
 
+    /** Return the slope at the given handle in terms of
+        dStandardPageY/dStandardPageX. */
     public Point2D.Double derivative(BoundedParam2DHandle hand) {
         return derivative(hand.getDecoration(), hand.getT());
     }
 
+    /** Return the slope at the given t value in terms of
+        dStandardPageY/dStandardPageX. */
     public Point2D.Double derivative(Decoration dec, double t) {
         BoundedParam2D param = ((BoundedParameterizable2D) dec)
             .getParameterization();
@@ -1955,7 +1960,20 @@ public class Editor extends Diagram
         if (g != null) {
             vertexInfo.setScreenDerivative(g);
         }
+        showTangentCommon(dec);
+    }
 
+    public void showTangent(Decoration dec) {
+        if (dec instanceof Angled) {
+            double theta = ((Angled) dec).getAngle();
+            Point2D.Double p = new Point2D.Double(Math.cos(theta),
+                                                  Math.sin(theta));
+            vertexInfo.setDerivative(p);
+        }
+        showTangentCommon(dec);
+    }
+
+    void showTangentCommon(Decoration dec) {
         double w = dec.getLineWidth();
         if (w != 0) {
             vertexInfo.setLineWidth(w);
@@ -3215,7 +3233,7 @@ public class Editor extends Diagram
         AnchoredLabel label = labelInfo.label.clone();
         label.setAngle(principalToPageAngle(label.getAngle()));
         LabelDialog dog = getLabelDialog();
-        dog.setTitle("Edit Text");
+        dog.setTitle("Edit Label");
         dog.set(label);
         AnchoredLabel newLabel = dog.showModal();
         if (newLabel == null || !check(newLabel)) {
@@ -5211,9 +5229,7 @@ public class Editor extends Diagram
         DecorationHandle h = getAutoPositionHandle(null);
         if (h != null) {
             moveMouse(h.getLocation());
-            if (h instanceof BoundedParam2DHandle) {
-                showTangent((BoundedParam2DHandle) h);
-            }
+            showTangent(h);
             setMouseStuck(true);
             redraw();
         }
