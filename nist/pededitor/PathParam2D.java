@@ -19,27 +19,25 @@ import java.util.ArrayList;
     segments.get(5), and it's partway between points[5] and points[6].
 
     For example, suppose the path consists of a moveTo followed by a
-    lineTo, another lineTo, and then a final moveTo. A
-    PointParam2D is initially added to the "segments" list
-    to mark the destination of the first moveTo, just in case the path
-    ends right away, but the PointParam2D is later removed.
-    The SegmentParam2D that represents the first line
-    segment starts at the moveTo destination at t = 0 (so the moveTo
-    destination is still remembered even after the
-    PointParam2D segment is removed), and ends at the
-    lineTo destination at t = 2. The second segment, corresponding to
-    the second lineTo, is assigned an offset of 1, so it ranges from
-    t=1 to t=2, overlapping with the previous segment at t=1, but
-    that's OK because the two segments overlap at the same point. The
-    second moveTo is assigned an offset of 3, so it goes from t=3 to
-    t=3. The parameterization arbitrarily treats t values greater than
-    2 but less than 3 as representing that last moveTo point as well.
-    It all works out so that getLocation(0), getLocation(1),
-    getLocation(2), and getLocation(3) represent the 4 control points.
-    t values in (i, i+1) represent locations on segment #i; a t value
-    of 0 represents a point on segment #0; and the t value
-    (segments.size()) represents the endPoint of segment #1
-    segments.size() -1.
+    lineTo, another lineTo, and then a final moveTo. A PointParam2D is
+    initially added to the "segments" list to mark the destination of
+    the first moveTo, just in case the path ends right away, but the
+    PointParam2D is later removed. The SegmentParam2D that represents
+    the first line segment starts at the moveTo destination at t = 0
+    (so the moveTo destination is still remembered even after the
+    PointParam2D segment is removed), and ends at the lineTo
+    destination at t = 2. The second segment, corresponding to the
+    second lineTo, is assigned an offset of 1, so it ranges from t=1
+    to t=2, overlapping with the previous segment at t=1, but that's
+    OK because the two segments overlap at the same point. The second
+    moveTo is assigned an offset of 3, so it goes from t=3 to t=3. The
+    parameterization arbitrarily treats t values greater than 2 but
+    less than 3 as representing that last moveTo point as well. It all
+    works out so that getLocation(0), getLocation(1), getLocation(2),
+    and getLocation(3) represent the 4 control points. t values in (i,
+    i+1) represent locations on segment #i; a t value of 0 represents
+    a point on segment #0; and the t value (segments.size())
+    represents the endpoint of segment #segments.size()-1).
  */
 public class PathParam2D extends Param2DAdapter
     implements Param2D, Iterable<OffsetParam2D> {
@@ -224,6 +222,20 @@ public class PathParam2D extends Param2DAdapter
         return Math.floor(t);
     }
 
+    /** Return the distance between p and s, or return a distance of 0
+        if s.contains(p). */
+    static public CurveDistanceRange distance
+        (Shape s, Point2D p, double maxError, int maxSteps) {
+        if (s.contains(p)) {
+            return new CurveDistanceRange
+                (Double.NaN, new Point2D.Double(p.getX(), p.getY()), 0, 0);
+        } else {
+            return PathParam2D.create(s).distance(p, maxError, maxSteps);
+        }
+    }
+
+    /** This probably isn't what you want, because there are no a
+        priori bounds on the error of its result. */
     @Override public CurveDistanceRange distance
         (Point2D p, double t0, double t1) {
         CurveDistanceRange minDist = null;
