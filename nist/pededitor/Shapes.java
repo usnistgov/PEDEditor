@@ -122,6 +122,39 @@ public class Shapes {
         return res;
     }
 
+    /** Draw the given string anchored at the given point with the given margins.
+
+        xWeight, yWeight, xMargin, and yMargin modify the string
+        positioning relative to point (x,y).
+
+        If xWeight == 0.0, then the beginning of the string appears at
+        point (x,y), much like drawString() normally behaves. If
+        xWeight == 1.0, then the end of the string appears at that
+        point. If xWeight = 0.5, then the center of the string appears
+        at that point.
+
+        yWeight works similarly, with 0.0 corresponding to the top of
+        the string and 1.0 corresponding to the bottom.
+
+        For example, if str == "CENTER", xWeight = 0.5, and yWeight =
+        0.0, then point (x,y) should appear between the N and the
+        crossbar of the T. This is true regardless of the value of
+        angle -- even if angle = Math.PI, so the text flows upside
+        down and in the opposite direction from normal, (x,y) will
+        still appear between the N and the crossbar of the T.
+
+        xMargin adds extra white space separating the anchor from the
+        string when xWeight equals 0 or 1, and yWeight adds extra
+        white space separating the anchor from the string when yWeight
+        equals 0 or 1. The units of xMargin and yMargin are those
+        defined by g.getFontMetrics(). Adding an xMargin that is as
+        wide as a space character has the same effect as adding an
+        actual space character to the beginning and end of the string.
+
+        yMargin does the same as xMargin, but in the vertical
+        direction.
+     */
+
     public static void drawString(Graphics g, String str,
                                   double x, double y,
                                   double xWeight, double yWeight,
