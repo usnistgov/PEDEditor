@@ -509,10 +509,10 @@ the diagram is not showing weight percent values.
 the entire diagram between weight and mole fraction values.
 
 <p>There is no guarantee that every point on every curve of the
-diagram will be correct after you perform a conversion, and points
-outside the diagram may not line up very well at all. The diagram may
-look funny, especially if there is a wide divergence between the mole
-and weight percents. Also, text angles may be wrong after conversion.
+diagram will be correct after you perform a conversion. The diagram
+may look funny, especially if there is a wide divergence between the
+mole and weight percents. Arrows and isotherm labels may no longer
+align with the curves they annotate.
 
 <li><p><b>Copy all formulas to clipboard</b>: Copy all unique formulas
 in the diagram to the clipboard in alphabetical order, one per line.
@@ -602,9 +602,9 @@ then <b>Deselect</b> (<code>Escape</code>) will un-highlight the item.
             key point.)
         </ul>
 
-      <li><b>Nearest line/curve</b> (<code>w</code>) moves the mouse
-        to the the nearest point on any ruler or curve and selects the
-        nearest vertex on that ruler or curve.
+      <li><b id=NearestCurve>Nearest line/curve</b> (<code>w</code>)
+        moves the mouse to the the nearest point on any ruler or curve
+        and selects the nearest vertex on that ruler or curve.
 
       <li><b id=SelectPoint>Select nearest point</b>
         (<code>Shift+Q</code>) moves the mouse to decoration anchors
@@ -712,6 +712,16 @@ increments.
         over a solid line. White character holes only obscure
         decorations in lower layers, so you may need
         to <a href="#Layer">raise the label</a> as well.
+
+    <p>To label isotherms, first use <a href="#NearestCurve">Nearest
+        Line/Curve</a> or <a href="#SelectPoint">Select Nearest
+        Point</a> to position the mouse over the curve you wish to
+        label. The angle value in the <a href="#SlopeWindow">slope
+        window</a> should change to match the curve. From
+        the <b>Edit Text</b> dialog, set <b>Label angle</b> to equal
+        the angle you saw in the slope window and
+        check <a href="#LabelWhiteBackground">White label
+        background</a> to make the label stand out.
 
     <p>If you check the box for <b>Label border</b>, the label will be
       surrounded by a thin border.
