@@ -5,8 +5,9 @@ import org.codehaus.jackson.annotate.JsonProperty;
 import org.codehaus.jackson.map.annotate.JsonSerialize;
 import org.codehaus.jackson.map.annotate.JsonSerialize.Inclusion;
 
-/** Class to hold definitions of a text or HTML string anchored to a
-    location in space and possibly drawn at an angle. */
+/** Class to hold a shape drawn at a given angle, scale, position,
+    with a given color, anchored at a specific location within the
+    shape's bounding box. */
 @JsonSerialize(include = Inclusion.NON_DEFAULT)
 public class TransformedShape implements Decorated {
 
