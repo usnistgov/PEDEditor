@@ -467,7 +467,7 @@ public class Diagram extends Observable implements Printable {
     }
 
 
-    class LabelDecoration implements Decoration {
+    class LabelDecoration implements Decoration, Angled {
         LabelInfo label;
 
         public LabelDecoration() {
@@ -573,9 +573,17 @@ public class Diagram extends Observable implements Printable {
         @Override public String toString() {
             return getClass().getSimpleName() + "[" + getLabel() + ")]";
         }
+
+        @Override public void setAngle(double d) {
+            getLabel().setAngle(d);
+        }
+
+        @Override public double getAngle() {
+            return getLabel().getAngle();
+        }
     }
 
-    class ArrowDecoration implements Decoration, DecorationHandle {
+    class ArrowDecoration implements Decoration, DecorationHandle, Angled {
         Arrow item;
 
         ArrowDecoration(Arrow item) {
@@ -658,8 +666,8 @@ public class Diagram extends Observable implements Printable {
         }
 
         @Override public void setColor(Color color) {
-            propagateChange();
             getItem().setColor(color);
+            propagateChange();
         }
 
         @Override public Color getColor() { return getItem().getColor(); }
@@ -683,6 +691,14 @@ public class Diagram extends Observable implements Printable {
 
         @Override public DecorationHandle[] getMovementHandles() {
             return getHandles();
+        }
+
+        @Override public void setAngle(double d) {
+            getItem().setAngle(d);
+        }
+
+        @Override public double getAngle() {
+            return getItem().getAngle();
         }
     }
 
@@ -1232,6 +1248,46 @@ public class Diagram extends Observable implements Printable {
         return null;
     }
 
+    /** @return the shape of the core graph, which, except for
+        free-form diagrams, is usually smaller than the entire page,
+        but not always -- the page may have been resized, the diagram
+        may have been resized (after which, confusingly, the original
+        diagram size is still returned by this), and for trapezoidal
+        ternary diagrams, the core graph will be the entire triangle,
+        possibly extending beyond the top of the page. */
+    public Path2D diagramShape() {
+        Path2D.Double res = new Path2D.Double();
+        int pointCnt = 0;
+        for (Point2D.Double p: principalToStandardPage.getInputVertices()) {
+            ++pointCnt;
+            if (pointCnt > 1) {
+                res.lineTo(p.x, p.y);
+            } else {
+                res.moveTo(p.x, p.y);
+            }
+        }
+        res.closePath();
+        return res;
+    }
+
+    /** @return the diagram's shape, as in diagramShape(), transformed
+        by xform. */
+    public Path2D diagramShape(AffineTransform xform) {
+        Path2D.Double res = new Path2D.Double();
+        int pointCnt = 0;
+        for (Point2D.Double p: principalToStandardPage.getInputVertices()) {
+            ++pointCnt;
+            xform.transform(p, p);
+            if (pointCnt > 1) {
+                res.lineTo(p.x, p.y);
+            } else {
+                res.moveTo(p.x, p.y);
+            }
+        }
+        res.closePath();
+        return res;
+    }
+
     public String[] getTags() {
         return tags.toArray(new String[0]);
     }
@@ -1710,7 +1766,7 @@ public class Diagram extends Observable implements Printable {
     }
 
     /** Assuming that the principal coordinates are defined as mole
-        percents (or in the case of binary diagrams, the X coordinate
+        fractions (or in the case of binary diagrams, the X coordinate
         only is define as mole percent), return the mole fractions of
         the various diagram components at point prin, or null if the
         fractions could not be determined.
@@ -1743,9 +1799,9 @@ public class Diagram extends Observable implements Printable {
 
     protected Side[] sidesThatCanHaveComponents() {
         if (isTernary()) {
-            return new Side[] { Side.LEFT, Side.RIGHT, Side.TOP };
+            return new Side[] { Side.RIGHT, Side.TOP, Side.LEFT };
         } else {
-            return new Side[] { Side.LEFT, Side.RIGHT };
+            return new Side[] { Side.RIGHT, Side.LEFT };
         }
     }
 
@@ -1786,7 +1842,7 @@ public class Diagram extends Observable implements Printable {
     }
 
     /** Assuming that diagram's principal coordinates are weight
-        fractions, return the weight fractions of the various diagram
+        fractions, return the mole fractions of the various diagram
         components at point prin, or null if the fractions could not
         be determined. */
     protected SideDouble[] componentMoleFractions(Point2D prin) {
@@ -1825,27 +1881,48 @@ public class Diagram extends Observable implements Printable {
         within the diagram (the projection) and an offset from that
         point, and perform the conversion by converting the projection
         and then adding the unchanged offset. */
-    ProjectionAndOffset projectOntoDiagram(Point2D p) {
+    ProjectionAndOffset projectOntoDiagram(Point2D prin) {
+        double x = prin.getX();
+        double y = prin.getY();
+        Shape diagramPage = diagramShape(principalToStandardPage);
+        Point2D.Double page = principalToStandardPage.transform(prin);
+        CurveDistanceRange cdist = PathParam2D.distance
+            (diagramPage, page, 1e-8, 20);
+        Point2D.Double projection;
+        Point2D.Double offset;
+        if (cdist.distance == 0) {
+            projection = new Point2D.Double(x, y);
+            offset = new Point2D.Double(0,0);
+        } else {
+            projection = standardPageToPrincipal.transform(cdist.point);
+            offset = new Point2D.Double(x - projection.x, y - projection. y);
+        }
         ProjectionAndOffset res = new ProjectionAndOffset();
-        res.projection = new Point2D.Double(p.getX(), p.getY());
-        res.offset = new Point2D.Double(0,0);
-        if (res.projection.x < 0) {
-            res.offset.x = res.projection.x;
-            res.projection.x = 0;
-        } else if (res.projection.x > 1) {
-            res.offset.x = res.projection.x - 1;
-            res.projection.x = 1;
-        }
-        if (isTernary()) {
-            if (res.projection.y < 0) {
-                res.offset.y = res.projection.y;
-                res.projection.y = 0;
-            } else if (res.projection.y > 1) {
-            res.offset.y = res.projection.y - 1;
-            res.projection.y = 1;
-            }
-        }
+        res.projection = projection;
+        res.offset = offset;
         return res;
+    }
+
+    public SideConcentrationTransform moleToWeightTransform() {
+        Side[] sides = sidesWithComponents();
+        if (sides == null) {
+            return null;
+        }
+        int len = sides.length;
+        double weights[] = new double[len];
+        for (int i = 0; i < len; ++i) {
+            weights[i] = componentWeight(sides[i]);
+        }
+        return new SideConcentrationTransform
+            (sides,
+             (len == 2)
+             ? new BinaryTransform(weights)
+             : new TernaryTransform(weights));
+    }
+
+    public SideConcentrationTransform weightToMoleTransform() {
+        SideConcentrationTransform res = moleToWeightTransform();
+        return (res != null) ? res.inverse() : null;
     }
 
     /** Convert the given point from mole fraction to weight fraction.
@@ -1854,35 +1931,64 @@ public class Diagram extends Observable implements Printable {
         the conversion cannot be performed for some reason, then
         return null. */
     public Point2D.Double moleToWeightFraction(Point2D p) {
+        return transform(p, moleToWeightTransform());
+    }
+
+    /** Transform the given point with the given transformation, with
+     * an important exception: points outside the diagram are
+     * transformed by projecting onto the closest point within
+     * diagram, transforming that, and applying the inverse of the
+     * projection vector afterwards. */
+    Point2D.Double transform(Point2D p, SideConcentrationTransform xform) {
+        if (xform == null) {
+            return null;
+        }
         ProjectionAndOffset pao = projectOntoDiagram(p);
         Point2D.Double proj = pao.projection;
         Point2D.Double offs = pao.offset;
-        SideDouble[] sds = componentWeightFractions(proj);
-        if (sds == null) {
-            return null;
-        }
-        if (isTernary()) {
-            return new Point2D.Double(sds[0].d + offs.x, sds[1].d + offs.y);
-        } else {
-            return new Point2D.Double(sds[0].d + offs.x, proj.y);
-        }
+        proj = xform.transform(proj);
+        return new Point2D.Double(proj.x + offs.x, proj.y + offs.y);
     }
 
     /** Inverse of moleToWeightFraction(). */
     public Point2D.Double weightToMoleFraction(Point2D p) {
-        ProjectionAndOffset pao = projectOntoDiagram(p);
-        Point2D.Double proj = pao.projection;
-        Point2D.Double offs = pao.offset;
-        SideDouble[] sds = componentMoleFractions(proj);
-        if (sds == null) {
-            return null;
-        }
-        if (isTernary()) {
-            return new Point2D.Double(sds[0].d + offs.x, sds[1].d + offs.y);
-        } else {
-            return new Point2D.Double(sds[0].d + offs.x, proj.y);
-        }
+        return transform(p, weightToMoleTransform());
     }
+
+    public boolean transformDiagram(boolean convertLabels,
+                                    SideConcentrationTransform xform) {
+        TernaryTransform ternary = 
+            (xform.xform instanceof TernaryTransform)
+            ? ((TernaryTransform) xform.xform)
+            : null;
+
+        BinaryTransform binary = 
+            (xform.xform instanceof BinaryTransform)
+            ? ((BinaryTransform) xform.xform)
+            : null;
+
+        for (DecorationHandle hand: movementHandles()) {
+            Point2D.Double p = hand.getLocation();
+            hand.move(transform(p, xform));
+            Decoration d = hand.getDecoration();
+            if (d instanceof Angled) {
+                ProjectionAndOffset pao = projectOntoDiagram(p);
+                if (pao.offset.getX() == 0 && pao.offset.getY() == 0) {
+                    // Only modify angles of points insde the diagram.
+                    Angled a = (Angled) d;
+                    double theta = a.getAngle();
+                    theta = (ternary != null)
+                        ? ternary.transformAngle(p, theta)
+                        : binary.transformAngle(p, theta);
+                    a.setAngle(theta);
+                }
+            }
+        }
+        computeMargins();
+
+        return true;
+    }
+
 
     /** Globally convert all coordinates from mole fraction to weight
         fraction, if the information necessary to do so is available.
@@ -1892,24 +1998,19 @@ public class Diagram extends Observable implements Printable {
 
         1. Curves can be distorted, because control points are
         translated, not the curves themselves. This would be hard to
-        fix.
-
-        2. Angle values are not converted. This will screw up labels
-        that follow isotherms, for example. This is fixable, though
-        for the reason listed under (1), isotherm labels *still* might
-        not end up quite parallel to their curves.
+        fix. Isotherms in converted diagrams may no longer lie on the
+        curves they describe unless the isotherm is located at a
+        control point, and the isotherms may no longer be tangent to
+        them either.
 
         @param convertLabels If true, attempt to convert appearances of
         variants of the words "mole" and "atomic" to "weight" in all
         labels.
     */
     public boolean moleToWeightFraction(boolean convertLabels) {
-        if (!haveComponentCompositions()) {
+        SideConcentrationTransform xform = moleToWeightTransform();
+        if (xform == null) {
             return false;
-        }
-
-        for (DecorationHandle hand: movementHandles()) {
-            hand.move(moleToWeightFraction(hand.getLocation()));
         }
         if (convertLabels) {
             for (LabelInfo labelInfo: labelInfos()) {
@@ -1919,9 +2020,7 @@ public class Diagram extends Observable implements Printable {
             }
         }
         setUsingWeightFraction(true);
-        computeMargins();
-
-        return true;
+        return transformDiagram(convertLabels, xform);
     }
 
     /** @return true if all diagram components are single elements: O, not O2 or NaCl. */
@@ -1965,12 +2064,9 @@ public class Diagram extends Observable implements Printable {
         "atomic", depending on whether all diagram components consist
         of just a single element. */
     public boolean weightToMoleFraction(boolean convertLabels) {
-        if (!haveComponentCompositions()) {
+        SideConcentrationTransform xform = weightToMoleTransform();
+        if (xform == null) {
             return false;
-        }
-
-        for (DecorationHandle hand: movementHandles()) {
-            hand.move(weightToMoleFraction(hand.getLocation()));
         }
         if (convertLabels) {
             boolean isAtom = isAtomic();
@@ -1983,33 +2079,41 @@ public class Diagram extends Observable implements Printable {
             }
         }
         setUsingWeightFraction(false);
-        computeMargins();
-
-        return true;
+        return transformDiagram(convertLabels, xform);
     }
 
     /* Return true if all sides that could have components do have
        them, those components' composiitions are known, and those
        components sum to 100%. */
     boolean haveComponentCompositions() {
+        return sidesWithComponents() != null;
+    }
+
+    /* Return null unless all sides that could have components do have
+       them, those components' composiitions are known, and those
+       components sum to 100%. Otherwise, return an array of those
+       sides. */
+    Side[] sidesWithComponents() {
         double[][] componentElements = getComponentElements();
         double a = 0;
         double b = 0;
         double c = 0;
-        for (Side side: sidesThatCanHaveComponents()) {
+        Side[] res =  sidesThatCanHaveComponents();
+        for (Side side: res) {
             if (componentElements[side.ordinal()] == null) {
-                return false;
+                return null;
             }
             LinearAxis axis = getAxis(side);
             if (axis == null) {
-                return false;
+                return null;
             }
             a += axis.getA();
             b += axis.getB();
             c += axis.getC();
         }
 
-        return Math.abs(a) < 1e-4 && Math.abs(b) < 1e-4 && Math.abs(c-1) < 1e-4;
+        return (Math.abs(a) < 1e-4 && Math.abs(b) < 1e-4 && Math.abs(c-1) < 1e-4)
+            ? res : null;
     }
 
     static class PointAndError {
@@ -4229,11 +4333,11 @@ public class Diagram extends Observable implements Printable {
         }
 
         // Convert all angles from principal to page coordinates.
-        for (Arrow item: arrows()) {
-            item.setAngle(principalToPageAngle(item.getAngle()));
-        }
-        for (AnchoredLabel item: labels()) {
-            item.setAngle(principalToPageAngle(item.getAngle()));
+        for (Decoration d: decorations) {
+            if (d instanceof Angled) {
+                Angled a = (Angled) d;
+                a.setAngle(principalToPageAngle(a.getAngle()));
+            }
         }
 
         principalToStandardPage.concatenate(itrans);
@@ -4247,11 +4351,11 @@ public class Diagram extends Observable implements Printable {
             axis.concatenate(itrans);
         }
 
-        for (Arrow item: arrows()) {
-            item.setAngle(pageToPrincipalAngle(item.getAngle()));
-        }
-        for (AnchoredLabel item: labels()) {
-            item.setAngle(pageToPrincipalAngle(item.getAngle()));
+        for (Decoration d: decorations) {
+            if (d instanceof Angled) {
+                Angled a = (Angled) d;
+                a.setAngle(pageToPrincipalAngle(a.getAngle()));
+            }
         }
 
         fixAxisFormats();
@@ -4993,6 +5097,7 @@ public class Diagram extends Observable implements Printable {
         r.axis = getYAxis();
         add(r);
     }
+
 
     /** Return the weight of the given component computed as a product
         of the quantities and standard weights of its individual
