@@ -33,20 +33,6 @@ public class Duh {
         return x*x + y * y;
     }
 
-    static class ReverseAngleSort implements Comparator<Point2D.Double> {
-        Point2D.Double center;
-
-        protected ReverseAngleSort(Point2D.Double center) {
-            this.center = center;
-        }
-
-        @Override public int compare(Point2D.Double o1, Point2D.Double o2) {
-            double diff = Duh.toAngle(Duh.aMinusB(o2, center)) -
-                Duh.toAngle(Duh.aMinusB(o1, center));
-            return (diff > 0) ? 1 : (diff == 0) ? 0 : -1;
-        }
-    }
-
     /** Sort a list of indices into an array of doubles into
         increasing order (by the double value they point to) */
     static class IndexSort implements Comparator<Integer> {
@@ -235,6 +221,10 @@ public class Duh {
         return new Point2D.Double(p.getX() * m, p.getY() * m);
     }
 
+    /** Return the input array rotated right by amount. For instance,
+        a value of 1 means that output[1...end] = input[0...end-1]
+        while output[0] = input[end-1]. Negative values represent left
+        rotations instead. */
     @SuppressWarnings("unchecked")
         public static <T> T[] rotateRight(T[] arr, int amount) {
         T[] output = (T[]) new Object[arr.length];
