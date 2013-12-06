@@ -230,8 +230,15 @@ public class PathParam2D extends Param2DAdapter
             return new CurveDistanceRange
                 (Double.NaN, new Point2D.Double(p.getX(), p.getY()), 0, 0);
         } else {
-            return PathParam2D.create(s).distance(p, maxError, maxSteps);
+            return borderDistance(s, p, maxError, maxSteps);
         }
+    }
+
+    /** Return the distance from p to the closest point on the border
+        of s. */
+    static public CurveDistanceRange borderDistance
+        (Shape s, Point2D p, double maxError, int maxSteps) {
+        return create(s).distance(p, maxError, maxSteps);
     }
 
     /** This probably isn't what you want, because there are no a
