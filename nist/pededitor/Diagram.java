@@ -1248,6 +1248,11 @@ public class Diagram extends Observable implements Printable {
         return null;
     }
 
+    public Point2D.Double[] diagramVertices() {
+        return (principalToStandardPage == null) ? null
+            : principalToStandardPage.getInputVertices();
+    }
+
     /** @return the shape of the core graph, which, except for
         free-form diagrams, is usually smaller than the entire page,
         but not always -- the page may have been resized, the diagram
@@ -1258,7 +1263,7 @@ public class Diagram extends Observable implements Printable {
     public Path2D diagramShape() {
         Path2D.Double res = new Path2D.Double();
         int pointCnt = 0;
-        for (Point2D.Double p: principalToStandardPage.getInputVertices()) {
+        for (Point2D.Double p: diagramVertices()) {
             ++pointCnt;
             if (pointCnt > 1) {
                 res.lineTo(p.x, p.y);
@@ -1275,7 +1280,7 @@ public class Diagram extends Observable implements Printable {
     public Path2D diagramShape(AffineTransform xform) {
         Path2D.Double res = new Path2D.Double();
         int pointCnt = 0;
-        for (Point2D.Double p: principalToStandardPage.getInputVertices()) {
+        for (Point2D.Double p: diagramVertices()) {
             ++pointCnt;
             xform.transform(p, p);
             if (pointCnt > 1) {
@@ -1869,9 +1874,12 @@ public class Diagram extends Observable implements Printable {
         return res;
     }
 
+    // Projection of a point onto the nearest point in a set, and offset from that projection.
     static class ProjectionAndOffset {
         Point2D.Double projection;
         Point2D.Double offset;
+        boolean interior; // true only if if in the open interior of
+                          // the set, not on the border.
     }
 
     /** Conversions between mole and weight fraction produce ugly
@@ -1886,11 +1894,13 @@ public class Diagram extends Observable implements Printable {
         double y = prin.getY();
         Shape diagramPage = diagramShape(principalToStandardPage);
         Point2D.Double page = principalToStandardPage.transform(prin);
-        CurveDistanceRange cdist = PathParam2D.distance
+        CurveDistanceRange cdist = PathParam2D.borderDistance
             (diagramPage, page, 1e-8, 20);
+        boolean contained = diagramPage.contains(page);
+        boolean interior = (cdist.minDistance > 0) && contained;
         Point2D.Double projection;
         Point2D.Double offset;
-        if (cdist.distance == 0) {
+        if (contained) {
             projection = new Point2D.Double(x, y);
             offset = new Point2D.Double(0,0);
         } else {
@@ -1900,6 +1910,7 @@ public class Diagram extends Observable implements Printable {
         ProjectionAndOffset res = new ProjectionAndOffset();
         res.projection = projection;
         res.offset = offset;
+        res.interior = interior;
         return res;
     }
 
@@ -1969,12 +1980,29 @@ public class Diagram extends Observable implements Printable {
 
         for (DecorationHandle hand: movementHandles()) {
             Point2D.Double p = hand.getLocation();
-            hand.move(transform(p, xform));
             Decoration d = hand.getDecoration();
+            Point2D.Double newP = transform(p, xform);
+
             if (d instanceof Angled) {
                 ProjectionAndOffset pao = projectOntoDiagram(p);
-                if (pao.offset.getX() == 0 && pao.offset.getY() == 0) {
-                    // Only modify angles of points insde the diagram.
+                if (!pao.interior && (d instanceof LabelDecoration)) {
+                    AnchoredLabel label = ((LabelDecoration) d).getLabel();
+                    String text = label.getText();
+                    if (MoleWeightString.hasAtomic(text)
+                        || MoleWeightString.hasMole(text)
+                        || MoleWeightString.hasWeight(text)) {
+                        // Assume this is a title whose positioning in
+                        // the diagram should remain fixed.
+                        continue;
+                    }
+                    if (principalToStandardPage.transform(p)
+                        .distanceSq(principalToStandardPage.transform(newP)) > 0.01) {
+                        // If the label moves, it might overlap the axes, so
+                        // make it opaque.
+                        label.setOpaque(true);
+                    }
+                }
+                if (pao.interior) { // Only modify angles of points inside the diagram.
                     Angled a = (Angled) d;
                     double theta = a.getAngle();
                     theta = (ternary != null)
@@ -1983,10 +2011,47 @@ public class Diagram extends Observable implements Printable {
                     a.setAngle(theta);
                 }
             }
+            hand.move(newP);
         }
         computeMargins();
+        transformDiagramCorners(xform);
 
         return true;
+    }
+
+    /** Change the boundary of the core diagram, without changing how
+        points are transformed. Basically this means converting
+        principalToStandardPage from one kind of
+        AffinePolygonTransform to another one that has the same effect
+        but with different vertices. */
+    void transformDiagramCorners(SideConcentrationTransform xform) {
+        AffinePolygonTransform p2s = principalToStandardPage;
+        if (p2s instanceof TriangleTransform) {
+            Point2D.Double[] dvs = diagramVertices();
+            int cnt = dvs.length;
+            Point2D.Double[] resInputs = new Point2D.Double[cnt];
+            Point2D.Double[] resOutputs = new Point2D.Double[cnt];
+            for (int i = 0; i < cnt; ++i) {
+                Point2D.Double  px = xform.transform(dvs[i]);
+                resInputs[i] = px;
+                resOutputs[i] = p2s.transform(px);
+            }
+            principalToStandardPage
+                = new TriangleTransform(resInputs, resOutputs);
+        } else {
+            RectangleTransform oldXform
+                =  (RectangleTransform) p2s;
+            Rectangle2D.Double inr = oldXform.inputRectangle();
+            Point2D.Double i1 = xform.transform
+                (new Point2D.Double(inr.x, inr.y));
+            Point2D.Double i2 = xform.transform
+                (new Point2D.Double(inr.x + inr.width, inr.y + inr.height));
+            Point2D.Double o1 = p2s.transform(i1);
+            Point2D.Double o2 = p2s.transform(i2);
+            principalToStandardPage = new RectangleTransform
+                (new Rectangle2D.Double(i1.x, i1.y, i2.x - i1.x, i2.y - i1.y),
+                 new Rectangle2D.Double(o1.x, o1.y, o2.x - o1.x, o2.y - o1.y));
+        }
     }
 
 
