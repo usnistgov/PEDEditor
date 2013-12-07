@@ -11,11 +11,14 @@ import java.awt.event.ActionEvent;
 import java.awt.event.KeyEvent;
 import java.awt.geom.Line2D;
 import java.awt.image.BufferedImage;
+import java.io.IOException;
+import java.net.URL;
 import java.util.EnumSet;
 import java.util.Enumeration;
 import java.util.Observable;
 import java.util.Observer;
 
+import javax.imageio.ImageIO;
 import javax.swing.AbstractAction;
 import javax.swing.AbstractButton;
 import javax.swing.ActionMap;
@@ -70,6 +73,7 @@ public class EditFrame extends JFrame
     JMenu mnProperties = new JMenu("Properties");
     JMenu mnFont = new JMenu("Font");
     JMenu mnMargins = new JMenu("Margins");
+    JMenu mnView = new JMenu("View");
 
     protected JMenuItem mnNewDiagram = new JMenuItem
         (new Action("New Diagram", KeyEvent.VK_N) {
@@ -796,6 +800,21 @@ public class EditFrame extends JFrame
         }
     }
 
+    static protected BufferedImage pedIcon = null;
+
+    public static BufferedImage getIcon() {
+        if (pedIcon == null) {
+            URL url =
+                Editor.class.getResource("images/PEDicon.png");
+            try {
+                pedIcon = ImageIO.read(url);
+            } catch (IOException e) {
+                return null;
+            }
+        }
+        return pedIcon;
+    } 
+
     static Icon getLineWidthIcon(double lineWidth) {
         int w = (int) Math.round(lineWidth / 0.0008);
         return icon(StandardStroke.SOLID, 25, w, w);
@@ -1307,7 +1326,6 @@ public class EditFrame extends JFrame
             });
 
         // "View" top-level menu
-        JMenu mnView = new JMenu("View");
         mnView.setMnemonic(KeyEvent.VK_V);
         menuBar.add(mnView);
 
@@ -1423,6 +1441,7 @@ public class EditFrame extends JFrame
         }
 
         enableZoom();
+        setIconImage(getIcon());
     }
 
     public void setReloadVisible(boolean b) {
