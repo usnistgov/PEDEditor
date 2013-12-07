@@ -82,9 +82,9 @@ import org.codehaus.jackson.annotate.JsonIgnore;
 
 import Jama.Matrix;
 
-// TODO (bug, 5/10) Somehow, the "nearest point on curve" can get stuck at
-// control points, which implies the nearest point isn't actually
-// being computed correctly.
+// TODO (bug, 5/10) Somehow, the "nearest point on curve" can get
+// stuck at control points, which implies the nearest point isn't
+// actually being computed correctly.
 
 // TODO (mandatory, 1 day): At this point, the rule that tie lines
 // have to end at vertexes of the diagram is no longer needed and not
@@ -495,6 +495,12 @@ public class Editor extends Diagram
 
     static final protected double MOUSE_UNSTICK_DISTANCE = 30; /* pixels */
     static final protected double MOUSE_DRAG_DISTANCE = 80; /* pixels */
+    static final protected String HOW_TO_SELECT
+        = "You can select an item by positioning the mouse pointer within "
+        + "the diagram, pressing the right mouse button to open a popup menu, "
+        + "and selecting the 'Select nearest key point' (<code>Shift+Q</code>) "
+        + "or 'Select nearest line/curve' (<code>Shift+W</code>) menu "
+        + "options.";
     protected double mouseDragDistance = MOUSE_DRAG_DISTANCE;
     static protected Image crosshairs = null;
     static int openEditorCnt = 0;
@@ -1964,6 +1970,9 @@ public class Editor extends Diagram
     }
 
     public void showTangent(Decoration dec) {
+        if (dec == null) {
+            return;
+        }
         if (dec instanceof Angled) {
             double theta = ((Angled) dec).getAngle();
             Point2D.Double p = new Point2D.Double(Math.cos(theta),
@@ -2686,7 +2695,8 @@ public class Editor extends Diagram
 
     void nothingToExportError() {
         showError("You must first select a curve or label whose "
-                  + "coordinates are to be copied.");
+                  + "coordinates are to be copied. "
+                  + HOW_TO_SELECT);
     }
 
     public void exportSelectedCoordinates() {
@@ -4758,13 +4768,14 @@ public class Editor extends Diagram
         showError(editFrame, mess, "Cannot perform operation");
     }
 
-    void showError(Component parent, String mess, String title) {
-        if (!mess.startsWith("<html>")) {
-            mess = "<html><div width=\"250 px\"><p>" + mess;
-        }
+    String htmlify(String mess) {
+        return mess.startsWith("<html>") ? mess
+            : ("<html><div width=\"250 px\"><p>" + mess);
+    }
 
+    void showError(Component parent, String mess, String title) {
         JOptionPane.showMessageDialog
-            (parent, mess, title, JOptionPane.ERROR_MESSAGE);
+            (parent, htmlify(mess), title, JOptionPane.ERROR_MESSAGE);
     }
 
     public void openImage(String filename) {
@@ -5775,6 +5786,9 @@ public class Editor extends Diagram
     }
 
     public void nextFile() {
+        if (!verifyCloseDiagram()) {
+            return;
+        }
         File file = filesList[++fileNo];
         if (fileNo+1 >= filesList.length) {
             editFrame.mnNextFile.setVisible(false);
