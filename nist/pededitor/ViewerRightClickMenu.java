@@ -17,7 +17,6 @@ public class ViewerRightClickMenu extends BasicRightClickMenu {
         add(getEditFrame().actSelectNearestCurve);
         add(ef.mnJump);
         add(ef.mnStep);
-        add(ef.actCenterMouse);
         addSeparator();
         coordinates = createCoordinatesLabel();
         add(ef.actCopyStatusBar);
