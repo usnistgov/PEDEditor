@@ -14,7 +14,6 @@ import javax.jnlp.ServiceManager;
 import javax.jnlp.SingleInstanceListener;
 import javax.jnlp.SingleInstanceService;
 import javax.jnlp.UnavailableServiceException;
-import javax.swing.AbstractAction;
 
 /** Class to start the PED Editor as a PED Viewer. The differences are
     that the editable flag is off by default, and the PED file is
@@ -59,85 +58,6 @@ public class JSONFetchDiagram {
         run(args[0], (args.length > 1) ? args[1] : null);
     }
 
-    /** Convert the given Editor to viewer mode. */
-    public static void makeViewer(Editor e) {
-        e.setRightClickMenu(new ViewerRightClickMenu(e));
-        
-        // Cut out all the functions that the viewer doesn't need.
-
-        EditFrame ef = e.editFrame;
-        ef.setNewDiagramVisible(false);
-        ef.setOpenVisible(false);
-        ef.setReloadVisible(false);
-        ef.setEditable(false);
-        ef.editingEnabled.setVisible(false);
-        ef.mnTags.setVisible(false);
-        ef.mnKeys.setVisible(false);
-        ef.mnExportText.setVisible(false);
-        ef.mnCopyFormulas.setVisible(false);
-        ef.mnJumpToSelection.setVisible(false);
-        ef.shortHelpFile = "viewhelp1.html";
-        ef.helpAboutFile = "viewabout.html";
-
-        for (AbstractAction act: new AbstractAction[]
-            { (AbstractAction) ef.mnUnstickMouse.getAction(),
-              ef.actColor,
-              ef.actRemoveSelection,
-              ef.actRemoveAll,
-              ef.actMoveSelection,
-              ef.actEditSelection,
-              ef.actResetToDefault,
-              ef.actMakeDefault,
-              ef.actMovePoint,
-              ef.actMoveRegion,
-              ef.actAddVertex,
-              ef.actAddAutoPositionedVertex,
-              ef.actText,
-              ef.actLeftArrow,
-              ef.actRightArrow,
-              ef.actRuler,
-              ef.actTieLine,
-              ef.actMoveSelection,
-              ef.actCopy,
-              ef.actCopyRegion
-            }) {
-            // Make these actions vanish from the interface.
-            act.setEnabled(false);
-            e.setVisible(act, false);
-        }
-
-        for (AbstractAction act: new AbstractAction[]
-            { (AbstractAction) ef.mnUnstickMouse.getAction(),
-                 ef.actAutoPosition,
-                 ef.actNearestPoint,
-                 ef.actNearestCurve,
-            }) {
-            // Remove the actions from the interface, but there's no
-            // harm in leaving them enabled.
-            e.setVisible(act, false);
-        }
-            
-        e.detachOriginalImage();
-        e.setEditable(false);
-        try {
-            e.removeVariable("page X");
-        } catch (CannotDeletePrincipalVariableException
-                 |NoSuchVariableException e1) {
-            // OK, let it be
-        }
-        try {
-            e.removeVariable("page Y");
-        } catch (CannotDeletePrincipalVariableException
-                 |NoSuchVariableException e1) {
-            // OK, let it be
-        }
-        e.setSaveNeeded(false);
-        e.initializeGUI();
-        ef.setVertexInfoVisible(false);
-        e.bestFit();
-        e.editFrame.toFront();
-    }
-
     public static Editor run(String urlStr, String title) {
         URL url = null;
 
@@ -155,10 +75,10 @@ public class JSONFetchDiagram {
             if (title != null) {
                 d.setTitle(title);
             }
-            Editor e = new Editor();
+            Viewer e = new Viewer();
             e.setExitOnClose(false);
             e.copyFrom(d);
-            makeViewer(e);
+            e.init();
             return e;
         } catch (IOException x) {
             if (url != null) {
