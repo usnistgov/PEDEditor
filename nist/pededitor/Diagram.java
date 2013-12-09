@@ -1253,6 +1253,28 @@ public class Diagram extends Observable implements Printable {
             : principalToStandardPage.getInputVertices();
     }
 
+    /** Like diagramVertices(), but don't trust getInputVertices();
+        instead assume all diagram component values in the range
+        0-100% are OK. */
+    Point2D.Double[] expansiveDiagramVertices() {
+        if (isTernary()) {
+            return new Point2D.Double[]
+                { new Point2D.Double(1, 0),
+                  new Point2D.Double(0, 1),
+                  new Point2D.Double(0, 0) };
+        } else {
+            Rectangle2D.Double r =
+                ((RectangleTransform) principalToStandardPage).inputRectangle();
+            double bogoMin = Math.min(0, Math.min(r.x, r.x + r.width));
+            double bogoMax = Math.max(1, Math.max(r.x, r.x + r.width));
+            return new Point2D.Double[]
+                { new Point2D.Double(bogoMin, r.y),
+                  new Point2D.Double(bogoMin, r.y + r.height),
+                  new Point2D.Double(bogoMax, r.y + r.height),
+                  new Point2D.Double(bogoMax, r.y) };
+        }
+    }
+
     /** @return the shape of the core graph, which, except for
         free-form diagrams, is usually smaller than the entire page,
         but not always -- the page may have been resized, the diagram
@@ -1263,7 +1285,7 @@ public class Diagram extends Observable implements Printable {
     public Path2D diagramShape() {
         Path2D.Double res = new Path2D.Double();
         int pointCnt = 0;
-        for (Point2D.Double p: diagramVertices()) {
+        for (Point2D.Double p: expansiveDiagramVertices()) {
             ++pointCnt;
             if (pointCnt > 1) {
                 res.lineTo(p.x, p.y);
@@ -1280,7 +1302,7 @@ public class Diagram extends Observable implements Printable {
     public Path2D diagramShape(AffineTransform xform) {
         Path2D.Double res = new Path2D.Double();
         int pointCnt = 0;
-        for (Point2D.Double p: diagramVertices()) {
+        for (Point2D.Double p: expansiveDiagramVertices()) {
             ++pointCnt;
             xform.transform(p, p);
             if (pointCnt > 1) {
@@ -1996,7 +2018,7 @@ public class Diagram extends Observable implements Printable {
                         continue;
                     }
                     if (principalToStandardPage.transform(p)
-                        .distanceSq(principalToStandardPage.transform(newP)) > 0.01) {
+                        .distanceSq(principalToStandardPage.transform(newP)) > 1e-3) {
                         // If the label moves, it might overlap the axes, so
                         // make it opaque.
                         label.setOpaque(true);
@@ -2725,12 +2747,10 @@ public class Diagram extends Observable implements Printable {
         }
         LinearAxis res = null;
         for (LinearAxis axis: axes) {
-            if (axis.isYAxis()) {
-                if ("page Y".equals(axis.name)) {
-                    res = axis;
-                } else {
-                    return axis;
-                }
+            if ("page Y".equals(axis.name)) {
+                res = axis;
+            } else if (axis.isYAxis()) {
+                return axis;
             }
         }
         return res;
