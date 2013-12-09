@@ -515,6 +515,7 @@ public class Editor extends Diagram
     protected JColorChooser colorChooser = null;
     protected JDialog colorDialog = null;
     protected FormulaDialog formulaDialog = null;
+    protected CoordinateDialog coordinateDialog = null;
     protected DigitizeDialog digitizeDialog = null;
 
     @JsonIgnore public DecorationHandle getSelection() {
@@ -542,6 +543,13 @@ public class Editor extends Diagram
             formulaDialog = new FormulaDialog(editFrame);
         }
         return formulaDialog;
+    }
+
+    CoordinateDialog getCoordinateDialog() {
+        if (coordinateDialog == null) {
+            coordinateDialog = new CoordinateDialog(editFrame);
+        }
+        return coordinateDialog;
     }
 
     RulerDialog getRulerDialog() {
@@ -825,6 +833,10 @@ public class Editor extends Diagram
             if (colorDialog != null) {
                 colorDialog.dispose();
                 colorDialog = null;
+            }
+            if (coordinateDialog != null) {
+                coordinateDialog.dispose();
+                coordinateDialog = null;
             }
             if (formulaDialog != null) {
                 formulaDialog.dispose();
@@ -2422,13 +2434,11 @@ public class Editor extends Diagram
     */
     public void computeFraction(boolean isWeight) {
         FormulaDialog dog = getFormulaDialog();
-        String compound = dog.showModal();
+        dog.okButton.setText("Locate compound in diagram");
+        String compound = dog.showModal(true);
         if (compound == null) {
             return;
         }
-
-        // Can't set the clipboard? Don't worry about it.
-        copyToClipboard(dog.getFormula().trim(), true);
 
         String errorTitle = "Could not compute component ratios";
         String nonEditableError = "This diagram does not support that feature.";
@@ -2439,7 +2449,8 @@ public class Editor extends Diagram
         for (Side side: sidesThatCanHaveComponents()) {
             if (diagramComponents[side.ordinal()] == null) {
                 if (isEditable()) {
-                    showError("The " + side + " diagram component is not defined. "
+                    showError("The " + side.toString().toLowerCase()
+                              + " diagram component is not defined. "
                               + "Define it with the \"Chemistry/Components/Set "
                               + side.toString().toLowerCase() + " component\" menu item.");
                 } else {
@@ -2821,7 +2832,7 @@ public class Editor extends Diagram
         }
     }
     
-    void copyToClipboard(String str, boolean ignoreFailure) {
+    static void copyToClipboard(String str, boolean ignoreFailure) {
         try {
             StringSelection sel = new StringSelection(str);
             Toolkit.getDefaultToolkit().getSystemClipboard().setContents
@@ -3166,12 +3177,11 @@ public class Editor extends Diagram
 
     public void setDiagramComponent(Side side) {
         String old = diagramComponents[side.ordinal()];
-        if (old == null) {
-            old = "";
-        }
-
-        String str = JOptionPane.showInputDialog
-            (editFrame, side + " diagram component name:", old);
+        FormulaDialog dog = getFormulaDialog();
+        dog.setFormula((old == null) ? "" : old);
+        dog.okButton.setText("Set " + side.toString().toLowerCase()
+                             + " component");
+        String str = dog.showModal(false);
         if (str == null) {
             return;
         }
@@ -5248,89 +5258,63 @@ public class Editor extends Diagram
 
     /** Invoked from the EditFrame menu */
     public void enterPosition() {
-        String[] labels = new String[axes.size()];
-        String[] oldValues = new String[axes.size()];
-        int i = -1;
-        LinearAxis xAxis = getXAxis();
-        LinearAxis yAxis = getYAxis();
-
-        // Fill in default values.
-        for (Axis axis: axes) {
-            ++i;
-            labels[i] = (String) axis.name;
-            oldValues[i] = null;
-            if ((axis == xAxis || axis == yAxis) && mprin != null) {
-                oldValues[i] = axis.valueAsString(mprin.x, mprin.y);
-            }
-        }
-        StringArrayDialog dog = new StringArrayDialog
-            (editFrame, labels, oldValues,
-             "<html><body width=\"200 px\"><p>"
-             + "Enter values for exactly two variables and leave all others "
-             + "blank. Fractions and percentages are allowed."
-             + "</p></body></html>");
+        CoordinateDialog dog = getCoordinateDialog();
         dog.setTitle("Set mouse position");
-        String[] values = dog.showModal();
-        if (values == null) {
+        int cnt = dog.rowCnt();
+
+        String[] oldValues = new String[cnt];
+        LinearAxis[] axes = { getXAxis(), getYAxis() };
+
+        dog.setAxes(getAxes());
+        for (int i = 0; i < cnt; ++i) {
+            dog.setAxis(i, axes[i]);
+            oldValues[i] = axes[i].valueAsString(mprin);
+            dog.setValue(i, oldValues[i]);
+        }
+        
+        if (!dog.showModal()) {
             return;
         }
 
-        ArrayList<LinearAxis> axs = new ArrayList<LinearAxis>();
-        ArrayList<Double> vs = new ArrayList<Double>();
+        double[] vs = new double[2];
 
         try {
-            i = -1;
-            for (String str: values) {
-                ++i;
-                if (str == null) {
-                    continue;
-                }
-                str = str.trim();
-                if (str.equals("")) {
-                    continue;
-                }
-                LinearAxis axis = axes.get(i);
+            for (int i = 0; i < dog.rowCnt(); ++i) {
+                String str = dog.getValue(i).trim();
                 if (str.equals(oldValues[i])) {
                     // Never mind the sig figs in the displayed value;
                     // assume the user meant the value to remain
                     // exactly as it was, down to the last bit. (This
-                    // assumption, of course, may be wrong, but it's
-                    // more likely to be right, and if it is right, it
-                    // may prevent a situation where a vertex that was
-                    // supposed to be right on a line ends up being
-                    // not quite there.)
-                    vs.add(axis.value(mprin));
+                    // assumption may be wrong, but it's more likely
+                    // to be right, and if it is right, it may prevent
+                    // a situation where a vertex that was supposed to
+                    // be right on a line ends up being not quite
+                    // there.)
+                    vs[i] = axes[i].value(mprin);
                 } else {
-                    vs.add(ContinuedFraction.parseDouble(str));
+                    vs[i] = ContinuedFraction.parseDouble(str);
                 }
-                axs.add(axis);
+                axes[i] = dog.getAxis(i, getAxes());
             }
         } catch (NumberFormatException e) {
             showError(e.getMessage());
             return;
         }
 
-        if (vs.size() != 2) {
-            showError("You did not enter exactly two values.");
-            return;
-        }
-
         try {
-            Affine xformi = inverseTransform(axs.get(0), axs.get(1));
+            Affine xformi = inverseTransform(axes[0], axes[1]);
             // Solve the linear system to determine the pair of principal
             // coordinates that corresponds to this pair of
             // whatever-coordinates.
-            Point2D.Double newMprin = xformi.transform(vs.get(0), vs.get(1));
+            Point2D.Double newMprin = xformi.transform(vs[0], vs[1]);
             Point2D.Double newMousePage = principalToStandardPage
                 .transform(newMprin);
             double d = Duh.distance(newMousePage, pageBounds);
             if (d > 10) {
                 showError
-                    ("<html><body width = \"300 px\""
-                     + "<p>The coordinates you selected lie far outside "
+                    ("The coordinates you selected lie far outside "
                      + "the page boundaries.  (Remember to use the percent "
-                     + "sign when entering percentage values.)"
-                     + "</body></html>",
+                     + "sign when entering percentage values.)",
                      "Coordinates out of bounds");
                 return;
             } else if (d > 1e-6) {
@@ -5340,14 +5324,13 @@ public class Editor extends Diagram
                     return;
                 } else if (JOptionPane.showConfirmDialog
                     (editFrame,
-                     "<html><body width = \"300 px\""
-                     + "<p>The coordinates you selected lie beyond the edge "
-                     + "of the page. Expand the page margins?"
-                     + "</body></html>",
+                     htmlify("The coordinates you selected lie beyond the "
+                             + "edge of the page. Expand the page margins?"),
                      "Coordinates out of bounds",
                      JOptionPane.OK_CANCEL_OPTION) == JOptionPane.OK_OPTION) {
                     pageBounds.add(newMousePage);
                     setPageBounds(pageBounds);
+                    bestFit();
                 } else {
                     return;
                 }
