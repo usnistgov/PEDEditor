@@ -18,9 +18,10 @@ import javax.swing.SwingUtilities;
 
 /** GUI for entering a coordinate pair using a combination of any two variables. */
 public class CoordinateDialog extends JDialog {
-	private static final long serialVersionUID = -3619180189523033215L;
-	protected JLabel descr = new JLabel
-        ("Enter a pair of coordinates. Fractions and percentages are allowed.\n");
+    private static final long serialVersionUID = -3619180189523033215L;
+    protected JLabel descr = new JLabel
+        (Editor.htmlify("Enter a pair of coordinates. Fractions and "
+                        + "percentages are allowed."));
     VariableSelector[] vars;
     AutofocusTextField vals[];
     protected transient boolean pressedOK = false;
@@ -70,13 +71,14 @@ public class CoordinateDialog extends JDialog {
     public CoordinateDialog(JFrame parent) {
         super(parent, "Enter Coordinate Pair", false);
         
-        GridBagUtil gb = new GridBagUtil(getContentPane());
-
         int cnt = rowCnt();
         vars = new VariableSelector[cnt];
         vals = new AutofocusTextField[cnt];
 
+        GridBagUtil gb = new GridBagUtil(getContentPane());
         gb.centerAndEndRow(descr);
+        gb.addWest(new JLabel("Variable"));
+        gb.endRowWith(new JLabel("Value"));
         for (int row = 0; row < rowCnt(); ++row) {
             vars[row] = new VariableSelector();
             gb.addEast(vars[row]);
