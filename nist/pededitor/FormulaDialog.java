@@ -82,8 +82,9 @@ public class FormulaDialog extends JDialog {
         String res = "<html><div style=\"width:350px;\"><p><font color=\"red\">Invalid formula</font>";
         weight.setText("");
         do {
-            String formula = getFormula();
-            if (formula == null) {
+            String formula = getFormula().trim();
+            if ("".equals(formula)) {
+                res ="";
                 break;
             }
             
@@ -141,22 +142,28 @@ public class FormulaDialog extends JDialog {
         return null;
     }
 
-    /** Show the dialog as document-modal, and return the value of
-        getPlainFormula() if a valid formula was entered. Return null
-        if the user pressed the exit button or the formula could not
-        be parsed. */
-    public String showModal() {
+    /** Show the dialog as document-modal. Return null if the user did
+        not press "OK" but closed the window or pressed the exit
+        button, otherwise return getPlainFormula().
+
+        @param strict If true, return null unless the formula can be parsed.
+    */
+    public String showModal(boolean strict) {
         pack();
         setModalityType(Dialog.ModalityType.DOCUMENT_MODAL);
+        pressedOK = false;
         setVisible(true);
-        if (pressedOK && getHillFormula() != null) {
-            return getPlainFormula();
+        if (!pressedOK || (strict && getHillFormula() == null)) {
+            return null;
         }
-        return null;
+
+        // Can't set the clipboard? Don't worry about it.
+        Editor.copyToClipboard(getFormula().trim(), true);
+        return getPlainFormula();
     }
 
     public static void main(String[] args) {
-        String formula = (new FormulaDialog(null)).showModal();
+        String formula = (new FormulaDialog(null)).showModal(true);
         System.out.println("You selected " + formula);
     }
 }
