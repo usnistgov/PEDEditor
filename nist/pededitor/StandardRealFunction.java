@@ -36,7 +36,17 @@ enum StandardRealFunction {
             @Override public double value(double x) {
                 return x - 273.15;
             }
-        }, "K to \u00b0C");
+        }, "K to \u00b0C"),
+    TO_PERCENT (new RealFunction() {
+            @Override public double value(double x) {
+                return x * 100;
+            }
+        }, "f(v) = 100 v"),
+    FROM_PERCENT (new RealFunction() {
+            @Override public double value(double x) {
+                return x / 100;
+            }
+        }, "f(v) = v / 100");
 
     private final RealFunction f;
     private final String text;
