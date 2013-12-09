@@ -4778,7 +4778,7 @@ public class Editor extends Diagram
         showError(editFrame, mess, "Cannot perform operation");
     }
 
-    String htmlify(String mess) {
+    static String htmlify(String mess) {
         return mess.startsWith("<html>") ? mess
             : ("<html><div width=\"250 px\"><p>" + mess);
     }
