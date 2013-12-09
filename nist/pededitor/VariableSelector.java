@@ -1,6 +1,6 @@
 package gov.nist.pededitor;
 
-import java.util.ArrayList;
+import java.util.List;
 import java.util.Arrays;
 
 import javax.swing.JComboBox;
@@ -10,7 +10,7 @@ import javax.swing.JComboBox;
 public class VariableSelector extends JComboBox<String> {
     private static final long serialVersionUID = 1038468375401505149L;
 
-    public void setAxes(ArrayList<LinearAxis> axes) {
+    public void setAxes(List<LinearAxis> axes) {
         String[] variables = new String[axes.size()];
         removeAllItems();
         int i = -1;
@@ -38,7 +38,7 @@ public class VariableSelector extends JComboBox<String> {
         throw new RuntimeException("Axis '" + name + "' not found");
     }
 
-    public LinearAxis getSelected(ArrayList<LinearAxis> axes) {
+    public LinearAxis getSelected(List<LinearAxis> axes) {
         Object obj = getSelectedItem();
         if (obj == null) {
             return null;
