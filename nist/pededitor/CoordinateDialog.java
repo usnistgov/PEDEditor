@@ -22,7 +22,7 @@ public class CoordinateDialog extends JDialog {
     protected JLabel descr = new JLabel
         (Editor.htmlify("Enter a pair of coordinates. Fractions and "
                         + "percentages are allowed."));
-    VariableSelector[] vars;
+    ArrowListenVariableSelector[] vars;
     AutofocusTextField vals[];
     protected transient boolean pressedOK = false;
     @SuppressWarnings("serial")
@@ -32,6 +32,7 @@ public class CoordinateDialog extends JDialog {
                     normalExit();
                 }
             });
+    { okButton.setFocusable(false); }
 
     @SuppressWarnings("serial") static class AutofocusTextField
         extends JTextField {
@@ -68,11 +69,36 @@ public class CoordinateDialog extends JDialog {
         }
     }
 
+    @SuppressWarnings("serial") static class ArrowListenVariableSelector
+        extends VariableSelector {
+        Component arrowTarget = null;
+        public ArrowListenVariableSelector() {
+            addKeyListener(new KeyAdapter() {
+                    @Override public void keyPressed(KeyEvent e) {
+                        switch (e.getKeyCode()) {
+                        case KeyEvent.VK_RIGHT:
+                        case KeyEvent.VK_LEFT:
+                            if (arrowTarget != null) {
+                                arrowTarget.requestFocusInWindow();
+                            }
+                            break;
+                        default:
+                            break;
+                        }
+                    }
+                });
+        }
+
+        public void setArrowTarget(Component c) {
+            arrowTarget = c;
+        }
+    }
+
     public CoordinateDialog(JFrame parent) {
         super(parent, "Enter Coordinate Pair", false);
         
         int cnt = rowCnt();
-        vars = new VariableSelector[cnt];
+        vars = new ArrowListenVariableSelector[cnt];
         vals = new AutofocusTextField[cnt];
 
         GridBagUtil gb = new GridBagUtil(getContentPane());
@@ -80,10 +106,11 @@ public class CoordinateDialog extends JDialog {
         gb.addWest(new JLabel("Variable"));
         gb.endRowWith(new JLabel("Value"));
         for (int row = 0; row < rowCnt(); ++row) {
-            vars[row] = new VariableSelector();
+            vars[row] = new ArrowListenVariableSelector();
             gb.addEast(vars[row]);
             vals[row] = new AutofocusTextField(20);
             gb.endRowWith(vals[row]);
+            vars[row].setArrowTarget(vals[row]);
         }
         vals[0].setArrowTarget(vals[1]);
         vals[1].setArrowTarget(vals[0]);
