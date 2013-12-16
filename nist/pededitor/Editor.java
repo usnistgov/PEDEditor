@@ -485,7 +485,7 @@ public class Editor extends Diagram
     public void edit(RulerHandle hand) {
         LinearRuler item = hand.getItem();
 
-        if (getRulerDialog().showModal(item, axes)) {
+        if (getRulerDialog().showModal(item, axes, principalToStandardPage)) {
             propagateChange();
         }
     }
@@ -2208,10 +2208,19 @@ public class Editor extends Diagram
         }
 
         VertexHandle vhand = getVertexHandle();
+
         r.startPoint = path.get(1 - vhand.vertexNo);
         r.endPoint = path.get(vhand.vertexNo);
+        if (principalToStandardPage.transform(r.startPoint).x >
+            principalToStandardPage.transform(r.endPoint).x + 1e-6) {
+            // For rulers with an appreciable horizontal component,
+            // make the left point the start.
+            Point2D.Double p = r.startPoint;
+            r.startPoint = r.endPoint;
+            r.endPoint = p;
+        }
 
-        if (!getRulerDialog().showModal(r, axes)) {
+        if (!getRulerDialog().showModal(r, axes, principalToStandardPage)) {
             return;
         }
 
