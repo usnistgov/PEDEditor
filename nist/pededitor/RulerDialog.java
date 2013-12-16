@@ -3,6 +3,8 @@ package gov.nist.pededitor;
 import java.awt.Dialog;
 import java.awt.Frame;
 import java.awt.event.ActionEvent;
+import java.awt.geom.AffineTransform;
+import java.awt.geom.Point2D;
 import java.util.ArrayList;
 import java.util.Enumeration;
 
@@ -102,6 +104,10 @@ public class RulerDialog extends JDialog {
                 setVisible(false);
             }
         });
+    LabelAnchorButton leftAnchorButton = new LabelAnchorButton
+        ("On left", LinearRuler.LabelAnchor.LEFT);
+    LabelAnchorButton rightAnchorButton = new LabelAnchorButton
+        ("On right", LinearRuler.LabelAnchor.RIGHT);
 
     RulerDialog(Frame owner, String title) {
         super(owner, "Edit Ruler", true);
@@ -116,12 +122,8 @@ public class RulerDialog extends JDialog {
             gb.addWest
                 (new LabelAnchorButton
                  ("None", LinearRuler.LabelAnchor.NONE));
-            gb.addWest
-                (new LabelAnchorButton
-                 ("On left", LinearRuler.LabelAnchor.LEFT));
-            gb.endRowWith
-                (new LabelAnchorButton
-                 ("On right", LinearRuler.LabelAnchor.RIGHT));
+            gb.addWest(leftAnchorButton);
+            gb.endRowWith(rightAnchorButton);
             cpgb.endRowWith(panel);
         }
 
@@ -190,13 +192,42 @@ public class RulerDialog extends JDialog {
 
         cpgb.centerAndEndRow(okButton);
         getRootPane().setDefaultButton(okButton);
-        pack();
     }
 
     RulerDialog(Frame owner, String title, LinearRuler ruler,
                 ArrayList<LinearAxis> axes) {
         this(owner, title);
         set(ruler, axes);
+    }
+
+    /** Change the captions to reflect the actual appearance of the
+        ruler, so the left half-plane of the vector from startPoint to
+        endPoint may be best described as "left", "right", "up", or
+        "down" depending on the angle.
+
+     @param angle: the angle (counterclockwise from east in radians) of the vector
+     ruler.startPoint -&gt; ruler.endPoint. */
+    void updateLeftRightLabels(double angle) {
+        int quadrant = (int) Math.floor((angle + Math.PI/4)/(Math.PI/2));
+        quadrant = ((quadrant % 4) + 4) % 4;
+        String left, right;
+        if (quadrant == 0) { // rightish
+            left = "Top";
+            right = "Bottom";
+        } else if (quadrant == 1) { // upish
+            left = "Left";
+            right = "Right";
+        } else if (quadrant == 2) { // leftish
+            left = "Bottom";
+            right = "Top";
+        } else { // downish
+            left = "Right";
+            right = "Left";
+        }
+        tickLeft.setText(left + "-side tick marks");
+        tickRight.setText(right + "-side tick marks");
+        leftAnchorButton.setText("On " + left.toLowerCase());
+        rightAnchorButton.setText("On " + right.toLowerCase());
     }
 
     public void set(LinearRuler ruler, ArrayList<LinearAxis> axes) {
@@ -253,9 +284,14 @@ public class RulerDialog extends JDialog {
     /** Show the dialog as document-modal. If the dialog is closed
         normally, then update "dest" with the new values and return
         true. Otherwise, make no changes to "dest" and return false. */
-    public boolean showModal(LinearRuler dest, ArrayList<LinearAxis> axes) {
+    public boolean showModal(LinearRuler dest, ArrayList<LinearAxis> axes,
+                             AffineTransform toPage) {
         setModalityType(Dialog.ModalityType.DOCUMENT_MODAL);
         set(dest, axes);
+        Point2D.Double v = Duh.aMinusB(dest.endPoint, dest.startPoint);
+        toPage.deltaTransform(v, v);
+        updateLeftRightLabels(Math.atan2(-v.y, v.x));
+        pack();
         setVisible(true);
         if (!pressedOK) {
             return false;
