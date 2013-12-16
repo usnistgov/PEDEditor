@@ -1,5 +1,6 @@
 package gov.nist.pededitor;
 
+import java.awt.Frame;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
@@ -14,6 +15,7 @@ import javax.jnlp.ServiceManager;
 import javax.jnlp.SingleInstanceListener;
 import javax.jnlp.SingleInstanceService;
 import javax.jnlp.UnavailableServiceException;
+import javax.swing.SwingUtilities;
 
 /** Class to start the PED Editor as a PED Viewer. The differences are
     that the editable flag is off by default, and the PED file is
@@ -58,6 +60,22 @@ public class JSONFetchDiagram {
         run(args[0], (args.length > 1) ? args[1] : null);
     }
 
+    static class ViewerRunner implements Runnable {
+        EditFrame ef;
+
+        ViewerRunner(Viewer v) {
+            ef = v.editFrame;
+        }
+
+        @Override public void run () {
+            // ef.toFront();
+            // ef.repaint();
+            // Recommendation from StackOverflow q#309023
+            ef.setState(Frame.ICONIFIED);
+            ef.setState(Frame.NORMAL);
+        }
+    }
+
     public static Editor run(String urlStr, String title) {
         URL url = null;
 
@@ -79,6 +97,7 @@ public class JSONFetchDiagram {
             e.setExitOnClose(false);
             e.copyFrom(d);
             e.init();
+            SwingUtilities.invokeLater(new ViewerRunner(e));
             return e;
         } catch (IOException x) {
             if (url != null) {
