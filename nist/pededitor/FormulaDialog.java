@@ -29,6 +29,7 @@ public class FormulaDialog extends JDialog {
                     normalExit();
                 }
             });
+    { okButton.setFocusable(false); }
 
     public FormulaDialog(JFrame parent) {
         super(parent, "Enter Chemical Formula", false);
