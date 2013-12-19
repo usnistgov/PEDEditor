@@ -424,7 +424,7 @@ public class EditFrame extends JFrame
     protected JMenuItem mnRemoveTag = new JMenuItem("Delete");
     JMenu mnTags = new JMenu("Tags");
     protected JSeparator mnVariablesSeparator = new JSeparator();
-    protected JMenuItem mnRemoveVariable = new JMenuItem("Delete");
+    protected JMenuItem mnEditVariable = new JMenuItem("Edit");
     protected JMenu mnVariables = new JMenu("Variables");
     protected JMenu mnScale = new JMenu("Scale");
     Action actAddTag = new Action("Add", KeyEvent.VK_A) {
@@ -969,13 +969,16 @@ public class EditFrame extends JFrame
     }
 
     class RemoveVariableAction extends Action {
+        String variable;
+
         RemoveVariableAction(String variable) {
-            super(variable);
+            super("Delete");
+            this.variable = variable;
         }
 
         @Override public void actionPerformed(ActionEvent e) {
             try {
-                getEditor().removeVariable(e.getActionCommand());
+                getEditor().removeVariable(variable);
             } catch (CannotDeletePrincipalVariableException x) {
                 getEditor().showError
                     ("Cannot delete principal coordinate variable "
@@ -985,6 +988,27 @@ public class EditFrame extends JFrame
             }
             finishEvent();
         }
+    }
+
+    class RenameVariableAction extends Action {
+        String variable;
+
+        RenameVariableAction(String variable) {
+            super("Rename");
+            this.variable = variable;
+        }
+
+        @Override public void actionPerformed(ActionEvent e) {
+            getEditor().renameVariable(variable);
+            finishEvent();
+        }
+    }
+
+    JMenu createEditVariableMenu(String variable) {
+        JMenu menu = new JMenu(variable);
+        menu.add(new RenameVariableAction(variable));
+        menu.add(new RemoveVariableAction(variable));
+        return menu;
     }
 
     /**
@@ -1261,11 +1285,11 @@ public class EditFrame extends JFrame
                 }
             });
         mnVariables.add(mnVariablesSeparator);
-        mnRemoveVariable.setEnabled(false);
-        mnVariables.add(mnRemoveVariable);
+        mnEditVariable.setEnabled(false);
+        mnVariables.add(mnEditVariable);
 
         mnVariablesSeparator.setVisible(false);
-        mnRemoveVariable.setVisible(false);
+        mnEditVariable.setVisible(false);
         mnProperties.add(editingEnabled);
         menuBar.add(mnProperties);
 
@@ -1702,11 +1726,11 @@ public class EditFrame extends JFrame
         int itemCount = mnVariables.getItemCount();
 
         mnVariablesSeparator.setVisible(true);
-        mnRemoveVariable.setVisible(true);
+        mnEditVariable.setVisible(true);
         for (int i = firstVariableIndex(); i <= itemCount; ++i) {
             if (i == itemCount
                 || mnVariables.getItem(i).getText().compareTo(variable) > 0) {
-                mnVariables.insert(new RemoveVariableAction(variable), i);
+                mnVariables.insert(createEditVariableMenu(variable), i);
                 break;
             }
         }
@@ -1717,7 +1741,7 @@ public class EditFrame extends JFrame
     int firstVariableIndex() {
         int itemCount = mnVariables.getItemCount();
         for (int i = 0; i < itemCount; ++i) {
-            if (mnVariables.getItem(i) == mnRemoveVariable) {
+            if (mnVariables.getItem(i) == mnEditVariable) {
                 return i + 1;
             }
         }
@@ -1730,7 +1754,7 @@ public class EditFrame extends JFrame
         if (firstVariableIndex() == mnVariables.getItemCount()) {
             // Hide the separator and the list of variables.
             mnVariablesSeparator.setVisible(false);
-            mnRemoveVariable.setVisible(false);
+            mnEditVariable.setVisible(false);
         }
     }
 
