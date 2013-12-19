@@ -113,16 +113,16 @@ import Jama.Matrix;
 // XYZZY is not available during auto-positionning, for no good
 // reason, but the help implies that it is.
 
-// TODO (1/10) The Properties/Scale dialog isn't very good generally
-// but is especially bad for values near 0, which get rounded to 0
-// until you try to edit them and can see their actual values, so it
-// appears the scale goes from 0 to 0.
+// TODO (3/10) The Properties/Scale dialog is generally poor but is
+// especially bad for values near 0, which get rounded to 0 until you
+// try to edit them and can see their actual values, so it appears the
+// scale goes from 0 to 0. Drop the crappy Properties/Scale dialog and
+// replace it with a custom dialog.
 
 // TODO (optional): Remappable key bindings.
 
-// TODO (optional) User-defined character palettes
-
-// TODO (optional) show the line style in the tangent window
+// TODO (optional) Automatically convert diagram components into
+// labels.
 
 // TODO (optional): Unify the ternary diagram interfaces to faciliate
 // creation of partial ternary diagrams, using a two-step process
@@ -142,11 +142,14 @@ import Jama.Matrix;
 // clipboard. (They would be written and read as PED format.)
 
 // TODO: Is there a fonts-based solution to improve nested subscript
-// rendering? The problem is that the subscripts don't sit below their
-// baselines.
+// rendering? The DejaVu Unicode subscripts don't sit below their
+// baselines as they should.
 
-// TODO: More helpful error messages if a chemical compound cannot be
-// parsed.
+// TODO Separate the PDF handling more clearly from the rest of the
+// code to make the code easier to adopt into other products.
+
+// TODO (optional) show the line style in the tangent window. This
+// might annoy more people than it benefits, though...
 
 // TODO (optional) More help when users start the program up.
 
@@ -154,12 +157,7 @@ import Jama.Matrix;
 // instance, allow the oxygen levels to be automatically adjusted to
 // the correct values.
 
-// TODO (optional, 2 weeks) Right-click popup menus. I don't think
-// experienced users (the digitizers) would make much use of them, but
-// occasional users might. Forcing the users to remember shortcuts
-// isn't very friendly, and you can't use the mouse to click on an
-// ordinary menu if you're already using the mouse to identify the
-// location the operation should apply to.
+// TODO (optional) User-defined character palettes
 
 // TODO (optional) If there exists an autosave version of a file that
 // is newer than the regular version, ask whether to use that instead.
@@ -189,26 +187,24 @@ import Jama.Matrix;
 // reject it as a repeat. This is sort-of by design, though it seems a
 // bit odd sometimes.
 
-// TODO (optional) Allow marking of multiple objects.
+// TODO (Optional) Allow line selection to cycle around likely
+// candidates the same way that point selection does.
 
 // TODO (optional, easy?) Add "Print visible region" as an alternative
 // to "Print". (You can always collapse the margins to the region you
 // want to show and then print that, but that's slow and might be hard
 // to undo.)
 
-// TODO (optional but in my opinion super useful for general
-// digitization tasks, 3 days) Let the user select the rise and run
+// TODO (optional, 3 days) Let the user select the rise and run
 // variables of the slope window. This would also facilitate drawing
 // straight lines whose slopes are defined in terms of user variables.
 
-// TODO (Optional) Allow line selection to cycle around likely
-// candidates the same way that point selection does.
+// TODO (optional) Allow marking of multiple objects.
 
-// TODO (mandatory?, preexisting, 1 week) Apply a gradient to all control
-// points on a curve. Specifically, apply the following transformation
-// to all points on the currently selected curve for which $variable
-// is between v1 and v2: "$variable = $variable + k * ($variable - v1)
-// / (v2 - v1)"
+// TODO (1 week) Apply a gradient to all control points on a curve.
+// Specifically, apply the following transformation to all points on
+// the currently selected curve for which $variable is between v1 and
+// v2: "$variable = $variable + k * ($variable - v1) / (v2 - v1)"
 
 // TODO (optional, TAV not so important unless someone complains) You
 // can't make tie lines that cross the "endpoint" of a closed curve.
@@ -2192,16 +2188,14 @@ public class Editor extends Diagram
             return;
         }
 
-        LinearAxis axis = axes.get(0);
-
         LinearRuler r = new LinearRuler();
         r.fontSize = rulerFontSize();
         r.tickPadding = 0.0;
         r.labelAnchor = LinearRuler.LabelAnchor.NONE;
         r.drawSpine = true;
         r.lineWidth = lineWidth;
-        r.axis = axis;
         r.setColor(color);
+
 
         if (diagramType.isTernary()) {
             r.tickType = LinearRuler.TickType.V;
@@ -2211,13 +2205,47 @@ public class Editor extends Diagram
 
         r.startPoint = path.get(1 - vhand.vertexNo);
         r.endPoint = path.get(vhand.vertexNo);
-        if (principalToStandardPage.transform(r.startPoint).x >
-            principalToStandardPage.transform(r.endPoint).x + 1e-6) {
+        Point2D.Double pageVec = Duh.aMinusB(r.endPoint, r.startPoint);
+        principalToStandardPage.deltaTransform(pageVec, pageVec);
+        if (pageVec.x < -1e-6) {
             // For rulers with an appreciable horizontal component,
             // make the left point the start.
             Point2D.Double p = r.startPoint;
             r.startPoint = r.endPoint;
             r.endPoint = p;
+            Duh.invert(pageVec);
+        }
+        r.textAngle = Math.atan2(-pageVec.y, pageVec.x);
+
+        LinearAxis axis = null;
+        double maxCosSq = -1;
+
+        // For the initial default variable, use a variable for which
+        // pageVec is closest to parallel to the gradient. A
+        // horizontal axis is not likely to be meant to measure
+        // changes in the vertical variable!
+
+        int axisNo = -1;
+        for (LinearAxis axisTemp: axes) {
+            ++axisNo;
+            Point2D.Double pageGrad = pageGradient(axisTemp);
+            double cosSq = Duh.cosSq(pageGrad, pageVec);
+            if (((String) axisTemp.name).contains("page ")) {
+                // An axis for the page coordinates? Not likely...
+                cosSq /= 4;
+            }
+            // Prefer later axes to earlier ones as a tiebreaker,
+            // mainly so "Right" is preferred over "Left".
+            cosSq *= (10000 + axisNo);
+            if (cosSq > maxCosSq) {
+                axis = axisTemp;
+                maxCosSq = cosSq;
+            }
+        }
+
+        r.axis = axis;
+        if (axis.isPercentage()) {
+            r.multiplier = 100.0;
         }
 
         if (!getRulerDialog().showModal(r, axes, principalToStandardPage)) {
@@ -2228,6 +2256,38 @@ public class Editor extends Diagram
         RulerDecoration d = new RulerDecoration(r);
         addDecoration(d);
         setSelection(new RulerHandle(d, RulerHandleType.END));
+    }
+
+    public void renameVariable(String name) {
+        for (Side side: Side.values()) {
+            Axis axis = getAxis(side);
+            if (axis != null && axis.name.equals(name)) {
+                setDiagramComponent(side);
+                return;
+            }
+        }
+
+        String newName = JOptionPane.showInputDialog
+            (editFrame, "New name for variable '" + name + "':");
+
+        if (newName == null || "".equals(newName)) {
+            return;
+        }
+        for (Axis axis: axes) {
+            if (axis.name.equals(newName)) {
+                showError("A variable with that name already exists.");
+                return;
+            }
+        }
+
+        for (LinearAxis axis: axes) {
+            if (axis.name.equals(name)) {
+                rename(axis, newName);
+                return;
+            }
+        }
+        
+        throw new IllegalStateException("No such variable '" + name + "'");
     }
 
     @Override public void rename(LinearAxis axis, String name) {
@@ -2337,7 +2397,9 @@ public class Editor extends Diagram
                     (maybePercentage
                     && JOptionPane.showConfirmDialog
                     (editFrame,
-                     "Display variable as a percentage?",
+                     htmlify("Display variable as a percentage "
+                             + "in the gray status bar at the bottom of "
+                             + "the window?"),
                      "Display format",
                      JOptionPane.YES_NO_OPTION)
                      == JOptionPane.YES_OPTION)
