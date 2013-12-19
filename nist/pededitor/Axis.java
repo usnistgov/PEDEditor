@@ -49,4 +49,8 @@ abstract public class Axis {
         return getClass().getSimpleName() + "['" + name + "', fmt: "
             + format + "]";
     }
+
+    public boolean isPercentage() {
+        return valueAsString(0.5, 0.5).indexOf('%') >= 0;
+    }
 }
