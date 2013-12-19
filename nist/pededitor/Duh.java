@@ -208,6 +208,7 @@ public class Duh {
         return Math.atan2(ray.y, ray.x);
     }
 
+    /** Return the vector from point b to point a. */
     public static Point2D.Double aMinusB(Point2D a, Point2D b) {
         return new Point2D.Double(a.getX() - b.getX(),
                                   a.getY() - b.getY());
@@ -219,6 +220,12 @@ public class Duh {
 
     public static Point2D.Double product(Point2D p, double m) {
         return new Point2D.Double(p.getX() * m, p.getY() * m);
+    }
+
+    /** Multiply the x and y components by minus one. */
+    public static void invert(Point2D.Double v) {
+        v.x = -v.x;
+        v.y = -v.y;
     }
 
     /** Return the input array rotated right by amount. For instance,
@@ -501,6 +508,20 @@ public class Duh {
     static double crossProduct(Point2D p1, Point2D p2, Point2D p3) {
         return (p2.getX() - p1.getX()) * (p3.getY() - p1.getY())
             - (p2.getY() - p1.getY()) * (p3.getX() - p1.getX());
+    }
+
+    /** @return the square of the sine of the angle between the two vectors. */
+    public static double sineSq(Point2D.Double v1, Point2D.Double v2) {
+        double l1l2Sq = lengthSq(v1) * lengthSq(v2);
+        double cp = crossProduct(v1, v2);
+        return (l1l2Sq == 0) ? 0 :  (cp * cp / l1l2Sq);
+    }
+
+    /** @return the square of the cosine of the angle between the two vectors. */
+    public static double cosSq(Point2D.Double v1, Point2D.Double v2) {
+        double l1l2Sq = lengthSq(v1) * lengthSq(v2);
+        double dp = v1.x * v2.x + v1.y * v2.y;
+        return (l1l2Sq == 0) ? 0 :  (dp * dp / l1l2Sq);
     }
 
     /** @return the convex hull of inputs[], starting with the point
