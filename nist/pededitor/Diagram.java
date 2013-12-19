@@ -1734,8 +1734,6 @@ public class Diagram extends Observable implements Printable {
             }
             ChemicalString.Match m = ChemicalString.maybeQuotedComposition(dc);
             if (m == null) {
-                System.out.println("Diagram component '" + dc + "' does not start\n"
-                                   + "with a simple chemical formula.");
                 continue;
             }
             StringComposition sc = new StringComposition();
@@ -2876,6 +2874,20 @@ public class Diagram extends Observable implements Printable {
         Point2D.Double p = new Point2D.Double(Math.cos(theta), Math.sin(theta));
         standardPageToPrincipal.deltaTransform(p, p);
         return Math.atan2(p.y, p.x);
+    }
+
+    Point2D.Double pageGradient(LinearAxis axis) {
+        if (standardPageToPrincipal == null) {
+            return null;
+        }
+        return new Point2D.Double
+            (s2pValue(new Point2D.Double(1,0), axis),
+             s2pValue(new Point2D.Double(0,1), axis));
+    }
+
+    private double s2pValue(Point2D.Double d, LinearAxis axis) {
+        standardPageToPrincipal.deltaTransform(d, d);
+        return axis.a * d.x + axis.b * d.y;
     }
 
     static class HandleAndDistance implements Comparable<HandleAndDistance> {
