@@ -138,8 +138,8 @@ public class RulerDialog extends JDialog {
             ("Label angle with respect to axis:");
         textAngleLabel.setLabelFor(textAngle);
         cpgb.addWest(textAngleLabel);
-        cpgb.addWest(textAngle);
-        cpgb.endRowWith(new JLabel("degrees"));
+        cpgb.endRowWith(textAngle);
+        textAngle.setToolTipText("(degrees counterclockwise from axis)");
 
         JLabel tickPaddingLabel = new JLabel
             ("<html>Minimum white space between tick<br>"
@@ -147,6 +147,20 @@ public class RulerDialog extends JDialog {
         tickPaddingLabel.setLabelFor(tickPadding);
         cpgb.addWest(tickPaddingLabel);
         cpgb.endRowWith(tickPadding);
+
+        cpgb.addWest(tickLeft);
+        cpgb.endRowWith(tickRight);
+        cpgb.endRowWith(tickTypeV);
+        cpgb.addWest(showPercentages);
+        cpgb.endRowWith(displayLog10);
+
+        cpgb.addWest(startArrow);
+        cpgb.endRowWith(endArrow);
+        cpgb.addWest(suppressStartTick);
+        cpgb.endRowWith(suppressStartLabel);
+        cpgb.addWest(suppressEndTick);
+        cpgb.endRowWith(suppressEndLabel);
+        cpgb.endRowWith(suppressSmallTicks);
 
         {
             JLabel label = new JLabel("Big tick step size (optional):");
@@ -175,20 +189,6 @@ public class RulerDialog extends JDialog {
             cpgb.addWest(label);
             cpgb.endRowWith(tickEnd);
         }
-
-        cpgb.addWest(tickLeft);
-        cpgb.endRowWith(tickRight);
-        cpgb.endRowWith(tickTypeV);
-        cpgb.addWest(showPercentages);
-        cpgb.endRowWith(displayLog10);
-
-        cpgb.addWest(startArrow);
-        cpgb.endRowWith(endArrow);
-        cpgb.addWest(suppressStartTick);
-        cpgb.endRowWith(suppressStartLabel);
-        cpgb.addWest(suppressEndTick);
-        cpgb.endRowWith(suppressEndLabel);
-        cpgb.endRowWith(suppressSmallTicks);
 
         cpgb.centerAndEndRow(okButton);
         getRootPane().setDefaultButton(okButton);
