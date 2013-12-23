@@ -3,6 +3,8 @@ package gov.nist.pededitor;
 import java.awt.geom.*;
 import java.text.*;
 
+import org.codehaus.jackson.annotate.JsonIgnore;
+
 /** Simple class to hold information about an axis/variable. */
 abstract public class Axis {
 
@@ -50,7 +52,7 @@ abstract public class Axis {
             + format + "]";
     }
 
-    public boolean isPercentage() {
+    @JsonIgnore public boolean isPercentage() {
         return valueAsString(0.5, 0.5).indexOf('%') >= 0;
     }
 }
