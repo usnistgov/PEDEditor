@@ -82,6 +82,11 @@ import org.codehaus.jackson.annotate.JsonIgnore;
 
 import Jama.Matrix;
 
+// TODO Craig's suggestions: 1) when you enter a new '%' value, he'd
+// rather automatically overwrite (ask the others?) 2) Reset all
+// components in one dialog box (already a TODO below). 3) Varying the
+// oxygen level (also already a TODO)
+
 // TODO (bug, 5/10) Somehow, the "nearest point on curve" can get
 // stuck at control points, which implies the nearest point isn't
 // actually being computed correctly.
@@ -113,11 +118,12 @@ import Jama.Matrix;
 // XYZZY is not available during auto-positionning, for no good
 // reason, but the help implies that it is.
 
-// TODO (3/10) The Properties/Scale dialog is generally poor but is
+// TODO (4/10) The Properties/Scale dialog is generally poor but is
 // especially bad for values near 0, which get rounded to 0 until you
 // try to edit them and can see their actual values, so it appears the
 // scale goes from 0 to 0. Drop the crappy Properties/Scale dialog and
-// replace it with a custom dialog.
+// replace it with a custom dialog. (Priority bumped up because Chris
+// experienced this bug)
 
 // TODO (optional): Remappable key bindings.
 
@@ -4034,13 +4040,21 @@ public class Editor extends Diagram
                         principalToStandardPage = new TriangleTransform
                             (new Point2D.Double[]
                                 { new Point2D.Double(minRight, minTop),
-                                  new Point2D.Double(minRight, maxRight + minTop),
+                                  new Point2D.Double(minRight,
+                                                     maxRight - minRight + minTop),
                                   new Point2D.Double(maxRight, minTop) },
                              trianglePagePositions);
 
-                        addTernaryBottomRuler(minRight, maxRight, minTop);
-                        addTernaryLeftRuler(minTop, maxTop, minRight);
-                        addTernaryRightRuler(minTop, maxTop, maxRight);
+                        LinearRuler rule = ternaryBottomRuler
+                            (minRight, maxRight, minTop);
+                        rule.startArrow = rule.endArrow = false;
+                        add(rule);
+                        rule = ternaryLeftRuler(minTop, maxTop, minRight);
+                        rule.startArrow = false;
+                        add(rule);
+                        rule = ternaryRightRuler(minTop, maxTop, maxRight);
+                        rule.startArrow = false;
+                        add(rule);
                         break;
                     }
                 case BINARY:
@@ -4083,10 +4097,10 @@ public class Editor extends Diagram
                             break;
                         }
 
-                        addBinaryBottomRuler(left, right, bottom);
-                        addBinaryTopRuler(left, right, top);
-                        addBinaryLeftRuler(bottom, top, left);
-                        addBinaryRightRuler(bottom, top, right);
+                        add(binaryBottomRuler(left, right, bottom));
+                        add(binaryTopRuler(left, right, top));
+                        add(binaryLeftRuler(bottom, top, left));
+                        add(binaryRightRuler(bottom, top, right));
 
                         Rectangle2D.Double principalBounds
                             = new Rectangle2D.Double
@@ -4223,8 +4237,8 @@ public class Editor extends Diagram
                             trianglePoints[TOP_VERTEX] = new Point2D.Double(0, leftLength);
                             trianglePoints[RIGHT_VERTEX]
                                 = new Point2D.Double(bottomLength, 0);
-                            addTernaryBottomRuler(0.0, bottomLength);
-                            addTernaryLeftRuler(0.0, leftLength);
+                            add(ternaryBottomRuler(0.0, bottomLength));
+                            add(ternaryLeftRuler(0.0, leftLength));
                             break;
 
                         case TERNARY_TOP:
@@ -4232,8 +4246,8 @@ public class Editor extends Diagram
                                 = new Point2D.Double(0, 1.0 - leftLength);
                             trianglePoints[RIGHT_VERTEX]
                                 = new Point2D.Double(rightLength, 1.0 - rightLength);
-                            addTernaryLeftRuler(1 - leftLength, 1.0);
-                            addTernaryRightRuler(1 - rightLength, 1.0);
+                            add(ternaryLeftRuler(1 - leftLength, 1.0));
+                            add(ternaryRightRuler(1 - rightLength, 1.0));
                             break;
 
                         case TERNARY_RIGHT:
@@ -4241,8 +4255,8 @@ public class Editor extends Diagram
                                 = new Point2D.Double(1.0 - bottomLength, 0.0);
                             trianglePoints[TOP_VERTEX]
                                 = new Point2D.Double(1.0 - rightLength, rightLength);
-                            addTernaryBottomRuler(1.0 - bottomLength, 1.0);
-                            addTernaryRightRuler(0.0, rightLength);
+                            add(ternaryBottomRuler(1.0 - bottomLength, 1.0));
+                            add(ternaryRightRuler(0.0, rightLength));
                             break;
 
                         default:
@@ -4331,9 +4345,9 @@ public class Editor extends Diagram
                         principalToStandardPage = new TriangleTransform
                             (principalTrianglePoints, trianglePagePositions);
 
-                        addTernaryBottomRuler(0.0, 1.0);
-                        addTernaryLeftRuler(0.0, 1.0);
-                        addTernaryRightRuler(0.0, 1.0);
+                        add(ternaryBottomRuler(0.0, 1.0));
+                        add(ternaryLeftRuler(0.0, 1.0));
+                        add(ternaryRightRuler(0.0, 1.0));
                         break;
                     }
                 }
