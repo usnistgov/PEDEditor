@@ -5037,11 +5037,12 @@ public class Diagram extends Observable implements Printable {
         g.fill(arr);
     }
 
-    void addTernaryBottomRuler(double start /* Right */, double end /* Right */) {
-        addTernaryBottomRuler(start, end, 0.0);
+    LinearRuler ternaryBottomRuler(double start /* Right */,
+                                      double end /* Right */) {
+        return ternaryBottomRuler(start, end, 0.0);
     }
 
-    void addTernaryBottomRuler(double start, double end, double y) {
+    LinearRuler ternaryBottomRuler(double start, double end, double y) {
         LinearRuler r = defaultTernaryRuler();
         r.textAngle = 0;
         r.tickLeft = true;
@@ -5056,14 +5057,14 @@ public class Diagram extends Observable implements Printable {
         r.suppressEndTick = (diagramType != DiagramType.TERNARY_LEFT)
             || (end > 1 - 1e-6);
         r.axis = getXAxis();
-        add(r);
+        return r;
     }
 
-    void addTernaryLeftRuler(double start /* Y */, double end /* Y */) {
-        addTernaryLeftRuler(start, end, 0.0);
+    LinearRuler ternaryLeftRuler(double start /* Y */, double end /* Y */) {
+        return ternaryLeftRuler(start, end, 0.0);
     }
 
-    void addTernaryLeftRuler(double start, double end, double right) {
+    LinearRuler ternaryLeftRuler(double start, double end, double right) {
         LinearRuler r = defaultTernaryRuler();
         r.textAngle = Math.PI / 3;
         r.tickRight = true;
@@ -5095,14 +5096,14 @@ public class Diagram extends Observable implements Printable {
         r.suppressEndTick = (diagramType != DiagramType.TERNARY_LEFT)
             || (end > 1 - 1e-6);
         r.axis = getYAxis();
-        add(r);
+        return r;
     }
 
-    void addTernaryRightRuler(double start /* Y */, double end /* Y */) {
-        addTernaryRightRuler(start, end, 1.0 - Math.min(start, end));
+    LinearRuler ternaryRightRuler(double start /* Y */, double end /* Y */) {
+        return ternaryRightRuler(start, end, 1.0 - Math.min(start, end));
     }
 
-    void addTernaryRightRuler(double start, double end, double right) {
+    LinearRuler ternaryRightRuler(double start, double end, double right) {
         LinearRuler r = defaultTernaryRuler();
         r.textAngle = Math.PI * 2 / 3;
         r.tickLeft = true;
@@ -5129,14 +5130,14 @@ public class Diagram extends Observable implements Printable {
         r.startArrow = Math.abs(start) > 1e-8;
         r.endArrow = (Math.abs(end - 1) > 1e-4);
         r.axis = getYAxis();
-        add(r);
+        return r;
     }
 
-    void addBinaryBottomRuler() {
-        addBinaryBottomRuler(0, 1, 0);
+    LinearRuler binaryBottomRuler() {
+        return binaryBottomRuler(0, 1, 0);
     }
 
-    void addBinaryBottomRuler(double left, double right, double y) {
+    LinearRuler binaryBottomRuler(double left, double right, double y) {
         LinearRuler r = defaultBinaryRuler();
         r.textAngle = 0;
         r.tickLeft = true;
@@ -5144,14 +5145,14 @@ public class Diagram extends Observable implements Printable {
         r.startPoint = new Point2D.Double(left, y);
         r.endPoint = new Point2D.Double(right, y);
         r.axis = getXAxis();
-        add(r);
+        return r;
     }
 
-    void addBinaryTopRuler() {
-        addBinaryTopRuler(0, 1, 1);
+    LinearRuler binaryTopRuler() {
+        return binaryTopRuler(0, 1, 1);
     }
 
-    void addBinaryTopRuler(double left, double right, double y) {
+    LinearRuler binaryTopRuler(double left, double right, double y) {
         LinearRuler r = defaultBinaryRuler();
         r.textAngle = 0;
         r.tickRight = true;
@@ -5160,14 +5161,14 @@ public class Diagram extends Observable implements Printable {
         r.startPoint = new Point2D.Double(left, y);
         r.endPoint = new Point2D.Double(right, y);
         r.axis = getXAxis();
-        add(r);
+        return r;
     }
 
-    void addBinaryLeftRuler() {
-        addBinaryLeftRuler(0, 1, 0);
+    LinearRuler binaryLeftRuler() {
+        return binaryLeftRuler(0, 1, 0);
     }
 
-    void addBinaryLeftRuler(double bottom, double top, double x) {
+    LinearRuler binaryLeftRuler(double bottom, double top, double x) {
         LinearRuler r = defaultBinaryRuler();
         r.textAngle = Math.PI / 2;
         r.tickRight = true;
@@ -5176,14 +5177,14 @@ public class Diagram extends Observable implements Printable {
         r.startPoint = new Point2D.Double(x, bottom);
         r.endPoint = new Point2D.Double(x, top);
         r.axis = getYAxis();
-        add(r);
+        return r;
     }
 
-    void addBinaryRightRuler() {
-        addBinaryRightRuler(0, 1, 1);
+    LinearRuler binaryRightRuler() {
+        return binaryRightRuler(0, 1, 1);
     }
 
-    void addBinaryRightRuler(double bottom, double top, double x) {
+    LinearRuler binaryRightRuler(double bottom, double top, double x) {
         LinearRuler r = defaultBinaryRuler();
         r.textAngle = Math.PI / 2;
         r.tickLeft = true;
@@ -5192,7 +5193,7 @@ public class Diagram extends Observable implements Printable {
         r.startPoint = new Point2D.Double(x, bottom);
         r.endPoint = new Point2D.Double(x, top);
         r.axis = getYAxis();
-        add(r);
+        return r;
     }
 
 
