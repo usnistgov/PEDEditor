@@ -6,7 +6,7 @@ import javax.swing.AbstractAction;
 import javax.swing.JOptionPane;
 
 /** Main driver class for Phase Equilibria Diagram digitization and creation. */
-public class Viewer extends Editor {
+public class Viewer extends BasicEditor {
     @SuppressWarnings("serial")
 	protected void init() {
         setRightClickMenu(new ViewerRightClickMenu(this));
@@ -95,7 +95,7 @@ public class Viewer extends Editor {
             // OK, let it be
         }
         setSaveNeeded(false);
-        int otherEditorCnt = Editor.getOpenEditorCnt() - 1;
+        int otherEditorCnt = BasicEditor.getOpenEditorCnt() - 1;
         ef.setLocation(10 * otherEditorCnt, 10 * otherEditorCnt);
         initializeGUI();
         ef.setVertexInfoVisible(false);

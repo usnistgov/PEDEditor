@@ -9,9 +9,9 @@ import javax.swing.JMenuItem;
 /** Position submenu of the popup menu. */
 @SuppressWarnings("serial")
 public class PositionMenu extends JMenu {
-    Editor mEditor;
+    BasicEditor mEditor;
 
-    public PositionMenu(Editor editor) {
+    public PositionMenu(BasicEditor editor) {
         super("Position");
         setMnemonic(KeyEvent.VK_P);
         mEditor = editor;
@@ -22,7 +22,7 @@ public class PositionMenu extends JMenu {
         add(getEditFrame().actSelectNearestCurve);
     }
 
-    public Editor getParentEditor() {
+    public BasicEditor getParentEditor() {
         return mEditor;
     }
 

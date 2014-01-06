@@ -24,7 +24,7 @@ public class PEDToImage {
         }
         String ifn = args[0];
         String ofn = args[1];
-        String ext = Editor.getExtension(ofn);
+        String ext = BasicEditor.getExtension(ofn);
         File ofh = new File(ofn);
 
         if (ext == null) {

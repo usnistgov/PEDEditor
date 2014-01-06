@@ -24,13 +24,13 @@ public class VertexInfoDialog extends JDialog {
     protected double angled = 0;
     protected double sloped = 0;
     protected double lineWidthd = 0;
-    protected Editor parentEditor = null;
+    protected BasicEditor parentEditor = null;
 
     public boolean selfModifying = false;
     JLabel slopeLabel = new JLabel("d####.../d####....");
     public JLabel lineWidth = new JLabel("0.00000");
 
-    public VertexInfoDialog(Editor parentEditor) {
+    public VertexInfoDialog(BasicEditor parentEditor) {
         super(parentEditor.editFrame, "Slope", false);
         this.parentEditor = parentEditor;
         setAngleDegrees(0);
@@ -104,7 +104,7 @@ public class VertexInfoDialog extends JDialog {
         setResizable(false);
     }
 
-    public Editor getParentEditor() { return parentEditor; }
+    public BasicEditor getParentEditor() { return parentEditor; }
 
     /** Like setDerivative(), but the derivative is expressed in
      standard page coordinates, not principal coordinates. */
@@ -287,15 +287,15 @@ public class VertexInfoDialog extends JDialog {
         }
     }
 
-    /** Set the slope label automatically from the parent Editor's
+    /** Set the slope label automatically from the parent BasicEditor's
         settings. */
     void setSlopeLabel() {
-        Editor e = getParentEditor();
+        BasicEditor e = getParentEditor();
         setSlopeLabel("d" + truncatedName(e.getYAxis(), "y")
                       + "/d" + truncatedName(e.getXAxis(), "x"));
     }
 
-    /** Set the slope label automatically from the parent Editor's
+    /** Set the slope label automatically from the parent BasicEditor's
         settings. */
     public void refresh() {
         setSlopeLabel();

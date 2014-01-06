@@ -3344,7 +3344,7 @@ public class Diagram extends Observable implements Printable {
             titleBuf.append(str);
         }
 
-        return titleBuf.length() > 0 ? titleBuf.toString() : "Phase Equilibria Diagram Editor";
+        return titleBuf.length() > 0 ? titleBuf.toString() : "Phase Equilibria Diagram BasicEditor";
     }
 
     /** @return the system name if known, with components sorted into

@@ -52,7 +52,7 @@ public class EditFrame extends JFrame
 
     protected JPanel statusBar;
     protected JLabel statusLabel;
-    protected Editor parentEditor;
+    protected BasicEditor parentEditor;
     protected ButtonGroup fillStyleGroup = new ButtonGroup();
     protected ButtonGroup lineStyleGroup = new ButtonGroup();
     protected ButtonGroup lineWidthGroup = new ButtonGroup();
@@ -96,7 +96,7 @@ public class EditFrame extends JFrame
     protected Action actSaveAsPED = new Action("PED", KeyEvent.VK_P) {
             { 
                 putValue(SHORT_DESCRIPTION,
-                         "Save diagram in PED Editor's native format");
+                         "Save diagram in PED BasicEditor's native format");
             }
             @Override public void actionPerformed(ActionEvent e) {
                 getEditor().saveAsPED();
@@ -605,7 +605,7 @@ public class EditFrame extends JFrame
             }
         };
 
-    /** Internal use; called from Editor.java. Make the GUI changes
+    /** Internal use; called from BasicEditor.java. Make the GUI changes
         necessary to reflect whether we are or aren't currently using weight
         fraction values. */
     void setUsingWeightFraction(boolean b) {
@@ -614,7 +614,7 @@ public class EditFrame extends JFrame
         usingWeightFraction.setSelected(b);
     }
 
-    /** Internal use; called from Editor.java. */
+    /** Internal use; called from BasicEditor.java. */
     void setSmoothed(boolean b) {
         smoothed.setSelected(b);
     }
@@ -696,7 +696,7 @@ public class EditFrame extends JFrame
                 }
             });
 
-    public Editor getEditor() { return parentEditor; }
+    public BasicEditor getEditor() { return parentEditor; }
 
     abstract class Action extends AbstractAction {
         Action(String name, int mnemonic, KeyStroke accelerator) {
@@ -805,7 +805,7 @@ public class EditFrame extends JFrame
     public static BufferedImage getIcon() {
         if (pedIcon == null) {
             URL url =
-                Editor.class.getResource("images/PEDicon.png");
+                BasicEditor.class.getResource("images/PEDicon.png");
             try {
                 pedIcon = ImageIO.read(url);
             } catch (IOException e) {
@@ -1014,7 +1014,7 @@ public class EditFrame extends JFrame
     /**
      * Create the frame.
      */
-    public EditFrame(Editor parentEditor) {
+    public EditFrame(BasicEditor parentEditor) {
         this.parentEditor = parentEditor;
         parentEditor.addObserver(this);
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
@@ -1507,7 +1507,7 @@ public class EditFrame extends JFrame
     }
 
     public void setEditable(boolean b) {
-        Editor e = getEditor();
+        BasicEditor e = getEditor();
         e.setVisible(actSave, b);
         e.setVisible(actSaveAsPED, b);
         mnUnstickMouse.setVisible(b);
@@ -1581,14 +1581,14 @@ public class EditFrame extends JFrame
         solution is to have all events that may be triggered by
         right-clicks end by calling finishEvent(). */
     void finishEvent() {
-        Editor e = getEditor();
+        BasicEditor e = getEditor();
         if (e != null) {
             e.rightClick = null;
         }
     }
 
     @Override public void update(Observable o, Object arg) {
-        Editor e = getEditor();
+        BasicEditor e = getEditor();
         if (e != null) {
             setTitle(e.getProvisionalTitle());
             repaint();
@@ -1598,7 +1598,7 @@ public class EditFrame extends JFrame
     /** This method is assumed to be a passive receiver of information
         that the font name has changed, to reflect the change in the
         menu selection. To actively change the font name, use
-        Editor#setFontName(s) instead. */
+        BasicEditor#setFontName(s) instead. */
     void setFontName(String s) {
         for (Enumeration<AbstractButton> bs = fontGroup.getElements();
              bs.hasMoreElements();) {
@@ -1657,7 +1657,7 @@ public class EditFrame extends JFrame
         return scrollPane;
     }
 
-    /** This is not a public interface. It is an interface that Editor
+    /** This is not a public interface. It is an interface that BasicEditor
         uses to perform UI operations in support of an addTag()
         request. */
     void addTag(String tag) {
@@ -1697,7 +1697,7 @@ public class EditFrame extends JFrame
         }
     }
 
-    /** This is not a public interface. It is an interface that Editor
+    /** This is not a public interface. It is an interface that BasicEditor
         uses to perform UI operations in support of an addTag()
         request. */
     void removeTag(String tag) {
@@ -1718,7 +1718,7 @@ public class EditFrame extends JFrame
         }
     }
 
-    /** This is not a public interface. It is an interface that Editor
+    /** This is not a public interface. It is an interface that BasicEditor
         uses to perform UI operations in support of an addVariable()
         request. */
     void addVariable(String variable) {
@@ -1758,7 +1758,7 @@ public class EditFrame extends JFrame
         }
     }
 
-    /** This is not a public interface. It is an interface that Editor
+    /** This is not a public interface. It is an interface that BasicEditor
         uses to perform UI operations in support of an addVariable()
         request. */
     void removeVariable(String variable) {

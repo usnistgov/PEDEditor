@@ -17,20 +17,20 @@ import javax.jnlp.SingleInstanceService;
 import javax.jnlp.UnavailableServiceException;
 import javax.swing.SwingUtilities;
 
-/** Class to start the PED Editor as a PED Viewer. The differences are
+/** Class to start the PED BasicEditor as a PED Viewer. The differences are
     that the editable flag is off by default, and the PED file is
     fetched using an HTTP connection to the url args[0]. */
 
 public class JSONFetchDiagram {
 
-    /** Task that gets called regularly to see if any Editor objects
+    /** Task that gets called regularly to see if any BasicEditor objects
         are open. A slightly better solution would be to check after a
-        given delay since the last non Editor closed, but that takes a
+        given delay since the last non BasicEditor closed, but that takes a
         little more code. Instead, just check every 30 minutes whether
         any Editors are open. */
     static class ShutdownChecker extends TimerTask {
         @Override public void run() {
-            int cnt = Editor.getOpenEditorCnt();
+            int cnt = BasicEditor.getOpenEditorCnt();
             if (cnt == 0) {
                 System.exit(0);
             }
@@ -76,7 +76,7 @@ public class JSONFetchDiagram {
         }
     }
 
-    public static Editor run(String urlStr, String title) {
+    public static BasicEditor run(String urlStr, String title) {
         URL url = null;
 
         try {

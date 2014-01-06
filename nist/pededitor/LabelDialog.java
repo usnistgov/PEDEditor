@@ -481,7 +481,7 @@ public class LabelDialog extends JDialog {
         // String fontName = "Free Serif";
         // String fontName = "Arial Unicode MS";
         String fontName = "Lucida Sans Unicode";
-        Font font = (new Editor()).getFont();
+        Font font = (new BasicEditor()).getFont();
         boolean foundFont = false;
         for (Font f: GraphicsEnvironment.getLocalGraphicsEnvironment()
                  .getAllFonts()) {

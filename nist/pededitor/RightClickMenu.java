@@ -8,7 +8,7 @@ import javax.swing.JLabel;
 import javax.swing.JMenu;
 
 
-/** PED Editor popup menu. */
+/** PED BasicEditor popup menu. */
 @SuppressWarnings("serial")
 public class RightClickMenu extends BasicRightClickMenu {
     JMenu mnEditSel = new JMenu("Edit selection");
@@ -18,7 +18,7 @@ public class RightClickMenu extends BasicRightClickMenu {
     JMenu mnDecorations;
     JLabel coordinates = new JLabel();
 
-    public RightClickMenu(Editor editor) {
+    public RightClickMenu(BasicEditor editor) {
         super(editor);
         EditFrame ef = getEditFrame();
         add(ef.actDeselect);

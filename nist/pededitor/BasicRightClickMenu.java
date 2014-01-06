@@ -10,9 +10,9 @@ import javax.swing.event.PopupMenuListener;
 /** Shared features of the editor and viewer popup menus. */
 @SuppressWarnings("serial")
 public class BasicRightClickMenu extends JPopupMenu {
-    Editor mEditor;
+    BasicEditor mEditor;
 
-    public BasicRightClickMenu(Editor editor) {
+    public BasicRightClickMenu(BasicEditor editor) {
         mEditor = editor;
 
         addPopupMenuListener(new PopupMenuListener() {
@@ -26,7 +26,7 @@ public class BasicRightClickMenu extends JPopupMenu {
             });
     }
 
-    public Editor getEditor() {
+    public BasicEditor getEditor() {
         return mEditor;
     }
 

@@ -20,7 +20,7 @@ import javax.swing.SwingUtilities;
 public class CoordinateDialog extends JDialog {
     private static final long serialVersionUID = -3619180189523033215L;
     protected JLabel descr = new JLabel
-        (Editor.htmlify("Enter a pair of coordinates. Fractions and "
+        (BasicEditor.htmlify("Enter a pair of coordinates. Fractions and "
                         + "percentages are allowed."));
     ArrowListenVariableSelector[] vars;
     AutofocusTextField vals[];
