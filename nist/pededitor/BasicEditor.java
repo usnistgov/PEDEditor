@@ -284,7 +284,7 @@ import Jama.Matrix;
 // TODO (preexisting in viewer) Periodic table integration.
 
 // TODO (preexisting but not mandatory) Smart line dash lengths. Peter
-// Schenk's PED Editor adjusts the segment length for dashed lines to
+// Schenk's PED BasicEditor adjusts the segment length for dashed lines to
 // insure that the dashes in dashed curves are always enough shorter
 // than the curves themselves that at least two dashes are visible.
 // It's a nice feature, but is it worth it to reproduce? The lengths
@@ -342,7 +342,7 @@ import Jama.Matrix;
 // are dedicated to vision-related tasks?)
 
 /** Main driver class for Phase Equilibria Diagram digitization and creation. */
-public class Editor extends Diagram
+public class BasicEditor extends Diagram
     implements CropEventListener, MouseListener, MouseMotionListener,
                Observer {
     abstract class Action extends AbstractAction {
@@ -646,7 +646,7 @@ public class Editor extends Diagram
 
     StepDialog tieLineDialog = new StepDialog
         (editFrame, "Select Tie Line Display Region",
-         new Editor.Action("Item selected") {
+         new BasicEditor.Action("Item selected") {
              private static final long serialVersionUID = -6676297149495177006L;
 
              @Override public void actionPerformed(ActionEvent e) {
@@ -731,7 +731,7 @@ public class Editor extends Diagram
     File[] filesList = null;
     int fileNo = -1;
 
-    public Editor() {
+    public BasicEditor() {
         setEditable(true);
         init();
         tieLineDialog.setFocusableWindowState(false);
@@ -798,7 +798,7 @@ public class Editor extends Diagram
         }
     }
 
-    /** close() irrevocably closes this Editor object. The results of
+    /** close() irrevocably closes this BasicEditor object. The results of
         any further method calls except isClosed() will be
         undefined.
 
@@ -807,7 +807,7 @@ public class Editor extends Diagram
         openEditors list will prevent garbage collection. But the only
         way I can see that happening is if a program does the closing
         -- user methods to close the window get redirected to close()
-        as here. So if you're going to close the Editor in your
+        as here. So if you're going to close the BasicEditor in your
         program, call close() or verifyThenClose() to do it.
     */
     public void close() {
@@ -1334,7 +1334,7 @@ public class Editor extends Diagram
              new ActionListener() {
                  @Override public void actionPerformed(ActionEvent e) {
                      color = colorChooser.getColor();
-                     Editor.this.selection.getDecoration().setColor(color);
+                     BasicEditor.this.selection.getDecoration().setColor(color);
                  }
              },
              null);
@@ -3776,7 +3776,7 @@ public class Editor extends Diagram
                     }
 
                     try {
-                        Editor app = new Editor();
+                        BasicEditor app = new BasicEditor();
                         app.run(args);
                     } catch (Exception e) {
                         e.printStackTrace();
@@ -4725,13 +4725,13 @@ public class Editor extends Diagram
 
     /** Return the default directory to save to and load from. */
     public static String getCurrentDirectory() {
-        return Preferences.userNodeForPackage(Editor.class)
+        return Preferences.userNodeForPackage(BasicEditor.class)
             .get(PREF_DIR,  null);
     }
 
     /** Set the default directory to save to and load from. */
     public static void setCurrentDirectory(String dir) {
-        Preferences.userNodeForPackage(Editor.class)
+        Preferences.userNodeForPackage(BasicEditor.class)
             .put(PREF_DIR,  dir);
     }
 
@@ -4874,7 +4874,7 @@ public class Editor extends Diagram
     }
 
     public void openImage(String filename) {
-        String title = (filename == null) ? "PED Editor" : filename;
+        String title = (filename == null) ? "PED BasicEditor" : filename;
         editFrame.setTitle(title);
 
         if (filename == null) {
@@ -4976,16 +4976,6 @@ public class Editor extends Diagram
         int extensionIndex = s.lastIndexOf(".");
         return (extensionIndex <= lastSeparatorIndex + 1) ? s
             : s.substring(0, extensionIndex);
-    }
-
-    /** Invoked from the EditFrame menu */
-    public void saveAsPDF() {
-        File file = showSaveDialog("pdf");
-        if (file == null || !verifyOverwriteFile(file)) {
-            return;
-        }
-
-        saveAsPDF(file);
     }
 
     /** Invoked from the EditFrame menu */
@@ -5917,7 +5907,7 @@ public class Editor extends Diagram
     public static void initializeCrosshairs() {
         if (crosshairs == null) {
             URL url =
-                Editor.class.getResource("images/crosshairs.png");
+                BasicEditor.class.getResource("images/crosshairs.png");
             try {
                 crosshairs = ImageIO.read(url);
             } catch (IOException e) {
