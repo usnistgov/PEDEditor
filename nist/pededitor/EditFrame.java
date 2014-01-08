@@ -1,3 +1,6 @@
+/* Eric Boesch, NIST Materials Measurement Laboratory, 2014. This file
+ * is placed into the public domain. */
+
 package gov.nist.pededitor;
 
 import java.awt.BorderLayout;
@@ -92,6 +95,7 @@ public class EditFrame extends JFrame
                 getEditor().save();
             }
         };
+    protected JMenu mnSaveAs = new JMenu("Save As");
     protected JMenuItem mnSave = toMenuItem(actSave);
     protected Action actSaveAsPED = new Action("PED", KeyEvent.VK_P) {
             { 
@@ -103,16 +107,6 @@ public class EditFrame extends JFrame
             }
         };
     protected JMenuItem mnSaveAsPED = toMenuItem(actSaveAsPED);
-    protected JMenuItem mnSaveAsPDF = toMenuItem
-        (new Action("PDF", KeyEvent.VK_F) {
-                { 
-                    putValue(SHORT_DESCRIPTION,
-                             "Save diagram in Adobe PDF format");
-                }
-                @Override public void actionPerformed(ActionEvent e) {
-                    getEditor().saveAsPDF();
-                }
-            });
     protected JMenuItem mnSaveAsPNG = toMenuItem
         (new SaveImageAction("PNG", KeyEvent.VK_G));
     protected JMenuItem mnReload = toMenuItem
@@ -1056,11 +1050,9 @@ public class EditFrame extends JFrame
         mnFile.add(mnSave);
 
         // "Save As" submenu
-        JMenu mnSaveAs = new JMenu("Save As");
         mnSaveAs.setMnemonic(KeyEvent.VK_A);
         mnFile.add(mnSaveAs);
         mnSaveAs.add(mnSaveAsPED);
-        mnSaveAs.add(mnSaveAsPDF);
         mnSaveAs.add(mnSaveAsPNG);
 
         mnFile.add(mnSaveAs);
@@ -1914,6 +1906,24 @@ public class EditFrame extends JFrame
         AbstractAction act = (AbstractAction) it.getAction();
         if (act != null) {
             enable(act);
+        }
+    }
+
+    /** Insert act into menu so that menu remains alphabetized. */
+    public void addAlphabetized(JMenu menu, AbstractAction act) {
+        addAlphabetized(menu, act, 0);
+    }
+
+    public void addAlphabetized(JMenu menu, AbstractAction act,
+                                int startFrom) {
+        String str = (String) act.getValue(Action.NAME);
+        int itemCount = menu.getItemCount();
+        for (int i = startFrom; i <= itemCount; ++i) {
+            if (i == itemCount
+                || menu.getItem(i).getText().compareTo(str) > 0) {
+                menu.insert(new JMenuItem(act), i);
+                break;
+            }
         }
     }
 }
