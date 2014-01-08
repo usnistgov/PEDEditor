@@ -1,3 +1,9 @@
+/* Eric Boesch, NIST Materials Measurement Laboratory, 2014.
+ *
+ * This file uses the iText library (http://itextpdf.com) and is
+ * subject to the GNU Affero General Public License
+ * (http://www.gnu.org/licenses/agpl-3.0.html). */
+
 package gov.nist.pededitor;
 
 import java.io.File;
@@ -46,7 +52,7 @@ public class PEDToImage {
                 throw new IllegalArgumentException
                     ("Invalid input file '" + args[0] + "': " + x);
             }
-            d.saveAsPDF(ofh);
+            DiagramPDF.saveAsPDF(d, ofh);
             return;
         }
 
