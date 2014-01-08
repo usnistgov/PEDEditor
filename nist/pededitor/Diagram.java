@@ -1,3 +1,6 @@
+/* Eric Boesch, NIST Materials Measurement Laboratory, 2014. This file
+ * is placed into the public domain. */
+
 package gov.nist.pededitor;
 
 import java.awt.BasicStroke;
@@ -24,9 +27,7 @@ import java.awt.print.PageFormat;
 import java.awt.print.Printable;
 import java.awt.print.PrinterException;
 import java.awt.print.PrinterJob;
-import java.io.ByteArrayOutputStream;
 import java.io.File;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.PrintWriter;
@@ -67,15 +68,6 @@ import org.codehaus.jackson.map.ObjectMapper;
 import org.codehaus.jackson.map.SerializationConfig;
 import org.codehaus.jackson.map.annotate.JsonDeserialize;
 import org.codehaus.jackson.map.annotate.JsonSerialize.Inclusion;
-
-import com.itextpdf.text.Document;
-import com.itextpdf.text.DocumentException;
-import com.itextpdf.text.PageSize;
-import com.itextpdf.text.Paragraph;
-import com.itextpdf.text.pdf.DefaultFontMapper;
-import com.itextpdf.text.pdf.PdfContentByte;
-import com.itextpdf.text.pdf.PdfTemplate;
-import com.itextpdf.text.pdf.PdfWriter;
 
 /** Main class for Phase Equilibria Diagrams and their presentation,
     but not including GUI elements such as menus and windows. */
@@ -3344,7 +3336,7 @@ public class Diagram extends Observable implements Printable {
             titleBuf.append(str);
         }
 
-        return titleBuf.length() > 0 ? titleBuf.toString() : "Phase Equilibria Diagram BasicEditor";
+        return titleBuf.length() > 0 ? titleBuf.toString() : "Phase Equilibria Diagram Editor";
     }
 
     /** @return the system name if known, with components sorted into
@@ -3438,6 +3430,15 @@ public class Diagram extends Observable implements Printable {
         Path p = Paths.get(filename).toAbsolutePath();
         int pnc = p.getNameCount();
         int opnc = op.getNameCount();
+        Path proot = p.getRoot();
+        Path oproot = op.getRoot();
+
+        if (proot != null || oproot != null) {
+            if (!proot.equals(oproot)) {
+                return fn;
+            }
+        }
+
         int commonCnt;
         for (commonCnt = 0;
              commonCnt < pnc-1 && commonCnt < opnc - 1;
@@ -3447,7 +3448,7 @@ public class Diagram extends Observable implements Printable {
             }
         }
         int parentCnt = pnc - 1 - commonCnt;
-        if (commonCnt > 0 && parentCnt <= 3) {
+        if (parentCnt == 0 || (commonCnt > 0 && parentCnt <= 3)) {
             ArrayList<String> names = new ArrayList<>();
             for (int i = commonCnt; i < pnc-1; ++i) {
                 names.add("..");
@@ -3793,24 +3794,6 @@ public class Diagram extends Observable implements Printable {
         }
     }
 
-    public void saveAsPDF(File file) {
-        saveAsPDF(new Document(PageSize.LETTER), file);
-    }
-
-    public void saveAsPDF(Document doc, File file) {
-        PdfWriter writer = null;
-        try {
-            writer = PdfWriter.getInstance(doc, new FileOutputStream(file));
-        } catch (Exception e) {
-            System.err.println(e);
-            return;
-        }
-
-        doc.open();
-        appendToPDF(doc, writer);
-        doc.close();
-    }
-
     /** Return a BufferedImage of this diagram such that its size
         <i>no greater than</i> width x height. */
     public BufferedImage createImage(int width, int height) {
@@ -3828,53 +3811,6 @@ public class Diagram extends Observable implements Printable {
     public void saveAsImage(File file, String format, int width, int height)
         throws IOException {
         ImageIO.write(createImage(width, height), format, file);
-    }
-
-    public byte[] toPDFByteArray() {
-        Document doc = new Document(PageSize.LETTER);
-        ByteArrayOutputStream baos = new ByteArrayOutputStream();
-        PdfWriter writer;
-        try {
-            writer = PdfWriter.getInstance(doc, baos);
-        } catch (DocumentException e) {
-            e.printStackTrace();
-            return null;
-        }
-
-        doc.open();
-        appendToPDF(doc, writer);
-        doc.close();
-        return baos.toByteArray();
-    }
-
-    public void appendToPDF(Document doc, PdfWriter writer) {
-        String title = getTitle();
-        if (title != null) {
-            try {
-                doc.add(new Paragraph(title));
-            } catch (DocumentException e) {
-                e.printStackTrace();
-            }
-        }
-
-        float topMargin = (float) (72 * 0.5);
-        Rectangle2D.Double bounds = new Rectangle2D.Double
-            (doc.left(), doc.bottom(), doc.right() - doc.left(),
-             doc.top() - doc.bottom() - topMargin);
-
-        PdfContentByte cb = writer.getDirectContent();
-        PdfTemplate tp = cb.createTemplate((float) bounds.width, (float) bounds.height);
-        
-        @SuppressWarnings("unused")
-            Graphics2D g2 = false
-            ? tp.createGraphics((float) bounds.width, (float) bounds.height,
-                                new DefaultFontMapper())
-            : tp.createGraphicsShapes((float) bounds.width, (float) bounds.height);
-
-        g2.setFont(getFont());
-        paintDiagram(g2, deviceScale(g2, bounds), null);
-        g2.dispose();
-        cb.addTemplate(tp, doc.left(), doc.bottom());
     }
 
     public void saveAsPED(Path path) throws IOException {
