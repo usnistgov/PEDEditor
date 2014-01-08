@@ -1,3 +1,6 @@
+/* Eric Boesch, NIST Materials Measurement Laboratory, 2014. This file
+ * is placed into the public domain. */
+
 package gov.nist.pededitor;
 
 import gov.nist.pededitor.EditFrame.BackgroundImageType;
@@ -85,7 +88,10 @@ import Jama.Matrix;
 // TODO Craig's suggestions: 1) when you enter a new '%' value, he'd
 // rather automatically overwrite (ask the others?) 2) Reset all
 // components in one dialog box (already a TODO below). 3) Varying the
-// oxygen level (also already a TODO)
+// oxygen level (also already a TODO with "H2SO*")
+
+// TODO support for tablets or one-button systems (not a big deal
+// since Android doesn't support Java 7 yet anyway)
 
 // TODO (bug, 5/10) Somehow, the "nearest point on curve" can get
 // stuck at control points, which implies the nearest point isn't
@@ -284,7 +290,7 @@ import Jama.Matrix;
 // TODO (preexisting in viewer) Periodic table integration.
 
 // TODO (preexisting but not mandatory) Smart line dash lengths. Peter
-// Schenk's PED BasicEditor adjusts the segment length for dashed lines to
+// Schenk's PED Editor adjusts the segment length for dashed lines to
 // insure that the dashes in dashed curves are always enough shorter
 // than the curves themselves that at least two dashes are visible.
 // It's a nice feature, but is it worth it to reproduce? The lengths
@@ -4874,7 +4880,7 @@ public class BasicEditor extends Diagram
     }
 
     public void openImage(String filename) {
-        String title = (filename == null) ? "PED BasicEditor" : filename;
+        String title = (filename == null) ? "PED Editor" : filename;
         editFrame.setTitle(title);
 
         if (filename == null) {

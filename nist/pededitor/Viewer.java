@@ -1,3 +1,9 @@
+/* Eric Boesch, NIST Materials Measurement Laboratory, 2014.
+ *
+ * This file uses the iText library (http://itextpdf.com) and is
+ * subject to the GNU Affero General Public License
+ * (http://www.gnu.org/licenses/agpl-3.0.html). */
+
 package gov.nist.pededitor;
 
 import java.awt.event.ActionEvent;
@@ -6,7 +12,7 @@ import javax.swing.AbstractAction;
 import javax.swing.JOptionPane;
 
 /** Main driver class for Phase Equilibria Diagram digitization and creation. */
-public class Viewer extends BasicEditor {
+public class Viewer extends Editor {
     @SuppressWarnings("serial")
 	protected void init() {
         setRightClickMenu(new ViewerRightClickMenu(this));
