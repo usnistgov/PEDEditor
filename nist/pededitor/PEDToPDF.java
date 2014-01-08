@@ -1,3 +1,9 @@
+/* Eric Boesch, NIST Materials Measurement Laboratory, 2014.
+ *
+ * This file uses the iText library (http://itextpdf.com) and is
+ * subject to the GNU Affero General Public License
+ * (http://www.gnu.org/licenses/agpl-3.0.html). */
+
 package gov.nist.pededitor;
 
 import java.awt.geom.Rectangle2D;
@@ -135,7 +141,7 @@ public class PEDToPDF {
             try {
                 Diagram d = loadAndFix(filename, true);
                 copy.addPage(copy.getImportedPage
-                             (new PdfReader(d.toPDFByteArray()),
+                             (new PdfReader(DiagramPDF.toPDFByteArray(d)),
                               1));
                 int pedpos = filename.indexOf("\\ped\\");
                 String pedout = filename.substring(0, pedpos) + "\\ped2\\"
@@ -232,7 +238,7 @@ public class PEDToPDF {
             String ifn = args[0];
             String ofn = args[1];
             try {
-                loadAndFix(ifn, true).saveAsPDF(new File(ofn));
+                DiagramPDF.saveAsPDF(loadAndFix(ifn, true), new File(ofn));
                 System.out.println(ifn + " -> " + ofn + " conversion complete.");
             } catch (IOException e) {
                 JOptionPane.showMessageDialog(null, e.toString());
