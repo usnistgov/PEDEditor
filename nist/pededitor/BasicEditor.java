@@ -5349,7 +5349,8 @@ public class BasicEditor extends Diagram
         dog.setAxes(getAxes());
         for (int i = 0; i < cnt; ++i) {
             dog.setAxis(i, axes[i]);
-            oldValues[i] = axes[i].valueAsString(mprin);
+            oldValues[i] = (mprin != null) ? axes[i].valueAsString(mprin)
+                : "";
             dog.setValue(i, oldValues[i]);
         }
         
