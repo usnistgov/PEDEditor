@@ -85,10 +85,23 @@ import org.codehaus.jackson.annotate.JsonIgnore;
 
 import Jama.Matrix;
 
-// TODO Craig's suggestions: 1) when you enter a new '%' value, he'd
-// rather automatically overwrite (ask the others?) 2) Reset all
-// components in one dialog box (already a TODO below). 3) Varying the
-// oxygen level (also already a TODO with "H2SO*")
+// TODO Hourglass during program load
+
+// TODO Censor negative and ridiculous composition values.
+
+// TODO (viewer) -- File/Exit All
+
+// TODO -- make the crosshairs wider? Especially for the backup
+// crosshairs, precision is not important.
+
+// TODO Export (Jay): "would be helpful if the output file had the
+// figure number as the first line and headings, including the
+// transform type, for each of the columns. And a few less significant
+// figures in the output would be nice." Maybe a field indicating the
+// number of sig figs. Also, remind users to use a transform if the
+// data should become/already is in percent format.
+
+// TODO Disable the conversion warning.
 
 // TODO support for tablets or one-button systems (not a big deal
 // since Android doesn't support Java 7 yet anyway)
@@ -550,6 +563,7 @@ public class BasicEditor extends Diagram
         if (formulaDialog == null) {
             formulaDialog = new FormulaDialog(editFrame);
         }
+        formulaDialog.formula.selectAll();
         return formulaDialog;
     }
 
