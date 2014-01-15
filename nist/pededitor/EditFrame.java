@@ -100,7 +100,7 @@ public class EditFrame extends JFrame
     protected Action actSaveAsPED = new Action("PED", KeyEvent.VK_P) {
             { 
                 putValue(SHORT_DESCRIPTION,
-                         "Save diagram in PED BasicEditor's native format");
+                         "Save diagram in PED Editor's native format");
             }
             @Override public void actionPerformed(ActionEvent e) {
                 getEditor().saveAsPED();
@@ -1375,8 +1375,12 @@ public class EditFrame extends JFrame
         lightGrayBackgroundImage.setSelected(true);
         mnView.add(mnBackgroundImage);
 
-        mnView.add(new Action("Best fit", KeyEvent.VK_B,
+        mnView.add(new Action("Best fit (100% zoom)", KeyEvent.VK_B,
                               KeyStroke.getKeyStroke("control B")) {
+                { 
+                    putValue(SHORT_DESCRIPTION,
+                             "Adjust the zoom ratio so the diagram is fully visible");
+                }
                 @Override public void actionPerformed(ActionEvent e) {
                     getEditor().bestFit();
                     finishEvent();
