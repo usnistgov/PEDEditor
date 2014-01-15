@@ -43,7 +43,8 @@ public class Viewer extends Editor {
                           + " while the mouse is inside the diagram."
                           + "<li>To zoom in, drag the mouse (move the mouse while holding down the left mouse button)."
                           + "<li>Hold down the <code>Shift</code> key while moving the "
-                          + "mouse to make the mouse follow curves and special points."
+                          + "mouse to find special points and curves, which will be "
+                          + "marked with a second pair of crosshairs."
                           + "</ol>"));
                 }
             });
