@@ -6,19 +6,42 @@
 
 package gov.nist.pededitor;
 
+import java.awt.Graphics;
 import java.awt.event.ActionEvent;
+import java.awt.event.KeyEvent;
+import java.util.ArrayList;
 
 import javax.swing.AbstractAction;
+import javax.swing.JMenuItem;
 import javax.swing.JOptionPane;
 
 /** Main driver class for Phase Equilibria Diagram digitization and creation. */
 public class Viewer extends Editor {
-    @SuppressWarnings("serial")
-	protected void init() {
+    static ArrayList<BasicEditor> openEditors = new ArrayList<>();
+
+    public Viewer() {
+        openEditors.add(this);
+    }
+
+    void closeAll() {
+        // Duplicate openEditors so we don't end up iterating through a
+        // list that is simultaneously being modified.
+        for (BasicEditor e: new ArrayList<>(openEditors)) {
+            e.close();
+        }
+    }
+
+    @Override public void close() {
+        super.close();
+        openEditors.remove(this);
+    }
+
+    @SuppressWarnings("serial") protected void init() {
         setRightClickMenu(new ViewerRightClickMenu(this));
         
         // Cut out all the functions that the viewer doesn't need.
         EditFrame ef = editFrame;
+        ef.setAlwaysOnTop(true);
         ef.setNewDiagramVisible(false);
         ef.setOpenVisible(false);
         ef.setReloadVisible(false);
@@ -32,6 +55,14 @@ public class Viewer extends Editor {
         ef.mnProperties.setVisible(false);
         ef.shortHelpFile = "viewhelp1.html";
         ef.helpAboutFile = "viewabout.html";
+        JMenuItem mnExitAll = new JMenuItem
+            (new Action("Exit all") {
+                    @Override public void actionPerformed(ActionEvent e) {
+                        closeAll();
+                    }
+                });
+        mnExitAll.setMnemonic(KeyEvent.VK_A);
+        ef.mnFile.add(mnExitAll);
         ef.mnView.add(new Action("Hints..") {
                 @Override public void actionPerformed(ActionEvent e) {
                     JOptionPane.showMessageDialog
@@ -89,24 +120,27 @@ public class Viewer extends Editor {
             
         detachOriginalImage();
         setEditable(false);
-        try {
-            removeVariable("page X");
-        } catch (CannotDeletePrincipalVariableException
-                 |NoSuchVariableException e1) {
-            // OK, let it be
-        }
-        try {
-            removeVariable("page Y");
-        } catch (CannotDeletePrincipalVariableException
-                 |NoSuchVariableException e1) {
-            // OK, let it be
+        for (String var: new String[] {"page X", "page Y"}) {
+            try {
+                removeVariable(var);
+            } catch (CannotDeletePrincipalVariableException
+                     |NoSuchVariableException e1) {
+                // OK, let it be
+            }
         }
         setSaveNeeded(false);
         int otherEditorCnt = BasicEditor.getOpenEditorCnt() - 1;
-        ef.setLocation(10 * otherEditorCnt, 10 * otherEditorCnt);
+        ef.setLocation(15 * otherEditorCnt, 15 * otherEditorCnt);
         initializeGUI();
         ef.setVertexInfoVisible(false);
         bestFit();
         ef.toFront();
+    }
+
+    @Override public void paintEditPane(Graphics g) {
+        if (paintCnt == 0) {
+            editFrame.setAlwaysOnTop(false);
+        }
+        super.paintEditPane(g);
     }
 }
