@@ -6,7 +6,6 @@
 
 package gov.nist.pededitor;
 
-import java.awt.EventQueue;
 import java.awt.event.ActionEvent;
 import java.awt.event.KeyEvent;
 import java.io.File;
@@ -51,32 +50,11 @@ public class Editor extends BasicEditor {
         DiagramPDF.saveAsPDF(this, file);
     }
 
-    /** Launch the application. */
     public static void main(String[] args) {
-        try {
-            // Work-around for a bug that affects EB's PC as of 7.0_3.
-            System.setProperty("sun.java2d.d3d", "false");
-            // TODO UNDO?
-            // UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
-        } catch (Exception x) {
-            // Success is not critical.
-            System.err.println("System settings: " + x);
-        }
-        EventQueue.invokeLater(new ArgsRunnable(args) {
-                @Override public void run() {
-                    if (args.length == 1 && args[0].charAt(0) == '-') {
-                        printHelp();
-                        System.exit(2);
-                    }
-
-                    try {
-                        Editor app = new Editor();
-                        app.run(args);
-                    } catch (Exception e) {
-                        e.printStackTrace();
-                    }
+        main(new BasicEditorCreator() {
+                @Override BasicEditor run() {
+                    return new Editor();
                 }
-            });
+            }, args);
     }
-
 }
