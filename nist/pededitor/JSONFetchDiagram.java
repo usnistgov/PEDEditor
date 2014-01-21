@@ -6,7 +6,6 @@
 
 package gov.nist.pededitor;
 
-import java.awt.Frame;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
@@ -21,7 +20,6 @@ import javax.jnlp.ServiceManager;
 import javax.jnlp.SingleInstanceListener;
 import javax.jnlp.SingleInstanceService;
 import javax.jnlp.UnavailableServiceException;
-import javax.swing.SwingUtilities;
 
 /** Class to start the PED BasicEditor as a PED Viewer. The differences are
     that the editable flag is off by default, and the PED file is
@@ -67,24 +65,39 @@ public class JSONFetchDiagram {
     }
 
     static class ViewerRunner implements Runnable {
-        EditFrame ef;
+        URL url;
+        String title;
 
-        ViewerRunner(Viewer v) {
-            ef = v.editFrame;
+        ViewerRunner(URL url, String title) {
+            this.url = url;
+            this.title = title;
         }
 
-        @Override public void run () {
-            // ef.toFront();
-            // ef.repaint();
-            // Recommendation from StackOverflow q#309023
-            ef.setState(Frame.ICONIFIED);
-            ef.setState(Frame.NORMAL);
+        @Override public void run() {
+            try {
+                URLConnection conn = url.openConnection();
+                Diagram d = Diagram.loadFrom(conn.getInputStream());
+                if (title != null) {
+                    d.setTitle(title);
+                }
+                Viewer e = new Viewer();
+                e.setExitOnClose(false);
+                e.copyFrom(d);
+                e.init();
+
+                EditFrame ef = e.editFrame;
+                ef.toFront();
+                ef.repaint();
+            } catch (IOException x) {
+                if (url != null) {
+                    System.err.println("While connecting to " + url + ":");
+                }
+                System.err.println("Error " + x);
+            }
         }
     }
 
-    public static BasicEditor run(String urlStr, String title) {
-        URL url = null;
-
+    public static void run(String urlStr, String title) {
         try {
             // Sanitize the urlStr argument.
             if (!Pattern.matches
@@ -93,24 +106,18 @@ public class JSONFetchDiagram {
                 throw new IllegalArgumentException
                     ("URL " + urlStr + ": illegal URL syntax");
             }
-            url = new URL(urlStr);
-            URLConnection conn = url.openConnection();
-            Diagram d = Diagram.loadFrom(conn.getInputStream());
-            if (title != null) {
-                d.setTitle(title);
+
+            ViewerRunner vr = new ViewerRunner(new URL(urlStr), title);
+
+            if (BasicEditor.waitDialog == null) {
+                WaitDialog dog = new WaitDialog(vr, "Loading PED Viewer...");
+                BasicEditor.waitDialog = dog;
+                dog.setTitle("PED Viewer");
+                dog.pack();
+                dog.setVisible(true);
             }
-            Viewer e = new Viewer();
-            e.setExitOnClose(false);
-            e.copyFrom(d);
-            e.init();
-            SwingUtilities.invokeLater(new ViewerRunner(e));
-            return e;
         } catch (IOException x) {
-            if (url != null) {
-                System.err.println("While connecting to " + url + ":");
-            }
             System.err.println("Error " + x);
-            return null;
         } catch (PatternSyntaxException x) {
             throw new IllegalStateException("Pattern could not compile: " + x);
         }
