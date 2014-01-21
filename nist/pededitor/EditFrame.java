@@ -72,6 +72,7 @@ public class EditFrame extends JFrame
     protected String shortHelpFile = "viewhelp.html";
     protected String helpAboutFile = "about.html";
 
+    JMenu mnFile = new JMenu("File");
     JMenu mnCurve = new JMenu("Curve");
     JMenu mnProperties = new JMenu("Properties");
     JMenu mnFont = new JMenu("Font");
@@ -1041,7 +1042,6 @@ public class EditFrame extends JFrame
         setJMenuBar(menuBar);
 
         // "File" top-level menu
-        JMenu mnFile = new JMenu("File");
         mnFile.setMnemonic(KeyEvent.VK_F);
         menuBar.add(mnFile);
 
