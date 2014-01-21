@@ -11,7 +11,6 @@ import java.awt.Color;
 import java.awt.Component;
 import java.awt.Cursor;
 import java.awt.Dimension;
-import java.awt.EventQueue;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.HeadlessException;
@@ -85,11 +84,7 @@ import org.codehaus.jackson.annotate.JsonIgnore;
 
 import Jama.Matrix;
 
-// TODO Hourglass during program load
-
 // TODO Censor negative and ridiculous composition values.
-
-// TODO (viewer) -- File/Exit All
 
 // TODO -- make the crosshairs wider? Especially for the backup
 // crosshairs, precision is not important.
@@ -538,6 +533,7 @@ public class BasicEditor extends Diagram
     protected FormulaDialog formulaDialog = null;
     protected CoordinateDialog coordinateDialog = null;
     protected DigitizeDialog digitizeDialog = null;
+    static JDialog waitDialog = null;
 
     @JsonIgnore public DecorationHandle getSelection() {
         return selection;
@@ -589,6 +585,8 @@ public class BasicEditor extends Diagram
     protected transient Dimension oldFrameSize = null;
     protected transient boolean autoRescale = false;
     protected transient boolean allowRobotToMoveMouse = true;
+    // Number of times paintEditPane() has been called.
+    protected transient int paintCnt = 0;
     protected boolean mEditable = true;
     protected boolean exitOnClose = true;
 
@@ -822,13 +820,7 @@ public class BasicEditor extends Diagram
         any further method calls except isClosed() will be
         undefined.
 
-        The use of openEditors() is hazardous, because if somehow an
-        editor gets closed without close() actually being called, the
-        openEditors list will prevent garbage collection. But the only
-        way I can see that happening is if a program does the closing
-        -- user methods to close the window get redirected to close()
-        as here. So if you're going to close the BasicEditor in your
-        program, call close() or verifyThenClose() to do it.
+        If this never gets called, then the open editor count will be wrong.
     */
     public void close() {
         if (!isClosed()) {
@@ -1570,6 +1562,12 @@ public class BasicEditor extends Diagram
         of this object, so it's simpler to do the painting from
         here. */
     public void paintEditPane(Graphics g) {
+        if (++paintCnt == 1) {
+            if (waitDialog != null) {
+                waitDialog.dispose();
+                waitDialog = null;
+            }
+        }
         updateMousePosition();
         Dimension size = editFrame.getSize();
         if (oldFrameSize == null
@@ -3777,32 +3775,31 @@ public class BasicEditor extends Diagram
         }
     }
 
+    public static void main(BasicEditorCreator ec, String[] args) {
+        if (args.length == 1 && args[0].charAt(0) == '-') {
+            printHelp();
+            System.exit(2);
+        }
+
+        waitDialog = new WaitDialog
+            (new BasicEditorArgsRunnable(ec, args) {
+
+                 @Override public void run() {
+                     try {
+                         super.run();
+                     } catch (Exception x) {
+                         x.printStackTrace();
+                     }
+                 }
+             }, "Loading PED Editor...");
+        waitDialog.setTitle("PED Editor");
+        waitDialog.pack();
+        waitDialog.setVisible(true);
+    }
+
     /** Launch the application. */
     public static void main(String[] args) {
-        try {
-            // Work-around for a bug that affects EB's PC as of 7.0_3.
-            System.setProperty("sun.java2d.d3d", "false");
-            // TODO UNDO?
-            // UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
-        } catch (Exception x) {
-            // Success is not critical.
-            System.err.println("System settings: " + x);
-        }
-        EventQueue.invokeLater(new ArgsRunnable(args) {
-                @Override public void run() {
-                    if (args.length == 1 && args[0].charAt(0) == '-') {
-                        printHelp();
-                        System.exit(2);
-                    }
-
-                    try {
-                        BasicEditor app = new BasicEditor();
-                        app.run(args);
-                    } catch (Exception e) {
-                        e.printStackTrace();
-                    }
-                }
-            });
+        main(new BasicEditorCreator(), args);
     }
 
     @Override public void cropPerformed(CropEvent e) {
