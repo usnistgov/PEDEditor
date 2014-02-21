@@ -37,6 +37,7 @@ public class Viewer extends Editor {
     }
 
     @SuppressWarnings("serial") protected void init() {
+        alwaysConvertLabels = true;
         setRightClickMenu(new ViewerRightClickMenu(this));
         
         // Cut out all the functions that the viewer doesn't need.
