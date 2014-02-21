@@ -67,6 +67,9 @@ import java.util.TimerTask;
 import java.util.prefs.Preferences;
 
 import javax.imageio.ImageIO;
+import javax.jnlp.IntegrationService;
+import javax.jnlp.ServiceManager;
+import javax.jnlp.UnavailableServiceException;
 import javax.print.attribute.HashPrintRequestAttributeSet;
 import javax.print.attribute.PrintRequestAttributeSet;
 import javax.swing.AbstractAction;
@@ -83,6 +86,18 @@ import javax.swing.filechooser.FileNameExtensionFilter;
 import org.codehaus.jackson.annotate.JsonIgnore;
 
 import Jama.Matrix;
+
+// TODO Does SingleInstanceServer work with associations?
+
+// TODO Disable asking whether to convert in the Viewer. Also, if you
+// press Cancel, it gives you that "Does not support" message even
+// when it's not correct.
+
+// TODO If you leave the program closed for hours, the server appears
+// not to restart correctly (or maybe it doesn't shut down or
+// whatever). Xiang tried first by directly accessing the .JNLP file.
+
+// TODO Check 
 
 // TODO Censor negative and ridiculous composition values.
 
@@ -120,6 +135,9 @@ import Jama.Matrix;
 // that specifies that lastSegNo = -1 if t1 == 0, but I'm concerned
 // that changing that could have side effects and I don't have time to
 // check that.
+
+// TODO: Will demonstrated that the underline feature is virtually
+// invisible, at about 1% of the character height.
 
 // TODO (bug 2/10) The text in the text box will be serif if the box
 // is first opened in serif mode, and sans if the box was first opened
@@ -585,6 +603,7 @@ public class BasicEditor extends Diagram
     protected transient Dimension oldFrameSize = null;
     protected transient boolean autoRescale = false;
     protected transient boolean allowRobotToMoveMouse = true;
+    protected transient boolean alwaysConvertLabels = false;
     // Number of times paintEditPane() has been called.
     protected transient int paintCnt = 0;
     protected boolean mEditable = true;
@@ -2341,11 +2360,14 @@ public class BasicEditor extends Diagram
         CuspFigure path = getSelectedCuspFigure();
         if (path == null || path.size() != 3) {
             showError(
-"Select a curve consisting of three vertexes which do not lie " + 
-"on a line. User variables must have the form<blockquote><code>a x + b y + c</code></blockquote> " + 
-"<p>where <code>x</code> and <code>y</code> are the principal variables of " + 
-"your diagram. The value of your variable at those three vertexes will " + 
-"determine its value everywhere else.</body>",
+"To add a user variable, first select a curve consisting of three points "
++ "where the variable's value is known. The points must not all lie on the same "
++ "line."
++ "<p>For example, for a variable whose values range from 0 to 1, "
++ "you might click on two different points where the variable should equal 0, "
++ "plus a third point where the variable should equal 1."
++ "<p>User variables must vary at the same rate throughout the entire diagram "
++ "&mdash; that is, they must be linear functions of the screen position.",
                  errorTitle);
             return;
         }
@@ -2360,12 +2382,9 @@ public class BasicEditor extends Diagram
                                 "Value at point #2",
                                 "Value at point #3" },
                  values,
-                 "<html><body width=\"200 px\"><p>"
-                 + "Enter the name of the new variable and its values "
-                 + "at three different points. The variable must be a "
-                 + "linear function (affine transformation) of the principal "
-                 + "coordinates. Fractions and percentages are allowed."
-                 + "</p></body></html>");
+                 htmlify("Enter the name of the new variable and its value "
+                         + "at the three points you selected. Fractions are allowed. "
+                         + "For percentages, do not omit the percent sign."));
             dog.setTitle("Create new axis");
             values = dog.showModal();
             if (values == null) {
@@ -2456,7 +2475,8 @@ public class BasicEditor extends Diagram
     }
 
     int convertLabels() {
-        return JOptionPane.showConfirmDialog
+        return alwaysConvertLabels ? JOptionPane.YES_OPTION
+            : JOptionPane.showConfirmDialog
             (editFrame,
              "Convert diagram labels? The conversion "
              + "is not guaranteed to be correct or reversible.",
@@ -3779,6 +3799,28 @@ public class BasicEditor extends Diagram
         if (args.length == 1 && args[0].charAt(0) == '-') {
             printHelp();
             System.exit(2);
+        }
+
+        try {
+            IntegrationService is
+                = (IntegrationService) ServiceManager.lookup("javax.jnlp.IntegrationService");
+            String mime = "application/x-pededitor";
+            String[] exts = { "ped" };
+            if (!is.hasAssociation(mime, exts)) {
+                /**
+                JOptionPane.showConfirmDialog
+                (editFrame,
+                 htmlify("Would you like to use this program to open all files that have PED format?
+
+PED files?"handle associate the PED file extension and with "
+                 htmlify("Would you like to associate the PED file extension and with "
+                         + "this application?"),
+                 "Create new file assocation",
+                 JOptionPane.YES_NO_OPTION) == JOptionPane.YES_OPTION) { */
+                is.requestAssociation(mime, exts);
+            }
+        } catch (UnavailableServiceException x) {
+            // OK, ignore this error.
         }
 
         waitDialog = new WaitDialog
@@ -5887,7 +5929,21 @@ public class BasicEditor extends Diagram
         bestFit();
     }
 
+    /** Remove -open arguments, because if the PED Editor is opened
+        because of a file assoication, its arguments have the form
+        -open <file>. */
+    static String[] stripOpenArguments(String[] args) {
+        ArrayList<String> strs = new ArrayList<>();
+        for (String s: args) {
+            if (!("-open".equals(s))) {
+                strs.add(s);
+            }
+        }
+        return strs.toArray(new String[0]);
+    }
+
     public void run(String[] args) {
+        args = stripOpenArguments(args);
         if (args.length > 0) {
             filesList = new File[args.length];
             for (int i = 0; i < args.length; ++i) {
