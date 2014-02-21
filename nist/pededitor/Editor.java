@@ -12,7 +12,7 @@ import java.io.File;
 
 import javax.swing.AbstractAction;
 
-/** BasicEdtor with "Save as PDF" menu. */
+/** BasicEditor plus "Save as PDF" menu. */
 public class Editor extends BasicEditor {
     public Editor() {
         addSaveAsPDF();
