@@ -2507,14 +2507,9 @@ public class Diagram extends Observable implements Printable {
         expressed in terms of variables v1 and v2 */
     public String coordinates(CuspFigure path, LinearAxis v1, LinearAxis v2) {
         StringBuilder sb = new StringBuilder();
-        /* int vertexNo = 0; */
         for (Point2D.Double point: path.getPoints()) {
             sb.append(v1.value(point) + ", " + v2.value(point));
-            /* if (path.curve.isSmoothed(vertexNo)) {
-                sb.append(" # smooth");
-                } */
             sb.append('\n');
-            /* ++vertexNo; */
         }
         return sb.toString();
     }
