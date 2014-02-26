@@ -84,7 +84,7 @@
     "a" : 0.0,
     "b" : 1.0,
     "c" : 0.0,
-    "name" : "Y"
+    "name" : "T°C"
   }, {
     "format" : {
       "type" : "DecimalFormat",
@@ -119,13 +119,13 @@
       "x" : 1.0,
       "y" : 1600.0
     },
-    "fontSize" : 0.02,
     "lineWidth" : 0.0016,
     "labelAnchor" : "NONE",
     "textAngle" : 1.5707963267948966,
     "tickRight" : true,
     "tickPadding" : 3.0,
-    "axis" : "Y"
+    "axis" : "T°C",
+    "fontSize" : 0.02
   }, {
     "decoration" : "ruler",
     "startPoint" : {
@@ -136,13 +136,13 @@
       "x" : 0.0,
       "y" : 1600.0
     },
-    "fontSize" : 0.02,
     "lineWidth" : 0.0016,
     "labelAnchor" : "LEFT",
     "textAngle" : 1.5707963267948966,
     "tickLeft" : true,
     "tickPadding" : 3.0,
-    "axis" : "Y"
+    "axis" : "T°C",
+    "fontSize" : 0.02
   }, {
     "decoration" : "ruler",
     "startPoint" : {
@@ -153,13 +153,13 @@
       "x" : 1.0,
       "y" : 1600.0
     },
-    "fontSize" : 0.02,
     "lineWidth" : 0.0016,
     "labelAnchor" : "NONE",
     "multiplier" : 100.0,
     "tickRight" : true,
     "tickPadding" : 3.0,
-    "axis" : "Al"
+    "axis" : "Al",
+    "fontSize" : 0.02
   }, {
     "decoration" : "ruler",
     "startPoint" : {
@@ -170,13 +170,13 @@
       "x" : 1.0,
       "y" : 400.0
     },
-    "fontSize" : 0.02,
     "lineWidth" : 0.0016,
     "labelAnchor" : "RIGHT",
     "multiplier" : 100.0,
     "tickRight" : true,
     "tickPadding" : 3.0,
-    "axis" : "Al"
+    "axis" : "Al",
+    "fontSize" : 0.02
   }, {
     "decoration" : "curve",
     "curve" : {
@@ -1311,7 +1311,7 @@
     "yWeight" : 1.0,
     "x" : 0.34700000000000003,
     "y" : 1310.0,
-    "fontSize" : 1.25
+    "scale" : 1.25
   }, {
     "decoration" : "label",
     "text" : "T<sub>e</sub>",
@@ -1319,14 +1319,14 @@
     "yWeight" : 0.5,
     "x" : 0.06388888888888879,
     "y" : 762.3809523809524,
-    "fontSize" : 1.25
+    "scale" : 1.25
   }, {
     "decoration" : "label",
     "text" : "1538&deg;C ",
     "xWeight" : 1.0,
     "yWeight" : 0.5,
     "y" : 1538.0,
-    "fontSize" : 1.25
+    "scale" : 1.25
   }, {
     "decoration" : "label",
     "text" : "L",
@@ -1334,7 +1334,7 @@
     "yWeight" : 0.5,
     "x" : 0.667857142857143,
     "y" : 1416.6666666666665,
-    "fontSize" : 1.8
+    "scale" : 1.8
   }, {
     "decoration" : "label",
     "text" : "1232",
@@ -1342,7 +1342,7 @@
     "yWeight" : 1.0,
     "x" : 0.3644068442848932,
     "y" : 1229.047619047619,
-    "fontSize" : 1.25
+    "scale" : 1.25
   }, {
     "decoration" : "label",
     "text" : "FeAl",
@@ -1350,7 +1350,7 @@
     "yWeight" : 0.5,
     "x" : 0.24563492063492093,
     "y" : 888.0952380952384,
-    "fontSize" : 1.5
+    "scale" : 1.5
   }, {
     "decoration" : "label",
     "text" : "ε",
@@ -1358,14 +1358,14 @@
     "yWeight" : 0.5,
     "x" : 0.43928571428571406,
     "y" : 1160.4761904761908,
-    "fontSize" : 1.5
+    "scale" : 1.5
   }, {
     "decoration" : "label",
     "text" : "(γFe)",
     "yWeight" : 0.5,
     "x" : 0.039851475418464295,
     "y" : 1100.4761904761906,
-    "fontSize" : 1.5
+    "scale" : 1.5
   }, {
     "decoration" : "label",
     "text" : "Weight Percent Aluminum",
@@ -1373,20 +1373,20 @@
     "yWeight" : 0.5,
     "x" : 0.495634920634921,
     "y" : 320.4761904761904,
-    "fontSize" : 1.8
+    "scale" : 1.8
   }, {
     "decoration" : "label",
     "text" : "Fe",
     "x" : -0.018725198412697718,
     "y" : 358.36309523809814,
-    "fontSize" : 1.8
+    "scale" : 1.8
   }, {
     "decoration" : "label",
     "text" : "1102&deg;C",
     "xWeight" : 0.5,
     "x" : 0.42700000000000005,
     "y" : 1102.0,
-    "fontSize" : 1.25
+    "scale" : 1.25
   }, {
     "decoration" : "label",
     "text" : "655&deg;C",
@@ -1394,14 +1394,14 @@
     "yWeight" : 1.0,
     "x" : 0.7892,
     "y" : 655.0,
-    "fontSize" : 1.25
+    "scale" : 1.25
   }, {
     "decoration" : "label",
     "text" : "660.452&deg;C",
     "yWeight" : 0.5,
     "x" : 1.0,
     "y" : 660.452,
-    "fontSize" : 1.25
+    "scale" : 1.25
   }, {
     "decoration" : "label",
     "text" : "Atomic Percent Aluminum",
@@ -1409,14 +1409,14 @@
     "yWeight" : 1.0,
     "x" : 0.49763083054989377,
     "y" : 1657.7222748504848,
-    "fontSize" : 1.8
+    "scale" : 1.8
   }, {
     "decoration" : "label",
     "text" : "~1160&deg;C",
     "yWeight" : 1.0,
     "x" : 0.594,
     "y" : 1160.0,
-    "fontSize" : 1.25
+    "scale" : 1.25
   }, {
     "decoration" : "label",
     "text" : "1169&deg;C",
@@ -1424,13 +1424,13 @@
     "yWeight" : 1.0,
     "x" : 0.545,
     "y" : 1169.0,
-    "fontSize" : 1.25
+    "scale" : 1.25
   }, {
     "decoration" : "label",
     "text" : "1394&deg;C",
     "xWeight" : 1.0,
     "y" : 1394.0,
-    "fontSize" : 1.25
+    "scale" : 1.25
   }, {
     "decoration" : "label",
     "text" : "(αFe)",
@@ -1438,7 +1438,7 @@
     "yWeight" : 0.5,
     "x" : 0.10654761904761903,
     "y" : 1272.8125000000007,
-    "fontSize" : 1.5
+    "scale" : 1.5
   }, {
     "decoration" : "label",
     "text" : "912&deg;C",
@@ -1446,7 +1446,7 @@
     "yWeight" : 0.5,
     "x" : -0.0012318305001231824,
     "y" : 911.9999999999999,
-    "fontSize" : 1.25,
+    "scale" : 1.25,
     "opaque" : true
   }, {
     "decoration" : "label",
@@ -1455,7 +1455,7 @@
     "yWeight" : 0.5,
     "x" : 0.9579999999999999,
     "y" : 500.0,
-    "fontSize" : 1.3333333333333333
+    "scale" : 1.3333333333333333
   }, {
     "decoration" : "label",
     "text" : "FeAl<sub>3</sub>",
@@ -1463,7 +1463,7 @@
     "x" : 0.6323238973008559,
     "y" : 749.5720868992756,
     "angle" : 1.5707963267948966,
-    "fontSize" : 1.5
+    "scale" : 1.5
   }, {
     "decoration" : "label",
     "text" : "Fe<sub>2</sub>Al<sub>5</sub>",
@@ -1472,7 +1472,7 @@
     "x" : 0.5500579951043852,
     "y" : 765.3719552337061,
     "angle" : 1.5707963267948966,
-    "fontSize" : 1.5
+    "scale" : 1.5
   }, {
     "decoration" : "label",
     "text" : "FeAl<sub>2</sub>",
@@ -1481,21 +1481,21 @@
     "x" : 0.46734315831957973,
     "y" : 749.572086899273,
     "angle" : 1.5707963267948966,
-    "fontSize" : 1.5
+    "scale" : 1.5
   }, {
     "decoration" : "label",
     "text" : "Fe<sub>3</sub>Al",
     "yWeight" : 0.5,
     "x" : 0.197023809523809,
     "y" : 485.0000000000001,
-    "fontSize" : 1.5
+    "scale" : 1.5
   }, {
     "decoration" : "label",
     "text" : "770&deg;C",
     "xWeight" : 1.0,
     "yWeight" : 0.5,
     "y" : 770.0,
-    "fontSize" : 1.25
+    "scale" : 1.25
   }, {
     "decoration" : "label",
     "text" : "1165&deg;C",
@@ -1503,7 +1503,7 @@
     "yWeight" : 1.0,
     "x" : 0.49629127350320723,
     "y" : 1220.714285714286,
-    "fontSize" : 1.25
+    "scale" : 1.25
   }, {
     "decoration" : "label",
     "text" : "Temperature °C",
@@ -1512,7 +1512,7 @@
     "x" : -0.0798177339204041,
     "y" : 999.5238095238092,
     "angle" : 1.5707963267948966,
-    "fontSize" : 1.8
+    "scale" : 1.8
   }, {
     "decoration" : "label",
     "text" : "Al",
@@ -1520,6 +1520,6 @@
     "yWeight" : 0.5,
     "x" : 1.01339285714286,
     "y" : 311.07142857142867,
-    "fontSize" : 1.8
+    "scale" : 1.8
   } ]
 }
