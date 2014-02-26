@@ -616,7 +616,8 @@ public class EditFrame extends JFrame
 
     void conversionError() {
         String msg = getEditor().isEditable()
-            ? ("<p>The conversion could not be performed."
+            ? ("<p>The conversion was canceled or could not be performed. "
+               + "<p>Conversions can only be performed on "
                + "<p>Conversions can only be performed on "
                + "diagrams for which the left, right, and (for ternary diagrams) "
                + "top components are defined (using the "
