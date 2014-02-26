@@ -17,6 +17,7 @@ import javax.swing.ButtonGroup;
 import javax.swing.JButton;
 import javax.swing.JCheckBox;
 import javax.swing.JDialog;
+import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
@@ -107,6 +108,15 @@ public class RulerDialog extends JDialog {
                 setVisible(false);
             }
         });
+
+    protected String helpFile = "rulerhelp.html";
+    JButton helpButton = new JButton(new Action("Help") {
+            private static final long serialVersionUID = -5968712403650275353L;
+
+            @Override public void actionPerformed(ActionEvent e) {
+                ShowHTML.show(helpFile, (JFrame) getOwner());
+            }
+        });
     LabelAnchorButton leftAnchorButton = new LabelAnchorButton
         ("On left", LinearRuler.LabelAnchor.LEFT);
     LabelAnchorButton rightAnchorButton = new LabelAnchorButton
@@ -160,8 +170,8 @@ public class RulerDialog extends JDialog {
         cpgb.addWest(startArrow);
         cpgb.endRowWith(endArrow);
         cpgb.addWest(suppressStartTick);
-        cpgb.endRowWith(suppressStartLabel);
-        cpgb.addWest(suppressEndTick);
+        cpgb.endRowWith(suppressEndTick);
+        cpgb.addWest(suppressStartLabel);
         cpgb.endRowWith(suppressEndLabel);
         cpgb.endRowWith(suppressSmallTicks);
 
@@ -193,7 +203,8 @@ public class RulerDialog extends JDialog {
             cpgb.endRowWith(tickEnd);
         }
 
-        cpgb.centerAndEndRow(okButton);
+        cpgb.addEast(okButton);
+        cpgb.endRowWith(helpButton);
         getRootPane().setDefaultButton(okButton);
     }
 
@@ -214,23 +225,38 @@ public class RulerDialog extends JDialog {
         int quadrant = (int) Math.floor((angle + Math.PI/4)/(Math.PI/2));
         quadrant = ((quadrant % 4) + 4) % 4;
         String left, right;
+        String start, end;;
         if (quadrant == 0) { // rightish
             left = "Top";
             right = "Bottom";
+            start = "Left";
+            end = "Right";
         } else if (quadrant == 1) { // upish
             left = "Left";
             right = "Right";
+            start = "Bottom";
+            end = "Top";
         } else if (quadrant == 2) { // leftish
             left = "Bottom";
             right = "Top";
+            start = "Right";
+            end = "Left";
         } else { // downish
             left = "Right";
             right = "Left";
+            start = "Top";
+            end = "Bottom";
         }
         tickLeft.setText(left + "-side tick marks");
         tickRight.setText(right + "-side tick marks");
         leftAnchorButton.setText("On " + left.toLowerCase());
         rightAnchorButton.setText("On " + right.toLowerCase());
+        startArrow.setText(start + " arrow");
+        endArrow.setText(end + " arrow");
+        suppressStartTick.setText("Suppress " + start.toLowerCase() + " tick");
+        suppressEndTick.setText("Suppress " + end.toLowerCase() + " tick");
+        suppressStartLabel.setText("Suppress " + start.toLowerCase() + " label");
+        suppressEndLabel.setText("Suppress " + end.toLowerCase() + " label");
     }
 
     public void set(LinearRuler ruler, ArrayList<LinearAxis> axes) {
