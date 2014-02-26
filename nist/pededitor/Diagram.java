@@ -2670,6 +2670,15 @@ public class Diagram extends Observable implements Printable {
 
         boolean first = true;
         for (LinearAxis axis : axes) {
+            if (axis.isPercentage()) {
+                double d = axis.value(prin);
+                if (d < -0.02 || d > 1.02) {
+                    // Don't display percentage values less than 0 or
+                    // greater than 100%, but allow a little bit of
+                    // fudge factor.
+                    continue;
+                }
+            }
             if (first) {
                 first = false;
             } else {
