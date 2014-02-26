@@ -89,18 +89,6 @@ import Jama.Matrix;
 
 // TODO Does SingleInstanceServer work with associations?
 
-// TODO Disable asking whether to convert in the Viewer. Also, if you
-// press Cancel, it gives you that "Does not support" message even
-// when it's not correct.
-
-// TODO If you leave the program closed for hours, the server appears
-// not to restart correctly (or maybe it doesn't shut down or
-// whatever). Xiang tried first by directly accessing the .JNLP file.
-
-// TODO Check 
-
-// TODO Censor negative and ridiculous composition values.
-
 // TODO -- make the crosshairs wider? Especially for the backup
 // crosshairs, precision is not important.
 
@@ -110,8 +98,6 @@ import Jama.Matrix;
 // figures in the output would be nice." Maybe a field indicating the
 // number of sig figs. Also, remind users to use a transform if the
 // data should become/already is in percent format.
-
-// TODO Disable the conversion warning.
 
 // TODO support for tablets or one-button systems (not a big deal
 // since Android doesn't support Java 7 yet anyway)
@@ -2302,9 +2288,14 @@ public class BasicEditor extends Diagram
     }
 
     public void renameVariable(String name) {
+        // If the user wants to rename or add a component, they should
+        // use Chemistry/Components instead. The only time it makes
+        // sense to redirect to that is if the old value is a component.
+
         for (Side side: Side.values()) {
             Axis axis = getAxis(side);
-            if (axis != null && axis.name.equals(name)) {
+            if (axis != null && axis.name.equals(name)
+                && (isTernary() || diagramComponents[side.ordinal()] != null)) {
                 setDiagramComponent(side);
                 return;
             }
