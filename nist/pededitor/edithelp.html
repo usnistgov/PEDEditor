@@ -349,9 +349,16 @@ rename or delete existing ones. Variables must be defined as
   <blockquote><code>a x + b y + c</code></blockquote>
 
 <p>where <code>x</code> and <code>y</code> are preexisting variables.
+In this program, variable values must change at a constant rate as you
+move across the diagram. You cannot define a single variable whose
+value changes at a varying rate or has the same value in two different
+places (such as in insets that magnify part of the main diagram).
+Where a logical variable's value has discontinuities or overlaps, the
+best you can do is to define several variables such that at least one
+of those variables displays correctly at each point.
 
 <p>New variables will be shown in the gray status bar at the bottom of
-the edit window and may be used to define ruler tick mark values.
+the edit window and may be used to define rulers.
 
 <li><p>Unchecking the <b>Show editing options</b> box hides options
 related to diagram editing, which may make the program easier to
@@ -450,12 +457,11 @@ in a text editor may give you an idea what is involved.</p>
 
 <li><p><b>Components</b>: Identify the diagram components for binary
 and ternary diagrams. Binary diagrams whose X-axis indicates
-increasing the relative proportions of substance A versus substance B
-have a left and right diagram component, while ternary diagrams have a
-left, right, and top component. In this context, the diagram
-components are the compounds that correspond to 0 and 100% of your
-independent variables, even if the displayed domain is a subset of
-that.
+increasing the relative proportions of two substances have a left and
+right diagram component, while ternary diagrams have a left, right,
+and top component. In this context, the diagram components are the
+compounds that correspond to 0 and 100% of your independent variables,
+even if the displayed domain is a subset of that.
 
 <p>You must identify the diagram components in a way the program can
 understand before most of the chemistry functions can be used.
@@ -468,11 +474,11 @@ example: <code>CO:6H<sub>2</sub>O</code>). Numbers may be entered as
 integers, fractions, fixed-point decimals, or percentages.
 
 <p>As soon as all diagram components are defined, the gray status bar
-will show additional information about points on the screen. If a
-position in the diagram corresponds precisely to a round formula, that
-formula will be shown; otherwise, a decimal approximation is shown.
-Component values will be shown as a pair <code>mole percent/weight
-percent</code>.
+at the bottom of the edit window will show additional information
+about points on the screen. If a position in the diagram matches a
+round formula exactly, that formula will be shown; otherwise, a
+decimal approximation is shown. Component values will be shown as a
+pair <code>mole percent/weight percent</code>.
 
 <p>The chemistry functions work best and the status bar shows the most
 information if coordinates are entered exactly, with values like 1/3 entered as 1/3 instead of as 0.33.
@@ -733,7 +739,7 @@ increments.
 
     <p><a href="#Top">Return to top</a>
 
-<li><p><b id=Arrowhead>Right Arrowhead</b> (<code>&gt;</code>) draws
+  <li><p><b id=Arrowhead>Right Arrowhead</b> (<code>&gt;</code>) draws
     an arrowhead that points at the angle indicated in the "Slope"
     window. <b>Left Arrowhead</b> (<code>&lt;</code>) draws an
     arrowhead that points in the opposite direction, press '&lt;'. The
@@ -742,121 +748,51 @@ increments.
 
     <p><a href="#Top">Return to top</a>
 
-<li><p><b id=Ruler>Ruler</b> creates a ruler or axis. However, you
+  <li><p><b id=Ruler>Ruler</b> creates a ruler or axis. However, you
     must create and select a line segment that marks the ruler's
     endpoints first. If you have done this, a window will open to
     allow you to edit the ruler's properties.</p>
 
-  <p>There is currently no way to automatically generate a ruler that
-    displays weight percent values in a mole-percent diagram or vice
-    versa. All you can do is convert the entire diagram between the
-    two states.</p>
+    <p>There is currently no way to automatically generate a ruler that
+      displays weight percent values in a mole-percent diagram or vice
+      versa. All you can do is convert the entire diagram between the
+      two states.</p>
 
-  <p>Rulers display the values of variables or components. Instead of
-    telling the system that you want the ruler to go from 0 to 1, you
-    tell which variable you want to display. If no variable goes from
-    0 to 1 in the range you want, you can <a href="#Variable">create
-    one</a>.
+    <p>Rulers in this program display values of a known variable or
+      component. You may choose to have the tick labels display the
+      basic value (which is the fractional value for components), a
+      percentage (100 times the basic value) or 10<sup>value</sup> for
+      logarithmic plots. For example, if <code>Si</code> is one of the
+      components of your diagram and you select it in the "Create Ruler"
+      dialog window's "Display variable/component" selection box, and
+      you check the <a href="#RulerPercent">Use percentages in
+        labels</a> box, then if there is a label displayed at the position
+      where your ruler crosses the 50% Si threshold, the label will
+      equal 50.</p>
 
-  <p><b>Tick labels</b>: Controls whether to show numbers next to big
-    tick marks. Small ticks are never labeled.
+    <p>If no existing variable has the values you need your ruler to
+      display in the positions where your ruler needs them, you may need
+      to <a href="#Variable">create a new variable</a>.
 
-  <p><b>Label angle with respect to axis</b>: A zero degree angle
-    means that the labels are parallel to the ruler axis (which does
-    not mean that the label text is horizontal unless the ruler itself
-    is horizontal). Positive angles are clockwise with respect to
-    that.
-
-  <p>By default, the program will assign reasonable tick values and
-    tick distances, but you can tweak these values in a number of
-    ways.
-
-  <p>When drawing two rulers that cross in the middle, such as for a
-    Cartesian graph that displays four quadrants for the negative and
-    positive X and Y values, there may be difficulties where the
-    rulers cross (typically at the origin). The X-axis label at x=0
-    will typically be overstruck by the Y-axis, and the Y-axis label
-    at y=0 will typically be overstruck by the X-axis. A solution to
-    that is to replace each individual ruler with two separate ones
-    that lie along the same line and meet at the origin, and to check
-    the boxes to suppress the rulers' start or end ticks and labels.
-
-  <p><b>Minimum white space between tick labels, in multiples of label
-      height</b>: If you do not explicitly tell the ruler where to put
-      the ticks, the program tries to figure out on its own how close
-      together the ticks can be without causing the labels to crowd
-      each other. (That applies even if the labels are turned off.)
-      You can increase the minimum separation between labels by
-      entering larger values here. This is only a minimum value, and
-      the actual tick step will be a round number large enough to
-      exceed this minimum, which means that depending on specifics, a
-      slight change to this value may not affect the actual tick step.
-      Generally speaking, a value of 0 means that labels will be
-      fairly close together, while a value of 3 means that the labels
-      are more widely spaced.
-
-  <p><b>Big tick step size (optional)</b>: You may specify what the
-    difference between big ticks should be or leave this blank to
-    allow the program to choose a reasonable value. On its own, the
-    program will always choose values that are 1, 2, or 5 times a
-    power of 10.
-
-  <p><b>Small tick step size (optional)</b>: You may specify what the
-    difference between big ticks should be or leave this blank to
-    allow the program to choose a reasonable value (normally the next
-    round number less than the big tick step size).
-
-  <p><b>Minimum/maximum tick value (optional)</b>: Usually you want
-    the ticks to extend the length of the ruler, possibly leaving out
-    the start or endpoints. In that case, leave this blank. But if you
-    want to explicitly specify the minimum and maximum tick values,
-    you may do so here.
-
-  <p><b>Left/right/top/bottom-side tick marks</b>: Check or uncheck to
-    remove the tick marks on the given side of the axis.
-
-  <p><b>V-shaped tick marks</b> are used mainly for ternary diagrams.
-    Check this box if you need them.
-
-  <p><b>Use percentages in labels</b>: If you check this, the labels
-    will display values that are 100 times greater than the underlying
-    variable. As mentioned in the <code>Chemistry Menu</code> section,
-    if you are showing percentage values, then you should insure this
-    box is checked; and if the values you get look right even when the
-    box is not checked, you should probably decrease the underlying
-    variable by a factor of 100, especially if you hope to use any of
-    the chemistry functions.
-
-  <p><b>Start/End arrow</b>: Check this box to add an arrow at the
-    ends of the axis.
-
-  <p><b>Suppress start/end tick</b>: Check this box to suppress any
-    tick marks that might otherwise appear at the start/end of the
-    ruler. to be there.
-
-  <p><b>Suppress start/end label</b>: Check this box to suppress any
-    label that might otherwise appear at the start or end of the
-    ruler.
-
-  <p><b>Suppress small ticks:</b> Check this to prevent all small tick
-    marks from being displayed.
+    <p>For more information on rulers, press the <b>Help</b> button
+      for the Create/Edit Ruler dialog.
 
     <p><a href="#Top">Return to top</a>
 
-      <li><p><b id=TieLines>Tie Lines</b></p>
+  <li><p><b id=TieLines>Tie Lines</b></p>
 
-        <p>To create a set of tie lines, select the<b>Tie Lines</b>
-          option of the <code>Add decoration</code> popup menu and
-          follow the instructions in the window that opens. </p>
+    <p>To create a set of tie lines, select the<b>Tie Lines</b>
+      option of the <code>Add decoration</code> popup menu and
+      follow the instructions in the window that opens. </p>
 
-        <p>If tie lines connect two segments or curves, instead of
-          connecting a curve to a point, then the tie lines should
-          tend to converge to a point someplace outside of the region
-          defined by the tie lines. If that is not the case, then the
-          Tie Line decoration may not be suited to your need, and you
-          may need to draw the individal tie lines manually.
+    <p>If tie lines connect two segments or curves, instead of
+      connecting a curve to a point, then the tie lines should
+      tend to converge to a point someplace outside of the region
+      defined by the tie lines. If that is not the case, then the
+      Tie Line decoration may not be suited to your need, and you
+      may need to draw the individal tie lines manually.
 
-        <p><a href="#Top">Return to top</a>
+    <p><a href="#Top">Return to top</a>
 
 </ul>
 
