@@ -2454,6 +2454,15 @@ public class BasicEditor extends Diagram
         }
     }
 
+    public void togglePercentageDisplay(String varName) {
+        for (Axis axis: axes) {
+            if (varName.equals(axis.name)) {
+                togglePercentageDisplay(axis);
+                return;
+            }
+        }
+    }
+
     /** Toggle the initial setting for vertexes added in the future
         between the smoothed and un-smoothed states. */
     public void setSmoothed(boolean b) {
@@ -3247,11 +3256,13 @@ public class BasicEditor extends Diagram
             }
         }
 
-        Object[][] data = {{v1, v1}, {v2, v2}};
+        double[][] data = {{v1, v1}, {v2, v2}};
 
-        TableDialog dog = new TableDialog(editFrame, data, columnNames);
+        NumberTableDialog dog = new NumberTableDialog
+            (editFrame, data, columnNames);
         dog.setTitle("Scale " + axis.name + " units");
-        Object[][] output = dog.showModal();
+        dog.setPercentage(axis.isPercentage());
+        double[][] output = dog.showModal();
         if (output == null) {
             return;
         }
@@ -3260,10 +3271,10 @@ public class BasicEditor extends Diagram
         // the new axis value and x is the old one -- this has nothing
         // to do with x-axis versus y-axis.
 
-        double x1 = (Double) output[0][0];
-        double x2 = (Double) output[1][0];
-        double y1 = (Double) output[0][1];
-        double y2 = (Double) output[1][1];
+        double x1 = output[0][0];
+        double x2 = output[1][0];
+        double y1 = output[0][1];
+        double y2 = output[1][1];
 
         if (x1 == x2 || y1 == y2) {
             showError("Please choose two different old values "
@@ -5388,15 +5399,16 @@ PED files?"handle associate the PED file extension and with "
         dog.setTitle("Set mouse position");
         int cnt = dog.rowCnt();
 
-        String[] oldValues = new String[cnt];
         LinearAxis[] axes = { getXAxis(), getYAxis() };
 
         dog.setAxes(getAxes());
         for (int i = 0; i < cnt; ++i) {
             dog.setAxis(i, axes[i]);
-            oldValues[i] = (mprin != null) ? axes[i].valueAsString(mprin)
-                : "";
-            dog.setValue(i, oldValues[i]);
+            if (mprin != null) {
+                dog.setValue(i, axes[i].value(mprin));
+            } else {
+                dog.setValue(i, "");
+            }
         }
         
         if (!dog.showModal()) {
@@ -5407,20 +5419,7 @@ PED files?"handle associate the PED file extension and with "
 
         try {
             for (int i = 0; i < dog.rowCnt(); ++i) {
-                String str = dog.getValue(i).trim();
-                if (str.equals(oldValues[i])) {
-                    // Never mind the sig figs in the displayed value;
-                    // assume the user meant the value to remain
-                    // exactly as it was, down to the last bit. (This
-                    // assumption may be wrong, but it's more likely
-                    // to be right, and if it is right, it may prevent
-                    // a situation where a vertex that was supposed to
-                    // be right on a line ends up being not quite
-                    // there.)
-                    vs[i] = axes[i].value(mprin);
-                } else {
-                    vs[i] = ContinuedFraction.parseDouble(str);
-                }
+                vs[i] = dog.getValue(i);
                 axes[i] = dog.getAxis(i, getAxes());
             }
         } catch (NumberFormatException e) {
