@@ -2330,6 +2330,7 @@ public class BasicEditor extends Diagram
         }
         super.rename(axis, name);
         editFrame.addVariable(name);
+        vertexInfo.refresh();
     }
 
     @Override public void add(LinearAxis axis) {
@@ -3210,8 +3211,8 @@ public class BasicEditor extends Diagram
             {"Current " + axis.name + " value", "New " + axis.name + " value"};
 
 
-        boolean isX = axis.isXAxis();
-        if (!isX && !axis.isYAxis()) {
+        boolean isX = isXAxis(axis);
+        if (!isX && !isYAxis(axis)) {
             throw new IllegalStateException("Only x and y units are adjustable");
         }
 
