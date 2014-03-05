@@ -2715,11 +2715,20 @@ public class Diagram extends Observable implements Printable {
     }
 
     @JsonIgnore public LinearAxis getXAxis() {
-        for (LinearAxis axis: axes) {
-            if (isXAxis(axis)) {
-                return axis;
+        // This program doesn't explicitly define the X- and Y-axes,
+        // so this isn't as simple as it could be. However, it is
+        // forbidden to delete the X or Y axis variables, so at least
+        // we can be sure that X- and Y-axes exist.
+
+        String name = diagramComponents[Side.RIGHT.ordinal()];
+        if (name != null) {
+            for (LinearAxis axis: axes) {
+                if (name.equals(axis.name)) {
+                    return axis;
+                }
             }
         }
+
         LinearAxis res = null;
         for (LinearAxis axis: axes) {
             if (axis.isXAxis()) {
@@ -2730,45 +2739,52 @@ public class Diagram extends Observable implements Printable {
                 }
             }
         }
+
+        if (res == null) {
+            throw new IllegalStateException("No X axis found.");
+        }
+        
         return res;
     }
 
     @JsonIgnore public LinearAxis getYAxis() {
-        for (LinearAxis axis: axes) {
-            if (isYAxis(axis)) {
-                return axis;
+        String name = diagramComponents[Side.TOP.ordinal()];
+        if (name != null) {
+            for (LinearAxis axis: axes) {
+                if (name.equals(axis.name)) {
+                    return axis;
+                }
             }
         }
+
         LinearAxis res = null;
         for (LinearAxis axis: axes) {
-            if ("page Y".equals(axis.name)) {
-                res = axis;
-            } else if (axis.isYAxis()) {
-                return axis;
+            if (axis.isYAxis()) {
+                if ("page Y".equals(axis.name)) {
+                    res = axis;
+                } else {
+                    return axis;
+                }
             }
         }
+
+        if (res == null) {
+            throw new IllegalStateException("No Y axis found.");
+        }
+        
         return res;
     }
 
     public boolean isLeftAxis(LinearAxis axis) {
-        String name = (String) axis.name;
-        return name.equals("Left")
-            || (name != null
-                && name.equals(diagramComponents[Side.LEFT.ordinal()]));
+        return axis.equals(getLeftAxis());
     }
 
     public boolean isXAxis(LinearAxis axis) {
-        String name = (String) axis.name;
-        return name.equals("Right") || name.equals("X")
-            || (name != null
-                && name.equals(diagramComponents[Side.RIGHT.ordinal()]));
+        return axis.equals(getXAxis());
     }
 
     public boolean isYAxis(LinearAxis axis) {
-        String name = (String) axis.name;
-        return name.equals("Top") || name.equals("Y")
-            || (name != null
-                && name.equals(diagramComponents[Side.TOP.ordinal()]));
+        return axis.equals(getYAxis());
     }
 
     /** Return true if this axis measures a diagram component
@@ -2781,11 +2797,17 @@ public class Diagram extends Observable implements Printable {
     }
 
     @JsonIgnore public LinearAxis getLeftAxis() {
+        String name = diagramComponents[Side.LEFT.ordinal()];
+        if (name == null) {
+            name = "Left";
+        }
+
         for (LinearAxis axis: axes) {
-            if (isLeftAxis(axis)) {
+            if (name.equals(axis.name)) {
                 return axis;
             }
         }
+        
         return null;
     }
 
@@ -4354,6 +4376,13 @@ public class Diagram extends Observable implements Printable {
         the range you really want. */
     public void invisiblyTransformPrincipalCoordinates(AffineTransform trans) {
         transformPrincipalCoordinates(trans);
+        ArrayList<LinearAxis> mainAxes = new ArrayList<>();
+        mainAxes.add(getXAxis());
+        mainAxes.add(getYAxis());
+        LinearAxis lax = getLeftAxis();
+        if (lax != null) {
+            mainAxes.add(lax);
+        }
 
         Affine atrans = new Affine(trans);
         Affine itrans;
@@ -4382,7 +4411,14 @@ public class Diagram extends Observable implements Printable {
 
         // Convert all axes from page to the new principal coordinates.
         for (LinearAxis axis: axes) {
-            if (isXAxis(axis) || isYAxis(axis) || isLeftAxis(axis)) {
+            boolean skip = false;
+            for (LinearAxis mainAxis: mainAxes) {
+                if (axis == mainAxis) {
+                    skip = true;
+                    break;
+                }
+            }
+            if (skip) {
                 continue;
             }
             axis.concatenate(itrans);
@@ -5171,6 +5207,14 @@ public class Diagram extends Observable implements Printable {
 
     @JsonIgnore public Rectangle2D.Double getPrincipalBounds() {
         return principalToStandardPage.inputBounds();
+    }
+
+    /** If this returns false, then the diagram doesn't exist yet, and
+        the edit window shows nothing but gray, though the Select
+        Diagram window may be open and displaying an original image
+        for digitization. */
+    public boolean haveDiagram() {
+        return principalToStandardPage != null;
     }
 
     public String getFontName() {
