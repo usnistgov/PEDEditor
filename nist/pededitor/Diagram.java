@@ -2648,6 +2648,15 @@ public class Diagram extends Observable implements Printable {
         }
     }
 
+    public void togglePercentageDisplay(Axis axis) {
+        if (axis.isPercentage()) {
+            axis.format = new DecimalFormat("0.0000");
+        } else {
+            axis.format = STANDARD_PERCENT_FORMAT;
+        }
+        fixAxisFormat(axis);
+    }
+
     /** Return a pretty description of the given point that is
         specified in principal coordinates. */
     String principalToPrettyString(Point2D.Double prin) {
@@ -4438,23 +4447,29 @@ public class Diagram extends Observable implements Printable {
         rescaling or change to the page bounds. */
     void fixAxisFormats() {
         for (Axis axis: getAxes()) {
-            double[] range = getRange(axis);
-            boolean percentP = ((DecimalFormat) (axis.format)).getMultiplier() == 100;
-            double max = Math.max(-range[0], range[1]);
-            if (percentP) {
-                if (max < 0.01) {
-                    axis.format = new DecimalFormat("0.000E0%");
-                } else {
-                    axis.format = STANDARD_PERCENT_FORMAT;
-                }
+            fixAxisFormat(axis);
+        }
+    }
+
+    void fixAxisFormat(Axis axis) {
+        double[] range = getRange(axis);
+        boolean percentP = ((DecimalFormat) (axis.format)).getMultiplier() == 100;
+        double max = Math.max(-range[0], range[1]);
+        if (percentP) {
+            if (max < 0.0001) {
+                axis.format = new DecimalFormat("0.000E0%");
+            } else if (max < 0.1) {
+                axis.format = new DecimalFormat("0.00000%");
             } else {
-                if (max < 0.01 || max > 1e7) {
-                    axis.format = new DecimalFormat("0.000E0");
-                } else if (max < 1e4) {
-                    axis.format = new DecimalFormat("0.0000");
-                } else {
-                    axis.format = new DecimalFormat("0");
-                }
+                axis.format = STANDARD_PERCENT_FORMAT;
+            }
+        } else {
+            if (max < 0.01 || max > 1e7) {
+                axis.format = new DecimalFormat("0.000E0");
+            } else if (max < 1e4) {
+                axis.format = new DecimalFormat("0.0000");
+            } else {
+                axis.format = new DecimalFormat("0");
             }
         }
         propagateChange();
