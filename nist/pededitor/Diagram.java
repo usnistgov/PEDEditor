@@ -2663,6 +2663,14 @@ public class Diagram extends Observable implements Printable {
         fixAxisFormat(axis);
     }
 
+    
+    /** Don't display proportion values less than 0 or greater than 1,
+        but allow a little bit of fudge factor. */
+    boolean isProportion(double v) {
+        return v >= -0.02 && v <= 1.02;
+    }
+
+
     /** Return a pretty description of the given point that is
         specified in principal coordinates. */
     String principalToPrettyString(Point2D.Double prin) {
@@ -2683,17 +2691,18 @@ public class Diagram extends Observable implements Printable {
             status.append(ChemicalString.autoSubscript(compound) + ": ");
         }
 
+        // If any single component value is out of bounds, then all
+        // component values are invalid.
+        boolean suppressComponents = false;
+        for (LinearAxis axis: axes) {
+            if (isComponentAxis(axis) && !isProportion(axis.value(prin))) {
+                suppressComponents = true;
+                break;
+            }
+        }
+
         boolean first = true;
         for (LinearAxis axis : axes) {
-            if (axis.isPercentage()) {
-                double d = axis.value(prin);
-                if (d < -0.02 || d > 1.02) {
-                    // Don't display percentage values less than 0 or
-                    // greater than 100%, but allow a little bit of
-                    // fudge factor.
-                    continue;
-                }
-            }
             if (first) {
                 first = false;
             } else {
@@ -2702,7 +2711,10 @@ public class Diagram extends Observable implements Printable {
             status.append(ChemicalString.autoSubscript(axis.name.toString()));
             status.append(" = ");
 
-            if (haveBoth && isComponentAxis(axis)) {
+            if ((isComponentAxis(axis) && suppressComponents)
+                || (axis.isPercentage() && !isProportion(axis.value(prin)))) {
+                status.append("--");
+            } else if (haveBoth && isComponentAxis(axis)) {
                 status.append(withFraction(axis, mole));
                 status.append("/");
                 status.append(withFraction(axis, weight));
