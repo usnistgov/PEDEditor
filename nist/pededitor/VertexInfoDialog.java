@@ -294,8 +294,12 @@ public class VertexInfoDialog extends JDialog {
         settings. */
     void setSlopeLabel() {
         BasicEditor e = getParentEditor();
-        setSlopeLabel("d" + truncatedName(e.getYAxis(), "y")
-                      + "/d" + truncatedName(e.getXAxis(), "x"));
+        String label = "dY/dX";
+        if (e.haveDiagram()) {
+            label = "d" + truncatedName(e.getYAxis(), "y")
+                + "/d" + truncatedName(e.getXAxis(), "x");
+        }
+        setSlopeLabel(label);
     }
 
     /** Set the slope label automatically from the parent BasicEditor's
