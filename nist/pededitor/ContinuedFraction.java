@@ -19,6 +19,7 @@ public class ContinuedFraction {
         this.denominator = denominator;
     }
 
+    /** Return the greatest common factor of a and b. */
     public static long gcf(long a, long b) {
         a = Math.abs(a);
         b = Math.abs(b);
@@ -31,6 +32,8 @@ public class ContinuedFraction {
         return a;
     }
 
+    /** Return the lowest common multiple of a and b, or throw an
+        exception if the LCM cannot be expressed as a long integer. */
     public static long lcm(long a, long b) throws OverflowException {
         a = Math.abs(a);
         b = Math.abs(b);
@@ -190,6 +193,8 @@ public class ContinuedFraction {
         return output;
     }
 
+    /** Return the number of digits in v. For example,
+        countDigits(779) = 3. */
     public int countDigits(long v) {
         v = Math.abs(v);
         int res = 1;
@@ -199,11 +204,22 @@ public class ContinuedFraction {
         return res;
     }
 
+    public boolean looksLikeDecimal() {
+        return looksLikeDecimal(false);
+    }
+
     /** Return true if this fraction equals and looks better as a
         terminating decimal. For example, 7/50 looks nicer as 0.14
-        (true), but 1/8 looks nicer than 0.125 (false). */
-    public boolean looksLikeDecimal() {
-        if (denominator == 1 || Math.abs(numerator) <= 1) {
+        (true), but 1/8 looks nicer than 0.125 (false).
+
+        @param preferDecimal If true, function tends to break rough
+        ties in favor of decimal format; otherwise, fractions tend to
+        be preferred. For example, 1/2 will be shown as 0.5 if
+        preferDecimal is true, or 1/2 if preferDecimal is false.
+    */
+    public boolean looksLikeDecimal(boolean preferDecimal) {
+        if (denominator == 1
+            || (Math.abs(numerator) <= 1 && !preferDecimal)) {
             return false;
         }
 
@@ -223,7 +239,7 @@ public class ContinuedFraction {
             return false;
         }
 
-        if (denominator > numerator) {
+        if (!preferDecimal && (denominator > numerator)) {
             return fives >= 1 && fives * 2 >= twos;
         }
 
@@ -279,18 +295,23 @@ public class ContinuedFraction {
 
     static String toString(double x, boolean showPercentage) {
         String suffix = showPercentage ? "%" : "";
-        double xp = showPercentage ? (x * 100) : x;
-        ContinuedFraction f = ContinuedFraction.create(x, 0.0000001, 1000, 0);
+        double mult = showPercentage ? 100 : 1;
+        double xp = x * mult;
 
+        if (Math.abs(xp) >= 1e6) {
+            return String.format("%g", xp) + suffix;
+        }
+
+        if (xp == (int) xp) {
+            return ((int) xp) + suffix;
+        }
+
+        ContinuedFraction f = ContinuedFraction.create(x, 0.0000001, 1000, 0);
         if (f != null) {
-            if (f.denominator == 1) {
-                return ((int) xp) + suffix;
-            }
-            if (!f.looksLikeDecimal()) {
+            if (!f.looksLikeDecimal(showPercentage)) {
                 return f.toString();
             }
 
-            
             int tens = 0;
             long pow10 = 1;
             while (pow10 % f.denominator != 0) {
@@ -306,5 +327,10 @@ public class ContinuedFraction {
         }
 
         return String.format("%g", xp) + suffix;
+    }
+
+    public static void main(String[] args) {
+        System.out.println(ContinuedFraction.toString(0.02, true));
+        System.out.println(ContinuedFraction.toString(0.02, false));
     }
 }
