@@ -1000,10 +1000,25 @@ public class EditFrame extends JFrame
         }
     }
 
+    class TogglePercentageDisplayAction extends Action {
+        String variable;
+
+        TogglePercentageDisplayAction(String variable) {
+            super("Toggle Percentage Display");
+            this.variable = variable;
+        }
+
+        @Override public void actionPerformed(ActionEvent e) {
+            getEditor().togglePercentageDisplay(variable);
+            finishEvent();
+        }
+    }
+
     JMenu createEditVariableMenu(String variable) {
         JMenu menu = new JMenu(variable);
         menu.add(new RenameVariableAction(variable));
         menu.add(new RemoveVariableAction(variable));
+        menu.add(new TogglePercentageDisplayAction(variable));
         return menu;
     }
 
