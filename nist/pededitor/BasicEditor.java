@@ -136,12 +136,9 @@ import Jama.Matrix;
 // XYZZY is not available during auto-positionning, for no good
 // reason, but the help implies that it is.
 
-// TODO (4/10) The Properties/Scale dialog is generally poor but is
-// especially bad for values near 0, which get rounded to 0 until you
-// try to edit them and can see their actual values, so it appears the
-// scale goes from 0 to 0. Drop the crappy Properties/Scale dialog and
-// replace it with a custom dialog. (Priority bumped up because Chris
-// experienced this bug)
+// TODO (feature, optional) Infer whether to show percentages from
+// whether the user entered percentages in the "Enter the graph
+// domain" dialog.
 
 // TODO (optional): Remappable key bindings.
 
@@ -3259,7 +3256,7 @@ public class BasicEditor extends Diagram
         double[][] data = {{v1, v1}, {v2, v2}};
 
         NumberTableDialog dog = new NumberTableDialog
-            (editFrame, data, columnNames);
+            (editFrame, data, null, columnNames, null);
         dog.setTitle("Scale " + axis.name + " units");
         dog.setPercentage(axis.isPercentage());
         double[][] output = dog.showModal();
@@ -3906,37 +3903,36 @@ PED files?"handle associate the PED file extension and with "
         }
     }
 
-    StringArrayDialog trapezoidDialog(String[] values) {
+    NumberColumnDialog trapezoidDialog(double[] values) {
         String[] labels = {
             "Minimum amount of top component",
             "Maximum amount of top component",
             "Minimum amount of right component",
             "Maximum amount of right component" };
-        return new StringArrayDialog
-            (editFrame, labels, values,
-             "<html><body width=\"300 px\"><p>"
-             + "Enter the range of compositions covered by this diagram. "
-             + "Fractions are allowed. For percentages, do not omit the "
-             +  "percent sign.");
+        return new NumberColumnDialog
+            (editFrame, values, labels,
+             htmlify
+             ("Enter the range of compositions covered by this diagram. "
+              + "Fractions are allowed. For percentages, do not omit the "
+              +  "percent sign."));
     }
 
-    StringArrayDialog cartesianDialog(String[] values) {
+    NumberColumnDialog cartesianDialog(double[] values) {
         String[] labels = {
             "Left X value",
             "Right X value",
             "Bottom Y value",
             "Top Y value" };
-        return new StringArrayDialog
-            (editFrame, labels, values,
-             "<html><body width=\"300 px\"><p>"
-             + "Enter the graph domain. Fractions are allowed. "
-             + "If you enter percentages, you must include the percent "
-             + "sign."
+        return new NumberColumnDialog
+            (editFrame, values, labels,
+             htmlify
+             ("<p>Enter the graph domain. Fractions are allowed. "
+              + "If you enter percentages, you must include the percent sign."
              + "<p>For logarithmic axes, enter the range of logarithms "
              + "(e.g. -2&nbsp;to&nbsp;2 for "
              + "10<sup>-2</sup>&nbsp;to&nbsp;10<sup>2</sup>)."
              + "<p>You can also set the domain later, using the "
-             + "<code>Properties/Scale</code> menu.");
+              + "<code>Properties/Scale</code> menu."));
     }
 
     /** Start on a blank new diagram.
@@ -3985,54 +3981,51 @@ PED files?"handle associate the PED file extension and with "
                             : (1.0
                                - (vertices[1].distance(vertices[2]) / 
                                   vertices[0].distance(vertices[3])));
-                        String initialHeight = String.format
-                            ("%.1f%%", defaultHeight * 100);
-                        String[] defaultValues = {
-                            "0%", initialHeight, "0%", "100%" };
-                        StringArrayDialog dog = trapezoidDialog(defaultValues);
+                        double[] defaultValues = { 0, defaultHeight, 0, 1 };
+                        NumberColumnDialog dog = trapezoidDialog(defaultValues);
+                        dog.setPercentage(true);
 
                         double minTop, maxTop, minRight, maxRight;
 
                         while (true) {
-                            String[] values = dog.showModal();
+                            double[] values = null;
+                            try {
+                                values = dog.showModalColumn();
+                            } catch (NumberFormatException x) {
+                                showError(x.getMessage());
+                                continue;
+                            }
                             if (values == null) {
                                 values = defaultValues;
                             }
-                            ArrayList<Double> dvs = new ArrayList<>();
-                            String parseMe = null;
-                            try {
-                                boolean retry = false;
-                                for (String s: values) {
-                                    parseMe = s;
-                                    double d = ContinuedFraction.parseDouble(parseMe);
-                                    if (d < 0 || d > 1) {
-                                        showError
-                                            ("Component density '" + parseMe + "' "
-                                             + "(equal to "
-                                             + String.format("%.2f%%", d * 100) + ") is "
-                                             + "not between 0% and 100%");
-                                        retry = true;
-                                        break;
-                                    }
-                                    dvs.add(d);
+
+                            boolean retry = false;
+                            for (int i = 0; i < values.length; ++i) {
+                                double d= values[i];
+                                if (d < 0 || d > 1) {
+                                    showError
+                                        ("Component density '" + dog.getTextAt(i) + "' "
+                                         + "(equal to "
+                                         + String.format("%.2f%%", d * 100) + ") is "
+                                         + "not between 0% and 100%");
+                                    retry = true;
+                                    break;
                                 }
-                                if (retry) {
-                                    continue;
-                                }
-                            } catch (NumberFormatException e) {
-                                showError
-                                    ("Invalid number format for '" + parseMe + "'.");
+                            }
+                            if (retry) {
                                 continue;
                             }
-                            minTop = dvs.get(0);
-                            maxTop = dvs.get(1);
+
+                            minTop = values[0];
+                            maxTop = values[1];
+                            minRight = values[2];
+                            maxRight = values[3];
+
                             if (minTop >= maxTop) {
                                 maxLessThanMinError
                                     ("the top component", minTop, maxTop);
                                 continue;
                             }
-                            minRight = dvs.get(2);
-                            maxRight = dvs.get(3);
                             if (minRight >= maxRight) {
                                 maxLessThanMinError
                                     ("the right component", minRight, maxRight);
@@ -4040,8 +4033,7 @@ PED files?"handle associate the PED file extension and with "
                             }
                             if (minTop + maxRight > 1 + 1e-12) {
                                 showError
-                                    ("<html><div width=\"200 px\">"
-                                     + "The sum of the min top component and the "
+                                    ("The sum of the min top component and the "
                                      + "max right component ("
                                      + String.format("%.2f%%", minTop * 100) + " + "
                                      + String.format("%.2f%%", maxRight * 100)
@@ -4121,37 +4113,40 @@ PED files?"handle associate the PED file extension and with "
                     }
                 case BINARY:
                     {
-                        String[] defaultValues = {
-                            "0","1", "0", "1" };
-                        StringArrayDialog dog = cartesianDialog(defaultValues);
+                        double[] defaultValues = {0, 1, 0, 1};
+                        NumberColumnDialog dog = cartesianDialog(defaultValues);
 
                         double bottom, top, left, right;
+                        double[] values = null;
+                        boolean xPercent = false;
+                        boolean yPercent = false;
 
                         while (true) {
-                            String[] values = dog.showModal();
-                            if (values == null) {
-                                values = defaultValues;
-                            }
-                            ArrayList<Double> dvs = new ArrayList<>();
-                            String parseMe = null;
                             try {
-                                for (String s: values) {
-                                    parseMe = s;
-                                    double d = ContinuedFraction.parseDouble(parseMe);
-                                    dvs.add(d);
+                                values = dog.showModalColumn();
+                                if (values == null) {
+                                    values = defaultValues;
+                                } else {
+                                    // If the user entered percentage
+                                    // values for the max X and Y
+                                    // values, then show percentages.
+                                    xPercent = dog.getTextAt(1).contains("%");
+                                    yPercent = dog.getTextAt(3).contains("%");
                                 }
-                            } catch (NumberFormatException e) {
-                                showError
-                                    ("Invalid number format for '" + parseMe + "'.");
+                            } catch (NumberFormatException x) {
+                                showError(x.getMessage());
                                 continue;
                             }
-                            left = dvs.get(0);
-                            right = dvs.get(1);
+                                    
+                            left = values[0];
+                            right = values[1];
+                            bottom = values[2];
+                            top = values[3];
+
                             if (left == right) {
                                 showError("The left and right X values cannot be equal.");
+                                continue;
                             }
-                            bottom = dvs.get(2);
-                            top = dvs.get(3);
                             if (bottom == top) {
                                 showError("The top and bottom Y values cannot be equal.");
                                 continue;
@@ -4163,6 +4158,13 @@ PED files?"handle associate the PED file extension and with "
                         add(binaryTopRuler(left, right, top));
                         add(binaryLeftRuler(bottom, top, left));
                         add(binaryRightRuler(bottom, top, right));
+
+                        if (xPercent) {
+                            togglePercentageDisplay(getXAxis());
+                        }
+                        if (yPercent) {
+                            togglePercentageDisplay(getYAxis());
+                        }
 
                         Rectangle2D.Double principalBounds
                             = new Rectangle2D.Double
