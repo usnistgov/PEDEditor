@@ -2649,10 +2649,16 @@ public class Diagram extends Observable implements Printable {
     }
 
     public void togglePercentageDisplay(Axis axis) {
-        if (axis.isPercentage()) {
+        boolean isPercentage = !axis.isPercentage();
+        if (!isPercentage) {
             axis.format = new DecimalFormat("0.0000");
         } else {
             axis.format = STANDARD_PERCENT_FORMAT;
+        }
+        for (LinearRuler r: rulers()) {
+            if (r.axis == axis) {
+                r.multiplier = isPercentage ? 100 : 1;
+            }
         }
         fixAxisFormat(axis);
     }
