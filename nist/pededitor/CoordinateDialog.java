@@ -11,12 +11,12 @@ import java.awt.event.FocusEvent;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
 import java.util.List;
+
 import javax.swing.AbstractAction;
 import javax.swing.JButton;
 import javax.swing.JDialog;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
-import javax.swing.JTextField;
 import javax.swing.SwingUtilities;
 
 /** GUI for entering a coordinate pair using a combination of any two variables. */
@@ -26,7 +26,7 @@ public class CoordinateDialog extends JDialog {
         (BasicEditor.htmlify("Enter a pair of coordinates. Fractions and "
                         + "percentages are allowed."));
     ArrowListenVariableSelector[] vars;
-    AutofocusTextField vals[];
+    AutofocusNumberField vals[];
     protected transient boolean pressedOK = false;
     @SuppressWarnings("serial")
     protected JButton okButton =  new JButton
@@ -37,10 +37,10 @@ public class CoordinateDialog extends JDialog {
             });
     { okButton.setFocusable(false); }
 
-    @SuppressWarnings("serial") static class AutofocusTextField
-        extends JTextField {
+    @SuppressWarnings("serial") static class AutofocusNumberField
+        extends NumberField {
         Component arrowTarget = null;
-        public AutofocusTextField(int size) {
+        public AutofocusNumberField(int size) {
             super(size);
             addFocusListener(new FocusAdapter() {
                     @Override public void focusGained(FocusEvent e) {
@@ -102,7 +102,7 @@ public class CoordinateDialog extends JDialog {
         
         int cnt = rowCnt();
         vars = new ArrowListenVariableSelector[cnt];
-        vals = new AutofocusTextField[cnt];
+        vals = new AutofocusNumberField[cnt];
 
         GridBagUtil gb = new GridBagUtil(getContentPane());
         gb.centerAndEndRow(descr);
@@ -111,7 +111,7 @@ public class CoordinateDialog extends JDialog {
         for (int row = 0; row < rowCnt(); ++row) {
             vars[row] = new ArrowListenVariableSelector();
             gb.addEast(vars[row]);
-            vals[row] = new AutofocusTextField(20);
+            vals[row] = new AutofocusNumberField(20);
             gb.endRowWith(vals[row]);
             vars[row].setArrowTarget(vals[row]);
         }
@@ -132,6 +132,10 @@ public class CoordinateDialog extends JDialog {
         setVisible(false);
     }
 
+    public void setValue(int varNum, double v) {
+        vals[varNum].setValue(v);
+    }
+
     public void setValue(int varNum, String text) {
         vals[varNum].setText(text);
     }
@@ -144,15 +148,16 @@ public class CoordinateDialog extends JDialog {
 
     public void setAxis(int varNum, LinearAxis axis) {
         vars[varNum].setSelected(axis);
+        vals[varNum].setFormat(axis.format);
     }
 
     public LinearAxis getAxis(int varNum, List<LinearAxis> axes) {
         return vars[varNum].getSelected(axes);
     }
 
-    /** Return the text that the user entered into the formula box. */
-    public String getValue(int varNum) {
-        return vals[varNum].getText();
+    /** Return the value in the formula box. */
+    public double getValue(int varNum) {
+        return vals[varNum].getValue();
     }
 
     /** Show the dialog as document-modal. Return true if the user
