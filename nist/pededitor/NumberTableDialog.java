@@ -21,27 +21,38 @@ public class NumberTableDialog extends JDialog {
     JButton okButton;
     NumberField[][] table;
 
-    NumberTableDialog(Frame owner, double[][] data, String[] columnNames) {
+    NumberTableDialog(Frame owner, int rowCnt, int colCnt, String[] rowNames,
+                      String[] columnNames, String intro) {
         super(owner, "Edit values", false);
-        table = new NumberField[data.length][data[0].length];
+        table = new NumberField[rowCnt][colCnt];
         GridBagUtil gb = new GridBagUtil(getContentPane());
 
-        for (int j = 0; j < columnNames.length; ++j) {
-            JLabel f = new JLabel(columnNames[j]);
-            if (j < columnNames.length - 1) {
-                gb.addWest(f);
-            } else {
-                gb.endRowWith(f);
+        if (intro != null) {
+            gb.centerAndEndRow(new JLabel(intro));
+        }
+
+        if (columnNames != null) {
+            if (rowNames != null) {
+                gb.addWest(new JLabel());
+            }
+            for (int j = 0; j < columnNames.length; ++j) {
+                JLabel f = new JLabel(columnNames[j]);
+                if (j < columnNames.length - 1) {
+                    gb.addWest(f);
+                } else {
+                    gb.endRowWith(f);
+                }
             }
         }
 
-        for (int i = 0; i < data.length; ++i) {
-            int cols = data[i].length;
-            for (int j = 0; j < cols; ++j) {
+        for (int i = 0; i < rowCnt; ++i) {
+            if (rowNames != null) {
+                gb.addWest(new JLabel(rowNames[i]));
+            }
+            for (int j = 0; j < colCnt; ++j) {
                 NumberField f = new NumberField(20);
-                f.setValue(data[i][j]);
                 table[i][j] = f;
-                if (j < cols - 1) {
+                if (j < colCnt - 1) {
                     gb.addWest(f);
                 } else {
                     gb.endRowWith(f);
@@ -62,6 +73,30 @@ public class NumberTableDialog extends JDialog {
         getRootPane().setDefaultButton(okButton);
     }
 
+    NumberTableDialog(Frame owner, double[][] data, String[] rowNames,
+                      String[] columnNames, String intro) {
+        this(owner, data.length, data[0].length, rowNames, columnNames, intro);
+        int rowCnt = data.length;
+        int colCnt = data[0].length;
+        for (int i = 0; i < rowCnt; ++i) {
+            for (int j = 0; j < colCnt; ++j) {
+                setValueAt(i,j,data[i][j]);
+            }
+        }
+    }
+
+    NumberTableDialog(Frame owner, String[][] data, String[] rowNames,
+                      String[] columnNames, String intro) {
+        this(owner, data.length, data[0].length, rowNames, columnNames, intro);
+        int rowCnt = data.length;
+        int colCnt = data[0].length;
+        for (int i = 0; i < rowCnt; ++i) {
+            for (int j = 0; j < colCnt; ++j) {
+                setValueAt(i,j,data[i][j]);
+            }
+        }
+    }
+
     public int getRowCount() {
         return table.length;
     }
@@ -70,8 +105,20 @@ public class NumberTableDialog extends JDialog {
         return table[0].length;
     }
 
-    public double getValueAt(int i, int j) {
-        return table[i][j].getValue();
+    public double getValueAt(int row, int col) {
+        return table[row][col].getValue();
+    }
+
+    public String getTextAt(int row, int col) {
+        return table[row][col].getText();
+    }
+
+    public void setValueAt(int row, int col, double v) {
+        table[row][col].setValue(v);
+    }
+
+    public void setValueAt(int row, int col, String v) {
+        table[row][col].setText(v);
     }
 
     /** Set whether to show the given field as a percentage. */
@@ -91,7 +138,7 @@ public class NumberTableDialog extends JDialog {
     /** Show the dialog as document-modal, and return the selected
         values (as strings). Return null if the dialog was closed
         abnormally. */
-    public double[][] showModal() {
+    public double[][] showModal() throws NumberFormatException {
         setModalityType(Dialog.ModalityType.DOCUMENT_MODAL);
         pack();
         setVisible(true);
@@ -114,7 +161,8 @@ public class NumberTableDialog extends JDialog {
              new double[][]
                 {{ 1.0/3, 0.5, 0.7 },
                  { 0.2, 0.411111356, 0.9234729835888 }},
-             new String[] { "Column one", "Column two", "Column three" });
+                 new String[] { "Row one", "Row two" },
+             new String[] { "Column one", "Column two", "Column three" }, "Intro");
         dog.setPercentage(true);
         double[][] values = dog.showModal();
         if (values != null) {
