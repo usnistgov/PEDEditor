@@ -1,3 +1,6 @@
+/* Eric Boesch, NIST Materials Measurement Laboratory, 2014. This file
+ * is placed into the public domain. */
+
 package gov.nist.pededitor;
 
 import java.text.NumberFormat;
@@ -5,10 +8,10 @@ import java.text.NumberFormat;
 import javax.swing.JTextField;
 
 /** A text field for entering numbers. Percent signs and fractions are
- allowed. The value displayed to the user may leave out some trailing
- decimals in the input value, but if the value does not change, the
- value returned will exactly equal the original value, including the
- hidden digits. */
+    allowed. The value displayed to the user may leave out some
+    trailing decimals in the input value, but if the user does not
+    alter the text, then the value returned will exactly equal the
+    original value, including the hidden digits. */
 class NumberField extends JTextField {
     private static final long serialVersionUID = 6579379135556549548L;
 
