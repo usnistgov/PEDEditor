@@ -2438,7 +2438,6 @@ public class Diagram extends Observable implements Printable {
         if (axis != null) {
             if (str != null) {
                 rename(axis, str);
-                axis.format = STANDARD_PERCENT_FORMAT;
             }
             return;
         }
@@ -2458,7 +2457,7 @@ public class Diagram extends Observable implements Printable {
         can take within the standard page. Assumes that the extremes
         are represented by corners of the page. */
     public double[] getRange(Axis ax) {
-        if (principalToStandardPage == null) {
+        if (principalToStandardPage == null || pageBounds == null) {
             return new double[] { 0, 0 };
         }
         int pointCnt = 0;
@@ -2648,8 +2647,7 @@ public class Diagram extends Observable implements Printable {
         }
     }
 
-    public void togglePercentageDisplay(Axis axis) {
-        boolean isPercentage = !axis.isPercentage();
+    public void setPercentageDisplay(Axis axis, boolean isPercentage) {
         if (!isPercentage) {
             axis.format = new DecimalFormat("0.0000");
         } else {
@@ -4473,6 +4471,9 @@ public class Diagram extends Observable implements Printable {
         double[] range = getRange(axis);
         boolean percentP = ((DecimalFormat) (axis.format)).getMultiplier() == 100;
         double max = Math.max(-range[0], range[1]);
+        if (max == 0) {
+            return;
+        }
         if (percentP) {
             if (max < 0.0001) {
                 axis.format = new DecimalFormat("0.000E0%");
