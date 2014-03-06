@@ -84,7 +84,7 @@
     "a" : 0.0,
     "b" : 1.0,
     "c" : 0.0,
-    "name" : "T°C"
+    "name" : "T"
   }, {
     "format" : {
       "type" : "DecimalFormat",
@@ -124,7 +124,7 @@
     "textAngle" : 1.5707963267948966,
     "tickRight" : true,
     "tickPadding" : 3.0,
-    "axis" : "T°C",
+    "axis" : "T",
     "fontSize" : 0.02
   }, {
     "decoration" : "ruler",
@@ -141,7 +141,7 @@
     "textAngle" : 1.5707963267948966,
     "tickLeft" : true,
     "tickPadding" : 3.0,
-    "axis" : "T°C",
+    "axis" : "T",
     "fontSize" : 0.02
   }, {
     "decoration" : "ruler",
