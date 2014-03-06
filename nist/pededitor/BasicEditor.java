@@ -136,10 +136,6 @@ import Jama.Matrix;
 // XYZZY is not available during auto-positionning, for no good
 // reason, but the help implies that it is.
 
-// TODO (feature, optional) Infer whether to show percentages from
-// whether the user entered percentages in the "Enter the graph
-// domain" dialog.
-
 // TODO (optional): Remappable key bindings.
 
 // TODO (optional) Automatically convert diagram components into
@@ -2454,7 +2450,7 @@ public class BasicEditor extends Diagram
     public void togglePercentageDisplay(String varName) {
         for (Axis axis: axes) {
             if (varName.equals(axis.name)) {
-                togglePercentageDisplay(axis);
+                setPercentageDisplay(axis, !axis.isPercentage());
                 return;
             }
         }
@@ -3986,6 +3982,7 @@ PED files?"handle associate the PED file extension and with "
                         dog.setPercentage(true);
 
                         double minTop, maxTop, minRight, maxRight;
+                        boolean isPercent = true;
 
                         while (true) {
                             double[] values = null;
@@ -3997,6 +3994,8 @@ PED files?"handle associate the PED file extension and with "
                             }
                             if (values == null) {
                                 values = defaultValues;
+                            } else {
+                                isPercent = dog.havePercentage();
                             }
 
                             boolean retry = false;
@@ -4109,6 +4108,11 @@ PED files?"handle associate the PED file extension and with "
                         rule = ternaryRightRuler(minTop, maxTop, maxRight);
                         rule.startArrow = false;
                         add(rule);
+
+                        for (Axis axis: getAxes()) {
+                            setPercentageDisplay(axis, isPercent);
+                        }
+
                         break;
                     }
                 case BINARY:
@@ -4159,12 +4163,8 @@ PED files?"handle associate the PED file extension and with "
                         add(binaryLeftRuler(bottom, top, left));
                         add(binaryRightRuler(bottom, top, right));
 
-                        if (xPercent) {
-                            togglePercentageDisplay(getXAxis());
-                        }
-                        if (yPercent) {
-                            togglePercentageDisplay(getYAxis());
-                        }
+                        setPercentageDisplay(getXAxis(), xPercent);
+                        setPercentageDisplay(getYAxis(), yPercent);
 
                         Rectangle2D.Double principalBounds
                             = new Rectangle2D.Double
@@ -4243,28 +4243,24 @@ PED files?"handle associate the PED file extension and with "
                                   angleSideLengths[1] / maxSideLength };
                         }
 
-                        String pageMaxInitialValues[] = new String[pageMaxes.length];
-                        for (int i = 0; i < pageMaxes.length; ++i) {
-                            pageMaxInitialValues[i] = ContinuedFraction.toString
-                                (pageMaxes[i], true);
-                        }
-                        DimensionsDialog dialog = new DimensionsDialog
-                            (editFrame, new String[] { sideNames[ov1], sideNames[ov2] });
-                        dialog.setDimensions(pageMaxInitialValues);
-                        dialog.setTitle("Select Screen Side Lengths");
+                        DimensionsDialog dog = new DimensionsDialog
+                            (editFrame, pageMaxes,
+                             new String[] { sideNames[ov1], sideNames[ov2] });
+                        dog.setPercentage(true);
+                        dog.setTitle("Select Triangle Side Lengths");
+                        boolean isPercent = true;
 
                         while (true) {
-                            String[] pageMaxStrings = dialog.showModal();
-                            if (pageMaxStrings == null) {
-                                pageMaxStrings = (String[]) pageMaxInitialValues.clone();
-                            }
                             try {
-                                for (int i = 0; i < pageMaxStrings.length; ++i) {
-                                    pageMaxes[i] = ContinuedFraction.parseDouble(pageMaxStrings[i]);
+                                double[] pageMaxes2 = dog.showModalColumn();
+                                if (pageMaxes2 != null) {
+                                    pageMaxes = pageMaxes2;
+                                    isPercent = dog.havePercentage();
                                 }
                                 break;
                             } catch (NumberFormatException e) {
-                                showError(e.toString(), "Invalid number format.");
+                                showError(e.getMessage(), "Invalid number format.");
+                                continue;
                             }
                         }
 
@@ -4389,6 +4385,10 @@ PED files?"handle associate the PED file extension and with "
 
                         principalToStandardPage = new TriangleTransform
                             (trianglePoints, xformed);
+
+                        for (Axis axis: getAxes()) {
+                            setPercentageDisplay(axis, isPercent);
+                        }
 
                         break;
                     }
