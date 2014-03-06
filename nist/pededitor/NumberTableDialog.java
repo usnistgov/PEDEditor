@@ -135,6 +135,18 @@ public class NumberTableDialog extends JDialog {
         }
     }
 
+    /** Return true if at least one entry includes a percent sign. */
+    public boolean havePercentage() {
+        for (int i = 0; i < getRowCount(); ++i) {
+            for (int j = 0; j < getColumnCount(); ++j) {
+                if (table[i][j].getText().contains("%")) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
     /** Show the dialog as document-modal, and return the selected
         values (as strings). Return null if the dialog was closed
         abnormally. */
