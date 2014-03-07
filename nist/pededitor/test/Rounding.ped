@@ -1,0 +1,581 @@
+{
+  "tags" : [ ],
+  "principalToStandardPage" : {
+    "transform" : "RectangleTransform",
+    "input" : {
+      "x" : 37.0,
+      "y" : 0.0,
+      "width" : 1.0000000000000002,
+      "height" : 1.0
+    },
+    "output" : {
+      "x" : 0.0,
+      "y" : 1.0,
+      "width" : 1.0,
+      "height" : -1.0
+    }
+  },
+  "pageBounds" : {
+    "x" : -0.5789329621701642,
+    "y" : 0.5453262483872431,
+    "width" : 1.6419127990941047,
+    "height" : 0.761173933390295
+  },
+  "diagramType" : "BINARY",
+  "diagramComponents" : [ null, null, null, null ],
+  "axes" : [ {
+    "format" : {
+      "type" : "DecimalFormat",
+      "pattern" : "#0.0000"
+    },
+    "a" : 1.0,
+    "b" : 0.0,
+    "c" : 0.0,
+    "name" : "X"
+  }, {
+    "format" : {
+      "type" : "DecimalFormat",
+      "pattern" : "#0.0000"
+    },
+    "a" : 0.0,
+    "b" : 1.0,
+    "c" : 0.0,
+    "name" : "Y"
+  }, {
+    "format" : {
+      "type" : "DecimalFormat",
+      "pattern" : "#0.0000"
+    },
+    "a" : 0.9999999999999998,
+    "b" : 0.0,
+    "c" : -36.99999999999999,
+    "name" : "page X"
+  }, {
+    "format" : {
+      "type" : "DecimalFormat",
+      "pattern" : "#0.0000"
+    },
+    "a" : 0.0,
+    "b" : -1.0,
+    "c" : 1.0,
+    "name" : "page Y"
+  } ],
+  "usingWeightFraction" : false,
+  "fontName" : "DejaVu LGC Sans PED",
+  "keys" : {
+  },
+  "decorations" : [ {
+    "decoration" : "curve",
+    "curve" : {
+      "points" : [ {
+	"x" : 37.95,
+	"y" : 0.0
+      }, {
+	"x" : 38.05,
+	"y" : 0.0
+      }, {
+	"x" : 38.0,
+	"y" : 0.1
+      } ],
+      "smoothed" : [ false, false, false ],
+      "closed" : true
+    },
+    "color" : {
+      "rgb" : -13369549
+    },
+    "lineWidth" : 0.0024,
+    "fillStyle" : "ALPHA50",
+    "id" : 23
+  }, {
+    "decoration" : "ruler",
+    "startPoint" : {
+      "x" : 36.449999999999996,
+      "y" : 0.0
+    },
+    "endPoint" : {
+      "x" : 38.05,
+      "y" : 0.0
+    },
+    "lineWidth" : 0.0014,
+    "labelAnchor" : "LEFT",
+    "tickLeft" : true,
+    "endArrow" : true,
+    "suppressEndTick" : true,
+    "suppressEndLabel" : true,
+    "axis" : "X",
+    "fontSize" : 0.011856368563685637
+  }, {
+    "decoration" : "ruler",
+    "startPoint" : {
+      "x" : 36.449999999999996,
+      "y" : 0.1
+    },
+    "endPoint" : {
+      "x" : 38.05,
+      "y" : 0.1
+    },
+    "lineWidth" : 0.0024,
+    "color" : {
+      "rgb" : -16777216
+    },
+    "labelAnchor" : "LEFT",
+    "textAngle" : -2.775557561562892E-17,
+    "tickLeft" : true,
+    "tickPadding" : 1.0,
+    "startArrow" : true,
+    "endArrow" : true,
+    "suppressStartTick" : true,
+    "suppressStartLabel" : true,
+    "suppressEndTick" : true,
+    "suppressEndLabel" : true,
+    "axis" : "X",
+    "fontSize" : 0.020325203252032523
+  }, {
+    "decoration" : "curve",
+    "curve" : {
+      "points" : [ {
+	"x" : 37.85,
+	"y" : 0.0
+      }, {
+	"x" : 37.95,
+	"y" : 0.0
+      }, {
+	"x" : 37.9,
+	"y" : 0.1
+      } ],
+      "smoothed" : [ false, false, false ],
+      "closed" : true
+    },
+    "color" : {
+      "rgb" : -13369549
+    },
+    "lineWidth" : 0.0024,
+    "fillStyle" : "ALPHA50",
+    "id" : 11
+  }, {
+    "decoration" : "curve",
+    "curve" : {
+      "points" : [ {
+	"x" : 37.75,
+	"y" : 0.0
+      }, {
+	"x" : 37.85,
+	"y" : 0.0
+      }, {
+	"x" : 37.800000000000004,
+	"y" : 0.1
+      } ],
+      "smoothed" : [ false, false, false ],
+      "closed" : true
+    },
+    "color" : {
+      "rgb" : -13369549
+    },
+    "lineWidth" : 0.0024,
+    "fillStyle" : "ALPHA50",
+    "id" : 12
+  }, {
+    "decoration" : "curve",
+    "curve" : {
+      "points" : [ {
+	"x" : 37.65,
+	"y" : 0.0
+      }, {
+	"x" : 37.75,
+	"y" : 0.0
+      }, {
+	"x" : 37.7,
+	"y" : 0.1
+      } ],
+      "smoothed" : [ false, false, false ],
+      "closed" : true
+    },
+    "color" : {
+      "rgb" : -13369549
+    },
+    "lineWidth" : 0.0024,
+    "fillStyle" : "ALPHA50",
+    "id" : 13
+  }, {
+    "decoration" : "curve",
+    "curve" : {
+      "points" : [ {
+	"x" : 37.550000000000004,
+	"y" : 0.0
+      }, {
+	"x" : 37.65,
+	"y" : 0.0
+      }, {
+	"x" : 37.6,
+	"y" : 0.1
+      } ],
+      "smoothed" : [ false, false, false ],
+      "closed" : true
+    },
+    "color" : {
+      "rgb" : -13369549
+    },
+    "lineWidth" : 0.0024,
+    "fillStyle" : "ALPHA50",
+    "id" : 14
+  }, {
+    "decoration" : "curve",
+    "curve" : {
+      "points" : [ {
+	"x" : 37.45,
+	"y" : 0.0
+      }, {
+	"x" : 37.550000000000004,
+	"y" : 0.0
+      }, {
+	"x" : 37.5,
+	"y" : 0.1
+      } ],
+      "smoothed" : [ false, false, false ],
+      "closed" : true
+    },
+    "color" : {
+      "rgb" : -13369549
+    },
+    "lineWidth" : 0.0024,
+    "fillStyle" : "ALPHA50",
+    "id" : 15
+  }, {
+    "decoration" : "curve",
+    "curve" : {
+      "points" : [ {
+	"x" : 37.35,
+	"y" : 0.0
+      }, {
+	"x" : 37.45,
+	"y" : 0.0
+      }, {
+	"x" : 37.4,
+	"y" : 0.1
+      } ],
+      "smoothed" : [ false, false, false ],
+      "closed" : true
+    },
+    "color" : {
+      "rgb" : -13369549
+    },
+    "lineWidth" : 0.0024,
+    "fillStyle" : "ALPHA50",
+    "id" : 16
+  }, {
+    "decoration" : "curve",
+    "curve" : {
+      "points" : [ {
+	"x" : 37.25,
+	"y" : 0.0
+      }, {
+	"x" : 37.35,
+	"y" : 0.0
+      }, {
+	"x" : 37.3,
+	"y" : 0.1
+      } ],
+      "smoothed" : [ false, false, false ],
+      "closed" : true
+    },
+    "color" : {
+      "rgb" : -13369549
+    },
+    "lineWidth" : 0.0024,
+    "fillStyle" : "ALPHA50",
+    "id" : 17
+  }, {
+    "decoration" : "curve",
+    "curve" : {
+      "points" : [ {
+	"x" : 37.15,
+	"y" : 0.0
+      }, {
+	"x" : 37.25,
+	"y" : 0.0
+      }, {
+	"x" : 37.2,
+	"y" : 0.1
+      } ],
+      "smoothed" : [ false, false, false ],
+      "closed" : true
+    },
+    "color" : {
+      "rgb" : -13369549
+    },
+    "lineWidth" : 0.0024,
+    "fillStyle" : "ALPHA50",
+    "id" : 18
+  }, {
+    "decoration" : "curve",
+    "curve" : {
+      "points" : [ {
+	"x" : 37.05,
+	"y" : 0.0
+      }, {
+	"x" : 37.15,
+	"y" : 0.0
+      }, {
+	"x" : 37.1,
+	"y" : 0.1
+      } ],
+      "smoothed" : [ false, false, false ],
+      "closed" : true
+    },
+    "color" : {
+      "rgb" : -13369549
+    },
+    "lineWidth" : 0.0024,
+    "fillStyle" : "ALPHA50",
+    "id" : 19
+  }, {
+    "decoration" : "curve",
+    "curve" : {
+      "points" : [ {
+	"x" : 36.95,
+	"y" : 0.0
+      }, {
+	"x" : 37.05,
+	"y" : 0.0
+      }, {
+	"x" : 37.0,
+	"y" : 0.1
+      } ],
+      "smoothed" : [ false, false, false ],
+      "closed" : true
+    },
+    "color" : {
+      "rgb" : -13369549
+    },
+    "lineWidth" : 0.0024,
+    "fillStyle" : "ALPHA50",
+    "id" : 20
+  }, {
+    "decoration" : "curve",
+    "curve" : {
+      "points" : [ {
+	"x" : 37.5,
+	"y" : 0.1
+      }, {
+	"x" : 38.0,
+	"y" : 0.4
+      }, {
+	"x" : 38.0,
+	"y" : 0.1
+      } ],
+      "smoothed" : [ false, false, false ],
+      "closed" : true
+    },
+    "color" : {
+      "rgb" : -16776961
+    },
+    "lineWidth" : 0.0024,
+    "fillStyle" : "ALPHA50",
+    "id" : 21
+  }, {
+    "decoration" : "curve",
+    "curve" : {
+      "points" : [ {
+	"x" : 36.5,
+	"y" : 0.1
+      }, {
+	"x" : 37.0,
+	"y" : 0.4
+      }, {
+	"x" : 37.4,
+	"y" : 0.1
+      } ],
+      "smoothed" : [ false, false, false ],
+      "closed" : true
+    },
+    "color" : {
+      "rgb" : -65434
+    },
+    "lineWidth" : 0.0024,
+    "fillStyle" : "ALPHA50",
+    "id" : 22
+  }, {
+    "decoration" : "ruler",
+    "startPoint" : {
+      "x" : 36.449999999999996,
+      "y" : 0.4
+    },
+    "endPoint" : {
+      "x" : 38.05,
+      "y" : 0.4
+    },
+    "lineWidth" : 0.0024,
+    "color" : {
+      "rgb" : -16777216
+    },
+    "labelAnchor" : "LEFT",
+    "tickLeft" : true,
+    "tickPadding" : 20.0,
+    "startArrow" : true,
+    "endArrow" : true,
+    "suppressStartTick" : true,
+    "suppressStartLabel" : true,
+    "suppressEndTick" : true,
+    "suppressEndLabel" : true,
+    "axis" : "X",
+    "fontSize" : 0.020325203252032523
+  }, {
+    "decoration" : "curve",
+    "curve" : {
+      "points" : [ {
+	"x" : 36.85,
+	"y" : 0.0
+      }, {
+	"x" : 36.95,
+	"y" : 0.0
+      }, {
+	"x" : 36.9,
+	"y" : 0.1
+      } ],
+      "smoothed" : [ false, false, false ],
+      "closed" : true
+    },
+    "color" : {
+      "rgb" : -13369549
+    },
+    "lineWidth" : 0.0024,
+    "fillStyle" : "ALPHA50",
+    "id" : 24
+  }, {
+    "decoration" : "curve",
+    "curve" : {
+      "points" : [ {
+	"x" : 36.75,
+	"y" : 0.0
+      }, {
+	"x" : 36.85,
+	"y" : 0.0
+      }, {
+	"x" : 36.8,
+	"y" : 0.1
+      } ],
+      "smoothed" : [ false, false, false ],
+      "closed" : true
+    },
+    "color" : {
+      "rgb" : -13369549
+    },
+    "lineWidth" : 0.0024,
+    "fillStyle" : "ALPHA50",
+    "id" : 25
+  }, {
+    "decoration" : "curve",
+    "curve" : {
+      "points" : [ {
+	"x" : 36.65,
+	"y" : 0.0
+      }, {
+	"x" : 36.75,
+	"y" : 0.0
+      }, {
+	"x" : 36.7,
+	"y" : 0.1
+      } ],
+      "smoothed" : [ false, false, false ],
+      "closed" : true
+    },
+    "color" : {
+      "rgb" : -13369549
+    },
+    "lineWidth" : 0.0024,
+    "fillStyle" : "ALPHA50",
+    "id" : 26
+  }, {
+    "decoration" : "curve",
+    "curve" : {
+      "points" : [ {
+	"x" : 36.55,
+	"y" : 0.0
+      }, {
+	"x" : 36.65,
+	"y" : 0.0
+      }, {
+	"x" : 36.6,
+	"y" : 0.1
+      } ],
+      "smoothed" : [ false, false, false ],
+      "closed" : true
+    },
+    "color" : {
+      "rgb" : -13369549
+    },
+    "lineWidth" : 0.0024,
+    "fillStyle" : "ALPHA50",
+    "id" : 27
+  }, {
+    "decoration" : "curve",
+    "curve" : {
+      "points" : [ {
+	"x" : 36.449999999999996,
+	"y" : 0.0
+      }, {
+	"x" : 36.55,
+	"y" : 0.0
+      }, {
+	"x" : 36.5,
+	"y" : 0.1
+      } ],
+      "smoothed" : [ false, false, false ],
+      "closed" : true
+    },
+    "color" : {
+      "rgb" : -13369549
+    },
+    "lineWidth" : 0.0024,
+    "fillStyle" : "ALPHA50",
+    "id" : 28
+  }, {
+    "decoration" : "curve",
+    "curve" : {
+      "points" : [ {
+	"x" : 36.449999999999996,
+	"y" : 0.0
+      }, {
+	"x" : 37.0,
+	"y" : 0.3999999999999999
+      }, {
+	"x" : 37.45,
+	"y" : 0.0
+      } ],
+      "smoothed" : [ false, false, false ],
+      "closed" : false
+    },
+    "color" : {
+      "rgb" : -16777216
+    },
+    "lineWidth" : 0.0017,
+    "lineStyle" : "DASH3",
+    "id" : 29
+  }, {
+    "decoration" : "label",
+    "text" : "Continuous range of actual values",
+    "xWeight" : 0.5,
+    "x" : 37.25,
+    "scale" : 1.5
+  }, {
+    "decoration" : "label",
+    "text" : "Measurements recorded to 3 significant figures",
+    "xWeight" : 0.5,
+    "x" : 37.25,
+    "y" : 0.1,
+    "scale" : 1.5
+  }, {
+    "decoration" : "label",
+    "text" : "Measurements later rounded down to 2 significant figures",
+    "xWeight" : 0.5,
+    "x" : 37.25,
+    "y" : 0.4,
+    "scale" : 1.5
+  }, {
+    "decoration" : "label",
+    "text" : "<div style=\"width: 5000 px\"><p>If you start with data that were already rounded when first recorded and remove a single significant figure by rounding a trailing 0-4 digit down and 5-9 up, original values in the range 36.45 - 37.45 end up being rounded to 37. If the actual values are roughly uniformly distributed over a wide range, this rounding procedure will tend to produce rounded values that are on average 0.05 greater than the input values. At 1/20th of a significant figure, this bias is fairly small.\n<p>One rule in common use to reduce the bias is to round 5s to produce an even trailing digit, so 1.5 is rounded up to 2 but 4.5 is rounded down to 4. If the range of input values is considerably larger than the number of significant figures, then this rule is likely to cause 5s to be rounded up about as often as they are rounded down, reducing the bias.\n<p>This problem can also occur when the input values are discrete. For instance, if you count the population of a city and then round it to the nearest tens value, you may expect the approximation to be on average about one-half of a person too high.</div>",
+    "x" : 36.5,
+    "y" : -0.06,
+    "scale" : 1.1
+  } ]
+}
