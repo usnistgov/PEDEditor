@@ -384,7 +384,7 @@ class LinearRuler implements BoundedParameterizable2D, Decorated {
         // m = page distance divided by logical distance.
 
         double m = distance / (aend - astart);
-        double minBigTickDelta = digitBounds.getHeight() / m;
+        double minBigTickDelta = RulerTick.roundCeil(digitBounds.getHeight() / m);
 
         // Construct an approximation of the largest string that is
         // likely to appear as a label in order to ascertain its size.
@@ -411,7 +411,7 @@ class LinearRuler implements BoundedParameterizable2D, Decorated {
             longestLabel = (lo.length() > hi.length()) ? lo : hi;
         } else {
             RulerTick rt2 = rt.clone();
-            rt2.mergeHigh(minBigTickDelta);
+            rt2.merge(minBigTickDelta);
             longestLabel = rt2.longestString();
         }
         
