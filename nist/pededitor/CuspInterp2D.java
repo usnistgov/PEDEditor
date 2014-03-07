@@ -72,12 +72,13 @@ public class CuspInterp2D extends PointsInterp2D {
         this(segment.getP1(), segment.getP2());
     }
 
-    /** Return true if the curve is to be smoothed across vertex
-        #vertexNo. If the curve is not closed or if the curve contains
-        two or fewer points, then the smoothing settings for the first
-        and last points have no immediate effect. */
+    /** Return true if the curve is to be smoothed at t = #vertexNo.
+        If the curve is not closed or if the curve contains two or
+        fewer points, then the smoothing settings for the first and
+        last points have no immediate effect. */
     public final boolean isSmoothed(int vertexNo) {
-        return smoothed.get(vertexNo);
+        return smoothed.get
+            ((vertexNo == smoothed.size() && isClosed()) ? 0 : vertexNo);
     }
 
     /** Return true if this point looks like an endpoint of the curve. */
