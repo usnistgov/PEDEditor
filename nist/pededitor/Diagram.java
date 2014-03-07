@@ -338,8 +338,13 @@ public class Diagram extends Observable implements Printable {
             BoundedParam2D c = getItem()
                 .createTransformed(principalToStandardPage)
                 .getParameterization();
-            double ct = BoundedParam2Ds.getNearestVertex(c, t);
-            return new VertexHandle(this, (int) ct);
+            int it = (int) BoundedParam2Ds.getNearestVertex(c, t);
+            if (it >= getItem().size()) {
+                // For closed curves, position t=size() wraps around
+                // to point to vertex #0.
+                it = 0;
+            }
+            return new VertexHandle(this, it);
         }
     }
 
