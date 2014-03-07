@@ -3252,7 +3252,14 @@ public class BasicEditor extends Diagram
         double[][] data = {{v1, v1}, {v2, v2}};
 
         NumberTableDialog dog = new NumberTableDialog
-            (editFrame, data, null, columnNames, null);
+            (editFrame, data, null, columnNames,
+             htmlify
+             ("Enter two pairs of current and new values. For example, to convert "
+              + "from degrees Celsius to degrees Kelvin, you might choose"
+              + "<blockquote>(Current value: 0, New value: 273.15)</blockquote>"
+              + "<blockquote>(Current value: 1, New value: 274.15)</blockquote>"
+              + "<p>Fractions are allowed. "
+              + "If you enter percentages, you must include the percent sign."));
         dog.setTitle("Scale " + axis.name + " units");
         dog.setPercentage(axis.isPercentage());
         double[][] output = dog.showModal();
