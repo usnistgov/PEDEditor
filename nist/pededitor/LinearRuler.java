@@ -447,13 +447,13 @@ class LinearRuler implements BoundedParameterizable2D, Decorated {
                 bigTickD = 1;
             }
         }
+        rt.merge(bigTickD);
 
         // tickD = change in logical coordinates between
         // neighboring ticks.
         double tickD = Double.isNaN(tickDelta)
             ? RulerTick.nextSmallerRound(bigTickD)
             : tickDelta;
-        rt.merge(tickD);
 
         g.setStroke(new BasicStroke((float) (scale * lineWidth),
                                     BasicStroke.CAP_BUTT, BasicStroke.JOIN_BEVEL));
