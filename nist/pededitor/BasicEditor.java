@@ -102,6 +102,16 @@ import Jama.Matrix;
 // TODO support for tablets or one-button systems (not a big deal
 // since Android doesn't support Java 7 yet anyway)
 
+// TODO The tick spacing can change when you resize images, and a
+// diagram that have ticks separated by 5 units on-screen might have
+// them separated by 2 units in the printout. This is a consequence of
+// the use of font metrics -- fonts don't scale continuously as you
+// resize the page, but instead, the dimensions of rendered strings
+// rise with font size in a stair-step pattern. This is for aesthetic
+// reasons -- text looks better when letters align with pixel
+// boundaries instead of having borders that lie halfway between rows
+// or columns.
+
 // TODO (bug, 5/10) Somehow, the "nearest point on curve" can get
 // stuck at control points, which implies the nearest point isn't
 // actually being computed correctly.
@@ -5407,7 +5417,6 @@ PED files?"handle associate the PED file extension and with "
         CoordinateDialog dog = getCoordinateDialog();
         dog.setTitle("Set mouse position");
         int cnt = dog.rowCnt();
-
         LinearAxis[] axes = { getXAxis(), getYAxis() };
 
         dog.setAxes(getAxes());
