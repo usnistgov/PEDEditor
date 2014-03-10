@@ -91,7 +91,8 @@ public class EditFrame extends JFrame
                     getEditor().showOpenDialog(EditFrame.this);
                 }
             });
-    protected Action actSave = new Action("Save", KeyEvent.VK_S) {
+    protected Action actSave = new Action("Save", KeyEvent.VK_S,
+                                          KeyStroke.getKeyStroke("control S")) {
             @Override public void actionPerformed(ActionEvent e) {
                 getEditor().save();
             }
@@ -184,7 +185,7 @@ public class EditFrame extends JFrame
        };
 
     Action actRemoveAll = new Action
-        ("Delete all", KeyEvent.VK_A) {
+        ("Delete all", KeyEvent.VK_A, KeyStroke.getKeyStroke("control D")) {
             @Override public void actionPerformed(ActionEvent e) {
                 getEditor().removeLikeSelection();
                 finishEvent();
