@@ -208,25 +208,29 @@ import Jama.Matrix;
 // point, to make it easier to change the fill for that region.
 // Unfortunately the math is not trivial.
 
+// TODO (Optional, 4/10) Allow line selection to cycle around likely
+// candidates the same way that point selection does.
+
+// TODO (optional, 4 hours, 3/10) Add mathematical italic lowercase pi
+// (U+1D70B) to the font and the label editing palette (it's part of
+// DejaVu Italic)
+
+// TODO (optional, easy?, 2/10) Add "Print visible region" as an
+// alternative to "Print". (You can always collapse the margins to the
+// region you want to show and then print that, but that's slow and
+// might be hard to undo.)
+
+// TODO (optional, 2 days, 2/10) Let the user select the rise and run
+// variables of the slope window. This would also facilitate drawing
+// straight lines whose slopes are defined in terms of user variables.
+
 // DONTFIX? (minor bug) If you select one curve control point with
 // 'Q', then move close to a neighboring vertex that is still less
 // than the unstick distance away, then press 'Q' again, it will
 // reject it as a repeat. This is sort-of by design, though it seems a
 // bit odd sometimes.
 
-// TODO (Optional) Allow line selection to cycle around likely
-// candidates the same way that point selection does.
-
-// TODO (optional, easy?) Add "Print visible region" as an alternative
-// to "Print". (You can always collapse the margins to the region you
-// want to show and then print that, but that's slow and might be hard
-// to undo.)
-
-// TODO (optional, 3 days) Let the user select the rise and run
-// variables of the slope window. This would also facilitate drawing
-// straight lines whose slopes are defined in terms of user variables.
-
-// TODO (optional) Allow marking of multiple objects.
+// TODO (optional, 2/10) Allow marking of multiple objects.
 
 // TODO (1 week) Apply a gradient to all control points on a curve.
 // Specifically, apply the following transformation to all points on
@@ -301,6 +305,9 @@ import Jama.Matrix;
 
 // TODO (optional) More compact representation for symbol sets in the
 // PED format.
+
+// TODO (optional) Make the status bar font bigger, or at least allow
+// that as an option.
 
 // TODO (preexisting in viewer) Periodic table integration.
 
@@ -2287,7 +2294,7 @@ public class BasicEditor extends Diagram
         vhand.getDecoration().remove();
         RulerDecoration d = new RulerDecoration(r);
         addDecoration(d);
-        setSelection(new RulerHandle(d, RulerHandleType.END));
+        setSelection(new RulerHandle(d, SegmentHandleType.END));
     }
 
     public void renameVariable(String name) {
@@ -5217,8 +5224,8 @@ PED files?"handle associate the PED file extension and with "
         if (rh != null) {
             return new RulerHandle
                 (rh.decoration,
-                 (rh.handle == RulerHandleType.START) ? RulerHandleType.END
-                 : RulerHandleType.START);
+                 (rh.handle == SegmentHandleType.START) ? SegmentHandleType.END
+                 : SegmentHandleType.START);
         }
         return null;
     }
