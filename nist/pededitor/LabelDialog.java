@@ -224,7 +224,7 @@ public class LabelDialog extends JDialog {
                         }
                     };
 
-                pal = new StringPalettePanel(new HTMLPalette(), 6, font);
+                pal = new StringPalettePanel(new HTMLPalette(), 8, font);
                 pal.addListener(listen);
                 gb.endRowWith(pal);
 
