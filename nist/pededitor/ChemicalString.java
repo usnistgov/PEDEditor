@@ -189,7 +189,7 @@ public class ChemicalString {
             .replaceAll(subscriptNeededReplacement);
     }
 
-    public static class Match {
+    public static class Match implements Cloneable {
         /** Inclusive index of beginning of match into input
             CharSequence -- like String#substring(). */
         int beginIndex;
@@ -197,7 +197,7 @@ public class ChemicalString {
             like String#substring(). */
         int endIndex;
         boolean mIsWholeStringMatch;
-        Map<String,Double> composition;
+        HashMap<String,Double> composition;
 
         public String within(String s) {
             return s.substring(beginIndex, endIndex);
@@ -240,18 +240,73 @@ public class ChemicalString {
         /** Return this Match expressed as a Hill order chemical
             formula. */
         @Override public String toString() {
-            return hillSystemFormula(composition);
+            return hillSystemFormula(composition, true);
         }
 
         /** Return this Match expressed as a Hill order chemical
-            formula. */
+            formula.
+
+            @param allowFractions If false, subscripts are never
+            represented as fractions. If true, subscripts that almost
+            precisely equal fractions may be displayed as such. */
+        public String toString(boolean allowFractions) {
+            return hillSystemFormula(composition, allowFractions);
+        }
+
+        /** Return the atomic weight of this composition. */
         public double getWeight() {
             return weight(composition);
         }
+
+        @SuppressWarnings("unchecked") @Override
+        public Match clone() {
+            Match res = new Match();
+            res.beginIndex = beginIndex;
+            res.endIndex = endIndex;
+            res.composition = (HashMap<String, Double>) composition.clone();
+            return res;
+        }
+
+        /** Return a Match equivalent to this whose quantities are
+            expressed defined as element weights. For instance, H2O
+            would be converted into roughly H2O16, since the atomic weight
+            of O is 16. Returns null if not all atomic weights are
+            known. */
+        public Match toWeight() {
+            return toOrFromWeight(true);
+        }
+
+        /** Inverse of toWeight(): if the quantities in a composition
+            are already defined in terms of weight, return a Match
+            defined in terms of numbers of atoms. For instance, H2O16
+            would become (approximately) H2O. */
+        public Match fromWeight() {
+            return toOrFromWeight(false);
+        }
+
+        public Match toOrFromWeight(boolean isTo) {
+            Match res = clone();
+            for (Map.Entry<String, Double> entry:
+                     res.composition.entrySet()) {
+                String element = entry.getKey();
+                double wt = elementWeight(symbolToNumber(element));
+                if (Double.isNaN(wt)) {
+                    return null;
+                }
+                double v = entry.getValue();
+                entry.setValue(isTo ? v * wt : v / wt);
+            }
+            return res;
+        }
     }
 
-    /** Return the Hill system chemical formula. */
-    public static String hillSystemFormula(Map<String,Double> composition) {
+    /** Return the Hill system chemical formula.
+
+        @param allowFractions If false, subscripts are never
+        represented as fractions. If true, subscripts that almost
+        precisely equal fractions may be displayed as such. */
+    public static String hillSystemFormula(Map<String,Double> composition,
+                                           boolean allowFractions) {
         String[] elements = composition.keySet().toArray(new String[0]);
         hillSort(elements);
         StringBuilder res = new StringBuilder();
@@ -259,7 +314,7 @@ public class ChemicalString {
             res.append(element);
             double quantity = composition.get(element);
             if (Math.abs(quantity-1) > 1e-10) {
-                res.append(ContinuedFraction.toString(quantity, false));
+                res.append(ContinuedFraction.toString(quantity, false, allowFractions));
             }
         }
         return res.toString();
