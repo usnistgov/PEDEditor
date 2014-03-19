@@ -249,6 +249,18 @@ public class ContinuedFraction {
         return decDigits <= fracDigits + 1;
     }
 
+    /** Return true if a power of 10 divides the denominator. */
+    public boolean isDecimal() {
+        long deno = denominator;
+        while (deno % 2 == 0) {
+            deno /= 2;
+        }
+        while (deno % 5 == 0) {
+            deno /= 5;
+        }
+        return deno == 1;
+    }
+
     @Override public String toString() {
         return numerator + "/" + denominator;
     }
@@ -294,6 +306,11 @@ public class ContinuedFraction {
         leave fractions alone. */
 
     static String toString(double x, boolean showPercentage) {
+        return toString(x, showPercentage, true);
+    }
+
+    static String toString(double x, boolean showPercentage,
+                           boolean allowFractions) {
         String suffix = showPercentage ? "%" : "";
         double mult = showPercentage ? 100 : 1;
         double xp = x * mult;
@@ -307,8 +324,8 @@ public class ContinuedFraction {
         }
 
         ContinuedFraction f = ContinuedFraction.create(x, 0.0000001, 1000, 0);
-        if (f != null) {
-            if (!f.looksLikeDecimal(showPercentage)) {
+        if (f != null && (allowFractions || f.isDecimal())) {
+            if (allowFractions && !f.looksLikeDecimal(showPercentage)) {
                 return f.toString();
             }
 
