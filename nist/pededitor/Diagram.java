@@ -846,19 +846,21 @@ public class Diagram extends Observable implements Printable {
         }
     }
 
-    static enum RulerHandleType { START, END };
-
     class RulerHandle implements BoundedParam2DHandle {
         RulerDecoration decoration;
-        /** Either end of the ruler may be used as a handle. */
-        RulerHandleType handle; 
+        /** handle=0 for the start or handle=1 for the end. */
+        int handle;
 
-        RulerHandle(RulerDecoration decoration, RulerHandleType handle) {
+        RulerHandle(RulerDecoration decoration, int handle) {
             this.decoration = decoration;
             this.handle = handle;
+            if (handle < 0 || handle > 1) {
+                throw new IllegalArgumentException
+                    ("RulerHandle: No such handle #" + handle);
+            }
         }
 
-        RulerHandle(LinearRuler ruler, RulerHandleType handle) {
+        RulerHandle(LinearRuler ruler, int handle) {
             this(new RulerDecoration(ruler), handle);
         }
 
@@ -869,7 +871,7 @@ public class Diagram extends Observable implements Printable {
         }
 
         @Override public double getT() {
-            return (handle == RulerHandleType.START) ? 0 : 1;
+            return handle;
         }
 
         @Override public DecorationHandle remove() {
@@ -880,12 +882,14 @@ public class Diagram extends Observable implements Printable {
             Point2D.Double d = new Point2D.Double(dest.getX(), dest.getY());
 
             switch (handle) {
-            case START:
+            case 0:
                 getItem().startPoint = d;
                 break;
-            case END:
+            case 1:
                 getItem().endPoint = d;
                 break;
+            default:
+                throw new IllegalStateException("handle = " + handle);
             }
 
             propagateChange();
@@ -898,11 +902,11 @@ public class Diagram extends Observable implements Printable {
             double dy = r.endPoint.y - r.startPoint.y;
             
             switch (handle) {
-            case START:
+            case 0:
                 r.startPoint = d;
                 r.endPoint = new Point2D.Double(d.x + dx, d.y + dy);
                 break;
-            case END:
+            case 1:
                 r.endPoint = d;
                 r.startPoint = new Point2D.Double(d.x - dx, d.y - dy);
                 break;
@@ -916,9 +920,9 @@ public class Diagram extends Observable implements Printable {
 
         @Override public Point2D.Double getLocation() {
             switch (handle) {
-            case START:
+            case 0:
                 return (Point2D.Double) getItem().startPoint.clone();
-            case END:
+            case 1:
                 return (Point2D.Double) getItem().endPoint.clone();
             }
 
@@ -1009,8 +1013,8 @@ public class Diagram extends Observable implements Printable {
 
         @Override public DecorationHandle[] getHandles() {
             ArrayList<RulerHandle> output = new ArrayList<>();
-            for (RulerHandleType handle: RulerHandleType.values()) {
-                output.add(new RulerHandle(this, handle));
+            for (int i = 0; i < 2; ++i) {
+                output.add(new RulerHandle(this, i));
             }
             return output.toArray(new DecorationHandle[0]);
         }
@@ -1021,9 +1025,7 @@ public class Diagram extends Observable implements Printable {
 
         /** Return the VertexHandle closest to path(t). */
         public RulerHandle getHandle(double t) {
-            return new RulerHandle
-                (this,
-                 (t <= 0.5) ? RulerHandleType.START : RulerHandleType.END);
+            return new RulerHandle(this, (t <= 0.5) ? 0 : 1);
         }
     }
 
@@ -1939,7 +1941,13 @@ public class Diagram extends Observable implements Printable {
         int len = sides.length;
         double weights[] = new double[len];
         for (int i = 0; i < len; ++i) {
-            weights[i] = componentWeight(sides[i]);
+            double wt = componentWeight(sides[i]);
+            if (wt == 0) {
+                // A value of zero indicates that the component's
+                // weight could not be determined.
+                return null;
+            }
+            weights[i] = wt;
         }
         return new SideConcentrationTransform
             (sides,
@@ -2443,6 +2451,7 @@ public class Diagram extends Observable implements Printable {
         if (axis != null) {
             if (str != null) {
                 rename(axis, str);
+                setPercentageDisplay(axis, true);
             }
             return;
         }
@@ -5232,7 +5241,7 @@ public class Diagram extends Observable implements Printable {
                 continue;
             }
             double w = ChemicalString.elementWeight(elements[i]);
-            if (w == 0) {
+            if (Double.isNaN(w)) {
                 return 0;
             }
             total += q * w;
