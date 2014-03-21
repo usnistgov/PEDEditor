@@ -2294,7 +2294,7 @@ public class BasicEditor extends Diagram
         vhand.getDecoration().remove();
         RulerDecoration d = new RulerDecoration(r);
         addDecoration(d);
-        setSelection(new RulerHandle(d, SegmentHandleType.END));
+        setSelection(new RulerHandle(d, 1));
     }
 
     public void renameVariable(String name) {
@@ -5222,10 +5222,7 @@ PED files?"handle associate the PED file extension and with "
         }
         RulerHandle rh = getRulerHandle();
         if (rh != null) {
-            return new RulerHandle
-                (rh.decoration,
-                 (rh.handle == SegmentHandleType.START) ? SegmentHandleType.END
-                 : SegmentHandleType.START);
+            return new RulerHandle(rh.decoration, 1 - rh.handle);
         }
         return null;
     }
