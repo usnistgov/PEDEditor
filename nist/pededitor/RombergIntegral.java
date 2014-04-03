@@ -19,6 +19,10 @@ package gov.nist.pededitor;
     functions, while still being well-conditioned enough not to harm
     accuracy for non-smooth functions, though functions with
     asymptotes in the domain of integration are a problem.
+
+    This is the basic version. More Romberg-related utilities and
+    functions are found in AdaptiveRombergIntegral.java and
+    AdaptiveRombergIntegralY.java
 */
 public class RombergIntegral {
 
@@ -43,6 +47,9 @@ public class RombergIntegral {
     public static NumericEstimate integral(RealFunction f, double lo, double hi,
                                            Precision p) {
         double stepLength = hi - lo;
+        if (stepLength == 0) {
+            return new NumericEstimate(0);
+        }
         // total is used to compute the trapezoid approximations. It
         // is a total of all f() values computed so far, except that,
         // f(hi) and f(lo) are assigned half as much weight as other
@@ -51,6 +58,7 @@ public class RombergIntegral {
         double ylo = f.value(lo);
         double yhi = f.value(hi);
         double total = (ylo + yhi)/2;
+
 
         // 0th trapezoid approximation.
         NumericEstimate res = new NumericEstimate(total * stepLength);
@@ -72,7 +80,7 @@ public class RombergIntegral {
 
         for (int split = 1, sampleCnt=1;
              split <= maxSplit;
-             split++, stepLength /=2, sampleCnt *= 2) {
+             split++, stepLength /=2, sampleCnt <<= 1) {
             // Don't let stepLength drop below the limits of numeric
             // precision. (This should prevent infinite loops, but not
             // loss of accuracy.)
