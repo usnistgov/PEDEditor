@@ -131,21 +131,15 @@ public class TieLine implements Decorated {
         return new Line2D.Double(getInner2(), getOuter2());
     }
 
-    /** Return the point at which all tie lines converge. */
-    public Point2D.Double convergencePoint() {
-        return Duh.lineIntersection(getOuter1(), getInner1(),
-                                    getOuter2(), getInner2());
-    }
-
     /** Return true if the inner and outer edges are oriented in
-        opposite directions. If left alone, convergencePoint() will
-        lie somewhere between the two edges instead of somewhere
-        beyond them, which is almost certainly not the intent. */
+        opposite directions. If left alone, the first tie line will
+        cross the last one, which is almost certainly not the
+        intent. */
     boolean isTwisted() {
-        Point2D.Double i1 = getInner1();
-        Point2D.Double i2 = getInner2();
-        Point2D.Double o1 = getOuter1();
-        Point2D.Double o2 = getOuter2();
+        Point2D.Double i1 = getInnerEdge(Math.min(it1, it2));
+        Point2D.Double i2 = getInnerEdge(Math.max(it1, it2));
+        Point2D.Double o1 = getOuterEdge(Math.min(ot1, ot2));
+        Point2D.Double o2 = getOuterEdge(Math.max(ot1, ot2));
 
         double dot = (i2.x - i1.x) * (o2.x - o1.x)
             + (i2.y - i1.y) * (o2.y - o1.y);
@@ -155,131 +149,34 @@ public class TieLine implements Decorated {
 
     @JsonIgnore public Path2D.Double getPath() {
         Path2D.Double output = new Path2D.Double();
+
+        boolean twisted = isTwisted();
         BoundedParam2D innerParam = innerEdge.getParameterization();
         BoundedParam2D outerParam = outerEdge.getParameterization();
-
-        if (isTwisted()) {
-            // Swap ot1 <=> ot2 to untwist.
-            double tmp = ot1;
-            ot1 = ot2;
-            ot2 = tmp;
-        }
-
-        Point2D.Double i1 = getInner1();
-        Point2D.Double i2 = getInner2();
-        Point2D.Double o1 = getOuter1();
-        Point2D.Double o2 = getOuter2();
-        Point2D.Double v = convergencePoint();
-
-        if (v == null) {
-            return output;
-        }
-
-        // For triangular tie-line regions, i1.equals(i2) or
-        // o1.equals(o2), but the midpoint of i1o1 never equals the
-        // midpoint of i2o2.
-
-        Point2D.Double mid1 = new Point2D.Double
-            ((i1.x + o1.x) / 2, (i1.y + o1.y) / 2);
-        Point2D.Double mid2 = new Point2D.Double
-            ((i2.x + o2.x) / 2, (i2.y + o2.y) / 2);
-        double theta1 = Math.atan2(mid1.y - v.y, mid1.x - v.x);
-        double theta2 = Math.atan2(mid2.y - v.y, mid2.x - v.x);
-
-        // Determine whether to proceed clockwise or counterclockwise
-        // from theta1 to theta2. We'll do this by taking the midpoint
-        // of the segment from the middle t value of the inner edge to
-        // the middle t value of the outer edge.
-        Point2D.Double iMid = getInnerEdge((it1 + it2) / 2);
-        Point2D.Double oMid = getOuterEdge((ot1 + ot2) / 2);
-        Point2D.Double midMid = new Point2D.Double
-            ((iMid.x + oMid.x) / 2, (iMid.y + oMid.y) / 2);
-
-        double thetaMid = Math.atan2(midMid.y - v.y, midMid.x - v.x);
-
-        // The correct direction of rotation from theta1 to theta2
-        // passes through thetaMid; the incorrect direction does not.
-        final double twoPi = 2 * Math.PI;
-
-        // Force theta2 >= theta1.
-        double theta2Minus1 = theta2 - theta1;
-        theta2Minus1 -= twoPi * Math.floor(theta2Minus1 / twoPi);
-        theta2 = theta1 + theta2Minus1;
-
-        double thetaMidMinus1 = thetaMid - theta1;
-        thetaMidMinus1 -= twoPi * Math.floor(thetaMidMinus1 / twoPi);
-
-        double oldit = it1;
-        double oldot = ot1;
-
-        /* oneToTwo is true if the tie lines should be starting next
-           to inner1outer1 and ending next to inner2outer2, and false
-           if the tie lines should be drawn in the reverse order. */
-        boolean oneToTwo = theta2Minus1 >= thetaMidMinus1;
-
-        if (!oneToTwo) {
-            // Theta1 and theta2 are out of order. Swap them.
-            double tmp = theta1;
-            theta1 = theta2;
-            theta2 = tmp;
-
-            oldit = it2;
-            oldot = ot2;
-
-            // Force theta2 >= theta1.
-            theta2Minus1 = theta2 - theta1;
-            theta2Minus1 -= twoPi * Math.floor(theta2Minus1 / twoPi);
-            theta2 = theta1 + theta2Minus1;
-        }
-
-        double deltaTheta = (theta2 - theta1) / (lineCnt + 1);
-        double theta = theta1;
+        AdaptiveRombergIntegral innerLength = Param2Ds.lengthIntegral
+            (innerParam.getUnboundedCurve(),
+             Math.min(it1,it2),
+             Math.max(it1,it2));
+        AdaptiveRombergIntegral outerLength = Param2Ds.lengthIntegral
+            (outerParam.getUnboundedCurve(),
+             Math.min(ot1,ot2),
+             Math.max(ot1,ot2));
+        Precision p = new Precision();
+        p.relativeError = 1e-3;
+        p.absoluteError = 0;
+        p.maxSampleCnt = 1000;
 
         for (int i = 0; i < lineCnt; ++i) {
-            theta += deltaTheta;
-            Line2D.Double line = new Line2D.Double
-                (v.x, v.y, v.x + Math.cos(theta), v.y + Math.sin(theta));
+            double quantile = (i + 1.0) / (lineCnt + 1);
+            double innerT = AdaptiveRombergIntegralY.quantile
+                (innerLength, quantile, p).value;
+            double outerT = AdaptiveRombergIntegralY.quantile
+                (outerLength,
+                 twisted ? 1 - quantile: quantile,
+                 p).value;
 
-            Point2D.Double innerPoint = i1;
-            if (!i1.equals(i2)) {
-                double minDeltaT = -1;
-                double newit = 0;
-
-                for (double t: innerParam.lineIntersections(line)) {
-                    if ((it1 < t) == (t < it2) && t != oldit
-                        && ((t > oldit) == (it2 > it1)) == oneToTwo) {
-                        // Look for the t value closest to the previous t value.
-                        double deltaT = Math.abs(t - oldit);
-                        if (minDeltaT < 0 || deltaT < minDeltaT) {
-                            innerPoint = innerParam.getLocation(t);
-                            minDeltaT = deltaT;
-                            newit = t;
-                        }
-                    }
-                }
-                oldit = newit;
-            }
-
-            Point2D.Double outerPoint = o1;
-            if (!o1.equals(o2)) {
-                double minDeltaT = -1;
-                double newot = 0;
-
-                for (double t: outerParam.lineIntersections(line)) {
-                    if ((ot1 < t) == (t < ot2) && t != oldot
-                        && ((t > oldot) == (ot2 > ot1)) == oneToTwo) {
-                        // Look for the t value closest to the previous t value.
-                        double deltaT = Math.abs(t - oldot);
-                        if (minDeltaT < 0 || deltaT < minDeltaT) {
-                            outerPoint = outerParam.getLocation(t);
-                            minDeltaT = deltaT;
-                            newot = t;
-                        }
-                    }
-                }
-                oldot = newot;
-            }
-
+            Point2D.Double innerPoint = innerParam.getLocation(innerT);
+            Point2D.Double outerPoint = outerParam.getLocation(outerT);
             output.moveTo(innerPoint.x, innerPoint.y);
             output.lineTo(outerPoint.x, outerPoint.y);
         }
