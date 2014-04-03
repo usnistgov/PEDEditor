@@ -1,3 +1,6 @@
+/* Eric Boesch, NIST Materials Measurement Laboratory, 2014. This file
+ * is placed into the public domain. */
+
 package gov.nist.pededitor;
 
 import java.awt.geom.Line2D;
@@ -5,6 +8,8 @@ import java.awt.geom.Point2D;
 import java.awt.geom.Rectangle2D;
 import java.util.ArrayList;
 import java.util.List;
+
+/** The main method of interest in this class is {@link #is class primarily exists to provide the intersections() and distance() methods. */
 
 public class BoundedParam2Ds {
     static final boolean debug = false;
@@ -45,6 +50,12 @@ public class BoundedParam2Ds {
         return Math.max(d0, d1);
     }
 
+    /** Determine the distance between the point and the closest of
+        the curves in ocps.
+
+        @see {@link OffsetParam2D#distance(ArrayList<BoundedParam2D>,
+        Point2D)} for a more generally useful variant of distance()
+        that also identifies which curve is closest. */
     static <T extends BoundedParam2D> CurveDistanceRange distance
         (Iterable<T> ocps, Point2D p,
          double maxError, double maxSteps) {
@@ -237,8 +248,6 @@ public class BoundedParam2Ds {
             }
         }
 
-        
-
         if (debug) {
             System.out.println
                 ("dlb1(" + Duh.toString(p) + ", " + Duh.toString(f0) + ", " + deltaT + ", "
@@ -352,21 +361,8 @@ public class BoundedParam2Ds {
         }
     }
 
-    public static ArrayList<Point2D.Double> intersections
-        (BoundedParam2D a, BoundedParam2D b,
-         double maxError, int maxSteps)
-    throws FailedToConvergeException {
-        ArrayList<Point2D.Double> res = new ArrayList<>();
-        if (intersections(res, a, b, maxError, maxSteps) > maxSteps) {
-            throw new FailedToConvergeException
-                ("Could not compute intersections to within " + maxError
-                 + " accuracy within " + maxSteps + " steps.");
-        }
-        return res;
-    }
-
-    /** Unless maxSteps is exceeded, the error guarantee is
-        supposed to be is as follows:
+    /** @return a list of intersections between a and b. The error
+        guarantee is supposed to be is as follows:
 
         1) No matter how small maxError is, the precision limits of
         double-precision arithmetic and the segmentIntersection()
@@ -420,9 +416,27 @@ public class BoundedParam2Ds {
         0.001], because the overlap diameter is less than the maxError
         value of 0.001 over that entire interval.
 
-        @return The number of steps actually needed.
+        @throws FailedToConvergeException if maxSteps is not enough to
+        identify all intersections to the requested error threshold..
     */
+    public static ArrayList<Point2D.Double> intersections
+        (BoundedParam2D a, BoundedParam2D b,
+         double maxError, int maxSteps)
+    throws FailedToConvergeException {
+        ArrayList<Point2D.Double> res = new ArrayList<>();
+        if (intersections(res, a, b, maxError, maxSteps) > maxSteps) {
+            throw new FailedToConvergeException
+                ("Could not compute intersections to within " + maxError
+                 + " accuracy within " + maxSteps + " steps.");
+        }
+        return res;
+    }
 
+    /** Like {@link #intersections(BoundedParam2D, BoundedParam2D,
+        double, int)}, but appends the list of intersections to the
+        given ArrayList and returns the number of steps actually
+        needed. If the return value is greater than maxSteps then no
+        error guarantee is provided. */
     public static int intersections
         (ArrayList<Point2D.Double> is,
          BoundedParam2D a, BoundedParam2D b,
@@ -503,8 +517,8 @@ public class BoundedParam2Ds {
         // allows the intersection to be computed in a single step
         // using the width bound.
 
-        double[] alb = a.getBounds(lx, ly);
-        double[] awb = a.getBounds(wx, wy);
+        double[] alb = a.getLinearFunctionBounds(lx, ly);
+        double[] awb = a.getLinearFunctionBounds(wx, wy);
         if (awb[1] - awb[0] <= maxError) {
             double cw = (awb[0] + awb[1])/2;
             // Curve 'a' is within maxError/2 of being the line
@@ -521,7 +535,7 @@ public class BoundedParam2Ds {
             return stepCnt;
         }
 
-        double[] bwb = b.getBounds(wx, wy);
+        double[] bwb = b.getLinearFunctionBounds(wx, wy);
         double wmin = Math.max(awb[0], bwb[0]);
         double wmax = Math.min(awb[1], bwb[1]);
         double width = wmax - wmin;
@@ -531,7 +545,7 @@ public class BoundedParam2Ds {
             return stepCnt;
         }
 
-        double[] blb = b.getBounds(lx, ly);
+        double[] blb = b.getLinearFunctionBounds(lx, ly);
         double lmin = Math.max(alb[0], blb[0]);
         double lmax = Math.min(alb[1], blb[1]);
         double length = lmax - lmin;
@@ -708,29 +722,6 @@ public class BoundedParam2Ds {
         return stepCnt;
     }
 
-    /** Return a number between 0 and 1 that represents how constant
-        the derivative of a curve is as compared to its lowest
-        magnitude, given that the bounding box for the derivative is
-        r. */
-    static double linearity(Rectangle2D r) {
-        // (dx, dy) is the point closest to the original that is within r.
-        double w = r.getWidth();
-        double h = r.getHeight();
-        if (w == 0 && h == 0) {
-            return (r.getX() == 0 && r.getY() == 0) ? 0 : 1;
-        }
-
-        double x1;
-        double x2;
-        double x = ((x1 = r.getX()) > 0) ? x1
-            : ((x2 = r.getMaxX()) < 0) ? -x2 : 0;
-        double y1;
-        double y2;
-        double y = ((y1 = r.getY()) > 0) ? y1
-            : ((y2 = r.getMaxY()) < 0) ? -y2 : 0;
-        return (x + y) / (x + y + w + h);
-    }
-
     /** Compute a lower bound on the minimum distance from c to p by
         computing the distance from p to c.getBounds(). (The "0"
         reflects that the bounds of the zeroth derivative -- that is,
@@ -766,7 +757,7 @@ public class BoundedParam2Ds {
     }
 
     @SuppressWarnings("unused")
-	public static void main(String[] args) {
+    public static void main(String[] args) {
         BoundedParam2D s1 = BezierParam2D.create
             (new Point2D.Double(0, 0), new Point2D.Double(1, 1));
         BoundedParam2D s2 = BezierParam2D.create
@@ -794,5 +785,10 @@ public class BoundedParam2Ds {
         } catch (FailedToConvergeException x) {
             System.err.println(x);
         }
+    }
+
+    static public AdaptiveRombergIntegral lengthIntegral(BoundedParam2D c) {
+        RealFunction dsdt = new Param2Ds.DLengthDT(c.getUnboundedCurve());
+        return new AdaptiveRombergIntegral(dsdt, c.getMinT(), c.getMaxT());
     }
 }

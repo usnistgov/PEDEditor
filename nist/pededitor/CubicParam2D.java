@@ -24,7 +24,8 @@ public class CubicParam2D extends BezierParam2D {
         double mid = (t0 + t1) / 2;
         /* Choose a candidate t value using the quadratic
            approximation of this Bezier curve. */
-        QuadParam2D quadApprox = new QuadParam2D
+
+        QuadParam2D quadApprox = QuadParam2D.createInterpolated
             (points[0], getLocation(mid), points[3]);
         double guessT = quadApprox.distance(p, t0, t1).t;
         CurveDistance dist = distance(p, guessT);

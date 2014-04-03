@@ -305,6 +305,74 @@ abstract public class BezierParam2D extends Param2DAdapter {
         return o;
     }
 
+    @Override public double area(double t0, double t1) {
+        // The signed area can be calculated directly using the definition
+        // area = integral(y * dx).
+        double[] dx = Polynomial.derivative(xCoefficients);
+        double[] ydx = Polynomial.times(dx, yCoefficients);
+        return Polynomial.evaluateIntegral(t0, t1, ydx);
+    }
+
+    @Override public Estimate length(double t0, double t1) {
+        // If I identify every T value where the X or Y derivative
+        // changes sign, plus t0 and t1, then I can set lower and
+        // upper bounds on the length of this object. The lower bound
+        // is a sum of the Euclidean distances between those points.
+        // The upper bound is a sum of the Manhattan distances between
+        // them: the longest route between two points that does not
+        // involve either heading both east and west, or both north
+        // and south, is to go due north/south and then due east-west.
+        // And since the ratio of the Manhattan and Euclidean
+        // distances is always less than sqrt(2):1, these two
+        // approximations will not be too far apart.
+
+        double[] xZeroes = Polynomial.solve(Polynomial.derivative(xCoefficients));
+        double[] yZeroes = Polynomial.solve(Polynomial.derivative(yCoefficients));
+        ArrayList<Double> ts = new ArrayList<>();
+        ts.add(t0);
+        for (double t: xZeroes) {
+            if (t > t0 && t < t1) {
+                ts.add(t);
+            }
+        }
+        int pos = 1;
+        for (double t: yZeroes) {
+            if (t > t0 && t < t1) {
+                while (true) {
+                    double other = 0;
+                    if (pos == ts.size() || (other = ts.get(pos)) > t) {
+                        ts.add(t); // add new t value
+                        ++pos;
+                        break;
+                    } else if (t == other) {
+                        ++pos; // discard duplicate t value
+                        break;
+                    } else {
+                        ++pos; // continue
+                    }
+                }
+            }
+        }
+        ts.add(t1);
+
+        Point2D.Double oldPoint = null;
+        double maxLength = 0;
+        double minLength = 0;
+        for (double t: ts) {
+            Point2D.Double p = getLocation(t);
+            if (oldPoint != null) {
+                minLength += oldPoint.distance(p);
+                maxLength += Math.abs(oldPoint.x - p.x)
+                    + Math.abs(oldPoint.y - p.y);
+            }
+            oldPoint = p;
+        }
+        Estimate res = new Estimate((minLength + maxLength) / 2);
+        res.setLowerBound(minLength);
+        res.setLowerBound(maxLength);
+        return res;
+    }
+
     @Override public Rectangle2D.Double getBounds(double t0, double t1) {
         double[] xBounds = Polynomial.getBounds(xCoefficients, t0, t1);
         double[] yBounds = Polynomial.getBounds(yCoefficients, t0, t1);

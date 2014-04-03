@@ -28,6 +28,24 @@ public class QuadParam2D extends BezierParam2D {
         this(new Point2D[] {p0, p1, pEnd});
     }
 
+    /** Like the regular constructor, but point p1 is the point the
+        curve actually passes through, not the Bezier control point. */
+    public static QuadParam2D createInterpolated(Point2D p0, Point2D pMid,
+                                          Point2D pEnd) {
+        // The actual point at t=1/2 is
+
+        // pMid = 1/4 p0 + 1/2 p1 + 1/4 p2
+
+        // So by trivial algebra
+
+        Point2D.Double p1 = new Point2D.Double(2 * pMid.getX() - 0.5 * (p0.getX() + pEnd.getX()),
+                                2 * pMid.getY() - 0.5 * (p0.getY() + pEnd.getY()));
+        return new QuadParam2D(p0, p1, pEnd);
+    }
+
+    // TODO It's possible to compute arc lengths of a quadratic Bezier
+    // analytically, but I don't do that.
+
     /** @param points The array of 3 Bezier control points.
     */
     public QuadParam2D(Point2D[] points) {

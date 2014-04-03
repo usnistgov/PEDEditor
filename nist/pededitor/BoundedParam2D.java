@@ -11,6 +11,8 @@ import java.awt.geom.Rectangle2D;
 /* Interface for curves in two dimensions parameterized by t over the
    domain [getMinT(), getMaxT()]. */
 public interface BoundedParam2D {
+    Param2D getUnboundedCurve();
+
     /** Return the maximum valid t value for this curve. */
     double getMinT();
     /** Return the minimum valid t value for this curve. */
@@ -71,8 +73,18 @@ public interface BoundedParam2D {
         than necessary instead of too narrow. */
     Rectangle2D.Double getBounds();
 
+    /** @see {@link Param2D#length(double, double) */
+    Estimate length();
+
+    /** @see {@link Param2D#length(double, double, int, double, double) */
+    Estimate length(double absoluteError, double relativeError,
+                         int maxSteps);
+
+    /** @see {@link Param2D#area(double, double) */
+    double area();
+
     /** Return {min,max} for the function f(x) = x(t) * xc + y(t) * yc. */
-    double[] getBounds(double xc, double yc);
+    double[] getLinearFunctionBounds(double xc, double yc);
 
     /** @return an array of t values where segment intersects this. */
     double[] segIntersections(Line2D segment);

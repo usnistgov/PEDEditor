@@ -7,6 +7,7 @@ import java.awt.geom.AffineTransform;
 import java.awt.geom.Line2D;
 import java.awt.geom.Point2D;
 import java.awt.geom.Rectangle2D;
+import java.awt.geom.Rectangle2D.Double;
 import java.util.ArrayList;
 
 /** Offset the t values in a CurveBoundedParam2D by a fixed value.
@@ -16,7 +17,7 @@ import java.util.ArrayList;
     would, and so on.
  */
 
-public class OffsetParam2D implements BoundedParam2D {
+public class OffsetParam2D implements BoundedParam2D, Param2D {
     BoundedParam2D c;
     double offset;
 
@@ -26,6 +27,10 @@ public class OffsetParam2D implements BoundedParam2D {
     public OffsetParam2D(BoundedParam2D c, double offset) {
         this.c = c;
         this.offset = offset;
+    }
+
+    @Override public OffsetParam2D getUnboundedCurve() {
+        return this;
     }
 
     public BoundedParam2D getContents() { return c; }
@@ -67,8 +72,8 @@ public class OffsetParam2D implements BoundedParam2D {
         return c.getBounds();
     }
 
-    @Override public double[] getBounds(double xc, double yc) {
-        return c.getBounds(xc, yc);
+    @Override public double[] getLinearFunctionBounds(double xc, double yc) {
+        return c.getLinearFunctionBounds(xc, yc);
     }
 
     @Override public double[] segIntersections(Line2D segment) {
@@ -202,5 +207,75 @@ public class OffsetParam2D implements BoundedParam2D {
 
     @Override public OffsetParam2D createTransformed(AffineTransform xform) {
         return new OffsetParam2D(c.createTransformed(xform), offset);
+    }
+
+    @Override public Estimate length() {
+        return c.length();
+    }
+
+    @Override public Estimate length(double absoluteError,
+                                          double relativeError, int maxSteps) {
+        return c.length(absoluteError, relativeError, maxSteps);
+    }
+
+    @Override public double area() {
+        return c.area();
+    }
+
+    @Override 
+    public CurveDistanceRange distance(Point2D p, double t0, double t1) {
+        return addOffset(c.getUnboundedCurve().distance(p, t0 - offset, t1 - offset));
+    }
+
+    @Override
+    public CurveDistanceRange distance(Point2D p, double maxError,
+                                       int maxSteps, double t0, double t1) {
+        return addOffset(c.getUnboundedCurve().distance
+                         (p, maxError, maxSteps, t0 - offset, t1 - offset));
+    }
+
+    @Override public Double getBounds(double t0, double t1) {
+        return c.getUnboundedCurve().getBounds(t0 - offset, t1 - offset);
+    }
+
+    @Override
+    public double[] getBounds(double xc, double yc, double t0, double t1) {
+        return c.getUnboundedCurve().getBounds(xc, yc, t0 - offset, t1 - offset);
+    }
+
+    @Override
+    public double[] segIntersections(Line2D segment, double t0, double t1) {
+        return c.getUnboundedCurve().segIntersections(segment, t0-offset, t1-offset);
+    }
+
+    @Override
+    public double[] lineIntersections(Line2D segment, double t0, double t1) {
+        return c.getUnboundedCurve().lineIntersections(segment, t0-offset, t1-offset);
+    }
+
+    @Override
+    public Estimate length(double t0, double t1) {
+        return c.getUnboundedCurve().length(t0-offset, t1-offset);
+    }
+
+    @Override
+    public Estimate length(double absoluteError, double relativeError,
+                           int maxSteps, double t0, double t1) {
+        return c.getUnboundedCurve().length(absoluteError, relativeError, maxSteps,
+                            t0-offset, t1-offset);
+    }
+
+    @Override public double area(double t0, double t1) {
+        return c.getUnboundedCurve().area(t0-offset, t1-offset);
+    }
+
+    @Override
+    public BoundedParam2D[] subdivide(double t0, double t1) {
+        ArrayList<BoundedParam2D> parts = new ArrayList<>();
+        for (BoundedParam2D part:
+                 c.getUnboundedCurve().subdivide(t0-offset, t1-offset)) {
+            parts.add(new OffsetParam2D(part, offset));
+        }
+        return parts.toArray(new BoundedParam2D[0]);
     }
 }

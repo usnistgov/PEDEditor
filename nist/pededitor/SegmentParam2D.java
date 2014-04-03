@@ -45,6 +45,23 @@ public class SegmentParam2D extends Param2DAdapter
         return distance(p, t0, t1);
     }
 
+    @Override public Estimate length(double t0, double t1) {
+        return new Estimate
+            (getLocation(t0).distance(getLocation(t1)));
+    }
+
+    @Override public Estimate length
+        (double absoluteError, double relativeError, int maxSteps,
+         double t0, double t1) {
+        return length(t0, t1);
+    }
+
+    @Override public double area(double t0, double t1) {
+        Point2D.Double p0 = getLocation(t0);
+        Point2D.Double p1 = getLocation(t1);
+        return (p1.x - p0.x) * (p1.y + p0.y) / 2;
+    }
+
     @Override public Rectangle2D.Double getBounds(double t0, double t1) {
         Rectangle2D r = (new Line2D.Double(getLocation(t0), getLocation(t1)))
             .getBounds2D();

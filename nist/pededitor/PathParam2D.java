@@ -10,6 +10,8 @@ import java.awt.geom.PathIterator;
 import java.awt.geom.Point2D;
 import java.awt.geom.Rectangle2D;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
 
 /** Param2D that can be constructed from a PathIterator. The
     individual segments of the PathIterator are converted into
@@ -185,6 +187,9 @@ public class PathParam2D extends Param2DAdapter
         }
     }
 
+    /** Return an Iterable over a set of BoundedParam2D objects that
+        include every OffsetParam2D, bounded as necessary, that covers
+        [t0, t1]. */
     public Subset subsetIterable(double t0, double t1) {
         return new Subset(t0, t1);
     }
@@ -287,7 +292,7 @@ public class PathParam2D extends Param2DAdapter
         double max = Double.NaN;
 
         for (BoundedParam2D segment: subsetIterable(t0, t1)) {
-            double[] thisb = segment.getBounds(xc, yc);
+            double[] thisb = segment.getLinearFunctionBounds(xc, yc);
             double thismin = thisb[0];
             double thismax = thisb[1];
             if (Double.isNaN(min) || thismin < min) {
@@ -426,6 +431,124 @@ public class PathParam2D extends Param2DAdapter
         PathParam2D res = new PathParam2D(t0, t1);
         for (OffsetParam2D segment: segments) {
             res.segments.add(segment.createTransformed(xform));
+        }
+        return res;
+    }
+
+    @Override public Estimate length(double t0, double t1) {
+        Estimate total = new Estimate(0);
+        for (BoundedParam2D seg: subsetIterable(t0, t1)) {
+            total.add(seg.length());
+        }
+        return total;
+    }
+
+    @Override public double area(double t0, double t1) {
+        double total = 0;
+        for (BoundedParam2D seg: subsetIterable(t0, t1)) {
+            total += seg.area();
+        }
+        return total;
+    }
+
+    static class CurveLength {
+        BoundedParam2D curve;
+        Estimate length;
+        CurveLength(BoundedParam2D curve, Estimate length) {
+            this.curve = curve;
+            this.length = length;
+        }
+    }
+
+    @Override public Estimate length(double absoluteError,
+                                          double relativeError, int maxSteps,
+                                          double t0, double t1) {
+        Precision p = new Precision();
+        p.absoluteError = absoluteError;
+        p.relativeError = relativeError;
+
+        Estimate roughLen = new Estimate(0);
+        ArrayList<CurveLength> cls = new ArrayList<>();
+        for (BoundedParam2D seg: subsetIterable(t0, t1)) {
+            Estimate len = seg.length();
+            cls.add(new CurveLength(seg, len));
+            roughLen.add(len);
+        }
+
+        if (p.closeEnough(roughLen)) {
+            return roughLen;
+        }
+
+        if (cls.size() == 1) {
+            return cls.get(0).curve.length(absoluteError, relativeError, maxSteps);
+        }
+
+        if (roughLen.relativeError() > 0.8) {
+            // This is a poor solution, but it's also a situation that
+            // does not happen for me, so I won't optimize it.
+            return super.length(absoluteError, relativeError, maxSteps, t0, t1);
+        }
+
+        // The allowable total absolute error is at least this much:
+        double maxError = p.maxError(roughLen.lowerBound);
+        relativeError = Math.max(relativeError, maxError / roughLen.upperBound);
+
+        NumericEstimate res = new NumericEstimate(0);
+
+        // Handle the segments whose relative error is already
+        // acceptable immediately. That might free up more error
+        // allowance for the others.
+
+        // Curves whose length estimates are not precise enough will
+        // be handled later.
+        ArrayList<CurveLength> laters = new ArrayList<>();
+        Estimate remainderLength = new Estimate(0);
+        for (CurveLength cl: cls) {
+            if (cl.length.relativeError() <= relativeError) {
+                res.add(cl.length);
+            } else {
+                laters.add(cl);
+                remainderLength.add(cl.length);
+            }
+        }
+        cls = laters;
+
+        // Sort the segments in decreasing order of length, and
+        // estimate the longer segments' lengths first. Imagine if you
+        // have two segments, one 100x longer than the other: a
+        // precise measurement of the longer segment makes a very
+        // crude (in terms of relative error) measurement of the
+        // shorter one allowable, but a precise measurement of the
+        // shorter segment hardly improves the error allowance on the
+        // longer one at all.
+
+        Collections.sort(cls, new Comparator<CurveLength>() {
+                @Override
+				public int compare(CurveLength a, CurveLength b) {
+                    return (int) Math.signum(a.length.value - b.length.value);
+                }
+           });
+
+        for (int i = 0; i < cls.size(); ++i) {
+            CurveLength cl = cls.get(i);
+            double errorLeft = maxError - res.width() / 2;
+            if (errorLeft <= 0) {
+                // Error allowance used up prematurely. This shouldn't
+                // happen often.
+                while (i < cls.size()) {
+                    res.add(cls.get(i).length);
+                    return res;
+                }
+            }
+            // The expected length of this segment as a fraction of
+            // the length of all remaining segments.
+            double remainderFraction = cl.length.value / remainderLength.value;
+            double thisAbsoluteError = errorLeft * remainderFraction;
+            res.add(cl.curve.length(thisAbsoluteError, 0,
+                                    maxSteps - res.sampleCnt));
+            remainderLength.upperBound -= cl.length.upperBound;
+            remainderLength.lowerBound -= cl.length.lowerBound;
+            remainderLength.value -= cl.length.value;
         }
         return res;
     }

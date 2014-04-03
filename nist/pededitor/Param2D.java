@@ -67,6 +67,26 @@ public interface Param2D {
         intersects this. */
     double[] lineIntersections(Line2D segment, double t0, double t1);
 
+    /** Return the range of possible lengths for the given section.
+        This computation should be fast; for high accuracy, a user
+        should select length(maxError, maxSteps) instead.
+    */
+    Estimate length(double t0, double t1);
+
+    /** Compute the length of the section of curve until the absolute
+        error threshold, the relative error threshold, or the maximum
+        number of steps is reached. */
+    Estimate length(double absoluteError, double relativeError,
+                         int maxSteps, double t0, double t1);
+
+    /** Return the signed area value for the given section. An exact
+        area solution happens to exist for all curve types I need, so
+        this routine does not accommodate approximations the way that
+        distance() and length() do. (The "signed area" is just the
+        integral of y dx, but in this case x is itself a function of
+        t.) */
+    double area(double t0, double t1);
+
     /** Return a BoundedParam2D that covers the t in (t0,t1) range
         of this item. */
     BoundedParam2D createSubset(double t0, double t1);

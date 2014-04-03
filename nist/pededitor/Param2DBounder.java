@@ -25,7 +25,7 @@ public class Param2DBounder implements BoundedParam2D {
         this.t1 = t1;
     }
 
-    public Param2D getUnboundedCurve() {
+    @Override public Param2D getUnboundedCurve() {
         return c;
     }
 
@@ -79,7 +79,7 @@ public class Param2DBounder implements BoundedParam2D {
         return (bounds == null) ? null : (Rectangle2D.Double) bounds.clone();
     }
 
-    @Override public double[] getBounds (double xc, double yc) {
+    @Override public double[] getLinearFunctionBounds (double xc, double yc) {
         return c.getBounds(xc, yc, t0, t1);
     }
 
@@ -105,7 +105,21 @@ public class Param2DBounder implements BoundedParam2D {
 
     public boolean inDomain(double t) { return t >= t0 && t <= t1; }
 
+    @Override public Estimate length() {
+        return c.length(t0, t1);
+    }
+
+    @Override public Estimate length(double absoluteError,
+                                          double relativeError, int maxSteps) {
+        return c.length(absoluteError, relativeError, maxSteps, t0, t1);
+    }
+
+    @Override public double area() {
+        return c.area(t0, t1);
+    }
+
     @Override public String toString() {
-        return getClass().getSimpleName() + "[t in [" + getMinT() + ", " + getMaxT() + "] " + c + "]";
+        return getClass().getSimpleName()
+            + "[t in [" + getMinT() + ", " + getMaxT() + "] " + c + "]";
     }
 }
