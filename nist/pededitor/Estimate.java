@@ -3,17 +3,23 @@
 
 package gov.nist.pededitor;
 
-public class Estimate implements Cloneable{
+public class Estimate implements Cloneable {
     double value;
     double lowerBound;
     double upperBound;
         
+    public Estimate() {}
+
     /** Exact estimate. */
     public Estimate(double d) {
         setExactValue(d);
     }
 
     public Estimate(Estimate other) {
+        copyFrom(other);
+    }
+
+    public void copyFrom(Estimate other) {
         this.value = other.value;
         this.lowerBound = other.lowerBound;
         this.upperBound = other.upperBound;
@@ -52,6 +58,14 @@ public class Estimate implements Cloneable{
         return lowerBound == upperBound;
     }
 
+    public double relativeError() {
+        return (lowerBound == upperBound)
+            ? 0
+            : Math.signum(lowerBound) != Math.signum(upperBound)
+            ? 1 :
+            Math.abs((upperBound - lowerBound) / (upperBound + lowerBound));
+    }
+
     /** Return true if the range of possible error is infinite. */
     boolean isBad() {
         return (lowerBound == Double.NEGATIVE_INFINITY)
@@ -76,9 +90,20 @@ public class Estimate implements Cloneable{
     public void add(Estimate other) {
         if (other == null)
             return;
-        this.value += other.value;
-        this.lowerBound += other.lowerBound;
-        this.upperBound += other.upperBound;
+        value += other.value;
+        lowerBound += other.lowerBound;
+        upperBound += other.upperBound;
+    }
+
+    public void times(double d) {
+        value *= d;
+        lowerBound *= d;
+        upperBound *= d;
+        if (d < 0) {
+            double tmp = lowerBound;
+            lowerBound = upperBound;
+            upperBound = tmp;
+        }
     }
 
     @Override public Estimate clone() {
