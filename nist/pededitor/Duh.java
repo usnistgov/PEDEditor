@@ -33,7 +33,7 @@ public class Duh {
     static double lengthSq(Point2D point) {
         double x = point.getX();
         double y = point.getY();
-        return x*x + y * y;
+        return x*x + y*y;
     }
 
     /** Sort a list of indices into an array of doubles into
@@ -45,8 +45,7 @@ public class Duh {
             this.values = values;
         }
 
-        @Override
-		public int compare(Integer i1, Integer i2) {
+        @Override public int compare(Integer i1, Integer i2) {
             double diff = values[i2] - values[i1];
             return (diff > 0) ? 1 : (diff == 0) ? 0 : -1;
         }
