@@ -9,6 +9,8 @@ public class NumericEstimate extends Estimate implements Cloneable {
         TOO_MANY_STEPS /* Loss of accuracy: maximum number of
                            * doublings of the step count reached
                            * before accuracy target achieved. */,
+        IMPOSSIBLE /* It appears that the problem has no solution even
+                    * in theory. */,
     };
 
     public NumericEstimate(double d) {
@@ -16,9 +18,7 @@ public class NumericEstimate extends Estimate implements Cloneable {
     }
 
     public NumericEstimate(NumericEstimate other) {
-        super(other);
-        status = other.status;
-        sampleCnt = other.sampleCnt;
+        copyFrom(other);
     }
 
     /** Return a bad estimate with unlimited error possible on both sides. */
@@ -32,6 +32,17 @@ public class NumericEstimate extends Estimate implements Cloneable {
 
     public Status status = Status.OK;
     public int sampleCnt = 0;
+
+    public boolean isOK() {
+        return status == Status.OK && !isBad();
+    }
+
+    /** Overwrite this object with other. */
+    void copyFrom(NumericEstimate other) {
+        super.copyFrom(other);
+        status = other.status;
+        sampleCnt = other.sampleCnt;
+    }
 
     @Override public NumericEstimate clone() {
         return new NumericEstimate(this);
@@ -62,5 +73,12 @@ public class NumericEstimate extends Estimate implements Cloneable {
             status = other.status;
         }
         sampleCnt += other.sampleCnt;
+    }
+
+    // Like add(), but leave value alone.
+    void addNoV(NumericEstimate other) {
+        double oldV = value;
+        add(other);
+        value = oldV;
     }
 };
