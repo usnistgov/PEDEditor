@@ -87,6 +87,17 @@ import org.codehaus.jackson.annotate.JsonIgnore;
 
 import Jama.Matrix;
 
+// TODO Move Layer menu down a level, move add vertex / add
+// auto-selected vertex.
+
+// TODO Add little "Default color / color of selected item" box to the
+// lower-left corner or the status bar, like Paint has. This would
+// prevent the kind of confusion where people ask "Why can't I see
+// <x>?" when <x> has been colored white.
+
+// TODO Preferences: prefer percentages; status bar font size (which
+// would also imply a need for fatter
+
 // TODO Does SingleInstanceServer work with associations?
 
 // TODO -- make the crosshairs wider? Especially for the backup
@@ -2075,6 +2086,7 @@ public class BasicEditor extends Diagram
             CurveDecoration d = new CurveDecoration(path);
             decorations.add(d);
             add(path, 0, point, smoothed);
+            d.setColor(color);
             setSelection(new VertexHandle(d, 0));
             insertBeforeSelection = false;
         } else {
@@ -2236,7 +2248,7 @@ public class BasicEditor extends Diagram
         r.setColor(color);
 
 
-        if (diagramType.isTernary()) {
+        if (isTernary()) {
             r.tickType = LinearRuler.TickType.V;
         }
 
@@ -2689,7 +2701,7 @@ public class BasicEditor extends Diagram
 
         Point2D.Double fractions;
 
-        if (diagramType.isTernary()) {
+        if (isTernary()) {
             fractions = new Point2D.Double(0,0);
         } else if (mprin != null) {
             fractions = new Point2D.Double(0,mprin.y);
@@ -4479,9 +4491,8 @@ PED files?"handle associate the PED file extension and with "
 
     @Override protected void initializeDiagram() {
         super.initializeDiagram();
-        boolean isTernary = diagramType.isTernary();
-        editFrame.setAspectRatio.setEnabled(!isTernary);
-        editFrame.setTopComponent.setEnabled(isTernary);
+        editFrame.setAspectRatio.setEnabled(!isTernary());
+        editFrame.setTopComponent.setEnabled(isTernary());
         bestFit();
     }
 
@@ -6261,7 +6272,31 @@ PED files?"handle associate the PED file extension and with "
         }
         mnRightClick.show(mp.e.getComponent(), mp.e.getX(), mp.e.getY());
     }
- 
+
+    @Override String principalToPrettyString(Point2D.Double prin) {
+        StringBuilder res = new StringBuilder(super.principalToPrettyString(prin));
+        if (!isTernary() && selection != null
+            && selection instanceof BoundedParameterizable2D) {
+            BoundedParam2D b
+                = ((BoundedParameterizable2D) selection).getParameterization();
+            b = b.createTransformed(standardPageToPrincipal);
+            double area = b.area();
+            if (area != 0) {
+                CuspFigure c = getSelectedCuspFigure();
+                if (c.isClosed()) {
+                    area = Math.abs(area);
+                } else if (c.curve.getStart().x > c.curve.getEnd().x) {
+                    area = -area;
+                }
+                res.append(" Area: " + String.format("%g", area));
+            }
+            double length = b.length(0, 1e-6, 400).value;
+            if (length != 0) {
+                res.append(" Length: " + String.format("%g", length));
+            }
+        }
+        return res.toString();
+    }
 }
 
 class ScaledCroppedImage {
