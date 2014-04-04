@@ -601,6 +601,14 @@ public class EditFrame extends JFrame
             }
         };
 
+    protected Action scaleBoth = new Action
+        ("Both axes uniformly", KeyEvent.VK_B) {
+            @Override public void actionPerformed(ActionEvent e) {
+                getEditor().scaleBoth();
+                finishEvent();
+            }
+        };
+
     /** Internal use; called from BasicEditor.java. Make the GUI changes
         necessary to reflect whether we are or aren't currently using weight
         fraction values. */
@@ -1270,6 +1278,7 @@ public class EditFrame extends JFrame
         mnScale.setMnemonic(KeyEvent.VK_S);
         mnScale.add(scaleXUnits);
         mnScale.add(scaleYUnits);
+        mnScale.add(scaleBoth);
         mnProperties.add(mnScale);
 
         mnTags.setMnemonic(KeyEvent.VK_T);
@@ -1622,27 +1631,6 @@ public class EditFrame extends JFrame
                 break;
             }
         }
-    }
-
-    /** Set the maximum number of components in the diagram. A
-        schematic/"other" has 0; a binary diagram may have 2 (this
-        program has no specific understanding of binary diagrams with
-        4 components, so such diagrams should be treated as
-        0-component diagrams); and a ternary diagram has 3.
-
-        TODO Maybe users should be allowed to make schematics with as
-        many diagram components as they want?
-    */
-    void setComponentCount(int n) {
-        setLeftComponent.setEnabled(n >= 2);
-        setRightComponent.setEnabled(n >= 2);
-        setTopComponent.setEnabled(n >= 3);
-    }
-
-    /** Set the number of meaningful axes that the diagram has. */
-    void setAxisCount(int n) {
-        scaleXUnits.setEnabled(n >= 1);
-        scaleYUnits.setEnabled(n >= 2);
     }
 
     protected void help() {

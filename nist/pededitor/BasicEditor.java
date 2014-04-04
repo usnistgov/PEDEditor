@@ -628,7 +628,6 @@ public class BasicEditor extends Diagram
     protected transient BackgroundImageType backgroundType = null;
     protected transient BackgroundImageType oldBackgroundType = null;
 
-
     protected transient boolean preserveMprin = false;
     protected transient boolean isShiftDown = false;
     protected transient Point2D.Double statusPt = null;
@@ -3322,6 +3321,45 @@ public class BasicEditor extends Diagram
         propagateChange();
     }
 
+    public void scaleBoth() {
+        BoundedParam2D b = getPrincipalParameterization(selection);
+        double oldV = (b == null) ? 1 
+            : b.length(0, 1e-9, 2000).value;
+        if (oldV <= 0) {
+            oldV = 1;
+        }
+
+        String[] columnNames = {"Current length", "New length"};
+        double[][] data = {{oldV, oldV}};
+
+        NumberTableDialog dog = new NumberTableDialog
+            (editFrame, data, null, columnNames,
+             htmlify
+             ("Enter the current and new values. Both axes will be rescaled by "
+              + "a factor of (new length)/(old length)."
+              + "<p>Fractions are allowed. "
+              + "If you enter percentages, you must include the percent sign."));
+        dog.setTitle("Scale units");
+        double[][] output = dog.showModal();
+        if (output == null) {
+            return;
+        }
+
+        oldV = output[0][0];
+        double newV = output[0][1];
+
+        if (oldV == 0 || newV == 0) {
+            showError("Neither the old nor the new length may be zero.");
+            return;
+        }
+
+        double m = newV / oldV;
+
+        AffineTransform xform = AffineTransform.getScaleInstance(m, m);
+        invisiblyTransformPrincipalCoordinates(xform);
+        propagateChange();
+    }
+
     public void setDiagramComponent(Side side) {
         String old = diagramComponents[side.ordinal()];
         FormulaDialog dog = getFormulaDialog();
@@ -4493,6 +4531,7 @@ PED files?"handle associate the PED file extension and with "
         super.initializeDiagram();
         editFrame.setAspectRatio.setEnabled(!isTernary());
         editFrame.setTopComponent.setEnabled(isTernary());
+        editFrame.scaleBoth.setEnabled(!isTernary());
         bestFit();
     }
 
@@ -6275,11 +6314,8 @@ PED files?"handle associate the PED file extension and with "
 
     @Override String principalToPrettyString(Point2D.Double prin) {
         StringBuilder res = new StringBuilder(super.principalToPrettyString(prin));
-        if (!isTernary() && selection != null
-            && selection instanceof BoundedParameterizable2D) {
-            BoundedParam2D b
-                = ((BoundedParameterizable2D) selection).getParameterization();
-            b = b.createTransformed(standardPageToPrincipal);
+        BoundedParam2D b = getPrincipalParameterization(selection);
+        if (b != null && !isTernary()) {
             double area = b.area();
             if (area != 0) {
                 CuspFigure c = getSelectedCuspFigure();
