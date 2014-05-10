@@ -21,6 +21,28 @@ public class VertexInfoDialog extends JDialog {
     protected JTextField angle = new JTextField(9);
     protected JTextField slope = new JTextField(12);
 
+    protected JLabel length = new JLabel("0.0000000");
+    protected JLabel lengthLabel = new JLabel("Arc length:");
+
+    protected JLabel totLength = new JLabel("0.0000000");
+    protected JLabel totLengthLabel = new JLabel("Total length:");
+
+    protected JLabel area = new JLabel("0.0000000");
+    protected JLabel areaLabel = new JLabel("\u222BdY/dX:");
+
+    protected JLabel totArea = new JLabel("0.0000000");
+    protected JLabel totAreaLabel = new JLabel("Total \u222B:");
+    {
+        lengthLabel.setToolTipText("Arc length from left curve endpoint to here");
+        totLengthLabel.setToolTipText("Perimeter or total curve length");
+        areaLabel.setToolTipText("Curve integral from left endpoint to here");
+        totAreaLabel.setToolTipText("Area or integral under whole curve");
+        length.setToolTipText(lengthLabel.getToolTipText());
+        area.setToolTipText(areaLabel.getToolTipText());
+        totLength.setToolTipText(totLengthLabel.getToolTipText());
+        totArea.setToolTipText(totAreaLabel.getToolTipText());
+    }
+
     /** These values provide greater precision than angle.getText()
      * and slope.getText() do. */
 
@@ -98,6 +120,18 @@ public class VertexInfoDialog extends JDialog {
 
         gb.addEast(slopeLabel);
         gb.endRowWith(slope);
+
+        gb.addEast(lengthLabel);
+        gb.endRowWith(length);
+
+        gb.addEast(totLengthLabel);
+        gb.endRowWith(totLength);
+
+        gb.addEast(areaLabel);
+        gb.endRowWith(area);
+
+        gb.addEast(totAreaLabel);
+        gb.endRowWith(totArea);
 
         gb.addEast(new JLabel("Line width:"));
         gb.endRowWith(lineWidth);
@@ -260,15 +294,7 @@ public class VertexInfoDialog extends JDialog {
             if (Double.isNaN(m)) {
                 slope.setText("");
             } else {
-                double mabs = Math.abs(sloped);
-                String format =
-                    (mabs == 0) ? "%.0f"
-                    : (mabs < 1e-4) ? "%.4e"
-                    : (mabs < 1) ? "%.6f"
-                    : (mabs < 1e5) ? "%.4f"
-                    : (mabs < 1e9) ? "%.0f"
-                    : "%.6e";
-                slope.setText(LinearRuler.fixMinusZero(String.format(format, sloped)));
+                slope.setText(ContinuedFraction.toDecimalString(sloped, 4));
             }
         }
     }
@@ -276,6 +302,16 @@ public class VertexInfoDialog extends JDialog {
     public void setSlopeLabel(String label) {
         slopeLabel.setText(label + ":");
         slopeLabel.repaint();
+        areaLabel.setText("\u222B" + label + ":");
+        areaLabel.repaint();
+    }
+
+    public void setTotAreaLabel(String label) {
+        totAreaLabel.setText(label + ":");
+    }
+
+    public void setTotLengthLabel(String label) {
+        totLengthLabel.setText(label + ":");
     }
 
     static String truncatedName(LinearAxis ax, String defaultName) {
@@ -307,10 +343,47 @@ public class VertexInfoDialog extends JDialog {
     public void refresh() {
         setSlopeLabel();
         setAngle(0);
+        setLength(0);
+        setArea(0);
+        setTotLength(0);
+        setTotArea(0);
+        boolean b = !getParentEditor().isTernary();
+        setLengthVisible(b);
+        setAreaVisible(b);
+    }
+
+    public void setLength(double v) {
+        length.setText(ContinuedFraction.toDecimalString(v, 4));
+    }
+
+    public void setTotLength(double v) {
+        totLength.setText(ContinuedFraction.toDecimalString(v, 4));
+    }
+
+    public void setArea(double v) {
+        area.setText(ContinuedFraction.toDecimalString(v, 4));
+    }
+
+    public void setTotArea(double v) {
+        totArea.setText(ContinuedFraction.toDecimalString(v, 4));
     }
 
     public double getSlope() {
         return sloped;
+    }
+
+    public void setAreaVisible(boolean b) {
+        area.setVisible(b);
+        areaLabel.setVisible(b);
+        totArea.setVisible(b);
+        totAreaLabel.setVisible(b);
+    }
+
+    public void setLengthVisible(boolean b) {
+        length.setVisible(b);
+        lengthLabel.setVisible(b);
+        totLength.setVisible(b);
+        totLengthLabel.setVisible(b);
     }
 
     public void setLineWidth(double w) {
