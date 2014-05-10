@@ -3274,15 +3274,14 @@ public class Diagram extends Observable implements Printable {
         ArrayList<Decoration> decs = new ArrayList<>();
         ArrayList<BoundedParam2D> params = new ArrayList<>();
         for (Decoration dec: getDecorations()) {
-            if (dec instanceof BoundedParameterizable2D) {
-                BoundedParam2D param
-                    = ((BoundedParameterizable2D) dec).getParameterization();
-                if (param.getMinT() == param.getMaxT()) {
+            BoundedParam2D b = getStandardPageParameterization(dec);
+            if (b != null) {
+                if (b.getMinT() == b.getMaxT()) {
                     // That's a point, not a curve.
                     continue;
                 }
                 decs.add(dec);
-                params.add(param);
+                params.add(b);
             }
         }
 
@@ -5287,6 +5286,27 @@ public class Diagram extends Observable implements Printable {
         }
         propagateChange();
         return true;
+    }
+
+    /** Return the parameterization of obj (which is probably a
+        Decoration or DecorationHandle) in standard page space if obj
+        is an instance of BoundedParameterizable2D, or null
+        otherwise. */
+    BoundedParam2D getStandardPageParameterization(Object obj) {
+        return (obj instanceof BoundedParameterizable2D)
+            ? ((BoundedParameterizable2D) obj).getParameterization()
+            : null;
+    }
+
+    /** Return the parameterization of obj (which is probably a
+        Decoration or DecorationHandle) in principal space if obj
+        is an instance of BoundedParameterizable2D, or null
+        otherwise. */
+    BoundedParam2D getPrincipalParameterization(Object obj) {
+        return (obj instanceof BoundedParameterizable2D)
+                ? ((BoundedParameterizable2D) obj).getParameterization()
+                        .createTransformed(standardPageToPrincipal)
+                : null;
     }
 
     public Font loadFont(String filename, float size) {
