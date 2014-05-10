@@ -63,6 +63,8 @@ described below.
 
     <li><a href="#Edit">Edit selection / Edit nearest item</a>
 
+    <li><a href="#Layer">Layer</a>
+
   </ul>
 
 <li>Drawing common shapes
@@ -209,7 +211,7 @@ later. The second step is to <a href=#AddVertex>add some points</a>.
     fill it.
 
   <p>Fill patterns can hide decorations underneath them, so you may
-    need to <a href=Layer>lower the layer of the fill pattern</a>,
+    need to <a href="#Layer">lower the layer of the fill pattern</a>,
     raise the layer of those decorations, or use a partially
     transparent fill pattern. All fill patterns except the first,
     solid one are transparent.</p>
@@ -334,7 +336,7 @@ initial ranges to the values you really want, but it can also be used
 to change a diagram's range from Celsius to Kelvin, for example.
 
 <p>If you highlight a ruler or line segment before choosing this
-operation, the dialog will be initialized with its endpoints.
+operation, the dialog will be initialized with its endpoint values.
 
 <li><b>Tags</b>: Allow the user to store free-form string data. The
 data are not displayed or otherwise used by the program.
@@ -833,34 +835,6 @@ increments.
           item. Otherwise, it deletes the selected or nearest
           decoration.</p>
 
-      <li><p>The <b id=Layer>Layer</b> menu determines the order in
-          which decorations are printed. Lower layers are printed
-          before higher layers -- to put it another way, the lower
-          layers form the background for the higher layers. For
-          instance, if you have two decorations that intersect, and
-          one is solid black while the other is solid red, then the
-          intersection will be red if the red decoration is higher or
-          black if the black decoration is higher. New decorations are
-          initially placed above all old ones.
-
-        <p>Plain black decorations never stand out against a black
-          background, regardless of layering, because the "white"
-          parts of the decoration are just holes that allow the
-          background to show through. To make a label stand out
-          against a black background, color the label non-black or
-          check <a href="#LabelWhiteBackground">White label
-          background</a> or, for data points,
-          possibly <a href="#LabelWhiteHoles">White character
-          holes</a>. In either case, the label needs to be moved to a
-          higher layer than the background before it can be
-          visible.</p>
-
-        <p><b>Lower</b> moves the selected or nearest item farther
-          into the background, while <b>Raise</b> moves the item
-          closer to the foreground. <b>To bottom</b> moves the item
-          all the way into the background, and <b>To top</b> moves the
-          item all the way into the foreground.</p>
-
       <li><p><b>Move selection only</b> (<code>Shift+V</code>) moves
           the selected vertex or item to the current mouse position.</p>
 
@@ -899,6 +873,34 @@ increments.
           pressing <code>d</code> on others is a quick way to change
           many things to match the first thing.</p>
     </ul>
+
+<li><p>The <b id=Layer>Layer</b> menu determines the order in
+    which decorations are printed. Lower layers are printed
+    before higher layers -- to put it another way, the lower
+    layers form the background for the higher layers. For
+    instance, if you have two decorations that intersect, and
+    one is solid black while the other is solid red, then the
+    intersection will be red if the red decoration is higher or
+    black if the black decoration is higher. New decorations are
+    initially placed above all old ones.
+
+  <p>Plain black decorations never stand out against a black
+    background, regardless of layering, because the "white"
+    parts of the decoration are just holes that allow the
+    background to show through. To make a label stand out
+    against a black background, color the label non-black or
+    check <a href="#LabelWhiteBackground">White label
+      background</a> or, for data points,
+    possibly <a href="#LabelWhiteHoles">White character
+      holes</a>. In either case, the label needs to be moved to a
+    higher layer than the background before it can be
+    visible.</p>
+
+  <p><b>Lower</b> moves the selected or nearest item farther
+    into the background, while <b>Raise</b> moves the item
+    closer to the foreground. <b>To bottom</b> moves the item
+    all the way into the background, and <b>To top</b> moves the
+    item all the way into the foreground.</p>
 
 <li><p><b>Copy coordinates to clipboard</b> copies all of the
     coordinate information in the gray status bar at the bottom of the
