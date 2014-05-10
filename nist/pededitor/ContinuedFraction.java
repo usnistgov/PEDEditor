@@ -3,6 +3,8 @@
 
 package gov.nist.pededitor;
 
+import java.util.regex.Pattern;
+
 /** @author Eric Boesch */
 
 public class ContinuedFraction {
@@ -343,11 +345,42 @@ public class ContinuedFraction {
                 + suffix;
         }
 
-        return String.format("%g", xp) + suffix;
+        return toDecimalString(xp, 6) + suffix;
     }
 
-    public static void main(String[] args) {
-        System.out.println(ContinuedFraction.toString(0.02, true));
-        System.out.println(ContinuedFraction.toString(0.02, false));
+    /** An alternative decimal number format intended for displays
+        limited by space, not accuracy. It displays zero as "0", and
+        may display more than minSigFigs if there is extra room
+        because no exponent is needed. If you have an upper bound on
+        sig figs instead of a lower bound, use String.format("%.6e",
+        x) or the like instead of this. */
+    public static String toDecimalString(double v, int minSigFigs) {
+        double vabs = Math.abs(v);
+        if (vabs == 0) {
+            return "0";
+        }
+        String format;
+        if (vabs < 1e-4 || vabs >= 1e6) {
+            format = "%." + Integer.toString(minSigFigs-1) + "e";
+        } else {
+            int precision = 
+                (vabs < 10) ? 3
+                : (vabs < 100) ? 2
+                : (vabs < 1000) ? 1
+                : (vabs < 1e4) ? 0
+                : (vabs < 1e5) ? -1
+                : -2;
+            precision = Math.max(0, minSigFigs + precision);
+            format = "%." + Integer.toString(precision) + "f";
+        }
+        return fixMinusZero(String.format(format, v));
+    }
+
+    private static Pattern minusZeroPattern = Pattern.compile("-0+\\.?0*(E|\\z)");
+
+    /** Remove the leading minus sign from minus zero ("-0") and its
+        fixed-point variants. Leave other strings unchanged. */
+    public static String fixMinusZero(String s) {
+        return minusZeroPattern.matcher(s).lookingAt() ? "0" : s;
     }
 }
