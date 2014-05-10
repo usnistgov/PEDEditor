@@ -18,6 +18,7 @@ public class RightClickMenu extends BasicRightClickMenu {
     { mnEditSel.setMnemonic(KeyEvent.VK_E); }
     JMenu mnEditNear = new JMenu("Edit nearest item");
     { mnEditNear.setMnemonic(KeyEvent.VK_E); }
+    JMenu mnLayer = null;
     JMenu mnDecorations;
     JLabel coordinates = new JLabel();
 
@@ -32,7 +33,6 @@ public class RightClickMenu extends BasicRightClickMenu {
               ef.actCopyRegion,
               ef.actRemoveSelection,
               ef.actRemoveAll,
-              ef.createLayerMenu(),
               ef.actMoveSelection,
               ef.actMovePoint,
               ef.actMoveRegion,
@@ -50,7 +50,6 @@ public class RightClickMenu extends BasicRightClickMenu {
             { ef.actColor,
               ef.actRemoveSelection,
               ef.actRemoveAll,
-              ef.createLayerMenu(),
               ef.actEditSelection,
               ef.actResetToDefault,
               ef.actMakeDefault }) {
@@ -81,6 +80,8 @@ public class RightClickMenu extends BasicRightClickMenu {
         add(mnDecorations = ef.createDecorationsMenu());
         add(mnEditSel);
         add(mnEditNear);
+        mnLayer = ef.createLayerMenu();
+        add(mnLayer);
         addSeparator();
         coordinates = createCoordinatesLabel();
         add(ef.actCopyStatusBar);
