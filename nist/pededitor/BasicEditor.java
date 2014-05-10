@@ -87,16 +87,8 @@ import org.codehaus.jackson.annotate.JsonIgnore;
 
 import Jama.Matrix;
 
-// TODO Move Layer menu down a level, move add vertex / add
-// auto-selected vertex.
-
-// TODO Add little "Default color / color of selected item" box to the
-// lower-left corner or the status bar, like Paint has. This would
-// prevent the kind of confusion where people ask "Why can't I see
-// <x>?" when <x> has been colored white.
-
 // TODO Preferences: prefer percentages; status bar font size (which
-// would also imply a need for fatter
+// would also imply a need for multi-row display at times)
 
 // TODO Does SingleInstanceServer work with associations?
 
@@ -1018,7 +1010,7 @@ public class BasicEditor extends Diagram
             lineStyle = ls;
         }
 
-        color = thisOrBlack(dec.getColor());
+        setColor(thisOrBlack(dec.getColor()));
         double lw = dec.getLineWidth();
         if (lw != 0) {
             lineWidth = lw;
@@ -1030,6 +1022,12 @@ public class BasicEditor extends Diagram
         if (!hadSelection) {
             clearSelection();
         }
+    }
+
+    public void setColor(Color c) {
+        color = c;
+        editFrame.setColor(c);
+        redraw();
     }
 
     public void resetSelectionToDefaultSettings() {
@@ -1370,7 +1368,7 @@ public class BasicEditor extends Diagram
             (editFrame, "Choose color", true, colorChooser,
              new ActionListener() {
                  @Override public void actionPerformed(ActionEvent e) {
-                     color = colorChooser.getColor();
+                     setColor(colorChooser.getColor());
                      BasicEditor.this.selection.getDecoration().setColor(color);
                  }
              },
@@ -1380,7 +1378,7 @@ public class BasicEditor extends Diagram
 
         Color c = selection.getDecoration().getColor();
         if (c != null) {
-            color = c;
+            setColor(c);
         }
         colorChooser.setColor(color);
         colorDialog.setVisible(true);
@@ -1548,9 +1546,8 @@ public class BasicEditor extends Diagram
         double closeDecT = 0;
         Point2D.Double res = null;
         for (Decoration dec: getDecorations()) {
-            if (dec instanceof BoundedParameterizable2D) {
-                BoundedParam2D b
-                    = ((BoundedParameterizable2D) dec).getParameterization();
+            BoundedParam2D b = getStandardPageParameterization(dec);
+            if (b != null) {
                 for (double t: b.segIntersections(seg)) {
                     Point2D.Double p = b.getLocation(t);
                     double distSq = p1.distanceSq(p);
@@ -1939,6 +1936,9 @@ public class BasicEditor extends Diagram
         mnRightClick.setHasSelection(haveSel);
         if (selection != null) {
             showTangent(selection);
+            editFrame.setColor(thisOrBlack(hand.getDecoration().getColor()));
+        } else {
+            editFrame.setColor(color);
         }
         redraw();
     }
@@ -2023,7 +2023,57 @@ public class BasicEditor extends Diagram
         if (g != null) {
             vertexInfo.setScreenDerivative(g);
         }
+        if (dec instanceof CurveDecoration && showLength()) {
+            CuspFigure c = ((CurveDecoration) dec).getItem();
+            BoundedParam2D b = getPrincipalParameterization(dec);
+            Param2D uc = b.getUnboundedCurve();
+
+            double t0, t1;
+            double areaMul;
+            if (c.curve.getStart().x > c.curve.getEnd().x) {
+                areaMul = -1;
+                t0 = t;
+                t1 = b.getMaxT();
+            } else {
+                areaMul = 1;
+                t0 = b.getMinT();
+                t1 = t;
+            }
+            double area = uc.area(t0, t1) * areaMul;
+            double totArea = b.area() * areaMul;
+            double length = uc.length(0, 1e-6, 800, t0, t1).value;
+            double totLength = b.length(0, 1e-6, 800).value;
+
+            if (c.isClosed()) {
+                vertexInfo.setTotLengthLabel("Perimeter");
+                vertexInfo.setTotAreaLabel("Area");
+                totArea = Math.abs(totArea);
+            } else {
+                vertexInfo.setTotLengthLabel("Total length");
+                vertexInfo.setTotAreaLabel("Total \u222B");
+            }
+
+            vertexInfo.setArea(area);
+            vertexInfo.setTotArea(totArea);
+            vertexInfo.setLength(length);
+            vertexInfo.setTotLength(totLength);
+        }
+            
         showTangentCommon(dec);
+    }
+
+    boolean showLength() {
+        if (isTernary()) { return false; }
+        for (String s: diagramComponents) {
+            if (s != null) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    boolean showArea() {
+        return showLength();
     }
 
     public void showTangent(Decoration dec) {
@@ -3707,12 +3757,11 @@ public class BasicEditor extends Diagram
             // This feature XYZZY should also be available for auto-positioning.
             DecorationDistance nc = nearestCurve(pagePoint);
             if (nc != null) {
-                if (nc.decoration instanceof BoundedParameterizable2D) {
-                    BoundedParam2D param = ((BoundedParameterizable2D) nc.decoration)
-                        .getParameterization();
+                BoundedParam2D b = getStandardPageParameterization(nc.decoration);
+                if (b != null) {
                     Point2D.Double selPage = principalToStandardPage
                         .transform(selection.getLocation());
-                    CurveDistanceRange cdr = param.distance(selPage, 1e-6, 1000);
+                    CurveDistanceRange cdr = b.distance(selPage, 1e-6, 1000);
                     if (cdr != null) {
                         points.add(standardPageToPrincipal.transform(cdr.point));
                     }
@@ -4556,6 +4605,7 @@ PED files?"handle associate the PED file extension and with "
         editFrame.setStatus("");
         editFrame.setVertexInfoVisible(true);
         editFrame.setVisible(true);
+        setColor(color);
     }
 
     /** Give the user an opportunity to save the old diagram or to
@@ -6310,28 +6360,6 @@ PED files?"handle associate the PED file extension and with "
             mnRightClick.setCoordinates(formatCoordinates(mp.prin));
         }
         mnRightClick.show(mp.e.getComponent(), mp.e.getX(), mp.e.getY());
-    }
-
-    @Override String principalToPrettyString(Point2D.Double prin) {
-        StringBuilder res = new StringBuilder(super.principalToPrettyString(prin));
-        BoundedParam2D b = getPrincipalParameterization(selection);
-        if (b != null && !isTernary()) {
-            double area = b.area();
-            if (area != 0) {
-                CuspFigure c = getSelectedCuspFigure();
-                if (c.isClosed()) {
-                    area = Math.abs(area);
-                } else if (c.curve.getStart().x > c.curve.getEnd().x) {
-                    area = -area;
-                }
-                res.append(" Area: " + String.format("%g", area));
-            }
-            double length = b.length(0, 1e-6, 400).value;
-            if (length != 0) {
-                res.append(" Length: " + String.format("%g", length));
-            }
-        }
-        return res.toString();
     }
 }
 
