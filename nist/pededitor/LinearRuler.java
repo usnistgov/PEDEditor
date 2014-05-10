@@ -13,7 +13,6 @@ import java.awt.geom.AffineTransform;
 import java.awt.geom.Line2D;
 import java.awt.geom.Point2D;
 import java.awt.geom.Rectangle2D;
-import java.util.regex.Pattern;
 
 import org.codehaus.jackson.annotate.JsonIgnore;
 import org.codehaus.jackson.annotate.JsonProperty;
@@ -25,13 +24,6 @@ import org.codehaus.jackson.map.annotate.JsonSerialize.Inclusion;
 @JsonSerialize(include = Inclusion.NON_DEFAULT)
 class LinearRuler implements BoundedParameterizable2D, Decorated {
     public static enum LabelAnchor { NONE, LEFT, RIGHT };
-    private static Pattern minusZeroPattern = Pattern.compile("-0+\\.?0*(E|\\z)");
-
-    /** Remove the leading minus sign from minus zero ("-0") and its
-        fixed-point variants. Leave other strings unchanged. */
-    public static String fixMinusZero(String s) {
-        return minusZeroPattern.matcher(s).lookingAt() ? "0" : s;
-    }
 
     /** Most applications use straight tick marks, but ternary
         diagrams use V-shaped tick marks (probably because internal
@@ -630,7 +622,7 @@ class LinearRuler implements BoundedParameterizable2D, Decorated {
                     String s = displayLog10
                         ? LogRulerTick.pow10String(logical)
                         : String.format(formatString, logical).trim();
-                    s = " " + LinearRuler.fixMinusZero(s) + " ";
+                    s = " " + ContinuedFraction.fixMinusZero(s) + " ";
                     LabelDialog.drawString
                         (g, s, anchor.x, anchor.y, xWeight, yWeight);
                     g.setTransform(oldTransform);

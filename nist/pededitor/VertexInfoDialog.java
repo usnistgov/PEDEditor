@@ -259,7 +259,7 @@ public class VertexInfoDialog extends JDialog {
     protected void basicSetAngleDegrees(double deg, boolean changeText) {
         angled = deg;
         if (changeText) {
-            angle.setText(LinearRuler.fixMinusZero(String.format("%.2f", deg)));
+            angle.setText(ContinuedFraction.fixMinusZero(String.format("%.2f", deg)));
         }
     }
 
