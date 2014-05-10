@@ -25,6 +25,9 @@ import javax.imageio.ImageIO;
 import javax.swing.AbstractAction;
 import javax.swing.AbstractButton;
 import javax.swing.ActionMap;
+import javax.swing.BorderFactory;
+import javax.swing.Box;
+import javax.swing.BoxLayout;
 import javax.swing.ButtonGroup;
 import javax.swing.Icon;
 import javax.swing.ImageIcon;
@@ -47,13 +50,13 @@ import javax.swing.ScrollPaneConstants;
 public class EditFrame extends JFrame
     implements Observer {
 
-    protected JPanel contentPane;
     protected JScrollPane scrollPane;
     protected EditPane imagePane;
     protected int preferredWidth = 800;
     protected int preferredHeight = 600;
 
     protected JPanel statusBar;
+    protected JLabel colorLabel;
     protected JLabel statusLabel;
     protected BasicEditor parentEditor;
     protected ButtonGroup fillStyleGroup = new ButtonGroup();
@@ -1039,8 +1042,7 @@ public class EditFrame extends JFrame
         parentEditor.addObserver(this);
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setLocation(0, 0);
-        contentPane = new JPanel(new BorderLayout());
-        setContentPane(contentPane);
+        getContentPane().setLayout(new BorderLayout());
 
         imagePane = new EditPane(this);
         // This is a workaround for an apparent Swing bug. When there
@@ -1055,13 +1057,20 @@ public class EditFrame extends JFrame
              ScrollPaneConstants.HORIZONTAL_SCROLLBAR_ALWAYS);
         scrollPane.setPreferredSize
             (new Dimension(preferredWidth, preferredHeight));
-        contentPane.add(scrollPane, BorderLayout.CENTER);
+        getContentPane().add(scrollPane, BorderLayout.CENTER);
 
         statusBar = new JPanel();
+        statusBar.setLayout(new BoxLayout(statusBar, BoxLayout.LINE_AXIS));
+        statusBar.setBorder(BorderFactory.createEmptyBorder(3, 3, 3, 3));
+
+        colorLabel = new JLabel();
+        statusBar.add(colorLabel);
+        statusBar.add(Box.createRigidArea(new Dimension(5, 0)));
+
         statusLabel = new JLabel("<html><font size=\"-2\">"
                                  + "No diagram loaded</font></html>");
         statusBar.add(statusLabel);
-        contentPane.add(statusBar, BorderLayout.SOUTH);
+        getContentPane().add(statusBar, BorderLayout.SOUTH);
 
         JMenuBar menuBar = new JMenuBar();
         setJMenuBar(menuBar);
@@ -1866,6 +1875,22 @@ public class EditFrame extends JFrame
                            RenderingHints.VALUE_ANTIALIAS_ON);
         stroke.getStroke().draw(g, line, lineWidth);
         return new ImageIcon(im);
+    }
+
+    void setColor(Color c) {
+        int width = 10;
+        int height = 10;
+
+        BufferedImage im = new BufferedImage
+            (width, height, BufferedImage.TYPE_INT_ARGB);
+        Graphics2D g = im.createGraphics();
+        g.setBackground(c);
+        g.clearRect(0, 0, im.getWidth(), im.getHeight());
+        if (c.equals(Color.WHITE)) {
+            g.setColor(Color.RED);
+            g.drawRect(0, 0, im.getWidth()-1, im.getHeight()-1);
+        }
+        colorLabel.setIcon(new ImageIcon(im));
     }
 
     static JMenuItem toMenuItem(Action act) {
