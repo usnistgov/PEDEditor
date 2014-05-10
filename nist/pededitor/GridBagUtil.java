@@ -11,7 +11,7 @@ import java.awt.Insets;
 /** Stupid class to marginally simplify use of GridBagLayout in a
     simple consistent style. */
 public class GridBagUtil extends GridBagWrapper {
-    private Insets insets = new Insets(0, 3, 0, 3);
+    public static final Insets insets = new Insets(0, 3, 0, 3);
 
     public static final GridBagConstraints east = new GridBagConstraints();
     public static final GridBagConstraints west = new GridBagConstraints();
@@ -20,7 +20,7 @@ public class GridBagUtil extends GridBagWrapper {
     public static final GridBagConstraints endRowCentered
         = new GridBagConstraints();
 
-    {
+    static {
         east.anchor = GridBagConstraints.EAST;
         east.insets = insets;
 
