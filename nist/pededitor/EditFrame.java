@@ -125,7 +125,8 @@ public class EditFrame extends JFrame
                 }
             });
     JMenuItem mnNextFile = toMenuItem
-        (new Action("Next", KeyEvent.VK_R) {
+        (new Action("Next", KeyEvent.VK_R,
+                    KeyStroke.getKeyStroke("control RIGHT")) {
                 { 
                     putValue(SHORT_DESCRIPTION,
                              "Show next diagram");
