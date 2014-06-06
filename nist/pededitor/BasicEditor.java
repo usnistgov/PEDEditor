@@ -87,291 +87,6 @@ import org.codehaus.jackson.annotate.JsonIgnore;
 
 import Jama.Matrix;
 
-// TODO Preferences: prefer percentages; status bar font size (which
-// would also imply a need for multi-row display at times)
-
-// TODO Does SingleInstanceServer work with associations?
-
-// TODO -- make the crosshairs wider? Especially for the backup
-// crosshairs, precision is not important.
-
-// TODO Export (Jay): "would be helpful if the output file had the
-// figure number as the first line and headings, including the
-// transform type, for each of the columns. And a few less significant
-// figures in the output would be nice." Maybe a field indicating the
-// number of sig figs. Also, remind users to use a transform if the
-// data should become/already is in percent format.
-
-// TODO support for tablets or one-button systems (not a big deal
-// since Android doesn't support Java 7 yet anyway)
-
-// TODO The tick spacing can change when you resize images, and a
-// diagram that have ticks separated by 5 units on-screen might have
-// them separated by 2 units in the printout. This is a consequence of
-// the use of font metrics -- fonts don't scale continuously as you
-// resize the page, but instead, the dimensions of rendered strings
-// rise with font size in a stair-step pattern. This is for aesthetic
-// reasons -- text looks better when letters align with pixel
-// boundaries instead of having borders that lie halfway between rows
-// or columns.
-
-// TODO (bug, 5/10) Somehow, the "nearest point on curve" can get
-// stuck at control points, which implies the nearest point isn't
-// actually being computed correctly.
-
-// TODO (mandatory, 1 day): At this point, the rule that tie lines
-// have to end at vertexes of the diagram is no longer needed and not
-// difficult to eliminate. Tie lines ending on rulers without extra
-// steps could also be enabled (and the extra steps are unintuitive).
-
-// TODO (2-3 weeks, mandatory) "Undo" option. Any good drawing program
-// has that feature, but making everything undoable would take a
-// couple weeks. (Every time an operation that changes the diagram is
-// completed, push the inverse operation onto a stack.)
-
-// TODO (bug 2/10) Copying a single point using Copy Region doesn't work.
-// The basic reason is, more or less, the line in PathParam2D.java
-// that specifies that lastSegNo = -1 if t1 == 0, but I'm concerned
-// that changing that could have side effects and I don't have time to
-// check that.
-
-// TODO: Will demonstrated that the underline feature is virtually
-// invisible, at about 1% of the character height.
-
-// TODO (bug 2/10) The text in the text box will be serif if the box
-// is first opened in serif mode, and sans if the box was first opened
-// in sans mode, which is odd.
-
-// TODO (bug 2/10) When you print a cropped diagram, the portion
-// outside the cropped region shows up too.
-
-// TODO (bug-ish, minor but easy) The nearestPoint() feature marked
-// XYZZY is not available during auto-positionning, for no good
-// reason, but the help implies that it is.
-
-// TODO (optional): Remappable key bindings.
-
-// TODO (optional) Automatically convert diagram components into
-// labels.
-
-// TODO (optional): Unify the ternary diagram interfaces to faciliate
-// creation of partial ternary diagrams, using a two-step process
-// (identify the 3 corners of the system, then the 3 corners of the
-// partial) and perhaps automatically adding the corner labels.
-
-// TODO (optional): Allow switching the pair of variables that are the
-// principal coordinates.
-
-// TODO (optional): Allow switching the pair of variables that are the
-// display coordinates. It would also be nice to automatically reverse
-// the text angle for labels that end up as leftward-pointing. This
-// would enable switching and mirroring axes and a number of other
-// tricks.
-
-// TODO (optional): Allow decorations to be copied to and from the
-// clipboard. (They would be written and read as PED format.)
-
-// TODO: Is there a fonts-based solution to improve nested subscript
-// rendering? The DejaVu Unicode subscripts don't sit below their
-// baselines as they should.
-
-// TODO Separate the PDF handling more clearly from the rest of the
-// code to make the code easier to adopt into other products.
-
-// TODO (optional) show the line style in the tangent window. This
-// might annoy more people than it benefits, though...
-
-// TODO (optional) More help when users start the program up.
-
-// TODO (optional) Allow wildcards in formula fits. This would, for
-// instance, allow the oxygen levels to be automatically adjusted to
-// the correct values.
-
-// TODO (optional) User-defined character palettes
-
-// TODO (optional) If there exists an autosave version of a file that
-// is newer than the regular version, ask whether to use that instead.
-
-// TODO (optional): "Margin size as a fraction of the core diagram
-// height", for example, perhaps should be replaced by something like
-// "Minimum visible page X value", which is probably easier to
-// understand. This item's importance is reduced because the margins
-// can be expanded using Enter and choosing an off-screen value.
-
-// TODO (optional) Modified tie-line rules so that endpoints are
-// scattered at even curve lengths along curve edges. Terrell's
-// suggestion: these can be handled manually, since they're not
-// common, but they're not that uncommon either -- issues come up
-// fairly regularly. (Consider corner cases like retrograde motion of
-// the edge as viewed from the convergence point or tie lines that
-// enclose angles exceeding 180 degrees. However, retrograde motion is
-// not a common issue and isn't reliably handled now anyway.)
-
-// TODO (optional) Option to identify the smallest region containing a
-// point, to make it easier to change the fill for that region.
-// Unfortunately the math is not trivial.
-
-// TODO (Optional, 4/10) Allow line selection to cycle around likely
-// candidates the same way that point selection does.
-
-// TODO (optional, 4 hours, 3/10) Add mathematical italic lowercase pi
-// (U+1D70B) to the font and the label editing palette (it's part of
-// DejaVu Italic)
-
-// TODO (optional, easy?, 2/10) Add "Print visible region" as an
-// alternative to "Print". (You can always collapse the margins to the
-// region you want to show and then print that, but that's slow and
-// might be hard to undo.)
-
-// TODO (optional, 2 days, 2/10) Let the user select the rise and run
-// variables of the slope window. This would also facilitate drawing
-// straight lines whose slopes are defined in terms of user variables.
-
-// DONTFIX? (minor bug) If you select one curve control point with
-// 'Q', then move close to a neighboring vertex that is still less
-// than the unstick distance away, then press 'Q' again, it will
-// reject it as a repeat. This is sort-of by design, though it seems a
-// bit odd sometimes.
-
-// TODO (optional, 2/10) Allow marking of multiple objects.
-
-// TODO (1 week) Apply a gradient to all control points on a curve.
-// Specifically, apply the following transformation to all points on
-// the currently selected curve for which $variable is between v1 and
-// v2: "$variable = $variable + k * ($variable - v1) / (v2 - v1)"
-
-// TODO (optional, TAV not so important unless someone complains) You
-// can't make tie lines that cross the "endpoint" of a closed curve.
-// Fix this somehow.
-
-// TODO (optional, 3 days) For opaque and boxed labels, allow users to decide
-// how much extra white space to include on each side.
-
-// TODO (optional) Grid lines might occasionally be nice. At one point
-// I would have liked to have them
-
-// TODO (optional) Resize all labels at once by a given factor. This
-// is more useful during conversion from GRUMP to PED fonts.
-
-// TODO (optional) Curve tags, such as temperature, liquidus, solidus, and
-// presumably user-defined tags too.
-
-// TODO (optional) Make cross sections of quaternary diagrams
-// first-class.
-
-// TODO (optional) As Chris suggested, allow input images to be
-// rotated (currently images must be within about 45 degrees of the
-// correct orientation). This is hardly a show-stopper; you can load
-// the image in MS-Paint and rotate it in a minute, and Chris said
-// that was a good solution.
-
-// TODO (optional) Other commonly used shapes (equilateral triangle,
-// square, circle) whose scale and orientation are defined by
-// selecting two points. Ideally the changes would be visible in real
-// time as you move the mouse around. (Auto-positioning has made this
-// slightly less important than before; squares, rectangles, and
-// equilateral triangles are easy if one side is horizontal.) A
-// complicating issue: what frame of reference defines equal lengths?
-// Should changing the aspect ratio turn a circle into an ellipse?
-
-// TODO (optional) Eutectic and peritectic points.
-
-// TODO (optional) Allow the diagram domain and range to be expanded.
-// Right now, you can expand the margins, change the aspect ratio, or
-// rescale the axes, but it is awkward to extend a partial ternary to
-// create a full ternary, for example. The 'move region' command is an
-// OK work-around, at least for binary diagrams.
-
-// TODO (optional) Better curve fitting. As I believe Don mentioned,
-// following the control points too slavishly can yield over-fitting
-// in which you end up mapping noise (experimental error, scanner
-// noise, twitches in the hand of the digitizer or the person who drew
-// the image in the first place, or whatever). Peter's program's
-// fitting is simple but not great.
-
-// Heuristics may be used to identify good cutoffs for fit quality. At
-// the over-fitting end of the spectrum, if you find the sum of the
-// squares of the fit error terms dropping only in rough proportion
-// to the difference of the number of data points and the number of
-// degrees of freedom in the fit, then that indicates that your fit
-// method cannot detect any kind of pattern in the data at that degree
-// of precision, so short of doing a perfect fit (smoothing), there is
-// little point in trying to fit the data any more accurately than
-// that. There may also be points further back in the curve where the
-// slope of the sum of squares of the fit error terms as a function of
-// the number of degrees of freedom in the fit definition becomes more
-// shallow, and just before any such turn would be a good candidate
-// for a fit. (For example, to fit a bumpy oval shape, one might find
-// that a perfect ellipse (5 degrees of freedom in 2D) provides a much
-// better fit than 4 degrees of freedom does and not much worse than 7
-// degrees of freedom does, so the perfect ellipse is a good choice.)
-
-// TODO (optional) More compact representation for symbol sets in the
-// PED format.
-
-// TODO (optional) Make the status bar font bigger, or at least allow
-// that as an option.
-
-// TODO (preexisting in viewer) Periodic table integration.
-
-// TODO (preexisting but not mandatory) Smart line dash lengths. Peter
-// Schenk's PED Editor adjusts the segment length for dashed lines to
-// insure that the dashes in dashed curves are always enough shorter
-// than the curves themselves that at least two dashes are visible.
-// It's a nice feature, but is it worth it to reproduce? The lengths
-// of the dashes in dashed lines is proportional to their thickness,
-// so you can make especially short dashes by using especially thin
-// lines already. (Using the sum of the chord lengths as a lower bound
-// on the length of the whole would achieve the goal of insuring at
-// least two dashes are visible, but would not guarantee that the
-// dashes end neatly at both endpoints. (Java2D already has its own
-// estimate of the path length -- and it would actually be better to
-// use its estimate than to do a better but different estimate of
-// one's own -- but I don't know how practical it would be to access
-// that information.)
-
-// TODO (optional) More general gradients, e.g. identify a polygon (or
-// circle?) and a point in the interior of that polygon that is to be
-// warped to some other point inside the polygon. The boundary should
-// remain the same, and the warping should apply to the scanned input
-// image as well. For polygonal regions, the transform used could be
-// that the interior point is used to decompose the polygon into ( #
-// of sides ) triangular regions, and each of those regions is
-// subjected to the affine transformation that preserves its external
-// edge while transforming the interior point to its new location.
-// (The result of such a transformation might not be pretty; any line
-// passing through the warped region could end up with sharp bends in
-// it. However, if the line is defined by its endpoints only to begin
-// with, you'll never see that.)
-
-// TODO (major) Visual location of nearest point on scanned diagram. (The
-// mouse can already be attracted to the nearest feature in the final
-// version of the diagram.) Complicating factors include noise and
-// specs in the scanned image, the need to infer the width of lines,
-// and that the simplest smoothing algorithms for edge detection (such
-// as Gaussian smoothing) tend to yield results that are biased
-// towards centers of curvature. You can't just mindlessly apply basic
-// edge-finding algorithms and have the answer pop right out. If the
-// return value is off by even half of a line width, then the feature
-// is almost worthless.
-
-// TODO Investigate whether JavaFX is really a plausible alternative.
-// (Answer: it's not quite ready, it seems.)
-
-// TODO (major) Visual location of curves in the scanned diagram.
-// Problems are much the same as for the previous section, plus more
-// processor speed constraints. (A lot of vision problems could be
-// stated in terms of optimization a function of the form
-// function(photo(vector of features)) -- multidimensional
-// optimization of the feature vector space where evaluating the
-// function even once requires transforming thousands or millions of
-// pixels of the scanned image. Multidimensional optimization of an
-// ordinary function can be kind of expensive, but in this case
-// computing the function just once, for a single feature vector,
-// requires transforming thousands or millions of pixels. Duh,
-// computer vision can be expensive, and how much of our own brains
-// are dedicated to vision-related tasks?)
-
 /** Main driver class for Phase Equilibria Diagram digitization and creation. */
 public class BasicEditor extends Diagram
     implements CropEventListener, MouseListener, MouseMotionListener,
@@ -807,7 +522,9 @@ public class BasicEditor extends Diagram
         rightClick = null;
         principalFocus = null;
         paintSuppressionRequestCnt = 0;
-        setBackgroundType(EditFrame.BackgroundImageType.LIGHT_GRAY);
+        setBackgroundType((backgroundType == null)
+                          ? BackgroundImageType.LIGHT_GRAY
+                          : backgroundType);
         tieLineDialog.setVisible(false);
         tieLineCorners = new ArrayList<>();
         originalImage = null;
@@ -1099,9 +816,10 @@ public class BasicEditor extends Diagram
         }
     }
 
-    public synchronized void setBackgroundType
-        (EditFrame.BackgroundImageType value) {
-        oldBackgroundType = backgroundType;
+    public synchronized void setBackgroundType(BackgroundImageType value) {
+        if (backgroundType != oldBackgroundType) {
+            oldBackgroundType = backgroundType;
+        }
         backgroundType = value;
 
         // Turn blinking off
@@ -1111,7 +829,7 @@ public class BasicEditor extends Diagram
         imageBlinker = null;
         darkImage = null;
 
-        if (value == EditFrame.BackgroundImageType.BLINK) {
+        if (value == BackgroundImageType.BLINK) {
             imageBlinker = new Timer("ImageBlinker", true);
             imageBlinker.scheduleAtFixedRate(new ImageBlinker(), 500, 500);
             backgroundImageEnabled = true;
@@ -1127,8 +845,7 @@ public class BasicEditor extends Diagram
        to its current value causes it to revert to its previous value.
        This exists just to allow control-H to hide the background
        image and then uh-hide it. */
-    public synchronized void toggleBackgroundType
-        (EditFrame.BackgroundImageType value) {
+    public synchronized void toggleBackgroundType(BackgroundImageType value) {
         setBackgroundType(value == backgroundType ? oldBackgroundType : value);
     }
 
@@ -1829,10 +1546,10 @@ public class BasicEditor extends Diagram
                             RenderingHints.VALUE_RENDER_QUALITY);
 
         { // Draw the background
-            EditFrame.BackgroundImageType back = editFrame.getBackgroundImage();
+            BackgroundImageType back = editFrame.getBackgroundImage();
             boolean showBackgroundImage = tracingImage()
-                && back != EditFrame.BackgroundImageType.NONE
-                && (back != EditFrame.BackgroundImageType.BLINK
+                && back != BackgroundImageType.NONE
+                && (back != BackgroundImageType.BLINK
                     || backgroundImageEnabled);
 
             if (showBackgroundImage) {
