@@ -37,21 +37,19 @@ public class QuadToRect extends RectToQuadCommon
     }
 
     /** @return the inverse transformation as a RectToQuad. */
-    @Override
-	public QuadrilateralTransform createInverse() {
+    @Override public QuadrilateralTransform createInverse() {
         RectToQuad inv = new RectToQuad();
         inv.copyFieldsFrom(this);
         inv.xform = xform.createInverse();
         return inv;
     }
 
-    @Override
-	@JsonIgnore public Point2D.Double[] getOutputVertices() {
+    @Override @JsonIgnore public Point2D.Double[] getOutputVertices() {
         return rectVertices();
     }
 
-    @Override
-	@JsonProperty("input") public Point2D.Double[] getInputVertices() {
+    @Override @JsonProperty("input")
+    public Point2D.Double[] getInputVertices() {
         return quadVertices();
     }
 
@@ -62,8 +60,7 @@ public class QuadToRect extends RectToQuadCommon
 
     /** @return a transformation from the unit square to the input
      * quadrilateral */
-    @Override
-	public RectToQuad squareToDomain() {
+    @Override public RectToQuad squareToDomain() {
         RectToQuad output = new RectToQuad();
         output.setVertices(getInputVertices());
         return output;
