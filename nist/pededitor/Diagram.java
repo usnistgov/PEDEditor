@@ -1174,6 +1174,7 @@ public class Diagram extends Observable implements Printable {
     protected double labelYMargin = Double.NaN;
     protected double boxedLabelXMargin = Double.NaN;
     protected double boxedLabelYMargin = Double.NaN;
+    protected boolean percentagePreferred = true;
 
     static final double STANDARD_LINE_WIDTH = 0.0024;
     static final double STANDARD_FONT_SIZE = 12.5;
@@ -1235,6 +1236,14 @@ public class Diagram extends Observable implements Printable {
     /** Initialize/clear almost every field except diagramType. */
     void clear() {
         init();
+    }
+
+    @JsonIgnore public boolean isPercentagePreferred() {
+        return percentagePreferred;
+    }
+
+    public void setPercentagePreferred(boolean v) {
+        percentagePreferred = v;
     }
 
     CuspFigure idToCurve(int id) {
