@@ -4030,23 +4030,31 @@ PED files?"handle associate the PED file extension and with "
                 case OTHER:
                     {
                         leftMargin = rightMargin = topMargin = bottomMargin = 0.05;
-                        Rectangle2D.Double principalBounds
-                            = new Rectangle2D.Double(0.0, 0.0, 1.0, 1.0);
+                        double[] wAndH = {1,1};
+                        if (tracing) {
+                            wAndH = widthAndHeight(vertices);
+                        }
+                        double width = wAndH[0];
+                        double height = wAndH[1];
+                        // pb = principalBounds
+                        Rectangle2D.Double pb = new Rectangle2D.Double
+                            (Math.max(0, -width), Math.max(0, -height),
+                             width, height);
                         if (tracing) {
                             // Transform the input quadrilateral into a rectangle
                             QuadToRect q = new QuadToRect();
                             q.setVertices(vertices);
-                            q.setRectangle(principalBounds);
+                            q.setRectangle(pb);
                             originalToPrincipal = q;
                         }
 
-                        r = new Rescale(1.0, 0.0, maxDiagramWidth,
-                                        1.0, 0.0, maxDiagramHeight);
-
+                        r = new Rescale(Math.abs(width), 0.0, 1.0,
+                                        Math.abs(height), 0.0, 1.0);
+                        double ph = pb.height*r.t;
                         principalToStandardPage = new RectangleTransform
-                            (new Rectangle2D.Double(0.0, 0.0, 1.0, 1.0),
-                             new Rectangle2D.Double(0.0, 1.0,
-                                                    1.0 * r.t, -1.0 * r.t));
+                            (pb,
+                             new Rectangle2D.Double(pb.x*r.t, ph - pb.y*r.t,
+                                                    pb.width*r.t, -ph));
                         break;
 
                     }
@@ -4275,6 +4283,57 @@ PED files?"handle associate the PED file extension and with "
                 initializeDiagram();
             }
         propagateChange();
+    }
+
+    /** For free-form diagrams, assume that the aspect ratio of the
+        input represents the aspect ratio of the output, but let the
+        user change that if desired. */
+    protected double[] widthAndHeight(Point2D.Double[] vertices) {
+        double width1 = vertices[1].distance(vertices[2]);
+        double width2 = vertices[0].distance(vertices[3]);
+        double height1 = vertices[0].distance(vertices[1]);
+        double height2 = vertices[2].distance(vertices[3]);
+        double wOverH = (width1 + width2) / (height1 + height2);
+        double[] defaultValues = {wOverH, 1};
+        NumberColumnDialog dog = new NumberColumnDialog
+            (editFrame, defaultValues,
+             new String[] { "Width", "Height" },
+             htmlify
+             ("<p>Enter the width and height of the diagram. Fractions are allowed. "
+              + "If you enter percentages, you must include the percent sign."
+             + "<p>You can modify these settings later using the "
+              + "<code>Properties/Scale</code> and "
+              + "<code>Properties/Aspect Ratio</code> menus."));
+        double width;
+        double height;
+        double[] values;
+
+        while (true) {
+            try {
+                values = dog.showModalColumn();
+                if (values == null) {
+                    values = defaultValues;
+                }
+            } catch (NumberFormatException x) {
+                showError(x.getMessage());
+                continue;
+            }
+                                    
+            width = values[0];
+            height = values[1];
+
+            if (width == 0) {
+                showError("The width cannot be zero.");
+                continue;
+            }
+            if (height == 0) {
+                showError("The height cannot be zero.");
+                continue;
+            }
+            break;
+        }
+
+        return new double[] {width, height};
     }
 
     private void maxLessThanMinError(String component, double min, double max) {
