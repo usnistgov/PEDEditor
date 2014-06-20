@@ -3103,7 +3103,7 @@ public class BasicEditor extends Diagram
             (editFrame, data, null, columnNames,
              htmlify
              ("Enter the current and new values. Both axes will be rescaled by "
-              + "a factor of (new length)/(old length)."
+              + "a factor of (new length)/(current length)."
               + "<p>Fractions are allowed. "
               + "If you enter percentages, you must include the percent sign."));
         dog.setTitle("Scale units");
@@ -3752,9 +3752,9 @@ PED files?"handle associate the PED file extension and with "
               + "Fractions are allowed. For percentages, do not omit the "
               +  "percent sign."));
     }
-
+ 
     NumberColumnDialog cartesianDialog(double[] values) {
-        String[] labels = {
+       String[] labels = {
             "Left X value",
             "Right X value",
             "Bottom Y value",
@@ -3762,7 +3762,7 @@ PED files?"handle associate the PED file extension and with "
         return new NumberColumnDialog
             (editFrame, values, labels,
              htmlify
-             ("<p>Enter the graph domain. Fractions are allowed. "
+             ("<p>Enter the X and Y range. Fractions are allowed. "
               + "If you enter percentages, you must include the percent sign."
              + "<p>For logarithmic axes, enter the range of logarithms "
              + "(e.g. -2&nbsp;to&nbsp;2 for "
@@ -3955,48 +3955,18 @@ PED files?"handle associate the PED file extension and with "
 
                         break;
                     }
+
                 case BINARY:
                     {
-                        double[] defaultValues = {0, 1, 0, 1};
-                        NumberColumnDialog dog = cartesianDialog(defaultValues);
+                        Rectangle2D.Double domain
+                            = xAndYRange(new Rectangle2D.Double(0, 0, 1, 1));
 
-                        double bottom, top, left, right;
-                        double[] values = null;
-                        boolean xPercent = false;
-                        boolean yPercent = false;
-
-                        while (true) {
-                            try {
-                                values = dog.showModalColumn();
-                                if (values == null) {
-                                    values = defaultValues;
-                                } else {
-                                    // If the user entered percentage
-                                    // values for the max X and Y
-                                    // values, then show percentages.
-                                    xPercent = dog.getTextAt(1).contains("%");
-                                    yPercent = dog.getTextAt(3).contains("%");
-                                }
-                            } catch (NumberFormatException x) {
-                                showError(x.getMessage());
-                                continue;
-                            }
-                                    
-                            left = values[0];
-                            right = values[1];
-                            bottom = values[2];
-                            top = values[3];
-
-                            if (left == right) {
-                                showError("The left and right X values cannot be equal.");
-                                continue;
-                            }
-                            if (bottom == top) {
-                                showError("The top and bottom Y values cannot be equal.");
-                                continue;
-                            }
-                            break;
-                        }
+                        boolean xPercent = isPercentagePreferred();
+                        boolean yPercent = xPercent;
+                        double bottom = domain.getY();
+                        double top = bottom + domain.getHeight();
+                        double left = domain.getX();
+                        double right = left + domain.getWidth();
 
                         add(binaryBottomRuler(left, right, bottom));
                         add(binaryTopRuler(left, right, top));
@@ -4006,15 +3976,11 @@ PED files?"handle associate the PED file extension and with "
                         setPercentageDisplay(getXAxis(), xPercent);
                         setPercentageDisplay(getYAxis(), yPercent);
 
-                        Rectangle2D.Double principalBounds
-                            = new Rectangle2D.Double
-                            (left, bottom, right-left, top-bottom);
-
                         if (tracing) {
                             // Transform the input quadrilateral into a rectangle
                             QuadToRect q = new QuadToRect();
                             q.setVertices(vertices);
-                            q.setRectangle(principalBounds);
+                            q.setRectangle(domain);
                             originalToPrincipal = q;
                         }
 
@@ -4022,39 +3988,46 @@ PED files?"handle associate the PED file extension and with "
                                         1, 0, maxDiagramHeight);
 
                         principalToStandardPage = new RectangleTransform
-                            (principalBounds,
+                            (domain,
                              new Rectangle2D.Double(0.0, 1.0, 1.0, -1.0));
                         break;
                     }
 
                 case OTHER:
+                    /** For free-form diagrams, assume that the aspect
+                        ratio of the input represents the aspect ratio
+                        of the output, but let the user change that if
+                        desired. */
                     {
                         leftMargin = rightMargin = topMargin = bottomMargin = 0.05;
-                        double[] wAndH = {1,1};
+                        Rectangle2D.Double domain
+                            = new Rectangle2D.Double(0, 0, 1, 1);
                         if (tracing) {
-                            wAndH = widthAndHeight(vertices);
+                            double width1 = vertices[1].distance(vertices[2]);
+                            double width2 = vertices[0].distance(vertices[3]);
+                            double height1 = vertices[0].distance(vertices[1]);
+                            double height2 = vertices[2].distance(vertices[3]);
+                            double wOverH = (width1 + width2) / (height1 + height2);
+                            domain = xAndYRange
+                                (new Rectangle2D.Double(0, 0, wOverH, 1));
                         }
-                        double width = wAndH[0];
-                        double height = wAndH[1];
-                        // pb = principalBounds
-                        Rectangle2D.Double pb = new Rectangle2D.Double
-                            (Math.max(0, -width), Math.max(0, -height),
-                             width, height);
+
                         if (tracing) {
                             // Transform the input quadrilateral into a rectangle
                             QuadToRect q = new QuadToRect();
                             q.setVertices(vertices);
-                            q.setRectangle(pb);
+                            q.setRectangle(domain);
                             originalToPrincipal = q;
                         }
 
-                        r = new Rescale(Math.abs(width), 0.0, 1.0,
-                                        Math.abs(height), 0.0, 1.0);
-                        double ph = pb.height*r.t;
+                        r = new Rescale(Math.abs(domain.width), 0.0, 1.0,
+                                        Math.abs(domain.height), 0.0, 1.0);
                         principalToStandardPage = new RectangleTransform
-                            (pb,
-                             new Rectangle2D.Double(pb.x*r.t, ph - pb.y*r.t,
-                                                    pb.width*r.t, -ph));
+                            (domain,
+                             new Rectangle2D.Double(0,
+                                                    Math.abs(domain.height) * r.t,
+                                                    Math.abs(domain.width) * r.t,
+                                                    -Math.abs(domain.height) * r.t));
                         break;
 
                     }
@@ -4285,30 +4258,15 @@ PED files?"handle associate the PED file extension and with "
         propagateChange();
     }
 
-    /** For free-form diagrams, assume that the aspect ratio of the
-        input represents the aspect ratio of the output, but let the
-        user change that if desired. */
-    protected double[] widthAndHeight(Point2D.Double[] vertices) {
-        double width1 = vertices[1].distance(vertices[2]);
-        double width2 = vertices[0].distance(vertices[3]);
-        double height1 = vertices[0].distance(vertices[1]);
-        double height2 = vertices[2].distance(vertices[3]);
-        double wOverH = (width1 + width2) / (height1 + height2);
-        double[] defaultValues = {wOverH, 1};
-        NumberColumnDialog dog = new NumberColumnDialog
-            (editFrame, defaultValues,
-             new String[] { "Width", "Height" },
-             htmlify
-             ("<p>Enter the width and height of the diagram. Fractions are allowed. "
-              + "If you enter percentages, you must include the percent sign."
-             + "<p>You can modify these settings later using the "
-              + "<code>Properties/Scale</code> and "
-              + "<code>Properties/Aspect Ratio</code> menus."));
-        double width;
-        double height;
-        double[] values;
-
+    /** Open a dialog asking for the ranges of the X and Y variables.
+     * Return the result. */
+    protected Rectangle2D.Double xAndYRange(Rectangle2D defaultLimits) {
+        double[] defaultValues =
+            { defaultLimits.getX(), defaultLimits.getMaxX(),
+              defaultLimits.getY(), defaultLimits.getMaxY() };
+        NumberColumnDialog dog = cartesianDialog(defaultValues);
         while (true) {
+        	double[] values;
             try {
                 values = dog.showModalColumn();
                 if (values == null) {
@@ -4319,21 +4277,24 @@ PED files?"handle associate the PED file extension and with "
                 continue;
             }
                                     
-            width = values[0];
-            height = values[1];
+            double left = values[0];
+            double right = values[1];
+            double bottom = values[2];
+            double top = values[3];
+            double width = right - left;
+            double height = top - bottom;
 
             if (width == 0) {
-                showError("The width cannot be zero.");
+                showError("The left and right X values cannot be equal.");
                 continue;
             }
             if (height == 0) {
-                showError("The height cannot be zero.");
+                showError("The top and bottom Y values cannot be equal.");
                 continue;
             }
-            break;
-        }
 
-        return new double[] {width, height};
+            return new Rectangle2D.Double(left, bottom, width, height);
+        }
     }
 
     private void maxLessThanMinError(String component, double min, double max) {
