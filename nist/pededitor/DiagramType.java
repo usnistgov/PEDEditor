@@ -9,10 +9,10 @@ import javax.swing.*;
 /** IDs and icons for different types of PEDs */
 public enum DiagramType {
     BINARY ("images/binaryicon.png", "Binary or Cartesian", 4, false),
-    OTHER ("images/schematicicon.png", "Free-form", 4, false),
+    OTHER ("images/schematicicon.png", "Free-form diagram or map", 4, false),
     TERNARY ("images/triangleicon.png", "Ternary", 3, true),
     TERNARY_LEFT ("images/leftangleicon.png",
-                  "Partial Ternary -- bottom left corner", 3, true, 0),
+                  "Partial ternary -- bottom left corner", 3, true, 0),
     TERNARY_RIGHT ("images/rightangleicon.png",
                    "Partial ternary -- bottom right corner", 3, true, 2),
     TERNARY_TOP ("images/upangleicon.png",
