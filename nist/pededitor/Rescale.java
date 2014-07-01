@@ -10,6 +10,12 @@ public class Rescale {
     public double height;
     public double t;
 
+    Rescale(double width, double height, double t) {
+        this.width = width;
+        this.height = height;
+        this.t = t;
+    }
+
     /** If there exists a quantity t such that the width of the scaled
         object equals xMargin + t * xSlope and the height equals
         yMargin + t * ySlope, and the width and height cannot exceed
