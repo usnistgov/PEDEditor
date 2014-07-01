@@ -4,7 +4,7 @@
 package gov.nist.pededitor;
 
 /** IDs and icons for different types of PEDs */
-enum StandardRealFunction {
+enum StandardRealFunction implements RealFunction {
     IDENTITY (new RealFunction() {
             @Override public double value(double x) {
                 return x;
@@ -60,7 +60,7 @@ enum StandardRealFunction {
     }
 
     public String getText() { return text; }
-    public double value(double x) {
+    @Override public double value(double x) {
         return f.value(x);
     }
 

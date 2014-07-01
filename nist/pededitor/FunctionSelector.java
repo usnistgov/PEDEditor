@@ -39,7 +39,7 @@ public class FunctionSelector extends JComboBox<String> {
         String s = (String) obj;
         for (StandardRealFunction f: StandardRealFunction.values()) {
             if (s.equals("<html>" + f.getText())) {
-                return f.getFunction();
+                return f;
             }
         }
 
