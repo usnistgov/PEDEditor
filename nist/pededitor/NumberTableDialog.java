@@ -77,6 +77,7 @@ public class NumberTableDialog extends JDialog {
 
         gb.centerAndEndRow(okButton);
         getRootPane().setDefaultButton(okButton);
+        setResizable(false);
     }
 
     NumberTableDialog(Frame owner, double[][] data, String[] rowNames,
