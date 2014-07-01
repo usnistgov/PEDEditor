@@ -74,6 +74,15 @@ public class NumberColumnDialog extends NumberTableDialog {
         setPercentage(row, 0, b);
     }
 
+    /** Return the array of values, regardless of the dialog's state. */
+    public double[] getColumnValues() {
+        return tableToColumn(getValues());
+    }
+
+    public void setValues(double[] values) {
+        setValues(columnToTable(values));
+    }
+
     /** Show the dialog as document-modal, and return the selected
         values. Return null if the dialog was closed
         abnormally. */
