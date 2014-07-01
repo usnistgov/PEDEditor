@@ -10,7 +10,7 @@ import java.util.*;
    Swing GUIs to insure they run on the GUI thread. This class can
    help you save the args from static void main(String[] args) in a
    way that makes them accessible in that code. */
-public abstract class BasicEditorArgsRunnable implements Runnable {
+public class BasicEditorArgsRunnable implements Runnable {
     public BasicEditorCreator ec;
     public String[] args;
         
