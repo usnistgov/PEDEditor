@@ -18,6 +18,7 @@ import javax.swing.JDialog;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JRadioButton;
+import javax.swing.JTextField;
 
 /** GUI for selecting where data should come from/go to and which
     variables should be input/output. */
@@ -67,6 +68,13 @@ public class DigitizeDialog extends JDialog {
         new VariablePanel("Column 2") };
     JCheckBox commented
         = new JCheckBox("Include comments in output");
+    JLabel sigLabel = new JLabel("Sig. figs");
+    JTextField sigValue = new JTextField("16");
+    {
+        sigValue.setToolTipText
+            ("More is better if you want to reimport these values later.");
+    }
+    
     transient boolean pressedOK = false;
     transient boolean packed = false;
 
@@ -87,6 +95,8 @@ public class DigitizeDialog extends JDialog {
         gb.endRowWith(variablePanels[variablePanels.length-1]);
 
         gb.centerAndEndRow(commented);
+        gb.addEast(sigLabel);
+        gb.endRowWith(sigValue);
         gb.centerAndEndRow(okButton);
         getRootPane().setDefaultButton(okButton);
     }
@@ -109,6 +119,22 @@ public class DigitizeDialog extends JDialog {
 
     public boolean isCommented() {
         return commented.isSelected();
+    }
+
+    public void setExport(boolean v) {
+        setCommentedCheckboxVisible(v);
+        sigLabel.setVisible(v);
+        sigValue.setVisible(v);
+    }
+
+    public int getSigFigs() {
+        try {
+            int x = Integer.parseInt(sigValue.getText());
+            return (x > 16) ? 16
+                : (x < 1) ? 1 : x;
+        } catch (NumberFormatException x) {
+            return 16;
+        }
     }
 
     public LinearAxis getVariable(int columnNo, ArrayList<LinearAxis> axes) {
