@@ -1,0 +1,140 @@
+package gov.nist.pededitor;
+
+import java.awt.Frame;
+import java.awt.geom.Rectangle2D;
+
+import javax.swing.Box;
+import javax.swing.ButtonGroup;
+import javax.swing.JLabel;
+import javax.swing.JOptionPane;
+import javax.swing.JRadioButton;
+
+public class CartesianDialog extends NumberColumnDialog {
+
+    private static final long serialVersionUID = 1731583998807758331L;
+    protected ButtonGroup diagramShape = new ButtonGroup();
+    protected JRadioButton squareDiagram = new JRadioButton
+        ("Square");
+    protected JRadioButton rectangularDiagram = new JRadioButton
+        ("Rectangular with uniform scale");
+    {
+        squareDiagram.setSelected(true);
+        diagramShape.add(squareDiagram);
+        squareDiagram.setToolTipText
+            ("Diagram is square, but X and Y scales may be different.");
+        diagramShape.add(rectangularDiagram);
+        rectangularDiagram.setToolTipText
+            ("Diagram is rectangular, but X and Y scales are the same.");
+    }
+
+    public boolean isSquare() {
+        return squareDiagram.isSelected();
+    }
+
+    public void setSquare(boolean v) {
+        (v ? squareDiagram : rectangularDiagram).setSelected(true);
+    }
+
+    public CartesianDialog(Frame owner) {
+        super(owner, 4,
+              new String[] { "Left X value", "Right X value", 
+                             "Bottom Y value", "Top Y value" },
+              BasicEditor.htmlify
+              ("<p>Fractions are allowed. "
+               + "If you enter percentages, you must include the percent sign."
+               + "<p>For logarithmic axes, enter the range of logarithms, "
+               + "such as -2&nbsp;to&nbsp;2 for "
+               + "10<sup>-2</sup>&nbsp;to&nbsp;10<sup>2</sup>."
+               + "<p>You can modify these settings later using the "
+               + "<code>Properties/Scale</code> and "
+               + "<code>Properties/Aspect Ratio</code> menu items."));
+        setTitle("Set Diagram Domain and Proportions");
+        GridBagUtil gb = new GridBagUtil(panelBeforeOK);
+        gb.endRowWith(Box.createVerticalStrut(6 /* pixels */));
+        gb.addEast(new JLabel("Diagram shape:"));
+        gb.addWest(squareDiagram);
+        gb.endRowWith(rectangularDiagram);
+        gb.endRowWith(Box.createVerticalStrut(6 /* pixels */));
+    }
+
+    public CartesianDialog(Frame owner, Rectangle2D.Double rect) {
+        this(owner);
+        setRectangle(rect);
+    }
+
+    protected static double[] rectToValues(Rectangle2D rect) {
+        return new double[]
+            { rect.getX(), rect.getMaxX(), rect.getY(), rect.getMaxY() };
+    }
+
+    protected static Rectangle2D.Double valuesToRect(double[] values) {
+        double left = values[0];
+        double right = values[1];
+        double bottom = values[2];
+        double top = values[3];
+        double width = right - left;
+        double height = top - bottom;
+        return new Rectangle2D.Double(left, bottom, width, height);
+    }
+
+    public Rectangle2D.Double getRectangle() {
+        return valuesToRect(getColumnValues());
+    }
+
+    public void setRectangle(Rectangle2D rect) {
+        setValues(rectToValues(rect));
+    }
+
+
+    public boolean xIsPercentage() {
+        return getTextAt(0).contains("%") ||
+            getTextAt(1).contains("%");
+    }
+
+    public boolean yIsPercentage() {
+        return getTextAt(2).contains("%") ||
+            getTextAt(3).contains("%");
+    }
+
+    void showError(String mess) {
+        JOptionPane.showMessageDialog
+            (getParent(), BasicEditor.htmlify(mess), "Numeric entry error",
+             JOptionPane.ERROR_MESSAGE);
+    }
+
+    Rectangle2D.Double showModalRectangle() {
+        Rectangle2D.Double old = getRectangle();
+        while (true) {
+            double[] values;
+            try {
+                values = showModalColumn();
+                if (values == null) {
+                    return old;
+                }
+            } catch (NumberFormatException x) {
+                showError(x.getMessage());
+                continue;
+            }
+
+            Rectangle2D.Double rect = valuesToRect(values);
+
+            if (rect.width == 0) {
+                showError("The left and right X values cannot be equal.");
+                continue;
+            }
+            if (rect.height == 0) {
+                showError("The top and bottom Y values cannot be equal.");
+                continue;
+            }
+
+            return rect;
+        }
+    }
+
+    public static void main(String[] args) {
+        CartesianDialog dog = new CartesianDialog
+            (null, new Rectangle2D.Double(0, 0, 1, 2));
+        Rectangle2D.Double rect = dog.showModalRectangle();
+        System.out.println(rect);
+    }
+}
