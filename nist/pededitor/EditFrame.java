@@ -39,6 +39,7 @@ import javax.swing.JLabel;
 import javax.swing.JMenu;
 import javax.swing.JMenuBar;
 import javax.swing.JMenuItem;
+import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JRadioButtonMenuItem;
 import javax.swing.JScrollPane;
@@ -91,7 +92,7 @@ public class EditFrame extends JFrame
     protected JMenuItem mnOpen = new JMenuItem
         (new Action("Open", KeyEvent.VK_O) {
                 @Override public void actionPerformed(ActionEvent e) {
-                    getEditor().showOpenDialog(EditFrame.this);
+                    getEditor().open();
                 }
             });
     protected Action actSave = new Action("Save", KeyEvent.VK_S,
@@ -138,6 +139,24 @@ public class EditFrame extends JFrame
     {
         mnNextFile.setVisible(false); // Hidden by default
     }
+
+    JMenuItem mnHints = new JMenuItem
+        (new Action("Hints..") {
+                @Override public void actionPerformed(ActionEvent e) {
+                    JOptionPane.showMessageDialog
+                    (EditFrame.this,
+                     BasicEditor.htmlify
+                     ("<ol>"
+                      + "<li>You can see more functions and their short-cut keys "
+                      + "by right-clicking (pressing the right mouse button) "
+                      + " while the mouse is inside the diagram."
+                      + "<li>To zoom in, drag the mouse (move the mouse while holding down the left mouse button)."
+                      + "<li>Hold down the <code>Shift</code> key while moving the "
+                      + "mouse to find special points and curves, which will be "
+                      + "marked with a second pair of crosshairs."
+                      + "</ol>"));
+                }
+            });
 
    Action actShiftPressed = new Action
        ("Shift Pressed", 0, "pressed SHIFT") {
@@ -1423,6 +1442,7 @@ public class EditFrame extends JFrame
                 }
             });
         mnView.add(showSlopeWindow);
+        mnView.add(mnHints);
         showSlopeWindow.setSelected(true);
 
         JMenu mnHelp = new JMenu("Help");
