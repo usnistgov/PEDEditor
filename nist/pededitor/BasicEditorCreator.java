@@ -4,7 +4,7 @@
 package gov.nist.pededitor;
 
 class BasicEditorCreator {
-    BasicEditor run() {
+    public BasicEditor run() {
         return new BasicEditor();
     }
 }
