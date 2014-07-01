@@ -17,6 +17,5 @@ public abstract class ArgsRunnable implements Runnable {
         this.args = Arrays.copyOf(args, args.length);
     }
 
-    @Override
-	abstract public void run();
+    @Override abstract public void run();
 };
