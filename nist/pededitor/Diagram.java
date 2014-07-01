@@ -2560,7 +2560,7 @@ public class Diagram extends Observable implements Printable {
         terms of f1(v1) and f2(v2) */
     @JsonIgnore public String allCoordinatesToString
         (LinearAxis v1, RealFunction f1, LinearAxis v2, RealFunction f2,
-         boolean addComments) {
+         boolean addComments, int sigFigs) {
         ArrayList<String> groupStartTags = new ArrayList<>();
         ArrayList<ArrayList<Point2D.Double>> rawCoordinateGroups
             = new ArrayList<>();
@@ -2575,15 +2575,17 @@ public class Diagram extends Observable implements Printable {
             String groupStartTag = null;
             if (addComments) {
                 StringBuilder s = new StringBuilder();
-                s.append("# Label");
-                if (plaintext.length() == 1) {
-                    char ch = plaintext.charAt(0);
-                    if (ch > ' ') {
-                        s.append(" " + ch);
+                s.append("# Label ");
+                for (int i = 0; i < plaintext.length(); ++i) {
+                    char ch = plaintext.charAt(i);
+                    if (i == 6 || ch < ' ') {
+                        s.append("...");
+                        break;
                     }
-                    s.append("\n");
-                    groupStartTag = s.toString();
+                    s.append(ch);
                 }
+                s.append("\n");
+                groupStartTag = s.toString();
             }
             groupStartTags.add(groupStartTag);
             rawCoordinateGroups.add(labelCoordinates(labelText));
@@ -2601,6 +2603,26 @@ public class Diagram extends Observable implements Printable {
         }
 
         StringBuilder sb = new StringBuilder();
+        if (addComments) {
+            sb.append("# ");
+            sb.append(getProvisionalTitle());
+            sb.append("\n");
+            sb.append("# ");
+            LinearAxis[] axes = { v1, v2 };
+            for (int i = 0; i < axes.length; ++i) {
+                if (i > 0) {
+                    sb.append(", ");
+                }
+                sb.append((String) axes[i].name);
+                RealFunction f = (i == 0) ? f1 : f2;
+                if (f instanceof StandardRealFunction
+                    && f != StandardRealFunction.IDENTITY) {
+                    sb.append(" ");
+                    sb.append(((StandardRealFunction) f).getText());
+                }
+            }
+            sb.append("\n\n");
+        }
         int i = -1;
         for (ArrayList<Point2D.Double> g: rawCoordinateGroups) {
             ++i;
@@ -2610,17 +2632,31 @@ public class Diagram extends Observable implements Printable {
             } else if (i > 0) {
                 sb.append("\n");
             }
-            sb.append(toString(g, v1, f1, v2, f2));
+            sb.append(toString(g, v1, f1, v2, f2, sigFigs));
         }
         return sb.toString();
     }
 
+    /** Expand all margins by the given factor. */
+    void expandMargins(double factor) {
+        double width = pageBounds.width;
+        double height = pageBounds.height;
+        pageBounds.x -= width * factor;
+        pageBounds.width += 2 * width * factor;
+        pageBounds.y -= height * factor;
+        pageBounds.height += 2 * height * factor;
+        propagateChange();
+    }
+
     String toString(Iterable<Point2D.Double> g,
-                    LinearAxis v1, RealFunction f1, LinearAxis v2, RealFunction f2) {
+                    LinearAxis v1, RealFunction f1, LinearAxis v2, RealFunction f2,
+                    int sigFigs) {
         StringBuilder sb = new StringBuilder();
+        String format = "%." + sigFigs + "g";
         for (Point2D.Double p: g) {
             p = transform(transform(p, v1, v2), f1, f2);
-            sb.append(p.getX() + ", " + p.getY() + '\n');
+            sb.append(String.format(format, p.getX()) + ", "
+                      + String.format(format, p.getY()) + '\n');
         }
         return sb.toString();
     }
@@ -3409,7 +3445,11 @@ public class Diagram extends Observable implements Printable {
             titleBuf.append(str);
         }
 
-        return titleBuf.length() > 0 ? titleBuf.toString() : "Phase Equilibria Diagram Editor";
+        return titleBuf.length() > 0 ? titleBuf.toString() : fallbackTitle();
+    }
+
+    String fallbackTitle() {
+        return "Phase Equilibria Diagram Editor";
     }
 
     /** @return the system name if known, with components sorted into
@@ -3763,11 +3803,20 @@ public class Diagram extends Observable implements Printable {
         propagateChange();
     }
 
-    /** Set the margins just slightly wider than necessary to fit the
-        entire diagram in. */
+    /** Set the page size just big enough so everything fits. */
     public void computeMargins() {
+        computeMargins(false);
+    }
+
+    /** Set the page size just big enough so everything fits.
+
+        @param onlyExpand If false. eliminate all excess white space.
+        If true, do not decrease the diagram size.
+    */
+    public void computeMargins(boolean onlyExpand) {
         if (pageBounds == null) {
             setPageBounds(new Rectangle2D.Double(0, 0, 1, 1));
+            onlyExpand = false;
         }
         MeteredGraphics mg = new MeteredGraphics();
         double mscale = 10000;
@@ -3787,6 +3836,9 @@ public class Diagram extends Observable implements Printable {
         bounds.height += margin * 2;
         bounds.x -= margin;
         bounds.y -= margin;
+        if (onlyExpand) {
+            bounds.add(pageBounds);
+        }
         setPageBounds(bounds);
     }
 
