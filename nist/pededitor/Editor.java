@@ -51,10 +51,11 @@ public class Editor extends BasicEditor {
     }
 
     public static void main(String[] args) {
-        main(new BasicEditorCreator() {
-                @Override BasicEditor run() {
-                    return new Editor();
-                }
-            }, args);
+        SingleInstanceBasicEditor.main
+            (new BasicEditorCreator() {
+                    @Override public BasicEditor run() {
+                        return new Editor();
+                    }
+                }, args);
     }
 }
