@@ -91,6 +91,8 @@ import Jama.Matrix;
 public class BasicEditor extends Diagram
     implements CropEventListener, MouseListener, MouseMotionListener,
                Observer {
+    static ArrayList<BasicEditor> openEditors = new ArrayList<>();
+
     abstract class Action extends AbstractAction {
         private static final long serialVersionUID = 1834208008403586162L;
 
@@ -251,7 +253,6 @@ public class BasicEditor extends Diagram
         + "options.";
     protected double mouseDragDistance = MOUSE_DRAG_DISTANCE;
     static protected Image crosshairs = null;
-    static int openEditorCnt = 0;
 
     protected CropFrame cropFrame = new CropFrame();
     protected EditFrame editFrame = new EditFrame(this);
@@ -360,6 +361,8 @@ public class BasicEditor extends Diagram
         "nearest point on curve" and the mouse has not yet been moved
         far enough to un-stick the mouse from that location. */
     protected transient boolean mouseIsStuck;
+
+    protected transient boolean exitIfLastWindowCloses = true;
 
     /** Because rescaling an image is slow, keep a cache of locations
         and sizes that have been rescaled. */
@@ -484,6 +487,7 @@ public class BasicEditor extends Diagram
 
     public BasicEditor() {
         setEditable(true);
+        setExitOnClose(false);
         init();
         tieLineDialog.setFocusableWindowState(false);
         vertexInfo.setDefaultCloseOperation
@@ -498,7 +502,9 @@ public class BasicEditor extends Diagram
             (WindowConstants.HIDE_ON_CLOSE);
         cropFrame.addCropEventListener(this);
         addObserver(this);
-        ++openEditorCnt;
+        int otherEditorCnt = getOpenEditorCnt();
+        editFrame.setLocation(15 * otherEditorCnt, 15 * otherEditorCnt);
+        openEditors.add(this);
     }
 
     public void initializeZoomFrame() {
@@ -540,14 +546,28 @@ public class BasicEditor extends Diagram
             fileSaver = null;
         }
         autosaveFile = null;
+        editFrame.setStatus(null);
         super.clear();
         init();
     }
 
     public void verifyThenClose() {
-        if (!isEditable() || verifyCloseDiagram
-            (new Object[] {"Save and quit", "Quit without saving", "Cancel"})) {
+        if (!isEditable() || verifyCloseDiagram()) {
             close();
+        }
+    }
+
+    /* If there is another editor open or this window is blank, then
+       close this one. If this is the last open editor, then just
+       clear it instead of closing it. (From the user's perspective,
+       the diagram is closed in either case.) */
+    public void verifyThenCloseOrClear() {
+        if (!isEditable() || verifyCloseDiagram()) {
+            if (getOpenEditorCnt() > 1 || !haveDiagram()) {
+                close();
+            } else {
+                clear();
+            }
         }
     }
 
@@ -608,11 +628,73 @@ public class BasicEditor extends Diagram
                 editFrame.parentEditor = null;
                 editFrame = null;
             }
-            --openEditorCnt;
-            if (isExitOnClose()) {
-                System.exit(0);
+        }
+        openEditors.remove(this);
+        if (getOpenEditorCnt() == 0) {
+            lastWindowClosed();
+        }
+    }
+
+    @JsonIgnore public boolean isExitIfLastWindowCloses() {
+        return isExitOnClose() || exitIfLastWindowCloses;
+    }
+
+    public void setExitIfLastWindowCloses(boolean v) {
+        exitIfLastWindowCloses = v;
+    }
+
+    /** This gets called automatically when the last window closes;
+        override it to change this behavior. */
+    void lastWindowClosed() {
+        if (isExitIfLastWindowCloses()) {
+            System.exit(0);
+        }
+    }
+
+    /** Close all windows, no questions asked. */
+    public void exit() {
+        // Duplicate openEditors so we don't end up iterating through a
+        // list that is simultaneously being modified.
+        for (BasicEditor e: new ArrayList<>(openEditors)) {
+            e.close();
+        }
+        lastWindowClosed();
+    }
+
+    /** Close all windows, but have the user confirm any unsaved
+        changes. */
+    public void verifyExit() {
+
+        // A single diagram that needs saving is handled differently
+        // from two or more diagrams that need saving.
+        BasicEditor needsSave = null;
+        for (BasicEditor e: openEditors) {
+            if (e.isSaveNeeded()) {
+                if (needsSave == null) {
+                    needsSave = e;
+                } else {
+                    // If two or more diagrams need saving, don't ask
+                    // about saving each one, because then the options
+                    // get hard to explain.
+                    if (JOptionPane.showConfirmDialog
+                        (null,
+                         "There are several diagrams with unsaved changes. "
+                         + "Exit anyway?",
+                         "Confirm exit",
+                         JOptionPane.OK_CANCEL_OPTION)
+                        == JOptionPane.OK_OPTION) {
+                        exit();
+                    } else {
+                        return;
+                    }
+                }
             }
         }
+
+        if (needsSave != null) {
+            needsSave.verifyThenClose();
+        }
+        exit();
     }
 
     @JsonIgnore public void setExitOnClose(boolean b) {
@@ -624,7 +706,7 @@ public class BasicEditor extends Diagram
     }
 
     public static int getOpenEditorCnt() {
-        return openEditorCnt;
+        return openEditors.size();
     }
 
     @JsonIgnore public boolean isClosed() {
@@ -1630,14 +1712,19 @@ public class BasicEditor extends Diagram
         }
     }
 
-    /** Paint a cross at principal coordinate p. */
+    /** Paint a crosshairs at principal coordinate p. */
     void paintCross(Graphics g, Point2D.Double p, double scale) {
         Point2D.Double vPage = principalToScaledPage(scale).transform(p);
-        int r = 9;
+        int r = 11;
         int ix = (int) vPage.x;
         int iy = (int) vPage.y;
-        g.drawLine(ix, iy - r, ix, iy + r);
-        g.drawLine(ix -r, iy, ix+r, iy);
+        int r2 = 1;
+        for (int offs = -r2; offs <= r2; ++offs) {
+            g.drawLine(ix + offs, iy - r, ix + offs, iy - r2 - 1);
+            g.drawLine(ix - r, iy + offs, ix - r2 - 1, iy + offs);
+            g.drawLine(ix + offs, iy + r, ix + offs, iy + r2 + 1);
+            g.drawLine(ix + r, iy + offs, ix + r2 + 1, iy + offs);
+        }
     }
 
     public void clearSelection() {
@@ -2536,16 +2623,16 @@ public class BasicEditor extends Diagram
 
     public String selectedCoordinatesToString
         (LinearAxis v1, RealFunction f1,
-         LinearAxis v2, RealFunction f2, boolean addComments) {
+         LinearAxis v2, RealFunction f2, boolean addComments, int sigFigs) {
         CuspFigure path = getSelectedCuspFigure();
         if (path != null) {
-            return toString(Arrays.asList(path.getPoints()), v1, f1, v2, f2);
+            return toString(Arrays.asList(path.getPoints()), v1, f1, v2, f2, sigFigs);
         }
 
         LabelDecoration ldec = getSelectedLabel();
         if (ldec != null) {
             return toString(labelCoordinates(ldec.getLabel().getText()),
-                            v1, f1, v2, f2);
+                            v1, f1, v2, f2, sigFigs);
         }
 
         nothingToExportError();
@@ -2557,14 +2644,21 @@ public class BasicEditor extends Diagram
      * canceled the operation. */
     DigitizeDialog exportDialog() {
         initializeDigitizeDialog();
-        digitizeDialog.setTitle("Export");
-        digitizeDialog.getSourceLabel().setText("Destination");
-        digitizeDialog.setCommentedCheckboxVisible(true);
-        digitizeDialog.pack();
-        if (!digitizeDialog.showModal()) {
+        DigitizeDialog dog = digitizeDialog;
+        for (int i = 0; i < dog.getVariableCount(); ++i) {
+            if (dog.getVariable(i, axes).isPercentage()) {
+                dog.setFunction(i, StandardRealFunction.TO_PERCENT);
+            }
+        }
+            
+        dog.setTitle("Export");
+        dog.getSourceLabel().setText("Destination");
+        dog.setExport(true);
+        dog.pack();
+        if (!dog.showModal()) {
             return null;
         }
-        return digitizeDialog;
+        return dog;
     }
 
     /** Export the string s to the type of destination indicated in
@@ -2605,7 +2699,7 @@ public class BasicEditor extends Diagram
         exportString(allCoordinatesToString
                      (dig.getVariable(0, axes), dig.getFunction(0),
                       dig.getVariable(1, axes), dig.getFunction(1),
-                      dig.isCommented()),
+                      dig.isCommented(), dig.getSigFigs()),
                      dig);
     }
 
@@ -2627,7 +2721,7 @@ public class BasicEditor extends Diagram
         exportString(selectedCoordinatesToString
                      (dig.getVariable(0, axes), dig.getFunction(0),
                       dig.getVariable(1, axes), dig.getFunction(1),
-                      dig.isCommented()),
+                      dig.isCommented(), dig.getSigFigs()),
                      dig);
     }
 
@@ -2694,6 +2788,7 @@ public class BasicEditor extends Diagram
         (String lines,
          LinearAxis v1, RealFunction f1,
          LinearAxis v2, RealFunction f2) {
+
         if (principalToStandardPage == null) {
             return;
         }
@@ -2717,19 +2812,52 @@ public class BasicEditor extends Diagram
         boolean haveLabel = getSelectedLabel() != null;
         boolean haveCurve = getSelectedCuspFigure() != null;
            
+        
         try {
-            for (Point2D.Double[] curve: stringToCurves(lines)) {
+            Point2D.Double[][] curves = stringToCurves(lines);
+
+            Rectangle2D.Double bounds = null;
+            for (Point2D.Double[] curve: curves) {
+                for (Point2D.Double point: curve) {
+                    point.setLocation(xformi.transform(transform(point, f1, f2)));
+                    Point2D.Double page = principalToStandardPage.transform(point);
+                    if (bounds == null) {
+                        bounds = new Rectangle2D.Double(page.x, page.y, 0, 0);
+                    } else {
+                        bounds.add(page);
+                    }
+                }
+            }
+
+            boolean expand = false;
+            if (bounds != null && !pageBounds.contains(bounds)) {
+                if (JOptionPane.showConfirmDialog
+                    (editFrame,
+                     "Expand diagram so these points can fit?",
+                     "Import data",
+                     JOptionPane.OK_CANCEL_OPTION)
+                        == JOptionPane.YES_OPTION) {
+                    expand = true;
+                } else {
+                    return;
+                }
+            }
+            
+            for (Point2D.Double[] curve: curves) {
                 if (!haveLabel && !haveCurve) {
                     deselectCurve();
                 }
                 for (Point2D.Double point: curve) {
-                    Point2D.Double p2 = xformi.transform(transform(point, f1, f2));
                     if (haveLabel) {
-                        selection.copy(p2);
+                        selection.copy(point);
                     } else {
-                        add(p2);
+                        add(point);
                     }
                 }
+            }
+
+            if (expand) {
+                computeMargins(true);
             }
         } catch (NumberFormatException x) {
             showError(x.toString());
@@ -2852,14 +2980,31 @@ public class BasicEditor extends Diagram
         is aborted. */
     DigitizeDialog importDialog() {
         initializeDigitizeDialog();
-        digitizeDialog.setTitle("Import");
-        digitizeDialog.getSourceLabel().setText("Source");
-        digitizeDialog.setCommentedCheckboxVisible(false);
-        digitizeDialog.pack();
-        if (!digitizeDialog.showModal()) {
+        DigitizeDialog dog = digitizeDialog;
+        for (int i = 0; i < dog.getVariableCount(); ++i) {
+            if (dog.getVariable(i, axes).isPercentage()) {
+                dog.setFunction(i, StandardRealFunction.FROM_PERCENT);
+            }
+        }
+
+        dog.setTitle("Import");
+        dog.getSourceLabel().setText("Source");
+        dog.setExport(false);
+        dog.pack();
+        if (!dog.showModal()) {
             return null;
         }
-        return digitizeDialog;
+        return dog;
+    }
+
+    @Override public void expandMargins(double factor) {
+        super.expandMargins(factor);
+        bestFit();
+    }
+
+    @Override public void computeMargins(boolean onlyExpand) {
+        super.computeMargins(onlyExpand);
+        bestFit();
     }
 
     /** Copy the contents of the status bar to the clipboard. */
@@ -3632,17 +3777,34 @@ public class BasicEditor extends Diagram
         }
     }
 
-    void setFileAssociations() {
+    /** @param askExit If true and the file associations were
+        successfully installed, then ask the user if they want to exit
+        afterwards. */
+    void setFileAssociations(boolean askExit) {
         setFileAssociations
-            ("application/x-pededitor", new String[] { "ped" });
+            (askExit, "application/x-pededitor", new String[] { "ped" });
     }
 
-    void setFileAssociations(String mime, String[] exts) {
+    void setFileAssociations(boolean askExit, String mime, String[] exts) {
         try {
             IntegrationService is
                 = (IntegrationService) ServiceManager.lookup("javax.jnlp.IntegrationService");
             if (!is.hasAssociation(mime, exts)) {
-                is.requestAssociation(mime, exts);
+                if (is.requestAssociation(mime, exts) && askExit) {
+                    if (JOptionPane.showOptionDialog
+                        (editFrame,
+                         fallbackTitle() + " has been installed. "
+                         + "You can uninstall it, run it, or create a shortcut "
+                         + "to it on your desktop using the Java Control Panel.",
+                         "Installation successful",
+                         JOptionPane.YES_NO_OPTION,
+                         JOptionPane.QUESTION_MESSAGE,
+                         null,
+                         new Object[] { "Run Now", "Finished" },
+                         null) != JOptionPane.YES_OPTION) {
+                        System.exit(0);
+                    }
+                }
             }
         } catch (UnavailableServiceException x) {
             // OK, ignore this error.
@@ -3671,7 +3833,8 @@ public class BasicEditor extends Diagram
     @Override public void cropPerformed(CropEvent e) {
         try (UpdateSuppressor us = new UpdateSuppressor()) {
                 diagramType = e.getDiagramType();
-                newDiagram(e.filename, Duh.toPoint2DDoubles(e.getVertices()));
+                newDiagram
+                    (e.filename, Duh.toPoint2DDoubles(e.getVertices()));
                 initializeGUI();
             }
         propagateChange();
@@ -3683,15 +3846,42 @@ public class BasicEditor extends Diagram
         fileNo = -1;
     }
 
-    /** Start on a blank new diagram. */
-    public void newDiagram() {
-        if (!verifyCloseDiagram()) {
-            return;
+    public BasicEditor createNew() {
+        return new BasicEditor();
+    }
+
+    public BasicEditor findEmptyEditor() {
+        if (haveDiagram()) {
+            return createNew();
+        } else {
+            return this;
+        }
+    }
+
+    /** Start on a blank new diagram.
+
+        @param overwrite This only affects behavior when a diagram is
+        already open in this window. If overwrite is true, the new
+        diagram will replace the old one; if false, the new diagram
+        will open in a new window.
+    */
+    public void newDiagram(boolean overwrite) {
+        if (overwrite) {
+            if (!verifyCloseDiagram()) {
+                return;
+            }
+        } else {
+            if (haveDiagram()) {
+                BasicEditor e = createNew();
+                e.newDiagram(true);
+                e.initializeGUI();
+                return;
+            }
+            clearFileList();
+            majorSaveNeeded = false;
+            setSaveNeeded(false);
         }
 
-        clearFileList();
-        majorSaveNeeded = false;
-        setSaveNeeded(false);
         try (UpdateSuppressor us = new UpdateSuppressor()) {
                 DiagramType temp = (new DiagramDialog(null)).showModal();
                 if (temp == null) {
@@ -4271,15 +4461,20 @@ public class BasicEditor extends Diagram
         editFrame.setVertexInfoVisible(true);
         editFrame.setVisible(true);
         setColor(color);
+        bestFit();
     }
 
+    @JsonIgnore public boolean isSaveNeeded() {
+        return saveNeeded || majorSaveNeeded;
+    }
+        
     /** Give the user an opportunity to save the old diagram or to
         change their mind before closing a diagram.
 
         @return false if the user changes their mind and the diagram
         should not be closed. */
     boolean verifyCloseDiagram(Object[] options) {
-        if (!(saveNeeded || majorSaveNeeded)) {
+        if (!isSaveNeeded()) {
             return true;
         }
 
@@ -4311,7 +4506,7 @@ public class BasicEditor extends Diagram
         should not be closed. */
     boolean verifyCloseDiagram() {
         return verifyCloseDiagram
-            (new Object[] {"Save and continue", "Do not save", "Cancel"});
+            (new Object[] {"Save and close", "Close without saving", "Cancel"});
     }
 
     /** If the file already exists, ask the user whether overwriting
@@ -4661,20 +4856,23 @@ public class BasicEditor extends Diagram
     }
 
     public void showOpenDialog(Component parent) {
-        if (!verifyCloseDiagram()) {
-            return;
-        }
-
-        clearFileList();
-        filesList = isEditable() ? openPEDOrImageFilesDialog(parent)
+        File[] filesList = isEditable() ? openPEDOrImageFilesDialog(parent)
             : openPEDFilesDialog(parent);
         showOpenDialog(parent, filesList);
     }
 
     public void showOpenDialog(Component parent, File[] files) {
-        if (files == null) {
+        if (files == null || files.length == 0) {
             return;
         }
+
+        if (haveDiagram()) {
+            BasicEditor e = createNew();
+            e.initializeGUI();
+            e.showOpenDialog(parent, files);
+            return;
+        }
+
         filesList = files;
         fileNo = 0;
         if (files.length > 1) {
@@ -4683,23 +4881,43 @@ public class BasicEditor extends Diagram
         showOpenDialog(parent, files[0]);
     }
 
+    /** Return true if the file extension is that of a PED file (or
+        possibly a PED viewer file) */
+    boolean isPED(File file) {
+        if (file == null) {
+            return false;
+        }
+        String ext = getExtension(file.getName());
+        for (String ext1: pedFileExtensions()) {
+            if (ext1.equalsIgnoreCase(ext)) {
+                return true;
+            }
+        }
+        return false;
+    }
+        
     public void showOpenDialog(Component parent, File file) {
         if (file == null) {
             return;
         }
-        String ext = getExtension(file.getName());
-        boolean isPed = false;
-        String[] exts = pedFileExtensions();
-        for (String ext1: exts) {
-            if (ext1.equalsIgnoreCase(ext)) {
-                isPed = true;
-                break;
-            }
+
+        if (haveDiagram()) {
+            BasicEditor e = createNew();
+            e.initializeGUI();
+            e.showOpenDialog(e.editFrame, file);
+            return;
         }
+        boolean ped = isPED(file);
+        String ext = getExtension(file.getName());
+        String[] exts = pedFileExtensions();
         String mainPEDExt = exts[0];
+        if (ext == null && Files.notExists(file.toPath())) {
+            ped = true;
+            file = new File(file.getAbsolutePath() + "." + mainPEDExt);
+        }
 
         try {
-            if (isEditable() && !isPed) {
+            if (isEditable() && !ped) {
                 // This had better be an image file.
                 cropFrame.setFilename(file.getAbsolutePath());
                 cropFrame.pack();
@@ -4707,11 +4925,7 @@ public class BasicEditor extends Diagram
                 clear();
                 cropFrame.setVisible(true);
             } else {
-                if (ext == null && Files.notExists(file.toPath())) {
-                    isPed = true;
-                    file = new File(file.getAbsolutePath() + "." + mainPEDExt);
-                }
-                if (isPed) {
+                if (ped) {
                     openDiagram(file);
                 } else {
                     StringBuilder buf = new StringBuilder
@@ -5717,9 +5931,7 @@ public class BasicEditor extends Diagram
             editFrame.mnNextFile.setVisible(false);
         }
         String filename = file.toString();
-        String lcase = filename.toLowerCase();
-        int index = lcase.lastIndexOf(".ped");
-        if (index >= 0 && index == lcase.length() - 4) {
+        if (isPED(file)) {
             try {
                 openDiagram(file);
             } catch (IOException e) {
@@ -5748,7 +5960,7 @@ public class BasicEditor extends Diagram
     }
 
     public void run(String[] args) {
-        setFileAssociations();
+        setFileAssociations(args.length == 0);
         args = stripOpenArguments(args);
         if (args.length > 0) {
             filesList = new File[args.length];
@@ -5784,11 +5996,12 @@ public class BasicEditor extends Diagram
             showOpenDialog(editFrame, openPEDFilesDialog(editFrame));
             break;
         case JOptionPane.CANCEL_OPTION:
-            newDiagram();
+            newDiagram(false);
             break;
         }
     }
 
+    /** Initializes the crosshairs in the zoom (not edit) frame. */
     public static void initializeCrosshairs() {
         if (crosshairs == null) {
             URL url =
