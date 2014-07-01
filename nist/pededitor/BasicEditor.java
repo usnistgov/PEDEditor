@@ -317,7 +317,8 @@ public class BasicEditor extends Diagram
     protected transient Dimension oldFrameSize = null;
     protected transient boolean autoRescale = false;
     protected transient boolean allowRobotToMoveMouse = true;
-    protected transient boolean alwaysConvertLabels = false;
+    // This warning is more annoying than helpful.
+    protected transient boolean alwaysConvertLabels = true;
     // Number of times paintEditPane() has been called.
     protected transient int paintCnt = 0;
     protected boolean mEditable = true;
@@ -3631,45 +3632,32 @@ public class BasicEditor extends Diagram
         }
     }
 
+    void setFileAssociations() {
+        setFileAssociations
+            ("application/x-pededitor", new String[] { "ped" });
+    }
+
+    void setFileAssociations(String mime, String[] exts) {
+        try {
+            IntegrationService is
+                = (IntegrationService) ServiceManager.lookup("javax.jnlp.IntegrationService");
+            if (!is.hasAssociation(mime, exts)) {
+                is.requestAssociation(mime, exts);
+            }
+        } catch (UnavailableServiceException x) {
+            // OK, ignore this error.
+        }
+    }
+
     public static void main(BasicEditorCreator ec, String[] args) {
         if (args.length == 1 && args[0].charAt(0) == '-') {
             printHelp();
             System.exit(2);
         }
 
-        try {
-            IntegrationService is
-                = (IntegrationService) ServiceManager.lookup("javax.jnlp.IntegrationService");
-            String mime = "application/x-pededitor";
-            String[] exts = { "ped" };
-            if (!is.hasAssociation(mime, exts)) {
-                /**
-                JOptionPane.showConfirmDialog
-                (editFrame,
-                 htmlify("Would you like to use this program to open all files that have PED format?
-
-PED files?"handle associate the PED file extension and with "
-                 htmlify("Would you like to associate the PED file extension and with "
-                         + "this application?"),
-                 "Create new file assocation",
-                 JOptionPane.YES_NO_OPTION) == JOptionPane.YES_OPTION) { */
-                is.requestAssociation(mime, exts);
-            }
-        } catch (UnavailableServiceException x) {
-            // OK, ignore this error.
-        }
-
         waitDialog = new WaitDialog
-            (new BasicEditorArgsRunnable(ec, args) {
-
-                 @Override public void run() {
-                     try {
-                         super.run();
-                     } catch (Exception x) {
-                         x.printStackTrace();
-                     }
-                 }
-             }, "Loading PED Editor...");
+            (new BasicEditorArgsRunnable(ec, args),
+             "Loading PED Editor...");
         waitDialog.setTitle("PED Editor");
         waitDialog.pack();
         waitDialog.setVisible(true);
@@ -3751,24 +3739,6 @@ PED files?"handle associate the PED file extension and with "
              ("Enter the range of compositions covered by this diagram. "
               + "Fractions are allowed. For percentages, do not omit the "
               +  "percent sign."));
-    }
- 
-    NumberColumnDialog cartesianDialog(double[] values) {
-       String[] labels = {
-            "Left X value",
-            "Right X value",
-            "Bottom Y value",
-            "Top Y value" };
-        return new NumberColumnDialog
-            (editFrame, values, labels,
-             htmlify
-             ("<p>Enter the X and Y range. Fractions are allowed. "
-              + "If you enter percentages, you must include the percent sign."
-             + "<p>For logarithmic axes, enter the range of logarithms "
-             + "(e.g. -2&nbsp;to&nbsp;2 for "
-             + "10<sup>-2</sup>&nbsp;to&nbsp;10<sup>2</sup>)."
-             + "<p>You can also set the domain later, using the "
-              + "<code>Properties/Scale</code> menu."));
     }
 
     /** Start on a blank new diagram.
@@ -3957,60 +3927,32 @@ PED files?"handle associate the PED file extension and with "
                     }
 
                 case BINARY:
-                    {
-                        Rectangle2D.Double domain
-                            = xAndYRange(new Rectangle2D.Double(0, 0, 1, 1));
-
-                        boolean xPercent = isPercentagePreferred();
-                        boolean yPercent = xPercent;
-                        double bottom = domain.getY();
-                        double top = bottom + domain.getHeight();
-                        double left = domain.getX();
-                        double right = left + domain.getWidth();
-
-                        add(binaryBottomRuler(left, right, bottom));
-                        add(binaryTopRuler(left, right, top));
-                        add(binaryLeftRuler(bottom, top, left));
-                        add(binaryRightRuler(bottom, top, right));
-
-                        setPercentageDisplay(getXAxis(), xPercent);
-                        setPercentageDisplay(getYAxis(), yPercent);
-
-                        if (tracing) {
-                            // Transform the input quadrilateral into a rectangle
-                            QuadToRect q = new QuadToRect();
-                            q.setVertices(vertices);
-                            q.setRectangle(domain);
-                            originalToPrincipal = q;
-                        }
-
-                        r = new Rescale(1, 0, maxDiagramWidth,
-                                        1, 0, maxDiagramHeight);
-
-                        principalToStandardPage = new RectangleTransform
-                            (domain,
-                             new Rectangle2D.Double(0.0, 1.0, 1.0, -1.0));
-                        break;
-                    }
-
                 case OTHER:
-                    /** For free-form diagrams, assume that the aspect
-                        ratio of the input represents the aspect ratio
-                        of the output, but let the user change that if
-                        desired. */
                     {
-                        leftMargin = rightMargin = topMargin = bottomMargin = 0.05;
-                        Rectangle2D.Double domain
-                            = new Rectangle2D.Double(0, 0, 1, 1);
-                        if (tracing) {
+                        boolean other = (diagramType == DiagramType.OTHER);
+                        if (other) {
+                            leftMargin = rightMargin = topMargin = bottomMargin = 0.05;
+                        }
+                        CartesianDialog dog = new CartesianDialog(editFrame);
+
+                        Rectangle2D.Double domain;
+                        if (other && tracing) {
+                            // For free-form diagrams, let the
+                            // dimensions of the input determine the
+                            // default dimensions of the output.
                             double width1 = vertices[1].distance(vertices[2]);
                             double width2 = vertices[0].distance(vertices[3]);
                             double height1 = vertices[0].distance(vertices[1]);
                             double height2 = vertices[2].distance(vertices[3]);
                             double wOverH = (width1 + width2) / (height1 + height2);
-                            domain = xAndYRange
-                                (new Rectangle2D.Double(0, 0, wOverH, 1));
+                            domain = new Rectangle2D.Double(0, 0, wOverH, 1);
+                            dog.setSquare(false);
+                        } else {
+                            domain = new Rectangle2D.Double(0, 0, 1, 1);
                         }
+                        
+                        dog.setRectangle(domain);
+                        domain = dog.showModalRectangle();
 
                         if (tracing) {
                             // Transform the input quadrilateral into a rectangle
@@ -4022,12 +3964,37 @@ PED files?"handle associate the PED file extension and with "
 
                         r = new Rescale(Math.abs(domain.width), 0.0, 1.0,
                                         Math.abs(domain.height), 0.0, 1.0);
+                        if (dog.isSquare()) {
+                            // I just need to get the width and height
+                            // correct.
+                            r = new Rescale(1.0, 1.0, 1.0);
+                        } else {
+                            // Scale the domain uniformly to just fit
+                            // inside a unit square. (This means the
+                            // page margins will be sane relative to
+                            // the size of the diagram.)
+                            r = new Rescale(Math.abs(domain.width), 0.0, 1.0,
+                                        Math.abs(domain.height), 0.0, 1.0);
+                        }
                         principalToStandardPage = new RectangleTransform
                             (domain,
-                             new Rectangle2D.Double(0,
-                                                    Math.abs(domain.height) * r.t,
-                                                    Math.abs(domain.width) * r.t,
-                                                    -Math.abs(domain.height) * r.t));
+                             new Rectangle2D.Double
+                             (0, r.height, r.width, -r.height));
+
+                        if (!other) {
+                            double bottom = domain.getY();
+                            double top = bottom + domain.getHeight();
+                            double left = domain.getX();
+                            double right = left + domain.getWidth();
+                            add(binaryBottomRuler(left, right, bottom));
+                            add(binaryTopRuler(left, right, top));
+                            add(binaryLeftRuler(bottom, top, left));
+                            add(binaryRightRuler(bottom, top, right));
+                        }
+
+                        setPercentageDisplay(getXAxis(), dog.xIsPercentage());
+                        setPercentageDisplay(getYAxis(), dog.yIsPercentage());
+
                         break;
 
                     }
@@ -4256,45 +4223,6 @@ PED files?"handle associate the PED file extension and with "
                 initializeDiagram();
             }
         propagateChange();
-    }
-
-    /** Open a dialog asking for the ranges of the X and Y variables.
-     * Return the result. */
-    protected Rectangle2D.Double xAndYRange(Rectangle2D defaultLimits) {
-        double[] defaultValues =
-            { defaultLimits.getX(), defaultLimits.getMaxX(),
-              defaultLimits.getY(), defaultLimits.getMaxY() };
-        NumberColumnDialog dog = cartesianDialog(defaultValues);
-        while (true) {
-        	double[] values;
-            try {
-                values = dog.showModalColumn();
-                if (values == null) {
-                    values = defaultValues;
-                }
-            } catch (NumberFormatException x) {
-                showError(x.getMessage());
-                continue;
-            }
-                                    
-            double left = values[0];
-            double right = values[1];
-            double bottom = values[2];
-            double top = values[3];
-            double width = right - left;
-            double height = top - bottom;
-
-            if (width == 0) {
-                showError("The left and right X values cannot be equal.");
-                continue;
-            }
-            if (height == 0) {
-                showError("The top and bottom Y values cannot be equal.");
-                continue;
-            }
-
-            return new Rectangle2D.Double(left, bottom, width, height);
-        }
     }
 
     private void maxLessThanMinError(String component, double min, double max) {
@@ -4643,9 +4571,13 @@ PED files?"handle associate the PED file extension and with "
         return result;
     }
 
-    public static File[] openPEDFilesDialog(Component parent) {
+    String[] pedFileExtensions() {
+        return new String[] {"ped"};
+    }
+
+    public File[] openPEDFilesDialog(Component parent) {
         return openFilesDialog
-            (parent, "Open PED File", "PED files", new String[] {"ped"});
+            (parent, "Open PED File", "PED files", pedFileExtensions());
     }
 
     /** Return the default directory to save to and load from. */
@@ -4660,8 +4592,8 @@ PED files?"handle associate the PED file extension and with "
             .put(PREF_DIR,  dir);
     }
 
-    public static File[] openPEDOrImageFilesDialog(Component parent) {
-        String[] pedExts = { "ped" };
+    public File[] openPEDOrImageFilesDialog(Component parent) {
+        String[] pedExts = pedFileExtensions();
         String[] imageExts = ImageIO.getReaderFileSuffixes();
         String[] allExts = concat(pedExts, imageExts);
         JFileChooser chooser = new JFileChooser();
@@ -4724,6 +4656,10 @@ PED files?"handle associate the PED file extension and with "
         return null;
     }
 
+    public void open() {
+        showOpenDialog(editFrame);
+    }
+
     public void showOpenDialog(Component parent) {
         if (!verifyCloseDiagram()) {
             return;
@@ -4752,8 +4688,18 @@ PED files?"handle associate the PED file extension and with "
             return;
         }
         String ext = getExtension(file.getName());
+        boolean isPed = false;
+        String[] exts = pedFileExtensions();
+        for (String ext1: exts) {
+            if (ext1.equalsIgnoreCase(ext)) {
+                isPed = true;
+                break;
+            }
+        }
+        String mainPEDExt = exts[0];
+
         try {
-            if (isEditable() && ext != null && !"ped".equalsIgnoreCase(ext)) {
+            if (isEditable() && !isPed) {
                 // This had better be an image file.
                 cropFrame.setFilename(file.getAbsolutePath());
                 cropFrame.pack();
@@ -4762,16 +4708,25 @@ PED files?"handle associate the PED file extension and with "
                 cropFrame.setVisible(true);
             } else {
                 if (ext == null && Files.notExists(file.toPath())) {
-                    // Add .ped extension.
-                    ext = "ped";
-                    file = new File(file.getAbsolutePath() + "." + ext);
+                    isPed = true;
+                    file = new File(file.getAbsolutePath() + "." + mainPEDExt);
                 }
-                if ("ped".equalsIgnoreCase(ext)) {
+                if (isPed) {
                     openDiagram(file);
                 } else {
-                    showError(parent,
-                              "Unrecognized file extension (expected .ped)",
-                              "File load error");
+                    StringBuilder buf = new StringBuilder
+                        ("Unrecognized file extension (expected ");
+                    for (int i = 0; i < exts.length; ++i) {
+                        if (i > 0) {
+                            buf.append((i == (exts.length - 1))
+                                       ? " or " : ", ");
+                        }
+                        buf.append("'.");
+                        buf.append(exts[i]);
+                        buf.append("'");
+                    }
+                    buf.append(")");
+                    showError(parent, buf.toString(), "File load error");
                 }
             }
         } catch (IOException x) {
@@ -4793,7 +4748,7 @@ PED files?"handle associate the PED file extension and with "
             : ("<html><div width=\"250 px\"><p>" + mess);
     }
 
-    void showError(Component parent, String mess, String title) {
+    static void showError(Component parent, String mess, String title) {
         JOptionPane.showMessageDialog
             (parent, htmlify(mess), title, JOptionPane.ERROR_MESSAGE);
     }
@@ -5793,6 +5748,7 @@ PED files?"handle associate the PED file extension and with "
     }
 
     public void run(String[] args) {
+        setFileAssociations();
         args = stripOpenArguments(args);
         if (args.length > 0) {
             filesList = new File[args.length];
@@ -5803,28 +5759,33 @@ PED files?"handle associate the PED file extension and with "
             nextFile();
         } else {
             initializeGUI();
-            Object[] options = {
-                "Load image file", "Load .PED file", "Create new diagram"
-            };
-            switch (JOptionPane.showOptionDialog
-                    (editFrame,
-                     "Please choose how to begin.",
-                     "Start",
-                     JOptionPane.YES_NO_CANCEL_OPTION,
-                     JOptionPane.QUESTION_MESSAGE,
-                     null,
-                     options,
-                     options[0])) {
-            case JOptionPane.YES_OPTION:
-                showOpenDialog(editFrame, openImageFilesDialog(editFrame));
-                break;
-            case JOptionPane.NO_OPTION:
-                showOpenDialog(editFrame, openPEDFilesDialog(editFrame));
-                break;
-            case JOptionPane.CANCEL_OPTION:
-                newDiagram();
-                break;
-            }
+            run();
+        }
+    }
+
+    /** run() when no arguments are present */
+    public void run() {
+        Object[] options = {
+            "Load image file", "Load .PED file", "Create new diagram"
+        };
+        switch (JOptionPane.showOptionDialog
+                (editFrame,
+                 "Please choose how to begin.",
+                 "Start",
+                 JOptionPane.YES_NO_CANCEL_OPTION,
+                 JOptionPane.QUESTION_MESSAGE,
+                 null,
+                 options,
+                 options[0])) {
+        case JOptionPane.YES_OPTION:
+            showOpenDialog(editFrame, openImageFilesDialog(editFrame));
+            break;
+        case JOptionPane.NO_OPTION:
+            showOpenDialog(editFrame, openPEDFilesDialog(editFrame));
+            break;
+        case JOptionPane.CANCEL_OPTION:
+            newDiagram();
+            break;
         }
     }
 
