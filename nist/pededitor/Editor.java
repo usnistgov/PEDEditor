@@ -13,9 +13,13 @@ import java.io.File;
 import javax.swing.AbstractAction;
 
 /** BasicEditor plus "Save as PDF" menu. */
-public class Editor extends BasicEditor {
+public class Editor extends SingleInstanceBasicEditor {
     public Editor() {
         addSaveAsPDF();
+    }
+
+    @Override public Editor createNew() {
+        return new Editor();
     }
 
     @SuppressWarnings("serial")
