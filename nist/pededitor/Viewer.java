@@ -11,10 +11,14 @@ import java.awt.Graphics;
 import javax.swing.AbstractAction;
 
 /** Main driver class for Phase Equilibria Diagram digitization and creation. */
-public class Viewer extends SingleInstanceBasicEditor {
+public class Viewer extends Editor {
 
     public Viewer() {
         init();
+    }
+
+    @Override public Viewer createNew() {
+        return new Viewer();
     }
 
     private void init() {
@@ -86,17 +90,16 @@ public class Viewer extends SingleInstanceBasicEditor {
             }
         }
         setSaveNeeded(false);
-        int otherEditorCnt = BasicEditor.getOpenEditorCnt() - 1;
-        ef.setLocation(15 * otherEditorCnt, 15 * otherEditorCnt);
-        initializeGUI();
-        ef.setVertexInfoVisible(false);
-        bestFit();
-        ef.toFront();
     }
 
-    @Override void setFileAssociations() {
+    @Override public void initializeGUI() {
+        super.initializeGUI();
+        editFrame.setVertexInfoVisible(false);
+    }
+
+    @Override void setFileAssociations(boolean askExit) {
         setFileAssociations
-            ("application/x-pedviewer", new String[] { "pedv" });
+            (askExit, "application/x-pedviewer", new String[] { "pedv" });
     }
 
     @Override public void paintEditPane(Graphics g) {
@@ -116,6 +119,10 @@ public class Viewer extends SingleInstanceBasicEditor {
 
     @Override String[] pedFileExtensions() {
         return new String[] {"ped", "pedv"};
+    }
+
+    @Override String fallbackTitle() {
+        return "Phase Equilibria Diagram Viewer";
     }
 
     public static void main(String[] args) {
