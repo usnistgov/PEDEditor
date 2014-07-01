@@ -11,13 +11,10 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.URL;
 import java.net.URLConnection;
-import java.util.Timer;
-import java.util.TimerTask;
 import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
 
 import javax.jnlp.ServiceManager;
-import javax.jnlp.SingleInstanceListener;
 import javax.jnlp.SingleInstanceService;
 import javax.jnlp.UnavailableServiceException;
 
@@ -26,35 +23,6 @@ import javax.jnlp.UnavailableServiceException;
     fetched using an HTTP connection to the url args[0]. */
 
 public class JSONFetchDiagram {
-
-    /** Task that gets called regularly to see if any BasicEditor objects
-        are open. A slightly better solution would be to check after a
-        given delay since the last non BasicEditor closed, but that takes a
-        little more code. Instead, just check every 30 minutes whether
-        any Editors are open. */
-    static class ShutdownChecker extends TimerTask {
-        @Override public void run() {
-            int cnt = BasicEditor.getOpenEditorCnt();
-            if (cnt == 0) {
-                System.exit(0);
-            }
-        }
-    }
-
-    static class Listener implements SingleInstanceListener {
-        Timer closer = new Timer("ShutdownChecker", false);
-        TimerTask closeTask;
-        long delay = 60*1000*30; // 30 minutes in msecs
-
-        @Override public void newActivation(String[] args) {
-            run(args);
-            if (closeTask != null) {
-                closeTask.cancel();
-            }
-            closeTask = new ShutdownChecker();
-            closer.scheduleAtFixedRate(closeTask, delay, delay);
-        }
-    }
 
     public static void run(String[] args) {
         if (args.length < 1 || args.length > 2) {
@@ -81,9 +49,7 @@ public class JSONFetchDiagram {
                     d.setTitle(title);
                 }
                 Viewer e = new Viewer();
-                e.setExitOnClose(false);
                 e.copyFrom(d);
-                e.init();
 
                 EditFrame ef = e.editFrame;
                 ef.toFront();
@@ -137,7 +103,12 @@ public class JSONFetchDiagram {
         try {
             SingleInstanceService sis = (SingleInstanceService)
                 ServiceManager.lookup("javax.jnlp.SingleInstanceService");
-            Listener listen = new Listener();
+            BasicEditorSingleInstanceListener listen
+                = new BasicEditorSingleInstanceListener
+                (new BasicEditorCreator() {
+                        @Override public BasicEditor run() {
+                            return new Viewer();
+                        }});
             sis.addSingleInstanceListener(listen);
             listen.newActivation(args);
         } catch(UnavailableServiceException x) {
