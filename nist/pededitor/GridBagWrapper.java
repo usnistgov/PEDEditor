@@ -13,10 +13,19 @@ public class GridBagWrapper {
     public GridBagLayout gbl;
 
     public GridBagWrapper(Container parent) {
-        this.parent = parent;
+        this(parent, new GridBagLayout());
+    }
 
-        gbl = new GridBagLayout();
+    GridBagWrapper(Container parent, GridBagLayout gbl) {
+        this.parent = parent;
+        this.gbl = gbl;
         parent.setLayout(gbl);
+    }
+
+    /** Use this only if you know that parent has already been
+        assigned a GridBagLayout and you want to retrieve it. */
+    public static GridBagWrapper getLayout(Container parent) {
+        return new GridBagWrapper(parent, (GridBagLayout) parent.getLayout());
     }
 
     void add(Component child, GridBagConstraints gbc) {

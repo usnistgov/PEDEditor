@@ -6,6 +6,7 @@ package gov.nist.pededitor;
 import java.awt.Component;
 import java.awt.Container;
 import java.awt.GridBagConstraints;
+import java.awt.GridBagLayout;
 import java.awt.Insets;
 
 /** Stupid class to marginally simplify use of GridBagLayout in a
@@ -41,6 +42,16 @@ public class GridBagUtil extends GridBagWrapper {
 
     public GridBagUtil(Container parent) {
         super(parent);
+    }
+
+    /** Use this only if you know that parent has already been
+        assigned a GridBagLayout and you want to retrieve it. */
+    public static GridBagUtil getLayout(Container parent) {
+        return new GridBagUtil(parent, (GridBagLayout) parent.getLayout());
+    }
+
+    GridBagUtil(Container parent, GridBagLayout gbl) {
+        super(parent, gbl);
     }
 
     void addEast(Component child) {
