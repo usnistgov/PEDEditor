@@ -3,46 +3,20 @@
 
 package gov.nist.pededitor;
 
-import java.awt.event.ActionEvent;
-import java.awt.event.KeyEvent;
-import java.util.ArrayList;
-
 import javax.jnlp.ServiceManager;
 import javax.jnlp.SingleInstanceService;
 import javax.jnlp.UnavailableServiceException;
-import javax.swing.JMenuItem;
 
 public class SingleInstanceBasicEditor extends BasicEditor {
-    static ArrayList<BasicEditor> openEditors = new ArrayList<>();
 
-    public SingleInstanceBasicEditor() {
-        setExitOnClose(false);
-        init();
-        openEditors.add(this);
+    @Override public SingleInstanceBasicEditor createNew() {
+        return new SingleInstanceBasicEditor();
     }
 
-    void closeAll() {
-        // Duplicate openEditors so we don't end up iterating through a
-        // list that is simultaneously being modified.
-        for (BasicEditor e: new ArrayList<>(openEditors)) {
-            e.close();
+    @Override public void lastWindowClosed() {
+        if (exitIfLastWindowCloses) {
+            super.lastWindowClosed();
         }
-    }
-
-    @Override public void close() {
-        super.close();
-        openEditors.remove(this);
-    }
-
-    @SuppressWarnings("serial") private void init() {
-        JMenuItem mnExitAll = new JMenuItem
-            (new Action("Exit all") {
-                    @Override public void actionPerformed(ActionEvent e) {
-                        closeAll();
-                    }
-                });
-        mnExitAll.setMnemonic(KeyEvent.VK_A);
-        editFrame.mnFile.add(mnExitAll);
     }
 
     static class Runnable extends ArgsRunnable {
@@ -74,5 +48,10 @@ public class SingleInstanceBasicEditor extends BasicEditor {
             // I guess we're not running via JWS...
             BasicEditor.main(ec, args);
         }
+    }
+
+    @Override public void initializeGUI() {
+        super.initializeGUI();
+        editFrame.toFront();
     }
 }
