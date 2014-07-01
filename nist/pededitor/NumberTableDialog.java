@@ -7,9 +7,11 @@ import java.awt.Dialog;
 import java.awt.Frame;
 import java.awt.event.ActionEvent;
 import javax.swing.AbstractAction;
+import javax.swing.Box;
 import javax.swing.JButton;
 import javax.swing.JDialog;
 import javax.swing.JLabel;
+import javax.swing.JPanel;
 
 /** Generic dialog that presents several rows of labels and
     corresponding text boxes and returns the array of text box text
@@ -20,6 +22,7 @@ public class NumberTableDialog extends JDialog {
     boolean pressedOK = false;
     JButton okButton;
     NumberField[][] table;
+    JPanel panelBeforeOK = new JPanel();
 
     NumberTableDialog(Frame owner, int rowCnt, int colCnt, String[] rowNames,
                       String[] columnNames, String intro) {
@@ -29,6 +32,7 @@ public class NumberTableDialog extends JDialog {
 
         if (intro != null) {
             gb.centerAndEndRow(new JLabel(intro));
+            gb.endRowWith(Box.createVerticalStrut(12 /* pixels */));
         }
 
         if (columnNames != null) {
@@ -47,7 +51,7 @@ public class NumberTableDialog extends JDialog {
 
         for (int i = 0; i < rowCnt; ++i) {
             if (rowNames != null) {
-                gb.addWest(new JLabel(rowNames[i]));
+                gb.addEast(new JLabel(rowNames[i]));
             }
             for (int j = 0; j < colCnt; ++j) {
                 NumberField f = new NumberField(20);
@@ -59,6 +63,8 @@ public class NumberTableDialog extends JDialog {
                 }
             }
         }
+
+        gb.endRowWith(panelBeforeOK);
 
         okButton = new JButton(new AbstractAction("OK") {
                 private static final long serialVersionUID = -8082661716737814979L;
@@ -147,21 +153,32 @@ public class NumberTableDialog extends JDialog {
         return false;
     }
 
+    public double[][] getValues() {
+        double[][] res = new double[getRowCount()][getColumnCount()];
+        for (int i = 0; i < getRowCount(); ++i) {
+            for (int j = 0; j < getColumnCount(); ++j) {
+                res[i][j] = getValueAt(i,j);
+            }
+        }
+        return res;
+    }
+
+    public void setValues(double[][] values) {
+        for (int i = 0; i < values.length; ++i) {
+            for (int j = 0; j < values[0].length; ++j) {
+                setValueAt(i, j, values[i][j]);
+            }
+        }
+    }
+
     /** Show the dialog as document-modal, and return the selected
-        values (as strings). Return null if the dialog was closed
-        abnormally. */
+        values. Return null if the dialog was closed abnormally. */
     public double[][] showModal() throws NumberFormatException {
         setModalityType(Dialog.ModalityType.DOCUMENT_MODAL);
         pack();
         setVisible(true);
         if (pressedOK) {
-            double[][] output = new double[getRowCount()][getColumnCount()];
-            for (int i = 0; i < getRowCount(); ++i) {
-                for (int j = 0; j < getColumnCount(); ++j) {
-                    output[i][j] = getValueAt(i,j);
-                }
-            }
-            return output;
+            return getValues();
         } else {
             return null;
         }
