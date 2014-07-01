@@ -86,7 +86,7 @@ public class EditFrame extends JFrame
     protected JMenuItem mnNewDiagram = new JMenuItem
         (new Action("New Diagram", KeyEvent.VK_N) {
                 @Override public void actionPerformed(ActionEvent e) {
-                    getEditor().newDiagram();
+                    getEditor().newDiagram(false);
                 }
             });
     protected JMenuItem mnOpen = new JMenuItem
@@ -1124,13 +1124,20 @@ public class EditFrame extends JFrame
 
         mnFile.addSeparator();
 
-        // "Exit" menu item
-        mnFile.add(new Action("Exit", KeyEvent.VK_X) {
+        // Close one window
+        mnFile.add(new Action("Close", KeyEvent.VK_C) {
                 @Override public void actionPerformed(ActionEvent e) {
-                    getEditor().verifyThenClose();
+                    getEditor().verifyThenCloseOrClear();
                     finishEvent();
                 }
             });
+
+        // Close all windows
+        mnFile.add(new Action("Exit", KeyEvent.VK_X) {
+                    @Override public void actionPerformed(ActionEvent e) {
+                        getEditor().verifyExit();
+                    }
+                });
 
         // "Position" top-level menu
 
@@ -1286,15 +1293,29 @@ public class EditFrame extends JFrame
         mnProperties.add(mnKeys);
 
         mnMargins.setMnemonic(KeyEvent.VK_M);
-        for (Side side: Side.values()) {
-            mnMargins.add(new MarginAction(side));
-        }
-        mnMargins.add(new Action("Auto-fit", KeyEvent.VK_A) {
+        mnMargins.add(toMenuItem(new Action("Auto-fit", KeyEvent.VK_A) {
+                {
+                    putValue(SHORT_DESCRIPTION,
+                             "Eliminate all excees white space");
+                }
                 @Override public void actionPerformed(ActionEvent e) {
                     getEditor().computeMargins();
                     finishEvent();
                 }
-            });
+            }));
+        mnMargins.add(toMenuItem(new Action("Expand all", KeyEvent.VK_X) {
+                {
+                    putValue(SHORT_DESCRIPTION,
+                             "Expand the diagram on all sides");
+                }
+                @Override public void actionPerformed(ActionEvent e) {
+                    getEditor().expandMargins(0.2);
+                    finishEvent();
+                }
+            }));
+        for (Side side: Side.values()) {
+            mnMargins.add(new MarginAction(side));
+        }
         mnMargins.add(new Action("Crop to selection", KeyEvent.VK_P) {
                 @Override public void actionPerformed(ActionEvent e) {
                     getEditor().cropToSelection();
@@ -1676,7 +1697,7 @@ public class EditFrame extends JFrame
     }
 
     protected void setStatus(String s) {
-        statusLabel.setText("<html><font size=\"-2\">" + s 
+        statusLabel.setText("<html><font size=\"-2\">" + ((s != null) ? s : "")
                             + "</font></html>");
     }
 
