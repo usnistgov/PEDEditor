@@ -1,0 +1,377 @@
+{
+  "tags" : [ ],
+  "originalToPrincipal" : {
+    "transform" : "QuadToRect",
+    "input" : [ {
+      "x" : 83.0,
+      "y" : 473.0
+    }, {
+      "x" : 83.0,
+      "y" : 40.0
+    }, {
+      "x" : 577.0,
+      "y" : 40.0
+    }, {
+      "x" : 577.0,
+      "y" : 473.0
+    } ],
+    "output" : {
+      "x" : 0.0,
+      "y" : 0.0,
+      "width" : 0.35000000000000003,
+      "height" : 0.45
+    },
+    "x" : 0.0,
+    "y" : 0.0,
+    "w" : 0.35000000000000003,
+    "h" : 0.45,
+    "llx" : 83.0,
+    "lly" : 473.0,
+    "ulx" : 83.0,
+    "uly" : 40.0,
+    "urx" : 577.0,
+    "ury" : 40.0,
+    "lrx" : 577.0,
+    "lry" : 473.0
+  },
+  "principalToStandardPage" : {
+    "transform" : "RectangleTransform",
+    "input" : {
+      "x" : 0.0,
+      "y" : 0.0,
+      "width" : 0.35000000000000003,
+      "height" : 0.45
+    },
+    "output" : {
+      "x" : 0.0,
+      "y" : 1.0,
+      "width" : 1.0,
+      "height" : -1.0
+    }
+  },
+  "pageBounds" : {
+    "x" : -0.15,
+    "y" : -0.15,
+    "width" : 1.2999999999999998,
+    "height" : 1.2999999999999998
+  },
+  "diagramType" : "BINARY",
+  "diagramComponents" : [ null, null, null, null ],
+  "originalFilename" : "strawpoll.gif",
+  "axes" : [ {
+    "format" : {
+      "type" : "DecimalFormat",
+      "pattern" : "#0.00%"
+    },
+    "a" : 1.0,
+    "b" : 0.0,
+    "c" : 0.0,
+    "name" : "X"
+  }, {
+    "format" : {
+      "type" : "DecimalFormat",
+      "pattern" : "#0.00%"
+    },
+    "a" : 0.0,
+    "b" : 1.0,
+    "c" : 0.0,
+    "name" : "Y"
+  }, {
+    "format" : {
+      "type" : "DecimalFormat",
+      "pattern" : "#0.0000"
+    },
+    "a" : 2.8571428571428568,
+    "b" : 0.0,
+    "c" : 0.0,
+    "name" : "page X"
+  }, {
+    "format" : {
+      "type" : "DecimalFormat",
+      "pattern" : "#0.0000"
+    },
+    "a" : 0.0,
+    "b" : -2.2222222222222223,
+    "c" : 1.0,
+    "name" : "page Y"
+  } ],
+  "usingWeightFraction" : false,
+  "fontName" : "DejaVu LGC Sans PED",
+  "keys" : {
+  },
+  "decorations" : [ {
+    "decoration" : "ruler",
+    "startPoint" : {
+      "x" : 0.0,
+      "y" : 0.0
+    },
+    "endPoint" : {
+      "x" : 0.35000000000000003,
+      "y" : 0.0
+    },
+    "lineWidth" : 0.0024,
+    "labelAnchor" : "RIGHT",
+    "multiplier" : 100.0,
+    "tickLeft" : true,
+    "tickPadding" : 3.0,
+    "axis" : "X",
+    "fontSize" : 0.020325203252032523
+  }, {
+    "decoration" : "ruler",
+    "startPoint" : {
+      "x" : 0.0,
+      "y" : 0.45
+    },
+    "endPoint" : {
+      "x" : 0.35000000000000003,
+      "y" : 0.45
+    },
+    "lineWidth" : 0.0024,
+    "labelAnchor" : "NONE",
+    "multiplier" : 100.0,
+    "tickRight" : true,
+    "tickPadding" : 3.0,
+    "axis" : "X",
+    "fontSize" : 0.020325203252032523
+  }, {
+    "decoration" : "ruler",
+    "startPoint" : {
+      "x" : 0.0,
+      "y" : 0.0
+    },
+    "endPoint" : {
+      "x" : 0.0,
+      "y" : 0.45
+    },
+    "lineWidth" : 0.0024,
+    "labelAnchor" : "LEFT",
+    "multiplier" : 100.0,
+    "textAngle" : 1.5707963267948966,
+    "tickRight" : true,
+    "tickPadding" : 2.0,
+    "axis" : "Y",
+    "fontSize" : 0.020325203252032523
+  }, {
+    "decoration" : "ruler",
+    "startPoint" : {
+      "x" : 0.35000000000000003,
+      "y" : 0.0
+    },
+    "endPoint" : {
+      "x" : 0.35000000000000003,
+      "y" : 0.45
+    },
+    "lineWidth" : 0.0024,
+    "labelAnchor" : "NONE",
+    "multiplier" : 100.0,
+    "textAngle" : 1.5707963267948966,
+    "tickLeft" : true,
+    "tickPadding" : 3.0,
+    "axis" : "Y",
+    "fontSize" : 0.020325203252032523
+  }, {
+    "decoration" : "label",
+    "text" : "○",
+    "xWeight" : 0.5,
+    "yWeight" : 0.5,
+    "x" : 0.31340459013248684,
+    "y" : 0.41017145373596126,
+    "scale" : 1.1
+  }, {
+    "decoration" : "label",
+    "text" : "○",
+    "xWeight" : 0.5,
+    "yWeight" : 0.5,
+    "x" : 0.24908666353272374,
+    "y" : 0.37041931705399633,
+    "scale" : 1.1
+  }, {
+    "decoration" : "label",
+    "text" : "○",
+    "xWeight" : 0.5,
+    "yWeight" : 0.5,
+    "x" : 0.3162183282061572,
+    "y" : 0.25020179010429944,
+    "scale" : 1.1
+  }, {
+    "decoration" : "label",
+    "text" : "○",
+    "xWeight" : 0.5,
+    "yWeight" : 0.5,
+    "x" : 0.33632375062104364,
+    "y" : 0.2496601278847774,
+    "scale" : 1.1
+  }, {
+    "decoration" : "label",
+    "text" : "○",
+    "xWeight" : 0.5,
+    "yWeight" : 0.5,
+    "x" : 0.23632211315957416,
+    "y" : 0.259550399721626,
+    "scale" : 1.1
+  }, {
+    "decoration" : "label",
+    "text" : "○",
+    "xWeight" : 0.5,
+    "yWeight" : 0.5,
+    "x" : 0.20810877519208798,
+    "y" : 0.3003581106599601,
+    "scale" : 1.1
+  }, {
+    "decoration" : "label",
+    "text" : "○",
+    "xWeight" : 0.5,
+    "yWeight" : 0.5,
+    "x" : 0.18104392715672252,
+    "y" : 0.3400526123471381,
+    "scale" : 1.1
+  }, {
+    "decoration" : "label",
+    "text" : "○",
+    "xWeight" : 0.5,
+    "yWeight" : 0.5,
+    "x" : 0.2248413645067169,
+    "y" : 0.19037933380262706,
+    "scale" : 1.1
+  }, {
+    "decoration" : "label",
+    "text" : "○",
+    "xWeight" : 0.5,
+    "yWeight" : 0.5,
+    "x" : 0.17507692633844785,
+    "y" : 0.22981287704118838,
+    "scale" : 1.1
+  }, {
+    "decoration" : "label",
+    "text" : "○",
+    "xWeight" : 0.5,
+    "yWeight" : 0.5,
+    "x" : 0.23653255204485973,
+    "y" : 0.08963656485984328,
+    "scale" : 1.1
+  }, {
+    "decoration" : "label",
+    "text" : "○",
+    "xWeight" : 0.5,
+    "yWeight" : 0.5,
+    "x" : 0.13484200763225224,
+    "y" : 0.11029657586139502,
+    "scale" : 1.1
+  }, {
+    "decoration" : "label",
+    "text" : "○",
+    "xWeight" : 0.5,
+    "yWeight" : 0.5,
+    "x" : 0.10520872602263223,
+    "y" : 0.17960959463792397,
+    "scale" : 1.1
+  }, {
+    "decoration" : "label",
+    "text" : "○",
+    "xWeight" : 0.5,
+    "yWeight" : 0.5,
+    "x" : 0.04615799755753115,
+    "y" : 0.13948709974871937,
+    "scale" : 1.1
+  }, {
+    "decoration" : "label",
+    "text" : "○",
+    "xWeight" : 0.5,
+    "yWeight" : 0.5,
+    "x" : 0.09083413139697231,
+    "y" : 0.10017629770275921,
+    "scale" : 1.1
+  }, {
+    "decoration" : "label",
+    "text" : "○",
+    "xWeight" : 0.5,
+    "yWeight" : 0.5,
+    "x" : 0.08886629953279312,
+    "y" : 0.08936600057876187,
+    "scale" : 1.1
+  }, {
+    "decoration" : "label",
+    "text" : "○",
+    "xWeight" : 0.5,
+    "yWeight" : 0.5,
+    "x" : 0.07276585700769074,
+    "y" : 0.06985602118614603,
+    "scale" : 1.1
+  }, {
+    "decoration" : "label",
+    "text" : "○",
+    "xWeight" : 0.5,
+    "yWeight" : 0.5,
+    "x" : 0.07296052335325073,
+    "y" : 0.009533527938964115,
+    "scale" : 1.1
+  }, {
+    "decoration" : "label",
+    "text" : "○",
+    "xWeight" : 0.5,
+    "yWeight" : 0.5,
+    "x" : 0.04293790905251066,
+    "y" : 0.03989436241487154,
+    "scale" : 1.1
+  }, {
+    "decoration" : "label",
+    "text" : "○",
+    "xWeight" : 0.5,
+    "yWeight" : 0.5,
+    "x" : 0.041817228598327205,
+    "y" : 0.06979518424720466,
+    "scale" : 1.1
+  }, {
+    "decoration" : "label",
+    "text" : "○",
+    "xWeight" : 0.5,
+    "yWeight" : 0.5,
+    "x" : 0.024185604519342253,
+    "y" : 0.010203267924678516,
+    "scale" : 1.1
+  }, {
+    "decoration" : "label",
+    "text" : "○",
+    "xWeight" : 0.5,
+    "yWeight" : 0.5,
+    "x" : 0.011794614297587094,
+    "y" : 0.009973261602891415,
+    "scale" : 1.1
+  }, {
+    "decoration" : "curve",
+    "curve" : {
+      "points" : [ {
+	"x" : 8.329402079791882E-4,
+	"y" : 0.02294883040785628
+      }, {
+	"x" : 0.34886906687372754,
+	"y" : 0.3545772660456903
+      } ],
+      "smoothed" : [ false, false ],
+      "closed" : false
+    },
+    "color" : {
+      "rgb" : -16777216
+    },
+    "lineWidth" : 0.0024,
+    "lineStyle" : "SOLID",
+    "id" : 0
+  }, {
+    "decoration" : "label",
+    "text" : "<br>\nAmes Straw Poll percentage",
+    "xWeight" : 0.5,
+    "x" : 0.17500000000000002,
+    "scale" : 2.0,
+    "color" : {
+      "rgb" : -16777216
+    }
+  }, {
+    "decoration" : "label",
+    "text" : "Iowa Caucuses percentage<br>\n<br>\n",
+    "xWeight" : 0.5,
+    "yWeight" : 1.0,
+    "y" : 0.225,
+    "angle" : 1.5707963267948966,
+    "scale" : 2.0
+  } ]
+}
