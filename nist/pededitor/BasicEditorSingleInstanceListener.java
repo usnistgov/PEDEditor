@@ -21,11 +21,27 @@ class BasicEditorSingleInstanceListener implements SingleInstanceListener {
     }
 
     @Override public void newActivation(String[] args) {
-        BasicEditor.main(ec, args);
+        // Turn off exitIfLastWindowCloses on the created BasicEditor
+        // object, so the service can continue running.
+        BasicEditor.main(new TurnOffExitOnClose(ec), args);
         if (closeTask != null) {
             closeTask.cancel();
         }
         closeTask = new BasicEditorShutdownChecker();
         closer.scheduleAtFixedRate(closeTask, delay, delay);
+    }
+
+    static class TurnOffExitOnClose extends BasicEditorCreator {
+        BasicEditorCreator ec;
+
+        TurnOffExitOnClose(BasicEditorCreator ec) {
+            this.ec = ec;
+        }
+
+        @Override public BasicEditor run() {
+            BasicEditor e = ec.run();
+            e.setExitIfLastWindowCloses(false);
+            return e;
+        }
     }
 }
