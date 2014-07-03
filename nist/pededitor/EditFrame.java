@@ -400,6 +400,14 @@ public class EditFrame extends JFrame
                 finishEvent();
             }
         };
+    Action actIsotherm = new Action
+        ("Isotherm/Line label...",
+         KeyEvent.VK_I, KeyStroke.getKeyStroke('i')) {
+            @Override public void actionPerformed(ActionEvent e) {
+                getEditor().addIsotherm();
+                finishEvent();
+            }
+        };
     Action actLeftArrow = new Action
         ("Left arrowhead",
          KeyEvent.VK_L, KeyStroke.getKeyStroke('<')) {
@@ -714,12 +722,12 @@ public class EditFrame extends JFrame
                 }
             });
 
-    protected JCheckBoxMenuItem showSlopeWindow
+    protected JCheckBoxMenuItem showMathWindow
         = new JCheckBoxMenuItem
-        (new Action("Show slope window", KeyEvent.VK_S) {
+        (new Action("Show math window", KeyEvent.VK_S) {
                 @Override public void actionPerformed(ActionEvent e) {
-                    getEditor().vertexInfo.setVisible
-                        (showSlopeWindow.isSelected());
+                    getEditor().mathWindow.setVisible
+                        (showMathWindow.isSelected());
                     finishEvent();
                 }
             });
@@ -1462,9 +1470,9 @@ public class EditFrame extends JFrame
                     finishEvent();
                 }
             });
-        mnView.add(showSlopeWindow);
+        mnView.add(showMathWindow);
         mnView.add(mnHints);
-        showSlopeWindow.setSelected(true);
+        showMathWindow.setSelected(true);
 
         JMenu mnHelp = new JMenu("Help");
         mnHelp.setMnemonic(KeyEvent.VK_H);
@@ -1526,6 +1534,7 @@ public class EditFrame extends JFrame
               actAddVertex,
               actAddAutoPositionedVertex,
               actText,
+              actIsotherm,
               actLeftArrow,
               actRightArrow,
               actRuler,
@@ -1566,6 +1575,7 @@ public class EditFrame extends JFrame
         JMenu mn = new JMenu("Add decoration");
         mn.setMnemonic(KeyEvent.VK_D);
         mn.add(actText);
+        mn.add(actIsotherm);
         mn.add(actLeftArrow);
         mn.add(actRightArrow);
         mn.add(actRuler);
@@ -1573,10 +1583,10 @@ public class EditFrame extends JFrame
         return mn;
     }
 
-    /* Set whether the Slope window is visible or not. */
-    public void setVertexInfoVisible(boolean b) {
-        getEditor().vertexInfo.setVisible(b);
-        showSlopeWindow.setSelected(b);
+    /* Set whether the Math window is visible or not. */
+    public void setMathWindowVisible(boolean b) {
+        getEditor().mathWindow.setVisible(b);
+        showMathWindow.setSelected(b);
     }
 
     public void setEditable(boolean b) {
@@ -1611,6 +1621,7 @@ public class EditFrame extends JFrame
               actAddVertex,
               actAddAutoPositionedVertex,
               actText,
+              actIsotherm,
               actLeftArrow,
               actRightArrow}) {
             act.setEnabled(b);
