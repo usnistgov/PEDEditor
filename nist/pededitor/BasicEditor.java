@@ -162,11 +162,11 @@ public class BasicEditor extends Diagram
         }
     }
 
-    class VertexInfoDialogCloseListener extends WindowAdapter
+    class MathWindowCloseListener extends WindowAdapter
         implements WindowListener
     {
         @Override public void windowClosing(WindowEvent e) {
-            editFrame.showSlopeWindow.setSelected(false);
+            editFrame.showMathWindow.setSelected(false);
         }
     }
 
@@ -258,7 +258,7 @@ public class BasicEditor extends Diagram
     protected EditFrame editFrame = new EditFrame(this);
     protected BasicRightClickMenu mnRightClick = new RightClickMenu(this);
     protected ImageZoomFrame zoomFrame = null;
-    protected VertexInfoDialog vertexInfo = new VertexInfoDialog(this);
+    protected MathWindow mathWindow = new MathWindow(this);
     protected LabelDialog labelDialog = null;
     protected RulerDialog rulerDialog = null;
     protected JColorChooser colorChooser = null;
@@ -490,9 +490,9 @@ public class BasicEditor extends Diagram
         setExitOnClose(false);
         init();
         tieLineDialog.setFocusableWindowState(false);
-        vertexInfo.setDefaultCloseOperation
+        mathWindow.setDefaultCloseOperation
             (WindowConstants.HIDE_ON_CLOSE);
-        vertexInfo.addWindowListener(new VertexInfoDialogCloseListener());
+        mathWindow.addWindowListener(new MathWindowCloseListener());
         editFrame.setDefaultCloseOperation
             (WindowConstants.DO_NOTHING_ON_CLOSE);
         editFrame.addWindowListener(new CloseListener());
@@ -521,8 +521,8 @@ public class BasicEditor extends Diagram
         scale = BASE_SCALE;
         mprin = null;
         scaledOriginalImages = null;
-        vertexInfo.refresh();
-        vertexInfo.setLineWidth(lineWidth);
+        mathWindow.refresh();
+        mathWindow.setLineWidth(lineWidth);
         mouseIsStuck = false;
         mouseTravel = null;
         mousePress = null;
@@ -587,9 +587,9 @@ public class BasicEditor extends Diagram
                 zoomFrame.dispose();
                 zoomFrame = null;
             }
-            if (vertexInfo != null) {
-                vertexInfo.dispose();
-                vertexInfo = null;
+            if (mathWindow != null) {
+                mathWindow.dispose();
+                mathWindow = null;
             }
             if (labelDialog != null) {
                 labelDialog.dispose();
@@ -1784,7 +1784,7 @@ public class BasicEditor extends Diagram
         propagateChange();
     }
 
-    /** Update the Slope window to show whatever information is
+    /** Update the math window to show whatever information is
         available for the given handle. */
     public void showTangent(DecorationHandle hand) {
         if (hand instanceof BoundedParam2DHandle) {
@@ -1826,7 +1826,7 @@ public class BasicEditor extends Diagram
     public void showTangent(Decoration dec, double t) {
         Point2D.Double g = derivative(dec, t);
         if (g != null) {
-            vertexInfo.setScreenDerivative(g);
+            mathWindow.setScreenDerivative(g);
         }
         if (dec instanceof CurveDecoration && showLength()) {
             CuspFigure c = ((CurveDecoration) dec).getItem();
@@ -1850,18 +1850,18 @@ public class BasicEditor extends Diagram
             double totLength = b.length(0, 1e-6, 800).value;
 
             if (c.isClosed()) {
-                vertexInfo.setTotLengthLabel("Perimeter");
-                vertexInfo.setTotAreaLabel("Area");
+                mathWindow.setTotLengthLabel("Perimeter");
+                mathWindow.setTotAreaLabel("Area");
                 totArea = Math.abs(totArea);
             } else {
-                vertexInfo.setTotLengthLabel("Total length");
-                vertexInfo.setTotAreaLabel("Total \u222B");
+                mathWindow.setTotLengthLabel("Total length");
+                mathWindow.setTotAreaLabel("Total \u222B");
             }
 
-            vertexInfo.setArea(area);
-            vertexInfo.setTotArea(totArea);
-            vertexInfo.setLength(length);
-            vertexInfo.setTotLength(totLength);
+            mathWindow.setArea(area);
+            mathWindow.setTotArea(totArea);
+            mathWindow.setLength(length);
+            mathWindow.setTotLength(totLength);
         }
             
         showTangentCommon(dec);
@@ -1889,7 +1889,7 @@ public class BasicEditor extends Diagram
             double theta = ((Angled) dec).getAngle();
             Point2D.Double p = new Point2D.Double(Math.cos(theta),
                                                   Math.sin(theta));
-            vertexInfo.setDerivative(p);
+            mathWindow.setDerivative(p);
         }
         showTangentCommon(dec);
     }
@@ -1897,7 +1897,7 @@ public class BasicEditor extends Diagram
     void showTangentCommon(Decoration dec) {
         double w = dec.getLineWidth();
         if (w != 0) {
-            vertexInfo.setLineWidth(w);
+            mathWindow.setLineWidth(w);
         }
     }
 
@@ -1982,7 +1982,7 @@ public class BasicEditor extends Diagram
             setMouseStuck(false);
         }
 
-        double theta = vertexInfo.getAngle();
+        double theta = mathWindow.getAngle();
         if (!rightward) {
             theta += Math.PI;
         }
@@ -2206,7 +2206,7 @@ public class BasicEditor extends Diagram
         }
         super.rename(axis, name);
         editFrame.addVariable(name);
-        vertexInfo.refresh();
+        mathWindow.refresh();
     }
 
     @Override public void add(LinearAxis axis) {
@@ -3287,14 +3287,13 @@ public class BasicEditor extends Diagram
 
         try {
             setDiagramComponent(side, str.isEmpty() ? null : str);
-            vertexInfo.refresh();
+            mathWindow.refresh();
         } catch (DuplicateComponentException x) {
             showError("Duplicate component '" + str + "'",
                       "Cannot change diagram component");
         }
     }
 
-    
 
     /** Invoked from the EditFrame menu */
     public void addLabel() {
@@ -3312,14 +3311,47 @@ public class BasicEditor extends Diagram
         if (mouseIsStuckAtSelection() && getSelectedLabel() != null) {
             setMouseStuck(false);
         }
-        double x = mprin.x;
-        double y = mprin.y;
 
         LabelDialog dog = getLabelDialog();
         double fontSize = dog.getFontSize();
         dog.reset();
-        dog.setTitle("Add Label");
         dog.setFontSize(fontSize);
+        finishAddLabel();
+    }
+
+    /** Invoked from the EditFrame menu */
+    public void addIsotherm() {
+        if (principalToStandardPage == null) {
+            return;
+        }
+
+        if (mprin == null) {
+            showError
+                ("Position the mouse where the label belongs, "
+                 + "then press 'i' to add the isotherm.");
+            return;
+        }
+
+        if (mouseIsStuckAtSelection() && getSelectedLabel() != null) {
+            setMouseStuck(false);
+        }
+
+        LabelDialog dog = getLabelDialog();
+        double fontSize = dog.getFontSize();
+        dog.reset();
+        dog.setFontSize(fontSize);
+        dog.setOpaqueLabel(true);
+        seekNearestCurve(false, null);
+        dog.setAngle(mathWindow.getAngle());
+        finishAddLabel();
+    }
+
+    public void finishAddLabel() {
+        double x = mprin.x;
+        double y = mprin.y;
+
+        LabelDialog dog = getLabelDialog();
+        dog.setTitle("Add Label");
         AnchoredLabel newLabel = dog.showModal();
         if (newLabel == null || !check(newLabel)) {
             return;
@@ -3332,6 +3364,7 @@ public class BasicEditor extends Diagram
         LabelDecoration d = new LabelDecoration(new LabelInfo(newLabel));
         decorations.add(d);
         setSelection(new LabelHandle(d, LabelHandleType.ANCHOR));
+        moveMouse(new Point2D.Double(x,y));
         setMouseStuck(true);
         propagateChange();
     }
@@ -3365,6 +3398,8 @@ public class BasicEditor extends Diagram
         newLabel.setBaselineYOffset(label.getBaselineYOffset());
 
         labelInfo.setLabel(newLabel);
+        moveMouse(label.getLocation());
+        setMouseStuck(true);
         propagateChange();
     }
 
@@ -4451,14 +4486,14 @@ public class BasicEditor extends Diagram
 
         if (tracingImage()) {
             Rectangle zrect = zoomFrame.getBounds();
-            Rectangle vrect = vertexInfo.getBounds();
-            vertexInfo.setLocation(zrect.x, zrect.y + zrect.height - vrect.height);
+            Rectangle vrect = mathWindow.getBounds();
+            mathWindow.setLocation(zrect.x, zrect.y + zrect.height - vrect.height);
         } else {
-            vertexInfo.setLocation(rect.x + rect.width, rect.y);
+            mathWindow.setLocation(rect.x + rect.width, rect.y);
         }
-        vertexInfo.refresh();
+        mathWindow.refresh();
+        editFrame.setMathWindowVisible(false);
         editFrame.setStatus("");
-        editFrame.setVertexInfoVisible(true);
         editFrame.setVisible(true);
         setColor(color);
         bestFit();
@@ -5197,9 +5232,9 @@ public class BasicEditor extends Diagram
             vectors.add(new Point2D.Double(g.y, -g.x));
         }
 
-        if (vertexInfo != null) {
-            // Add the line at the angle given in vertexInfo.
-            double theta = vertexInfo.getAngle();
+        if (mathWindow != null) {
+            // Add the line at the angle given in mathWindow.
+            double theta = mathWindow.getAngle();
             Point2D.Double p = new Point2D.Double(Math.cos(theta), Math.sin(theta));
             standardPageToPrincipal.deltaTransform(p, p);
             vectors.add(p);
