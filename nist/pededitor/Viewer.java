@@ -55,6 +55,7 @@ public class Viewer extends Editor {
               ef.actAddVertex,
               ef.actAddAutoPositionedVertex,
               ef.actText,
+              ef.actIsotherm,
               ef.actLeftArrow,
               ef.actRightArrow,
               ef.actRuler,
@@ -90,11 +91,6 @@ public class Viewer extends Editor {
             }
         }
         setSaveNeeded(false);
-    }
-
-    @Override public void initializeGUI() {
-        super.initializeGUI();
-        editFrame.setVertexInfoVisible(false);
     }
 
     @Override void setFileAssociations(boolean askExit) {
