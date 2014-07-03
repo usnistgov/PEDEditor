@@ -4,6 +4,9 @@
 package gov.nist.pededitor;
 
 import java.awt.Color;
+import java.awt.geom.Point2D;
+
+import org.codehaus.jackson.annotate.JsonIgnore;
 import org.codehaus.jackson.annotate.JsonProperty;
 import org.codehaus.jackson.map.annotate.JsonSerialize;
 import org.codehaus.jackson.map.annotate.JsonSerialize.Inclusion;
@@ -81,6 +84,7 @@ public class TransformedShape implements Decorated {
 
     public double getX() { return x; }
     public double getY() { return y; }
+    @JsonIgnore public Point2D.Double getLocation() { return new Point2D.Double(getX(), getY()); }
     public double getAngle() { return angle; }
     public double getScale() { return scale; }
     @JsonProperty("xWeight") public double getXWeight() { return xWeight; }
