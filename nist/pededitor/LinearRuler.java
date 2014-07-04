@@ -330,19 +330,21 @@ class LinearRuler implements BoundedParameterizable2D, Decorated {
                 (new Point2D.Double
                  (pageEndPoint.x - pageStartPoint.x,
                   (pageEndPoint.y - pageStartPoint.y)));
-            vec.x *= scaledLineWidth / 2;
-            vec.y *= scaledLineWidth / 2;
             Point2D.Double psp = (Point2D.Double) pageStartPoint.clone();
-            if (!startArrow) {
-                // Extend the endpoint to simulate CAP_SQUARE.
-                psp.x -= vec.x;
-                psp.y -= vec.y;
-            }
             Point2D.Double pep = (Point2D.Double) pageEndPoint.clone();
-            if (!endArrow) {
-                // Extend the endpoint to simulate CAP_SQUARE.
-                pep.x += vec.x;
-                pep.y += vec.y;
+            if (vec != null) {
+                vec.x *= scaledLineWidth / 2;
+                vec.y *= scaledLineWidth / 2;
+                if (!startArrow) {
+                    // Extend the endpoint to simulate CAP_SQUARE.
+                    psp.x -= vec.x;
+                    psp.y -= vec.y;
+                }
+                if (!endArrow) {
+                    // Extend the endpoint to simulate CAP_SQUARE.
+                    pep.x += vec.x;
+                    pep.y += vec.y;
+                }
             }
             g.draw(new Line2D.Double(psp, pep));
         }
