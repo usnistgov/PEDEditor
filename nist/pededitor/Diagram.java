@@ -3938,15 +3938,23 @@ public class Diagram extends Observable implements Printable {
         ImageIO.write(createImage(width, height), format, file);
     }
 
-    public void saveAsPED(Path path) throws IOException {
-        saveAsPED(path, true);
+    /** Return true if the save was successful. */
+    public boolean saveAsPED(Path path) throws IOException {
+        return saveAsPED(path, true);
     }
 
     /** @param updateFilename If true, set the diagram's filename to
         correspond to the new path. If false, leave the filename
         alone. The 'false' option is useful during autosaves, which
-        should not alter the file's real name. */
-    public void saveAsPED(Path path, boolean updateFilename) throws IOException {
+        should not alter the file's real name.
+
+        @return true if the save was successful.
+    */
+    public boolean saveAsPED(Path path, boolean updateFilename)
+        throws IOException {
+        if (!haveDiagram()) {
+            return false;
+        }
         String oldFilename = getFilename();
         try (PrintWriter writer = new PrintWriter
              (Files.newBufferedWriter(path, StandardCharsets.UTF_8))) {
@@ -3959,6 +3967,7 @@ public class Diagram extends Observable implements Printable {
                 }
                 writer.print(Tabify.tabify(getObjectMapper().writeValueAsString(this)));
                 setSaveNeeded(false);
+                return true;
             } catch (IOException x) {
             if (updateFilename) {
                 // Revert to the old filename;
