@@ -548,6 +548,10 @@ public class BasicEditor extends Diagram
         autosaveFile = null;
         editFrame.setStatus(null);
         super.clear();
+        if (zoomFrame != null) {
+            zoomFrame.setVisible(false);
+            zoomFrame.clear();
+        }
         init();
     }
 
@@ -569,6 +573,20 @@ public class BasicEditor extends Diagram
                 clear();
             }
         }
+    }
+
+
+    /* If a different diagram window is open and this window does not
+       have a diagram, then close it and return true; otherwise return
+       false. */
+    public boolean closeIfNotUsed() {
+        if (getOpenEditorCnt() > 1
+            && !haveDiagram()
+            && (zoomFrame == null || !zoomFrame.isVisible())) {
+            close();
+            return true;
+        }
+        return false;
     }
 
     /** close() irrevocably closes this BasicEditor object. The results of
@@ -3909,7 +3927,9 @@ public class BasicEditor extends Diagram
             if (haveDiagram()) {
                 BasicEditor e = createNew();
                 e.newDiagram(true);
-                e.initializeGUI();
+                if (!e.isClosed()) {
+                    e.initializeGUI();
+                }
                 return;
             }
             clearFileList();
@@ -3920,6 +3940,7 @@ public class BasicEditor extends Diagram
         try (UpdateSuppressor us = new UpdateSuppressor()) {
                 DiagramType temp = (new DiagramDialog(null)).showModal();
                 if (temp == null) {
+                    closeIfNotUsed();
                     return;
                 }
 
@@ -3927,6 +3948,7 @@ public class BasicEditor extends Diagram
                 newDiagram(null, null);
             }
 
+        closeIfNotUsed();
         propagateChange1();
     }
 
@@ -4933,6 +4955,7 @@ public class BasicEditor extends Diagram
         
     public void showOpenDialog(Component parent, File file) {
         if (file == null) {
+            closeIfNotUsed();
             return;
         }
 
@@ -4955,6 +4978,10 @@ public class BasicEditor extends Diagram
             if (isEditable() && !ped) {
                 // This had better be an image file.
                 cropFrame.setFilename(file.getAbsolutePath());
+                if (cropFrame.getDiagramType() == null) {
+                    closeIfNotUsed();
+                    return;
+                }
                 cropFrame.pack();
                 editFrame.setStatus("");
                 clear();
@@ -4976,11 +5003,13 @@ public class BasicEditor extends Diagram
                     }
                     buf.append(")");
                     showError(parent, buf.toString(), "File load error");
+                    closeIfNotUsed();
                 }
             }
         } catch (IOException x) {
             showError(parent, "Could not load file: " + x,
                       "File load error");
+            closeIfNotUsed();
         }
     }
 
@@ -5107,8 +5136,17 @@ public class BasicEditor extends Diagram
             : s.substring(0, extensionIndex);
     }
 
+    void nothingToSave() {
+        showError("You must create or load a diagram before "
+                  + "you can save it.");
+    }
+
     /** Invoked from the EditFrame menu */
     public void saveAsImage(String ext) {
+        if (!haveDiagram()) {
+            nothingToSave();
+            return;
+        }
         StringArrayDialog dog = new StringArrayDialog
             (editFrame,
              new String[] {"Width", "Height"},
@@ -5147,44 +5185,60 @@ public class BasicEditor extends Diagram
         }
     }
 
-    public void saveAsPED() {
+    public boolean saveAsPED() {
+        if (!haveDiagram()) {
+            nothingToSave();
+            return false;
+        }
         File file = showSaveDialog("ped");
         if (file == null || !verifyOverwriteFile(file)) {
-            return;
+            return false;
         }
-        saveAsPEDGUI(file.toPath());
+        return saveAsPEDGUI(file.toPath());
     }
 
     /** Like saveAsPED(), but handle both exceptions and success
         internally with warning or information dialogs. */
-    public void saveAsPEDGUI(Path file) {
+    public boolean saveAsPEDGUI(Path file) {
         try {
-            saveAsPED(file);
-            JOptionPane.showMessageDialog
-                (editFrame, "Saved '" + getFilename() + "'.");
+            boolean saved = saveAsPED(file);
+            if (saved) {
+                JOptionPane.showMessageDialog
+                    (editFrame, "Saved '" + getFilename() + "'.");
+            }
+            return saved;
         } catch (IOException e) {
             showError("File save error: " + e);
+            return false;
         }
     }
 
-    @Override public void saveAsPED(Path file) throws IOException {
-        super.saveAsPED(file);
-        // Now delete the auto-save file if it exists.
-        if (autosaveFile != null) {
-            try {
-                if (Files.deleteIfExists(autosaveFile)) {
-                    System.out.println("Deleted '" + autosaveFile + "'");
-                }
-            } catch (IOException|SecurityException x) {
-                showError("Auto-save file '" + autosaveFile + "': " + x,
-                          "Could not delete file");
-            } finally {
-                // No matter whether we succeeded or failed, do not
-                // try again.
-                autosaveFile = null;
-            }
+    @Override public boolean saveAsPED(Path file) throws IOException {
+        if (!haveDiagram()) {
+            nothingToSave();
+            return false;
         }
-        majorSaveNeeded = false;
+        if (super.saveAsPED(file)) {
+            // Now delete the auto-save file if it exists.
+            if (autosaveFile != null) {
+                try {
+                    if (Files.deleteIfExists(autosaveFile)) {
+                        System.out.println("Deleted '" + autosaveFile + "'");
+                    }
+                } catch (IOException|SecurityException x) {
+                    showError("Auto-save file '" + autosaveFile + "': " + x,
+                              "Could not delete file");
+                } finally {
+                    // No matter whether we succeeded or failed, do not
+                    // try again.
+                    autosaveFile = null;
+                }
+            }
+            majorSaveNeeded = false;
+            return true;
+        } else {
+            return false;
+        }
     }
 
     /** Invoked from the EditFrame menu */
