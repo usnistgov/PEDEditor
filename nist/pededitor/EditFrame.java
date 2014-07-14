@@ -113,8 +113,6 @@ public class EditFrame extends JFrame
             }
         };
     protected JMenuItem mnSaveAsPED = toMenuItem(actSaveAsPED);
-    protected JMenuItem mnSaveAsPNG = toMenuItem
-        (new SaveImageAction("PNG", KeyEvent.VK_G));
     protected JMenuItem mnReload = toMenuItem
         (new Action("Refresh", KeyEvent.VK_R) {
                 { 
@@ -1115,7 +1113,12 @@ public class EditFrame extends JFrame
         mnSaveAs.setMnemonic(KeyEvent.VK_A);
         mnFile.add(mnSaveAs);
         mnSaveAs.add(mnSaveAsPED);
-        mnSaveAs.add(mnSaveAsPNG);
+        for (SaveImageAction act: new SaveImageAction[] {
+                new SaveImageAction("PNG", KeyEvent.VK_N),
+                new SaveImageAction("GIF", KeyEvent.VK_G),
+                new SaveImageAction("JPEG", KeyEvent.VK_J)}) {
+            mnSaveAs.add(toMenuItem(act));
+        }
 
         mnFile.add(mnSaveAs);
 
