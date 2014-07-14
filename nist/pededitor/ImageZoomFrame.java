@@ -34,4 +34,8 @@ public class ImageZoomFrame extends JFrame {
         contentPane.zoomY = y;
         contentPane.repaint();
     }
+
+    public void clear() {
+        setImage(null);
+    }
 }
