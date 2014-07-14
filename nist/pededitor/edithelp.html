@@ -112,10 +112,15 @@ this program and continue where you left off.</p>
 
 <h3>Save as PDF</h3>
 
-<h3>Save as PNG</h3>
-
 <p>Save an image of the diagram. Diagrams saved as PDF stay sharp at
-higher magnification, but diagrams saved as PNG do not.
+higher magnification.
+
+<h3>Save as PNG</h3>
+<h3>Save as GIF</h3>
+<h3>Save as JPEG</h3>
+
+<p>Save an image of the diagram. Diagrams saved in these formats do
+not stay sharp at higher magnification.
 
 <h3>Print</h3>
 
@@ -125,8 +130,22 @@ or larger by <a href="#Margins">adjusting the margins</a>.
 
 <h3>Next File</h3>
 
-<p>Switch to the next selected diagram, if any. This option is only
-enabled if you opened multiple files at once.
+<p>(<code>Control+Right Arrow</code>) Switch to the next selected
+diagram, if any. This option is only enabled if you opened multiple
+files at once.
+
+<h3>Refresh</h3>
+
+<p>Refresh the current diagram from disk if the diagram was previously
+opened or saved in PED format.
+
+<h3>Close</h3>
+
+<p>Close this diagram only.
+
+<h3>Exit</h3>
+
+<p>Close all diagrams and exit the program.
 
 <h3>Refresh</h3>
 
@@ -159,7 +178,7 @@ lines through the selection point, if any.
 
 <li><p>The program may also include invisible lines through the
 selection at <b>other special angles</b>. These angles include the
-value indicated in <a href=#SlopeWindow>the "Slope" window</a>, lines
+value indicated in <a href=#MathWindow>the math window</a>, lines
 in ternary diagrams at 60 or 120 degrees, and lines of zero change for
 user-defined variables created using
 <a href="#Variable"><code>Properties/Variables/Add</code></a>.
@@ -309,8 +328,8 @@ intersect may not quite do so anymore, or they may intersect at a
 slightly different location), so it is best to set the aspect ratio
 early in the editing process.
 
-<li><p><b>Font</b>: The program uses variants of the DejaVu LGC Serif and
-Sans Serif font families. <code>Serif (widely spaced lines)</code>
+<li><p><b>Font</b>: The program uses variants of the DejaVu LGC Serif
+and Sans Serif font families. <code>Serif (widely spaced lines)</code>
 exists for backwards compatibility, and is not recommended for use in
 new diagrams.</p>
 
@@ -321,19 +340,15 @@ once.
 of keys and values alongside the diagram. Except for the title, the
 data are not displayed or otherwise used by the program.
 
-<li><a id="Margins"><b>Margins</b></a>: If you need to align your
-diagram in a specific way, or if you need to extend a diagram in any
-direction, you may set the left, right, top, and bottom margins using
-these menu options. <code>Auto-fit</code> eliminates excess white
-space on all sides. It is a good idea to allow generous margins while
-you are editing the diagram, and then select <code>Auto-fit</code>
-when finished.
+<li><a id="Margins"><b>Margins</b></a>: <code>Expand all</code> adds
+extra space on all sides. Afterward you can use <code>Auto-fit</code>
+to eliminate all excess white space. You can also expand margins one
+at a time or shrink the diagram to the size of a selected item.
 
-<li><b><a id=Scale>Scale</a></b>: This option allows you to change the
+<li><a id=Scale><b>Scale</b></a>: This option allows you to change the
 units of the X and Y axis, while the positions of items on the screen
-remains the same. This option is most often used to change the axes'
-initial ranges to the values you really want, but it can also be used
-to change a diagram's range from Celsius to Kelvin, for example.
+remains the same. This feature allows you to change from units of
+Celsius to Kelvin, for example, or grams to kilograms.
 
 <p>If you highlight a ruler or line segment before choosing this
 operation, the dialog will be initialized with its endpoint values.
@@ -564,12 +579,26 @@ hidden and vice versa. <b>Detach</b> permanently removes the linkage
 from the new diagram to the original image; the background image
 disappears and the Zoom window closes.
 
-<p>The <b id=SlopeWindow>Show slope window</b> checkbox can be used to
-close or reopen the slope window, which shows the slope of the second
-principal variable with respect to the first one at the most recently
-selected point on a curve. You can type angles or slope values into
-the slope window to convert between them or to allow auto-positioning
-along the given angle.
+<p>The <b id=MathWindow>Show math window</b> checkbox can be used to
+close or reopen the math window, which displays information about the
+most recently selected point on a curve. The window displays some or
+all of the following values:
+
+<ul>
+  <li>the slope at that point
+  <li>the angle at that point
+  <li>the arc length from the left end of the curve to that point
+  <li>the total length of the curve
+  <li>the integral under the curve between the left end of the curve and that point
+  <li>the total area under the curve, or, for closed curves, the total area inside the curve
+</ul>
+
+<p>You can type angles or slope values into the math window to
+convert between them or to allow auto-positioning along the given
+angle.
+
+<p>Since you are already reading the help file, you do not need to
+read the <b>Hints</b>.
 
 <p><a href="#Top">Return to top</a>
 
@@ -723,16 +752,6 @@ increments.
         decorations in lower layers, so you may need
         to <a href="#Layer">raise the label</a> as well.
 
-    <p>To label isotherms, first use <a href="#NearestCurve">Nearest
-        Line/Curve</a> or <a href="#SelectPoint">Select Nearest
-        Point</a> to position the mouse over the curve you wish to
-        label. The angle value in the <a href="#SlopeWindow">slope
-        window</a> should change to match the curve. From
-        the <b>Edit Text</b> dialog, set <b>Label angle</b> to equal
-        the angle you saw in the slope window and
-        check <a href="#LabelWhiteBackground">White label
-        background</a> to make the label stand out.
-
     <p>If you check the box for <b>Label border</b>, the label will be
       surrounded by a thin border.
 
@@ -742,12 +761,15 @@ increments.
 
     <p><a href="#Top">Return to top</a>
 
+  <li><p><b id=Isotherm>Isotherm/Line Label</b> (<code>i</code>)
+      creates a label in the middle of the closest line.</p>
+
   <li><p><b id=Arrowhead>Right Arrowhead</b> (<code>&gt;</code>) draws
-    an arrowhead that points at the angle indicated in the "Slope"
+    an arrowhead that points at the angle indicated in the math
     window. <b>Left Arrowhead</b> (<code>&lt;</code>) draws an
     arrowhead that points in the opposite direction, press '&lt;'. The
     size of the arrowhead is determined by the line width indicated in
-    the "Slope" window.</p>
+    the math window.</p>
 
     <p><a href="#Top">Return to top</a>
 
@@ -951,7 +973,7 @@ auto-positioning. To create other parallel lines:</p>
 already described. Let the new vertex remain selected.
 
 <li>Press <code>w</code> to select the line you want the new line to
-  be parallel to. This will enter the slope of that line in the Slope
+  be parallel to. This will enter the slope of that line in the math
   window so auto-position will prefer points at the given slope with
   respect to your first vertex.
 
