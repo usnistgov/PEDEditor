@@ -1178,6 +1178,7 @@ public class Diagram extends Observable implements Printable {
 
     static final double STANDARD_LINE_WIDTH = 0.0024;
     static final double STANDARD_FONT_SIZE = 12.5;
+    static final double STANDARD_LABEL_BOX_WIDTH = 0.0010;
     static final int STANDARD_RULER_FONT_SIZE = 15;
     protected String filename;
     private boolean usingWeightFraction = false;
@@ -4866,6 +4867,9 @@ public class Diagram extends Observable implements Printable {
         }
 
         if (label.isBoxed()) {
+            float width = (float) (STANDARD_LABEL_BOX_WIDTH
+                * label.getScale() * scale);
+            g.setStroke(new BasicStroke(width));
             g.draw(box);
         }
 
