@@ -5881,7 +5881,7 @@ public class BasicEditor extends Diagram
             mouseIsStuck = false;
         }
         centerPoint(center);
-        propagateChange();
+        redraw();
     }
 
     /** Return the minimum scale that does not waste screen real
