@@ -278,6 +278,7 @@ public class ContinuedFraction {
             s = s.substring(0, s.length() -1);
         }
 
+
         try {
             return mul * Double.parseDouble(s);
         } catch (NumberFormatException e) {
@@ -286,6 +287,18 @@ public class ContinuedFraction {
 
         int p = s.indexOf('/');
         if (p <= 0) {
+            if (s.length() == 1) {
+                switch (s.charAt(0)) {
+                case '\u00bd':
+                    return 0.5;
+                case '\u00bc':
+                    return 0.25;
+                case '\u2153':
+                    return 1.0/3;
+                default:
+                    break;
+                }
+            }
             throw new NumberFormatException
                 ("Invalid number format '" + s + "'");
         }
