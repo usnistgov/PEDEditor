@@ -64,7 +64,9 @@ public class ChemicalString {
         + "(?![a-z]))";
 
     final static String ion = "[\u207a\u207b]"; // superscript+ or superscript-
-    final static String subscript = "(?:\\.\\d+|\\d+\\.\\d*|\\d+/\\d+|\\d+)%?";
+    final static String unicodeFractions = "[\u00bd\u2153\u00bc]";
+    final static String subscript = "(?:" + unicodeFractions
+        + "|\\.\\d+|\\d+\\.\\d*|\\d+/\\d+|\\d+)%?";
     final static String elementCount =
         "(" + element + ")" + ion + "*(" + subscript + ")?" + ion + "*"
         + "(?![a-z])";
