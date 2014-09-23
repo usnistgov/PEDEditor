@@ -9,6 +9,8 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
 
+/** Swing can't render nested subscripts correctly. Replace nested
+    subscripts with Unicode subscripts where available. */
 public class NestedSubscripts {
     static Pattern subPattern = null;
     static Pattern unsubPattern = null;
