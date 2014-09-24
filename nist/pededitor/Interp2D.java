@@ -13,10 +13,6 @@ import java.awt.geom.Point2D;
 import org.codehaus.jackson.annotate.JsonIgnore;
 import org.codehaus.jackson.map.ObjectMapper;
 
-// The annotations below for deserializing this GeneralPolyline into
-// its appropriate subtype were recommended on Programmer Bruce's
-// blog, "Deserialize JSON with Jackson into Polymorphic Types". -- EB
-
 /** A class for curves interpolated between control points. */
 public abstract class Interp2D implements BoundedParameterizable2D {
     private boolean closed = false;
