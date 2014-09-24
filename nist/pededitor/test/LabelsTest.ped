@@ -87,8 +87,8 @@
     "labelAnchor" : "LEFT",
     "tickRight" : true,
     "tickLeft" : true,
-    "fontSize" : 0.016260162601626018,
-    "axis" : "Y"
+    "axis" : "Y",
+    "fontSize" : 0.016260162601626018
   }, {
     "decoration" : "curve",
     "curve" : {
@@ -491,7 +491,7 @@
     "boxed" : true
   }, {
     "decoration" : "label",
-    "text" : "√2 →←±≅∫∇⇌∞≡≠≥≤",
+    "text" : "√2°𝜋𝑒 →←±≅∫∇⇌∞≡≠≥≤",
     "xWeight" : 0.5,
     "yWeight" : 0.5,
     "x" : 0.5064864649168048,
@@ -849,8 +849,8 @@
     "textAngle" : -1.5707963267948966,
     "tickRight" : true,
     "tickLeft" : true,
-    "fontSize" : 0.014397018970189702,
-    "axis" : "exponent"
+    "axis" : "exponent",
+    "fontSize" : 0.014397018970189702
   }, {
     "decoration" : "label",
     "text" : "<span style=\"font-size: 75%;\">small</span> normal <span style=\"font-size: 133%;\">big</span>",
@@ -859,5 +859,17 @@
     "x" : 0.15981055713476064,
     "y" : 0.8914714941472907,
     "scale" : 1.2
+  }, {
+    "decoration" : "label",
+    "text" : "P<sub>O<sub>2-x</sub></sub>",
+    "xWeight" : 0.5,
+    "yWeight" : 0.5,
+    "x" : 0.823445429601059,
+    "y" : 0.9086594034554107,
+    "scale" : 2.0,
+    "color" : {
+      "rgb" : -16777216
+    },
+    "boxed" : true
   } ]
 }
