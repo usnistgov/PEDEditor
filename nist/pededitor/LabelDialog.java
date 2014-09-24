@@ -186,6 +186,14 @@ public class LabelDialog extends JDialog {
         GridBagUtil cpgb = new GridBagUtil(this);
 
         if (modifiableText) {
+            StringPalettePanel pal;
+
+            StringEventListener listen = new StringEventListener() {
+                    @Override public void actionPerformed(StringEvent e) {
+                        insertText(e.getString());
+                    }
+                };
+
             {
                 JPanel panel = new JPanel();
                 GridBagUtil gb = new GridBagUtil(panel);
@@ -210,23 +218,17 @@ public class LabelDialog extends JDialog {
                     (new HTMLDelimiterPalette(), 7, font);
                 dpal.addListener(dlisten);
                 gb.endRowWith(dpal);
+
+                pal = new StringPalettePanel(new HTMLPalette(), 10, font);
+                pal.addListener(listen);
+                gb.endRowWith(pal);
+
                 cpgb.endRowWith(panel);
             }
 
             {
                 JPanel panel = new JPanel();
                 GridBagUtil gb = new GridBagUtil(panel);
-
-                StringPalettePanel pal;
-                StringEventListener listen = new StringEventListener() {
-                        @Override public void actionPerformed(StringEvent e) {
-                            insertText(e.getString());
-                        }
-                    };
-
-                pal = new StringPalettePanel(new HTMLPalette(), 8, font);
-                pal.addListener(listen);
-                gb.endRowWith(pal);
 
                 pal = new StringPalettePanel(new PedPalette(), 8, font);
                 pal.addListener(listen);
