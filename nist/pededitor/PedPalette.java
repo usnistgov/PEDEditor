@@ -30,7 +30,7 @@ public class PedPalette extends StringPalette {
                     },
                     "\u221A" /* square root/radical */,
                     "\u2192" /* right arrow */, "\u2190" /* left arrow */,
-                    "\u00b1" /* plus-minus */, "\u2245" /* approximately equal */,
+                    "\u00b1" /* plus-minus */, "\u2248" /* almost equal to */,
                     "\u2264" /* <= */, "\u2265" /* >= */, "\u2260" /* != */,
                     "\u2261" /* congruent */,
                     "\u221E" /* infinity */, "\u21cc" /* right-over-left harpoon */,
