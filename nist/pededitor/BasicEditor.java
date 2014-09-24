@@ -11,6 +11,7 @@ import java.awt.Color;
 import java.awt.Component;
 import java.awt.Cursor;
 import java.awt.Dimension;
+import java.awt.Frame;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.HeadlessException;
@@ -32,7 +33,6 @@ import java.awt.event.MouseListener;
 import java.awt.event.MouseMotionListener;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
-import java.awt.event.WindowListener;
 import java.awt.geom.AffineTransform;
 import java.awt.geom.Ellipse2D;
 import java.awt.geom.Line2D;
@@ -155,7 +155,6 @@ public class BasicEditor extends Diagram
     }
 
     class CloseListener extends WindowAdapter
-        implements WindowListener
     {
         @Override public void windowClosing(WindowEvent e) {
             verifyThenClose();
@@ -163,10 +162,16 @@ public class BasicEditor extends Diagram
     }
 
     class MathWindowCloseListener extends WindowAdapter
-        implements WindowListener
     {
         @Override public void windowClosing(WindowEvent e) {
             editFrame.showMathWindow.setSelected(false);
+        }
+    }
+
+    class ZoomWindowCloseListener extends WindowAdapter
+    {
+        @Override public void windowClosing(WindowEvent e) {
+            zoomFrame.setState(Frame.ICONIFIED);
         }
     }
 
@@ -512,6 +517,9 @@ public class BasicEditor extends Diagram
             return;
         zoomFrame = new ImageZoomFrame();
         zoomFrame.setFocusableWindowState(false);
+        zoomFrame.setDefaultCloseOperation
+            (WindowConstants.DO_NOTHING_ON_CLOSE);
+        zoomFrame.addWindowListener(new ZoomWindowCloseListener());
         Rectangle rect = editFrame.getBounds();
         zoomFrame.setLocation(rect.x + rect.width, rect.y);
         zoomFrame.pack();
