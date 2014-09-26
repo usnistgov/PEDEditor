@@ -4304,12 +4304,9 @@ public class Diagram extends Observable implements Printable {
     /** Invoked from the EditFrame menu */
     public void print(PrinterJob job, PrintRequestAttributeSet aset)
         throws PrinterException {
-        /* Disabled -- use default printer settings instead.
-        aset.add
-            ((pageBounds.width > pageBounds.height)
-             ? OrientationRequested.LANDSCAPE
-             : OrientationRequested.PORTRAIT);
-        */
+        /* Mucking with aset is discouraged at this point, because
+         * it's too late to give the user the chance to change those
+         * settings in a dialog. */
         job.print(aset);
     }
 
@@ -5503,6 +5500,7 @@ abstract class ColorAnnotations extends Color {
         @Type(value=AnchoredLabel.class, name = "label"),
         @Type(value=LinearRuler.class, name = "ruler"),
         @Type(value=Arrow.class, name = "arrow"),
+        @Type(value=Circle.class, name = "circle"),
         @Type(value=TieLine.class, name = "tie line")
             })
 interface DecoratedAnnotations extends Decorated {
