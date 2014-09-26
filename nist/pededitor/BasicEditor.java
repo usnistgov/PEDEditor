@@ -1504,6 +1504,23 @@ public class BasicEditor extends Diagram
 
         CurveDecoration csel = getSelectedCurve();
         CuspFigure path = csel.getItem();
+        Color oldColor = csel.getColor();
+        Color highlight = getHighlightColor(oldColor);
+
+        double originalLineWidth = path.getLineWidth();
+        double highlightLineWidth = originalLineWidth;
+        double highlightLineWidthPixels = highlightLineWidth * scale;
+        double MAX_LINE_WIDTH_PIXELS = 3;
+        if (highlightLineWidthPixels > MAX_LINE_WIDTH_PIXELS * 2.0) {
+            // If somebody zooms in a lot, drawing the line at normal
+            // size can make it hard to figure out where to put the
+            // control points. Instead, draw the line as normal and
+            // then draw a thinner highlighted line inside it.
+            csel.draw(g, scale);
+            highlightLineWidthPixels = MAX_LINE_WIDTH_PIXELS;
+            highlightLineWidth = highlightLineWidthPixels / scale;
+            csel.setLineWidth(highlightLineWidth);
+        }
 
         // Disable anti-aliasing for this phase because it
         // prevents the green line from precisely overwriting
@@ -1530,18 +1547,18 @@ public class BasicEditor extends Diagram
             // results from this addition in red. Then remove the
             // extra vertex.
 
-            Color oldColor = csel.getColor();
             csel.setColor(toColor(ap.position));
 
             int vip = vertexInsertionPosition();
             path.getCurve().add(vip, extraVertex, smoothed);
             csel.draw(g, scale);
             path.remove(vip);
-            csel.setColor(oldColor);
         }
 
+        g.setColor(highlight);
+        csel.setColor(highlight);
         csel.draw(g, scale);
-        double r = Math.max(path.getLineWidth() * scale * 2.0, 4.0);
+        double r = Math.max(path.getLineWidth() * scale * 1.7, 4.0);
         circleVertices(g, path, scale, false, r);
 
         // Mark the active vertex specifically.
@@ -1553,6 +1570,9 @@ public class BasicEditor extends Diagram
             g.fill(new Ellipse2D.Double
                    (xpoint.x - r, xpoint.y - r, r * 2, r * 2));
         }
+
+        csel.setLineWidth(originalLineWidth);
+        csel.setColor(oldColor);
 
         g.setRenderingHint(RenderingHints.KEY_ANTIALIASING,
                            RenderingHints.VALUE_ANTIALIAS_ON);
@@ -1682,20 +1702,22 @@ public class BasicEditor extends Diagram
             Decoration decoration = decorations.get(dn);
             if (decoration.equals(sel)) {
                 try (UpdateSuppressor us = new UpdateSuppressor()) {
-                        Decoration dec = selection.getDecoration();
-                        Color oldColor = dec.getColor();
-                        Color highlight = getHighlightColor(oldColor);
-
-                        g.setColor(highlight);
-                        dec.setColor(highlight);
                         if (selection instanceof VertexHandle) {
                             paintSelectedCurve(g, scale);
-                        } else if (selection instanceof LabelHandle) {
-                           paintSelectedLabel(g, scale);
                         } else {
-                           sel.draw(g, scale);
+                            Decoration dec = selection.getDecoration();
+                            Color oldColor = dec.getColor();
+                            Color highlight = getHighlightColor(oldColor);
+
+                            g.setColor(highlight);
+                            dec.setColor(highlight);
+                            if (selection instanceof LabelHandle) {
+                                paintSelectedLabel(g, scale);
+                            } else {
+                                sel.draw(g, scale);
+                            }
+                            dec.setColor(oldColor);
                         }
-                        dec.setColor(oldColor);
                     }
             } else {
                 g.setColor(thisOrBlack(decoration.getColor()));
@@ -5269,7 +5291,7 @@ public class BasicEditor extends Diagram
         PrintRequestAttributeSet aset 
             = new HashPrintRequestAttributeSet();
         aset.add
-            ((pageBounds.width > pageBounds.height * 1.05)
+            ((pageBounds.width > pageBounds.height * 1.12)
              ? OrientationRequested.LANDSCAPE
              : OrientationRequested.PORTRAIT);
         if (job.printDialog(aset)) {
