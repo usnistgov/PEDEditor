@@ -225,6 +225,10 @@ public class CropFrame extends ImageScrollFrame {
         cropAction.setEnabled(ready);
     }
 
+    void refresh() {
+        setSelectionReady(getCropPane().getSelection() != null);
+    }
+
     @Override public void setFilename(String filename)
         throws IOException {
         super.setFilename(filename);
@@ -246,13 +250,11 @@ public class CropFrame extends ImageScrollFrame {
         return filename;
     }
 
-    @Override
-	public BufferedImage getImage() {
+    @Override public BufferedImage getImage() {
         return getImagePane().getImage();
     }
 
-    @Override
-        protected ImagePane newImagePane() {
+    @Override protected ImagePane newImagePane() {
         return new CropPane(this);
     }
 
@@ -263,8 +265,7 @@ public class CropFrame extends ImageScrollFrame {
 
     public static void main(String[] args) {
         EventQueue.invokeLater(new ArgsRunnable(args) {
-                @Override
-				public void run() {
+                @Override public void run() {
                     if (args.length != 1) {
                         printHelp();
                         System.exit(2);
