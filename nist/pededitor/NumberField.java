@@ -66,7 +66,6 @@ class NumberField extends JTextField {
         ContinuedFraction.toString(). Whether percentages are
         displayed will be determined by the setting of
         isPercentage(). */
-
     public void setFormat(NumberFormat f) {
         format = f;
         refresh();
