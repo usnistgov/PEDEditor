@@ -13,26 +13,34 @@ public class CartesianDialog extends NumberColumnDialog {
 
     private static final long serialVersionUID = 1731583998807758331L;
     protected ButtonGroup diagramShape = new ButtonGroup();
-    protected JRadioButton squareDiagram = new JRadioButton
-        ("Square");
-    protected JRadioButton rectangularDiagram = new JRadioButton
-        ("Rectangular with uniform scale");
+    protected JRadioButton fixedAspect = new JRadioButton();
+    protected JRadioButton uniformScale = new JRadioButton
+        ("Uniform scale");
+    protected NumberField aspectRatio = new NumberField(6);
     {
-        squareDiagram.setSelected(true);
-        diagramShape.add(squareDiagram);
-        squareDiagram.setToolTipText
-            ("Diagram is square, but X and Y scales may be different.");
-        diagramShape.add(rectangularDiagram);
-        rectangularDiagram.setToolTipText
-            ("Diagram is rectangular, but X and Y scales are the same.");
+        fixedAspect.setSelected(true);
+        diagramShape.add(fixedAspect);
+        diagramShape.add(uniformScale);
+        uniformScale.setToolTipText
+            ("Width proportional to X range, height proportional to Y range");
+        aspectRatio.setPercentage(true);
+        aspectRatio.setValue(1.0);
     }
 
-    public boolean isSquare() {
-        return squareDiagram.isSelected();
+    public boolean isUniformScale() {
+        return uniformScale.isSelected();
     }
 
-    public void setSquare(boolean v) {
-        (v ? squareDiagram : rectangularDiagram).setSelected(true);
+    public void setUniformScale(boolean v) {
+        (v ? uniformScale : fixedAspect).setSelected(true);
+    }
+
+    public void setAspectRatio(double d) {
+        aspectRatio.setValue(d);
+    }
+
+    public double getAspectRatio() throws NumberFormatException {
+        return aspectRatio.getValue();
     }
 
     public CartesianDialog(Frame owner) {
@@ -51,9 +59,10 @@ public class CartesianDialog extends NumberColumnDialog {
         setTitle("Set Diagram Domain and Proportions");
         GridBagUtil gb = new GridBagUtil(panelBeforeOK);
         gb.endRowWith(Box.createVerticalStrut(6 /* pixels */));
-        gb.addEast(new JLabel("Diagram shape:"));
-        gb.addWest(squareDiagram);
-        gb.endRowWith(rectangularDiagram);
+        gb.addEast(new JLabel("Diagram width:height ratio:"));
+        gb.addWest(fixedAspect);
+        gb.addWest(aspectRatio);
+        gb.endRowWith(uniformScale);
         gb.endRowWith(Box.createVerticalStrut(6 /* pixels */));
     }
 

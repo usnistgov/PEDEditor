@@ -43,6 +43,12 @@ public class DiagramPDF {
 
     public static byte[] toPDFByteArray(Diagram d) {
         Document doc = new Document(PageSize.LETTER);
+        /*
+          // TODO Decide whether to do this or not.
+           if (pageBounds.width > pageBounds.height * 1.05) {
+              doc = doc.rotate();
+           }
+        */
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
         PdfWriter writer;
         try {

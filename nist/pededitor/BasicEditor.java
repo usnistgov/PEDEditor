@@ -72,6 +72,7 @@ import javax.jnlp.ServiceManager;
 import javax.jnlp.UnavailableServiceException;
 import javax.print.attribute.HashPrintRequestAttributeSet;
 import javax.print.attribute.PrintRequestAttributeSet;
+import javax.print.attribute.standard.OrientationRequested;
 import javax.swing.AbstractAction;
 import javax.swing.JColorChooser;
 import javax.swing.JDialog;
@@ -4201,9 +4202,12 @@ public class BasicEditor extends Diagram
                             double height2 = vertices[2].distance(vertices[3]);
                             double wOverH = (width1 + width2) / (height1 + height2);
                             domain = new Rectangle2D.Double(0, 0, wOverH, 1);
-                            dog.setSquare(false);
+                            dog.setUniformScale(true);
                         } else {
                             domain = new Rectangle2D.Double(0, 0, 1, 1);
+                            if (!other) {
+                                dog.setAspectRatio(0.9);
+                            }
                         }
                         
                         dog.setRectangle(domain);
@@ -4217,19 +4221,17 @@ public class BasicEditor extends Diagram
                             originalToPrincipal = q;
                         }
 
-                        r = new Rescale(Math.abs(domain.width), 0.0, 1.0,
-                                        Math.abs(domain.height), 0.0, 1.0);
-                        if (dog.isSquare()) {
-                            // I just need to get the width and height
-                            // correct.
-                            r = new Rescale(1.0, 1.0, 1.0);
-                        } else {
+                        if (dog.isUniformScale()) {
                             // Scale the domain uniformly to just fit
                             // inside a unit square. (This means the
                             // page margins will be sane relative to
                             // the size of the diagram.)
                             r = new Rescale(Math.abs(domain.width), 0.0, 1.0,
-                                        Math.abs(domain.height), 0.0, 1.0);
+                                            Math.abs(domain.height), 0.0, 1.0);
+                        } else {
+                            // I just need to get the width and height
+                            // correct.
+                            r = new Rescale(dog.getAspectRatio(), 1.0, 1.0);
                         }
                         principalToStandardPage = new RectangleTransform
                             (domain,
@@ -4993,6 +4995,7 @@ public class BasicEditor extends Diagram
                 cropFrame.pack();
                 editFrame.setStatus("");
                 clear();
+                cropFrame.refresh();
                 cropFrame.setVisible(true);
             } else {
                 if (ped) {
@@ -5265,6 +5268,10 @@ public class BasicEditor extends Diagram
         job.setPrintable(this);
         PrintRequestAttributeSet aset 
             = new HashPrintRequestAttributeSet();
+        aset.add
+            ((pageBounds.width > pageBounds.height * 1.05)
+             ? OrientationRequested.LANDSCAPE
+             : OrientationRequested.PORTRAIT);
         if (job.printDialog(aset)) {
             try {
                 print(job, aset);
