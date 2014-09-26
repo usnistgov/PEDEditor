@@ -27,25 +27,21 @@ public class CropPane extends ImagePane {
     }
 
     class CropMouseAdapter extends MouseAdapter {
-        @Override
-		public void mousePressed(MouseEvent e) {
+        @Override public void mousePressed(MouseEvent e) {
             addVertex(vertices, new Point(e.getX(), e.getY()));
             CropPane.this.repaint();
-            parentFrame.setSelectionReady(getSelection() != null);
+            parentFrame.refresh();
         }
 
-        @Override
-		public void mouseMoved(MouseEvent e) {
+        @Override public void mouseMoved(MouseEvent e) {
             repaintMaybe();
         }
 
-        @Override
-		public void mouseDragged(MouseEvent e) {
+        @Override public void mouseDragged(MouseEvent e) {
             repaintMaybe();
         }
 
-        @Override
-		public void mouseExited(MouseEvent e) {
+        @Override public void mouseExited(MouseEvent e) {
             repaintMaybe();
         }
 
@@ -57,8 +53,7 @@ public class CropPane extends ImagePane {
         }
     }
 
-    @Override
-	public void setImage(BufferedImage image) {
+    @Override public void setImage(BufferedImage image) {
         super.setImage(image);
         vertices = new ArrayList<Point>();
     }
@@ -318,8 +313,7 @@ public class CropPane extends ImagePane {
         return true;
     }
 
-    @Override
-	public void paintComponent(Graphics g) {
+    @Override public void paintComponent(Graphics g) {
         super.paintComponent(g);
 
         DiagramType diagramType = parentFrame.getDiagramType();
