@@ -1214,8 +1214,8 @@ public class EditFrame extends JFrame
 
         JMenu mnLineWidth = new JMenu("Line width");
         mnLineWidth.setMnemonic(KeyEvent.VK_W);
-        double[] lineWidths = {0.0006, 0.0012, 0.0017, 0.0024, 0.0034,
-                               0.0048};
+        double[] lineWidths = {0.0006, 0.0012, 0.0017, 0.0020, 0.0024, 0.0029,
+                               0.0034, 0.0048};
 
         for (int i = 0; i < lineWidths.length; ++i) {
             LineWidthMenuItem item = new LineWidthMenuItem(lineWidths[i]);
