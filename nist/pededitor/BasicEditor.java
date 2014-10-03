@@ -72,7 +72,6 @@ import javax.jnlp.ServiceManager;
 import javax.jnlp.UnavailableServiceException;
 import javax.print.attribute.HashPrintRequestAttributeSet;
 import javax.print.attribute.PrintRequestAttributeSet;
-import javax.print.attribute.standard.OrientationRequested;
 import javax.swing.AbstractAction;
 import javax.swing.JColorChooser;
 import javax.swing.JDialog;
@@ -5290,10 +5289,11 @@ public class BasicEditor extends Diagram
         job.setPrintable(this);
         PrintRequestAttributeSet aset 
             = new HashPrintRequestAttributeSet();
-        aset.add
+        /* Disabled at Will's request */
+        /* aset.add
             ((pageBounds.width > pageBounds.height * 1.12)
              ? OrientationRequested.LANDSCAPE
-             : OrientationRequested.PORTRAIT);
+             : OrientationRequested.PORTRAIT); */
         if (job.printDialog(aset)) {
             try {
                 print(job, aset);
