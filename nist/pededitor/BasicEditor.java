@@ -1277,7 +1277,8 @@ public class BasicEditor extends Diagram
             return; // Nothing to do.
         }
 
-        CuspFigure path = getSelectedCuspFigure();
+        CuspFigure path = getSelectedCuspFigure()
+            .createTransformed(principalToStandardPage);
         int cnt = path.size();
 
         Point2D.Double g = path.getParameterization().getDerivative
@@ -1503,78 +1504,85 @@ public class BasicEditor extends Diagram
 
         CurveDecoration csel = getSelectedCurve();
         CuspFigure path = csel.getItem();
-        Color oldColor = csel.getColor();
-        Color highlight = getHighlightColor(oldColor);
+        try (UpdateSuppressor us = new UpdateSuppressor()) {
+                Color oldColor = csel.getColor();
+                Color highlight = getHighlightColor(oldColor);
 
-        double originalLineWidth = path.getLineWidth();
-        double highlightLineWidth = originalLineWidth;
-        double highlightLineWidthPixels = highlightLineWidth * scale;
-        double MAX_LINE_WIDTH_PIXELS = 3;
-        if (highlightLineWidthPixels > MAX_LINE_WIDTH_PIXELS * 2.0) {
-            // If somebody zooms in a lot, drawing the line at normal
-            // size can make it hard to figure out where to put the
-            // control points. Instead, draw the line as normal and
-            // then draw a thinner highlighted line inside it.
-            csel.draw(g, scale);
-            highlightLineWidthPixels = MAX_LINE_WIDTH_PIXELS;
-            highlightLineWidth = highlightLineWidthPixels / scale;
-            csel.setLineWidth(highlightLineWidth);
-        }
+                StandardFill oldFill = path.getFill();
+                if (oldFill != null) {
+                    path.setStroke(StandardStroke.SOLID);
+                }
 
-        // Disable anti-aliasing for this phase because it
-        // prevents the green line from precisely overwriting
-        // the red line.
+                double originalLineWidth = path.getLineWidth();
+                double highlightLineWidth = originalLineWidth;
+                double highlightLineWidthPixels = highlightLineWidth * scale;
+                double MAX_LINE_WIDTH_PIXELS = 2;
+                if (highlightLineWidthPixels > MAX_LINE_WIDTH_PIXELS
+                    || oldFill != null) {
+                    // If somebody zooms in a lot, drawing the line at normal
+                    // size can make it hard to figure out where to put the
+                    // control points. Instead, draw the line as normal and
+                    // then draw a thinner highlighted line inside it.
+                    highlightLineWidth = MAX_LINE_WIDTH_PIXELS / scale;
+                    csel.setLineWidth(highlightLineWidth);
+                }
 
-        g.setRenderingHint(RenderingHints.KEY_ANTIALIASING,
-                           RenderingHints.VALUE_ANTIALIAS_OFF);
+                // Disable anti-aliasing for this phase because it
+                // prevents the green line from precisely overwriting
+                // the red line.
 
-        AutoPositionHolder ap = new AutoPositionHolder();
-        Point2D.Double extraVertex = mprin;
-        if (isZoomMode() || !isEditable()) {
-            extraVertex = null;
-        } else if (isShiftDown) {
-            extraVertex = statusPt = getAutoPosition(ap);
-        } else if (mouseIsStuckAtSelection()) {
-            // Show the point that would be added if the mouse became
-            // unstuck.
-            extraVertex = getMousePrincipal();
-        }
+                g.setRenderingHint(RenderingHints.KEY_ANTIALIASING,
+                                   RenderingHints.VALUE_ANTIALIAS_OFF);
 
-        if (extraVertex != null && !isDuplicate(extraVertex)) {
-            // Add the current mouse position to the path next to the
-            // currently selected vertex, and draw the curve that
-            // results from this addition in red. Then remove the
-            // extra vertex.
+                AutoPositionHolder ap = new AutoPositionHolder();
+                Point2D.Double extraVertex = mprin;
+                if (isZoomMode() || !isEditable()) {
+                    extraVertex = null;
+                } else if (isShiftDown) {
+                    extraVertex = statusPt = getAutoPosition(ap);
+                } else if (mouseIsStuckAtSelection()) {
+                    // Show the point that would be added if the mouse became
+                    // unstuck.
+                    extraVertex = getMousePrincipal();
+                }
 
-            csel.setColor(toColor(ap.position));
+                if (extraVertex != null && !isDuplicate(extraVertex)) {
+                    // Add the current mouse position to the path next to the
+                    // currently selected vertex, and draw the curve that
+                    // results from this addition in red. Then remove the
+                    // extra vertex.
 
-            int vip = vertexInsertionPosition();
-            path.getCurve().add(vip, extraVertex, smoothed);
-            csel.draw(g, scale);
-            path.remove(vip);
-        }
+                    csel.setColor(toColor(ap.position));
 
-        g.setColor(highlight);
-        csel.setColor(highlight);
-        csel.draw(g, scale);
-        double r = Math.max(path.getLineWidth() * scale * 1.7, 4.0);
-        circleVertices(g, path, scale, false, r);
+                    int vip = vertexInsertionPosition();
+                    path.getCurve().add(vip, extraVertex, smoothed);
+                    csel.draw(g, scale);
+                    path.remove(vip);
+                }
 
-        // Mark the active vertex specifically.
-        Point2D.Double point = getActiveVertex();
-        if (point != null) {
-            Point2D.Double xpoint = new Point2D.Double();
-            Affine p2d = principalToScaledPage(scale);
-            p2d.transform(point, xpoint);
-            g.fill(new Ellipse2D.Double
-                   (xpoint.x - r, xpoint.y - r, r * 2, r * 2));
-        }
+                g.setColor(highlight);
+                csel.setColor(highlight);
+                csel.draw(g, scale);
+                double r = Math.max(path.getLineWidth() * scale * 1.7, 4.0);
+                circleVertices(g, path, scale, false, r);
 
-        csel.setLineWidth(originalLineWidth);
-        csel.setColor(oldColor);
+                // Mark the active vertex specifically.
+                Point2D.Double point = getActiveVertex();
+                if (point != null) {
+                    Point2D.Double xpoint = new Point2D.Double();
+                    Affine p2d = principalToScaledPage(scale);
+                    p2d.transform(point, xpoint);
+                    g.fill(new Ellipse2D.Double
+                           (xpoint.x - r, xpoint.y - r, r * 2, r * 2));
+                }
 
-        g.setRenderingHint(RenderingHints.KEY_ANTIALIASING,
-                           RenderingHints.VALUE_ANTIALIAS_ON);
+                csel.setLineWidth(originalLineWidth);
+                csel.setColor(oldColor);
+                path.setFill(oldFill);
+
+                g.setRenderingHint(RenderingHints.KEY_ANTIALIASING,
+                                   RenderingHints.VALUE_ANTIALIAS_ON);
+            }
     }
 
 
@@ -1697,31 +1705,31 @@ public class BasicEditor extends Diagram
         statusPt = mprin;
 
         Decoration sel = showSel ? selection.getDecoration() : null;
+        boolean isCurve = selection instanceof VertexHandle;
         for (int dn = 0; dn < decorations.size(); ++dn) {
             Decoration decoration = decorations.get(dn);
-            if (decoration.equals(sel)) {
+            if (decoration.equals(sel) && !isCurve) {
                 try (UpdateSuppressor us = new UpdateSuppressor()) {
-                        if (selection instanceof VertexHandle) {
-                            paintSelectedCurve(g, scale);
-                        } else {
-                            Decoration dec = selection.getDecoration();
-                            Color oldColor = dec.getColor();
-                            Color highlight = getHighlightColor(oldColor);
+                        Color oldColor = sel.getColor();
+                        Color highlight = getHighlightColor(oldColor);
 
-                            g.setColor(highlight);
-                            dec.setColor(highlight);
-                            if (selection instanceof LabelHandle) {
-                                paintSelectedLabel(g, scale);
-                            } else {
-                                sel.draw(g, scale);
-                            }
-                            dec.setColor(oldColor);
+                        g.setColor(highlight);
+                        sel.setColor(highlight);
+                        if (selection instanceof LabelHandle) {
+                            paintSelectedLabel(g, scale);
+                        } else {
+                            sel.draw(g, scale);
                         }
+                        sel.setColor(oldColor);
                     }
             } else {
                 g.setColor(thisOrBlack(decoration.getColor()));
                 decoration.draw(g, scale);
             }
+        }
+
+        if (isCurve) {
+            paintSelectedCurve(g, scale);
         }
 
         // g.setColor(Color.GREEN);
