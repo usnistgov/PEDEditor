@@ -359,7 +359,7 @@ public class LabelDialog extends JDialog {
         setText("");
         setXWeight(0.5);
         setYWeight(0.5);
-        setFontSize(1);
+        setFontSize(1.2);
         setAngle(0);
         setOpaqueLabel(false);
         setBoxed(false);
