@@ -513,6 +513,14 @@ public class Duh {
             - (p2.getY() - p1.getY()) * (p3.getX() - p1.getX());
     }
 
+    /** @return the signed area of the triangle formed by these
+        points. The returned value will be positive if p1p3 is between
+        0 and 180 degrees counterclockwise from p1p2. */
+    public static double signedArea(Point2D p1, Point2D p2, Point2D p3) {
+        return ((p2.getX() - p1.getX()) * (p3.getY() - p1.getY())
+                - (p2.getY() - p1.getY()) * (p3.getX() - p1.getX()))/2;
+    }
+
     /** @return the square of the sine of the angle between the two vectors. */
     public static double sineSq(Point2D.Double v1, Point2D.Double v2) {
         double l1l2Sq = lengthSq(v1) * lengthSq(v2);
@@ -1063,6 +1071,18 @@ public class Duh {
                 }
             }
         }
+    }
+
+    /** @return the signed area of the quadrilateral formed by these
+        points. The absolute value of the value returned will be less
+        than the true area of the quadrilateral if the quadrilateral
+        crosses itself. For quadrilaterals that do not cross
+        themselves, the the returned value will equal the area if the
+        vertices run counterclockwise, or -1 times the area if they
+        run clockwise. */
+    public static double signedArea(Point2D a, Point2D b,
+                              Point2D c, Point2D d) {
+        return signedArea(a,b,c) + signedArea(c,d,a);
     }
 
     /** Merge the list of x and y values to create an array of
