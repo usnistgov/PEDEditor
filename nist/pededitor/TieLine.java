@@ -134,17 +134,19 @@ public class TieLine implements Decorated {
     /** Return true if the inner and outer edges are oriented in
         opposite directions. If left alone, the first tie line will
         cross the last one, which is almost certainly not the
-        intent. */
+        intent.
+
+        Sometimes the twists can't be taken out (in particular if i1i2
+        crosses o1o2), but I think the best orientation is the one
+        that creates a quadrilateral with the maximum area.
+    */
     boolean isTwisted() {
         Point2D.Double i1 = getInnerEdge(Math.min(it1, it2));
         Point2D.Double i2 = getInnerEdge(Math.max(it1, it2));
         Point2D.Double o1 = getOuterEdge(Math.min(ot1, ot2));
         Point2D.Double o2 = getOuterEdge(Math.max(ot1, ot2));
-
-        double dot = (i2.x - i1.x) * (o2.x - o1.x)
-            + (i2.y - i1.y) * (o2.y - o1.y);
-
-        return (dot < 0);
+        return Math.abs(Duh.signedArea(i1, i2, o2, o1)) <
+            Math.abs(Duh.signedArea(i1, i2, o1, o2));
     }
 
     @JsonIgnore public Path2D.Double getPath() {
