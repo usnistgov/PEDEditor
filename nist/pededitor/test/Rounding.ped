@@ -16,10 +16,10 @@
     }
   },
   "pageBounds" : {
-    "x" : -0.5789329621701642,
-    "y" : 0.5453262483872431,
-    "width" : 1.6419127990941047,
-    "height" : 0.761173933390295
+    "x" : -0.5794645398532994,
+    "y" : 0.5435368589670473,
+    "width" : 1.6442337662061033,
+    "height" : 1.1238884097669863
   },
   "diagramType" : "BINARY",
   "diagramComponents" : [ null, null, null, null ],
@@ -96,14 +96,14 @@
       "x" : 38.05,
       "y" : 0.0
     },
-    "lineWidth" : 0.0014,
+    "lineWidth" : 0.0013,
     "labelAnchor" : "LEFT",
     "tickLeft" : true,
     "endArrow" : true,
     "suppressEndTick" : true,
     "suppressEndLabel" : true,
     "axis" : "X",
-    "fontSize" : 0.011856368563685637
+    "fontSize" : 0.011009485094850948
   }, {
     "decoration" : "ruler",
     "startPoint" : {
@@ -574,9 +574,9 @@
     "scale" : 1.5
   }, {
     "decoration" : "label",
-    "text" : "<div style=\"width: 5000 px\"><p>If you start with data that were already rounded when first recorded and remove a single significant figure by rounding a trailing 0-4 digit down and 5-9 up, original values in the range 36.45 - 37.45 end up being rounded to 37. If the actual values are roughly uniformly distributed over a wide range, this rounding procedure will tend to produce rounded values that are on average 0.05 greater than the input values. At 1/20th of a significant figure, this bias is fairly small.\n<p>One rule in common use to reduce the bias is to round 5s to produce an even trailing digit, so 1.5 is rounded up to 2 but 4.5 is rounded down to 4. If the range of input values is considerably larger than the number of significant figures, then this rule is likely to cause 5s to be rounded up about as often as they are rounded down, reducing the bias.\n<p>This problem can also occur when the input values are discrete. For instance, if you count the population of a city and then round it to the nearest tens value, you may expect the approximation to be on average about one-half of a person too high.</div>",
+    "text" : "<div style=\"width: 5700 px\">\n<p>If you reduce the precision of data by discarding the last decimal place and rounding the next-to-last decimal place up or down depending on the discarded digit, then always rounding 5s up can induce a slight bias. Suppose observations are recorded to 3 digits of precision and then reduced to 2 digits of precision by rounding up a trailing 5 or more. Then, for example, if the the precise value of an observation (regardless of its accuracy) is 36.47..., then the initially recorded value will be 36.5, and the rounded value will be 37. Any precise value of the form XX.45 - XX.99 will be rounded up, while only values of the form XX.00 - XX.44 are rounded down. So if the actual values are roughly uniformly distributed over a wide range, then it is likely that most values will be rounded up, so the computed average of all of those rounded values will be slighly greater than the average of the original values recorded with full precision would be. The expected value of that difference, that bias in the rounding procedure, is 0.05 times the least decimal place in the final (rounded) value. If the rounded value reflects the number of significant figures, then that 1/20th of a significant figure is not important. So the short answer to the question, \"Does the bias matter?\" is usually no. \n<p>But if you aggregate many sets of statistics together in an attempt to arrive at a figure with greater accuracy than any one of them, that slight bias can make a difference, because the bias does not go away as you gather more data. For example, you could try to estimate the value of π by choosing 400 random points inside a square circumscribing a circle, counting how many of those points are inside the circle, and dividing by 100; this provides an unbiased estimate \n<p>An alternative rule used in statistics is to round 5s to produce an even trailing digit, so 1.15 is rounded up to 1.2 but 1.45 is rounded down to 1.4. If the standard deviation in the input values is much larger than the smallest significant figure, then this rule is likely to cause 5s to be rounded up about as often as they are rounded down, reducing the bias. That may make a difference if you later hope to combine many different data sets that each are accurate to, say, 2 significant figures into one large data set that is accurate to 3 significant figures. With the improved accuracy, a bias of 1/20th of a significant figure may become a bias of fully 1/2 of a significant figure (because the bias stays the same as the number of samples is increased), which is unacceptable.\n<p>Rounding 5s up can also create bias when the values being measured are discrete. For instance, if you count the population of a city exactly and then round it to the nearest multiple of ten, and repeat the process for many cities, an estimate of the cities' average populations based on the rounded values can be expected to be on average one-half person greater than the average of the exact populations.\n<p>Is this rounding issue a serious problem in general? I would say no. It's not often important in statistics -- if you're worried about losing accuracy through rounding, then just record the original un-rounded values somewhere -- and it's even less often applicable to other fields. I think the alternate rounding rule is mostly applied because it's But the alternate rounding rule is easy to apply a</div>",
     "x" : 36.5,
     "y" : -0.06,
-    "scale" : 1.1
+    "scale" : 1.0
   } ]
 }
