@@ -445,6 +445,7 @@ public class LabelDialog extends JDialog {
             pack();
             packed = true;
         }
+        pressedOK = false;
         textField.requestFocusInWindow();
         setModalityType(Dialog.ModalityType.DOCUMENT_MODAL);
         setVisible(true);
