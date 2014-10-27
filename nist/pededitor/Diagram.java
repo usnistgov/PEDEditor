@@ -3800,7 +3800,7 @@ public class Diagram extends Observable implements Printable {
     }
 
     public void setPageBounds(Rectangle2D rect) {
-        pageBounds = Duh.createRectangle2DDouble(rect);
+        pageBounds = Geom.createRectangle2DDouble(rect);
         propagateChange();
     }
 
@@ -3990,10 +3990,10 @@ public class Diagram extends Observable implements Printable {
             for (DecorationHandle hand: movementHandles()) {
                 Point2D page = principalToStandardPage.transform
                     (hand.getLocation());
-                if (Duh.distanceSq(page, r) > 1e-12) {
+                if (Geom.distanceSq(page, r) > 1e-12) {
                     System.err.println("Removing handle " + hand
-                                       + " at " + Duh.toString(page)
-                                       + " outside  " + Duh.toString(r) + ")");
+                                       + " at " + Geom.toString(page)
+                                       + " outside  " + Geom.toString(r) + ")");
                     hand.remove();
                     finished = false;
                     res = true;
@@ -4093,7 +4093,7 @@ public class Diagram extends Observable implements Printable {
         // of the delta with the coefficient vector be a lot smaller
         // than the cross product.
 
-        Point2D.Double ray = Duh.aMinusB(res.endPoint, res.startPoint);
+        Point2D.Double ray = Geom.aMinusB(res.endPoint, res.startPoint);
         double dot = cx * ray.x + cy * ray.y;
         double cross = cx * ray.y - cy * ray.x;
         if (Math.abs(dot * 4) > Math.abs(cross)) {
@@ -4179,7 +4179,7 @@ public class Diagram extends Observable implements Printable {
         switch (side) {
 
         case LEFT:
-            target = Duh.toPoint2DDouble(ll);
+            target = Geom.toPoint2DDouble(ll);
             if (target == null) {
                 return null;
             }
@@ -4192,7 +4192,7 @@ public class Diagram extends Observable implements Printable {
             return nearestChemical(target, maxDist);
 
         case RIGHT:
-            target = Duh.toPoint2DDouble(lr);
+            target = Geom.toPoint2DDouble(lr);
             if (target == null) {
                 return null;
             }
@@ -4209,7 +4209,7 @@ public class Diagram extends Observable implements Printable {
             Point2D.Double ltarget = null;
             String lchem = null;
             if (left != null) {
-                ltarget = Duh.toPoint2DDouble(ul);
+                ltarget = Geom.toPoint2DDouble(ul);
                 ltarget.y += lh * margin;
                 lchem = nearestChemical(ltarget, maxDist);
             }
@@ -4218,7 +4218,7 @@ public class Diagram extends Observable implements Printable {
                 return lchem;
             }
 
-            Point2D.Double rtarget = Duh.toPoint2DDouble(ur);
+            Point2D.Double rtarget = Geom.toPoint2DDouble(ur);
             rtarget.y += rh * margin;
             rtarget.x -= rh * margin;
             String rchem = nearestChemical(rtarget, maxDist);
@@ -4242,7 +4242,7 @@ public class Diagram extends Observable implements Printable {
             // For full ternary diagrams, checking the two different
             // positions above is a waste of time, but it shouldn't
             // hurt anything.
-            return nearestChemical(Duh.midpoint(ltarget, rtarget), maxDist);
+            return nearestChemical(Geom.midpoint(ltarget, rtarget), maxDist);
             
 		default:
 			throw new IllegalArgumentException("No such component 'BOTTOM'");
@@ -4357,8 +4357,8 @@ public class Diagram extends Observable implements Printable {
                                   List<Point2D.Double> vectors) {
         Point2D source = segment.getP1();
         Point2D dest = segment.getP2();
-        Point2D.Double pageDelta = Duh.aMinusB(dest, source);
-        double deltaLength = Duh.length(pageDelta);
+        Point2D.Double pageDelta = Geom.aMinusB(dest, source);
+        double deltaLength = Geom.length(pageDelta);
 
         // Tolerance is the maximum ratio of the distance between dest
         // and the projection to deltaLength. TODO A smarter approach
@@ -4371,7 +4371,7 @@ public class Diagram extends Observable implements Printable {
         
         for (Point2D.Double v: vectors) {
             principalToStandardPage.deltaTransform(v, v);
-            Point2D.Double projection = Duh.nearestPointOnLine
+            Point2D.Double projection = Geom.nearestPointOnLine
                 (pageDelta, new Point2D.Double(0,0), v);
             double distSq = pageDelta.distanceSq(projection);
             if (distSq < maxDistSq) {
@@ -4398,7 +4398,7 @@ public class Diagram extends Observable implements Printable {
         double maxT = Double.NaN;
 
         for (int i = 0; i < 4; ++i) {
-            double t = Duh.lineSegmentIntersectionT
+            double t = Geom.lineSegmentIntersectionT
                 (res.getP1(), res.getP2(),
                  vertexes[i], vertexes[(i+1) % 4]);
             if (Double.isNaN(t)) {

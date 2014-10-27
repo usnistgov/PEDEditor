@@ -33,8 +33,8 @@ public class TriangleTransform extends AffinePolygonTransform {
     Point2D.Double[] outputVerts = equilateralTriangleVertices();
 
     public TriangleTransform(TriangleTransform other) {
-        inputVerts = Duh.deepCopy(other.inputVerts);
-        outputVerts = Duh.deepCopy(other.outputVerts);
+        inputVerts = Geom.deepCopy(other.inputVerts);
+        outputVerts = Geom.deepCopy(other.outputVerts);
         update();
     }
 
@@ -79,19 +79,19 @@ public class TriangleTransform extends AffinePolygonTransform {
 
     @Override
 	public Point2D.Double[] getInputVertices() {
-        return Duh.deepCopy(inputVerts);
+        return Geom.deepCopy(inputVerts);
     }
 
     @Override
 	public Point2D.Double[] getOutputVertices() {
-        return Duh.deepCopy(outputVerts);
+        return Geom.deepCopy(outputVerts);
     }
 
     public void setInputVertices(Point2D.Double[] inputVertices) {
         if (inputVertices.length != 3) {
             throw new IllegalArgumentException("inputVertices.length " + inputVertices.length + " != 3");
         }
-        inputVerts = Duh.deepCopy(inputVertices);
+        inputVerts = Geom.deepCopy(inputVertices);
         update();
     }
 
@@ -99,7 +99,7 @@ public class TriangleTransform extends AffinePolygonTransform {
         if (outputVertices.length != 3) {
             throw new IllegalArgumentException("outputVertices.length " + outputVertices.length + " != 3");
         }
-        outputVerts = Duh.deepCopy(outputVertices);
+        outputVerts = Geom.deepCopy(outputVertices);
         update();
     }
 
@@ -155,12 +155,12 @@ public class TriangleTransform extends AffinePolygonTransform {
 
     @Override
 	public Rectangle2D.Double inputBounds() {
-        return Duh.bounds(inputVerts);
+        return Geom.bounds(inputVerts);
     }
 
     @Override
 	public Rectangle2D.Double outputBounds() {
-        return Duh.bounds(outputVerts);
+        return Geom.bounds(outputVerts);
     }
 
     @Override

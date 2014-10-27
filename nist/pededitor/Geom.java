@@ -9,7 +9,7 @@ import java.util.*;
 import java.util.Arrays;
 
 /** Utility functions for working with points and polygons. */
-public class Duh {
+public class Geom {
     /** Divide vector by its magnitude and return the result */
     static Point2D.Double normalize(Point2D vector) {
         double len = length(vector);
@@ -423,7 +423,7 @@ public class Duh {
         double[] angles = new double[cnt];
         Integer[] indicesI = new Integer[cnt];
         for (int i = 0; i < angles.length; ++i) {
-            angles[i] = mul * Duh.toAngle(Duh.aMinusB(points[i], center));
+            angles[i] = mul * Geom.toAngle(Geom.aMinusB(points[i], center));
             indicesI[i] = i;
         }
       
@@ -1064,7 +1064,7 @@ public class Duh {
             for (int j = i + 1; j < segCnt; ++j) {
                 Point2D.Double b1 = points[j*2];
                 Point2D.Double b2 = points[j*2 + 1];
-                Point2D.Double p = Duh.segmentIntersection(a1,a2,b1,b2);
+                Point2D.Double p = Geom.segmentIntersection(a1,a2,b1,b2);
                 if (p != null) {
                     System.out.println(a1 + " - " + a2 + " intersects "
                                        + b1 + " - " + b2 + " at " + p);

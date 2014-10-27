@@ -165,7 +165,7 @@ public class QuadParam2D extends BezierParam2D {
         double stabilizedXAxis = ax + ySweep * ((cross >= 0) ? 1 : -1);
         double stabilizedYAxis = ay - xSweep * ((cross >= 0) ? 1 : -1);
         Point2D.Double axisBasisVector
-            = Duh.normalize(new Point2D.Double(stabilizedXAxis, stabilizedYAxis));
+            = Geom.normalize(new Point2D.Double(stabilizedXAxis, stabilizedYAxis));
         Point2D.Double sweepBasisVector = new Point2D.Double
             (-axisBasisVector.y, axisBasisVector.x);
         if (cross < 0) {
@@ -199,7 +199,7 @@ public class QuadParam2D extends BezierParam2D {
                                + ", " + sweepBasisVector.y + ", " + axisBasisVector.y
                                + ", " + xCusp + ", " + yCusp + ")");
             throw new IllegalStateException(toString() + ".distance" 
-                                            + Duh.toString(p)
+                                            + Geom.toString(p)
                                             + ": normal coordinates aren't really");
         }
 
@@ -211,8 +211,8 @@ public class QuadParam2D extends BezierParam2D {
         // 1 relative to the cusp, the y value changes by
         // |axis|/(|sweep|^2).
 
-        double sweepLen = Duh.length(sweep);
-        double xSqCoefficient = Duh.length(axis) / (sweepLen * sweepLen);
+        double sweepLen = Geom.length(sweep);
+        double xSqCoefficient = Geom.length(axis) / (sweepLen * sweepLen);
 
         for (double x: parabolaNearests(transformedPoint, xSqCoefficient)) {
             // Convert x values in the transformed system back to t

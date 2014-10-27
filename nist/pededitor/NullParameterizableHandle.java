@@ -53,6 +53,6 @@ class NullParameterizableHandle implements BoundedParam2DHandle {
 
     @Override public String toString() {
         return getClass().getSimpleName() + "[" + dec + ", " + t + "]@"
-            + Duh.toString(getLocation());
+            + Geom.toString(getLocation());
     }
 }

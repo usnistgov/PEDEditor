@@ -91,7 +91,7 @@ public class CropPane extends ImagePane {
             pts[i] = new Point2D.Double((double) p.x, (double) p.y);
         }
 
-        int[] indices = Duh.sortIndices(pts, DOWNWARDS_Y);
+        int[] indices = Geom.sortIndices(pts, DOWNWARDS_Y);
         ArrayList<Point> output = new ArrayList<Point>(cnt);
 
         for (int i = 0; i < cnt; ++i) {
@@ -172,10 +172,10 @@ public class CropPane extends ImagePane {
         Point[] points =
             { p0,
               p1, 
-              Duh.toPoint(p0.x + normx, p0.y + normy),
-              Duh.toPoint(p1.x + normx, p1.y + normy) };
+              Geom.toPoint(p0.x + normx, p0.y + normy),
+              Geom.toPoint(p1.x + normx, p1.y + normy) };
 
-        return Duh.sortToPolygon(points, DOWNWARDS_Y);
+        return Geom.sortToPolygon(points, DOWNWARDS_Y);
     }
 
     /** Assuming the points were entered in order (that is,
@@ -223,7 +223,7 @@ public class CropPane extends ImagePane {
                 return toRectangle(points.get(0), points.get(1), 
                                    points.get(2));
             } else if (triangular) {
-                return Duh.sortToPolygon(points, DOWNWARDS_Y);
+                return Geom.sortToPolygon(points, DOWNWARDS_Y);
             } else {
                 return null;
             }
@@ -231,7 +231,7 @@ public class CropPane extends ImagePane {
 
         if (cnt == 4) {
             if (quadrilateral) {
-                return Duh.sortToPolygon(points, DOWNWARDS_Y);
+                return Geom.sortToPolygon(points, DOWNWARDS_Y);
             } else {
                 return null;
             }
@@ -289,8 +289,8 @@ public class CropPane extends ImagePane {
         }
         p2x = csx + heightx;
 
-        Point[] points = { p0, p1, Duh.toPoint(p2x, p2y) };
-        return Duh.sortToPolygon(points, DOWNWARDS_Y);
+        Point[] points = { p0, p1, Geom.toPoint(p2x, p2y) };
+        return Geom.sortToPolygon(points, DOWNWARDS_Y);
     }
 
     /** Context-sensitive vertex addition or substitution routine;

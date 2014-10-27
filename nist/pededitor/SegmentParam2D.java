@@ -89,7 +89,7 @@ public class SegmentParam2D extends Param2DAdapter
 
     @Override public double[] segIntersections
         (Line2D segment, double t0, double t1) {
-        double t = Duh.segmentIntersectionT
+        double t = Geom.segmentIntersectionT
             (p0, pEnd, segment.getP1(), segment.getP2());
         if (t >= t0 && t <= t1) {
             return new double[] { t };
@@ -100,7 +100,7 @@ public class SegmentParam2D extends Param2DAdapter
 
     @Override public double[] lineIntersections
         (Line2D segment, double t0, double t1) {
-        double t = Duh.lineIntersectionT
+        double t = Geom.lineIntersectionT
             (p0, pEnd, segment.getP1(), segment.getP2());
         if (t >= t0 && t <= t1) {
             return new double[] { t };
@@ -117,8 +117,8 @@ public class SegmentParam2D extends Param2DAdapter
 
     @Override public String toString() {
         StringBuilder s = new StringBuilder
-            (getClass().getSimpleName() + "[" + Duh.toString(p0) + ", "
-             + Duh.toString(pEnd));
+            (getClass().getSimpleName() + "[" + Geom.toString(p0) + ", "
+             + Geom.toString(pEnd));
         s.append("]");
         return s.toString();
     }

@@ -317,7 +317,7 @@ public class RulerDialog extends JDialog {
                              AffineTransform toPage) {
         setModalityType(Dialog.ModalityType.DOCUMENT_MODAL);
         set(dest, axes);
-        Point2D.Double v = Duh.aMinusB(dest.endPoint, dest.startPoint);
+        Point2D.Double v = Geom.aMinusB(dest.endPoint, dest.startPoint);
         toPage.deltaTransform(v, v);
         updateLeftRightLabels(Math.atan2(-v.y, v.x));
         pack();

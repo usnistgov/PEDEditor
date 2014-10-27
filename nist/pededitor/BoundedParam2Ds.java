@@ -235,8 +235,8 @@ public class BoundedParam2Ds {
 
         // Find the minimum distance from pn to b and -b.
         double minDist = Math.min
-            (Duh.distance(pn, b),
-             Duh.distance(pn,
+            (Geom.distance(pn, b),
+             Geom.distance(pn,
                           new Rectangle2D.Double(-b.getMaxX(), -b.getMaxY(),
                                                  b.getWidth(), b.getHeight())));
 
@@ -250,10 +250,10 @@ public class BoundedParam2Ds {
 
         if (debug) {
             System.out.println
-                ("dlb1(" + Duh.toString(p) + ", " + Duh.toString(f0) + ", " + deltaT + ", "
-                 + Duh.toString(dfdtBounds) + ") = ");
-            System.out.println("pn = " + Duh.toString(pn) + ", b = "
-                               + Duh.toString(b) + ", dist = " + minDist);
+                ("dlb1(" + Geom.toString(p) + ", " + Geom.toString(f0) + ", " + deltaT + ", "
+                 + Geom.toString(dfdtBounds) + ") = ");
+            System.out.println("pn = " + Geom.toString(pn) + ", b = "
+                               + Geom.toString(b) + ", dist = " + minDist);
         }
         return minDist;
     }
@@ -322,7 +322,7 @@ public class BoundedParam2Ds {
             }
 
             double midT = (oldT + t) / 2;
-            boolean onLeft = Duh.crossProduct(p1, p2, c.getLocation(midT)) >= 0;
+            boolean onLeft = Geom.crossProduct(p1, p2, c.getLocation(midT)) >= 0;
             if (oldT != t0 && onLeft != oldOnLeft) {
                 // The parameterization crossed the divider. Add the
                 // segment [startT, oldT] on the old side of the
@@ -446,13 +446,13 @@ public class BoundedParam2Ds {
         if (debug) {
             System.out.println(a + ", " + b);
             System.out.println("a[" + a.getMinT() + ", " + a.getMaxT() + "], "
-                               + Duh.toString(a.getStart()) + " - "
-                               + Duh.toString(a.getEnd()) + ", "
-                               + Duh.toString(ab));
+                               + Geom.toString(a.getStart()) + " - "
+                               + Geom.toString(a.getEnd()) + ", "
+                               + Geom.toString(ab));
             System.out.println("b[" + b.getMinT() + ", " + b.getMaxT() + "], "
-                               + Duh.toString(b.getStart()) + " - "
-                               + Duh.toString(b.getEnd()) + ", "
-                               + Duh.toString(bb));
+                               + Geom.toString(b.getStart()) + " - "
+                               + Geom.toString(b.getEnd()) + ", "
+                               + Geom.toString(bb));
         }
         Rectangle2D isec = ab.createIntersection(bb);
         double iw = isec.getWidth();
@@ -483,7 +483,7 @@ public class BoundedParam2Ds {
         {
             // Normalize the length vector. This makes life simpler
             // later.
-            Point2D.Double normalLength = Duh.normalize
+            Point2D.Double normalLength = Geom.normalize
                 (new Point2D.Double(lx, ly));
             lx = normalLength.x;
             ly = normalLength.y;
@@ -558,7 +558,7 @@ public class BoundedParam2Ds {
         Point2D.Double wp = new Point2D.Double(wx, wy);
         Point2D.Double lp = new Point2D.Double(lx, ly);
         double cl = lmin + length/2;
-        Line2D.Double widthAxis = Duh.createRay
+        Line2D.Double widthAxis = Geom.createRay
             (new Point2D.Double(cl * lx, cl * ly), wp);
 
         double[][] lbounds = { alb, blb };
@@ -583,13 +583,13 @@ public class BoundedParam2Ds {
             // all because of roundoff errors.
 
             w = wbounds[you][0];
-            Line2D.Double wminline = Duh.createRay
+            Line2D.Double wminline = Geom.createRay
                 (new Point2D.Double(w * wx, w * wy), lp);
             intersectWithHalfPlane(ci, wminline, curves, null);
 
             curves2 = new ArrayList<>();
             w = wbounds[you][1];
-            Line2D.Double wmaxline = Duh.createRay
+            Line2D.Double wmaxline = Geom.createRay
                 (new Point2D.Double(w * wx, w * wy), lp);
             // I care only about the closed half-plane on the right
             // side of wmaxline. intersectWithHalfPlane() returns the
@@ -606,7 +606,7 @@ public class BoundedParam2Ds {
 
             curves2 = new ArrayList<>();
             l = lbounds[you][0];
-            Line2D.Double lminline = Duh.createRay
+            Line2D.Double lminline = Geom.createRay
                 (new Point2D.Double(l * lx, l * ly), wp);
             intersectWithHalfPlane
                 (curves, new Line2D.Double(lminline.getP2(), lminline.getP1()),
@@ -615,7 +615,7 @@ public class BoundedParam2Ds {
 
             curves2 = new ArrayList<>();
             l = lbounds[you][1];
-            Line2D.Double lmaxline = Duh.createRay
+            Line2D.Double lmaxline = Geom.createRay
                 (new Point2D.Double(l * lx, l * ly), wp);
             intersectWithHalfPlane(curves, lmaxline, curves2, null);
             curves = curves2;
@@ -728,7 +728,7 @@ public class BoundedParam2Ds {
         the function itself -- are used to determine the answer.) */
     public static double distanceLowerBound0
         (BoundedParam2D c, Point2D p) {
-        return Duh.distance(p, c.getBounds());
+        return Geom.distance(p, c.getBounds());
     }
 
     /** Compute the distance from p to this curve to within maxError
@@ -780,7 +780,7 @@ public class BoundedParam2Ds {
              new Point2D.Double(1, 0.5));
         try {
             for (Point2D p: intersections(q1, q2, 1e-5, 20)) {
-                System.out.println(Duh.toString(p));
+                System.out.println(Geom.toString(p));
             }
         } catch (FailedToConvergeException x) {
             System.err.println(x);

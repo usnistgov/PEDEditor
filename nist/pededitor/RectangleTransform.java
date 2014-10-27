@@ -62,11 +62,11 @@ public class RectangleTransform extends AffinePolygonTransform {
     }
 
     @Override @JsonIgnore public Point2D.Double[] getInputVertices() {
-        return Duh.toPoint2DDoubles(input);
+        return Geom.toPoint2DDoubles(input);
     }
 
     @Override @JsonIgnore public Point2D.Double[] getOutputVertices() {
-        return Duh.toPoint2DDoubles(output);
+        return Geom.toPoint2DDoubles(output);
     }
 
     private void concatSub(Transform2D other, Rectangle2D.Double rect) {

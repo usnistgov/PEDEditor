@@ -102,7 +102,7 @@ public class PointParam2D implements BoundedParam2D, Param2D {
     }
 
     @Override public String toString() {
-        return getClass().getSimpleName() + Duh.toString(getStart());
+        return getClass().getSimpleName() + Geom.toString(getStart());
     }
 
     @Override public BoundedParam2D createSubset(double minT, double maxT) {

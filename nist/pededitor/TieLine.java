@@ -145,8 +145,8 @@ public class TieLine implements Decorated {
         Point2D.Double i2 = getInnerEdge(Math.max(it1, it2));
         Point2D.Double o1 = getOuterEdge(Math.min(ot1, ot2));
         Point2D.Double o2 = getOuterEdge(Math.max(ot1, ot2));
-        return Math.abs(Duh.signedArea(i1, i2, o2, o1)) <
-            Math.abs(Duh.signedArea(i1, i2, o1, o2));
+        return Math.abs(Geom.signedArea(i1, i2, o2, o1)) <
+            Math.abs(Geom.signedArea(i1, i2, o1, o2));
     }
 
     @JsonIgnore public Path2D.Double getPath() {

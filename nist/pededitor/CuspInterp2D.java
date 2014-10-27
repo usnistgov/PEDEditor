@@ -237,7 +237,7 @@ public class CuspInterp2D extends PointsInterp2D {
         int i = -1;
         for (Point2D point: points) {
             ++i;
-            res.append(Duh.toString(point));
+            res.append(Geom.toString(point));
             res.append(isSmoothed(i) ? "-" : ",");
         }
         if (isClosed()) {

@@ -326,7 +326,7 @@ class LinearRuler implements BoundedParameterizable2D, Decorated {
                                     BasicStroke.JOIN_MITER));
         
         if (drawSpine) {
-            Point2D.Double vec = Duh.normalize
+            Point2D.Double vec = Geom.normalize
                 (new Point2D.Double
                  (pageEndPoint.x - pageStartPoint.x,
                   (pageEndPoint.y - pageStartPoint.y)));
@@ -461,7 +461,7 @@ class LinearRuler implements BoundedParameterizable2D, Decorated {
              pageDelta.y * tickLength / distance / Math.sqrt(3));
 
         double minTickPageDelta = (tickType == TickType.V)
-            ? (Duh.length(tickVOffset) * 4)
+            ? (Geom.length(tickVOffset) * 4)
             : (3 * scale * lineWidth);
         double minTickDelta = minTickPageDelta / m;
 

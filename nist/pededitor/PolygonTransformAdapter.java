@@ -25,11 +25,11 @@ abstract public class PolygonTransformAdapter
 
     @Override
 	public Rectangle2D.Double inputBounds() {
-        return Duh.bounds(getInputVertices());
+        return Geom.bounds(getInputVertices());
     }
     @Override
 	public Rectangle2D.Double outputBounds() {
-        return Duh.bounds(getOutputVertices());
+        return Geom.bounds(getOutputVertices());
     }
 
     /** Verify the consistency of this transform's internal state;
@@ -86,7 +86,7 @@ abstract public class PolygonTransformAdapter
         Point2D.Double[] ovs = xform.getOutputVertices();
         StringBuilder out = new StringBuilder(xform.getClass().getCanonicalName());
         for (int i = 0; i < ivs.length; ++i) {
-            out.append(Duh.toString(ivs[i]) + ":" + Duh.toString(ovs[i]));
+            out.append(Geom.toString(ivs[i]) + ":" + Geom.toString(ovs[i]));
             if (i + 1 < ivs.length) {
                 out.append(", ");
             }

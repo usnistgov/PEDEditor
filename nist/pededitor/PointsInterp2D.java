@@ -39,19 +39,19 @@ public abstract class PointsInterp2D extends Interp2D {
     }
 
     @Override public Point2D.Double[] getPoints() {
-        return Duh.deepCopy(points.toArray(new Point2D.Double[0]));
+        return Geom.deepCopy(points.toArray(new Point2D.Double[0]));
     }
 
     @JsonIgnore public <T extends Point2D> void setPoints(Collection<T> points) {
         this.points = new ArrayList<Point2D.Double>
-            (Arrays.asList(Duh.deepCopy(points.toArray
+            (Arrays.asList(Geom.deepCopy(points.toArray
                                         (new Point2D.Double[0]))));
         param = null;
     }
 
     @JsonProperty("points") public void setPoints(Point2D.Double[] points) {
         this.points = new ArrayList<Point2D.Double>
-            (Arrays.asList(Duh.deepCopy(points)));
+            (Arrays.asList(Geom.deepCopy(points)));
         param = null;
     }
 

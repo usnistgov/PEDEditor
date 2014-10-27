@@ -94,7 +94,7 @@ final public class CubicSpline2D implements BoundedParameterizable2D {
                 if (d == 0) {
                     throw new IllegalArgumentException
                         ("Successive points must not coincide (#" + (i-1) + " and #" + i
-                         + " at " + Duh.toString(points[i]) + ")");
+                         + " at " + Geom.toString(points[i]) + ")");
                 }
                 t += d;
             }
@@ -190,8 +190,8 @@ final public class CubicSpline2D implements BoundedParameterizable2D {
         Point2D.Double v02 = value(segment, t02);
         Point2D.Double v1 = value(segment, t1);
 
-        double me2 = v01.distanceSq(Duh.mean(v0,v02)) +
-            v02.distanceSq(Duh.mean(v01,v1));
+        double me2 = v01.distanceSq(Geom.mean(v0,v02)) +
+            v02.distanceSq(Geom.mean(v01,v1));
 
         if (me2 > maxError2) {
             samplePoints(output, segment, t0, t01, maxError2);
@@ -314,7 +314,7 @@ final public class CubicSpline2D implements BoundedParameterizable2D {
             new Rectangle2D.Double
             (minx, miny, maxx - minx, maxy - miny);
 
-        double d = Duh.distance(p, bounds);
+        double d = Geom.distance(p, bounds);
 
         if (d == 0) {
             return d;

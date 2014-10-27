@@ -448,7 +448,7 @@ public class BasicEditor extends Diagram
 
         @Override public String toString() {
             return getClass().getSimpleName() + "[" + e + ", "
-                + Duh.toString(prin) + "]";
+                + Geom.toString(prin) + "]";
         }
     }
 
@@ -992,7 +992,7 @@ public class BasicEditor extends Diagram
         Shape region = vhand.getDecoration().getShape();
         Param2DBounder param = PathParam2D.create(region);
 
-        Point2D.Double delta = Duh.aMinusB(mprin, selection.getLocation());
+        Point2D.Double delta = Geom.aMinusB(mprin, selection.getLocation());
 
         for (DecorationHandle hand: movementHandles()) {
             Point2D prin = hand.getLocation();
@@ -1043,7 +1043,7 @@ public class BasicEditor extends Diagram
         Shape region = vhand.getDecoration().getShape();
         Param2DBounder param = PathParam2D.create(region);
 
-        Point2D.Double delta = Duh.aMinusB(mprin, selection.getLocation());
+        Point2D.Double delta = Geom.aMinusB(mprin, selection.getLocation());
 
         for (Decoration d: new ArrayList<Decoration>(getDecorations())) {
             boolean inside = true;
@@ -1172,7 +1172,7 @@ public class BasicEditor extends Diagram
                  layer > 0 && layer < decorations.size() - 1;
                  layer += ((delta > 0) ? 1 : -1)) {
                 Decoration jumpedPast = decorations.get(layer);
-                if (Duh.distanceSq(selectionBounds, bounds(jumpedPast))
+                if (Geom.distanceSq(selectionBounds, bounds(jumpedPast))
                     < 1e-12) {
                     break;
                 }
@@ -1758,7 +1758,7 @@ public class BasicEditor extends Diagram
             Point mpos = getEditPane().getMousePosition();
             if (mpos != null) {
                 g.setColor(Color.RED);
-                g.draw(Duh.bounds
+                g.draw(Geom.bounds
                        (new Point[] { mpos, mousePress.e.getPoint() }));
             }
         }
@@ -2166,7 +2166,7 @@ public class BasicEditor extends Diagram
 
         r.startPoint = path.get(1 - vhand.vertexNo);
         r.endPoint = path.get(vhand.vertexNo);
-        Point2D.Double pageVec = Duh.aMinusB(r.endPoint, r.startPoint);
+        Point2D.Double pageVec = Geom.aMinusB(r.endPoint, r.startPoint);
         principalToStandardPage.deltaTransform(pageVec, pageVec);
         if (pageVec.x < -1e-6) {
             // For rulers with an appreciable horizontal component,
@@ -2174,7 +2174,7 @@ public class BasicEditor extends Diagram
             Point2D.Double p = r.startPoint;
             r.startPoint = r.endPoint;
             r.endPoint = p;
-            Duh.invert(pageVec);
+            Geom.invert(pageVec);
         }
         r.textAngle = Math.atan2(-pageVec.y, pageVec.x);
 
@@ -2190,7 +2190,7 @@ public class BasicEditor extends Diagram
         for (LinearAxis axisTemp: axes) {
             ++axisNo;
             Point2D.Double pageGrad = pageGradient(axisTemp);
-            double cosSq = Duh.cosSq(pageGrad, pageVec);
+            double cosSq = Geom.cosSq(pageGrad, pageVec);
             if (((String) axisTemp.name).contains("page ")) {
                 // An axis for the page coordinates? Not likely...
                 cosSq /= 4;
@@ -3481,7 +3481,7 @@ public class BasicEditor extends Diagram
             return true;
         }
 
-        return Duh.distance(pageP, pageR) < pagePrecision();
+        return Geom.distance(pageP, pageR) < pagePrecision();
     }
 
     /** Return null if principal coordinates point prin is not within
@@ -3495,7 +3495,7 @@ public class BasicEditor extends Diagram
         Point2D.Double pointd = principalToScaledPage(scale).transform(mprin);
         JScrollPane spane = editFrame.getScrollPane();
         Rectangle view = spane.getViewport().getViewRect();
-        Point point = Duh.floorPoint(pointd);
+        Point point = Geom.floorPoint(pointd);
 
         // If pointd is on the view's boundary, then bump it inside.
         // This avoids a potential infinite loop where the mouse is
@@ -3619,7 +3619,7 @@ public class BasicEditor extends Diagram
                                     Point viewportPoint) {
         ++paintSuppressionRequestCnt;
         Affine xform = principalToScaledPage(scale);
-        Point panePoint = Duh.floorPoint(xform.transform(prin));
+        Point panePoint = Geom.floorPoint(xform.transform(prin));
         JScrollPane spane = editFrame.getScrollPane();
         Rectangle view = spane.getViewport().getViewRect();
 
@@ -3925,7 +3925,7 @@ public class BasicEditor extends Diagram
         try (UpdateSuppressor us = new UpdateSuppressor()) {
                 diagramType = e.getDiagramType();
                 newDiagram
-                    (e.filename, Duh.toPoint2DDoubles(e.getVertices()));
+                    (e.filename, Geom.toPoint2DDoubles(e.getVertices()));
                 initializeGUI();
             }
         propagateChange();
@@ -4364,7 +4364,7 @@ public class BasicEditor extends Diagram
                         // actual diagram (though only one of those key points
                         // will be a diagram component).
                         Point2D.Double[] trianglePoints
-                            = Duh.deepCopy(principalTrianglePoints);
+                            = Geom.deepCopy(principalTrianglePoints);
 
                         switch (diagramType) {
                         case TERNARY_LEFT:
@@ -4425,7 +4425,7 @@ public class BasicEditor extends Diagram
                         // downwards, and rescale to fill the available
                         // space as much as possible.
 
-                        Rectangle2D.Double bounds = Duh.bounds(xformed);
+                        Rectangle2D.Double bounds = Geom.bounds(xformed);
                         r = new Rescale
                             (bounds.width, 0.0, maxDiagramWidth,
                              bounds.height, 0.0, maxDiagramHeight);
@@ -5442,7 +5442,7 @@ public class BasicEditor extends Diagram
                     if (gridLine == null) {
                         continue;
                     }
-                    gridLine = Duh.transform(standardPageToPrincipal, gridLine);
+                    gridLine = Geom.transform(standardPageToPrincipal, gridLine);
                     decorations.add
                         (new CurveDecoration
                          (new CuspFigure(new CuspInterp2D(gridLine),
@@ -5597,7 +5597,7 @@ public class BasicEditor extends Diagram
             Point2D.Double newMprin = xformi.transform(vs[0], vs[1]);
             Point2D.Double newMousePage = principalToStandardPage
                 .transform(newMprin);
-            double d = Duh.distance(newMousePage, pageBounds);
+            double d = Geom.distance(newMousePage, pageBounds);
             if (d > 10) {
                 showError
                     ("The coordinates you selected lie far outside "
@@ -5874,7 +5874,7 @@ public class BasicEditor extends Diagram
         Rectangle2D.Double res = bounds(selection.getDecoration());
         if (res.width == 0 || res.height == 0) {
             showError("The selection's width and/or height is too small. ("
-                      + Duh.toString(res) + ", " + selection.getDecoration() + ")");
+                      + Geom.toString(res) + ", " + selection.getDecoration() + ")");
             return null;
         }
         return res;
@@ -5897,7 +5897,7 @@ public class BasicEditor extends Diagram
         Point2D.Double page1 = paneToStandardPage(pane1);
         Point2D.Double page2 = paneToStandardPage(pane2);
         mprin = null;
-        zoom(Duh.bounds(new Point2D.Double[] { page1, page2 }));
+        zoom(Geom.bounds(new Point2D.Double[] { page1, page2 }));
     }
 
     void zoomToSelection() {

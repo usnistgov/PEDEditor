@@ -58,7 +58,7 @@ public class MeteredGraphics extends Graphics2D {
         accuracy = orig.accuracy;
         g = (Graphics2D) orig.g.create();
         if (orig.bounds != null) {
-            bounds = Duh.createRectangle2DDouble(orig.bounds);
+            bounds = Geom.createRectangle2DDouble(orig.bounds);
         }
     }
 

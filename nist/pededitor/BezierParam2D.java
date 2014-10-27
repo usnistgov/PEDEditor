@@ -27,7 +27,7 @@ abstract public class BezierParam2D extends Param2DAdapter {
     /** @param points The array of Bezier control points.
     */
     public BezierParam2D(Point2D[] points) {
-        this.points = Duh.deepCopy(points);
+        this.points = Geom.deepCopy(points);
         int len = points.length;
         double[] xs = new double[len];
         double[] ys = new double[len];
@@ -91,7 +91,7 @@ abstract public class BezierParam2D extends Param2DAdapter {
     }
 
     public Point2D.Double[] getControlPoints() {
-        return Duh.deepCopy(points);
+        return Geom.deepCopy(points);
     }
 
     public double[] getXPolynomial() {
@@ -212,7 +212,7 @@ abstract public class BezierParam2D extends Param2DAdapter {
         polyToBezier(xd, xd);
         double[] yd = Polynomial.derivative(yCoefficients);
         polyToBezier(yd, yd);
-        return createUnbounded(Duh.merge(xd, yd));
+        return createUnbounded(Geom.merge(xd, yd));
     }
 
     @Override public double[] segIntersections
@@ -398,7 +398,7 @@ abstract public class BezierParam2D extends Param2DAdapter {
             if (!first) {
                 s.append(", ");
             }
-            s.append(Duh.toString(p));
+            s.append(Geom.toString(p));
             first = false;
         }
         s.append("]");
