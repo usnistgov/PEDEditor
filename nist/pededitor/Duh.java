@@ -504,9 +504,10 @@ public class Duh {
             - (a2.getY() - a1.getY()) * (b2.getX() - b1.getX());
     }
 
-    /** @return the cross product p1p2 x p1p3. The returned value will be
-        positive if p1p3 is between 0 and 180 degrees counterclockwise
-        from p1p2. */
+    /** @return the cross product p1p2 x p1p3. The returned value will
+        be positive if p1p3 is between 0 and 180 degrees
+        counterclockwise from p1p2. This equals twice the signed area
+        of the triangle p1p2p3. */
     static double crossProduct(Point2D p1, Point2D p2, Point2D p3) {
         return (p2.getX() - p1.getX()) * (p3.getY() - p1.getY())
             - (p2.getY() - p1.getY()) * (p3.getX() - p1.getX());
