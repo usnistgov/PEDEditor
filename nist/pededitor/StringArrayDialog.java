@@ -7,7 +7,6 @@ import java.awt.Dialog;
 import java.awt.Frame;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
-import java.awt.Insets;
 import java.awt.event.ActionEvent;
 import java.util.Arrays;
 
@@ -16,6 +15,7 @@ import javax.swing.JButton;
 import javax.swing.JComponent;
 import javax.swing.JDialog;
 import javax.swing.JLabel;
+import javax.swing.JPanel;
 import javax.swing.JTextField;
 
 /** Generic dialog that presents several rows of labels and
@@ -26,7 +26,7 @@ public class StringArrayDialog extends JDialog {
 
     boolean pressedOK = false;
     JTextField[] textFields;
-    String[] limits = {"0.0", "100.0"};
+    JPanel panelBeforeOK = new JPanel();
 
     protected void add(JComponent c, GridBagLayout gb,
                        GridBagConstraints gbc) {
@@ -38,29 +38,12 @@ public class StringArrayDialog extends JDialog {
                       String intro) {
         super(owner, "Edit values", false);
 
-        GridBagLayout gb = new GridBagLayout();
-        getContentPane().setLayout(gb);
-
-        Insets insets = new Insets(0, 3, 0, 3);
-        GridBagConstraints east = new GridBagConstraints();
-        east.anchor = GridBagConstraints.EAST;
-        east.insets = insets;
-        GridBagConstraints west = new GridBagConstraints();
-        west.anchor = GridBagConstraints.WEST;
-        west.insets = insets;
-
-        GridBagConstraints endRow = new GridBagConstraints();
-        endRow.anchor = GridBagConstraints.WEST;
-        endRow.gridwidth = GridBagConstraints.REMAINDER;
-
-        GridBagConstraints wholeRow = new GridBagConstraints();
-        wholeRow.anchor = GridBagConstraints.CENTER;
-        wholeRow.gridwidth = GridBagConstraints.REMAINDER;
+        GridBagUtil gb = new GridBagUtil(getContentPane());
 
         textFields = new JTextField[labels.length];
 
         if (intro != null) {
-            add(new JLabel(intro), gb, wholeRow);
+            gb.centerAndEndRow(new JLabel(intro));
         }
 
         for (int i = 0; i < labels.length; ++i) {
@@ -72,8 +55,8 @@ public class StringArrayDialog extends JDialog {
             textFields[i] = text;
             label.setLabelFor(text);
 
-            add(label, gb, west);
-            add(text, gb, endRow);
+            gb.addWest(label);
+            gb.endRowWith(text);
         }
 
         AbstractAction okAction = new AbstractAction("OK") {
@@ -86,11 +69,20 @@ public class StringArrayDialog extends JDialog {
             };
         JButton okButton = new JButton(okAction);
         getRootPane().setDefaultButton(okButton);
-        add(okButton, gb, wholeRow);
+        gb.endRowWith(panelBeforeOK);
+        gb.centerAndEndRow(okButton);
         setResizable(false);
     }
 
-    /** Set the dimensions strings. The user may change these values
+    public void setTextAt(int index, String value) {
+        textFields[index].setText(value);
+    }
+
+    public String getTextAt(int index) {
+        return textFields[index].getText();
+    }
+
+    /** Set all fields at once. The user may change these values
         (that's the point of presenting the dialog). */
     public void setValues(String[] values) {
         for (int i = 0; i < values.length; ++i) {
@@ -101,14 +93,14 @@ public class StringArrayDialog extends JDialog {
     /** Show the dialog as document-modal, and return the selected
         values (as strings). Return null if the dialog was closed
         abnormally. */
-    public String[] showModal() {
+    public String[] showModalStrings() {
         setModalityType(Dialog.ModalityType.DOCUMENT_MODAL);
         pack();
         setVisible(true);
         if (pressedOK) {
             String[] output = new String[textFields.length];
             for (int i = 0; i < textFields.length; ++i) {
-                output[i] = textFields[i].getText();
+                output[i] = getTextAt(i);
             }
             return output;
         } else {
@@ -125,7 +117,7 @@ public class StringArrayDialog extends JDialog {
             + "This is some text, and some more text. "
             + "</body></html>"
              );
-        String[] values = dog.showModal();
+        String[] values = dog.showModalStrings();
         System.out.println(Arrays.toString(values));
     }
 }
