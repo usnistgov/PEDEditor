@@ -56,7 +56,7 @@ public class MathWindow extends JDialog {
     public JLabel lineWidth = new JLabel("0.00000");
 
     public MathWindow(BasicEditor parentEditor) {
-        super(parentEditor.editFrame, "Slope", false);
+        super(parentEditor.editFrame, "Math", false);
         this.parentEditor = parentEditor;
         setAngleDegrees(0);
 
