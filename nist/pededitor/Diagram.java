@@ -5,6 +5,7 @@ package gov.nist.pededitor;
 
 import java.awt.BasicStroke;
 import java.awt.Color;
+import java.awt.Dimension;
 import java.awt.Font;
 import java.awt.FontFormatException;
 import java.awt.Graphics;
@@ -1520,16 +1521,20 @@ public class Diagram extends Observable implements Printable {
         return deviceScale(g.getTransform(), deviceBounds);
     }
 
+    public void paintBackground(Graphics2D g, double scale, Color color) {
+        // Draw a box the size of the page.
+        if (color != null && pageBounds.width > 0) {
+            g.setColor(color);
+            g.fill(scaledPageBounds(scale));
+        }
+    }
+
     public void paintDiagram(Graphics2D g, double scale, Color backColor) {
         g.setRenderingHint(RenderingHints.KEY_ANTIALIASING,
                            RenderingHints.VALUE_ANTIALIAS_ON);
         g.setRenderingHint(RenderingHints.KEY_RENDERING,
                             RenderingHints.VALUE_RENDER_QUALITY);
-
-        if (backColor != null && pageBounds.width > 0) {
-            g.setColor(backColor);
-            g.fill(scaledPageBounds(scale));
-        }
+        paintBackground(g, scale, backColor);
 
         ArrayList<Decoration> decorations = getDecorations();
 
@@ -3920,18 +3925,36 @@ public class Diagram extends Observable implements Printable {
         }
     }
 
-    /** Return a BufferedImage of this diagram such that its size
-        <i>no greater than</i> width x height. */
-    public BufferedImage createImage(int width, int height) {
+    /** Return a Dimension whose proportions match the diagram's and
+        which is not larger than width x height. */
+    public Dimension bestFitSize(int width, int height) {
         Rescale r = new Rescale
             (pageBounds.width, 0, width,
              pageBounds.height, 0, height);
-        BufferedImage im = new BufferedImage
-            ((int) (r.width + 1e-6),
-             (int) (r.height + 1e-6),
-             BufferedImage.TYPE_INT_RGB);
-        paintDiagram((Graphics2D) im.getGraphics(), r.t, Color.WHITE);
+        return new Dimension((int) (r.width + 0.5), (int) (r.height + 0.5));
+    }
+
+    /** Return a BufferedImage of the diagram which is no larger than
+        width x height. */
+    public BufferedImage createImage(int width, int height) {
+        Dimension size = bestFitSize(width, height);
+        BufferedImage im = new BufferedImage(size.width, size.height,
+                                             BufferedImage.TYPE_INT_RGB);
+        paintDiagram((Graphics2D) im.getGraphics(),
+                     bestFitScale(new Dimension(width, height)), Color.WHITE);
         return im;
+    }
+
+    /** Return the minimum scale that does not waste screen real
+        estate, or 0 if that is not defined. */
+    double bestFitScale(Dimension size) {
+        if (pageBounds == null || size.width < 0) {
+            return 0;
+        }
+
+        Rescale r = new Rescale(pageBounds.width, 0, (double) size.width,
+                                pageBounds.height, 0, (double) size.height);
+        return r.t;
     }
 
     public void saveAsImage(File file, String format, int width, int height)
@@ -4244,8 +4267,8 @@ public class Diagram extends Observable implements Printable {
             // hurt anything.
             return nearestChemical(Geom.midpoint(ltarget, rtarget), maxDist);
             
-		default:
-			throw new IllegalArgumentException("No such component 'BOTTOM'");
+        default:
+            throw new IllegalArgumentException("No such component 'BOTTOM'");
         }
     }
 
