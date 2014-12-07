@@ -96,6 +96,7 @@ public class StringArrayDialog extends JDialog {
     public String[] showModalStrings() {
         setModalityType(Dialog.ModalityType.DOCUMENT_MODAL);
         pack();
+        pressedOK = false;
         setVisible(true);
         if (pressedOK) {
             String[] output = new String[textFields.length];
