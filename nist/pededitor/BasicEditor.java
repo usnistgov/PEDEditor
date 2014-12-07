@@ -5194,6 +5194,7 @@ public class BasicEditor extends Diagram
             imageDimensionDialog = new ImageDimensionDialog(editFrame);
         }
         ImageDimensionDialog dog = imageDimensionDialog;
+        dog.setShowOriginalImageVisible(tracingImage());
 
         Dimension size;
         try {
