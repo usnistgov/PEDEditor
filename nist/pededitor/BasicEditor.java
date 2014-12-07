@@ -271,6 +271,7 @@ public class BasicEditor extends Diagram
     protected FormulaDialog formulaDialog = null;
     protected CoordinateDialog coordinateDialog = null;
     protected DigitizeDialog digitizeDialog = null;
+    protected ImageDimensionDialog imageDimensionDialog = null;
     static JDialog waitDialog = null;
 
     @JsonIgnore public DecorationHandle getSelection() {
@@ -376,8 +377,8 @@ public class BasicEditor extends Diagram
         no darkened version exists. At most one dark image is kept in
         memory at a time. */
     protected transient ScaledCroppedImage darkImage;
-    /** Darkness value of darkImage. */
-    protected transient double darkImageDarkness = 0;
+    /** Alpha value of darkImage. */
+    protected transient double darkImageAlpha = 0;
 
     protected transient double lineWidth = STANDARD_LINE_WIDTH;
     protected transient StandardStroke lineStyle = StandardStroke.SOLID;
@@ -641,6 +642,10 @@ public class BasicEditor extends Diagram
                 digitizeDialog.dispose();
                 digitizeDialog = null;
             }
+            if (imageDimensionDialog != null) {
+                imageDimensionDialog.dispose();
+                imageDimensionDialog = null;
+            }
             if (tieLineDialog != null) {
                 tieLineDialog.dispose();
                 tieLineDialog = null;
@@ -882,7 +887,7 @@ public class BasicEditor extends Diagram
         StringArrayDialog dog = new StringArrayDialog
             (editFrame, labels, values, null);
         dog.setTitle("Add key/value pair");
-        values = dog.showModal();
+        values = dog.showModalStrings();
         if (values == null || values[0].isEmpty()) {
             return;
         }
@@ -911,7 +916,7 @@ public class BasicEditor extends Diagram
                  (editFrame, keys, values,
                   "To delete a key, replace a value with the empty string.");
         dog.setTitle("Key/value pairs");
-        values = dog.showModal();
+        values = dog.showModalStrings();
         if (values == null || !isEditable()) {
             return;
         }
@@ -1422,7 +1427,7 @@ public class BasicEditor extends Diagram
         if (oldFrameSize == null
             || (size != null && !size.equals(oldFrameSize))) {
             oldFrameSize = size;
-            if (autoRescale || scale < minScale()) {
+            if (autoRescale || scale < bestFitScale()) {
                 boolean oart = allowRobotToMoveMouse;
                 try {
                     allowRobotToMoveMouse = false;
@@ -1435,12 +1440,12 @@ public class BasicEditor extends Diagram
         paintDiagramWithSelection((Graphics2D) g, scale);
     }
 
-    static final double DEFAULT_BACKGROUND_IMAGE_DARKNESS = 1.0/3;
+    static final double DEFAULT_BACKGROUND_IMAGE_ALPHA = 1.0/3;
 
-    double getBackgroundImageDarkness() {
+    double getBackgroundImageAlpha() {
         switch (editFrame.getBackgroundImage()) {
         case LIGHT_GRAY:
-            return DEFAULT_BACKGROUND_IMAGE_DARKNESS;
+            return DEFAULT_BACKGROUND_IMAGE_ALPHA;
         case DARK_GRAY:
             return 0.577; // Geometric mean of 1/3 and 1
         case BLACK:
@@ -1454,12 +1459,12 @@ public class BasicEditor extends Diagram
 
     void paintBackgroundImage(Graphics2D g, double scale) {
         ScaledCroppedImage im = getScaledOriginalImage();
-        double darkness = getBackgroundImageDarkness();
-        if (darkness != DEFAULT_BACKGROUND_IMAGE_DARKNESS) {
+        double alpha = getBackgroundImageAlpha();
+        if (alpha != DEFAULT_BACKGROUND_IMAGE_ALPHA) {
             if (darkImage != null
                 && im.imageBounds.equals(darkImage.imageBounds)
                 && im.cropBounds.equals(darkImage.cropBounds)
-                && darkImageDarkness == darkness) {
+                && darkImageAlpha == alpha) {
                 // The cached image darkImage can be used.
                 im = darkImage;
             } else {
@@ -1470,8 +1475,9 @@ public class BasicEditor extends Diagram
                 BufferedImage src = im.croppedImage;
                 darkImage.croppedImage = new BufferedImage
                     (src.getWidth(), src.getHeight(), BufferedImage.TYPE_INT_RGB);
-                fade(src, darkImage.croppedImage, darkness / DEFAULT_BACKGROUND_IMAGE_DARKNESS);
-                darkImageDarkness = darkness;
+                fade(src, darkImage.croppedImage,
+                     alpha / DEFAULT_BACKGROUND_IMAGE_ALPHA);
+                darkImageAlpha = alpha;
                 im = darkImage;
             }
         }
@@ -1663,6 +1669,20 @@ public class BasicEditor extends Diagram
             : Color.GREEN;
     }
 
+    public void paintScreenBackground(Graphics2D g, double scale, Color color) {
+        BackgroundImageType back = editFrame.getBackgroundImage();
+        boolean showBackgroundImage = tracingImage()
+            && back != BackgroundImageType.NONE
+            && (back != BackgroundImageType.BLINK
+                || backgroundImageEnabled);
+
+        if (showBackgroundImage) {
+            paintBackgroundImage(g, scale);
+        } else {
+            super.paintBackground(g, scale, Color.WHITE);
+        }
+    }
+
     /** Paint the diagram to the given graphics context. Highlight the
         selection, if any, and print the background image if
         necessary. Also indicate the autoselect point if the shift key
@@ -1682,24 +1702,7 @@ public class BasicEditor extends Diagram
         g.setRenderingHint(RenderingHints.KEY_RENDERING,
                             RenderingHints.VALUE_RENDER_QUALITY);
 
-        { // Draw the background
-            BackgroundImageType back = editFrame.getBackgroundImage();
-            boolean showBackgroundImage = tracingImage()
-                && back != BackgroundImageType.NONE
-                && (back != BackgroundImageType.BLINK
-                    || backgroundImageEnabled);
-
-            if (showBackgroundImage) {
-                paintBackgroundImage(g, scale);
-            } else {
-                // Draw a white box the size of the page.
-
-                g.setColor(Color.WHITE);
-                if (pageBounds.width > 0) {
-                    g.fill(scaledPageBounds(scale));
-                }
-            }
-        }
+        paintScreenBackground(g, scale, Color.WHITE);
 
         boolean showSel = selection != null;
         statusPt = mprin;
@@ -2310,7 +2313,7 @@ public class BasicEditor extends Diagram
                          + "at the three points you selected. Fractions are allowed. "
                          + "For percentages, do not omit the percent sign."));
             dog.setTitle("Create new axis");
-            values = dog.showModal();
+            values = dog.showModalStrings();
             if (values == null) {
                 return;
             }
@@ -5187,29 +5190,19 @@ public class BasicEditor extends Diagram
             nothingToSave();
             return;
         }
-        StringArrayDialog dog = new StringArrayDialog
-            (editFrame,
-             new String[] {"Width", "Height"},
-             new String[] {"800", "600"},
-             "<html><body width=\"200 px\"><p>"
-             + "Enter maximum values for the width and height of the "
-             + "image in pixels."
-             + "</p></body></html>");
-        dog.setTitle("Image size");
-        String[] values = dog.showModal();
-        int width;
-        try {
-            width = Integer.parseInt(values[0]);
-        } catch (NumberFormatException x) {
-            showError("Invalid width value '" + values[0] + "'");
-            return;
+        if (imageDimensionDialog == null) {
+            imageDimensionDialog = new ImageDimensionDialog(editFrame);
         }
-        int height;
+        ImageDimensionDialog dog = imageDimensionDialog;
+
+        Dimension size;
         try {
-            height = Integer.parseInt(values[1]);
+            size = dog.showModalDimension();
+            if (size == null) {
+                return;
+            }
         } catch (NumberFormatException x) {
-            showError
-                ("Invalid height value '" + values[1] + "'");
+            showError(x.toString());
             return;
         }
         
@@ -5219,12 +5212,24 @@ public class BasicEditor extends Diagram
         }
 
         try {
-            saveAsImage(file, ext, width, height);
+            saveAsImage(file, ext, size.width, size.height, dog.isShowOriginalImage());
         } catch (IOException x) {
             showError("File error: " + x);
         }
     }
 
+    public void saveAsImage(File file, String format, int width, int height,
+                            boolean showOriginalImage) throws IOException {
+        if (!showOriginalImage) {
+            saveAsImage(file, format, width, height);
+            return;
+        }
+        BufferedImage im = transformOriginalImage(new Dimension(width, height));
+        paintDiagram((Graphics2D) im.getGraphics(),
+                     bestFitScale(new Dimension(width, height)), null);
+        ImageIO.write(im, format, file);
+    }
+ 
     public boolean saveAsPED() {
         if (!haveDiagram()) {
             nothingToSave();
@@ -5931,20 +5936,13 @@ public class BasicEditor extends Diagram
 
     /** Return the minimum scale that does not waste screen real
         estate, or 0 if that is not defined. */
-    double minScale() {
-        Dimension size = getViewportSize();
-        if (pageBounds == null || size.width < 0) {
-            return 0;
-        }
-
-        Rescale r = new Rescale(pageBounds.width, 0, (double) size.width,
-                                pageBounds.height, 0, (double) size.height);
-        return r.t;
+    double bestFitScale() {
+        return bestFitScale(getViewportSize());
     }
 
     /** Adjust the scale so that the page just fits in the edit frame. */
     void bestFit() {
-        double s = minScale();
+        double s = bestFitScale();
         if (s > 0) {
             setScale(s);
             autoRescale = true;
@@ -6034,7 +6032,11 @@ public class BasicEditor extends Diagram
         return (res < 0) ? 0 : res;
     }
 
-    static void fade(BufferedImage src, BufferedImage dest, double frac) { 
+    static void fade(BufferedImage src, BufferedImage dest, double frac) {
+        if (src == dest && frac == 1.0) {
+            // Nothing to do.
+            return;
+        }
         int width = src.getWidth();
         int height = src.getHeight();
         for (int x = 0; x < width; ++x) {
@@ -6186,7 +6188,7 @@ public class BasicEditor extends Diagram
         }
     }
 
-    synchronized ScaledCroppedImage getScaledOriginalImage() {
+    ScaledCroppedImage getScaledOriginalImage() {
         Rectangle viewBounds = getViewRect();
         Rectangle imageBounds = scaledPageBounds(scale);
         Rectangle imageViewBounds = viewBounds.intersection(imageBounds);
@@ -6329,6 +6331,57 @@ public class BasicEditor extends Diagram
             cropBounds.height = imageViewBounds.height + margin1 + margin2;
         }
 
+        ScaledCroppedImage im = new ScaledCroppedImage();
+        im.scale = scale;
+        im.imageBounds = imageBounds;
+        im.cropBounds = cropBounds;
+        ImageTransform.DithererType dither
+            = (cropBounds.getWidth() * cropBounds.getHeight() > 3000000)
+            ? ImageTransform.DithererType.FAST
+            : ImageTransform.DithererType.GOOD;
+
+        im.croppedImage = transformOriginalImage
+            (cropBounds, scale, dither, DEFAULT_BACKGROUND_IMAGE_ALPHA);
+        scaledOriginalImages.add(im);
+        return im;
+    }
+
+    BufferedImage transformOriginalImage(Dimension size) {
+        return transformOriginalImage
+            (new Rectangle(size), bestFitScale(size), 
+             ImageTransform.DithererType.FAST, getBackgroundImageAlpha());
+    }
+
+    /** Scale the diagram by the given amount, placing the upper-left
+        corner in position (0,0), but don't actually draw the diagram.
+        Instead, just return the portion of originalImage, adjusted to
+        the current background image alpha (mixed with a background of
+        pure white), that would sit in the background of the cropRect
+        portion of the scaled diagram.
+
+        TODO: the way fade() works here is doubtful. It makes more
+        sense to use an RGBA image type than to use RGB and mix the
+        color with pure white according to the alpha value. Only real
+        RGBA allows bitmaps to be layered in nontrivial ways. Allowing
+        diagrams to be saved as semitransparent bitmaps would also be
+        neat, though I'm not aware of a need for that right now.
+    */
+
+    synchronized BufferedImage transformOriginalImage
+        (Rectangle cropBounds, double scale, ImageTransform.DithererType dither,
+         double alpha) {
+        BufferedImage input = getOriginalImage();
+
+        if (input == null || alpha == 0.0) {
+            BufferedImage im = new BufferedImage
+                (cropBounds.width, cropBounds.height,
+                 BufferedImage.TYPE_INT_RGB);
+            Graphics2D g2d = im.createGraphics();
+            g2d.setPaint(Color.WHITE);
+            g2d.fill(cropBounds);
+            return im;
+        }
+
         // Create the transformed, cropped, and faded image of the
         // original diagram.
         PolygonTransform originalToCrop = originalToPrincipal.clone();
@@ -6340,24 +6393,15 @@ public class BasicEditor extends Diagram
         originalToCrop.preConcatenate
             (new Affine(AffineTransform.getTranslateInstance
                         ((double) -cropBounds.x, (double) -cropBounds.y)));
-
-        ScaledCroppedImage im = new ScaledCroppedImage();
-        im.scale = scale;
-        im.imageBounds = imageBounds;
-        im.cropBounds = cropBounds;
+        
         Cursor oldCursor = editFrame.getCursor();
         ++paintSuppressionRequestCnt;
         editFrame.setCursor(new Cursor(Cursor.WAIT_CURSOR));
-        ImageTransform.DithererType dither
-            = (cropBounds.getWidth() * cropBounds.getHeight() > 3000000)
-            ? ImageTransform.DithererType.FAST
-            : ImageTransform.DithererType.GOOD;
+
         System.out.println("Resizing original image (" + dither + ")...");
-        im.croppedImage = ImageTransform.run
-            (originalToCrop, getOriginalImage(), Color.WHITE,
-             new Dimension(cropBounds.width, cropBounds.height), dither);
-        fade(im.croppedImage, im.croppedImage, DEFAULT_BACKGROUND_IMAGE_DARKNESS);
-        scaledOriginalImages.add(im);
+        BufferedImage im = ImageTransform.run
+            (originalToCrop, input, Color.WHITE, cropBounds.getSize(), dither);
+        fade(im, im, alpha);
         --paintSuppressionRequestCnt;
         editFrame.setCursor(oldCursor);
         return im;
