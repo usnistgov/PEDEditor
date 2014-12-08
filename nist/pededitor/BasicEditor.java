@@ -5216,6 +5216,9 @@ public class BasicEditor extends Diagram
             saveAsImage(file, ext, size.width, size.height, dog.isShowOriginalImage());
         } catch (IOException x) {
             showError("File error: " + x);
+        } catch (OutOfMemoryError x) {
+            showError("Out of memory. You may either re-run Java with a "
+                      + "larger heap size or try saving as a smaller image.");
         }
     }
 
@@ -6397,14 +6400,17 @@ public class BasicEditor extends Diagram
         
         Cursor oldCursor = editFrame.getCursor();
         ++paintSuppressionRequestCnt;
-        editFrame.setCursor(new Cursor(Cursor.WAIT_CURSOR));
-
-        System.out.println("Resizing original image (" + dither + ")...");
-        BufferedImage im = ImageTransform.run
-            (originalToCrop, input, Color.WHITE, cropBounds.getSize(), dither);
-        fade(im, im, alpha);
-        --paintSuppressionRequestCnt;
-        editFrame.setCursor(oldCursor);
+        BufferedImage im = null;
+        try {
+            editFrame.setCursor(new Cursor(Cursor.WAIT_CURSOR));
+            System.out.println("Resizing original image (" + dither + ")...");
+            im = ImageTransform.run
+                (originalToCrop, input, Color.WHITE, cropBounds.getSize(), dither);
+            fade(im, im, alpha);
+        } finally {
+            --paintSuppressionRequestCnt;
+            editFrame.setCursor(oldCursor);
+        }
         return im;
     }
 
