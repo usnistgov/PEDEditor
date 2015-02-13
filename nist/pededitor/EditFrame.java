@@ -1219,7 +1219,7 @@ public class EditFrame extends JFrame
 
         for (int i = 0; i < lineWidths.length; ++i) {
             LineWidthMenuItem item = new LineWidthMenuItem(lineWidths[i]);
-            if (i == 3) {
+            if (lineWidths[i] == Diagram.STANDARD_LINE_WIDTH) {
                 item.setSelected(true);
             }
             mnLineWidth.add(item);
