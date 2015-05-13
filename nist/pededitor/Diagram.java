@@ -5523,7 +5523,6 @@ abstract class ColorAnnotations extends Color {
         @Type(value=AnchoredLabel.class, name = "label"),
         @Type(value=LinearRuler.class, name = "ruler"),
         @Type(value=Arrow.class, name = "arrow"),
-        @Type(value=Circle.class, name = "circle"),
         @Type(value=TieLine.class, name = "tie line")
             })
 interface DecoratedAnnotations extends Decorated {
