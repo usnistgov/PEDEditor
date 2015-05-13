@@ -8,7 +8,11 @@ package gov.nist.pededitor;
 
 import java.awt.Graphics;
 
+import javax.jnlp.IntegrationService;
+import javax.jnlp.ServiceManager;
+import javax.jnlp.UnavailableServiceException;
 import javax.swing.AbstractAction;
+import javax.swing.JOptionPane;
 
 /** Main driver class for Phase Equilibria Diagram digitization and creation. */
 public class Viewer extends Editor {
@@ -119,6 +123,31 @@ public class Viewer extends Editor {
 
     @Override String fallbackTitle() {
         return "Phase Equilibria Diagram Viewer";
+    }
+
+    @Override void setFileAssociations(boolean askExit, String mime, String[] exts) {
+        try {
+            IntegrationService is
+                = (IntegrationService) ServiceManager.lookup("javax.jnlp.IntegrationService");
+            if (askExit) {
+                if (is.requestAssociation(mime, exts)) {
+                    JOptionPane.showMessageDialog
+                        (editFrame,
+                         fallbackTitle() + " has been installed. For uninstall instructions, see PED Viewer help menu.",
+                         "Installation successful",
+                         JOptionPane.PLAIN_MESSAGE);
+                } else {
+                    JOptionPane.showMessageDialog
+                        (editFrame,
+                         fallbackTitle() + " may not have successfully registered as the handler for  " +
+                         "PED Viewer diagrams. If you are unable to view diagrams, please contact " +
+                         "phase3@ceramics.org");
+                }
+                System.exit(0);
+            }
+        } catch (UnavailableServiceException x) {
+            // OK, ignore this error.
+        }
     }
 
     public static void main(String[] args) {
