@@ -3883,21 +3883,20 @@ public class BasicEditor extends Diagram
         try {
             IntegrationService is
                 = (IntegrationService) ServiceManager.lookup("javax.jnlp.IntegrationService");
-            if (!is.hasAssociation(mime, exts)) {
-                if (is.requestAssociation(mime, exts) && askExit) {
-                    if (JOptionPane.showOptionDialog
-                        (editFrame,
-                         fallbackTitle() + " has been installed. "
-                         + "You can uninstall it, run it, or create a shortcut "
-                         + "to it on your desktop using the Java Control Panel.",
-                         "Installation successful",
-                         JOptionPane.YES_NO_OPTION,
-                         JOptionPane.QUESTION_MESSAGE,
-                         null,
-                         new Object[] { "Run Now", "Finished" },
-                         null) != JOptionPane.YES_OPTION) {
-                        System.exit(0);
-                    }
+            if (askExit && is.requestAssociation(mime, exts)) {
+                if (JOptionPane.showOptionDialog
+                    (editFrame,
+                     fallbackTitle() + " has been installed. At any time, you can " +
+                     "uninstall, run, or create a shortcut for it by opening the Java Control " +
+                     "Panel's General tab and and pressing the \"View...\" " +
+                     "button.",
+                     "Installation successful",
+                     JOptionPane.YES_NO_OPTION,
+                     JOptionPane.QUESTION_MESSAGE,
+                     null,
+                     new Object[] { "Run Now", "Finished" },
+                     null) != JOptionPane.YES_OPTION) {
+                    System.exit(0);
                 }
             }
         } catch (UnavailableServiceException x) {
