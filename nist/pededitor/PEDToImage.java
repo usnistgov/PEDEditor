@@ -9,6 +9,9 @@ package gov.nist.pededitor;
 import java.io.File;
 import java.io.IOException;
 
+import com.itextpdf.text.Document;
+import com.itextpdf.text.PageSize;
+
 import javax.imageio.ImageIO;
 
 /** Wrapper class for conversion of PED files to JPEG files. */
@@ -17,7 +20,8 @@ public class PEDToImage {
     static void help() {
         System.err.println
             ("Usage:\n\n"
-             + "    java -jar PEDToImage.jar <PED file> <PDF file>\n\n"
+             + "    java -jar PEDToImage.jar [-nomargin] <PED file> <PDF file>\n"
+             + "           -nomargin: Omit margins from PDF file\n\n"
              + "         or\n\n"
              + "    java -jar PEDToImage.jar <PED file> <image file> <width> <height>\n\n"
              + "Supported image formats include GIF, JPEG, and PNG.");
@@ -25,11 +29,18 @@ public class PEDToImage {
     }
 
     public static void main(String[] args) {
-        if (args.length < 2) {
+        int baseIndex = 0;
+        boolean haveMargins = true;
+        if (baseIndex < args.length && "-nomargin".equals(args[baseIndex])) {
+            haveMargins = false;
+            ++baseIndex;
+        }
+        if (args.length - baseIndex < 2) {
             help();
         }
-        String ifn = args[0];
-        String ofn = args[1];
+
+        String ifn = args[baseIndex++];
+        String ofn = args[baseIndex++];
         String ext = BasicEditor.getExtension(ofn);
         File ofh = new File(ofn);
 
@@ -41,8 +52,12 @@ public class PEDToImage {
         boolean isPDF = ext.equalsIgnoreCase("pdf");
 
         if (isPDF) {
-            if (args.length != 2) {
+            Document doc = new Document(PageSize.LETTER);
+            if (baseIndex < args.length) {
                 help();
+            }
+            if (!haveMargins) {
+                doc.setMargins(0f, 0f, 0f, 0f);
             }
 
             Diagram d;
@@ -52,7 +67,8 @@ public class PEDToImage {
                 throw new IllegalArgumentException
                     ("Invalid input file '" + args[0] + "': " + x);
             }
-            DiagramPDF.saveAsPDF(d, ofh);
+            
+            DiagramPDF.saveAsPDF(d, doc, ofh);
             return;
         }
 
