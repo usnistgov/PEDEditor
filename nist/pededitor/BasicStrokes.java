@@ -34,6 +34,35 @@ public class BasicStrokes {
                                stroke.getDashPhase() * scale);
     }
 
+    /** @return a copy of "stroke" with its line width and dash
+        pattern lengths scaled by a factor of "scaled". Also, the cap
+        and join settings are rounded if "round" is true or square
+        otherwise.
+    */
+    public static BasicStroke scaledStroke(BasicStroke stroke, double scaled,
+                                           boolean round) {
+        float scale = (float) scaled;
+        float[] dashes = stroke.getDashArray();
+
+        if (dashes != null) {
+            dashes = (float[]) dashes.clone();
+            for (int i = 0; i < dashes.length; ++i) {
+                dashes[i] *= scale;
+            }
+        }
+
+        if (scale == 0) {
+            throw new IllegalStateException("Zero scale");
+        }
+
+        return new BasicStroke(stroke.getLineWidth() * scale,
+                               round ? BasicStroke.CAP_ROUND
+                               : BasicStroke.CAP_SQUARE,
+                               round ? BasicStroke.JOIN_ROUND
+                               : BasicStroke.JOIN_MITER,
+                               3.0f, dashes, stroke.getDashPhase() * scale);
+    }
+
     public static BasicStroke getSolidLine() {
         return new BasicStroke
             (1.0f,
@@ -85,17 +114,6 @@ public class BasicStrokes {
              3.0f,
              new float[] { 5, 4 },
              7.0f);
-    }
-
-    /** Put a dot at the starting point and that's all. */
-    public static BasicStroke getStartingDot() {
-        return new BasicStroke
-            (2.0f,
-             BasicStroke.CAP_ROUND,
-             BasicStroke.JOIN_ROUND,
-             3.0f,
-             new float[] { 0, 1e6f },
-             0.0f);
     }
 
     /** Plot nothing. */
