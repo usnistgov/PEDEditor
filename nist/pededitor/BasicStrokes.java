@@ -37,8 +37,13 @@ public class BasicStrokes {
     /** @return a copy of "stroke" with its line width and dash
         pattern lengths scaled by a factor of "scaled". Also, the cap
         and join settings are rounded if "round" is true or square
-        otherwise.
-    */
+        otherwise
+.
+        That's only approximately true. If round is true, then the cap
+        and join settings are not changed at all -- but most
+        StandardStrokes use rounded settings to begin with. If round
+        is false, then a cap setting of ROUND is changed to BUTT, and
+        a join setting of ROUND is changed to MITER. */
     public static BasicStroke scaledStroke(BasicStroke stroke, double scaled,
                                            boolean round) {
         float scale = (float) scaled;
@@ -55,12 +60,18 @@ public class BasicStrokes {
             throw new IllegalStateException("Zero scale");
         }
 
+        int cap = stroke.getEndCap();
+        int join = stroke.getLineJoin();
+        if (!round) {
+            if (join == BasicStroke.JOIN_ROUND)
+                join = BasicStroke.JOIN_MITER;
+            if (cap == BasicStroke.CAP_ROUND)
+                cap = BasicStroke.CAP_SQUARE;
+        }
+
         return new BasicStroke(stroke.getLineWidth() * scale,
-                               round ? BasicStroke.CAP_ROUND
-                               : BasicStroke.CAP_SQUARE,
-                               round ? BasicStroke.JOIN_ROUND
-                               : BasicStroke.JOIN_MITER,
-                               3.0f, dashes, stroke.getDashPhase() * scale);
+                               cap, join, stroke.getMiterLimit(),
+                               dashes, stroke.getDashPhase() * scale);
     }
 
     public static BasicStroke getSolidLine() {
