@@ -1,0 +1,283 @@
+{
+  "tags" : [ ],
+  "principalToStandardPage" : {
+    "transform" : "RectangleTransform",
+    "input" : {
+      "x" : 0.5,
+      "y" : 0.5,
+      "width" : 15.0,
+      "height" : 10.0
+    },
+    "output" : {
+      "x" : 0.0,
+      "y" : 0.6666666666666666,
+      "width" : 1.0,
+      "height" : -0.6666666666666666
+    }
+  },
+  "pageBounds" : {
+    "x" : -0.05,
+    "y" : -0.05,
+    "width" : 1.1,
+    "height" : 0.7666666666666667
+  },
+  "diagramType" : "OTHER",
+  "pixelMode" : true,
+  "diagramComponents" : [ null, null, null, null ],
+  "axes" : [ {
+    "format" : {
+      "type" : "DecimalFormat",
+      "pattern" : "#0.0000"
+    },
+    "a" : 1.0,
+    "b" : 0.0,
+    "c" : 0.0,
+    "name" : "X"
+  }, {
+    "format" : {
+      "type" : "DecimalFormat",
+      "pattern" : "#0.0000"
+    },
+    "a" : 0.0,
+    "b" : 1.0,
+    "c" : 0.0,
+    "name" : "Y"
+  } ],
+  "usingWeightFraction" : false,
+  "fontName" : "DejaVu LGC Sans PED",
+  "keys" : {
+  },
+  "decorations" : [ {
+    "decoration" : "curve",
+    "curve" : {
+      "points" : [ {
+	"x" : 7.5,
+	"y" : 8.5
+      }, {
+	"x" : 8.5,
+	"y" : 8.5
+      } ],
+      "smoothed" : [ false, false ],
+      "closed" : false
+    },
+    "color" : {
+      "rgb" : -16777216
+    },
+    "lineWidth" : 0.06666666666666667,
+    "lineStyle" : "SOLID",
+    "id" : 0
+  }, {
+    "decoration" : "curve",
+    "curve" : {
+      "points" : [ {
+	"x" : 12.5,
+	"y" : 8.5
+      }, {
+	"x" : 12.5,
+	"y" : 3.5
+      }, {
+	"x" : 6.5,
+	"y" : 3.5
+      }, {
+	"x" : 4.5,
+	"y" : 1.5
+      }, {
+	"x" : 4.5,
+	"y" : 8.5
+      } ],
+      "smoothed" : [ false, false, false, false, false ],
+      "closed" : false
+    },
+    "color" : {
+      "rgb" : -16777216
+    },
+    "lineWidth" : 0.06666666666666667,
+    "lineStyle" : "SOLID",
+    "id" : 1
+  }, {
+    "decoration" : "curve",
+    "curve" : {
+      "points" : [ {
+	"x" : 10.5,
+	"y" : 8.5
+      } ],
+      "smoothed" : [ false ],
+      "closed" : false
+    },
+    "color" : {
+      "rgb" : -16777216
+    },
+    "lineWidth" : 0.06666666666666667,
+    "lineStyle" : "SOLID",
+    "id" : 2
+  }, {
+    "decoration" : "curve",
+    "curve" : {
+      "points" : [ {
+	"x" : 7.5,
+	"y" : 6.5
+      } ],
+      "smoothed" : [ false ],
+      "closed" : false
+    },
+    "color" : {
+      "rgb" : -16777216
+    },
+    "lineWidth" : 0.06666666666666667,
+    "lineStyle" : "SOLID",
+    "id" : 3
+  }, {
+    "decoration" : "curve",
+    "curve" : {
+      "points" : [ {
+	"x" : 2.5,
+	"y" : 8.5
+      } ],
+      "smoothed" : [ false ],
+      "closed" : false
+    },
+    "color" : {
+      "rgb" : -16777216
+    },
+    "lineWidth" : 0.06666666666666667,
+    "lineStyle" : "SOLID",
+    "id" : 5
+  }, {
+    "decoration" : "curve",
+    "curve" : {
+      "points" : [ {
+	"x" : 2.5,
+	"y" : 6.5
+      } ],
+      "smoothed" : [ false ],
+      "closed" : false
+    },
+    "color" : {
+      "rgb" : -16777216
+    },
+    "lineWidth" : 0.06666666666666667,
+    "lineStyle" : "SOLID",
+    "id" : 6
+  }, {
+    "decoration" : "curve",
+    "curve" : {
+      "points" : [ {
+	"x" : 2.5,
+	"y" : 4.5
+      } ],
+      "smoothed" : [ false ],
+      "closed" : false
+    },
+    "color" : {
+      "rgb" : -16777216
+    },
+    "lineWidth" : 0.06666666666666667,
+    "lineStyle" : "SOLID",
+    "id" : 7
+  }, {
+    "decoration" : "curve",
+    "curve" : {
+      "points" : [ {
+	"x" : 13.5,
+	"y" : 9.5
+      } ],
+      "smoothed" : [ false ],
+      "closed" : false
+    },
+    "color" : {
+      "rgb" : -16777216
+    },
+    "lineWidth" : 0.06666666666666667,
+    "lineStyle" : "SOLID",
+    "id" : 11
+  }, {
+    "decoration" : "curve",
+    "curve" : {
+      "points" : [ {
+	"x" : 11.5,
+	"y" : 7.5
+      } ],
+      "smoothed" : [ false ],
+      "closed" : false
+    },
+    "color" : {
+      "rgb" : -16777216
+    },
+    "lineWidth" : 0.06666666666666667,
+    "lineStyle" : "SOLID",
+    "id" : 12
+  }, {
+    "decoration" : "curve",
+    "curve" : {
+      "points" : [ {
+	"x" : 9.5,
+	"y" : 9.5
+      } ],
+      "smoothed" : [ false ],
+      "closed" : false
+    },
+    "color" : {
+      "rgb" : -16777216
+    },
+    "lineWidth" : 0.06666666666666667,
+    "lineStyle" : "SOLID",
+    "id" : 13
+  }, {
+    "decoration" : "curve",
+    "curve" : {
+      "points" : [ {
+	"x" : 6.5,
+	"y" : 9.5
+      } ],
+      "smoothed" : [ false ],
+      "closed" : false
+    },
+    "color" : {
+      "rgb" : -16777216
+    },
+    "lineWidth" : 0.06666666666666667,
+    "lineStyle" : "SOLID",
+    "id" : 14
+  }, {
+    "decoration" : "curve",
+    "curve" : {
+      "points" : [ {
+	"x" : 3.5,
+	"y" : 9.5
+      } ],
+      "smoothed" : [ false ],
+      "closed" : false
+    },
+    "color" : {
+      "rgb" : -16777216
+    },
+    "lineWidth" : 0.06666666666666667,
+    "lineStyle" : "SOLID",
+    "id" : 15
+  }, {
+    "decoration" : "curve",
+    "curve" : {
+      "points" : [ {
+	"x" : 9.0,
+	"y" : 2.0
+      }, {
+	"x" : 11.0,
+	"y" : 2.0
+      }, {
+	"x" : 11.0,
+	"y" : 0.0
+      }, {
+	"x" : 9.0,
+	"y" : 0.0
+      } ],
+      "smoothed" : [ false, false, false, false ],
+      "closed" : true
+    },
+    "color" : {
+      "rgb" : -16777216
+    },
+    "lineWidth" : 0.06666666666666667,
+    "fillStyle" : "SOLID",
+    "id" : 118
+  } ]
+}
