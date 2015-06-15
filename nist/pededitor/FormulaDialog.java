@@ -28,7 +28,7 @@ public class FormulaDialog extends JDialog {
     protected transient boolean pressedOK = false;
     protected transient boolean selfModifying = false;
     @SuppressWarnings("serial")
-	protected JButton okButton =  new JButton
+    protected JButton okButton =  new JButton
         (new AbstractAction("Locate compound in diagram") {
                 @Override public void actionPerformed(ActionEvent e) {
                     normalExit();
