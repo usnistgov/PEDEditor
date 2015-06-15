@@ -6206,6 +6206,7 @@ public class BasicEditor extends Diagram
         Point2D.Double iv = new Point2D.Double(1.0, 0.0);
         principalToStandardPage.deltaTransform(iv, iv);
         setLineWidth(mult * Geom.length(iv));
+        editFrame.customLineWidth.setSelected(true);
     }
 
     EditPane getEditPane() { return editFrame.getEditPane(); }
