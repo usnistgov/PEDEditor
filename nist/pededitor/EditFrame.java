@@ -71,6 +71,13 @@ public class EditFrame extends JFrame
     protected JRadioButtonMenuItem blackBackgroundImage;
     protected JRadioButtonMenuItem blinkBackgroundImage;
     protected JRadioButtonMenuItem noBackgroundImage;
+    protected JRadioButtonMenuItem customLineWidth =
+        new JRadioButtonMenuItem(new AbstractAction("Custom...") {
+                @Override public void actionPerformed(ActionEvent e) {
+                    getEditor().customLineWidth();
+                    finishEvent();
+                }
+            });
     protected Action setAspectRatio;
     static final boolean showSnap = false;
     protected Action snapToGrid;
@@ -1258,14 +1265,8 @@ public class EditFrame extends JFrame
         double[] lineWidths = {0.0006, 0.0012, 0.0017, 0.0020, 0.0024, 0.0029,
                                0.0034, 0.0048};
 
-        mnLineWidth.add
-            (new JRadioButtonMenuItem
-             (new AbstractAction("Custom...") {
-                     @Override public void actionPerformed(ActionEvent e) {
-                         getEditor().customLineWidth();
-                         finishEvent();
-                     }
-                 }));
+        mnLineWidth.add(customLineWidth);
+        lineWidthGroup.add(customLineWidth);
         for (int i = 0; i < lineWidths.length; ++i) {
             LineWidthMenuItem item = new LineWidthMenuItem(lineWidths[i]);
             if (lineWidths[i] == Diagram.STANDARD_LINE_WIDTH) {
