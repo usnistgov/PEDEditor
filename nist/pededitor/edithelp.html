@@ -50,7 +50,7 @@ described below.
 
     <li><a href="#PositionPopup">Position</a>
 
-    <li><a href="#PositionPopup">View</a>
+    <li><a href="#ViewPopup">View</a>
 
     <li><a href="#AddDecoration">Add decoration</a>
 
@@ -80,7 +80,7 @@ described below.
 
 <h2><a id="File">File</a></h2>
 
-<h3>New Diagram</h3>
+<h3>New diagram</h3>
 
 <p>Create a new diagram from scratch. If you wish to digitize a
 scanned image of an existing diagram, use the
@@ -104,7 +104,7 @@ select the boundary of a diagram within that image and then create a
 new diagram traced from the old one. That window has its own Help menu
 option which provides more information.</p>
 
-<h3>Save / Save As PED</h3>
+<h3>Save / Save as PED</h3>
 
 <p>Save a diagram as a file in this program's native PED format. This
 is the only choice that allows you to reload the diagram later with
@@ -185,10 +185,10 @@ user-defined variables created using
 </ul>
 
 <p>Sometimes the auto-positioning is attracted by a key point that
-prevents you from clicking on a curve or grid line instead. You may
-sidestep this problem by <a href="#DragToZoom">zooming in</a> until
-the screen distance becomes large enough that the key point no longer
-attracts the mouse pointer.</p>
+prevents you from clicking on what you really want. You may sidestep
+this problem by <a href="#DragToZoom">zooming in</a> until the screen
+distance becomes large enough that the key point no longer attracts
+the mouse pointer.</p>
 
 <ul>
 
@@ -345,6 +345,21 @@ extra space on all sides. Afterward you can use <code>Auto-fit</code>
 to eliminate all excess white space. You can also expand margins one
 at a time or shrink the diagram to the size of a selected item.
 
+<li><h3 id=PixelMode>Pixel mode</h3>
+
+  <p>Pixel mode is only available for diagrams of type "Picture or
+  map" that have uniform aspect (the X and Y units have equal length).
+  It is intended for drawing icons or other pixelated pictures whose
+  edges should align with pixel boundaries for maximum sharpness.
+  Corners are squared off, the line width is set (initially) to one
+  user unit wide, pressing the mouse button adds a control point at
+  the nearest pixel edge or center (pixel edges are best for fill
+  patterns, while pixel centers are best for lines), and curves
+  containing just a single point appear as one-unit squares.
+
+<!--  <p>Turning on pixel mode also enables <a href="#Snap">Snap to
+      grid</a>.-->
+
 <li><a id=Scale><b>Scale</b></a>: This option allows you to change the
 units of the X and Y axis, while the positions of items on the screen
 remains the same. This feature allows you to change from units of
@@ -352,6 +367,10 @@ Celsius to Kelvin, for example, or grams to kilograms.
 
 <p>If you highlight a ruler or line segment before choosing this
 operation, the dialog will be initialized with its endpoint values.
+
+<!-- <li><b id=Snap>Snap to grid</b> aligns (imperfectly) control points
+with pixel boundaries unless that would cause two different positions
+to overlap. It is only available in <a href=#PixelMode>pixel mode</a>. -->
 
 <li><b>Tags</b>: Allow the user to store free-form string data. The
 data are not displayed or otherwise used by the program.
@@ -571,6 +590,11 @@ forms.</a>
 <p>Once you have zoomed in, you can use <b id=BestFit>Best fit</b>
 (<code>Control+B</code>) to zoom all the way back out again.
 
+<p><b id=ShowGrid>Show grid</b> (<code>Control+G</code> to toggle)
+overlays a grid onto the diagram. <a href="#NearestGridPoint">Nearest
+grid point</a> moves the mouse to the nearest intersection on that
+grid.
+
 <p>If you are tracing an image, you may use the <b>Background
 Image</b> submenu to select how to display the original image (if any)
 in the background of the new diagram. <b>Hide</b>
@@ -624,7 +648,10 @@ then <b>Deselect</b> (<code>Escape</code>) will un-highlight the item.
       to <a href="#Autoposition">the nearest point of special
       interest</a>.
 
-      <li><p><b id=NearestPoint>Nearest point</b> (<code>q</code>)
+      <li><p><b id=NearestGridPoint>Nearest grid point</b> (<code>g</code>)
+          moves the mouse to the nearest round number coordinate.</p>
+
+      <li><p><b id=NearestPoint>Nearest key point</b> (<code>q</code>)
           moves the mouse to the nearest key point, including</p>
 
         <ul>
@@ -682,7 +709,7 @@ a fixed composition.
 (<code>Up/Down/Left/Right</code> arrow) moves the mouse in small
 increments.
 
-<li><h3>View popup menu</h3>
+<li><h3 id=ViewPopup>View popup menu</h3>
 
   <ul>
     <li><b>Zoom in</b> (<code>Control++</code>, press <code>+</code>
