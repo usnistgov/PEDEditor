@@ -120,11 +120,11 @@ public class CuspFigure implements BoundedParameterizable2D, Decorated {
         this.fill = fill;
     }
 
-    public void draw(Graphics2D g) {
-        draw(g, getLineWidth());
+    public void draw(Graphics2D g, boolean round) {
+        draw(g, getLineWidth(), round);
     }
 
-    public void draw(Graphics2D g, double lineWidth) {
+    public void draw(Graphics2D g, double lineWidth, boolean round) {
         StandardFill fill = getFill();
         if (fill != null) {
             curve.fill(g, getPaint());
@@ -135,7 +135,7 @@ public class CuspFigure implements BoundedParameterizable2D, Decorated {
                 oldColor  = g.getColor();
                 g.setColor(color);
             }
-            curve.draw(g, getStroke(), lineWidth, getColor());
+            curve.draw(g, getStroke(), lineWidth, getColor(), round);
             if (oldColor != null) {
                 g.setColor(oldColor);
             }
