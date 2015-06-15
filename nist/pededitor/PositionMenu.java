@@ -19,6 +19,7 @@ public class PositionMenu extends JMenu {
         setMnemonic(KeyEvent.VK_P);
         mEditor = editor;
         add(getEditFrame().actAutoPosition);
+        add(getEditFrame().actNearestGridPoint);
         add(getEditFrame().actNearestPoint);
         add(getEditFrame().actNearestCurve);
         add(getEditFrame().actSelectNearestPoint);
