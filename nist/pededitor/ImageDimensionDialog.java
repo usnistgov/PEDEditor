@@ -15,6 +15,7 @@ public class ImageDimensionDialog extends StringArrayDialog {
     private static final long serialVersionUID = -8426815422655006923L;
     JCheckBox showOriginalImage = new
         JCheckBox("Show original image");
+    JCheckBox transparent = new JCheckBox("Transparent");
 
     ImageDimensionDialog(Frame owner) {
         super(owner,
@@ -25,7 +26,8 @@ public class ImageDimensionDialog extends StringArrayDialog {
         setTitle("Image size");
         GridBagUtil gb = new GridBagUtil(panelBeforeOK);
         gb.endRowWith(Box.createVerticalStrut(6 /* pixels */));
-        gb.centerAndEndRow(showOriginalImage);
+        gb.addEast(transparent);
+        gb.endRowWith(showOriginalImage);
     }
 
     /** Select whether to display the "Show original image"
@@ -40,6 +42,20 @@ public class ImageDimensionDialog extends StringArrayDialog {
 
     public boolean isShowOriginalImage() {
         return showOriginalImage.isSelected();
+    }
+
+    /** Select whether to display the "Show original image"
+        checkbox. */
+    public void setTransparentVisible(boolean b) {
+        panelBeforeOK.setVisible(b);
+    }
+
+    public void setTransparent(boolean b) {
+        transparent.setSelected(b);
+    }
+
+    public boolean isTransparent() {
+        return transparent.isSelected();
     }
 
     public void setDimension(Dimension d) {
