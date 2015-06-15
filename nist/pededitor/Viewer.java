@@ -76,6 +76,7 @@ public class Viewer extends Editor {
         for (AbstractAction act: new AbstractAction[]
             { (AbstractAction) ef.mnUnstickMouse.getAction(),
                  ef.actAutoPosition,
+                 ef.actNearestGridPoint,
                  ef.actNearestPoint,
                  ef.actNearestCurve,
             }) {
