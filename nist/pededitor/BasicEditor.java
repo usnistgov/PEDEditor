@@ -272,6 +272,7 @@ public class BasicEditor extends Diagram
     protected CoordinateDialog coordinateDialog = null;
     protected DigitizeDialog digitizeDialog = null;
     protected ImageDimensionDialog imageDimensionDialog = null;
+    protected LineWidthDialog lineWidthDialog = null;
     static JDialog waitDialog = null;
 
     @JsonIgnore public DecorationHandle getSelection() {
@@ -320,6 +321,7 @@ public class BasicEditor extends Diagram
     protected transient BufferedImage originalImage;
     protected transient boolean editorIsPacked = false;
     protected transient boolean smoothed = false;
+    protected transient boolean showGrid = false;
     protected transient boolean majorSaveNeeded = false;
     protected transient Dimension oldFrameSize = null;
     protected transient boolean autoRescale = false;
@@ -646,6 +648,10 @@ public class BasicEditor extends Diagram
                 imageDimensionDialog.dispose();
                 imageDimensionDialog = null;
             }
+            if (lineWidthDialog != null) {
+                lineWidthDialog.dispose();
+                lineWidthDialog = null;
+            }
             if (tieLineDialog != null) {
                 tieLineDialog.dispose();
                 tieLineDialog = null;
@@ -827,6 +833,11 @@ public class BasicEditor extends Diagram
     @Override public void removeTag(String tag) {
         super.removeTag(tag);
         editFrame.removeTag(tag);
+    }
+
+    @Override public void detachOriginalImage() {
+        originalImage = null;
+        super.detachOriginalImage();
     }
 
     public void setDefaultSettingsFromSelection() {
@@ -1683,6 +1694,75 @@ public class BasicEditor extends Diagram
         }
     }
 
+    public double gridStep(LinearAxis ax) {
+        if (isTernary()) {
+            return 0.1;
+        } else if (isPixelMode()) {
+            return 0.5;
+        } else {
+            return RulerTick.roundFloor(length(ax) / 15);
+        }
+    }
+    
+    public double gridStepX() {
+        return gridStep(getXAxis());
+    }
+
+    public double gridStepY() {
+        return gridStep(getYAxis());
+    }
+    
+    public Point2D.Double nearestGridPoint(Point2D prin) {
+        double gx = gridStepX();
+        double x = prin.getX();
+        x = Math.rint(x / gx) * gx;
+        double gy = gridStepY();
+        double y = prin.getY();
+        y = Math.rint(y / gy) * gy;
+        return new Point2D.Double(x,y);
+    }
+
+    public void paintGridLines(Graphics2D g, double scale,
+                               LinearAxis lineAx, LinearAxis stepAx,
+                               double dstep) {
+        if (principalToStandardPage == null) {
+            return;
+        }
+        double[] lineRange = getRange(lineAx);
+        double[] stepRange = getRange(stepAx);
+
+        double stepMin = dstep * Math.ceil(stepRange[0] / dstep);
+        double stepMax = dstep * Math.floor(stepRange[1] / dstep) + dstep / 2;
+        double lineMin = lineRange[0];
+        double lineMax = lineRange[1];
+        Affine toPage;
+
+        try {
+            toPage = inverseTransform(lineAx, stepAx);
+        } catch (NoninvertibleTransformException x) {
+            throw new IllegalStateException
+                ("Axes " + lineAx + " and " + stepAx + " are not L.I.");
+        }
+        toPage.preConcatenate(principalToScaledPage(scale));
+        g.setColor(Color.GRAY);
+        for (double step = stepMin; step < stepMax; step += dstep) {
+            Point2D.Double p1 = toPage.transform(lineMin, step);
+            Point2D.Double p2 = toPage.transform(lineMax, step);
+            g.drawLine((int) Math.round(p1.x), (int) Math.round(p1.y),
+                       (int) Math.round(p2.x), (int) Math.round(p2.y));
+        }
+    }
+
+    public void paintGridLines(Graphics2D g, double scale) {
+        double xstep = isPixelMode() ? 1.0 : gridStepX();
+        double ystep = isPixelMode() ? 1.0 : gridStepY();
+        paintGridLines(g, scale, getXAxis(), getYAxis(), ystep);
+        paintGridLines(g, scale, getYAxis(), getXAxis(), xstep);
+        if (isTernary()) {
+            paintGridLines(g, scale, getYAxis(), getLeftAxis(), xstep);
+        }
+    }
+
     /** Paint the diagram to the given graphics context. Highlight the
         selection, if any, and print the background image if
         necessary. Also indicate the autoselect point if the shift key
@@ -1703,6 +1783,9 @@ public class BasicEditor extends Diagram
                             RenderingHints.VALUE_RENDER_QUALITY);
 
         paintScreenBackground(g, scale, Color.WHITE);
+        if (showGrid) {
+            paintGridLines(g, scale);
+        }
 
         boolean showSel = selection != null;
         statusPt = mprin;
@@ -2405,9 +2488,30 @@ public class BasicEditor extends Diagram
         editFrame.setSmoothed(b);
     }
 
+    /** Toggle whether to show grid lines at round (x,y) values. */
+    public void setShowGrid(boolean b) {
+        showGrid = b;
+        redraw();
+    }
+
     @Override public void setUsingWeightFraction(boolean b) {
         super.setUsingWeightFraction(b);
         editFrame.setUsingWeightFraction(b);
+    }
+
+    /** Set pixel mode on or off, but also make other related settings
+        changes the user usually wants. */
+    public void setPixelModeComplex(boolean b) {
+        setPixelMode(b);
+        if (b) {
+            setGridLineWidth(1.0);
+            setShowGrid(true);
+        }
+    }
+
+    @Override public void setPixelMode(boolean b) {
+        super.setPixelMode(b);
+        editFrame.setPixelMode(b);
     }
 
     int convertLabels() {
@@ -3196,6 +3300,21 @@ public class BasicEditor extends Diagram
         setMouseStuck(true);
     }
 
+    /** Move the mouse to the nearest integer coordinates.
+
+        @param key A String describing the key combination used to
+        invoke this function; this parameter is used to display an
+        error to the user if the mouse is off-screen.
+    */
+    public void seekNearestGridPoint(String key) {
+        if (mouseMissing(key)) {
+            return;
+        }
+        setMouseStuck(false);
+        moveMouse(nearestGridPoint(mprin));
+        setMouseStuck(true);
+    }
+
     public void scaleXUnits() {
         scaleUnits(getXAxis());
     }
@@ -3290,6 +3409,7 @@ public class BasicEditor extends Diagram
             : new AffineTransform(1.0, 0.0, 0.0, m, 0.0, b);
 
         invisiblyTransformPrincipalCoordinates(xform);
+        resetPixelModeVisible();
         propagateChange();
     }
 
@@ -4216,11 +4336,10 @@ public class BasicEditor extends Diagram
                 case BINARY:
                 case OTHER:
                     {
-                        boolean other = (diagramType == DiagramType.OTHER);
-                        if (other) {
-                            leftMargin = rightMargin = topMargin = bottomMargin = 0.05;
-                        }
                         CartesianDialog dog = new CartesianDialog(editFrame);
+                        boolean other = (diagramType == DiagramType.OTHER);
+                        dog.setUniformScale(other);
+                        dog.setPixelModeVisible(other);
 
                         Rectangle2D.Double domain;
                         if (other && tracing) {
@@ -4269,7 +4388,14 @@ public class BasicEditor extends Diagram
                              new Rectangle2D.Double
                              (0, r.height, r.width, -r.height));
 
-                        if (!other) {
+                        if (other) {
+                            if (dog.isPixelMode()) {
+                                setPixelModeComplex(true);
+                                leftMargin = rightMargin = topMargin = bottomMargin = 0.0;
+                            } else {
+                                leftMargin = rightMargin = topMargin = bottomMargin = 0.05;
+                            }
+                        } else {
                             double bottom = domain.getY();
                             double top = bottom + domain.getHeight();
                             double left = domain.getX();
@@ -4529,11 +4655,33 @@ public class BasicEditor extends Diagram
         return getLabelDialog().getFontSize();
     }
 
+    /** Return true unless something about the setup of this diagram
+        makes it unsuitable for use with pixel mode. */
+    boolean maybePixelMode() {
+        if (isPixelMode())
+            return true;
+        if (isTernary() || !isFixedAspect())
+            return false;
+        LinearAxis[] axes =
+            { LinearAxis.createXAxis(null), LinearAxis.createYAxis(null) };
+        for (LinearAxis axis: axes) {
+            long len = Math.round(length(axis));
+            if (len < 2 || len > 256)
+                return false;
+        }
+        return true;
+    }
+
+    void resetPixelModeVisible() {
+        editFrame.pixelMode.setVisible(maybePixelMode());
+    }
+        
     @Override protected void initializeDiagram() {
         super.initializeDiagram();
         editFrame.setAspectRatio.setEnabled(!isTernary());
         editFrame.setTopComponent.setEnabled(isTernary());
         editFrame.scaleBoth.setEnabled(!isTernary());
+        resetPixelModeVisible();
         bestFit();
     }
 
@@ -4765,6 +4913,9 @@ public class BasicEditor extends Diagram
         super.cannibalize(other);
         for (LinearAxis axis: axes) {
             editFrame.addVariable((String) axis.name);
+        }
+        if (isPixelMode()) {
+            setPixelModeComplex(true);
         }
         clearSelection();
     }
@@ -5191,9 +5342,18 @@ public class BasicEditor extends Diagram
         }
         if (imageDimensionDialog == null) {
             imageDimensionDialog = new ImageDimensionDialog(editFrame);
+            if (isPixelMode()) {
+                imageDimensionDialog.setDimension
+                    (new Dimension
+                     ((int) Math.max(1, length(getXAxis())),
+                      (int) Math.max(1, length(getYAxis()))));
+            }
         }
         ImageDimensionDialog dog = imageDimensionDialog;
         dog.setShowOriginalImageVisible(tracingImage());
+        boolean maybeTransparent = ext.equalsIgnoreCase("GIF")
+            || ext.equalsIgnoreCase("PNG");
+        dog.setTransparentVisible(maybeTransparent);
 
         Dimension size;
         try {
@@ -5212,7 +5372,9 @@ public class BasicEditor extends Diagram
         }
 
         try {
-            saveAsImage(file, ext, size.width, size.height, dog.isShowOriginalImage());
+            saveAsImage(file, ext, size.width, size.height,
+                        dog.isShowOriginalImage(),
+                        maybeTransparent && dog.isTransparent());
         } catch (IOException x) {
             showError("File error: " + x);
         } catch (OutOfMemoryError x) {
@@ -5222,9 +5384,10 @@ public class BasicEditor extends Diagram
     }
 
     public void saveAsImage(File file, String format, int width, int height,
-                            boolean showOriginalImage) throws IOException {
+                            boolean showOriginalImage,
+                            boolean transparent) throws IOException {
         if (!showOriginalImage) {
-            saveAsImage(file, format, width, height);
+            saveAsImage(file, format, width, height, transparent);
             return;
         }
         BufferedImage im = transformOriginalImage(new Dimension(width, height));
@@ -5643,19 +5806,6 @@ public class BasicEditor extends Diagram
         }
     }
 
-     /** Return the inverse transform from the (v0,v1) system to the
-         principal coordinate system. Throws an exception if the
-         inverse does not exist. */
-    Affine inverseTransform(LinearAxis v0, LinearAxis v1)
-        throws NoninvertibleTransformException {
-        Affine xform = new Affine
-            (v0.getA(), v1.getA(),
-             v0.getB(), v1.getB(),
-             v0.getC(), v1.getC());
-
-        return xform.createInverse();
-    }
-
     @Override public void mouseDragged(MouseEvent e) {
         mouseMoved(e);
     }
@@ -5683,11 +5833,17 @@ public class BasicEditor extends Diagram
            if (e.isShiftDown()) {
               mprin = getAutoPosition();
            }
-            showPopupMenu(new MousePress(e,mprin));
+           showPopupMenu(new MousePress(e,mprin));
         } else {
-            Point2D.Double p =  e.isShiftDown() ?
-                getAutoPositionHandle(null).getLocation() :
-                getVertexAddMousePosition(e.getPoint());
+            Point2D.Double p;
+            if (e.isShiftDown()) {
+                p = getAutoPositionHandle(null).getLocation();
+            } else {
+                p = getVertexAddMousePosition(e.getPoint());
+                if (isPixelMode()) {
+                    p = nearestGridPoint(p);
+                }
+            }
             mousePress = new MousePress(e,p);
             mouseTravel = null;
         }
@@ -6009,21 +6165,47 @@ public class BasicEditor extends Diagram
     }
 
     void customLineWidth() {
-        while (true) {
-            String str = (String) JOptionPane.showInputDialog
-                (editFrame,
-                 "Line width in page X/Y units:",
-                 String.format("%.5f", getLineWidth()));
-            if (str == null) {
-                return;
+        boolean firstTime = false;
+        if (lineWidthDialog == null) {
+            lineWidthDialog = new LineWidthDialog(editFrame);
+            firstTime = true;
+        }
+        LineWidthDialog dog = lineWidthDialog;
+        if (!isFixedAspect()) {
+            dog.setUnitsVisible(false);
+            if (dog.isUserUnits()) {
+                dog.getValueField().setText(null); // Clear it.
             }
+            dog.setUserUnits(false);
+        }
+        if (firstTime) {
+            dog.setValue(lineWidth);
+        }
+
+        if (dog.showModal()) {
             try {
-                setLineWidth(ContinuedFraction.parseDouble(str));
-                return;
+                double w = dog.getValue();
+                if (dog.isUserUnits()) {
+                    setGridLineWidth(w);
+                } else {
+                    setLineWidth(w);
+                }
             } catch (NumberFormatException e) {
                 showError("Invalid number format.");
+                return;
             }
         }
+    }
+
+    /** Set the default line width to equal the screen length of the
+        principal coordinates vector (x=1, y=0). */
+    void setGridLineWidth(double mult) {
+        if (principalToStandardPage == null) {
+            return;
+        }
+        Point2D.Double iv = new Point2D.Double(1.0, 0.0);
+        principalToStandardPage.deltaTransform(iv, iv);
+        setLineWidth(mult * Geom.length(iv));
     }
 
     EditPane getEditPane() { return editFrame.getEditPane(); }
