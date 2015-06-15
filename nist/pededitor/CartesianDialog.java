@@ -5,6 +5,7 @@ import java.awt.geom.Rectangle2D;
 
 import javax.swing.Box;
 import javax.swing.ButtonGroup;
+import javax.swing.JCheckBox;
 import javax.swing.JLabel;
 import javax.swing.JOptionPane;
 import javax.swing.JRadioButton;
@@ -17,6 +18,8 @@ public class CartesianDialog extends NumberColumnDialog {
     protected JRadioButton uniformScale = new JRadioButton
         ("Uniform scale");
     protected NumberField aspectRatio = new NumberField(6);
+    protected JCheckBox pixelMode = new JCheckBox
+        ("Pixel mode (for drawing tiny pictures)");
     {
         fixedAspect.setSelected(true);
         diagramShape.add(fixedAspect);
@@ -33,6 +36,18 @@ public class CartesianDialog extends NumberColumnDialog {
 
     public void setUniformScale(boolean v) {
         (v ? uniformScale : fixedAspect).setSelected(true);
+    }
+
+    public void setPixelModeVisible(boolean b) {
+        pixelMode.setVisible(b);
+    }
+
+    public boolean isPixelMode() {
+        return pixelMode.isSelected();
+    }
+
+    public void setPixelMode(boolean v) {
+        (v ? pixelMode : fixedAspect).setSelected(true);
     }
 
     public void setAspectRatio(double d) {
@@ -63,6 +78,7 @@ public class CartesianDialog extends NumberColumnDialog {
         gb.addWest(fixedAspect);
         gb.addWest(aspectRatio);
         gb.endRowWith(uniformScale);
+        gb.centerAndEndRow(pixelMode);
         gb.endRowWith(Box.createVerticalStrut(6 /* pixels */));
     }
 
