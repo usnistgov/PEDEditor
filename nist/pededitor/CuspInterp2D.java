@@ -128,12 +128,12 @@ public class CuspInterp2D extends PointsInterp2D {
         Path2D.Double res = new Path2D.Double();
         if (s <= 2) {
             if (s >= 1) {
-            	temp = points.get(0);
+                temp = points.get(0);
                 res.moveTo(temp.x, temp.y);
                 if (s == 2) {
-                	temp = points.get(1);
-                    res.lineTo(temp.x, temp.y);
+                    temp = points.get(1);
                 }
+                res.lineTo(temp.x, temp.y);
             }
             return res;
         }
@@ -201,7 +201,9 @@ public class CuspInterp2D extends PointsInterp2D {
             // Remove the temporary duplicate of the starting point.
             points.remove(s);
         }
-        if (!isClosed()) {
+        if (isClosed()) {
+            res.closePath();
+        } else {
             // Reset the last vertex to its
             // original smoothing value.
             setSmoothed(lastClear, oldLast);
