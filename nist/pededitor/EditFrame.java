@@ -65,7 +65,7 @@ public class EditFrame extends JFrame
     protected ButtonGroup lineWidthGroup = new ButtonGroup();
     protected ButtonGroup backgroundImageGroup = new ButtonGroup();
     protected ButtonGroup fontGroup = new ButtonGroup();
-    protected JMenu mnBackgroundImage = new JMenu("Background Image");
+    protected JMenu mnBackgroundImage = new JMenu("Background image");
     protected JRadioButtonMenuItem lightGrayBackgroundImage;
     protected JRadioButtonMenuItem darkGrayBackgroundImage;
     protected JRadioButtonMenuItem blackBackgroundImage;
@@ -86,7 +86,7 @@ public class EditFrame extends JFrame
     JMenu mnView = new JMenu("View");
 
     protected JMenuItem mnNewDiagram = new JMenuItem
-        (new Action("New Diagram", KeyEvent.VK_N) {
+        (new Action("New diagram", KeyEvent.VK_N) {
                 @Override public void actionPerformed(ActionEvent e) {
                     getEditor().newDiagram(false);
                 }
@@ -103,7 +103,7 @@ public class EditFrame extends JFrame
                 getEditor().save();
             }
         };
-    protected JMenu mnSaveAs = new JMenu("Save As");
+    protected JMenu mnSaveAs = new JMenu("Save as");
     protected JMenuItem mnSave = toMenuItem(actSave);
     protected Action actSaveAsPED = new Action("PED", KeyEvent.VK_P) {
             { 
