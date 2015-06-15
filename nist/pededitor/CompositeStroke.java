@@ -52,7 +52,13 @@ public class CompositeStroke {
     /** Draw the given path with this stroke while multiplying the
         line width and dash length by "scale" and changing the cap and
         join to be rounded or not depending on the value of
-        "round". */
+        "round".
+
+        That's only approximately true. If round is true, then the cap
+        and join settings are not changed at all -- but most
+        StandardStrokes use rounded settings to begin with. If round
+        is false, then a cap setting of ROUND is changed to BUTT, and
+        a join setting of ROUND is changed to MITER. */
     public void draw(Graphics2D g, Shape shape, double scale,
                      boolean round) {
         Stroke oldStroke = g.getStroke();
