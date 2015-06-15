@@ -49,6 +49,22 @@ public class CompositeStroke {
         g.setStroke(oldStroke);
     }
 
+    /** Draw the given path with this stroke while multiplying the
+        line width and dash length by "scale" and changing the cap and
+        join to be rounded or not depending on the value of
+        "round". */
+    public void draw(Graphics2D g, Shape shape, double scale,
+                     boolean round) {
+        Stroke oldStroke = g.getStroke();
+
+        for (BasicStroke s: strokes) {
+            g.setStroke(BasicStrokes.scaledStroke(s, scale, round));
+            g.draw(shape);
+        }
+
+        g.setStroke(oldStroke);
+    }
+
     public int strokeCount() {
         return strokes.size();
     }
@@ -75,10 +91,6 @@ public class CompositeStroke {
 
     public static CompositeStroke getInvisibleLine() {
         return new CompositeStroke(BasicStrokes.getInvisibleLine());
-    }
-
-    public static CompositeStroke getStartingDot() {
-        return new CompositeStroke(BasicStrokes.getStartingDot());
     }
 
     public static CompositeStroke getDotDashLine() {
