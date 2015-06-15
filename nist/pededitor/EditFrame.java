@@ -72,6 +72,8 @@ public class EditFrame extends JFrame
     protected JRadioButtonMenuItem blinkBackgroundImage;
     protected JRadioButtonMenuItem noBackgroundImage;
     protected Action setAspectRatio;
+    static final boolean showSnap = false;
+    protected Action snapToGrid;
     protected String longHelpFile = "edithelp.html";
     protected String shortHelpFile = "viewhelp.html";
     protected String helpAboutFile = "about.html";
@@ -309,6 +311,19 @@ public class EditFrame extends JFrame
                     finishEvent();
                 }
             });
+
+    Action actNearestGridPoint = new Action
+        ("Nearest grid point",
+         KeyEvent.VK_G, KeyStroke.getKeyStroke('g')) {
+            { 
+                putValue(SHORT_DESCRIPTION,
+                         "Move the mouse to the closest integer coordinates");
+            }
+            @Override public void actionPerformed(ActionEvent e) {
+                getEditor().seekNearestGridPoint("g");
+                finishEvent();
+                }
+            };
     
     Action actNearestPoint = new Action
         ("Nearest key point",
@@ -652,6 +667,13 @@ public class EditFrame extends JFrame
         smoothed.setSelected(b);
     }
 
+    /** Internal use; called from BasicEditor.java. */
+    void setPixelMode(boolean b) {
+        pixelMode.setSelected(b);
+        if (showSnap)
+            snapToGrid.setEnabled(b && getEditor().isEditable());
+    }
+
     void conversionError() {
         String msg = getEditor().isEditable()
             ? ("<p>The conversion was canceled or could not be performed. "
@@ -716,6 +738,25 @@ public class EditFrame extends JFrame
           KeyStroke.getKeyStroke('s')) {
                 @Override public void actionPerformed(ActionEvent e) {
                     getEditor().setSmoothed(smoothed.isSelected());
+                    finishEvent();
+                }
+            });
+
+    protected JCheckBoxMenuItem pixelMode
+        = new JCheckBoxMenuItem
+        (new Action("Pixel mode", KeyEvent.VK_P) {
+                @Override public void actionPerformed(ActionEvent e) {
+                    getEditor().setPixelModeComplex(pixelMode.isSelected());
+                    finishEvent();
+                }
+            });
+
+    protected JCheckBoxMenuItem showGrid
+        = new JCheckBoxMenuItem
+        (new Action("Show grid", KeyEvent.VK_G,
+                    KeyStroke.getKeyStroke("control G")) {
+                @Override public void actionPerformed(ActionEvent e) {
+                    getEditor().setShowGrid(showGrid.isSelected());
                     finishEvent();
                 }
             });
@@ -1217,13 +1258,6 @@ public class EditFrame extends JFrame
         double[] lineWidths = {0.0006, 0.0012, 0.0017, 0.0020, 0.0024, 0.0029,
                                0.0034, 0.0048};
 
-        for (int i = 0; i < lineWidths.length; ++i) {
-            LineWidthMenuItem item = new LineWidthMenuItem(lineWidths[i]);
-            if (lineWidths[i] == Diagram.STANDARD_LINE_WIDTH) {
-                item.setSelected(true);
-            }
-            mnLineWidth.add(item);
-        }
         mnLineWidth.add
             (new JRadioButtonMenuItem
              (new AbstractAction("Custom...") {
@@ -1232,6 +1266,13 @@ public class EditFrame extends JFrame
                          finishEvent();
                      }
                  }));
+        for (int i = 0; i < lineWidths.length; ++i) {
+            LineWidthMenuItem item = new LineWidthMenuItem(lineWidths[i]);
+            if (lineWidths[i] == Diagram.STANDARD_LINE_WIDTH) {
+                item.setSelected(true);
+            }
+            mnLineWidth.add(item);
+        }
         mnCurve.add(mnLineWidth);
         mnCurve.add(smoothed);
 
@@ -1270,16 +1311,6 @@ public class EditFrame extends JFrame
     
         // "Properties" top-level menu
         mnProperties.setMnemonic(KeyEvent.VK_R);
-
-        setAspectRatio = new Action
-            ("Aspect ratio", KeyEvent.VK_A) {
-                @Override public void actionPerformed(ActionEvent e) {
-                    getEditor().setAspectRatio();
-                    finishEvent();
-                }
-            };
-        setAspectRatio.setEnabled(false);
-        mnProperties.add(setAspectRatio);
 
         mnFont.setMnemonic(KeyEvent.VK_F);
         FontMenuItem sans = new FontMenuItem
@@ -1353,8 +1384,6 @@ public class EditFrame extends JFrame
         mnTagsSeparator.setVisible(false);
         mnRemoveTag.setVisible(false);
 
-        mnProperties.add(mnSetTitle);
-
         mnVariables.setMnemonic(KeyEvent.VK_V);
         mnProperties.add(mnVariables);
         mnVariables.add(new Action("Add", KeyEvent.VK_A) {
@@ -1369,6 +1398,30 @@ public class EditFrame extends JFrame
 
         mnVariablesSeparator.setVisible(false);
         mnEditVariable.setVisible(false);
+
+        setAspectRatio = new Action
+            ("Aspect ratio", KeyEvent.VK_A) {
+                @Override public void actionPerformed(ActionEvent e) {
+                    getEditor().setAspectRatio();
+                    finishEvent();
+                }
+            };
+        setAspectRatio.setEnabled(false);
+        mnProperties.add(setAspectRatio);
+
+        snapToGrid = new Action
+            ("Snap to grid", KeyEvent.VK_G) {
+                @Override public void actionPerformed(ActionEvent e) {
+                    getEditor().snapToGrid();
+                    finishEvent();
+                }
+            };
+        if (showSnap) {
+            mnProperties.add(snapToGrid);
+        }
+        mnProperties.add(mnSetTitle);
+
+        mnProperties.add(pixelMode);
         mnProperties.add(editingEnabled);
         menuBar.add(mnProperties);
 
@@ -1473,6 +1526,7 @@ public class EditFrame extends JFrame
                     finishEvent();
                 }
             });
+        mnView.add(showGrid);
         mnView.add(showMathWindow);
         mnView.add(mnHints);
         showMathWindow.setSelected(true);
@@ -1519,6 +1573,7 @@ public class EditFrame extends JFrame
         for (Action act: new Action[]
             { actAutoPosition,
               actNearestPoint,
+              actNearestGridPoint,
               actNearestCurve,
               actSelectNearestPoint,
               actSelectNearestCurve,
@@ -1600,6 +1655,8 @@ public class EditFrame extends JFrame
         mnCurve.setVisible(b);
         mnFont.setVisible(b);
         e.setVisible(setAspectRatio, b);
+        if (showSnap)
+            e.setVisible(snapToGrid, b);
         mnKeys.setVisible(b);
         e.setVisible(actAddKey, b);
         mnMargins.setVisible(b);
