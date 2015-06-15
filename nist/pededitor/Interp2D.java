@@ -43,7 +43,7 @@ public abstract class Interp2D implements BoundedParameterizable2D {
     abstract public int size();
 
     public void draw(Graphics2D g, StandardStroke stroke, double lineWidth,
-                     Color color) {
+                     Color color, boolean round) {
         Color oldColor = g.getColor();
         if (color != null) {
             g.setColor(color);
@@ -57,7 +57,7 @@ public abstract class Interp2D implements BoundedParameterizable2D {
         if (stroke == null) {
             throw new IllegalArgumentException("draw(): null stroke in " + this);
         }
-        stroke.getStroke().draw(g, getPath(), lineWidth);
+        stroke.getStroke().draw(g, getPath(), lineWidth, round);
         g.setColor(oldColor);
     }
 
