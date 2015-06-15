@@ -52,6 +52,7 @@ import java.util.Observable;
 import java.util.Set;
 import java.util.TreeMap;
 import java.util.TreeSet;
+import java.util.function.Function;
 
 import javax.imageio.ImageIO;
 import javax.print.attribute.PrintRequestAttributeSet;
@@ -68,11 +69,13 @@ import org.codehaus.jackson.map.DeserializationConfig;
 import org.codehaus.jackson.map.ObjectMapper;
 import org.codehaus.jackson.map.SerializationConfig;
 import org.codehaus.jackson.map.annotate.JsonDeserialize;
+import org.codehaus.jackson.map.annotate.JsonSerialize;
 import org.codehaus.jackson.map.annotate.JsonSerialize.Inclusion;
 
 /** Main class for Phase Equilibria Diagrams and their presentation,
     but not including GUI elements such as menus and windows. */
 @JsonIgnoreProperties({"exitOnClose"})
+
 public class Diagram extends Observable implements Printable {
     static ObjectMapper objectMapper = null;
     protected static final DecimalFormat STANDARD_PERCENT_FORMAT
@@ -294,13 +297,14 @@ public class Diagram extends Observable implements Printable {
         @Override public void draw(Graphics2D g, double scale) {
             CuspFigure item = getItem();
             if (item.size() == 1
-                && item.getStroke() != StandardStroke.INVISIBLE) {
+                && item.getStroke() != StandardStroke.INVISIBLE
+                && !isPixelMode()) {
                 // Draw a dot.
                 double r = item.getLineWidth() * 2 * scale;
                 circleVertices(g, item, scale, true, r);
             } else {
                 item.createTransformed(principalToScaledPage(scale))
-                    .draw(g, scale * item.getLineWidth());
+                    .draw(g, scale * item.getLineWidth(), !isPixelMode());
             }
         }
 
@@ -1074,11 +1078,12 @@ public class Diagram extends Observable implements Printable {
 
     protected static final double BASE_SCALE = 615.0;
 
-    // The label views are grid-fitted at the font size of the buttons
-    // they were created from. Grid-fitting throws off the font
-    // metrics, but the bigger the font size, the less effect
-    // grid-fitting has, and the less error it induces. So make the
-    // Views big enough that grid-fitting is largely irrelevant.
+    // The graphics driver grid fits the label views (at a pixel
+    // level, unrelated to the grid the program displays) at the font
+    // size of the buttons they were created from. Grid-fitting throws
+    // off the font metrics, but the bigger the font size, the less
+    // effect grid-fitting has, and the less error it induces. So make
+    // the Views big enough that grid-fitting is largely irrelevant.
 
     private static final int VIEW_MAGNIFICATION = 8; // = 100 px / 12.5 px
     static protected final String defaultFontName = "DejaVu LGC Sans PED";
@@ -1115,6 +1120,11 @@ public class Diagram extends Observable implements Printable {
     protected Rectangle2D.Double pageBounds;
     protected DiagramType diagramType = null;
     protected ArrayList<Decoration> decorations;
+    /** In pixel mode, one-point lines are shown as squares at the
+        normal line width and line ends; CAP_SQUARE and JOIN_MITER are
+        the default settings for lines; and the grid length is one
+        screen unit. */
+    protected boolean pixelMode = false;
 
     class LabelInfo {
         AnchoredLabel label;
@@ -1246,6 +1256,17 @@ public class Diagram extends Observable implements Printable {
 
     public void setPercentagePreferred(boolean v) {
         percentagePreferred = v;
+        propagateChange();
+    }
+
+    @JsonSerialize(include = Inclusion.NON_DEFAULT)
+    public boolean isPixelMode() {
+        return pixelMode;
+    }
+
+    public void setPixelMode(boolean v) {
+        pixelMode = v;
+        propagateChange();
     }
 
     CuspFigure idToCurve(int id) {
@@ -2482,6 +2503,12 @@ public class Diagram extends Observable implements Printable {
         add(axis);
     }
 
+    /** Like getRange(), but simply return max - min. */
+    double length(Axis ax) {
+        double[] range = getRange(ax);
+        return range[1] - range[0];
+    }
+
     /** Return { min, max } representing the range of values that ax
         can take within the standard page. Assumes that the extremes
         are represented by corners of the page. */
@@ -3367,7 +3394,7 @@ public class Diagram extends Observable implements Printable {
 
     void draw(Graphics2D g, CuspFigure path, double scale) {
         path.createTransformed(principalToScaledPage(scale))
-            .draw(g, scale * path.getLineWidth());
+            .draw(g, scale * path.getLineWidth(), !isPixelMode());
     }
 
     void draw(Graphics2D g, TieLine tie, double scale) {
@@ -3439,10 +3466,16 @@ public class Diagram extends Observable implements Printable {
             titleBuf.append(str);
         }
 
-        str = getOriginalFilename();
-        if (str == null) {
-            str = getFilename();
+        str = getFilename();
+        if (str != null) {
+            str = Paths.get(str).getFileName().toString();
+            if (titleBuf.length() > 0) {
+                titleBuf.append(" ");
+            }
+            titleBuf.append(str);
         }
+
+        str = getOriginalFilename();
         if (str != null) {
             str = Paths.get(str).getFileName().toString();
             if (titleBuf.length() > 0) {
@@ -3907,6 +3940,7 @@ public class Diagram extends Observable implements Printable {
                 if (!haveBounds) {
                     pageBounds = null;
                 }
+                setPixelMode(other.isPixelMode());
                 setUsingWeightFraction(other.isUsingWeightFraction());
             }
         propagateChange1();
@@ -3937,11 +3971,19 @@ public class Diagram extends Observable implements Printable {
     /** Return a BufferedImage of the diagram which is no larger than
         width x height. */
     public BufferedImage createImage(int width, int height) {
+        return createImage(width, height, false);
+    }
+
+    public BufferedImage createImage(int width, int height, boolean transparent) {
         Dimension size = bestFitSize(width, height);
-        BufferedImage im = new BufferedImage(size.width, size.height,
-                                             BufferedImage.TYPE_INT_RGB);
-        paintDiagram((Graphics2D) im.getGraphics(),
-                     bestFitScale(new Dimension(width, height)), Color.WHITE);
+        BufferedImage im = new BufferedImage
+            (size.width, size.height,
+             transparent ? BufferedImage.TYPE_INT_ARGB
+             : BufferedImage.TYPE_INT_RGB);
+        Graphics2D g = (Graphics2D) im.getGraphics();
+        Color backColor = transparent ? new Color(0, 0, 0, 0) :
+            Color.WHITE;
+        paintDiagram(g, bestFitScale(new Dimension(width, height)), backColor);
         return im;
     }
 
@@ -3959,7 +4001,12 @@ public class Diagram extends Observable implements Printable {
 
     public void saveAsImage(File file, String format, int width, int height)
         throws IOException {
-        ImageIO.write(createImage(width, height), format, file);
+        saveAsImage(file, format, width, height, false);
+    }
+
+    public void saveAsImage(File file, String format, int width, int height,
+                            boolean transparent) throws IOException {
+        ImageIO.write(createImage(width, height, transparent), format, file);
     }
 
     /** Return true if the save was successful. */
@@ -4462,6 +4509,17 @@ public class Diagram extends Observable implements Printable {
     /** Apply the given transform to all curve vertices, all label
         locations, all arrow locations, and all ruler start- and
         endpoints. */
+    public void transformPrincipalCoordinates(Function<? super Point2D.Double,
+                                              ? extends Point2D> xform) {
+        for (DecorationHandle hand: movementHandles()) {
+            hand.move(xform.apply(hand.getLocation()));
+        }
+        propagateChange();
+    }
+
+    /** Apply the given transform to all curve vertices, all label
+        locations, all arrow locations, and all ruler start- and
+        endpoints. */
     public void transformPrincipalCoordinates(AffineTransform trans) {
         for (CuspFigure path: paths()) {
             path.setCurve(path.getCurve().createTransformed(trans));
@@ -4561,6 +4619,25 @@ public class Diagram extends Observable implements Printable {
         }
 
         fixAxisFormats();
+    }
+
+    /** This is crude and untested, and I'm pretty sure it can fail
+        when two points get mapped to the same target, but even so, it's 
+        sometimes useful. */
+    public void snapToGrid() {
+        ArrayList<Double> xs = new ArrayList<>();
+        ArrayList<Double> ys = new ArrayList<>();
+        for (DecorationHandle hand: movementHandles()) {
+            Point2D p = hand.getLocation();
+            xs.add(p.getX());
+            ys.add(p.getY());
+        }
+        SnapToGrid snapX = new SnapToGrid(SnapToGrid.toDoubleArray(xs),
+                                          length(getXAxis()) * 1e-8);
+        SnapToGrid snapY = new SnapToGrid(SnapToGrid.toDoubleArray(ys),
+                                          length(getYAxis()) * 1e-8);
+        transformPrincipalCoordinates
+            (p -> new Point2D.Double(snapX.snap(p.getX()), snapY.snap(p.getY())));
     }
 
     /** Make sure that the axis formats still make sense after a
@@ -5359,7 +5436,8 @@ public class Diagram extends Observable implements Printable {
     }
 
     public String getFontName() {
-        return getFont().getFontName();
+        return (embeddedFont == null) ? defaultFontName
+            : getFont().getFontName();
     }
 
     /** Returns false if there is no effect because it's the same font
@@ -5430,6 +5508,38 @@ public class Diagram extends Observable implements Printable {
             setFontName(defaultFontName);
         }
         return embeddedFont;
+    }
+
+     /** Return the inverse transform from the (v0,v1) system to the
+         principal coordinate system. Throws an exception if the
+         inverse does not exist. */
+    public Affine inverseTransform(LinearAxis v0, LinearAxis v1)
+        throws NoninvertibleTransformException {
+        Affine xform = new Affine
+            (v0.getA(), v1.getA(),
+             v0.getB(), v1.getB(),
+             v0.getC(), v1.getC());
+
+        return xform.createInverse();
+    }
+
+    /** Return true if the diagram has fixed aspect; that is, the
+        length of a vector after transformation into screen
+        coordinates does not depend on its orientation. */
+    @JsonIgnore public boolean isFixedAspect() {
+        if (principalToStandardPage == null) {
+            return false;
+        }
+        Point2D.Double tmp = new Point2D.Double();
+        tmp.x = 1.0;
+        tmp.y = 0.0;
+        double lenX = Geom.length
+            (principalToStandardPage.deltaTransform(tmp, tmp));
+        tmp.x = 0.0;
+        tmp.y = 1.0;
+        double lenY = Geom.length
+            (principalToStandardPage.deltaTransform(tmp, tmp));
+        return Math.abs((lenX - lenY) / lenY) < 1e-12;
     }
 }
 
