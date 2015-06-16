@@ -3573,6 +3573,7 @@ public class BasicEditor extends Diagram
         newLabel.setAngle(pageToPrincipalAngle(newLabel.getAngle()));
         newLabel.setX(label.getX());
         newLabel.setY(label.getY());
+        newLabel.setColor(label.getColor());
         newLabel.setBaselineXOffset(label.getBaselineXOffset());
         newLabel.setBaselineYOffset(label.getBaselineYOffset());
 
