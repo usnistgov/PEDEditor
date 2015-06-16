@@ -3974,7 +3974,7 @@ public class Diagram extends Observable implements Printable {
         return createImage(width, height, false);
     }
 
-    public BufferedImage createImage(int width, int height, boolean transparent) {
+    BufferedImage createImage(int width, int height, boolean transparent) {
         Dimension size = bestFitSize(width, height);
         BufferedImage im = new BufferedImage
             (size.width, size.height,
@@ -4006,7 +4006,23 @@ public class Diagram extends Observable implements Printable {
 
     public void saveAsImage(File file, String format, int width, int height,
                             boolean transparent) throws IOException {
-        ImageIO.write(createImage(width, height, transparent), format, file);
+        BufferedImage save = null;
+
+        // Images in the editor are normally displayed without font
+        // hinting, but saving at low resolution can cause font
+        // hinting to significantly rearrange the positions of letters
+        // in labels, which can be confusing. Writing the image at a
+        // larger scale and downscaling the result reduces the
+        // problem.
+        int scale = 400 / (width + height);
+        if (scale > 1) {
+            BufferedImage tmp = createImage(width * scale, height * scale,
+                                            transparent);
+            save = ScaleImage.downscale(tmp, scale);
+        } else {
+            save = createImage(width, height, transparent);
+        }
+        ImageIO.write(save, format, file);
     }
 
     /** Return true if the save was successful. */
