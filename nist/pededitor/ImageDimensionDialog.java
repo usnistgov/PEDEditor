@@ -33,7 +33,7 @@ public class ImageDimensionDialog extends StringArrayDialog {
     /** Select whether to display the "Show original image"
         checkbox. */
     public void setShowOriginalImageVisible(boolean b) {
-        panelBeforeOK.setVisible(b);
+        showOriginalImage.setVisible(b);
     }
 
     public void setShowOriginalImage(boolean b) {
