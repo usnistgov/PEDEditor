@@ -131,20 +131,32 @@ public class Viewer extends Editor {
             IntegrationService is
                 = (IntegrationService) ServiceManager.lookup("javax.jnlp.IntegrationService");
             if (askExit) {
+                Object[] options = {"Run Now", "Finished"};
+                int defaultIndex;
+                String mess;
+                String title;
                 if (is.requestAssociation(mime, exts)) {
-                    JOptionPane.showMessageDialog
-                        (editFrame,
-                         fallbackTitle() + " has been installed. For uninstall instructions, see PED Viewer help menu.",
-                         "Installation successful",
-                         JOptionPane.PLAIN_MESSAGE);
+                    mess = fallbackTitle()
+                        + " has been installed. For uninstall instructions, see PED Viewer help menu.";
+                    title = "Installation successful";
+                    defaultIndex = 1; // Default is exit
                 } else {
-                    JOptionPane.showMessageDialog
-                        (editFrame,
-                         fallbackTitle() + " may not have successfully registered as the handler for  " +
-                         "PED Viewer diagrams. If you are unable to view diagrams, please contact " +
-                         "phase3@ceramics.org");
+                    mess = fallbackTitle() +
+                        " could not register as the handler for  " +
+                        "PED Viewer diagrams (.PEDV files). " +
+                        "<p>You can still use this program\'s File/Open option to " +
+                        "manually load and view those files. " +
+                        "<p>For more information, please contact phase3@ceramics.org.";
+                    title = "Installation partly successful";
+                    defaultIndex = 0; // Default is continue
                 }
-                System.exit(0);
+                if (JOptionPane.showOptionDialog
+                    (editFrame, htmlify(mess), title,
+                     JOptionPane.YES_NO_OPTION,
+                     JOptionPane.PLAIN_MESSAGE,
+                     null, options, options[defaultIndex]) != JOptionPane.YES_OPTION) {
+                    System.exit(0);
+                }
             }
         } catch (UnavailableServiceException x) {
             // OK, ignore this error.
