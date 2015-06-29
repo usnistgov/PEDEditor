@@ -510,9 +510,6 @@ public class BasicEditor extends Diagram
             (WindowConstants.HIDE_ON_CLOSE);
         cropFrame.addCropEventListener(this);
         addObserver(this);
-        int otherEditorCnt = getOpenEditorCnt();
-        editFrame.setLocation(15 * otherEditorCnt, 15 * otherEditorCnt);
-        openEditors.add(this);
     }
 
     public void initializeZoomFrame() {
@@ -4007,10 +4004,10 @@ public class BasicEditor extends Diagram
             if (askExit && is.requestAssociation(mime, exts)) {
                 if (JOptionPane.showOptionDialog
                     (editFrame,
-                     fallbackTitle() + " has been installed. At any time, you can " +
-                     "uninstall, run, or create a shortcut for it by opening the Java Control " +
-                     "Panel's General tab and and pressing the \"View...\" " +
-                     "button.",
+                     htmlify(fallbackTitle() + " has been installed. At any time, you can " +
+                             "uninstall, run, or create a shortcut for it by opening the Java Control " +
+                             "Panel's General tab and and pressing the \"View...\" " +
+                             "button."),
                      "Installation successful",
                      JOptionPane.YES_NO_OPTION,
                      JOptionPane.QUESTION_MESSAGE,
@@ -4692,6 +4689,9 @@ public class BasicEditor extends Diagram
         if (!editorIsPacked) {
             editFrame.pack();
             editorIsPacked = true;
+            int otherEditorCnt = getOpenEditorCnt();
+            editFrame.setLocation(15 * otherEditorCnt, 15 * otherEditorCnt);
+            openEditors.add(this);
         }
         Rectangle rect = editFrame.getBounds();
         revalidateZoomFrame();
@@ -5021,8 +5021,9 @@ public class BasicEditor extends Diagram
     }
 
     public File[] openPEDFilesDialog(Component parent) {
+        String what = String.join("/", Arrays.asList(pedFileExtensions())).toUpperCase();
         return openFilesDialog
-            (parent, "Open PED File", "PED files", pedFileExtensions());
+            (parent, "Open " + what + "  File", what + " files", pedFileExtensions());
     }
 
     /** Return the default directory to save to and load from. */
@@ -5705,7 +5706,7 @@ public class BasicEditor extends Diagram
                 while (decorations.size() > oldSize) {
                     decorations.get(decorations.size()-1).remove();
                 }
-            } catch (Exception e) {
+        } catch (Exception e) {
             System.err.println(e);
             System.exit(1);
         }
@@ -6270,7 +6271,7 @@ public class BasicEditor extends Diagram
     }
 
     /** Remove -open arguments, because if the PED Editor is opened
-        because of a file assoication, its arguments have the form
+        because of a file association, its arguments have the form
         -open <file>. */
     static String[] stripOpenArguments(String[] args) {
         ArrayList<String> strs = new ArrayList<>();
