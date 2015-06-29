@@ -7,6 +7,7 @@
 package gov.nist.pededitor;
 
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 
 import com.itextpdf.text.Document;
@@ -68,7 +69,13 @@ public class PEDToImage {
                     ("Invalid input file '" + args[0] + "': " + x);
             }
             
-            DiagramPDF.saveAsPDF(d, doc, ofh);
+            try {
+                DiagramPDF.saveAsPDF(d, doc, ofh);
+            } catch (FileNotFoundException e) {
+                // TODO Auto-generated catch block
+                e.printStackTrace();
+                System.exit(2);
+            }
             return;
         }
 
