@@ -9,6 +9,7 @@ package gov.nist.pededitor;
 import java.awt.event.ActionEvent;
 import java.awt.event.KeyEvent;
 import java.io.File;
+import java.io.FileNotFoundException;
 
 import javax.swing.AbstractAction;
 
@@ -51,7 +52,11 @@ public class Editor extends SingleInstanceBasicEditor {
             return;
         }
 
-        DiagramPDF.saveAsPDF(this, file);
+        try {
+            DiagramPDF.saveAsPDF(this, file);
+        } catch (FileNotFoundException e) {
+            showError("Could not save file: " + e.getMessage());
+        }
     }
 
     public static void main(String[] args) {
