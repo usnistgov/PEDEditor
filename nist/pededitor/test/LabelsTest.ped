@@ -71,8 +71,7 @@
   } ],
   "usingWeightFraction" : false,
   "fontName" : "DejaVu LGC Serif PED",
-  "keys" : {
-  },
+  "keys" : { },
   "decorations" : [ {
     "decoration" : "ruler",
     "startPoint" : {
@@ -580,7 +579,7 @@
     "scale" : 2.0
   }, {
     "decoration" : "label",
-    "text" : "There once was a man from St. Paul<br>who fell in a spring in the Fall<br>'Twould have been a sad thing<br>had he died in the spring,<br>but he didn't; he died in the fall.",
+    "text" : "There once was a man from St. Paul<br>who fell in a spring in the fall<br>'Twould have been a sad thing<br>had he died in the spring,<br>but he didn't; he died in the fall.",
     "xWeight" : 1.0,
     "yWeight" : 0.5,
     "x" : 0.42780662611935494,
