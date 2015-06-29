@@ -1076,7 +1076,6 @@ public class Diagram extends Observable implements Printable {
         }
     }
 
-    protected static final double BASE_SCALE = 615.0;
 
     // The graphics driver grid fits the label views (at a pixel
     // level, unrelated to the grid the program displays) at the font
@@ -1086,6 +1085,8 @@ public class Diagram extends Observable implements Printable {
     // the Views big enough that grid-fitting is largely irrelevant.
 
     private static final int VIEW_MAGNIFICATION = 8; // = 100 px / 12.5 px
+    // The value 4290 below is a meaningless historical accident.
+    protected static final double BASE_SCALE = 4920.0 / VIEW_MAGNIFICATION;
     static protected final String defaultFontName = "DejaVu LGC Sans PED";
     static protected final Map<String,String> fontFiles
         = new HashMap<String, String>() {
@@ -4962,13 +4963,12 @@ public class Diagram extends Observable implements Printable {
     }
 
 
-    void draw(Graphics g0, LabelInfo labelInfo, double scale) {
+    void draw(Graphics2D g, LabelInfo labelInfo, double scale) {
         AnchoredLabel label = labelInfo.label;
         if (label.getScale() == 0) {
             return;
         }
 
-        Graphics2D g = (Graphics2D) g0;
         AffineTransform l2s = labelToScaledPage(labelInfo, scale);
         Path2D.Double box = htmlBox(l2s);
 
@@ -5454,6 +5454,11 @@ public class Diagram extends Observable implements Printable {
     public String getFontName() {
         return (embeddedFont == null) ? defaultFontName
             : getFont().getFontName();
+    }
+
+    /** Return the path to the font with the given name. */
+    public String fontNameToFilename(String name) {
+        return fontFiles.get(name);
     }
 
     /** Returns false if there is no effect because it's the same font
