@@ -132,4 +132,8 @@ public class Arrow extends Path2D.Double implements Decorated {
         }
         output.closePath();
     }
+
+    @Override public String toString() {
+        return "Arrow[(" + x + ", " + y + ") s=" + size + " th=" + theta + "]";
+    }
 }
