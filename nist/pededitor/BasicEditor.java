@@ -2108,9 +2108,12 @@ public class BasicEditor extends Diagram
         super.remove(path);
     }
 
-    /** Print an arrow at the currently selected location that is
-        tangent to the curve at that location and that points
-        rightward (or downward if the curve is vertical). */
+    /** Print an arrow at the currently selected location at the angle
+        given in the math window, even if that value is hidden. When
+        you choose a point on a line, the angle gets reset to be
+        tangent to the curve at that location and pointing rightward
+        (or downward if the curve is vertical).
+    */
     public void addArrow(boolean rightward) {
         if (mprin == null) {
             showError("The mouse must be inside the diagram.");
@@ -2122,6 +2125,11 @@ public class BasicEditor extends Diagram
         }
 
         double theta = mathWindow.getAngle();
+        if (Double.isNaN(theta)) {
+            // It's easier to use angle 0 than to explain to users
+            // what the problem is.
+            theta = 0;
+        }
         if (!rightward) {
             theta += Math.PI;
         }
@@ -6251,6 +6259,7 @@ public class BasicEditor extends Diagram
             return;
         }
         File file = filesList[++fileNo];
+        setCurrentDirectory(file.getParent());
         if (fileNo+1 >= filesList.length) {
             editFrame.mnNextFile.setVisible(false);
         }
