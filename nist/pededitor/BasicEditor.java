@@ -4009,7 +4009,13 @@ public class BasicEditor extends Diagram
         try {
             IntegrationService is
                 = (IntegrationService) ServiceManager.lookup("javax.jnlp.IntegrationService");
-            if (askExit && is.requestAssociation(mime, exts)) {
+            // It appears that the return value of
+            // requestAssociation() is unreliable. I don't know if a
+            // theoretically redundant subsequent call to
+            // hasAssocation() will increase the reliability any, but
+            // let's try; it shouldn't hurt, anyway.
+            if (askExit && is.requestAssociation(mime, exts)
+                && is.hasAssociation(mime, exts)) {
                 if (JOptionPane.showOptionDialog
                     (editFrame,
                      htmlify(fallbackTitle() + " has been installed. At any time, you can " +
@@ -4030,7 +4036,10 @@ public class BasicEditor extends Diagram
         }
     }
 
+    public static String PROGRAM_TITLE = "PED Editor";
+
     public static void main(BasicEditorCreator ec, String[] args) {
+        String programTitle = ec.getProgramTitle();
         if (args.length == 1 && args[0].charAt(0) == '-') {
             printHelp();
             System.exit(2);
@@ -4038,8 +4047,8 @@ public class BasicEditor extends Diagram
 
         waitDialog = new WaitDialog
             (new BasicEditorArgsRunnable(ec, args),
-             "Loading PED Editor...");
-        waitDialog.setTitle("PED Editor");
+             "Loading " + programTitle + "...");
+        waitDialog.setTitle(programTitle);
         waitDialog.pack();
         waitDialog.setVisible(true);
     }
