@@ -17,6 +17,8 @@ import javax.swing.JOptionPane;
 /** Main driver class for Phase Equilibria Diagram digitization and creation. */
 public class Viewer extends Editor {
 
+    public static String PROGRAM_TITLE = "PED Viewer";
+
     public Viewer() {
         init();
     }
@@ -168,6 +170,9 @@ public class Viewer extends Editor {
             (new BasicEditorCreator() {
                     @Override public BasicEditor run() {
                         return new Viewer();
+                    }
+                    @Override public String getProgramTitle() {
+                        return Viewer.PROGRAM_TITLE;
                     }
                 }, args);
     }
