@@ -3822,6 +3822,10 @@ public class Diagram extends Observable implements Printable {
         copyFrom(loadFrom(jsonString));
     }
 
+    public void openDiagram(InputStream is) throws IOException {
+        copyFrom(loadFrom(is));
+    }
+
     void copyFrom(Diagram d) throws IOException {
         setSaveNeeded(false);
         try (UpdateSuppressor us = new UpdateSuppressor()) {
