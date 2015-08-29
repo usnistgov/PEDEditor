@@ -19,7 +19,7 @@ public class CartesianDialog extends NumberColumnDialog {
         ("Uniform scale");
     protected NumberField aspectRatio = new NumberField(6);
     protected JCheckBox pixelMode = new JCheckBox
-        ("Pixel mode (for drawing tiny pictures)");
+        ("Pixel mode (for drawing small bitmaps)");
     {
         fixedAspect.setSelected(true);
         diagramShape.add(fixedAspect);
