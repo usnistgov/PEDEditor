@@ -7,4 +7,8 @@ class BasicEditorCreator {
     public BasicEditor run() {
         return new BasicEditor();
     }
+
+    public String getProgramTitle() {
+        return BasicEditor.PROGRAM_TITLE;
+    }
 }
