@@ -3,6 +3,10 @@
 
 package gov.nist.pededitor;
 
+import static gov.nist.pededitor.Stuff.copyToClipboard;
+import static gov.nist.pededitor.Stuff.getExtension;
+import static gov.nist.pededitor.Stuff.htmlify;
+import static gov.nist.pededitor.Stuff.removeExtension;
 import gov.nist.pededitor.EditFrame.BackgroundImageType;
 
 import java.awt.AWTException;
@@ -24,7 +28,6 @@ import java.awt.Shape;
 import java.awt.Stroke;
 import java.awt.Toolkit;
 import java.awt.datatransfer.DataFlavor;
-import java.awt.datatransfer.StringSelection;
 import java.awt.datatransfer.UnsupportedFlavorException;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -2911,6 +2914,18 @@ public class BasicEditor extends Diagram
              dig.getVariable(1, axes), dig.getFunction(1));
     }
 
+    /** Convert a String that is a list of lists of x,y coordinate
+        pairs into an array of arrays of Point2D.Doubles. Each
+        coordinate pair is separated by newlines, and each list of
+        coordinate pairs is separated by blank lines. Lines may be
+        terminated by comments that start with the character #. For
+        example:
+
+        "1,2.3\n2,5.7\n\n9.4,9.4 # comment"
+
+        would be converted to [[(1,2.3), (2,5.7)], [(9.4, 9.4)]]
+        (where the coordinate pairs represent Point2D.Double objects).
+    */
     public static Point2D.Double[][] stringToCurves(String pointsStr)
         throws NumberFormatException {
         String[] lines = pointsStr.split("\r?\n");
@@ -3030,19 +3045,6 @@ public class BasicEditor extends Diagram
         } catch (NumberFormatException x) {
             showError(x.toString());
             return;
-        }
-    }
-    
-    static void copyToClipboard(String str, boolean ignoreFailure) {
-        try {
-            StringSelection sel = new StringSelection(str);
-            Toolkit.getDefaultToolkit().getSystemClipboard().setContents
-                (sel, sel);
-        } catch (HeadlessException e) {
-            if (!ignoreFailure) {
-                throw new IllegalArgumentException
-                    ("Can't call coordinatesToClipboard() in a headless environment:" + e);
-            }
         }
     }
     
@@ -5214,33 +5216,23 @@ public class BasicEditor extends Diagram
                         buf.append("'");
                     }
                     buf.append(")");
-                    showError(parent, buf.toString(), "File load error");
+                    Stuff.showError(parent, buf.toString(), "File load error");
                     closeIfNotUsed();
                 }
             }
         } catch (IOException x) {
-            showError(parent, "Could not load file: " + x,
+            Stuff.showError(parent, "Could not load file: " + x,
                       "File load error");
             closeIfNotUsed();
         }
     }
 
     void showError(String mess, String title) {
-        showError(editFrame, mess, title);
+        Stuff.showError(editFrame, mess, title);
     }
 
     void showError(String mess) {
-        showError(editFrame, mess, "Cannot perform operation");
-    }
-
-    static String htmlify(String mess) {
-        return mess.startsWith("<html>") ? mess
-            : ("<html><div width=\"250 px\"><p>" + mess);
-    }
-
-    static void showError(Component parent, String mess, String title) {
-        JOptionPane.showMessageDialog
-            (parent, htmlify(mess), title, JOptionPane.ERROR_MESSAGE);
+        Stuff.showError(editFrame, mess, "Cannot perform operation");
     }
 
     public void openImage(String filename) {
@@ -5324,28 +5316,6 @@ public class BasicEditor extends Diagram
 
         setCurrentDirectory(file.getParent());
         return file;
-    }
-
-    /** If the last section of the filename contains a dot, then
-        return everything after that dot, converted to lower case.
-        Otherwise, return null. */
-    public static String getExtension(String s) {
-        String separator = System.getProperty("file.separator");
-        int lastSeparatorIndex = s.lastIndexOf(separator);
-        int extensionIndex = s.lastIndexOf(".");
-        return (extensionIndex <= lastSeparatorIndex + 1) ? null
-            : s.substring(extensionIndex + 1).toLowerCase();
-    }
-
-    /** If the base filename contains a dot, then remove the last dot
-        and everything after it. Otherwise, return the entire string.
-        Modified from coobird's suggestion on Stack Overflow. */
-    public static String removeExtension(String s) {
-        String separator = System.getProperty("file.separator");
-        int lastSeparatorIndex = s.lastIndexOf(separator);
-        int extensionIndex = s.lastIndexOf(".");
-        return (extensionIndex <= lastSeparatorIndex + 1) ? s
-            : s.substring(0, extensionIndex);
     }
 
     void nothingToSave() {
