@@ -52,6 +52,7 @@ import java.util.Observable;
 import java.util.Set;
 import java.util.TreeMap;
 import java.util.TreeSet;
+import java.util.function.DoubleUnaryOperator;
 import java.util.function.Function;
 
 import javax.imageio.ImageIO;
@@ -2586,14 +2587,14 @@ public class Diagram extends Observable implements Printable {
         return new Point2D.Double(v1.value(p), v2.value(p));
     }
 
-    Point2D.Double transform(Point2D.Double p, RealFunction f1, RealFunction f2) {
-        return new Point2D.Double(f1.value(p.getX()), f2.value(p.getY()));
+    Point2D.Double transform(Point2D.Double p, DoubleUnaryOperator f1, DoubleUnaryOperator f2) {
+        return new Point2D.Double(f1.applyAsDouble(p.getX()), f2.applyAsDouble(p.getY()));
     }
 
     /** Return the coordinates of all labels and curves, expressed in
         terms of f1(v1) and f2(v2) */
     @JsonIgnore public String allCoordinatesToString
-        (LinearAxis v1, RealFunction f1, LinearAxis v2, RealFunction f2,
+        (LinearAxis v1, DoubleUnaryOperator f1, LinearAxis v2, DoubleUnaryOperator f2,
          boolean addComments, int sigFigs) {
         ArrayList<String> groupStartTags = new ArrayList<>();
         ArrayList<ArrayList<Point2D.Double>> rawCoordinateGroups
@@ -2648,11 +2649,11 @@ public class Diagram extends Observable implements Printable {
                     sb.append(", ");
                 }
                 sb.append((String) axes[i].name);
-                RealFunction f = (i == 0) ? f1 : f2;
-                if (f instanceof StandardRealFunction
-                    && f != StandardRealFunction.IDENTITY) {
+                DoubleUnaryOperator f = (i == 0) ? f1 : f2;
+                if (f instanceof StandardDoubleUnaryOperator
+                    && f != StandardDoubleUnaryOperator.IDENTITY) {
                     sb.append(" ");
-                    sb.append(((StandardRealFunction) f).getText());
+                    sb.append(((StandardDoubleUnaryOperator) f).getText());
                 }
             }
             sb.append("\n\n");
@@ -2683,7 +2684,8 @@ public class Diagram extends Observable implements Printable {
     }
 
     String toString(Iterable<Point2D.Double> g,
-                    LinearAxis v1, RealFunction f1, LinearAxis v2, RealFunction f2,
+                    LinearAxis v1, DoubleUnaryOperator f1,
+                    LinearAxis v2, DoubleUnaryOperator f2,
                     int sigFigs) {
         StringBuilder sb = new StringBuilder();
         String format = "%." + sigFigs + "g";

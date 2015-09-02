@@ -67,6 +67,7 @@ import java.util.Observer;
 import java.util.Set;
 import java.util.Timer;
 import java.util.TimerTask;
+import java.util.function.DoubleUnaryOperator;
 import java.util.prefs.Preferences;
 
 import javax.imageio.ImageIO;
@@ -2793,8 +2794,9 @@ public class BasicEditor extends Diagram
     }
 
     public String selectedCoordinatesToString
-        (LinearAxis v1, RealFunction f1,
-         LinearAxis v2, RealFunction f2, boolean addComments, int sigFigs) {
+        (LinearAxis v1, DoubleUnaryOperator f1,
+         LinearAxis v2, DoubleUnaryOperator f2,
+         boolean addComments, int sigFigs) {
         CuspFigure path = getSelectedCuspFigure();
         if (path != null) {
             return toString(Arrays.asList(path.getPoints()), v1, f1, v2, f2, sigFigs);
@@ -2818,7 +2820,7 @@ public class BasicEditor extends Diagram
         DigitizeDialog dog = digitizeDialog;
         for (int i = 0; i < dog.getVariableCount(); ++i) {
             if (dog.getVariable(i, axes).isPercentage()) {
-                dog.setFunction(i, StandardRealFunction.TO_PERCENT);
+                dog.setFunction(i, StandardDoubleUnaryOperator.TO_PERCENT);
             }
         }
             
@@ -2969,8 +2971,8 @@ public class BasicEditor extends Diagram
 
     public void copyCoordinatesFromString
         (String lines,
-         LinearAxis v1, RealFunction f1,
-         LinearAxis v2, RealFunction f2) {
+         LinearAxis v1, DoubleUnaryOperator f1,
+         LinearAxis v2, DoubleUnaryOperator f2) {
 
         if (principalToStandardPage == null) {
             return;
@@ -3153,7 +3155,7 @@ public class BasicEditor extends Diagram
         DigitizeDialog dog = digitizeDialog;
         for (int i = 0; i < dog.getVariableCount(); ++i) {
             if (dog.getVariable(i, axes).isPercentage()) {
-                dog.setFunction(i, StandardRealFunction.FROM_PERCENT);
+                dog.setFunction(i, StandardDoubleUnaryOperator.FROM_PERCENT);
             }
         }
 
