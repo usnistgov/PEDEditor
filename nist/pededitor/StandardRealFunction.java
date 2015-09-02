@@ -3,53 +3,21 @@
 
 package gov.nist.pededitor;
 
-/** IDs and icons for different types of PEDs */
+/** Functions useful for transforming graphs and chemical diagrams. */
 enum StandardRealFunction implements RealFunction {
-    IDENTITY (new RealFunction() {
-            @Override public double value(double x) {
-                return x;
-            }
-        }, "None"),
-    LOG_10 (new RealFunction() {
-            @Override public double value(double x) {
-                return Math.log10(x);
-            }
-        }, "f(<var>v</var>) = log<sub>10</sub> <var>v</var>"),
-    EXP_10 (new RealFunction() {
-            @Override public double value(double x) {
-                return Math.pow(10, x);
-            }
-        }, "f(<var>v</var>) = 10<sup><var>v</var></sup>"),
-    LOG (new RealFunction() {
-            @Override public double value(double x) {
-                return Math.log(x);
-            }
-        }, "f(<var>v</var>) = log<sub><var>e</var></sub> <var>v</var>"),
-    EXP (new RealFunction() {
-            @Override public double value(double x) {
-                return Math.exp(x);
-            }
-        }, "f(<var>v</var>) = e<sup><var>v</var></sup>"),
-    C_TO_K (new RealFunction() {
-            @Override public double value(double x) {
-                return x + 273.15;
-            }
-        }, "\u00b0C to K"),
-    K_TO_C (new RealFunction() {
-            @Override public double value(double x) {
-                return x - 273.15;
-            }
-        }, "K to \u00b0C"),
-    TO_PERCENT (new RealFunction() {
-            @Override public double value(double x) {
-                return x * 100;
-            }
-        }, "f(v) = 100 v"),
-    FROM_PERCENT (new RealFunction() {
-            @Override public double value(double x) {
-                return x / 100;
-            }
-        }, "f(v) = v / 100");
+    IDENTITY ((double x) -> x, "None"),
+    LOG_10 ((double x) -> Math.log10(x),
+            "f(<var>v</var>) = log<sub>10</sub> <var>v</var>"),
+    EXP_10 ((double x) -> Math.pow(10, x),
+            "f(<var>v</var>) = 10<sup><var>v</var></sup>"),
+    LOG ((double x) -> Math.log(x),
+         "f(<var>v</var>) = log<sub><var>e</var></sub> <var>v</var>"),
+    EXP ((double x) -> Math.exp(x),
+         "f(<var>v</var>) = e<sup><var>v</var></sup>"),
+    C_TO_K ((double x) -> x + 273.15, "\u00b0C to K"),
+    K_TO_C ((double x) -> x - 273.15, "K to \u00b0C"),
+    TO_PERCENT ((double x) -> x * 100, "f(v) = 100 v"),
+    FROM_PERCENT ((double x) -> x / 100, "f(v) = v / 100");
 
     private final RealFunction f;
     private final String text;
