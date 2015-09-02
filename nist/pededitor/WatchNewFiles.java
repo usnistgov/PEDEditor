@@ -11,9 +11,7 @@ import java.nio.file.StandardWatchEventKinds;
 import java.nio.file.WatchEvent;
 import java.nio.file.WatchKey;
 import java.nio.file.WatchService;
-import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Map;
 import java.util.function.Consumer;
 
 /**
@@ -23,83 +21,113 @@ import java.util.function.Consumer;
 
 public class WatchNewFiles {
 
-    private final WatchService watcher;
-    private final Map<WatchKey,Path> keys;
-
-    /**
-     * Register the given directory with the WatchService and return
-     * this.
-     */
-    public WatchNewFiles addDir(Path dir) throws IOException {
-        WatchKey key = dir.register
-            (watcher, StandardWatchEventKinds.ENTRY_CREATE);
-        keys.put(key, dir);
-        return this;
-    }
-
-    /**
-     * Creates a WatchService and registers the given directory
-     * @throws IOException 
-     */
-    public WatchNewFiles() throws IOException {
-        this.watcher = FileSystems.getDefault().newWatchService();
-        this.keys = new HashMap<WatchKey,Path>();
-    }
+    volatile private Thread thread;
+    HashSet<String> exts;
+    Path dir;
+    Consumer<Path> fileCreated;
+    WatchService watcher;
 
     /**
      * Whenever a file whose extension is in exts[] (do not include
-     * the period) is created in a registered directory, call
+     * the period) is created in directory dir, call
      * fileCreated.accept(path) where path is the resolved path to the
      * new file.
+     *
+     * You have to call start() before anything happens.
      */
-    void processEvents(Consumer<Path> fileCreated, String[] exts) {
-        HashSet<String> set = new HashSet<>();
+    public WatchNewFiles(Path dir, String[] exts, Consumer<Path> fileCreated) {
+        this.dir = dir;
+        this.exts = new HashSet<>();
         for (String s: exts) {
-            set.add(s.toLowerCase());
+            this.exts.add(s.toLowerCase());
         }
-
-        for (;;) {
-
-            // wait for key to be signalled
-            WatchKey key;
-            try {
-                key = watcher.take();
-            } catch (InterruptedException x) {
-                return;
-            }
-
-            Path dir = keys.get(key);
-            if (dir == null) {
-                System.err.println("WatchKey not recognized!!");
-                continue;
-            }
-
-            for (WatchEvent<?> event: key.pollEvents()) {
-                WatchEvent.Kind<?> kind = event.kind();
-
-                if (kind != StandardWatchEventKinds.ENTRY_CREATE) {
-                    System.out.println("Rejecting " + kind);
-                    continue;
-                }
-
-                @SuppressWarnings("unchecked")
-                    WatchEvent<Path> ev = (WatchEvent<Path>) event;
-                Path path = dir.resolve(ev.context());
-                if (set.contains(Stuff.getExtension(path.toString()))) {
-                    fileCreated.accept(dir.resolve(ev.context()));
-                } else {
-                    System.out.println("Rejecting '" + path.toString() + "'");
-                }
-            }
-            key.reset();
-        }
+        this.fileCreated = fileCreated;
     }
 
+    /** Start the directory-watching thread. Return true if the thread
+        wasn't already running. The call returns promptly, but the
+        thread it starts runs until you call watchNewFiles.stop() or
+        you end the program (as with exit() or abort()).
+
+        Throws an IOException if for whatever reason monitoring cannot
+        be enabled.
+    */
+    synchronized public boolean start() throws IOException {
+        if (thread != null && thread.isAlive()) {
+            return false;
+        }
+        watcher = FileSystems.getDefault().newWatchService();
+        dir.register(watcher, StandardWatchEventKinds.ENTRY_CREATE);
+        thread = new Thread(() -> { watch(); });
+        thread.start();
+        return true;
+    }
+
+    /** Stop the directory-watching thread. Return true if a directory
+        was actually being watched.
+
+        You may call stop() and then later call start() to restart the thread.
+    */
+    synchronized public boolean stop() {
+        if (thread != null) {
+            if (thread.isAlive()) {
+                thread.interrupt();
+                thread = null;
+                return true;
+            } else {
+                thread = null;
+            }
+        }
+        return false;
+    }
+        
+    private void watch() {
+        try {
+            while (thread != null) {
+                WatchKey key;
+                key = watcher.take();
+
+                for (WatchEvent<?> event: key.pollEvents()) {
+                    WatchEvent.Kind<?> kind = event.kind();
+
+                    if (kind != StandardWatchEventKinds.ENTRY_CREATE) {
+                        continue;
+                    }
+
+                    @SuppressWarnings("unchecked")
+                        WatchEvent<Path> ev = (WatchEvent<Path>) event;
+                    Path path = dir.resolve(ev.context());
+                    if (exts.contains(Stuff.getExtension(path.toString()))) {
+                        fileCreated.accept(dir.resolve(ev.context()));
+                    }
+                    key.reset();
+                }
+            }
+        } catch (InterruptedException x) {
+        }
+        thread = null;
+    }
+
+    /** Test harness detects the creation of files with extension .clam or .clem. */
     public static void main(String[] args) throws IOException {
-        // register directory and process its events
-        Path dir = Paths.get(".");
-        new WatchNewFiles().addDir(dir).processEvents
-            ((Path p) -> { System.out.println("Created " + p); },
-             new String[] { "clam", "clem" });
+        try {
+            Path dir = Paths.get(".");
+            String[] exts = { "clam", "clem" };
+            WatchNewFiles watcher = new WatchNewFiles
+                (dir, exts, (Path p) -> { System.out.println("Created " + p); });
+            watcher.start();
+            Thread.sleep(3000);
+            System.out.println("Stopped monitoring output.");
+            watcher.stop();
+            Thread.sleep(3000);
+            System.out.println("And we're back!");
+            watcher.start();
+            System.out.println(watcher.start());
+            Thread.sleep(3000);
+            watcher.stop();
+            System.out.println("Finished.");
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+        }
     }
 }
