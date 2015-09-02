@@ -3,6 +3,8 @@
 
 package gov.nist.pededitor;
 
+import java.util.function.DoubleUnaryOperator;
+
 
 /** Romberg scalar numerical integration -- numerically estimates the
     integral of a real-valued function using Romberg integration, a
@@ -26,9 +28,9 @@ package gov.nist.pededitor;
 */
 public class RombergIntegral {
 
-    /** Equivalent to {@link #integral(RealFunction, double, double,
+    /** Equivalent to {@link #integral(DoubleUnaryOperator, double, double,
         Precision) integral(f, lo, hi, new Precision()) } */
-    public static NumericEstimate integral(RealFunction f, double lo, double hi) {
+    public static NumericEstimate integral(DoubleUnaryOperator f, double lo, double hi) {
         return integral(f, lo, hi, new Precision());
     }
 
@@ -44,7 +46,7 @@ public class RombergIntegral {
 
      @param p Requested precision of the result.
     */
-    public static NumericEstimate integral(RealFunction f, double lo, double hi,
+    public static NumericEstimate integral(DoubleUnaryOperator f, double lo, double hi,
                                            Precision p) {
         double stepLength = hi - lo;
         if (stepLength == 0) {
@@ -55,8 +57,8 @@ public class RombergIntegral {
         // f(hi) and f(lo) are assigned half as much weight as other
         // points, because that's how the trapezoid approximation
         // works.
-        double ylo = f.value(lo);
-        double yhi = f.value(hi);
+        double ylo = f.applyAsDouble(lo);
+        double yhi = f.applyAsDouble(hi);
         double total = (ylo + yhi)/2;
 
 
@@ -93,7 +95,7 @@ public class RombergIntegral {
             // Compute the (split)th trapezoid approximation.
             double x = lo + stepLength/2;
             for (int i = 0; i < sampleCnt; ++i, x += stepLength) {
-                total += f.value(x);
+                total += f.applyAsDouble(x);
             }
             res.sampleCnt += sampleCnt;
 
@@ -149,11 +151,8 @@ public class RombergIntegral {
         Precision p = new Precision();
         p.relativeError = 1e-10;
         p.absoluteError = 1e-16;
-        RealFunction gaussian = new RealFunction() {
-                @Override public double value(double x) {
-                    return Math.exp(-x*x/2)/Math.sqrt(2 * 3.14159265358979);
-                }
-            };
+        DoubleUnaryOperator gaussian =
+            x-> Math.exp(-x*x/2)/Math.sqrt(2 * 3.14159265358979);
         NumericEstimate res = integral(gaussian, 0, 4, p);
         System.out.println(res);
         double expected = 0.49996832875817;

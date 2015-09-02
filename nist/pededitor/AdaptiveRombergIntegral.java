@@ -4,6 +4,7 @@
 package gov.nist.pededitor;
 
 import java.util.Arrays;
+import java.util.function.DoubleUnaryOperator;
 
 /** Adaptive Romberg integration which stores the calculated data
     points in an unbalanced binary tree. Compared to regular Romberg,
@@ -30,7 +31,7 @@ public class AdaptiveRombergIntegral {
     AdaptiveRombergIntegral left = null;
     AdaptiveRombergIntegral right = null;
     AdaptiveRombergIntegral parent = null;
-    RealFunction f;
+    DoubleUnaryOperator f;
     NumericEstimate estimate;
     // bestLeaf is the leaf of this subtree that has the highest
     // efficiency() -- that is, the highest ratio of estimate.width()
@@ -41,14 +42,14 @@ public class AdaptiveRombergIntegral {
     // Currently all leaves get filled with exactly maxLeafSize samples.
     int maxLeafSize;
 
-    public AdaptiveRombergIntegral(RealFunction f, double lo, double hi) {
+    public AdaptiveRombergIntegral(DoubleUnaryOperator f, double lo, double hi) {
         this(f, lo, hi, 17);
     }
     
     // leafSize must equal a value of the form (2**i+1) that is at
     // least 5 -- so 5, 9, 17, 33, ... are the allowed values. (The
     // value 0 is for internal use.)
-    public AdaptiveRombergIntegral(RealFunction f, double lo, double hi,
+    public AdaptiveRombergIntegral(DoubleUnaryOperator f, double lo, double hi,
                                    int maxLeafSize) {
         if (maxLeafSize < 5) {
             throw new IllegalArgumentException("maxLeafSize must be at least 9");
@@ -90,7 +91,7 @@ public class AdaptiveRombergIntegral {
         return estimate.clone();
     }
 
-    public RealFunction getFunction() {
+    public DoubleUnaryOperator getFunction() {
         return f;
     }
 
@@ -317,11 +318,11 @@ public class AdaptiveRombergIntegral {
         return res;
     }
 
-    static double[] sample(RealFunction f, double lo, double hi,
+    static double[] sample(DoubleUnaryOperator f, double lo, double hi,
                                    int sampleCnt) {
         double[] res = new double[sampleCnt];
         for (int i = 0; i < res.length; ++i) {
-            res[i] = f.value(lo + (double) i/(sampleCnt - 1) * (hi - lo));
+            res[i] = f.applyAsDouble(lo + (double) i/(sampleCnt - 1) * (hi - lo));
         }
         return res;
     }
@@ -333,9 +334,9 @@ public class AdaptiveRombergIntegral {
 
         If ys == null or ys.length==0 then the sample set for the
         initial (zeroth) split will be returned. */
-    static double[] nextStep(double[] ys, RealFunction f, double lo, double hi) {
+    static double[] nextStep(double[] ys, DoubleUnaryOperator f, double lo, double hi) {
         if (ys == null || ys.length == 0) {
-            return new double[] { f.value(lo), f.value(hi) };
+            return new double[] { f.applyAsDouble(lo), f.applyAsDouble(hi) };
         }
 
         double[] res = new double[ys.length*2 - 1];
@@ -346,7 +347,7 @@ public class AdaptiveRombergIntegral {
         double xStep = (hi - lo) / (ys.length - 1);
         double x = lo + xStep / 2;
         for (int i = 0; i < ys.length - 1; ++i, x += xStep) {
-            res[i*2 + 1] = f.value(x);
+            res[i*2 + 1] = f.applyAsDouble(x);
         }
         return res;
     }
@@ -496,20 +497,11 @@ public class AdaptiveRombergIntegral {
         AdaptiveRombergIntegral ig;
         NumericEstimate est;
 
-        RealFunction quad = new RealFunction() {
-                @Override public double value(double x) {
-                    return 1 + 5 * x + 2 * x* x;
-                }
-            };
-
+        DoubleUnaryOperator quad = x -> 1 + 5 * x + 2 * x* x;
         System.out.println((new AdaptiveRombergIntegral(quad, 0, 10, 17)).integral(p));
         
-        RealFunction gaussian = new RealFunction() {
-                @Override public double value(double x) {
-                    return Math.exp(-x*x/2)/Math.sqrt(2 * 3.14159265358979);
-                }
-            };
-
+        DoubleUnaryOperator gaussian =
+            x -> Math.exp(-x*x/2)/Math.sqrt(2 * 3.14159265358979);
         System.out.println((new AdaptiveRombergIntegral(gaussian, 0, 4, 17)).integral(p));
 
         ig = new AdaptiveRombergIntegral(gaussian, 0, 10, 17);

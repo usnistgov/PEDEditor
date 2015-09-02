@@ -4,6 +4,7 @@
 package gov.nist.pededitor;
 
 import java.util.ArrayList;
+import java.util.function.DoubleUnaryOperator;
 
 /** Utilities to solve problems of the form integral_lo^x (f(u) du) =
     y. (For instance, if p(x) is the probability density at x, you
@@ -338,11 +339,8 @@ public class AdaptiveRombergIntegralY {
         pInversion.relativeError = 1e-12;
         pInversion.absoluteError = 1e-16;
 
-        RealFunction gaussian = new RealFunction() {
-                @Override public double value(double x) {
-                    return Math.exp(-x*x/2)/Math.sqrt(2 * 3.14159265358979);
-                }
-            };
+        DoubleUnaryOperator gaussian =
+            x -> Math.exp(-x*x/2)/Math.sqrt(2 * 3.14159265358979);
 
         ig = new AdaptiveRombergIntegral(gaussian, 0, 5, 33);
         ArrayList<Double> testValues = new ArrayList<>();

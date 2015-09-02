@@ -8,6 +8,7 @@ import java.awt.geom.Point2D;
 import java.awt.geom.Rectangle2D;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.function.DoubleUnaryOperator;
 
 /** The main method of interest in this class is {@link #is class primarily exists to provide the intersections() and distance() methods. */
 
@@ -788,7 +789,8 @@ public class BoundedParam2Ds {
     }
 
     static public AdaptiveRombergIntegral lengthIntegral(BoundedParam2D c) {
-        RealFunction dsdt = new Param2Ds.DLengthDT(c.getUnboundedCurve());
+        DoubleUnaryOperator dsdt =
+            new Param2Ds.DLengthDT(c.getUnboundedCurve());
         return new AdaptiveRombergIntegral(dsdt, c.getMinT(), c.getMaxT());
     }
 }

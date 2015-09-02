@@ -3,6 +3,8 @@
 
 package gov.nist.pededitor;
 
+import java.util.function.DoubleUnaryOperator;
+
 import javax.swing.JComboBox;
 
 /** A simple ComboBox to list variables. */
@@ -11,14 +13,14 @@ public class FunctionSelector extends JComboBox<String> {
     private static final long serialVersionUID = -6731864317879982175L;
 
     {
-        for (StandardRealFunction f: StandardRealFunction.values()) {
+        for (StandardDoubleUnaryOperator f: StandardDoubleUnaryOperator.values()) {
             addItem("<html>" + f.getText());
         }
     }
 
     public FunctionSelector() {}
 
-    public void setSelected(StandardRealFunction f) {
+    public void setSelected(StandardDoubleUnaryOperator f) {
         String name = "<html>" + f.getText();
         int cnt = getItemCount();
         for (int i = 0; i < cnt; ++i) {
@@ -31,13 +33,13 @@ public class FunctionSelector extends JComboBox<String> {
         throw new RuntimeException("Function '" + f + "' not found");
     }
 
-    public RealFunction getSelected() {
+    public DoubleUnaryOperator getSelected() {
         Object obj = getSelectedItem();
         if (obj == null) {
             return null;
         }
         String s = (String) obj;
-        for (StandardRealFunction f: StandardRealFunction.values()) {
+        for (StandardDoubleUnaryOperator f: StandardDoubleUnaryOperator.values()) {
             if (s.equals("<html>" + f.getText())) {
                 return f;
             }

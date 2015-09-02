@@ -7,6 +7,7 @@ import java.awt.Color;
 import java.awt.Dialog;
 import java.awt.event.ActionEvent;
 import java.util.ArrayList;
+import java.util.function.DoubleUnaryOperator;
 
 import javax.swing.AbstractAction;
 import javax.swing.BorderFactory;
@@ -145,11 +146,11 @@ public class DigitizeDialog extends JDialog {
         getPanel(columnNo).variable.setSelected(axis);
     }
 
-    public RealFunction getFunction(int columnNo) {
+    public DoubleUnaryOperator getFunction(int columnNo) {
         return getPanel(columnNo).function.getSelected();
     }
 
-    public void setFunction(int columnNo, StandardRealFunction f) {
+    public void setFunction(int columnNo, StandardDoubleUnaryOperator f) {
         getPanel(columnNo).function.setSelected(f);
     }
 
