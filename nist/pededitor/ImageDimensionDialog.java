@@ -21,8 +21,8 @@ public class ImageDimensionDialog extends StringArrayDialog {
         super(owner,
               new String[] {"Width", "Height"},
               new String[] {"800", "600"},
-              BasicEditor.htmlify("Enter maximum values for the width "
-                                  + "and height of the image in pixels."));
+              Stuff.htmlify("Enter maximum values for the width "
+                            + "and height of the image in pixels."));
         setTitle("Image size");
         GridBagUtil gb = new GridBagUtil(panelBeforeOK);
         gb.endRowWith(Box.createVerticalStrut(6 /* pixels */));

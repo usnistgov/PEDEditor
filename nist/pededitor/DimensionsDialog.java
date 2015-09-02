@@ -28,7 +28,7 @@ public class DimensionsDialog extends NumberColumnDialog {
 "<p>You may enter values as decimals, fractions, or percentages, but if " +
 "you use percentages, do not omit the percent sign.";
     DimensionsDialog(Frame owner, double[] values, String[] labels) {
-        super(owner, values, labels, BasicEditor.htmlify(intro));
+        super(owner, values, labels, Stuff.htmlify(intro));
         setTitle("Select Axis Lengths");
     }
 

@@ -152,7 +152,7 @@ public class EditFrame extends JFrame
                 @Override public void actionPerformed(ActionEvent e) {
                     JOptionPane.showMessageDialog
                     (EditFrame.this,
-                     BasicEditor.htmlify
+                     Stuff.htmlify
                      ("<ol>"
                       + "<li>You can see more functions and their short-cut keys "
                       + "by right-clicking (pressing the right mouse button) "

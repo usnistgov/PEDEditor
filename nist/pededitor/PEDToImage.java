@@ -42,7 +42,7 @@ public class PEDToImage {
 
         String ifn = args[baseIndex++];
         String ofn = args[baseIndex++];
-        String ext = BasicEditor.getExtension(ofn);
+        String ext = Stuff.getExtension(ofn);
         File ofh = new File(ofn);
 
         if (ext == null) {

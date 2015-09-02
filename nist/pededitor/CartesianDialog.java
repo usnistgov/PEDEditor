@@ -7,7 +7,6 @@ import javax.swing.Box;
 import javax.swing.ButtonGroup;
 import javax.swing.JCheckBox;
 import javax.swing.JLabel;
-import javax.swing.JOptionPane;
 import javax.swing.JRadioButton;
 
 public class CartesianDialog extends NumberColumnDialog {
@@ -62,7 +61,7 @@ public class CartesianDialog extends NumberColumnDialog {
         super(owner, 4,
               new String[] { "Left X value", "Right X value", 
                              "Bottom Y value", "Top Y value" },
-              BasicEditor.htmlify
+              Stuff.htmlify
               ("<p>Fractions are allowed. "
                + "If you enter percentages, you must include the percent sign."
                + "<p>For logarithmic axes, enter the range of logarithms, "
@@ -122,9 +121,7 @@ public class CartesianDialog extends NumberColumnDialog {
     }
 
     void showError(String mess) {
-        JOptionPane.showMessageDialog
-            (getParent(), BasicEditor.htmlify(mess), "Numeric entry error",
-             JOptionPane.ERROR_MESSAGE);
+        Stuff.showError(getParent(), mess, "Numeric entry error");
     }
 
     Rectangle2D.Double showModalRectangle() {
