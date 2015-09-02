@@ -153,7 +153,7 @@ public class Viewer extends Editor {
                     defaultIndex = 0; // Default is continue
                 }
                 if (JOptionPane.showOptionDialog
-                    (editFrame, htmlify(mess), title,
+                    (editFrame, Stuff.htmlify(mess), title,
                      JOptionPane.YES_NO_OPTION,
                      JOptionPane.PLAIN_MESSAGE,
                      null, options, options[defaultIndex]) != JOptionPane.YES_OPTION) {
