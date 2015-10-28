@@ -51,6 +51,14 @@ public class LinearAxis extends Axis {
         return a * px + b * py + c;
     }
 
+    /** Analogous to AffineTransform.deltaTransform(). Return
+        value(Point(x0 + dx, y0 + dy)) - value(Point(x0, y0)). The
+        value is independent of x0 and y0 because the axis is
+        linear. */
+    public double deltaValue(double dx, double dy) {
+        return a * dx + b * dy;
+    }
+
     public double getA() { return a; }
     public double getB() { return b; }
     public double getC() { return c; }
@@ -85,6 +93,23 @@ public class LinearAxis extends Axis {
 
     public Point2D.Double gradient() {
         return new Point2D.Double(a, b);
+    }
+
+    /** Return the gradient of this axis in the space whose transform
+        to the space in which this axis' coordinates are defined is
+        toPrincipal. */
+    public Point2D.Double gradient(AffineTransform toPrincipal) {
+        if (toPrincipal == null) {
+            return null;
+        }
+        return new Point2D.Double
+            (s2pValue(new Point2D.Double(1,0), toPrincipal),
+             s2pValue(new Point2D.Double(0,1), toPrincipal));
+    }
+
+    private double s2pValue(Point2D.Double d, AffineTransform toPrincipal) {
+        toPrincipal.deltaTransform(d, d);
+        return deltaValue(d.x, d.y);
     }
 
     @Override public String toString() {
