@@ -184,6 +184,7 @@ public class DigitizeDialog extends JDialog {
             packed = true;
         }
         setModalityType(Dialog.ModalityType.DOCUMENT_MODAL);
+        pressedOK = false;
         setVisible(true);
         return pressedOK;
     }
