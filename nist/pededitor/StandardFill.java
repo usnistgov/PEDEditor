@@ -13,7 +13,9 @@ public enum StandardFill {
      // ALPHAXX -> XX% transparent gray
     SOLID (fill(0, 1, 1, false)),
     ALPHA50 (fill(0, 0.5, 0.5, false)),
+    ALPHA35 (fill(0, 0.35, 0.35, false)),
     ALPHA25 (fill(0, 0.25, 0.25, false)),
+    ALPHA15 (fill(0, 0.15, 0.15, false)),
     ALPHA10 (fill(0, 0.10, 0.10, false)),
 
     // VX_YY -> Vertical line X wide, YY% dense
