@@ -63,6 +63,11 @@ public class WatchNewFiles {
         return true;
     }
 
+    /* @return true if the watcher is currently active. */
+    public boolean isEnabled() {
+        return thread != null && thread.isAlive();
+    }
+
     /** Stop the directory-watching thread. Return true if a directory
         was actually being watched.
 
@@ -106,6 +111,11 @@ public class WatchNewFiles {
         } catch (InterruptedException x) {
         }
         thread = null;
+    }
+
+    /** @return the Path to the watched directory. */
+    public Path getPath() {
+        return dir;
     }
 
     /** Test harness detects the creation of files with extension .clam or .clem. */
