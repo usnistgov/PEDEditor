@@ -89,6 +89,7 @@ public class Viewer extends Editor {
             
         detachOriginalImage();
         setEditable(false);
+        // Page X and Page Y are only useful during editing.
         for (String var: new String[] {"page X", "page Y"}) {
             try {
                 removeVariable(var);
@@ -97,6 +98,10 @@ public class Viewer extends Editor {
                 // OK, let it be
             }
         }
+
+        // UNDO?
+        // ef.mnMonitor.setVisible(true); // Enable directory monitoring.
+        
         setSaveNeeded(false);
     }
 
@@ -146,8 +151,15 @@ public class Viewer extends Editor {
                     mess = fallbackTitle() +
                         " could not register as the handler for  " +
                         "PED Viewer diagrams (.PEDV files). " +
-                        "<p>You can still use this program\'s File/Open option to " +
-                        "manually load and view those files. " +
+                        "<p>You can still view any. PEDV files you download " +
+                        "(using the \"View Diagram\" button of the PED Online Search) " +
+                        "by pressing \"Run Now\" " +
+                        "and selecting the file to display when the " +
+                        "\"Open PED/PEDV file\" dialog opens. Then, as long as you keep the PED " +
+                        "Viewer open, you can display additional diagrams using its " +
+                        "File/Open menu item. You can reopen the PED Viewer at " +
+                        "any time by clicking on the desktop shortcut if available or clicking " +
+                        "on the same link you used to run this program in the first place. " +
                         "<p>For more information, please contact phase3@ceramics.org.";
                     title = "Installation partly successful";
                     defaultIndex = 0; // Default is continue
