@@ -104,6 +104,16 @@ public class EditFrame extends JFrame
                     getEditor().open();
                 }
             });
+    protected JMenuItem mnMonitor = new JMenuItem
+        (new Action("Monitor Directory", KeyEvent.VK_M) {
+                @Override public void actionPerformed(ActionEvent e) {
+                    getEditor().monitor();
+                }
+            });
+    {
+        mnMonitor.setVisible(false);
+    }
+
     protected Action actSave = new Action("Save", KeyEvent.VK_S,
                                           KeyStroke.getKeyStroke("control S")) {
             @Override public void actionPerformed(ActionEvent e) {
@@ -675,6 +685,11 @@ public class EditFrame extends JFrame
     }
 
     /** Internal use; called from BasicEditor.java. */
+    void setShowGrid(boolean b) {
+        showGrid.setSelected(b);
+    }
+
+    /** Internal use; called from BasicEditor.java. */
     void setPixelMode(boolean b) {
         pixelMode.setSelected(b);
         if (showSnap)
@@ -805,26 +820,6 @@ public class EditFrame extends JFrame
         }
     }
 
-    class MarginAction extends Action {
-        Side side;
-        MarginAction(Side side) {
-            super(side.toString());
-            this.side = side;
-            char ch = side.toString().charAt(0);
-            int code = (ch == 'L') ? KeyEvent.VK_L
-                : (ch == 'R') ? KeyEvent.VK_R
-                : (ch == 'T') ? KeyEvent.VK_T
-                : (ch == 'B') ? KeyEvent.VK_B
-                : 0;
-            putValue(MNEMONIC_KEY, code);
-        }
-
-        @Override public void actionPerformed(ActionEvent e) {
-            getEditor().setMargin(side);
-            finishEvent();
-        }
-    }
-
     class SaveImageAction extends Action {
         String ext;
         SaveImageAction(String ext, int mnemonic) {
@@ -932,7 +927,7 @@ public class EditFrame extends JFrame
         }
 
         @Override public void actionPerformed(ActionEvent e) {
-            getEditor().setLineStyle(lineStyle);
+            getEditor().setSelectedLineStyle(lineStyle);
             finishEvent();
         }
     }
@@ -946,7 +941,7 @@ public class EditFrame extends JFrame
         }
 
         @Override public void actionPerformed(ActionEvent e) {
-            getEditor().setFill(fill);
+            getEditor().setSelectedFill(fill);
             finishEvent();
         }
     }
@@ -1155,6 +1150,7 @@ public class EditFrame extends JFrame
 
         mnFile.add(mnNewDiagram);
         mnFile.add(mnOpen);
+        mnFile.add(mnMonitor);
         mnFile.add(mnSave);
 
         // "Save As" submenu
@@ -1356,12 +1352,9 @@ public class EditFrame extends JFrame
                     finishEvent();
                 }
             }));
-        for (Side side: Side.values()) {
-            mnMargins.add(new MarginAction(side));
-        }
-        mnMargins.add(new Action("Crop to selection", KeyEvent.VK_P) {
+        mnMargins.add(new Action("Set", KeyEvent.VK_S) {
                 @Override public void actionPerformed(ActionEvent e) {
-                    getEditor().cropToSelection();
+                    getEditor().setMargins();
                     finishEvent();
                 }
             });
