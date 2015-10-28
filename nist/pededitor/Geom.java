@@ -1099,6 +1099,13 @@ public class Geom {
         return res;
     }
 
+    /** Return true if d nearly equals an integer. This will also
+        return true if d is so large that there isn't enough precision
+        to distinguish d from an integer. */
+    public static boolean integerish(double d) {
+        return Math.abs(d - Math.rint(d)) < 1e-8;
+    }
+
     public static void main(String[] args) {
         segmentTest(args);
     }
