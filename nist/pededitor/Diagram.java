@@ -1117,8 +1117,7 @@ public class Diagram extends Observable implements Printable {
     protected PolygonTransform principalToOriginal;
     @JsonProperty protected AffinePolygonTransform principalToStandardPage;
     protected transient Affine standardPageToPrincipal;
-    /** Bounds of the entire page in standardPage space. Use null to
-        compute automatically instead. */
+    /** Bounds of the entire page in standardPage space. */
     protected Rectangle2D.Double pageBounds;
     protected DiagramType diagramType = null;
     protected ArrayList<Decoration> decorations;
@@ -2895,6 +2894,45 @@ public class Diagram extends Observable implements Printable {
         return res;
     }
 
+    /** @return an array of all axes whose gradient on the page is
+        horizontal to within numeric error limits. */
+    @JsonIgnore public LinearAxis[] getPageXAxes() {
+        return getPageAxes(1, 0);
+    }
+
+    /** @return an array of all axes whose gradient on the page is
+        vertical to within numeric error limits. */
+    @JsonIgnore public LinearAxis[] getPageYAxes() {
+        return getPageAxes(0, 1);
+    }
+
+    LinearAxis[] getPageAxes(double dx, double dy) {
+        assert(standardPageToPrincipal != null);
+        Point2D.Double vec = new Point2D.Double(dx, dy);
+        ArrayList<LinearAxis> res = new ArrayList<>();
+        double maxSineSq = 1e-10;
+        for (LinearAxis axis: axes) {
+            if (Geom.sineSq(vec, pageGradient(axis)) < maxSineSq) {
+                res.add(axis);
+            }
+        }
+        LinearAxis[] res2 = res.toArray(new LinearAxis[0]);
+        Arrays.sort(res2);
+        
+        // Put Page X / Page Y first if they exist.
+        int i = -1;
+        for (LinearAxis axis: res2) {
+            ++i;
+            if (((String) axis.name).startsWith("Page ")) {
+                LinearAxis tmp = res2[0];
+                res2[0] = axis;
+                res2[i] = tmp;
+                break;
+            }
+        }
+        return res2;
+    }
+
     public boolean isLeftAxis(LinearAxis axis) {
         return axis.equals(getLeftAxis());
     }
@@ -3015,17 +3053,7 @@ public class Diagram extends Observable implements Printable {
     }
 
     Point2D.Double pageGradient(LinearAxis axis) {
-        if (standardPageToPrincipal == null) {
-            return null;
-        }
-        return new Point2D.Double
-            (s2pValue(new Point2D.Double(1,0), axis),
-             s2pValue(new Point2D.Double(0,1), axis));
-    }
-
-    private double s2pValue(Point2D.Double d, LinearAxis axis) {
-        standardPageToPrincipal.deltaTransform(d, d);
-        return axis.a * d.x + axis.b * d.y;
+        return axis.gradient(standardPageToPrincipal);
     }
 
     static class HandleAndDistance implements Comparable<HandleAndDistance> {
@@ -3877,20 +3905,20 @@ public class Diagram extends Observable implements Printable {
         bounds.height /= mscale;
         bounds.x += pageBounds.x;
         bounds.y += pageBounds.y;
-        double margin = (bounds.width + bounds.height) / 200;
-        bounds.width += margin * 2;
-        bounds.height += margin * 2;
-        bounds.x -= margin;
-        bounds.y -= margin;
+        bounds = addMargins(bounds, defaultRelativeMargin());
         if (onlyExpand) {
             bounds.add(pageBounds);
         }
         setPageBounds(bounds);
     }
 
-    /** Return the bounds of d on the standard page, augmented by a
-        slight margin for error (1/400th of the bounding rectangle's
-        perimeter). */
+    /** Return the default relative margin to use with auto-fit margins and
+        cropToSelection(). */
+    public double defaultRelativeMargin() {
+        return isPixelMode() ? 0 : (1.0 / 400);
+    }
+
+    /** Return the bounds of d on the standard page. */
     public Rectangle2D.Double bounds(Decoration d) {
         if (pageBounds == null) {
             setPageBounds(new Rectangle2D.Double(0, 0, 1, 1));
@@ -3908,12 +3936,18 @@ public class Diagram extends Observable implements Printable {
         bounds.height /= mscale;
         bounds.x += pageBounds.x;
         bounds.y += pageBounds.y;
-        double margin = (bounds.width + bounds.height) / 200;
-        bounds.width += margin * 2;
-        bounds.height += margin * 2;
-        bounds.x -= margin;
-        bounds.y -= margin;
         return bounds;
+    }
+
+    /** Return a copy of r with a margin added on all sides that
+        equals relativeMargin times the bounding rectangle's
+        perimeter. */
+    public static Rectangle2D.Double addMargins(Rectangle2D r,
+                                                double relativeMargin) {
+        double margin = (r.getWidth() + r.getHeight()) * 2 * relativeMargin;
+        return new Rectangle2D.Double
+            (r.getX() - margin, r.getY() - margin,
+             r.getWidth() + 2 * margin, r.getHeight() + 2 * margin);
     }
 
     /** Copy non-transient data fields from other. Afterwards, it is
@@ -5445,8 +5479,17 @@ public class Diagram extends Observable implements Printable {
         return (c == null) ? Color.BLACK : c;
     }
 
-    @JsonIgnore public Rectangle2D.Double getPrincipalBounds() {
-        return principalToStandardPage.inputBounds();
+    /** Return the X and Y range of the original central figure (such
+        as the Cartesian graph inside a Binary diagram) intersected
+        with the page range. */
+
+    @JsonIgnore public Rectangle2D getPrincipalBounds() {
+        double[] rangeX = getRange(LinearAxis.createXAxis());
+        double[] rangeY = getRange(LinearAxis.createYAxis());
+        Rectangle2D.Double pageBounds = new Rectangle2D.Double
+            (rangeX[0], rangeY[0], rangeX[1] - rangeX[0], rangeY[1] - rangeY[0]);
+        return principalToStandardPage.inputBounds().createIntersection
+            (pageBounds);
     }
 
     /** If this returns false, then the diagram doesn't exist yet, and
