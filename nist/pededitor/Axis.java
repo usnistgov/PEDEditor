@@ -9,7 +9,7 @@ import java.text.*;
 import org.codehaus.jackson.annotate.JsonIgnore;
 
 /** Simple class to hold information about an axis/variable. */
-abstract public class Axis {
+abstract public class Axis implements Comparable<Axis> {
 
     public Axis() {
         format = NumberFormat.getInstance();
@@ -28,7 +28,7 @@ abstract public class Axis {
 
     /** @param px the x value in principal coordinates
 
-        @param py the y value in principal coordiantes
+        @param py the y value in principal coordinates
 
         @return the value of this variable corresponding to the given
         location in principal coordinates. */
@@ -57,5 +57,9 @@ abstract public class Axis {
 
     @JsonIgnore public boolean isPercentage() {
         return valueAsString(0.5, 0.5).indexOf('%') >= 0;
+    }
+
+    @Override public int compareTo(Axis other) {
+        return ((String) name).compareTo((String) other.name);
     }
 }
