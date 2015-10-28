@@ -14,8 +14,9 @@ public class VariableSelector extends JComboBox<String> {
     private static final long serialVersionUID = 1038468375401505149L;
 
     public void setAxes(List<LinearAxis> axes) {
-        String[] variables = new String[axes.size()];
+        String name = getSelectedName();
         removeAllItems();
+        String[] variables = new String[axes.size()];
         int i = -1;
         for (Axis axis: axes) {
             ++i;
@@ -26,10 +27,17 @@ public class VariableSelector extends JComboBox<String> {
         for (String s: variables) {
             addItem(s);
         }
+
+        if (name != null) {
+            try {
+                setSelected(name);
+            } catch (RuntimeException x) {
+                // OK if formerly selected name is no longer available
+            }
+        }
     }
 
-    public void setSelected(LinearAxis axis) {
-        String name = (String) axis.name;
+    public void setSelected(String name) {
         int cnt = getItemCount();
         for (int i = 0; i < cnt; ++i) {
             String s = getItemAt(i);
@@ -41,19 +49,26 @@ public class VariableSelector extends JComboBox<String> {
         throw new RuntimeException("Axis '" + name + "' not found");
     }
 
+    public void setSelected(LinearAxis axis) {
+        setSelected((String) axis.name);
+    }
+
     public LinearAxis getSelected(List<LinearAxis> axes) {
-        Object obj = getSelectedItem();
-        if (obj == null) {
+        String name = getSelectedName();
+        if (name == null) {
             return null;
         }
-        String s = (String) obj;
-        int cnt = axes.size();
-        for (int i = 0; i < cnt; ++i) {
-            LinearAxis axis = axes.get(i);
-            if (s.equals((String) axis.name)) {
+        for (LinearAxis axis: axes) {
+            if (name.equals((String) axis.name)) {
                 return axis;
             }
         }
         return null;
     }
+
+    public String getSelectedName() {
+        Object obj = getSelectedItem();
+        return (obj == null) ? null : (String) obj;
+    }
+        
 }
