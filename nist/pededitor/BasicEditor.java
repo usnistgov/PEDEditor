@@ -277,6 +277,7 @@ public class BasicEditor extends Diagram
     protected DigitizeDialog digitizeDialog = null;
     protected ImageDimensionDialog imageDimensionDialog = null;
     protected LineWidthDialog lineWidthDialog = null;
+    protected MarginsDialog marginsDialog = null;
     static JDialog waitDialog = null;
 
     @JsonIgnore public DecorationHandle getSelection() {
@@ -334,6 +335,7 @@ public class BasicEditor extends Diagram
     protected transient boolean alwaysConvertLabels = true;
     // Number of times paintEditPane() has been called.
     protected transient int paintCnt = 0;
+    protected transient WatchNewFiles watchNewFiles = null;
     protected boolean mEditable = true;
     protected boolean exitOnClose = true;
 
@@ -388,6 +390,7 @@ public class BasicEditor extends Diagram
 
     protected transient double lineWidth = STANDARD_LINE_WIDTH;
     protected transient StandardStroke lineStyle = StandardStroke.SOLID;
+    protected transient StandardFill fill = null;
     protected transient Color color = Color.BLACK;
 
     static String[] tieLineStepStrings =
@@ -657,6 +660,10 @@ public class BasicEditor extends Diagram
                 tieLineDialog.dispose();
                 tieLineDialog = null;
             }
+            if (marginsDialog != null) {
+                marginsDialog.dispose();
+                marginsDialog = null;
+            }
             if (mnRightClick != null) {
                 mnRightClick = null;
             }
@@ -850,7 +857,12 @@ public class BasicEditor extends Diagram
         Decoration dec = selection.getDecoration();
         StandardStroke ls = dec.getLineStyle();
         if (ls != null) {
-            lineStyle = ls;
+            setLineStyle(ls);
+        }
+
+        CuspFigure path = getSelectedCuspFigure();
+        if (path != null) {
+            setFill(path.getFill());
         }
 
         setColor(thisOrBlack(dec.getColor()));
@@ -888,6 +900,12 @@ public class BasicEditor extends Diagram
             ldec.getLabel().setScale(getLabelDialog().getFontSize());
             propagateChange();
         }
+
+        CuspFigure path = getSelectedCuspFigure();
+        if (path != null && path.isClosed()) {
+            path.setFill(fill);
+        }
+        
         if (!hadSelection) {
             clearSelection();
         }
@@ -1878,6 +1896,13 @@ public class BasicEditor extends Diagram
         if (selection == hand) {
             return;
         }
+        CuspFigure path = getSelectedCuspFigure();
+        if (path != null && path.isClosed() && path.size() <= 2) {
+            // Delete this fill region that has zero area.
+            remove(path);
+            decorations.remove(selection.getDecoration());
+        }
+
         selection = hand;
         boolean haveSel = (hand != null);
         getEditFrame().actDeselect.setEnabled(haveSel);
@@ -1895,24 +1920,25 @@ public class BasicEditor extends Diagram
         clearSelection();
     }
 
-    public void setFill(StandardFill fill) {
-        String errorTitle = "Cannot change fill settings";
+    public void setSelectedFill(StandardFill fill) {
+        setFill(fill);
         CuspFigure path = getSelectedCuspFigure();
         if (path == null) {
-            showError
-                ("Fill settings can only be changed when a curve is selected.",
-                 errorTitle);
             return;
         }
 
         if (!path.isClosed()) {
-            showError
-                ("Fill settings can only be changed for closed curves.",
-                 errorTitle);
-            return;
+            path.setClosed(true);
         }
 
         setFill(path, fill);
+    }
+
+    public void setFill(StandardFill fill) {
+        this.fill = fill;
+        if (fill != null) {
+            this.lineStyle = null;
+        }
     }
 
     /** Toggle the highlighted vertex between the smoothed and
@@ -2079,7 +2105,31 @@ public class BasicEditor extends Diagram
         if (path == null) {
             // Start a new curve consisting of a single point, and
             // make it the new selection.
-            path = new CuspFigure(new CuspInterp2D(false), lineStyle, lineWidth);
+
+            if (isPixelMode()) {
+                // If point is integer coordinates, assume this is the
+                // corner of a fill region. Admittedly, that could go
+                // wrong if the user wants to create 2x2 pixel dots,
+                // but that's less likely.
+                
+                if (Geom.integerish(point.x) && Geom.integerish(point.y)
+                    && fill == null) {
+                    path = new CuspFigure(new CuspInterp2D(true), StandardFill.SOLID);
+                }
+
+                // If point has integer-and-a-half coordinates, assume
+                // this is a line, not a fill region.
+                if (Geom.integerish(point.x + 0.5) && Geom.integerish(point.y + 0.5)
+                    && lineStyle == null) {
+                    path = new CuspFigure(new CuspInterp2D(true), null, lineWidth);
+                }
+            }
+
+            if (path == null) {
+                path = (fill != null) ? new CuspFigure(new CuspInterp2D(true), fill)
+                    : new CuspFigure(new CuspInterp2D(false), lineStyle, lineWidth);
+            }
+            
             CurveDecoration d = new CurveDecoration(path);
             decorations.add(d);
             add(path, 0, point, smoothed);
@@ -2500,6 +2550,7 @@ public class BasicEditor extends Diagram
     /** Toggle whether to show grid lines at round (x,y) values. */
     public void setShowGrid(boolean b) {
         showGrid = b;
+        editFrame.setShowGrid(b);
         redraw();
     }
 
@@ -3346,7 +3397,7 @@ public class BasicEditor extends Diagram
             throw new IllegalStateException("Only x and y units are adjustable");
         }
 
-        Rectangle2D.Double principalBounds = getPrincipalBounds();
+        Rectangle2D principalBounds = getPrincipalBounds();
 
         Point2D.Double p1 = null;
         Point2D.Double p2 = null;
@@ -3364,9 +3415,9 @@ public class BasicEditor extends Diagram
             }
         }
 
-        double v1 = isX ? principalBounds.x : principalBounds.y;
-        double v2 = isX ? principalBounds.x + principalBounds.width
-            : principalBounds.y + principalBounds.height;
+        double v1 = isX ? principalBounds.getX() : principalBounds.getY();
+        double v2 = isX ? principalBounds.getX() + principalBounds.getWidth()
+            : principalBounds.getY() + principalBounds.getHeight();
         if (p1 != null) {
             if (isX) {
                 v1 = p1.getX();
@@ -3593,10 +3644,18 @@ public class BasicEditor extends Diagram
     }
 
     /** Invoked from the EditFrame menu */
-    public void setLineStyle(StandardStroke lineStyle) {
-        this.lineStyle = lineStyle;
+    public void setSelectedLineStyle(StandardStroke lineStyle) {
+        setLineStyle(lineStyle);
         if (selection != null) {
             selection.getDecoration().setLineStyle(lineStyle);
+        }
+    }
+
+    /** Invoked from the EditFrame menu */
+    public void setLineStyle(StandardStroke lineStyle) {
+        this.lineStyle = lineStyle;
+        if (lineStyle != null) {
+            this.fill = null;
         }
     }
 
@@ -4807,8 +4866,7 @@ public class BasicEditor extends Diagram
             try {
                 String aspectRatioStr = JOptionPane.showInputDialog
                     (editFrame,
-                     "Enter the width-to-height ratio for the diagram.\n"
-                     + "(Most diagrams in the database uses a ratio of 80%.)",
+                     htmlify("Enter the width-to-height ratio for the diagram."),
                      ContinuedFraction.toString(oldValue, true));
                 if (aspectRatioStr == null) {
                     return;
@@ -4846,52 +4904,54 @@ public class BasicEditor extends Diagram
         if (sbounds == null) {
             return;
         }
-        setPageBounds(sbounds);
+        setPageBounds(addMargins(sbounds, defaultRelativeMargin()));
     }
 
-    /** Invoked from the EditFrame menu */
-    public void setMargin(Side side) {
-        if (diagramType == null) {
+
+    public void setMargins() {
+        if (marginsDialog == null) {
+            marginsDialog = new MarginsDialog(editFrame, 20);
+        }
+        MarginsDialog dog = marginsDialog;
+        dog.toPage = principalToStandardPage;
+        dog.fromPage = standardPageToPrincipal;
+        dog.axes = axes;
+
+        Point2D.Double[] directions =
+            { new Point2D.Double(1, 0),
+              new Point2D.Double(0, 1) };
+        LinearAxis[][] axes2 = new LinearAxis[2][];
+        for (int varNo = 0; varNo < directions.length; ++varNo) {
+            LinearAxis[] axes = getPageAxes(directions[varNo].x, directions[varNo].y);
+            axes2[varNo] = axes;
+            if (axes.length == 0) {
+                String[] names = { "X", "Y" };
+                showError("No variable corrsponds to the " + names[varNo]
+                          + " axis, so it cannot be set.");
+                return;
+            }
+            VariableSelector vs = dog.getVariableSelector(varNo);
+            vs.setAxes(Arrays.asList(axes));
+            LinearAxis ax = vs.getSelected(Arrays.asList(axes));
+            double[] range = getRange(ax);
+            dog.getNumberField(varNo, 0).setValue(range[0]);
+            dog.getNumberField(varNo, 1).setValue(range[1]);
+        }
+        
+        if (!dog.showModal()) {
             return;
         }
 
-        String standard;
-        switch (diagramType) {
-        case BINARY:
-        case OTHER:
-            standard = "core diagram height";
-            break;
-        case TERNARY:
-            standard = "triangle side length";
-            break;
-        default:
-            Rectangle2D.Double bounds = principalToStandardPage.outputBounds();
-            standard = "core diagram "
-                + ((bounds.width >= bounds.height) ? "width" : "height");
-            break;
+        try {
+            double[] rangeX = dog.pageXRange();
+            double[] rangeY = dog.pageYRange();
+            setPageBounds
+                (new Rectangle2D.Double(rangeX[0], rangeY[0],
+                                        rangeX[1] - rangeX[0], rangeY[1] - rangeY[0]));
+        } catch (NumberFormatException x) {
+            showError(x.toString());
+            return;
         }
-
-        String oldString = ContinuedFraction.toString(getMargin(side), true);
-        double margin;
-
-        while (true) {
-            try {
-                String marginStr = JOptionPane.showInputDialog
-                    (editFrame,
-                     "Margin size as a fraction of the " + standard + ":",
-                     oldString);
-                if (marginStr == null) {
-                    return;
-                }
-
-                margin = ContinuedFraction.parseDouble(marginStr);
-                break;
-            } catch (NumberFormatException e) {
-                showError("Invalid number format.");
-            }
-        }
-
-        setMargin(side, margin);
     }
 
     @Override public void openDiagram(File file) throws IOException {
@@ -5125,6 +5185,50 @@ public class BasicEditor extends Diagram
 
     public void open() {
         showOpenDialog(editFrame);
+    }
+
+    public void monitor() {
+        if (watchNewFiles == null || !watchNewFiles.isEnabled()) {
+            JFileChooser chooser = new JFileChooser();
+            chooser.setDialogTitle("Select directory to monitor for new diagram files");
+            String dir = getCurrentDirectory();
+            File dirFile;
+            if (dir != null) {
+                System.err.println("Selecting " + dir);
+                dirFile = new File(dir);
+                // This shouldn't be necessary, and it doesn't even
+                // work correctly, but there's a bug that causes
+                // directory selection to initially select the wrong directory:
+                // https://bugs.openjdk.java.net/browse/JDK-7110156 .
+                chooser.setCurrentDirectory(dirFile.getParentFile());
+                chooser.setSelectedFile(dirFile);
+            }
+            chooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
+            if (chooser.showOpenDialog(getEditFrame())
+                == JFileChooser.APPROVE_OPTION) {
+                dirFile = chooser.getSelectedFile();
+                setCurrentDirectory(dirFile.toString());
+                String[] exts = pedFileExtensions();
+                watchNewFiles = new WatchNewFiles
+                    (dirFile.toPath(), exts,
+                     path -> showOpenDialog(getEditFrame(), path.toFile()));
+                try {
+                    watchNewFiles.start();
+                    JOptionPane.showMessageDialog
+                        (editFrame,
+                         htmlify(dirFile + " will be monitored for newly "
+                                 + "created files with extension '"
+                                 + String.join("' or '", exts) + "'"));
+                } catch (IOException x) {
+                    showError("Could not watch directory: " + x);
+                }
+            }
+        } else {
+            watchNewFiles.stop();
+            watchNewFiles = null;
+            JOptionPane.showMessageDialog
+                (editFrame, htmlify("The existing directory monitor has been stopped."));
+        }
     }
 
     public void showOpenDialog(Component parent) {
