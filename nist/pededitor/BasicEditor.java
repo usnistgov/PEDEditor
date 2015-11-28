@@ -1863,8 +1863,11 @@ public class BasicEditor extends Diagram
             Point mpos = getEditPane().getMousePosition();
             if (mpos != null) {
                 g.setColor(Color.RED);
+                Stroke oldStroke = g.getStroke();
+                g.setStroke(new BasicStroke(2.0f));
                 g.draw(Geom.bounds
                        (new Point[] { mpos, mousePress.e.getPoint() }));
+                g.setStroke(oldStroke);
             }
         }
 
@@ -6263,6 +6266,7 @@ public class BasicEditor extends Diagram
         boolean firstTime = false;
         if (lineWidthDialog == null) {
             lineWidthDialog = new LineWidthDialog(editFrame);
+            lineWidthDialog.setUserUnits(isPixelMode());
             firstTime = true;
         }
         LineWidthDialog dog = lineWidthDialog;
@@ -6274,7 +6278,8 @@ public class BasicEditor extends Diagram
             dog.setUserUnits(false);
         }
         if (firstTime) {
-            dog.setValue(lineWidth);
+            double lw = dog.isUserUnits() ? getGridLineWidth() : lineWidth;
+            dog.setValue(lw);
         }
 
         if (dog.showModal()) {
@@ -6302,6 +6307,16 @@ public class BasicEditor extends Diagram
         principalToStandardPage.deltaTransform(iv, iv);
         setLineWidth(mult * Geom.length(iv));
         editFrame.customLineWidth.setSelected(true);
+    }
+
+    /** Return the line width in user coordinate terms, or 0 if undefined. */
+    double getGridLineWidth() {
+        if (principalToStandardPage == null) {
+            return 0;
+        }
+        Point2D.Double iv = new Point2D.Double(1.0, 0.0);
+        principalToStandardPage.deltaTransform(iv, iv);
+        return lineWidth / Geom.length(iv);
     }
 
     EditPane getEditPane() { return editFrame.getEditPane(); }
