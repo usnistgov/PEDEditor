@@ -1902,7 +1902,7 @@ public class BasicEditor extends Diagram
             return;
         }
         CuspFigure path = getSelectedCuspFigure();
-        if (path != null && path.isClosed() && (path.getFill() != null) && path.size() <= 2) {
+        if (path != null && (path.getFill() != null) && path.size() <= 2) {
             // Delete this fill region that has zero area.
             remove(path);
             decorations.remove(selection.getDecoration());
