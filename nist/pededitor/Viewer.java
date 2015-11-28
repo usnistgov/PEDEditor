@@ -99,7 +99,6 @@ public class Viewer extends Editor {
             }
         }
 
-        // UNDO?
         // ef.mnMonitor.setVisible(true); // Enable directory monitoring.
         
         setSaveNeeded(false);
@@ -151,7 +150,7 @@ public class Viewer extends Editor {
                     mess = fallbackTitle() +
                         " could not register as the handler for  " +
                         "PED Viewer diagrams (.PEDV files). " +
-                        "<p>You can still view any. PEDV files you download " +
+                        "<p>You can still view any .PEDV files you download " +
                         "(using the \"View Diagram\" button of the PED Online Search) " +
                         "by pressing \"Run Now\" " +
                         "and selecting the file to display when the " +
