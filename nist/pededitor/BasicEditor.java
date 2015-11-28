@@ -252,6 +252,8 @@ public class BasicEditor extends Diagram
     private static final String PREF_DIR = "dir";
     private static final long AUTO_SAVE_DELAY = 5 * 60 * 1000; // 5 minutes
 
+    static final StandardStroke DEFAULT_LINE_STYLE = StandardStroke.SOLID;
+    static final StandardFill DEFAULT_FILL = StandardFill.SOLID;
     static final protected double MOUSE_UNSTICK_DISTANCE = 30; /* pixels */
     static final protected double MOUSE_DRAG_DISTANCE = 80; /* pixels */
     static final protected String HOW_TO_SELECT
@@ -389,7 +391,7 @@ public class BasicEditor extends Diagram
     protected transient double darkImageAlpha = 0;
 
     protected transient double lineWidth = STANDARD_LINE_WIDTH;
-    protected transient StandardStroke lineStyle = StandardStroke.SOLID;
+    protected transient StandardStroke lineStyle = DEFAULT_LINE_STYLE;
     protected transient StandardFill fill = null;
     protected transient Color color = Color.BLACK;
 
@@ -1900,7 +1902,7 @@ public class BasicEditor extends Diagram
             return;
         }
         CuspFigure path = getSelectedCuspFigure();
-        if (path != null && path.isClosed() && path.size() <= 2) {
+        if (path != null && path.isClosed() && (path.getFill() != null) && path.size() <= 2) {
             // Delete this fill region that has zero area.
             remove(path);
             decorations.remove(selection.getDecoration());
@@ -2105,9 +2107,14 @@ public class BasicEditor extends Diagram
             return; // Adding the same point twice causes problems.
         }
         CuspFigure path = getSelectedCuspFigure();
+        
+        StandardFill fill1 = (fill == null) ? DEFAULT_FILL : fill;
+        StandardStroke ls = (lineStyle == null) ? DEFAULT_LINE_STYLE : lineStyle;
+        
         if (path == null) {
             // Start a new curve consisting of a single point, and
             // make it the new selection.
+
 
             if (isPixelMode()) {
                 // If point is integer coordinates, assume this is the
@@ -2115,23 +2122,22 @@ public class BasicEditor extends Diagram
                 // wrong if the user wants to create 2x2 pixel dots,
                 // but that's less likely.
                 
-                if (Geom.integerish(point.x) && Geom.integerish(point.y)
-                    && fill == null) {
-                    path = new CuspFigure(new CuspInterp2D(true), StandardFill.SOLID);
+                if (Geom.integerish(point.x) && Geom.integerish(point.y)) {
+                    path = new CuspFigure(new CuspInterp2D(true), fill1);
                 }
 
                 // If point has integer-and-a-half coordinates, assume
                 // this is a line, not a fill region.
-                if (Geom.integerish(point.x + 0.5) && Geom.integerish(point.y + 0.5)
-                    && lineStyle == null) {
-                    path = new CuspFigure(new CuspInterp2D(true), null, lineWidth);
+                if (Geom.integerish(point.x + 0.5) && Geom.integerish(point.y + 0.5)) {
+                    path = new CuspFigure(new CuspInterp2D(true), ls);
                 }
             }
 
             if (path == null) {
                 path = (fill != null) ? new CuspFigure(new CuspInterp2D(true), fill)
-                    : new CuspFigure(new CuspInterp2D(false), lineStyle, lineWidth);
+                    : new CuspFigure(new CuspInterp2D(false), ls);
             }
+            path.setLineWidth(lineWidth);
             
             CurveDecoration d = new CurveDecoration(path);
             decorations.add(d);
