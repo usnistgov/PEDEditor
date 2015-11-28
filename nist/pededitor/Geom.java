@@ -285,7 +285,7 @@ public class Geom {
                                       maxX(points) - mx, maxY(points) - my);
     }
 
-    public static Rectangle bounds(Point[] points) {
+    public static Rectangle bounds(Point... points) {
         if (points == null || points.length == 0) {
             return null;
         }
