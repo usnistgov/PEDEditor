@@ -696,6 +696,12 @@ public class EditFrame extends JFrame
             snapToGrid.setEnabled(b && getEditor().isEditable());
     }
 
+    /** Internal use; called from BasicEditor.java. */
+    void setPixelModeVisible(boolean b) {
+        pixelMode.setVisible(b);
+        mnProperties.setVisible(getVisibleItemCount(mnProperties) > 0);
+    }
+
     void conversionError() {
         String msg = getEditor().isEditable()
             ? ("<p>The conversion was canceled or could not be performed. "
