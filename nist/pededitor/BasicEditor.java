@@ -4751,7 +4751,7 @@ public class BasicEditor extends Diagram
     }
 
     void resetPixelModeVisible() {
-        editFrame.pixelMode.setVisible(maybePixelMode());
+        editFrame.setPixelModeVisible(maybePixelMode());
     }
         
     @Override protected void initializeDiagram() {
