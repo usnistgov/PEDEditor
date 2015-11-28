@@ -2129,7 +2129,7 @@ public class BasicEditor extends Diagram
                 // If point has integer-and-a-half coordinates, assume
                 // this is a line, not a fill region.
                 if (Geom.integerish(point.x + 0.5) && Geom.integerish(point.y + 0.5)) {
-                    path = new CuspFigure(new CuspInterp2D(true), ls);
+                    path = new CuspFigure(new CuspInterp2D(false), ls);
                 }
             }
 
