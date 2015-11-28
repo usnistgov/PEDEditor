@@ -51,15 +51,6 @@ public class CuspFigure implements BoundedParameterizable2D, Decorated {
         return lineWidth;
     }
 
-    public void setFilled(boolean filled) {
-        System.out.println("WARNING Used obsolete method setFilled().");
-        if (filled) {
-            setFill(StandardFill.SOLID);
-        } else {
-            setStroke(StandardStroke.SOLID);
-        }
-    }
-
     @JsonIgnore public boolean isFilled() {
         return fill != null;
     }
@@ -108,10 +99,15 @@ public class CuspFigure implements BoundedParameterizable2D, Decorated {
     }
 
     public CuspFigure(CuspInterp2D curve,
-                           StandardStroke stroke,
-                           double lineWidth) {
+                      StandardStroke stroke) {
         this.curve = curve;
         this.stroke = stroke;
+    }
+
+    public CuspFigure(CuspInterp2D curve,
+                           StandardStroke stroke,
+                           double lineWidth) {
+        this(curve, stroke);
         this.lineWidth = lineWidth;
     }
 
