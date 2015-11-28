@@ -16,10 +16,10 @@
     }
   },
   "pageBounds" : {
-    "x" : -0.05,
-    "y" : -0.05,
-    "width" : 1.1,
-    "height" : 0.7666666666666667
+    "x" : 0.09994890543619792,
+    "y" : 0.03328216145833329,
+    "width" : 0.8001022338867188,
+    "height" : 0.6667178385416664
   },
   "diagramType" : "OTHER",
   "pixelMode" : true,
@@ -45,8 +45,7 @@
   } ],
   "usingWeightFraction" : false,
   "fontName" : "DejaVu LGC Sans PED",
-  "keys" : {
-  },
+  "keys" : { },
   "decorations" : [ {
     "decoration" : "curve",
     "curve" : {
