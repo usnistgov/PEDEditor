@@ -24,6 +24,7 @@ public class AnchoredLabel extends TransformedShape {
     boolean boxed = false;
     boolean opaque = false;
     boolean cutout = false;
+    boolean autoWidth = false;
 
     public AnchoredLabel() {
     }
@@ -45,6 +46,7 @@ public class AnchoredLabel extends TransformedShape {
         output.setBoxed(isBoxed());
         output.setOpaque(isOpaque());
         output.setCutout(isCutout());
+        output.setAutoWidth(isAutoWidth());
         output.setBaselineXOffset(getBaselineXOffset());
         output.setBaselineYOffset(getBaselineYOffset());
         output.setColor(getColor());
@@ -53,6 +55,7 @@ public class AnchoredLabel extends TransformedShape {
 
     public void setText(String text) { this.text = text; }
     /** If true, draw a box around the label. */
+    public void setAutoWidth(boolean v) { autoWidth = v; }
     public void setBoxed(boolean boxed) { this.boxed = boxed; }
     /** If true, erase the label's background before drawing. */
     public void setOpaque(boolean opaque) { this.opaque = opaque; }
@@ -63,7 +66,9 @@ public class AnchoredLabel extends TransformedShape {
     public double getBaselineXOffset() { return baselineXOffset; }
     public double getBaselineYOffset() { return baselineYOffset; }
     public String getText() { return text; }
-   /** If true, draw a box around the label. */
+    /** If true, draw a box around the label. */
+    public boolean isAutoWidth() { return autoWidth; }
+    /** If true, draw a box around the label. */
     public boolean isBoxed() { return boxed; }
     /** If true, erase the label's background before drawing. */
     public boolean isOpaque() { return opaque; }

@@ -17,6 +17,7 @@ import java.awt.Shape;
 import java.awt.Stroke;
 import java.awt.font.FontRenderContext;
 import java.awt.geom.AffineTransform;
+import java.awt.geom.Dimension2D;
 import java.awt.geom.Ellipse2D;
 import java.awt.geom.Line2D;
 import java.awt.geom.NoninvertibleTransformException;
@@ -513,7 +514,7 @@ public class Diagram extends Observable implements Printable {
         }
 
         @JsonIgnore public Point2D.Double getCenterLocation() {
-            initializeLabelInfo(label);
+            initialize(label);
             Point2D.Double center = label.getCenter();
             if (center == null) {
                 center = new Point2D.Double(0.5, 0.5);
@@ -2986,6 +2987,12 @@ public class Diagram extends Observable implements Printable {
 
     /** @param xWeight Used to determine how to justify rows of text. */
     View toView(String str, double xWeight, Color textColor) {
+        return toView(str, xWeight, textColor, 0);
+    }
+
+    /** @param width If not zero, the value (in pixels) to specify for
+        the width CSS attribute. */
+    View toView(String str, double xWeight, Color textColor, double width) {
         String style
             = "<style type=\"text/css\"><!--"
             + " body { font-size: 100 pt; } "
@@ -2997,7 +3004,11 @@ public class Diagram extends Observable implements Printable {
 
         StringBuilder sb = new StringBuilder("<html><head");
         sb.append(style);
-        sb.append("</head><body>");
+        sb.append("</head><body");
+        if (width > 0) {
+            sb.append(" style=\"width:" + width + "px\"");
+        }
+        sb.append(">");
 
         if (xWeight >= 0.67) {
             sb.append("<div align=\"right\">");
@@ -3010,7 +3021,6 @@ public class Diagram extends Observable implements Printable {
         } else {
             sb.append(str);
         }
-        sb.append("</body></html>");
         str = sb.toString();
 
         JLabel bogus = new JLabel(str);
@@ -3020,12 +3030,53 @@ public class Diagram extends Observable implements Printable {
         return (View) bogus.getClientProperty("html");
     }
 
+    /** A metric for the size of d that compromises between minimum
+        perimeter and minimum area, such that 3x0 and 1x1 are considered equally bad. */
+    private static double size(View v) {
+        Dimension2D d = dimension(v);
+        double w = d.getWidth();
+        double h = d.getHeight();
+        return 9.0 * (w+h) * (w+h) - 5.0 * (w-h) * (w-h);
+    }
+
     View toView(AnchoredLabel label) {
-        return toView(label.getText(), label.getXWeight(), label.getColor());
+        String text = label.getText();
+        double xw = label.getXWeight();
+        Color c = label.getColor();
+        View wideView = toView(text, xw, c);
+        if (label.isAutoWidth()) {
+            // Find the CSS width specifier that minimizes size(View)
+
+            View thinView = toView(text, xw, c, 1);
+            double thinWidth = dimension(thinView).getWidth();
+            double wideWidth = dimension(wideView).getWidth();
+            // System.err.println("Width = " + thinWidth + " ... " + wideWidth);
+            if (thinWidth == wideWidth) {
+                return wideView;
+            }
+            View bestView = null;
+            double leastSize = 0;
+            for (double width = thinWidth; ; width *= 1.1) {
+                View thisView = toView(text, xw, c, width);
+                double size = size(thisView);
+                Dimension2D dim = dimension(thisView);
+                // System.err.println("Dim(" + width + ") = " + dim);
+                if (bestView == null || size < leastSize) {
+                    leastSize = size;
+                    bestView = thisView;
+                }
+                if (dim.getWidth() >= wideWidth) {
+                    break;
+                }
+            }
+            return bestView;
+        } else {
+            return wideView;
+        }
     }
 
     /** Regenerate the labelViews field from the labels field. */
-    void initializeLabelInfo(LabelInfo labelInfo) {
+    void initialize(LabelInfo labelInfo) {
         if (!labelInfo.label.isCutout() && labelInfo.view == null) {
             labelInfo.view = toView(labelInfo.label);
         }
@@ -4914,32 +4965,35 @@ public class Diagram extends Observable implements Printable {
         }
     }
 
+    static Dimension2D dimension(View view) {
+        return new Dimension2DDouble
+                (view.getPreferredSpan(View.X_AXIS) / VIEW_MAGNIFICATION,
+                 view.getPreferredSpan(View.Y_AXIS) / VIEW_MAGNIFICATION);
+    }
+
+    Dimension2D dimension(LabelInfo labelInfo) {
+        if (labelInfo.label.isCutout()) {
+            // TODO Does it save time to cache the big font?
+            Rectangle2D bounds = getFont().getStringBounds
+                (labelInfo.label.getText(), new FontRenderContext(null, true, false));
+            return new Dimension2DDouble(bounds);
+        } else {
+            initialize(labelInfo);
+            return dimension(labelInfo.view);
+        }
+    }
+
     /** @return a transformation that maps the unit square to the
         outline of label labelNo in scaled page space. */
     AffineTransform labelToScaledPage(LabelInfo labelInfo, double scale) {
-        initializeLabelInfo(labelInfo);
         AnchoredLabel label = labelInfo.label;
-        View view = labelInfo.view;
         Affine toPage = getPrincipalToAlignedPage();
         Point2D.Double point = toPage.transform(label.getX(), label.getY());
         double angle = principalToPageAngle(label.getAngle());
-
-        double width;
-        double height;
-        if (label.isCutout()) {
-            // TODO Does it save time to cache the big font?
-            Font font = getFont();
-            Rectangle2D bounds = font.getStringBounds
-                (label.getText(), new FontRenderContext(null, true, false));
-            width = bounds.getWidth();
-            height = bounds.getHeight();
-        } else {
-            width = view.getPreferredSpan(View.X_AXIS) / VIEW_MAGNIFICATION;
-            height = view.getPreferredSpan(View.Y_AXIS) / VIEW_MAGNIFICATION;
-        }
+        Dimension2D dimension = dimension(labelInfo);
 
         return labelToScaledPage
-            (width, height, scale * label.getScale(), angle,
+            (dimension.getWidth(), dimension.getHeight(), scale * label.getScale(), angle,
              point.x * scale, point.y * scale,
              label.getXWeight(), label.getYWeight(),
              label.getBaselineXOffset(), label.getBaselineYOffset(),

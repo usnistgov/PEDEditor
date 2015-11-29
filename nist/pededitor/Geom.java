@@ -167,7 +167,7 @@ public class Geom {
         return rv;
     }
 
-    public static Point2D.Double mean(Point2D.Double[] points) {
+    public static Point2D.Double mean(Point2D.Double... points) {
         double totX = 0;
         double totY = 0;
         for (Point2D.Double p : points) {
@@ -175,10 +175,6 @@ public class Geom {
             totY += p.y;
         }
         return new Point2D.Double(totX / points.length, totY / points.length);
-    }
-
-    public static Point2D.Double mean(Point2D.Double a, Point2D.Double b) {
-        return new Point2D.Double((a.x + b.x) / 2, (a.y + b.y) / 2);
     }
 
     public static String toString(Point2D point) {

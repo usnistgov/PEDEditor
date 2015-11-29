@@ -50,10 +50,13 @@ public class LabelDialog extends JDialog {
     JCheckBox mIsOpaque = new JCheckBox("White label background");
     JCheckBox mIsBoxed = new JCheckBox("Label border");
     JCheckBox mIsCutout = new JCheckBox("White character holes (no HTML allowed)");
+    JCheckBox mIsAutoWidth = new JCheckBox("Compact label");
     JTextField fontSize = new JTextField(10);
     JTextField codePoint = new JTextField("0000", 10);
 
     {
+        mIsAutoWidth.setToolTipText
+            ("Wrap text as needed to reduce label size.");
         String layerUp = "You may need to raise this object to the top layer "
             + "to see the effect.";
         mIsCutout.setToolTipText
@@ -102,16 +105,22 @@ public class LabelDialog extends JDialog {
     }
 
     /** The funny method name is because isOpaque() is already taken by JDialog. */
-    public boolean isOpaqueLabel() { return mIsOpaque.isSelected(); }
+    public boolean isAutoWidth() { return mIsAutoWidth.isSelected(); }
     public boolean isBoxed() { return mIsBoxed.isSelected(); }
-    public void setOpaqueLabel(boolean v) {
-        mIsOpaque.setSelected(v);
+    public boolean isCutout() { return mIsCutout.isSelected(); }
+    public boolean isOpaqueLabel() { return mIsOpaque.isSelected(); }
+
+    public void setAutoWidth(boolean v) {
+        mIsAutoWidth.setSelected(v);
     }
     public void setBoxed(boolean v) {
         mIsBoxed.setSelected(v);
     }
     public void setCutout(boolean v) {
         mIsCutout.setSelected(v);
+    }
+    public void setOpaqueLabel(boolean v) {
+        mIsOpaque.setSelected(v);
     }
 
     double getXWeight() { return xWeight; }
@@ -323,8 +332,8 @@ public class LabelDialog extends JDialog {
             boxMe.setBorder(BorderFactory.createLineBorder(Color.black));
 
             gb.endRowWith(boxMe);
-
             gb.endRowWith(mIsCutout);
+            gb.endRowWith(mIsAutoWidth);
             mgb.endRowWith(panel);
         }
 
@@ -373,9 +382,10 @@ public class LabelDialog extends JDialog {
         setYWeight(label.getYWeight());
         setFontSize(label.getScale());
         setAngle(label.getAngle());
-        setOpaqueLabel(label.isOpaque());
+        setAutoWidth(label.isAutoWidth());
         setBoxed(label.isBoxed());
         setCutout(label.isCutout());
+        setOpaqueLabel(label.isOpaque());
     }
 
     public AnchorAction createAnchorAction(double xWeight,
@@ -457,6 +467,7 @@ public class LabelDialog extends JDialog {
             new AnchoredLabel(textField.getText(), xWeight, yWeight);
         al.setFontSize(getFontSize());
         al.setAngle(getAngle());
+        al.setAutoWidth(mIsAutoWidth.isSelected());
         al.setOpaque(isOpaqueLabel());
         al.setBoxed(mIsBoxed.isSelected());
         al.setCutout(mIsCutout.isSelected());
