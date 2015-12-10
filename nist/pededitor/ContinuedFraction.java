@@ -264,7 +264,11 @@ public class ContinuedFraction {
     }
 
     @Override public String toString() {
-        return numerator + "/" + denominator;
+        if (denominator != 1) {
+            return numerator + "/" + denominator;
+        } else {
+            return Long.toString(numerator);
+        }
     }
 
     /** Extend Double.parseDouble() with fraction and percentage
