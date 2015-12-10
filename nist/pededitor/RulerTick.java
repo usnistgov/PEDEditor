@@ -41,6 +41,25 @@ public class RulerTick implements Cloneable {
         return leastPow10 * 5;
     }
 
+    /** Return the greatest round number that is no larger than x plus
+        a tiny fudge factor. Round numbers equal 1 or 5 times a power
+        of ten. */
+    public static double roundFloor15(double x) {
+        if (x == 0) {
+            return 0;
+        }
+        if (x < 0) {
+            return -roundCeil15(-x);
+        }
+
+        x *= 1.000001; // Fudge factor for roundoff error
+        double leastPow10 = Math.pow(10,
+                                     Math.floor(Math.log(x)/Math.log(10.0)));
+        if (x < leastPow10 * 5)
+            return leastPow10;
+        return leastPow10 * 5;
+    }
+
     /** Return the least round number that is at least as great as x plus
         a tiny fudge factor. Round numbers equal 1, 2, or 5 times a
         power of ten. */
@@ -51,12 +70,36 @@ public class RulerTick implements Cloneable {
         return 1.0 / roundFloor(1.0 / x);
     }
 
+    /** Return the least round number that is at least as great as x plus
+        a tiny fudge factor. Round numbers equal 1 or 5 times a
+        power of ten. */
+    public static double roundCeil15(double x) {
+        if (x == 0) {
+            return 0;
+        }
+        if (x < 0) {
+            return -roundFloor15(-x);
+        }
+
+        x *= 1.000001; // Fudge factor for roundoff error
+        double nextPow10 = Math.pow(10,
+                                     Math.ceil(Math.log(x)/Math.log(10.0)));
+        if (x > nextPow10 / 2)
+            return nextPow10;
+        return nextPow10 / 2;
+    }
+
     /** Return the next round number that is a multiple of this round
         number. */
     public static double nextLargerRound(double round) {
         double rv = roundCeil(round * 1.5);
         rv = divides(round, rv) ? rv : (round * 5.0);
         return rv;
+    }
+
+    /** If this is 5000..., then double it; if this is 1000..., then quintuple it. */
+    public static double nextLargerRound15(double round) {
+        return roundCeil15(round * 1.5);
     }
 
     /** Return the next smaller round number that divides this round
