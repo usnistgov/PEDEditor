@@ -1715,29 +1715,31 @@ public class BasicEditor extends Diagram
         }
     }
 
-    public double gridStep(LinearAxis ax) {
+    public double gridStep(LinearAxis ax, double scale) {
         if (isTernary()) {
             return 0.1;
         } else if (isPixelMode()) {
             return 0.5;
         } else {
-            return RulerTick.roundFloor(length(ax) / 15);
+            double maxGridLineDistance = 50; // pixels
+            double axisChangePerPixel = Geom.length(pageGradient(ax));
+            return RulerTick.roundFloor(maxGridLineDistance/scale * axisChangePerPixel);
         }
     }
     
-    public double gridStepX() {
-        return gridStep(getXAxis());
+    public double gridStepX(double scale) {
+        return gridStep(getXAxis(), scale);
     }
 
-    public double gridStepY() {
-        return gridStep(getYAxis());
+    public double gridStepY(double scale) {
+        return gridStep(getYAxis(), scale);
     }
     
     public Point2D.Double nearestGridPoint(Point2D prin) {
-        double gx = gridStepX();
+        double gx = gridStep(getXAxis(), scale);
         double x = prin.getX();
         x = Math.rint(x / gx) * gx;
-        double gy = gridStepY();
+        double gy = gridStep(getYAxis(), scale);
         double y = prin.getY();
         y = Math.rint(y / gy) * gy;
         return new Point2D.Double(x,y);
@@ -1749,8 +1751,9 @@ public class BasicEditor extends Diagram
         if (principalToStandardPage == null) {
             return;
         }
-        double[] lineRange = getRange(lineAx);
-        double[] stepRange = getRange(stepAx);
+        Rectangle2D.Double vr = getStandardPageViewRect();
+        double[] lineRange = getRange(lineAx, vr);
+        double[] stepRange = getRange(stepAx, vr);
 
         double stepMin = dstep * Math.ceil(stepRange[0] / dstep);
         double stepMax = dstep * Math.floor(stepRange[1] / dstep) + dstep / 2;
@@ -1765,7 +1768,6 @@ public class BasicEditor extends Diagram
                 ("Axes " + lineAx + " and " + stepAx + " are not L.I.");
         }
         toPage.preConcatenate(principalToScaledPage(scale));
-        g.setColor(Color.GRAY);
         for (double step = stepMin; step < stepMax; step += dstep) {
             Point2D.Double p1 = toPage.transform(lineMin, step);
             Point2D.Double p2 = toPage.transform(lineMax, step);
@@ -1775,12 +1777,17 @@ public class BasicEditor extends Diagram
     }
 
     public void paintGridLines(Graphics2D g, double scale) {
-        double xstep = isPixelMode() ? 1.0 : gridStepX();
-        double ystep = isPixelMode() ? 1.0 : gridStepY();
+        double xstep = isPixelMode() ? 1.0 : gridStepX(scale);
+        double ystep = isPixelMode() ? 1.0 : gridStepY(scale);
+        g.setColor(new Color(180, 180, 180));
         paintGridLines(g, scale, getXAxis(), getYAxis(), ystep);
         paintGridLines(g, scale, getYAxis(), getXAxis(), xstep);
         if (isTernary()) {
             paintGridLines(g, scale, getYAxis(), getLeftAxis(), xstep);
+        } else {
+            g.setColor(Color.BLACK);
+            paintGridLines(g, scale, getXAxis(), getYAxis(), ystep*5);
+            paintGridLines(g, scale, getYAxis(), getXAxis(), xstep*5);
         }
     }
 
@@ -6159,6 +6166,14 @@ public class BasicEditor extends Diagram
     Rectangle getViewRect() {
         JScrollPane spane = editFrame.getScrollPane();
         return spane.getViewport().getViewRect();
+    }
+
+    /** Return the view rectangle transformed to standard page space. */
+    Rectangle2D.Double getStandardPageViewRect() {
+        Rectangle r = getViewRect();
+        Point2D.Double p = paneToStandardPage(new Point(r.x, r.y));
+        Point2D.Double p2 = paneToStandardPage(new Point(r.x + r.width, r.y + r.height));
+        return new Rectangle2D.Double(p.x, p.y, p2.x - p.x, p2.y - p.y);
     }
 
     void zoom(Point pane1, Point pane2) {
