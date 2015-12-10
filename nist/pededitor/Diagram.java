@@ -300,6 +300,7 @@ public class Diagram extends Observable implements Printable {
             CuspFigure item = getItem();
             if (item.size() == 1
                 && item.getStroke() != StandardStroke.INVISIBLE
+                && item.getFill() == null
                 && !isPixelMode()) {
                 // Draw a dot.
                 double r = item.getLineWidth() * 2 * scale;
@@ -2507,7 +2508,12 @@ public class Diagram extends Observable implements Printable {
 
     /** Like getRange(), but simply return max - min. */
     double length(Axis ax) {
-        double[] range = getRange(ax);
+        return length(ax, pageBounds);
+    }
+
+    /** Like getRange(), but simply return max - min. */
+    double length(Axis ax, Rectangle2D pageBounds) {
+        double[] range = getRange(ax, pageBounds);
         return range[1] - range[0];
     }
 
@@ -2515,6 +2521,14 @@ public class Diagram extends Observable implements Printable {
         can take within the standard page. Assumes that the extremes
         are represented by corners of the page. */
     public double[] getRange(Axis ax) {
+        return getRange(ax, pageBounds);
+    }
+
+    /** Return { min, max } representing the range of values that ax
+        can take within the pageBounds region of the standard page.
+        Assumes that the extremes are represented by corners of the
+        page. */
+    public double[] getRange(Axis ax, Rectangle2D pageBounds) {
         if (principalToStandardPage == null || pageBounds == null) {
             return new double[] { 0, 0 };
         }
