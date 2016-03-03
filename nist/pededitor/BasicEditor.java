@@ -51,6 +51,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.io.OutputStreamWriter;
+import java.net.URISyntaxException;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.FileSystems;
@@ -4076,15 +4077,18 @@ public class BasicEditor extends Diagram
         }
     }
 
-    /** @param askExit If true and the file associations were
-        successfully installed, then ask the user if they want to exit
-        afterwards. */
-    void setFileAssociations(boolean askExit) {
-        setFileAssociations
-            (askExit, "application/x-pededitor", new String[] { "ped" });
+    public String mimeType() {
+        return "application/x-pededitor";
     }
 
-    void setFileAssociations(boolean askExit, String mime, String[] exts) {
+    boolean setFileAssociations() {
+        return setFileAssociations
+            (mimeType(), launchPEDFileExtensions());
+    }
+
+    /** @return true if the file associations were set (apparently)
+        successfully. */
+    boolean setFileAssociations(String mime, String[] exts) {
         try {
             IntegrationService is
                 = (IntegrationService) ServiceManager.lookup("javax.jnlp.IntegrationService");
@@ -4093,33 +4097,30 @@ public class BasicEditor extends Diagram
             // theoretically redundant subsequent call to
             // hasAssocation() will increase the reliability any, but
             // let's try; it shouldn't hurt, anyway.
-            if (askExit && is.requestAssociation(mime, exts)
-                && is.hasAssociation(mime, exts)) {
-                if (JOptionPane.showOptionDialog
-                    (editFrame,
-                     htmlify(fallbackTitle() + " has been installed. At any time, you can " +
-                             "uninstall, run, or create a shortcut for it by opening the Java Control " +
-                             "Panel's General tab and and pressing the \"View...\" " +
-                             "button."),
-                     "Installation successful",
-                     JOptionPane.YES_NO_OPTION,
-                     JOptionPane.QUESTION_MESSAGE,
-                     null,
-                     new Object[] { "Run Now", "Finished" },
-                     null) != JOptionPane.YES_OPTION) {
-                    System.exit(0);
-                }
-            }
+            return is.requestAssociation(mime, exts)
+                && is.hasAssociation(mime, exts);
         } catch (UnavailableServiceException x) {
-            // OK, ignore this error.
+            return false;
         }
+    }
+
+    String successfulAssociationMessage() {
+        return fallbackTitle() + " has been installed. At any time, you can " +
+            "uninstall, run, or create a shortcut for it by opening the Java Control " +
+            "Panel's General tab and and pressing the \"View...\" " +
+            "button.";
+    }
+
+    String failedAssociationMessage(boolean haveOptions) {
+        return fallbackTitle() + " could not register as the handler for "
+            + "PED diagrams (.PED files).";
     }
 
     public static String PROGRAM_TITLE = "PED Editor";
 
     public static void main(BasicEditorCreator ec, String[] args) {
         String programTitle = ec.getProgramTitle();
-        if (args.length == 1 && args[0].charAt(0) == '-') {
+        if (args.length == 1 && "-help".equals(args[0])) {
             printHelp();
             System.exit(2);
         }
@@ -5113,8 +5114,14 @@ public class BasicEditor extends Diagram
         return result;
     }
 
-    String[] pedFileExtensions() {
+    /** Return all PED type file extensions this program can open. */
+    public String[] pedFileExtensions() {
         return new String[] {"ped"};
+    }
+
+    /** Return all PED type file extensions this program should take ownership of. */
+    public String[] launchPEDFileExtensions() {
+        return pedFileExtensions();
     }
 
     public File[] openPEDFilesDialog(Component parent) {
@@ -6380,7 +6387,10 @@ public class BasicEditor extends Diagram
             return;
         }
         File file = filesList[++fileNo];
-        setCurrentDirectory(file.getParent());
+        String parent = file.getParent();
+        if (parent != null) {
+            setCurrentDirectory(parent);
+        }
         if (fileNo+1 >= filesList.length) {
             editFrame.mnNextFile.setVisible(false);
         }
@@ -6400,32 +6410,93 @@ public class BasicEditor extends Diagram
         bestFit();
     }
 
-    /** Remove -open arguments, because if the PED Editor is opened
-        because of a file association, its arguments have the form
-        -open <file>. */
-    static String[] stripOpenArguments(String[] args) {
-        ArrayList<String> strs = new ArrayList<>();
-        for (String s: args) {
-            if (!("-open".equals(s))) {
-                strs.add(s);
-            }
-        }
-        return strs.toArray(new String[0]);
-    }
-
     public void run(String[] args) {
-        setFileAssociations(args.length == 0);
-        args = stripOpenArguments(args);
-        if (args.length > 0) {
+        boolean launch = false;
+
+        boolean exit = false;
+
+        { // Crude command line processing
+            ArrayList<String> res = new ArrayList<>();
+            for (String s: args) {
+                if ("-open".equals(s)) {
+                    // Remove -open arguments, because if the PED
+                    // Editor is opened because of a file association,
+                    // its arguments have the form -open <file>.
+
+                    // Do nothing.
+                } else if ("-launch".equals(s)) {
+                    // Launch the program -- don't give the user a
+                    // chance to exit first.
+                    launch = true;
+                } else if ("-exit".equals(s)) {
+                    // Exit after setting file associations -- don't
+                    // even ask the user whether to launch or not.
+                    exit = true;
+                } else {
+                    res.add(s);
+                }
+            }
+            args = res.toArray(new String[0]);
+        }
+
+        if (args.length == 0) {
+            boolean ok = setFileAssociations();
+            if (exit) {
+                // Tell the user whether the file association worked,
+                // then exit.
+                doFileAssociationsMessage(ok, true);
+            } else if (launch) {
+                // Don't tell the user whether the file associations
+                // were set correctly. Just launch.
+
+                // fall through.
+            } else {
+                // Tell the user whether the file association worked,
+                // then let them launch or quit.
+                doFileAssociationsMessage(ok, false);
+            }
+            initializeGUI();
+            run();
+        } else {
             filesList = new File[args.length];
             for (int i = 0; i < args.length; ++i) {
                 filesList[i] = new File(args[i]);
             }
             editFrame.mnNextFile.setVisible(true);
             nextFile();
+        }
+    }
+
+    /**
+       @param ok If true, file associations were set successfully.
+
+       @param exitOnly If true, quit afterwards. If false, give users
+       a choice whether to quit afterwards or not. */
+    void doFileAssociationsMessage(boolean ok, boolean exitOnly) {
+        String title;
+        String mess;
+        int messType = JOptionPane.PLAIN_MESSAGE;
+        if (ok) {
+            title = "Installation successful";
+            mess = successfulAssociationMessage();
         } else {
-            initializeGUI();
-            run();
+            title = "Installation partly successful";
+            mess = failedAssociationMessage(!exitOnly);
+        }
+        if (exitOnly) {
+            JOptionPane.showMessageDialog
+                (editFrame, Stuff.htmlify(mess), title, messType);
+            System.exit(0);
+        } else {
+            Object[] options = {"Run Now", "Finished"};
+            int defaultIndex = ok ? 1 : 0;
+            if (JOptionPane.showOptionDialog
+                (editFrame, Stuff.htmlify(mess), title,
+                 JOptionPane.YES_NO_OPTION,
+                 messType,
+                 null, options, options[defaultIndex]) != JOptionPane.YES_OPTION) {
+                System.exit(0);
+            }
         }
     }
 
@@ -6472,7 +6543,20 @@ public class BasicEditor extends Diagram
     } 
 
     public static void printHelp() {
-        System.err.println("Usage: java -jar PEDEditor.jar [<filename> ...]");
+        String fn;
+        try {
+            fn = new File(BasicEditor.class.getProtectionDomain().getCodeSource()
+                          .getLocation().toURI().getPath()).toString();
+        } catch (URISyntaxException e) {
+            fn = "???.jar";
+        }
+        System.err.println("Usage: java -jar " + fn + " <options...>");
+        System.err.println("    -launch: open file dialog");
+        System.err.println("    -exit: attempt to set file associations, then quit.");
+        System.err.println("    <filename>...: open these files.");
+        System.err.println();
+        System.err.println("If no command line arguments are given, attempt to set");
+        System.err.println("file associations, then ask whether to exit or continue.");
     }
 
     @Override public void mouseClicked(MouseEvent e) {}
