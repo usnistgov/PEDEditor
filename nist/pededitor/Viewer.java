@@ -8,11 +8,7 @@ package gov.nist.pededitor;
 
 import java.awt.Graphics;
 
-import javax.jnlp.IntegrationService;
-import javax.jnlp.ServiceManager;
-import javax.jnlp.UnavailableServiceException;
 import javax.swing.AbstractAction;
-import javax.swing.JOptionPane;
 
 /** Main driver class for Phase Equilibria Diagram digitization and creation. */
 public class Viewer extends Editor {
@@ -104,9 +100,8 @@ public class Viewer extends Editor {
         setSaveNeeded(false);
     }
 
-    @Override void setFileAssociations(boolean askExit) {
-        setFileAssociations
-            (askExit, "application/x-pedviewer", new String[] { "pedv" });
+    @Override public String mimeType() {
+        return "application/x-pedviewer";
     }
 
     @Override public void paintEditPane(Graphics g) {
@@ -124,56 +119,40 @@ public class Viewer extends Editor {
         open();
     }
 
-    @Override String[] pedFileExtensions() {
+    @Override public String[] pedFileExtensions() {
         return new String[] {"ped", "pedv"};
     }
 
-    @Override String fallbackTitle() {
-        return "Phase Equilibria Diagram Viewer";
+    @Override public String[] launchPEDFileExtensions() {
+        return new String[] {"pedv"};
     }
 
-    @Override void setFileAssociations(boolean askExit, String mime, String[] exts) {
-        try {
-            IntegrationService is
-                = (IntegrationService) ServiceManager.lookup("javax.jnlp.IntegrationService");
-            if (askExit) {
-                Object[] options = {"Run Now", "Finished"};
-                int defaultIndex;
-                String mess;
-                String title;
-                if (is.requestAssociation(mime, exts)) {
-                    mess = fallbackTitle()
-                        + " has been installed. For uninstall instructions, see PED Viewer help menu.";
-                    title = "Installation successful";
-                    defaultIndex = 1; // Default is exit
-                } else {
-                    mess = fallbackTitle() +
-                        " could not register as the handler for  " +
-                        "PED Viewer diagrams (.PEDV files). " +
-                        "<p>You can still view any .PEDV files you download " +
-                        "(using the \"View Diagram\" button of the PED Online Search) " +
-                        "by pressing \"Run Now\" " +
-                        "and selecting the file to display when the " +
-                        "\"Open PED/PEDV file\" dialog opens. Then, as long as you keep the PED " +
-                        "Viewer open, you can display additional diagrams using its " +
-                        "File/Open menu item. You can reopen the PED Viewer at " +
-                        "any time by clicking on the desktop shortcut if available or clicking " +
-                        "on the same link you used to run this program in the first place. " +
-                        "<p>For more information, please contact phase3@ceramics.org.";
-                    title = "Installation partly successful";
-                    defaultIndex = 0; // Default is continue
-                }
-                if (JOptionPane.showOptionDialog
-                    (editFrame, Stuff.htmlify(mess), title,
-                     JOptionPane.YES_NO_OPTION,
-                     JOptionPane.PLAIN_MESSAGE,
-                     null, options, options[defaultIndex]) != JOptionPane.YES_OPTION) {
-                    System.exit(0);
-                }
-            }
-        } catch (UnavailableServiceException x) {
-            // OK, ignore this error.
+    @Override String fallbackTitle() {
+        return "PED Viewer";
+    }
+
+    @Override String successfulAssociationMessage() {
+        return fallbackTitle()
+            + " has been installed. For uninstall instructions, "
+            + "see PED View`er help menu.";
+    }
+
+    @Override String failedAssociationMessage(boolean haveOptions) {
+        String res = fallbackTitle() + " could not register as the handler for "
+            + "PED Viewer diagrams (.PEDV files).";
+        if (haveOptions) {
+            res = res + "<p>You can still view any .PEDV files you download " +
+                "(using the \"View Diagram\" button of the PED Online Search) " +
+                "by pressing \"Run Now\" " +
+                "and selecting the file to display when the " +
+                "\"Open PED/PEDV file\" dialog opens. Then, as long as you keep the PED " +
+                "Viewer open, you can display additional diagrams using its " +
+                "File/Open menu item. You can reopen the PED Viewer at " +
+                "any time by clicking on the desktop shortcut if available or clicking " +
+                "on the same link you used to run this program in the first place. " +
+                "<p>For more information, please contact phase3@ceramics.org.";
         }
+        return res;
     }
 
     public static void main(String[] args) {
