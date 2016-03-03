@@ -342,20 +342,33 @@ data are not displayed or otherwise used by the program.
 
 <li><a id="Margins"><b>Margins</b></a>: <code>Expand all</code> adds
 extra space on all sides. Afterward you can use <code>Auto-fit</code>
-to eliminate all excess white space. You can also expand margins one
-at a time or shrink the diagram to the size of a selected item.
+to eliminate all excess white space. Use <code>Set</code> to manually
+assign values to the page X and Y boundaries.
 
 <li><h3 id=PixelMode>Pixel mode</h3>
 
   <p>Pixel mode is only available for diagrams of type "Picture or
-  map" that have uniform aspect (the X and Y units have equal length).
-  It is intended for drawing icons or other pixelated pictures whose
-  edges should align with pixel boundaries for maximum sharpness.
-  Corners are squared off, the line width is set (initially) to one
-  user unit wide, pressing the mouse button adds a control point at
-  the nearest pixel edge or center (pixel edges are best for fill
-  patterns, while pixel centers are best for lines), and curves
-  containing just a single point appear as one-unit squares.
+    map" that have uniform aspect (the X and Y units have equal length).
+    It is intended for drawing icons or other pixelated pictures whose
+    edges should align with pixel boundaries for maximum sharpness.</p>
+
+  <ul>
+    <li>Curve endpoints are squared off instead of rounded
+    <li><code>Show Grid</code> is turned on
+    <li>Line width is initially set to one user unit wide
+    <li>When you press the mouse button to add a point or press 'g' to
+    go to the nearest grid point, the mouse aligns to the nearest
+    half-grid width. Grid lines are useful for outlining fill regions,
+    whereas grid box centers (halfway between grid lines) are good for creating
+    curves.
+    <li>When creating a new curve, starting on a grid line starts a
+      fill region by default, whereas starting in the center of a grid
+      box starts a curve.
+    <li>Unfilled curves containing just a single point appear as
+      one-unit squares. So if you click in the center of a grid box
+      and then press <code>End</code>, you fill that single
+      pixel.</li>
+  </ul>
 
 <!--  <p>Turning on pixel mode also enables <a href="#Snap">Snap to
       grid</a>.-->
