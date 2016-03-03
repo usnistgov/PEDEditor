@@ -3584,7 +3584,7 @@ public class Diagram extends Observable implements Printable {
     }
 
     String fallbackTitle() {
-        return "Phase Equilibria Diagram Editor";
+        return "PED Editor";
     }
 
     /** @return the system name if known, with components sorted into
