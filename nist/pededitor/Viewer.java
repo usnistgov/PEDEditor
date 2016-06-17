@@ -100,6 +100,10 @@ public class Viewer extends Editor {
         setSaveNeeded(false);
     }
 
+    @Override protected void resizeEditFrame(int otherEditorCnt) {
+        // Use default settings instead of expanding height to fill screen.
+    }
+
     @Override public String mimeType() {
         return "application/x-pedviewer";
     }
@@ -134,7 +138,7 @@ public class Viewer extends Editor {
     @Override String successfulAssociationMessage() {
         return fallbackTitle()
             + " has been installed. For uninstall instructions, "
-            + "see PED View`er help menu.";
+            + "see PED Viewer help menu.";
     }
 
     @Override String failedAssociationMessage(boolean haveOptions) {
