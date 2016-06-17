@@ -18,6 +18,7 @@ import java.awt.Dimension;
 import java.awt.Frame;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
+import java.awt.GraphicsEnvironment;
 import java.awt.HeadlessException;
 import java.awt.Image;
 import java.awt.Point;
@@ -1445,15 +1446,19 @@ public class BasicEditor extends Diagram
         setMouseStuck(true);
     }
 
+    void closeWaitDialog() {
+        if (waitDialog != null) {
+            waitDialog.dispose();
+            waitDialog = null;
+        }
+    }
+
     /** Most of the information required to paint the EditPane is part
         of this object, so it's simpler to do the painting from
         here. */
     public void paintEditPane(Graphics g) {
         if (++paintCnt == 1) {
-            if (waitDialog != null) {
-                waitDialog.dispose();
-                waitDialog = null;
-            }
+            closeWaitDialog();
         }
         updateMousePosition();
         Dimension size = editFrame.getSize();
@@ -1908,12 +1913,6 @@ public class BasicEditor extends Diagram
     public void setSelection(DecorationHandle hand) {
         if (selection == hand) {
             return;
-        }
-        CuspFigure path = getSelectedCuspFigure();
-        if (path != null && (path.getFill() != null) && path.size() <= 2) {
-            // Delete this fill region that has zero area.
-            remove(path);
-            decorations.remove(selection.getDecoration());
         }
 
         selection = hand;
@@ -3626,9 +3625,6 @@ public class BasicEditor extends Diagram
     }
 
     public boolean check(AnchoredLabel label) {
-        if (label.getText().isEmpty()) {
-            return false;
-        }
         if (label.getScale() <= 0) {
             showError("Font size is not a positive number");
             return false;
@@ -3644,6 +3640,10 @@ public class BasicEditor extends Diagram
         dog.set(label);
         AnchoredLabel newLabel = dog.showModal();
         if (newLabel == null || !check(newLabel)) {
+            return;
+        }
+        if (newLabel.getText().isEmpty()) {
+            labelInfo.remove();
             return;
         }
 
@@ -4081,25 +4081,31 @@ public class BasicEditor extends Diagram
         return "application/x-pededitor";
     }
 
-    boolean setFileAssociations() {
+    boolean setFileAssociations() throws UnavailableServiceException {
         return setFileAssociations
             (mimeType(), launchPEDFileExtensions());
     }
 
     /** @return true if the file associations were set (apparently)
         successfully. */
-    boolean setFileAssociations(String mime, String[] exts) {
+    boolean setFileAssociations(String mime, String[] exts) throws UnavailableServiceException {
         try {
             IntegrationService is
                 = (IntegrationService) ServiceManager.lookup("javax.jnlp.IntegrationService");
             // It appears that the return value of
-            // requestAssociation() is unreliable. I don't know if a
-            // theoretically redundant subsequent call to
-            // hasAssocation() will increase the reliability any, but
-            // let's try; it shouldn't hurt, anyway.
+            // requestAssociation() is unreliable for Macs. It appears
+            // that a theoretically redundant subsequent call to
+            // hasAssocation() actually does improve trustworthiness.
             return is.requestAssociation(mime, exts)
                 && is.hasAssociation(mime, exts);
-        } catch (UnavailableServiceException x) {
+        } catch (NullPointerException x) {
+            Stuff.showError(null,
+                            "JNLP startup failure: null pointer exception in requestAssociation(). "
+                            + "This may be caused by an existing " + fallbackTitle()
+                            + "process that is no longer current or erased from the cache. "
+                            + "Restart your computer and try again.",
+                            "JNLP Startup failure");
+            System.exit(2);
             return false;
         }
     }
@@ -4125,12 +4131,15 @@ public class BasicEditor extends Diagram
             System.exit(2);
         }
 
-        waitDialog = new WaitDialog
-            (new BasicEditorArgsRunnable(ec, args),
-             "Loading " + programTitle + "...");
-        waitDialog.setTitle(programTitle);
-        waitDialog.pack();
-        waitDialog.setVisible(true);
+        BasicEditorArgsRunnable bear = new BasicEditorArgsRunnable(ec, args);
+        if (waitDialog == null) {
+            waitDialog = new WaitDialog(bear, "Loading " + programTitle + "...");
+            waitDialog.setTitle(programTitle);
+            waitDialog.pack();
+            waitDialog.setVisible(true);
+        } else {
+            bear.run();
+        }
     }
 
     /** Launch the application. */
@@ -4735,8 +4744,7 @@ public class BasicEditor extends Diagram
     }
 
     private void maxLessThanMinError(String component, double min, double max) {
-        showError("<html><div width=\"200 px\">"
-                  + "The maximum amount of " + component + ", "
+        showError("The maximum amount of " + component + ", "
                   + String.format("%.2f%%", max * 100) + ", "
                   + "does not exceed the minimum amount "
                   + String.format("%.2f%%", min * 100) + ".");
@@ -4780,13 +4788,23 @@ public class BasicEditor extends Diagram
         bestFit();
     }
 
+    protected void resizeEditFrame(int otherEditorCnt) {
+        Rectangle rect = GraphicsEnvironment.getLocalGraphicsEnvironment()
+            .getMaximumWindowBounds();
+        Dimension size = rect.getSize();
+        size.width = editFrame.getPreferredSize().width;
+        size.height = Math.max(100, size.height - 15 * otherEditorCnt);
+        editFrame.setPreferredSize(size);
+    }
+
     protected void initializeGUI() {
         // Force the editor frame image to be initialized.
 
         if (!editorIsPacked) {
+            int otherEditorCnt = getOpenEditorCnt();
+            resizeEditFrame(otherEditorCnt);
             editFrame.pack();
             editorIsPacked = true;
-            int otherEditorCnt = getOpenEditorCnt();
             editFrame.setLocation(15 * otherEditorCnt, 15 * otherEditorCnt);
             openEditors.add(this);
         }
@@ -6410,10 +6428,12 @@ public class BasicEditor extends Diagram
         bestFit();
     }
 
-    public void run(String[] args) {
-        boolean launch = false;
+    // NO: Don't launch; ASK: Ask whether to launch; YES: launch no matter what.
+    static enum LaunchType { NO, ASK, YES };
 
-        boolean exit = false;
+    public void run(String[] args) {
+        // By default, ask the user whether to visibly launch the program or not.
+        LaunchType launch = LaunchType.ASK;
 
         { // Crude command line processing
             ArrayList<String> res = new ArrayList<>();
@@ -6427,11 +6447,11 @@ public class BasicEditor extends Diagram
                 } else if ("-launch".equals(s)) {
                     // Launch the program -- don't give the user a
                     // chance to exit first.
-                    launch = true;
+                    launch = LaunchType.YES;
                 } else if ("-exit".equals(s)) {
                     // Exit after setting file associations -- don't
                     // even ask the user whether to launch or not.
-                    exit = true;
+                    launch = LaunchType.NO;
                 } else {
                     res.add(s);
                 }
@@ -6440,23 +6460,25 @@ public class BasicEditor extends Diagram
         }
 
         if (args.length == 0) {
-            boolean ok = setFileAssociations();
-            if (exit) {
-                // Tell the user whether the file association worked,
-                // then exit.
-                doFileAssociationsMessage(ok, true);
-            } else if (launch) {
-                // Don't tell the user whether the file associations
-                // were set correctly. Just launch.
-
-                // fall through.
-            } else {
-                // Tell the user whether the file association worked,
-                // then let them launch or quit.
-                doFileAssociationsMessage(ok, false);
+            try {
+                boolean ok = setFileAssociations();
+                if (launch != LaunchType.YES) {
+                    launch = doFileAssociationsMessage(ok, launch == LaunchType.ASK)
+                        ? LaunchType.YES : LaunchType.NO;
+                }
+            } catch (UnavailableServiceException x) {
+                launch = LaunchType.YES;
             }
-            initializeGUI();
-            run();
+
+            if (launch == LaunchType.YES) {
+                initializeGUI();
+                run();
+            }
+
+            if (getOpenEditorCnt() == 0) {
+                lastWindowClosed();
+                closeWaitDialog();
+            }
         } else {
             filesList = new File[args.length];
             for (int i = 0; i < args.length; ++i) {
@@ -6471,8 +6493,11 @@ public class BasicEditor extends Diagram
        @param ok If true, file associations were set successfully.
 
        @param exitOnly If true, quit afterwards. If false, give users
-       a choice whether to quit afterwards or not. */
-    void doFileAssociationsMessage(boolean ok, boolean exitOnly) {
+       a choice whether to quit afterwards or not.
+
+       @return true if the user asks to launch the application afterwards.
+    */
+    boolean doFileAssociationsMessage(boolean ok, boolean haveOptions) {
         String title;
         String mess;
         int messType = JOptionPane.PLAIN_MESSAGE;
@@ -6481,22 +6506,20 @@ public class BasicEditor extends Diagram
             mess = successfulAssociationMessage();
         } else {
             title = "Installation partly successful";
-            mess = failedAssociationMessage(!exitOnly);
+            mess = failedAssociationMessage(haveOptions);
         }
-        if (exitOnly) {
-            JOptionPane.showMessageDialog
-                (editFrame, Stuff.htmlify(mess), title, messType);
-            System.exit(0);
-        } else {
+        if (haveOptions) {
             Object[] options = {"Run Now", "Finished"};
             int defaultIndex = ok ? 1 : 0;
-            if (JOptionPane.showOptionDialog
+            return JOptionPane.showOptionDialog
                 (editFrame, Stuff.htmlify(mess), title,
                  JOptionPane.YES_NO_OPTION,
                  messType,
-                 null, options, options[defaultIndex]) != JOptionPane.YES_OPTION) {
-                System.exit(0);
-            }
+                 null, options, options[defaultIndex]) == JOptionPane.YES_OPTION;
+        } else {
+            JOptionPane.showMessageDialog
+                (editFrame, Stuff.htmlify(mess), title, messType);
+            return false;
         }
     }
 
