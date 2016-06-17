@@ -192,6 +192,10 @@ public class Diagram extends Observable implements Printable {
                         return (new VertexHandle(decoration, vertexNo)).remove();
                     }
                 }
+                if (path.isDegenerate()) {
+                    getDecoration().remove();
+                    return null;
+                }
                 propagateChange();
                 return new VertexHandle(decoration, 
                                         (vertexNo > 0) ? (vertexNo - 1) : 0);
@@ -494,15 +498,8 @@ public class Diagram extends Observable implements Printable {
         }
 
         @Override public DecorationHandle remove() {
-            for (Iterator<LabelInfo> it = new LabelInfoIterator();
-                 it.hasNext();) {
-                if (it.next() == label) {
-                    it.remove();
-                    propagateChange();
-                    return null;
-                }
-            }
-            throw new IllegalStateException("Could not locate " + label.label);
+            label.remove();
+            return null;
         }
 
         @Override public boolean equals(Object other) {
@@ -1166,6 +1163,18 @@ public class Diagram extends Observable implements Printable {
             this.center = (center == null) ? null
                 : new Point2D.Double(center.getX(), center.getY());
             this.view = view;
+        }
+
+        public void remove() {
+            for (Iterator<LabelInfo> it = new LabelInfoIterator();
+                 it.hasNext();) {
+                if (it.next() == this) {
+                    it.remove();
+                    propagateChange();
+                    return;
+                }
+            }
+            throw new IllegalStateException("Could not locate " + label);
         }
     }
 
