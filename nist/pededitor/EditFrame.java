@@ -20,6 +20,7 @@ import java.util.EnumSet;
 import java.util.Enumeration;
 import java.util.Observable;
 import java.util.Observer;
+import java.util.ServiceConfigurationError;
 
 import javax.imageio.ImageIO;
 import javax.swing.AbstractAction;
@@ -886,16 +887,27 @@ public class EditFrame extends JFrame
     static protected BufferedImage pedIcon = null;
 
     public static BufferedImage getIcon() {
-        if (pedIcon == null) {
-            URL url =
-                BasicEditor.class.getResource("images/PEDicon.png");
-            try {
-                pedIcon = ImageIO.read(url);
-            } catch (IOException e) {
-                return null;
+        try {
+            if (pedIcon == null) {
+                URL url =
+                    BasicEditor.class.getResource("images/PEDicon.png");
+                try {
+                    pedIcon = ImageIO.read(url);
+                } catch (IOException e) {
+                    return null;
+                }
             }
+            return pedIcon;
+        } catch (ServiceConfigurationError x) {
+            Stuff.showError(null,
+                            "When you are asked whether to enable or block mixed code, you should "
+                            + "select the 'block' option to avoid this error. Alternatively, you can automatically "
+                            + "block from the 'Advanced' tab of the Java Control Panel -- in the 'Mixed code' "
+                            + "section, select \"Enable - hide warning and don't run untrusted code\"",
+                            "Please block execution of unsigned code");
+            System.exit(3);
+            return null;
         }
-        return pedIcon;
     } 
 
     static Icon getLineWidthIcon(double lineWidth) {
