@@ -55,6 +55,10 @@ public class CuspFigure implements BoundedParameterizable2D, Decorated {
         return fill != null;
     }
 
+    @JsonIgnore public boolean isDegenerate() {
+        return size() < 1 || (isFilled() && size() <= 2);
+    }
+
     @JsonProperty("id") int getJSONId() {
         if (jsonId == -1) {
             jsonId = minFreeId;
