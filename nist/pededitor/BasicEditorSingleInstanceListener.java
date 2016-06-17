@@ -43,5 +43,9 @@ class BasicEditorSingleInstanceListener implements SingleInstanceListener {
             e.setExitIfLastWindowCloses(false);
             return e;
         }
+
+        @Override public String getProgramTitle() {
+            return ec.getProgramTitle();
+        }
     }
 }
