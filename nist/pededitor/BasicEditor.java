@@ -3259,11 +3259,18 @@ public class BasicEditor extends Diagram
         copyToClipboard(HtmlToText.htmlToText(principalToPrettyString(mprin)), false);
     }
 
-    public void copyAllTextToClipboard() {
+    /** If a label is selected, then copy it to the clipboard. If
+        nothing is selected, copy all text to the clipboard. */
+    public void copyTextToClipboard() {
+        LabelDecoration ldec = getSelectedLabel();
         StringBuilder res = new StringBuilder();
-        for (String s: getAllText()) {
-            res.append(s);
-            res.append("\n");
+        if (ldec != null) {
+            res.append(HtmlToText.htmlToText(ldec.getLabel().getText()));
+        } else {
+            for (String s: getAllText()) {
+                res.append(s);
+                res.append("\n");
+            }
         }
         copyToClipboard(res.toString(), false);
     }

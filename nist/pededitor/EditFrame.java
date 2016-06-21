@@ -500,9 +500,9 @@ public class EditFrame extends JFrame
         };
     protected JMenuItem mnSetTitle = new JMenuItem(actSetTitle);
     protected JMenuItem mnExportText = new JMenuItem
-        (new Action("Export all text to clipboard", KeyEvent.VK_T) {
+        (new Action("Export text to clipboard", KeyEvent.VK_T) {
                 @Override public void actionPerformed(ActionEvent e) {
-                    getEditor().copyAllTextToClipboard();
+                    getEditor().copyTextToClipboard();
                     finishEvent();
                 }
             });
