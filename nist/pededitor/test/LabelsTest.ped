@@ -493,9 +493,9 @@
     "text" : "√2°𝜋𝑒 →←±≅∫∇⇌∞≡≠≥≤",
     "xWeight" : 0.5,
     "yWeight" : 0.5,
-    "x" : 0.5064864649168048,
-    "y" : 0.8593671936197805,
-    "scale" : 1.6,
+    "x" : 0.48941890237157926,
+    "y" : 0.8607462561017611,
+    "scale" : 1.4,
     "boxed" : true
   }, {
     "decoration" : "label",
@@ -852,20 +852,34 @@
     "fontSize" : 0.014397018970189702
   }, {
     "decoration" : "label",
-    "text" : "<span style=\"font-size: 75%;\">small</span> normal <span style=\"font-size: 133%;\">big</span>",
+    "text" : "<span style=\"font-size: 75%;\">small</span> normal <span style=\"font-size: 133%;\">big</span> compact label yadda yadda",
     "xWeight" : 0.5,
     "yWeight" : 0.5,
-    "x" : 0.15981055713476064,
-    "y" : 0.8914714941472907,
-    "scale" : 1.2
+    "x" : 0.15989351778925553,
+    "y" : 0.8777071214846749,
+    "scale" : 1.2,
+    "boxed" : true,
+    "autoWidth" : true
   }, {
     "decoration" : "label",
     "text" : "P<sub>O<sub>2-x</sub></sub>",
     "xWeight" : 0.5,
     "yWeight" : 0.5,
-    "x" : 0.823445429601059,
-    "y" : 0.9086594034554107,
+    "x" : 0.8577119792577057,
+    "y" : 0.11567966963805132,
     "scale" : 2.0,
+    "color" : {
+      "rgb" : -16777216
+    },
+    "boxed" : true
+  }, {
+    "decoration" : "label",
+    "text" : "Table<br>\n<table>\n  <tr><td>1&nbsp;<td>2&nbsp;<td>3&nbsp;<td>4\n  <tr><td>uno&nbsp;<td>dos&nbsp;<td>tres&nbsp;<td>cuatro\n  <tr><td>one&nbsp;<td>two&nbsp;<td>three&nbsp;<td>four\n</table>\n",
+    "xWeight" : 0.5,
+    "yWeight" : 0.5,
+    "x" : 0.8274247196453598,
+    "y" : 0.9092058714815147,
+    "scale" : 1.15,
     "color" : {
       "rgb" : -16777216
     },
