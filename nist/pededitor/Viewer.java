@@ -95,13 +95,28 @@ public class Viewer extends Editor {
             }
         }
 
-        // ef.mnMonitor.setVisible(true); // Enable directory monitoring.
+        if (Stuff.isFileAssociationBroken()) {
+            ef.mnMonitor.setVisible(true); // Enable directory monitoring.
+        }
         
         setSaveNeeded(false);
     }
 
     @Override protected void resizeEditFrame(int otherEditorCnt) {
         // Use default settings instead of expanding height to fill screen.
+    }
+
+    /** Standard installation message for Macintosh, on which file associations don't work. */
+    @Override void doFileAssociationsBrokenMessage() {
+        doFileAssociationsBrokenMessage
+            ("On Macintosh systems, you may view downloaded diagrams (.PEDV files) either one at a time "
+             + "using the <code>File/Open</code> menu option, or you may have this program "
+             + "automatically scan for newly downloaded diagrams using the "
+             + "<code>File/Monitor Directory</code> option. "
+             + "<p>At any time, you can "
+             + "uninstall, run, or create a shortcut for it by opening the Java Control "
+             + "Panel's General tab and and pressing the \"View...\" button.",
+             fallbackTitle());
     }
 
     @Override public String mimeType() {
