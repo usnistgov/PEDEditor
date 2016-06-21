@@ -37,7 +37,7 @@ public class Stuff {
     /** If you display a long ASCII paragraph in a showMessageDialog,
         you just end up with a very long line. Unless mess starts with
         <html>, add your own <html> tag and word wrap. */
-    static String htmlify(String mess) {
+    public static String htmlify(String mess) {
         return mess.startsWith("<html>") ? mess
             : ("<html><div width=\"250 px\"><p>" + mess);
     }
@@ -51,7 +51,7 @@ public class Stuff {
     
     /** Copy str to the clipboard. If it fails and ignoreFailure
         equals false, throw IllegalArgumentException. */
-    static void copyToClipboard(String str, boolean ignoreFailure) {
+    public static void copyToClipboard(String str, boolean ignoreFailure) {
         try {
             StringSelection sel = new StringSelection(str);
             Toolkit.getDefaultToolkit().getSystemClipboard().setContents
@@ -62,5 +62,14 @@ public class Stuff {
                     ("Can't call coordinatesToClipboard() in a headless environment:" + e);
             }
         }
+    }
+
+    public static boolean isOSX() {
+        return System.getProperty("os.name").contains("OS X");
+    }
+
+    /** Return true if file associations aren't even supposed to work for this OS. */
+    public static boolean isFileAssociationBroken() {
+        return isOSX();
     }
 }
