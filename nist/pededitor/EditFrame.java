@@ -218,7 +218,7 @@ public class EditFrame extends JFrame
        };
 
    Action actRemoveSelection = new Action
-       ("Delete", KeyEvent.VK_D, "DELETE") {
+       ("Delete", KeyEvent.VK_D, Stuff.isOSX() ? "BACK_SPACE" : "DELETE") {
            @Override public void actionPerformed(ActionEvent e) {
                getEditor().removeSelection();
                finishEvent();
@@ -463,7 +463,7 @@ public class EditFrame extends JFrame
             }
         };
     Action actTieLine = new Action
-        ("Tie lines", KeyEvent.VK_I) {
+        ("Tie lines", KeyEvent.VK_I, KeyStroke.getKeyStroke("shift T")) {
             @Override public void actionPerformed(ActionEvent e) {
                 getEditor().addTieLine();
                 finishEvent();
@@ -900,11 +900,12 @@ public class EditFrame extends JFrame
             return pedIcon;
         } catch (ServiceConfigurationError x) {
             Stuff.showError(null,
-                            "When you are asked whether to enable or block mixed code, you should "
-                            + "select the 'block' option to avoid this error. Alternatively, you can automatically "
-                            + "block from the 'Advanced' tab of the Java Control Panel -- in the 'Mixed code' "
-                            + "section, select \"Enable - hide warning and don't run untrusted code\"",
-                            "Please block execution of unsigned code");
+                            "When the pop-up window asks you whether to enable or block mixed code, you should "
+                            + "select the 'block' option. Alternatively, you can make that the default behavior "
+                            + "from the Java Control Panel. Select the 'Advanced' tab, then in the 'Mixed code' "
+                            + "section, select \"Enable - hide warning and don't run untrusted code\". "
+                            + "If you need additional guidance, contact phase3@ceramics.org.",
+                            "Please block execution of mixed signed/unsigned code");
             System.exit(3);
             return null;
         }
