@@ -4,40 +4,27 @@
 package gov.nist.pededitor;
 
 import java.awt.Font;
-import java.awt.GridBagConstraints;
-import java.awt.Insets;
 import java.awt.event.ActionEvent;
 import java.util.ArrayList;
 
 import javax.swing.AbstractAction;
-import javax.swing.Action;
 import javax.swing.JButton;
-import javax.swing.JPanel;
 
 
-/** A JPanel filled with JButtons that generate DelimiterEvents when
-    pressed. This is a rote copy of StringPalettePanel.java, and it
-    might be better style if the duplicate elements were merged, but
-    eh. */
-public class DelimiterPalettePanel extends JPanel {
-    /**
-	 * 
-	 */
-	private static final long serialVersionUID = -7265299416396566730L;
-	DelimiterPalette palette;
-    int columnCnt = 0;
+/** A ButtonsPanel whose buttons generate DelimiterEvents. */
+public class DelimiterPalettePanel extends ButtonsPanel {
+    private static final long serialVersionUID = -7265299416396566730L;
+    DelimiterPalette palette;
+
     ArrayList<DelimiterEventListener> delimiterEventListeners
         = new ArrayList<DelimiterEventListener>();
 
     class DelimiterAction extends AbstractAction {
-        /**
-		 * 
-		 */
-		private static final long serialVersionUID = -7205094586111632209L;
-		Delimiter delimiter;
+        private static final long serialVersionUID = -7205094586111632209L;
+        Delimiter delimiter;
 
         DelimiterAction(String label, Delimiter delimiter) {
-            putValue(Action.NAME, label);
+            super(label);
             this.delimiter = delimiter;
         }
 
@@ -77,37 +64,16 @@ public class DelimiterPalettePanel extends JPanel {
         @param font Font to use for the buttons.
     */
     public DelimiterPalettePanel(DelimiterPalette palette, int colCnt, Font font) {
+        super(colCnt, font);
         this.palette = palette;
         int cnt = palette.size();
 
-        GridBagLineWrap gb = null;
-
-        GridBagConstraints gbc = new GridBagConstraints();
-        gbc.anchor = GridBagConstraints.WEST;
-
-        GridBagConstraints wholeRow = new GridBagConstraints();
-        wholeRow.anchor = GridBagConstraints.WEST;
-        wholeRow.gridwidth = GridBagConstraints.REMAINDER;
-        wholeRow.insets = new Insets(3, 3, 3, 3);
-        GridBagWrapper gb0 = new GridBagWrapper(this);
-
-        for (int i = 0; i <= cnt; ++i) {
-            String label = (i < cnt) ? palette.getLabel(i) : null;
+        for (int i = 0; i < cnt; ++i) {
+            String label = palette.getLabel(i);
             if (label == null) {
-                gb = null;
+                newSet();
             } else {
-                if (gb == null) {
-                    JPanel subpanel = new JPanel();
-                    gb0.add(subpanel, wholeRow);
-                    gb = new GridBagLineWrap(subpanel, gbc, colCnt);
-                }
-                JButton b = new JButton
-                    (new DelimiterAction(label, palette.get(i)));
-                if (font != null) {
-                    b.setFont(font);
-                }
-                b.setFocusable(false);
-                gb.add(b);
+                addButton(new JButton(new DelimiterAction(label, palette.get(i))));
             }
         }
     }

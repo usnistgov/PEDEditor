@@ -4,8 +4,6 @@
 package gov.nist.pededitor;
 
 import java.awt.Font;
-import java.awt.GridBagConstraints;
-import java.awt.Insets;
 import java.awt.event.ActionEvent;
 import java.util.ArrayList;
 
@@ -13,16 +11,12 @@ import javax.swing.AbstractAction;
 import javax.swing.Action;
 import javax.swing.Icon;
 import javax.swing.JButton;
-import javax.swing.JPanel;
 
 
-/** A JPanel filled with JButtons that generate StringEvents when
-    pressed. */
-public class StringPalettePanel extends JPanel {
+/** A ButtonsPanel whose buttons generate StringEvents. */
+public class StringPalettePanel extends ButtonsPanel {
     private static final long serialVersionUID = 4572788761165949707L;
-
     StringPalette palette;
-    int columnCnt = 0;
 
     class StringAction extends AbstractAction {
         private static final long serialVersionUID = 3954492051851940113L;
@@ -74,36 +68,16 @@ public class StringPalettePanel extends JPanel {
         @param font Font to use for the buttons.
     */
     public StringPalettePanel(StringPalette palette, int colCnt, Font font) {
+        super(colCnt, font);
         this.palette = palette;
         int cnt = palette.size();
 
-        GridBagLineWrap gb = null;
-
-        GridBagConstraints gbc = new GridBagConstraints();
-        gbc.anchor = GridBagConstraints.WEST;
-
-        GridBagConstraints wholeRow = new GridBagConstraints();
-        wholeRow.anchor = GridBagConstraints.WEST;
-        wholeRow.gridwidth = GridBagConstraints.REMAINDER;
-        wholeRow.insets = new Insets(3, 3, 3, 3);
-        GridBagWrapper gb0 = new GridBagWrapper(this);
-
-        for (int i = 0; i <= cnt; ++i) {
-            Object label = (i < cnt) ? palette.getLabel(i) : null;
+        for (int i = 0; i < cnt; ++i) {
+            Object label = palette.getLabel(i);
             if (label == null) {
-                gb = null;
+                newSet();
             } else {
-                if (gb == null) {
-                    JPanel subpanel = new JPanel();
-                    gb0.add(subpanel, wholeRow);
-                    gb = new GridBagLineWrap(subpanel, gbc, colCnt);
-                }
-                JButton b = new JButton(new StringAction(label, i));
-                if (font != null) {
-                    b.setFont(font);
-                }
-                b.setFocusable(false);
-                gb.add(b);
+                addButton(new JButton(new StringAction(label, i)));
             }
         }
     }
