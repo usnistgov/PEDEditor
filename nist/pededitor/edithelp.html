@@ -766,34 +766,67 @@ increments.
       of the height of binary diagrams and 2% of the length of the
       longest side of ternary diagrams. </p>
 
-    <p>The <code>H2SO4-&gt;H<sub>2</sub>SO<sub>4</sub></code> button
-      will convert numbers that appear to be meant as subscripts in
-      chemical formulas into actual subscripts.</p>
+    <ul>
 
-    <p>The nine anchor buttons in the lower right determine whether
-      the label will be centered at the anchor or will have a corner
-      or center of one side located there. The anchors use the text's
-      frame of reference: for example, if the label reads "Foo" and
-      the lower right button is selected, then the corner of the F
-      will lie closest to the anchor, no matter what text angle is
-      selected.
+      <li>The <code>H2SO4-&gt;H<sub>2</sub>SO<sub>4</sub></code> button
+        converts numbers that appear to be meant as subscripts in
+        chemical formulas into actual subscripts.
 
-    <p>If you check the box for <b id=LabelWhiteBackground>White label
-      background</b>, a white rectangle will be printed behind the
-      label. White label backgrounds only obscure decorations in lower
-      layers, so you may need to <a href="#Layer">raise the label</a>
-      as well.
+      <li>The <code>Table</code> button converts comma-separated
+      values into a table whose columns and rows align. A newline
+      starts a new row, and a comma starts a new cell. For example:
 
-    <p>If you check the box for <b id=LabelWhiteHoles>White character
-        holes</b>, the insides of hollow letters and characters will
+        <blockquote>
+          1,2&lt;br&gt;<br>
+          one,two&lt;br&gt;<br>
+          uno,dos&lt;br&gt;<br>
+        </blockquote>
+
+        becomes
+
+        <blockquote>
+          <table>
+            <tr><td style="text-align:right">1&nbsp;<td>2</tr>
+            <tr><td style="text-align:right">one&nbsp;<td>two</tr>
+            <tr><td style="text-align:right">uno&nbsp;<td>dos</tr>
+          </table>
+        </blockquote>
+
+        <p>By default, the first column is right-aligned and the other
+        columns are left-aligned, but you can change that by removing
+        or adding "align=left" or "align=right" to the &lt;td&gt tags
+        created during conversion.
+
+      <li>The nine anchor buttons in the lower right determine whether
+        the label will be centered at the anchor or will have a corner
+        or center of one side located there. The anchors use the text's
+        frame of reference: for example, if the label reads "Foo" and
+        the lower right button is selected, then the corner of the F
+        will lie closest to the anchor, no matter what text angle is
+        selected.
+
+      <li>If you check the box for <b id=LabelWhiteBackground>White label
+          background</b>, a white rectangle will be printed behind the
+        label. White label backgrounds only obscure decorations in lower
+        layers, so you may need to <a href="#Layer">raise the label</a>
+        as well.
+
+      <li>If you check the box for <b id=LabelWhiteHoles>White character
+          holes</b>, the insides of hollow letters and characters will
         be painted white. This option is mostly useful for symbols,
         and it insures that a hollow circle stands out when plotted
         over a solid line. White character holes only obscure
         decorations in lower layers, so you may need
         to <a href="#Layer">raise the label</a> as well.
 
-    <p>If you check the box for <b>Label border</b>, the label will be
-      surrounded by a thin border.
+      <li>If you check the box for <b>Label border</b>, the label will be
+        surrounded by a thin border.
+
+      <li>If you check the box for <b>Compact label</b>, the label
+      text wraps to achieve a good compromise between height and
+      width.
+
+    </ul>
 
     <p>The <a href="#Copy">copy command</a> is the best way to create
       many duplicates of a label, such as when marking data
