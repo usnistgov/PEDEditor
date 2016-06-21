@@ -7,6 +7,7 @@ import static gov.nist.pededitor.Stuff.copyToClipboard;
 import static gov.nist.pededitor.Stuff.getExtension;
 import static gov.nist.pededitor.Stuff.htmlify;
 import static gov.nist.pededitor.Stuff.removeExtension;
+import static gov.nist.pededitor.Stuff.isFileAssociationBroken;
 import gov.nist.pededitor.EditFrame.BackgroundImageType;
 
 import java.awt.AWTException;
@@ -58,6 +59,7 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.FileSystems;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.text.DecimalFormat;
 import java.text.NumberFormat;
 import java.util.ArrayList;
@@ -1667,7 +1669,7 @@ public class BasicEditor extends Diagram
             // Mark the anchor with a circle -- either a solid circle
             // if the selection handle is the anchor, or a hollow
             // circle if the selection handle is the label's center.
-            double r = Math.max(scale * 2.0 / BASE_SCALE, 4.0);
+            double r = Math.max(scale * label.getScale() * 2.0 / BASE_SCALE, 4.0);
             Point2D.Double p = new Point2D.Double
                 (label.getXWeight(), label.getYWeight());
             labelToScaledPage(labelInfo, scale).transform(p, p);
@@ -4110,6 +4112,7 @@ public class BasicEditor extends Diagram
         }
     }
 
+    /** Standard successful installation message. */
     String successfulAssociationMessage() {
         return fallbackTitle() + " has been installed. At any time, you can " +
             "uninstall, run, or create a shortcut for it by opening the Java Control " +
@@ -4117,6 +4120,8 @@ public class BasicEditor extends Diagram
             "button.";
     }
 
+    /** Installation message if setting file associations fails on an
+        OS where it might be expected to succeed (e.g. Windows). */
     String failedAssociationMessage(boolean haveOptions) {
         return fallbackTitle() + " could not register as the handler for "
             + "PED diagrams (.PED files).";
@@ -5068,9 +5073,9 @@ public class BasicEditor extends Diagram
             } catch (IOException e) {
                 if (JOptionPane.showOptionDialog
                     (editFrame,
-                     "Original image unavailable: '" + ofn + "':\n" +  e.toString() + "\n"
-                     + "You may hide the original image or\ntry to locate a "
-                     + "readable copy of this file.",
+                     htmlify("Original image unavailable: '" + ofn + "':\n" +  e.toString() + "\n"
+                             + "You may hide the original image or try to locate a "
+                             + "readable copy of this file."),
                      "Image load error",
                      JOptionPane.YES_NO_OPTION,
                      JOptionPane.WARNING_MESSAGE,
@@ -5234,8 +5239,13 @@ public class BasicEditor extends Diagram
             chooser.setDialogTitle("Select directory to monitor for new diagram files");
             String dir = getCurrentDirectory();
             File dirFile;
+            if (dir == null) {
+                String home = System.getProperty("user.home");
+                if (home != null) {
+                    dir = Paths.get(home, "Downloads").toString();
+                }
+            }
             if (dir != null) {
-                System.err.println("Selecting " + dir);
                 dirFile = new File(dir);
                 // This shouldn't be necessary, and it doesn't even
                 // work correctly, but there's a bug that causes
@@ -6460,19 +6470,24 @@ public class BasicEditor extends Diagram
         }
 
         if (args.length == 0) {
-            try {
-                boolean ok = setFileAssociations();
-                if (launch != LaunchType.YES) {
-                    launch = doFileAssociationsMessage(ok, launch == LaunchType.ASK)
-                        ? LaunchType.YES : LaunchType.NO;
-                }
-            } catch (UnavailableServiceException x) {
-                launch = LaunchType.YES;
-            }
-
-            if (launch == LaunchType.YES) {
+            if (isFileAssociationBroken()) {
+                doFileAssociationsBrokenMessage();
                 initializeGUI();
-                run();
+            } else {
+                try {
+                    boolean ok = setFileAssociations();
+                    if (launch != LaunchType.YES) {
+                        launch = doFileAssociationsMessage(ok, launch == LaunchType.ASK)
+                            ? LaunchType.YES : LaunchType.NO;
+                    }
+                } catch (UnavailableServiceException x) {
+                    launch = LaunchType.YES;
+                }
+
+                if (launch == LaunchType.YES) {
+                    initializeGUI();
+                    run();
+                }
             }
 
             if (getOpenEditorCnt() == 0) {
@@ -6521,6 +6536,22 @@ public class BasicEditor extends Diagram
                 (editFrame, Stuff.htmlify(mess), title, messType);
             return false;
         }
+    }
+
+    void doFileAssociationsBrokenMessage() {
+        doFileAssociationsBrokenMessage
+            ("At any time, you can " +
+             "uninstall, run, or create a shortcut for this program by opening the Java Control " +
+             "Panel's General tab and and pressing the \"View...\" button. ",
+             fallbackTitle());
+    }
+
+    /** Standard installation message for OSes such Macintosh for
+        which file associations don't work. For the PED Editor, that's
+        not a big deal. */
+    void doFileAssociationsBrokenMessage(String mess, String title) {
+        JOptionPane.showMessageDialog(editFrame, Stuff.htmlify(mess), title,
+                                      JOptionPane.PLAIN_MESSAGE);
     }
 
     /** run() when no arguments are present */
