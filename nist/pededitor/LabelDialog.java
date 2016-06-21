@@ -18,6 +18,10 @@ import java.awt.geom.Ellipse2D;
 import java.awt.geom.Line2D;
 import java.awt.geom.Rectangle2D;
 import java.awt.image.BufferedImage;
+import java.io.StringReader;
+import java.io.IOException;
+import java.util.List;
+import java.util.function.Function;
 
 import javax.swing.AbstractAction;
 import javax.swing.BorderFactory;
@@ -35,6 +39,9 @@ import javax.swing.JTextField;
 import javax.swing.KeyStroke;
 
 import org.codehaus.jackson.annotate.JsonIgnore;
+import org.supercsv.io.CsvListReader;
+import org.supercsv.io.ICsvListReader;
+import org.supercsv.prefs.CsvPreference;
 
 /** GUI for selecting a label string and an anchoring position for
     that label. */
@@ -171,6 +178,46 @@ public class LabelDialog extends JDialog {
         textField.setSelectionEnd(ss + s.length());
     }
 
+    Function<String, String> csvToHTML = str -> {
+        try {
+            ICsvListReader r = null;
+            try {
+                r = new CsvListReader(new StringReader(str),
+                        CsvPreference.STANDARD_PREFERENCE);
+                StringBuilder outStr = new StringBuilder("<table>\n");
+                for (List<String> cellList; (cellList = r.read()) != null;) {
+                    outStr.append("  <tr>");
+                    int cellNum = 0;
+                    for (String cell: cellList) {
+                        if (cellNum == 0) {
+                            outStr.append("<td align=right>");
+                        } else {
+                            outStr.append("&nbsp;<td>");
+                        }
+                        ++cellNum;
+                        String br = "<br>";
+                        if (cell.endsWith(br)) {
+                            cell = cell.substring(0, cell.length() - br.length());
+                        }
+                        outStr.append(cell);
+                    }
+                    outStr.append("\n");
+                }
+                outStr.append("</table>\n");
+                return outStr.toString();
+            } finally {
+                if (r != null) {
+                    r.close();
+                }
+            }
+        } catch (IOException x) {
+            throw new IllegalStateException(x);
+        }
+    };
+            
+
+    /** Replace the selected text with the same plus a starting
+        delimiter before it and an ending delimiter afterwards. */
     public void delimit(Delimiter d) {
         String str = textField.getText();
         int ss = textField.getSelectionStart();
@@ -183,6 +230,45 @@ public class LabelDialog extends JDialog {
 
         textField.setSelectionStart(ss + dsl);
         textField.setSelectionEnd(se + dsl);
+    }
+
+    /** Replace the selected text with transform.apply(selection).
+        Afterwards, all of the new text will be selected. */
+    public void transformSelection(Function<String, String> transform) {
+        String str = textField.getText();
+        int ss0 = textField.getSelectionStart();
+        int se0 = textField.getSelectionEnd();
+        int ss;
+        int se;
+        if (ss0 < se0) { // If a region is selected, transform that region.
+            ss = ss0;
+            se = se0;
+        } else { // Otherwise transform entire label.
+            ss = 0;
+            se = str.length();
+        }
+        String prefix = str.substring(0, ss);
+        String suffix = str.substring(se);
+        String sel = transform.apply(str.substring(ss, se));
+        if (sel.isEmpty())
+            return;
+        str = prefix + sel + suffix;
+        textField.setText(str);
+        textField.setSelectionStart(newSelectionPos(ss0, ss, se, sel.length()));
+        textField.setSelectionEnd(newSelectionPos(se0, ss, se, sel.length()));
+    }
+
+    /** Return the new selection position. Anything before the
+        selection is unchanged, anything after the selection has its
+        position unchanged with respect to the end of the label, and
+        anything inside the selection is transformed into the
+        selection start. */
+    int newSelectionPos(int pos, int ss, int se, int len) {
+        if (pos <= ss)
+            return pos;
+        if (pos < se)
+            return ss;
+        return ss + len + pos - se;
     }
 
     LabelDialog(Frame owner, String title, Font font) {
@@ -224,7 +310,15 @@ public class LabelDialog extends JDialog {
                     };
 
                 DelimiterPalettePanel dpal = new DelimiterPalettePanel
-                    (new HTMLDelimiterPalette(), 7, font);
+                    (new HTMLDelimiterPalette(), 8, font);
+                @SuppressWarnings("serial")
+                    JButton butTable = new JButton(new AbstractAction("Table") {
+                            @Override public void actionPerformed(ActionEvent e) {
+                                transformSelection(csvToHTML);
+                            }
+                        });
+                butTable.setToolTipText("Convert comma separated values into a table.");
+                dpal.addButton(butTable);
                 dpal.addListener(dlisten);
                 gb.endRowWith(dpal);
 
