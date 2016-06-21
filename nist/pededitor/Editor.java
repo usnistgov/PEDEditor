@@ -24,7 +24,7 @@ public class Editor extends SingleInstanceBasicEditor {
     }
 
     @SuppressWarnings("serial")
-	abstract class Action extends AbstractAction {
+    abstract class Action extends AbstractAction {
         Action(String name) {
             super(name);
         }
@@ -32,17 +32,17 @@ public class Editor extends SingleInstanceBasicEditor {
 
     void addSaveAsPDF() {
         @SuppressWarnings("serial")
-		Action act = new Action("PDF") {
-                {
-                    putValue(MNEMONIC_KEY, KeyEvent.VK_F);
-                    putValue(SHORT_DESCRIPTION,
-                             "Save diagram in Adobe PDF format");
-                }
+            Action act = new Action("PDF") {
+                    {
+                        putValue(MNEMONIC_KEY, KeyEvent.VK_F);
+                        putValue(SHORT_DESCRIPTION,
+                                 "Save diagram in Adobe PDF format");
+                    }
 
-                @Override public void actionPerformed(ActionEvent e) {
-                    saveAsPDF();
-                }
-            };
+                    @Override public void actionPerformed(ActionEvent e) {
+                        saveAsPDF();
+                    }
+                };
         editFrame.addAlphabetized(editFrame.mnSaveAs, act, 1);
     }
 
