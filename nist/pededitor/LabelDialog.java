@@ -11,6 +11,7 @@ import java.awt.Frame;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.GraphicsEnvironment;
+import java.awt.GridBagConstraints;
 import java.awt.GridLayout;
 import java.awt.Image;
 import java.awt.event.ActionEvent;
@@ -289,9 +290,13 @@ public class LabelDialog extends JDialog {
                     }
                 };
 
+            GridBagConstraints greedy = (GridBagConstraints) GridBagUtil.endRow.clone();
+            greedy.weightx = 1.0;
+            greedy.weighty = 1.0;
+            greedy.fill = GridBagConstraints.BOTH;
+
             {
                 JPanel panel = new JPanel();
-                GridBagUtil gb = new GridBagUtil(panel);
 
                 TransferFocus.patch(textField);
                 JScrollPane sp = new JScrollPane(textField);
@@ -301,7 +306,9 @@ public class LabelDialog extends JDialog {
                 InputMap im = textField.getInputMap();
                 im.put(KeyStroke.getKeyStroke("ENTER"),
                        okButton.getAction());
-                gb.endRowWith(sp);
+
+                GridBagUtil gb = new GridBagUtil(panel);
+                gb.add(sp, greedy);
 
                 DelimiterEventListener dlisten = new DelimiterEventListener() {
                         @Override public void actionPerformed(DelimiterEvent e) {
@@ -326,7 +333,7 @@ public class LabelDialog extends JDialog {
                 pal.addListener(listen);
                 gb.endRowWith(pal);
 
-                cpgb.endRowWith(panel);
+                cpgb.add(panel, greedy);
             }
 
             {
@@ -449,7 +456,6 @@ public class LabelDialog extends JDialog {
         cpgb.endRowWith(miscPane);
 
         reset();
-        setResizable(false);
     }
 
     LabelDialog(Frame owner, String title, AnchoredLabel label, Font font) {
@@ -547,6 +553,7 @@ public class LabelDialog extends JDialog {
     public AnchoredLabel showModal() {
         if (!packed) {
             pack();
+            setMinimumSize(getSize());
             packed = true;
         }
         pressedOK = false;
