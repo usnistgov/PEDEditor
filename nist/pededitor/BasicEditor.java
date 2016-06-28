@@ -3617,6 +3617,7 @@ public class BasicEditor extends Diagram
         LabelDialog dog = getLabelDialog();
         dog.setTitle("Add Label");
         AnchoredLabel newLabel = dog.showModal();
+        editFrame.toFront();
         if (newLabel == null || !check(newLabel)) {
             return;
         }
@@ -3648,6 +3649,7 @@ public class BasicEditor extends Diagram
         dog.setTitle("Edit Label");
         dog.set(label);
         AnchoredLabel newLabel = dog.showModal();
+        editFrame.toFront();
         if (newLabel == null || !check(newLabel)) {
             return;
         }
