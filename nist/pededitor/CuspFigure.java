@@ -102,15 +102,13 @@ public class CuspFigure implements BoundedParameterizable2D, Decorated {
         this.curve = curve;
     }
 
-    public CuspFigure(CuspInterp2D curve,
-                      StandardStroke stroke) {
+    public CuspFigure(CuspInterp2D curve, StandardStroke stroke) {
         this.curve = curve;
         this.stroke = stroke;
     }
 
-    public CuspFigure(CuspInterp2D curve,
-                           StandardStroke stroke,
-                           double lineWidth) {
+    public CuspFigure(CuspInterp2D curve, StandardStroke stroke,
+            double lineWidth) {
         this(curve, stroke);
         this.lineWidth = lineWidth;
     }

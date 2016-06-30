@@ -103,7 +103,7 @@ public class CuspInterp2D extends PointsInterp2D {
         param = null;
     }
 
-    int nextClearBit(int n) {
+    int nextUnsmoothed(int n) {
         int s = smoothed.size();
         for (int i = n; i < s; ++i) {
             if (!smoothed.get(i)) {
@@ -113,7 +113,7 @@ public class CuspInterp2D extends PointsInterp2D {
         return s;
     }
 
-    int previousClearBit(int n) {
+    int previousUnsmoothed(int n) {
         for (int i = n; i >= 0; --i) {
             if (!smoothed.get(i)) {
                 return i;
@@ -138,7 +138,7 @@ public class CuspInterp2D extends PointsInterp2D {
             return res;
         }
 
-        int nextClear = nextClearBit(0);
+        int nextClear = nextUnsmoothed(0);
         if (nextClear >= s) {
             return new CubicSpline2D
                 (points.toArray(new Point2D.Double[0]), isClosed()).path();
@@ -154,7 +154,7 @@ public class CuspInterp2D extends PointsInterp2D {
             if (nextClear > 0) {
                 // Smooth through point #0, which requires a spline that
                 // straddles the loop back to #0.
-                lastClear = previousClearBit(s-1);
+                lastClear = previousUnsmoothed(s-1);
                 if (lastClear == -1) {
                     lastClear = s;
                 }
@@ -183,7 +183,7 @@ public class CuspInterp2D extends PointsInterp2D {
             setSmoothed(lastClear, false);
         }
         while (ss < lastClear) {
-            int se = nextClearBit(ss+1);
+            int se = nextUnsmoothed(ss+1);
             if (se == ss+1) {
                 Point2D.Double p = points.get(se);
                 res.lineTo(p.x, p.y);

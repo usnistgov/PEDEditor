@@ -209,10 +209,19 @@ public class Diagram extends Observable implements Printable {
             return getClass().getSimpleName() + "[" + getItem() + ", " + vertexNo + "]";
         }
 
-        @Override public void move(Point2D target) {
-            CuspFigure path = getItem();
+        @Override public VertexHandle move(Point2D target) {
+            CuspInterp2D path = getItem().getCurve();
+            /* Moving this point onto an adjacent control point deletes
+               the control point, since adjacent control points cannot
+               be duplicates of each other. */
+            for (int i: path.adjacentVertexes(vertexNo)) {
+                if (principalCoordinatesMatch(target, path.get(i), 1e-9)) {
+                    return remove();
+                }
+            }
             path.set(vertexNo, target);
             propagateChange();
+            return this;
         }
 
         @Override public VertexHandle copy(Point2D dest) {
@@ -394,7 +403,7 @@ public class Diagram extends Observable implements Printable {
             return null;
         }
 
-        @Override public void move(Point2D dest) {
+        @Override public LabelHandle move(Point2D dest) {
             Point2D.Double destAnchor = getAnchorLocation(dest);
             LabelInfo item = getItem();
             AnchoredLabel label = item.label;
@@ -402,6 +411,7 @@ public class Diagram extends Observable implements Printable {
             label.setY(destAnchor.getY());
             item.center = null;
             propagateChange();
+            return this;
         }
 
         @Override public LabelHandle copy(Point2D dest) {
@@ -628,11 +638,12 @@ public class Diagram extends Observable implements Printable {
             return null;
         }
 
-        @Override public void move(Point2D dest) {
+        @Override public ArrowDecoration move(Point2D dest) {
             Arrow item = getItem();
             item.x = dest.getX();
             item.y = dest.getY();
             propagateChange();
+            return this;
         }
 
         @Override public ArrowDecoration copy(Point2D dest) {
@@ -747,11 +758,12 @@ public class Diagram extends Observable implements Printable {
             return null;
         }
 
-        @Override public void move(Point2D dest) {
+        @Override public DecorationHandle move(Point2D dest) {
             // Tie line movement happens indirectly: normally,
             // everything at a key point moves at once, which means
             // that the control point that delimits the tie line moves
             // with it. No additional work is required here.
+            return null;
         }
 
         @Override public boolean equals(Object other) {
@@ -879,11 +891,11 @@ public class Diagram extends Observable implements Printable {
             return handle;
         }
 
-        @Override public DecorationHandle remove() {
+        @Override public RulerHandle remove() {
             return getDecoration().remove();
         }
 
-        @Override public void move(Point2D dest) {
+        @Override public RulerHandle move(Point2D dest) {
             Point2D.Double d = new Point2D.Double(dest.getX(), dest.getY());
 
             switch (handle) {
@@ -898,6 +910,7 @@ public class Diagram extends Observable implements Printable {
             }
 
             propagateChange();
+            return this;
         }
 
         @Override public RulerHandle copy(Point2D dest) {
@@ -996,7 +1009,7 @@ public class Diagram extends Observable implements Printable {
             return StandardStroke.SOLID;
         }
 
-        @Override public DecorationHandle remove() {
+        @Override public RulerHandle remove() {
             removeDecoration(this);
             return null;
         }
@@ -1464,7 +1477,8 @@ public class Diagram extends Observable implements Printable {
     /** Return true if the distance between p1 and p2's
         transformations to the standard page is less than
         threshold. */
-    public boolean principalCoordinatesMatch(Point2D p1, Point2D p2, double threshold) {
+    public boolean principalCoordinatesMatch(Point2D p1, Point2D p2,
+            double threshold) {
         Point2D.Double page1 = principalToStandardPage.transform(p1);
         Point2D.Double page2 = principalToStandardPage.transform(p2);
         return page1.distanceSq(page2) < threshold * threshold;
@@ -4822,7 +4836,7 @@ public class Diagram extends Observable implements Printable {
         compounds with integer subscripts (that is, the components sum
         to 1), and point "prin" nearly equals a round fraction, then
         return the compound that "prin" represents. If it doesn't
-        nearly equal a round fraction, the express the compound using
+        nearly equal a round fraction, then express the compound using
         floating point subscripts. */
     public String molePercentToCompound(Point2D.Double prin) {
         if (prin == null) {

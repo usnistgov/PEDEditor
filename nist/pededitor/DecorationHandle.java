@@ -3,7 +3,7 @@
 
 package gov.nist.pededitor;
 
-import java.awt.geom.*;
+import java.awt.geom.Point2D;
 
 /** Interface for the combination of a Decoration and a location on
     it. For example, to display a dragged object, you need to know
@@ -14,7 +14,7 @@ public interface DecorationHandle {
         should leave the current selection empty. */
     DecorationHandle remove();
 
-    void move(Point2D dest);
+    DecorationHandle move(Point2D dest);
 
     /** Copy this selection, placing the copy at dest. Return the
         SelectionHandle object that represents the copy. */

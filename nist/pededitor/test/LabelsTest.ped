@@ -35,6 +35,15 @@
   }, {
     "format" : {
       "type" : "DecimalFormat",
+      "pattern" : "#0.0000"
+    },
+    "a" : 894.4404570212026,
+    "b" : 0.0,
+    "c" : -515.7436178124074,
+    "name" : "X-axis"
+  }, {
+    "format" : {
+      "type" : "DecimalFormat",
       "pattern" : "#0.000"
     },
     "a" : 0.0,
@@ -118,19 +127,6 @@
     "decoration" : "curve",
     "curve" : {
       "points" : [ {
-	"x" : 0.260958009632252,
-	"y" : 0.3813184131319757
-      } ],
-      "smoothed" : [ false ],
-      "closed" : false
-    },
-    "lineWidth" : 0.0016,
-    "lineStyle" : "SOLID",
-    "id" : 17
-  }, {
-    "decoration" : "curve",
-    "curve" : {
-      "points" : [ {
 	"x" : 0.5,
 	"y" : 1.0
       } ],
@@ -144,8 +140,8 @@
     "decoration" : "curve",
     "curve" : {
       "points" : [ {
-	"x" : 0.8854350117172466,
-	"y" : 0.26587125866043093
+	"x" : 0.8157418428178242,
+	"y" : 0.2741702620080031
       } ],
       "smoothed" : [ false ],
       "closed" : false
@@ -462,32 +458,14 @@
     "boxed" : true
   }, {
     "decoration" : "label",
-    "text" : "Southeast",
-    "xWeight" : 1.0,
-    "yWeight" : 1.0,
-    "x" : 0.260958009632252,
-    "y" : 0.3813184131319757,
-    "angle" : -1.5707963267948966,
-    "scale" : 2.5,
-    "boxed" : true
-  }, {
-    "decoration" : "label",
-    "text" : "C⁺C⁻C<sub>2</sub>C<sub>3</sub>C<sub>4</sub>C<sub>5</sub>C<sub>6</sub>Ã○●◉□■△▲✕",
+    "text" : "C⁺ C⁻ C<sub>2</sub> C<sub>3</sub> C<sub>4</sub> C<sub>5</sub> C<sub>6</sub> Ã ○ ● ◓ ◉ ⦵ ✕ □ ■ △ ▲ ▽ ▼ ◇ ◆ ✡ ✶",
     "xWeight" : 0.5,
     "yWeight" : 0.5,
-    "x" : 0.6606381258554028,
-    "y" : 0.5819544667371899,
-    "scale" : 1.6,
-    "boxed" : true
-  }, {
-    "decoration" : "label",
-    "text" : "St. Paul,<br>Fall.<br>thing<br>spring<br>fall",
-    "xWeight" : 0.5,
-    "x" : 0.5675054537641802,
-    "y" : 0.32928589280677234,
-    "angle" : -0.0,
-    "scale" : 1.5,
-    "boxed" : true
+    "x" : 0.33954924376612194,
+    "y" : 0.5660970292527423,
+    "scale" : 1.4,
+    "boxed" : true,
+    "autoWidth" : true
   }, {
     "decoration" : "label",
     "text" : "√2°𝜋𝑒 →←±≅∫∇⇌∞≡≠≥≤",
@@ -502,10 +480,10 @@
     "text" : "Southeast",
     "xWeight" : 1.0,
     "yWeight" : 1.0,
-    "x" : 0.8854350117172466,
-    "y" : 0.26587125866043093,
+    "x" : 0.8157418428178242,
+    "y" : 0.2741702620080031,
     "angle" : 0.7853981633974483,
-    "scale" : 3.0,
+    "scale" : 2.0,
     "boxed" : true
   }, {
     "decoration" : "label",
@@ -534,15 +512,6 @@
     "yWeight" : 0.5,
     "x" : 0.5018503962082186,
     "y" : 0.06373099914061853,
-    "scale" : 2.0,
-    "boxed" : true
-  }, {
-    "decoration" : "label",
-    "text" : "H<sub>2</sub>O",
-    "xWeight" : 0.5,
-    "yWeight" : 0.5,
-    "x" : 0.29649452818482536,
-    "y" : 0.1753589061173627,
     "scale" : 2.0,
     "boxed" : true
   }, {
@@ -585,27 +554,6 @@
     "x" : 0.42780662611935494,
     "y" : 0.2925682084429442,
     "scale" : 1.0,
-    "boxed" : true
-  }, {
-    "decoration" : "label",
-    "text" : "Two",
-    "x" : 0.6330671249678674,
-    "y" : 0.805273776675314,
-    "scale" : 1.5,
-    "boxed" : true
-  }, {
-    "decoration" : "label",
-    "text" : "Lines",
-    "x" : 0.6329070786217226,
-    "y" : 0.769204245754477,
-    "scale" : 1.5,
-    "boxed" : true
-  }, {
-    "decoration" : "label",
-    "text" : "Two<br>Lines",
-    "x" : 0.7240779039576151,
-    "y" : 0.805672575888834,
-    "scale" : 1.5,
     "boxed" : true
   }, {
     "decoration" : "label",
@@ -653,14 +601,6 @@
     "yWeight" : 0.5,
     "x" : 0.6165034262789182,
     "y" : 0.3748143480913252,
-    "scale" : 2.0
-  }, {
-    "decoration" : "label",
-    "text" : "a|b<br>c|d",
-    "xWeight" : 0.5,
-    "yWeight" : 0.5,
-    "x" : 0.2099637888466707,
-    "y" : 0.5471720716685611,
     "scale" : 2.0
   }, {
     "decoration" : "label",
@@ -865,8 +805,8 @@
     "text" : "P<sub>O<sub>2-x</sub></sub>",
     "xWeight" : 0.5,
     "yWeight" : 0.5,
-    "x" : 0.8577119792577057,
-    "y" : 0.11567966963805132,
+    "x" : 0.32829068123389893,
+    "y" : 0.17504269847824938,
     "scale" : 2.0,
     "color" : {
       "rgb" : -16777216
@@ -884,5 +824,74 @@
       "rgb" : -16777216
     },
     "boxed" : true
+  }, {
+    "decoration" : "curve",
+    "curve" : {
+      "points" : [ {
+	"x" : 0.7163625177983385,
+	"y" : 0.7327644389208382
+      }, {
+	"x" : 0.7598409724943636,
+	"y" : 0.7731372897100043
+      }, {
+	"x" : 0.8209178493292558,
+	"y" : 0.7482924584551328
+      }, {
+	"x" : 0.7898618102606665,
+	"y" : 0.6799691725042365
+      }, {
+	"x" : 0.7329257386349195,
+	"y" : 0.7006731985499626
+      } ],
+      "smoothed" : [ true, true, true, true, true ],
+      "closed" : true
+    },
+    "color" : {
+      "rgb" : -16777216
+    },
+    "lineWidth" : 0.0034,
+    "lineStyle" : "SOLID",
+    "id" : 129
+  }, {
+    "decoration" : "label",
+    "text" : "iso",
+    "xWeight" : 0.5,
+    "yWeight" : 0.5,
+    "x" : 0.8086034882884264,
+    "y" : 0.7639631465065855,
+    "angle" : -0.6405358354819191,
+    "scale" : 0.8,
+    "color" : {
+      "rgb" : -16777216
+    },
+    "opaque" : true,
+    "autoWidth" : true
+  }, {
+    "decoration" : "ruler",
+    "startPoint" : {
+      "x" : 0.5766103419896867,
+      "y" : 0.5723082370664603
+    },
+    "endPoint" : {
+      "x" : 0.9120155639304565,
+      "y" : 0.5723082370664603
+    },
+    "lineWidth" : 0.0024,
+    "color" : {
+      "rgb" : -16777216
+    },
+    "labelAnchor" : "RIGHT",
+    "tickRight" : true,
+    "axis" : "X-axis",
+    "fontSize" : 0.02032520325203252
+  }, {
+    "decoration" : "arrow",
+    "x" : 0.726481592721376,
+    "y" : 0.7079669059857372,
+    "size" : 0.0024,
+    "angle" : 2.2345929525486667,
+    "color" : {
+      "rgb" : -16777216
+    }
   } ]
 }

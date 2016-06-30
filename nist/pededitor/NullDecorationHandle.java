@@ -25,7 +25,8 @@ public class NullDecorationHandle implements DecorationHandle {
         return null;
     }
 
-    @Override public void move(Point2D dest) {
+    @Override public DecorationHandle move(Point2D dest) {
+        return null;
     }
 
     @Override public DecorationHandle copy(Point2D dest) {

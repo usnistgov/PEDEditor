@@ -1148,7 +1148,7 @@ public class BasicEditor extends Diagram
             setMouseStuck(false);
         }
 
-        moveSelection(mprin, moveAll);
+        setSelection(moveSelection(mprin, moveAll));
         setMouseStuck(true);
     }
 
@@ -1265,20 +1265,25 @@ public class BasicEditor extends Diagram
 
         @param moveAll If true, move all selectable items that have
         the same location as the selection to dest. If false, move
-        only the selection itself. */
-    public void moveSelection(Point2D.Double dest, boolean moveAll) {
+        only the selection itself. 
+     * @return */
+    public DecorationHandle moveSelection(Point2D.Double dest, boolean moveAll) {
+        DecorationHandle res = null;
         if (moveAll) {
             Point2D.Double p = selection.getLocation();
 
             for (DecorationHandle sel: getDecorationHandles()) {
                 if (principalCoordinatesMatch(p, sel.getLocation())) {
-                    sel.move(dest);
+                    DecorationHandle res2 = sel.move(dest);
+                    if (sel == selection)
+                        res = res2;
                 }
             }
         } else {
-            selection.move(dest);
+            res = selection.move(dest);
         }
         propagateChange();
+        return res;
     }
 
     public void removeSelection() {
@@ -2086,7 +2091,7 @@ public class BasicEditor extends Diagram
 
     /** Return true if, were point p inserted into the currently
         selected curve at the current position, it would be the same
-        as the point preceding or following it. SplinePolyline barfs
+        as the point preceding or following it. CubicSpline2D barfs
         on smoothing between a series of points where the same point
         appears twice in a row, so inserting duplicate points is
         bad. */
@@ -3691,8 +3696,8 @@ public class BasicEditor extends Diagram
         still big enough to avoid getting swallowed by loss of
         precision. */
     double pagePrecision() {
-        return 1e-10 * (pageBounds.width + pageBounds.height +
-                        Math.abs(pageBounds.x) + Math.abs(pageBounds.y));
+        return 1e-10 * (Math.abs(pageBounds.width) + Math.abs(pageBounds.height)
+                + Math.abs(pageBounds.x) + Math.abs(pageBounds.y));
     }
 
     /** Return true if point pageP is inside pageR or nearly so. */

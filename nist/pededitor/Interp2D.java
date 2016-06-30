@@ -172,6 +172,25 @@ public abstract class Interp2D implements BoundedParameterizable2D {
         return get(i % size());
     }
 
+    /** @return An array of the indexes of the control points adjacent
+       to the control point at the given index. This will contain up
+       to 2 index values, but may contain less if this is an endpoint
+       of an open curve or if size() &lt; 3. */
+    public int[] adjacentVertexes(int vertexNo) {
+        int s = size();
+        if (s <= 1) {
+            return new int[0];
+        } else if (s >= 3 && isClosed()) {
+            return new int[] { (vertexNo + s - 1) % s, (vertexNo + 1) % s };
+        } else if (vertexNo == 0) {
+            return new int[] {1};
+        } else if (vertexNo == s - 1) {
+            return new int[s-2];
+        } else {
+            return new int[] {vertexNo - 1, vertexNo + 1};
+        }
+    }
+
     @Override public String toString() {
         try {
             return getClass().getCanonicalName()
