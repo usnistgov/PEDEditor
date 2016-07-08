@@ -19,17 +19,24 @@ public class ImageTransform {
 
     enum DithererType { FAST, GOOD };
 
-    /** run() with default size and black background. */
+    /** run() with default size and black background.
+
+        @param imageType The BufferedImage imageType, such as
+        BufferedImage.TYPE_INT_RGB.
+    */
     public static BufferedImage run(PolygonTransform xform,
-                                    BufferedImage imageIn) {
-        return run(xform, imageIn, Color.BLACK);
+            BufferedImage imageIn, int imageType) {
+        return run(xform, imageIn, Color.BLACK, imageType);
     }
 
-    /** run() with default size and black background. */
+    /** run() with default size and black background.
+
+        @param ditherer Either ImageTransform.DithererType.FAST or
+        ImageTransform.DithererType.GOOD.
+    */
     public static BufferedImage run(PolygonTransform xform,
-                                    BufferedImage imageIn,
-                                    DithererType ditherer) {
-        return run(xform, imageIn, Color.BLACK, ditherer);
+            BufferedImage imageIn, DithererType ditherer, int imageType) {
+        return run(xform, imageIn, Color.BLACK, ditherer, imageType);
     }
 
     protected static Dimension defaultSize(PolygonTransform xform) {
@@ -41,18 +48,17 @@ public class ImageTransform {
     /** run() with output image size just large enough to hold
         xform.outputBounds(). */
     public static BufferedImage run(PolygonTransform xform,
-                                    BufferedImage imageIn,
-                                    Color background) {
-        return run(xform, imageIn, background, DithererType.GOOD);
+            BufferedImage imageIn, Color background, int imageType) {
+        return run(xform, imageIn, background, DithererType.GOOD, imageType);
     }
 
     /** run() with output image size just large enough to hold
         xform.outputBounds(). */
     public static BufferedImage run(PolygonTransform xform,
-                                    BufferedImage imageIn,
-                                    Color background,
-                                    DithererType ditherer) {
-        return run(xform, imageIn, background, defaultSize(xform), ditherer);
+            BufferedImage imageIn, Color background,
+            DithererType ditherer, int imageType) {
+        return run(xform, imageIn, background, defaultSize(xform), ditherer,
+                imageType);
     }
 
     /** This ditherer divides each pixel into sampleCnt x sampleCnt
@@ -79,14 +85,12 @@ public class ImageTransform {
             this.sampleCnt = sampleCnt;
         }
 
-        @Override
-		public double estimatedRunTime(Rectangle outputBounds) {
+        @Override public double estimatedRunTime(Rectangle outputBounds) {
             return 1 + (outputBounds.width * outputBounds.height
                         * (4 + sampleCnt * sampleCnt));
         }
 
-        @Override
-		public void run(Rectangle outputBounds) {
+        @Override public void run(Rectangle outputBounds) {
             /** Use stack variables for speed. Not sure how much this matters... */
             BufferedImage input = this.input;
             int[] output = this.output;
@@ -214,13 +218,11 @@ public class ImageTransform {
             this.background = background;
         }
 
-        @Override
-		public double estimatedRunTime(Rectangle outputBounds) {
+        @Override public double estimatedRunTime(Rectangle outputBounds) {
             return 1 + 4 * outputBounds.width * outputBounds.height;
         }
 
-        @Override
-		public void run(Rectangle outputBounds) {
+        @Override public void run(Rectangle outputBounds) {
             /** Use stack variables for speed. Not sure how much this matters... */
             BufferedImage input = this.input;
             int[] output = this.output;
@@ -259,18 +261,18 @@ public class ImageTransform {
          @param dithererType Either DithererType.GOOD or
          DithererType.FAST. */
     public static BufferedImage run(PolygonTransform xform,
-                                    BufferedImage input,
-                                    Color background,
-                                    Dimension size,
-                                    DithererType dithererType) {
+            BufferedImage input, 
+            Color background,
+            Dimension size,
+            DithererType dithererType,
+            int imageType) {
         int width = size.width;
         int height = size.height;
 
         StopWatch s = new StopWatch();
         s.start();
 
-        BufferedImage output = new BufferedImage(width, height,
-                                                 BufferedImage.TYPE_INT_ARGB);
+        BufferedImage output = new BufferedImage(width, height, imageType);
         Transform2D inverseTransform;
 
         try {
@@ -291,10 +293,10 @@ public class ImageTransform {
             int sampleCnt = (int) Math.round
                 (Math.max(2, Math.min(11, 2 * Math.sqrt(ipixels / (width * height)))));
             ditherer = new GoodDitherer(input, outputRGB, width,
-                                           inverseTransform, background, sampleCnt);
+                    inverseTransform, background, sampleCnt);
         } else {
             ditherer = new FastDitherer(input, outputRGB, width,
-                                           inverseTransform, background);
+                    inverseTransform, background);
         }
         mainPool.invoke(new RecursiveRectangleAction(ditherer, outputBounds, 500000));
         output.setRGB(0, 0, width, height, outputRGB, 0, width);
@@ -357,7 +359,8 @@ public class ImageTransform {
         System.out.println(xform);
         xform.check();
 
-        BufferedImage output = run(xform, input, DithererType.GOOD);
+        BufferedImage output = run(xform, input, DithererType.GOOD,
+                BufferedImage.TYPE_INT_RGB);
         System.out.println("Task subdivided into " + RecursiveRectangleAction.totalJobs + " jobs.");
         String type = "png";
 
