@@ -185,7 +185,7 @@ public abstract class Interp2D implements BoundedParameterizable2D {
         } else if (vertexNo == 0) {
             return new int[] {1};
         } else if (vertexNo == s - 1) {
-            return new int[s-2];
+            return new int[] {s-2};
         } else {
             return new int[] {vertexNo - 1, vertexNo + 1};
         }
