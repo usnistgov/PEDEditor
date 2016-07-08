@@ -30,6 +30,7 @@ import java.awt.print.Printable;
 import java.awt.print.PrinterException;
 import java.awt.print.PrinterJob;
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.PrintWriter;
@@ -1228,6 +1229,12 @@ public class Diagram extends Observable implements Printable {
         making transient changes that will be undone later. */
     transient int suppressUpdateCnt = 0;
     transient boolean saveNeeded = false;
+    
+    /** True if the program already tried and failed to load the image
+        named originalFilename. */
+    protected transient boolean triedToLoadOriginalImage = false;
+    protected transient BufferedImage originalImage;
+
 
     /** If an UpdateSuppressor object is created, then all changes are
         treated like no change at all, until the object is closed
@@ -3087,7 +3094,6 @@ public class Diagram extends Observable implements Printable {
             View thinView = toView(text, xw, c, 1);
             double thinWidth = dimension(thinView).getWidth();
             double wideWidth = dimension(wideView).getWidth();
-            // System.err.println("Width = " + thinWidth + " ... " + wideWidth);
             if (thinWidth == wideWidth) {
                 return wideView;
             }
@@ -3097,7 +3103,6 @@ public class Diagram extends Observable implements Printable {
                 View thisView = toView(text, xw, c, width);
                 double size = size(thisView);
                 Dimension2D dim = dimension(thisView);
-                // System.err.println("Dim(" + width + ") = " + dim);
                 if (bestView == null || size < leastSize) {
                     leastSize = size;
                     bestView = thisView;
@@ -4100,20 +4105,63 @@ public class Diagram extends Observable implements Printable {
     /** Return a BufferedImage of the diagram which is no larger than
         width x height. */
     public BufferedImage createImage(int width, int height) {
-        return createImage(width, height, false);
+        return createImage(width, height, 0, false);
     }
 
-    BufferedImage createImage(int width, int height, boolean transparent) {
+    /** Return a BufferedImage of the diagram which is no larger than
+        width x height. */
+    public BufferedImage createImage(int width, int height,
+            double alpha, boolean transparent) {
+        if (width == 0 || height == 0) {
+            throw new IllegalArgumentException(
+                    "Cannot make image with width " + width
+                    + " and height " + height);
+        }
         Dimension size = bestFitSize(width, height);
-        BufferedImage im = new BufferedImage
-            (size.width, size.height,
-             transparent ? BufferedImage.TYPE_INT_ARGB
-             : BufferedImage.TYPE_INT_RGB);
-        Graphics2D g = (Graphics2D) im.getGraphics();
+        width = size.width;
+        height = size.height;
+        
+        // Images in the editor are normally displayed without font
+        // hinting, but saving at low resolution can cause font
+        // hinting to significantly rearrange the positions of letters
+        // in labels, which can be confusing. Writing the image at a
+        // larger scale and downscaling the result reduces the
+        // problem.
+        int scale = Math.max(1, 400 / (width + height));
+        BufferedImage res = createImageSub(width * scale, height * scale,
+                    alpha, transparent);
+        if (scale > 1) {
+            res = ScaleImage.downscale(res, scale);
+        }
+        return res;
+    }
+
+    BufferedImage createImageSub(int width, int height,
+            double alpha, boolean transparent) {
+        BufferedImage res = null;
         Color backColor = transparent ? new Color(0, 0, 0, 0) :
             Color.WHITE;
-        paintDiagram(g, bestFitScale(new Dimension(width, height)), backColor);
-        return im;
+        int imageType = transparent ? BufferedImage.TYPE_INT_ARGB
+            : BufferedImage.TYPE_INT_RGB;
+        if (alpha > 0) {
+            Dimension size = new Dimension(width, height);
+            try {
+                res = transformOriginalImage(
+                        new Rectangle(size), bestFitScale(size), 
+                        ImageTransform.DithererType.GOOD, alpha, backColor,
+                        imageType);
+                backColor = null;
+            } catch (IOException x) {
+                // OK, fall through
+            }
+        }
+        if (res == null) {
+            res = new BufferedImage(width, height, imageType);
+        }
+        Graphics2D g = (Graphics2D) res.getGraphics();
+        paintDiagram(g, bestFitScale(new Dimension(width, height)),
+                backColor);
+        return res;
     }
 
     /** Return the minimum scale that does not waste screen real
@@ -4130,27 +4178,21 @@ public class Diagram extends Observable implements Printable {
 
     public void saveAsImage(File file, String format, int width, int height)
         throws IOException {
-        saveAsImage(file, format, width, height, false);
+        saveAsImage(file, format, width, height, 0, false);
     }
 
-    public void saveAsImage(File file, String format, int width, int height,
-                            boolean transparent) throws IOException {
-        BufferedImage save = null;
+    /** Save the diagram as an image.
 
-        // Images in the editor are normally displayed without font
-        // hinting, but saving at low resolution can cause font
-        // hinting to significantly rearrange the positions of letters
-        // in labels, which can be confusing. Writing the image at a
-        // larger scale and downscaling the result reduces the
-        // problem.
-        int scale = 400 / (width + height);
-        if (scale > 1) {
-            BufferedImage tmp = createImage(width * scale, height * scale,
-                                            transparent);
-            save = ScaleImage.downscale(tmp, scale);
-        } else {
-            save = createImage(width, height, transparent);
-        }
+       @param transparent If true and the format supports it, the returned image may be partly transparent. Otherwise the image will be as if painted on a white background.
+
+       @param alpha If nonzero, then the original image (assuming it
+       exists) will be shown in the background of the returned image,
+       with the given alpha channel value (0 = don't show background
+       image at all, 0.5 = show at half normal alpha value, 1 = show
+       background image at full alpha value). */
+    public void saveAsImage(File file, String format, int width, int height,
+                            double alpha, boolean transparent) throws IOException {
+        BufferedImage save = createImage(width, height, alpha, transparent);
         ImageIO.write(save, format, file);
     }
 
@@ -5701,6 +5743,127 @@ public class Diagram extends Observable implements Printable {
         double lenY = Geom.length
             (principalToStandardPage.deltaTransform(tmp, tmp));
         return Math.abs((lenX - lenY) / lenY) < 1e-12;
+    }
+
+    @JsonIgnore public BufferedImage getOriginalImage() throws IOException {
+        if (originalImage != null) {
+            return originalImage;
+        }
+
+        if (triedToLoadOriginalImage) {
+            return null;
+        }
+        triedToLoadOriginalImage = true;
+        
+        String filename = getAbsoluteOriginalFilename();
+        if (filename == null) {
+            return null;
+        }
+        
+        originalImage = loadImage(new File(filename));
+        return originalImage;
+    }
+
+    BufferedImage loadImage(File file) throws IOException {
+        if (Files.notExists(file.toPath())) {
+            throw new FileNotFoundException(file.toString());
+        }
+        BufferedImage res = ImageIO.read(file);
+        if (res == null) {
+            throw new IOException(file + ": unknown image format");
+        }
+        return res;
+    }
+
+    /** Scale the diagram by the given amount, placing the upper-left
+        corner in position (0,0), but don't actually draw the diagram.
+        Instead, just return the portion of originalImage, adjusted to
+        the current background image alpha (mixed with a background of
+        pure white), that would sit in the background of the cropRect
+        portion of the scaled diagram.
+
+        TODO: the way fade() works here is doubtful. It makes more
+        sense to use an RGBA image type than to use RGB and mix the
+        color with pure white according to the alpha value. Only real
+        RGBA allows bitmaps to be layered in nontrivial ways.
+    */
+    synchronized BufferedImage transformOriginalImage(
+            Rectangle cropBounds, double scale,
+            ImageTransform.DithererType dither, double alpha,
+            Color backColor, int imageType) throws IOException {
+        BufferedImage input = null;
+        if (alpha > 0) {
+            try {
+                input = getOriginalImage();
+            } catch (IOException x) {
+                // Oh well, treat original image as blank.
+            }
+        }
+
+        if (input == null) {
+            BufferedImage res = new BufferedImage(
+                    cropBounds.width, cropBounds.height, imageType);
+            Graphics2D g2d = res.createGraphics();
+            g2d.setPaint(backColor);
+            g2d.fill(cropBounds);
+            return res;
+        }
+
+        // Create the transformed, cropped, and faded image of the
+        // original diagram.
+        PolygonTransform originalToCrop = originalToPrincipal.clone();
+        originalToCrop.preConcatenate(principalToScaledPage(scale));
+
+        // Shift the transform so that location (cropBounds.x,
+        // cropBounds.y) is mapped to location (0,0).
+
+        originalToCrop.preConcatenate
+            (new Affine(AffineTransform.getTranslateInstance
+                        ((double) -cropBounds.x, (double) -cropBounds.y)));
+        
+        System.out.println("Resizing original image (" + dither + ")...");
+        BufferedImage res = ImageTransform.run(originalToCrop, input,
+                backColor, cropBounds.getSize(), dither, imageType);
+        fade(res, res, alpha);
+
+        return res;
+    }
+
+    /** Compress the brightness into the upper "frac" portion of the range
+        0..255. */
+    static int fade(int i, double frac) {
+        int res = (int) (255 - (255 - i)*frac);
+        return (res < 0) ? 0 : res;
+    }
+
+    static void fade(BufferedImage src, BufferedImage dest, double frac) {
+        if (src == dest && frac == 1.0) {
+            // Nothing to do.
+            return;
+        }
+
+        int width = src.getWidth();
+        int height = src.getHeight();
+        if (dest.getType() == BufferedImage.TYPE_INT_ARGB) {
+            for (int x = 0; x < width; ++x) {
+                for (int y = 0; y < height; ++y) {
+                    Color c = new Color(src.getRGB(x,y));
+                    c = new Color(c.getRed(), c.getGreen(), c.getBlue(),
+                            (int) (c.getAlpha() * frac + 0.5));
+                    dest.setRGB(x,y,c.getRGB());
+                }
+            }
+        } else {
+            for (int x = 0; x < width; ++x) {
+                for (int y = 0; y < height; ++y) {
+                    Color c = new Color(src.getRGB(x,y));
+                    c = new Color(fade(c.getRed(), frac),
+                            fade(c.getGreen(), frac),
+                            fade(c.getBlue(), frac));
+                    dest.setRGB(x,y,c.getRGB());
+                }
+            }
+        }
     }
 }
 
