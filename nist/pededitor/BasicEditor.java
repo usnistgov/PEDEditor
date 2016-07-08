@@ -6,9 +6,8 @@ package gov.nist.pededitor;
 import static gov.nist.pededitor.Stuff.copyToClipboard;
 import static gov.nist.pededitor.Stuff.getExtension;
 import static gov.nist.pededitor.Stuff.htmlify;
-import static gov.nist.pededitor.Stuff.removeExtension;
 import static gov.nist.pededitor.Stuff.isFileAssociationBroken;
-import gov.nist.pededitor.EditFrame.BackgroundImageType;
+import static gov.nist.pededitor.Stuff.removeExtension;
 
 import java.awt.AWTException;
 import java.awt.BasicStroke;
@@ -48,7 +47,6 @@ import java.awt.image.BufferedImage;
 import java.awt.print.PrinterException;
 import java.awt.print.PrinterJob;
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
@@ -94,6 +92,7 @@ import javax.swing.filechooser.FileNameExtensionFilter;
 import org.codehaus.jackson.annotate.JsonIgnore;
 
 import Jama.Matrix;
+import gov.nist.pededitor.EditFrame.BackgroundImageType;
 
 /** Main driver class for Phase Equilibria Diagram digitization and creation. */
 public class BasicEditor extends Diagram
@@ -329,7 +328,6 @@ public class BasicEditor extends Diagram
     }
 
     protected transient double scale;
-    protected transient BufferedImage originalImage;
     protected transient boolean editorIsPacked = false;
     protected transient boolean smoothed = false;
     protected transient boolean showGrid = false;
@@ -364,10 +362,6 @@ public class BasicEditor extends Diagram
     /** autosaveFile is null unless an autosave event happened and the
         resulting autosavefile has not been deleted by this program. */
     protected transient Path autosaveFile = null;
-
-    /** True if the program already tried and failed to load the image
-        named originalFilename. */
-    protected transient boolean triedToLoadOriginalImage = false;
 
     /** True unless selection instanceof VertexHandle and the next
         vertex to be inserted should be added to the curve before the
@@ -1267,7 +1261,8 @@ public class BasicEditor extends Diagram
         the same location as the selection to dest. If false, move
         only the selection itself. 
      * @return */
-    public DecorationHandle moveSelection(Point2D.Double dest, boolean moveAll) {
+    public DecorationHandle moveSelection(Point2D.Double dest,
+            boolean moveAll) {
         DecorationHandle res = null;
         if (moveAll) {
             Point2D.Double p = selection.getLocation();
@@ -1275,7 +1270,7 @@ public class BasicEditor extends Diagram
             for (DecorationHandle sel: getDecorationHandles()) {
                 if (principalCoordinatesMatch(p, sel.getLocation())) {
                     DecorationHandle res2 = sel.move(dest);
-                    if (sel == selection)
+                    if (sel.equals(selection))
                         res = res2;
                 }
             }
@@ -5056,30 +5051,27 @@ public class BasicEditor extends Diagram
         clearSelection();
     }
 
-    @JsonIgnore public BufferedImage getOriginalImage() {
+    @Override public BufferedImage getOriginalImage() {
         if (originalImage != null) {
             return originalImage;
         }
 
-        String ofn = getAbsoluteOriginalFilename();
-
-        if (ofn == null || triedToLoadOriginalImage || !isEditable()) {
+        if (triedToLoadOriginalImage) {
             return null;
         }
-
         triedToLoadOriginalImage = true;
 
+        String ofn = getAbsoluteOriginalFilename();
+        if (ofn == null) {
+            return null;
+        }
         File originalFile = new File(ofn);
+        
         boolean changedOriginal = false;
         do {
             try {
-                if (Files.notExists(originalFile.toPath())) {
-                    throw new FileNotFoundException(originalFile.toString());
-                }
-                originalImage = ImageIO.read(originalFile);
-                if (originalImage == null) {
-                    throw new IOException(filename + ": unknown image format");
-                }
+                originalImage = loadImage(originalFile);
+
                 if (changedOriginal) {
                     setOriginalFilename(originalFile.getName());
                 }
@@ -5087,7 +5079,8 @@ public class BasicEditor extends Diagram
             } catch (IOException e) {
                 if (JOptionPane.showOptionDialog
                     (editFrame,
-                     htmlify("Original image unavailable: '" + ofn + "':\n" +  e.toString() + "\n"
+                     htmlify("Original image unavailable: '" + ofn + "':\n"
+                             +  e.toString() + "\n"
                              + "You may hide the original image or try to locate a "
                              + "readable copy of this file."),
                      "Image load error",
@@ -5532,28 +5525,16 @@ public class BasicEditor extends Diagram
         }
 
         try {
-            saveAsImage(file, ext, size.width, size.height,
-                        dog.isShowOriginalImage(),
-                        maybeTransparent && dog.isTransparent());
+            double alpha = (tracingImage() && dog.isShowOriginalImage())
+                ? getBackgroundImageAlpha() : 0;
+            saveAsImage(file, ext, size.width, size.height, alpha,
+                    maybeTransparent && dog.isTransparent());
         } catch (IOException x) {
             showError("File error: " + x);
         } catch (OutOfMemoryError x) {
             showError("Out of memory. You may either re-run Java with a "
                       + "larger heap size or try saving as a smaller image.");
         }
-    }
-
-    public void saveAsImage(File file, String format, int width, int height,
-                            boolean showOriginalImage,
-                            boolean transparent) throws IOException {
-        if (!showOriginalImage) {
-            saveAsImage(file, format, width, height, transparent);
-            return;
-        }
-        BufferedImage im = transformOriginalImage(new Dimension(width, height));
-        paintDiagram((Graphics2D) im.getGraphics(),
-                     bestFitScale(new Dimension(width, height)), null);
-        ImageIO.write(im, format, file);
     }
  
     public boolean saveAsPED() {
@@ -6391,31 +6372,6 @@ public class BasicEditor extends Diagram
 
     EditPane getEditPane() { return editFrame.getEditPane(); }
 
-    /** Compress the brightness into the upper "frac" portion of the range
-        0..255. */
-    static int fade(int i, double frac) {
-        int res = (int) (255 - (255 - i)*frac);
-        return (res < 0) ? 0 : res;
-    }
-
-    static void fade(BufferedImage src, BufferedImage dest, double frac) {
-        if (src == dest && frac == 1.0) {
-            // Nothing to do.
-            return;
-        }
-        int width = src.getWidth();
-        int height = src.getHeight();
-        for (int x = 0; x < width; ++x) {
-            for (int y = 0; y < height; ++y) {
-                Color c = new Color(src.getRGB(x,y));
-                c = new Color(fade(c.getRed(), frac),
-                              fade(c.getGreen(), frac),
-                              fade(c.getBlue(), frac));
-                dest.setRGB(x,y,c.getRGB());
-            }
-        }
-    }
-
     public void run(String filename) {
         if (filename == null) {
             run(new String[] {});
@@ -6658,6 +6614,29 @@ public class BasicEditor extends Diagram
         }
     }
 
+    /* Override changes: suppress painting while the operation
+       completes, and use WAIT_CURSOR until the operation
+       completes. */
+    @Override synchronized BufferedImage transformOriginalImage(
+            Rectangle cropBounds, double scale,
+            ImageTransform.DithererType dither, double alpha,
+            Color backColor, int imageType) {
+        try {
+            Cursor oldCursor = editFrame.getCursor();
+            try {
+                ++paintSuppressionRequestCnt;
+                editFrame.setCursor(new Cursor(Cursor.WAIT_CURSOR));
+                return super.transformOriginalImage(cropBounds, scale, dither,
+                        alpha, backColor, imageType);
+            } finally {
+                --paintSuppressionRequestCnt;
+                editFrame.setCursor(oldCursor);
+            }
+        } catch (IOException x) {
+            throw new IllegalStateException(x); // This shouldn't happen.
+        }
+    }
+
     ScaledCroppedImage getScaledOriginalImage() {
         Rectangle viewBounds = getViewRect();
         Rectangle imageBounds = scaledPageBounds(scale);
@@ -6810,74 +6789,19 @@ public class BasicEditor extends Diagram
             ? ImageTransform.DithererType.FAST
             : ImageTransform.DithererType.GOOD;
 
-        im.croppedImage = transformOriginalImage
-            (cropBounds, scale, dither, DEFAULT_BACKGROUND_IMAGE_ALPHA);
+        im.croppedImage = transformOriginalImage(
+                cropBounds, scale, dither,
+                DEFAULT_BACKGROUND_IMAGE_ALPHA,
+                Color.WHITE, BufferedImage.TYPE_INT_RGB);
         scaledOriginalImages.add(im);
         return im;
     }
 
     BufferedImage transformOriginalImage(Dimension size) {
-        return transformOriginalImage
-            (new Rectangle(size), bestFitScale(size), 
-             ImageTransform.DithererType.FAST, getBackgroundImageAlpha());
-    }
-
-    /** Scale the diagram by the given amount, placing the upper-left
-        corner in position (0,0), but don't actually draw the diagram.
-        Instead, just return the portion of originalImage, adjusted to
-        the current background image alpha (mixed with a background of
-        pure white), that would sit in the background of the cropRect
-        portion of the scaled diagram.
-
-        TODO: the way fade() works here is doubtful. It makes more
-        sense to use an RGBA image type than to use RGB and mix the
-        color with pure white according to the alpha value. Only real
-        RGBA allows bitmaps to be layered in nontrivial ways. Allowing
-        diagrams to be saved as semitransparent bitmaps would also be
-        neat, though I'm not aware of a need for that right now.
-    */
-
-    synchronized BufferedImage transformOriginalImage
-        (Rectangle cropBounds, double scale, ImageTransform.DithererType dither,
-         double alpha) {
-        BufferedImage input = getOriginalImage();
-
-        if (input == null || alpha == 0.0) {
-            BufferedImage im = new BufferedImage
-                (cropBounds.width, cropBounds.height,
-                 BufferedImage.TYPE_INT_RGB);
-            Graphics2D g2d = im.createGraphics();
-            g2d.setPaint(Color.WHITE);
-            g2d.fill(cropBounds);
-            return im;
-        }
-
-        // Create the transformed, cropped, and faded image of the
-        // original diagram.
-        PolygonTransform originalToCrop = originalToPrincipal.clone();
-        originalToCrop.preConcatenate(principalToScaledPage(scale));
-
-        // Shift the transform so that location (cropBounds.x,
-        // cropBounds.y) is mapped to location (0,0).
-
-        originalToCrop.preConcatenate
-            (new Affine(AffineTransform.getTranslateInstance
-                        ((double) -cropBounds.x, (double) -cropBounds.y)));
-        
-        Cursor oldCursor = editFrame.getCursor();
-        ++paintSuppressionRequestCnt;
-        BufferedImage im = null;
-        try {
-            editFrame.setCursor(new Cursor(Cursor.WAIT_CURSOR));
-            System.out.println("Resizing original image (" + dither + ")...");
-            im = ImageTransform.run
-                (originalToCrop, input, Color.WHITE, cropBounds.getSize(), dither);
-            fade(im, im, alpha);
-        } finally {
-            --paintSuppressionRequestCnt;
-            editFrame.setCursor(oldCursor);
-        }
-        return im;
+        return transformOriginalImage(
+                new Rectangle(size), bestFitScale(size), 
+                ImageTransform.DithererType.FAST, getBackgroundImageAlpha(),
+                Color.WHITE, BufferedImage.TYPE_INT_RGB);
     }
 
     @Override public boolean setFontName(String s) {
