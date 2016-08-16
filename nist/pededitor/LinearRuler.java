@@ -685,9 +685,10 @@ class LinearRuler implements BoundedParameterizable2D, Decorated {
     }
 
     public void neaten(AffineTransform toPage) {
-        double theta = textAngle
-            +  Geom.transformRadians(toPage,
-                    Geom.toAngle(Geom.aMinusB(endPoint, startPoint)));
+        double theta = Geom.normalizeRadians(
+                textAngle
+                +  Geom.transformRadians(toPage,
+                        Geom.toAngle(Geom.aMinusB(endPoint, startPoint))));
         if (theta != MathWindow.normalizeRadians180(theta)) {
             textAngle = Geom.normalizeRadians(Math.PI + textAngle);
         }
