@@ -18,7 +18,7 @@ import org.codehaus.jackson.annotate.JsonTypeInfo;
               include = JsonTypeInfo.As.PROPERTY,
               property = "transform")
 @JsonSubTypes({
-        @Type(value=TriangleTransform.class, name = "TriangleTransform"),
+        @Type(value=TriangleMultiplierTransform.class, name = "TriangleMultiplierTransform"),
         @Type(value=Affine.class, name = "Affine") })
 @JsonIgnoreProperties
     ({"scaleX", "scaleY", "shearX", "shearY", "translateX", "translateY",
