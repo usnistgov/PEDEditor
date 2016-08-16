@@ -103,8 +103,7 @@
   } ],
   "usingWeightFraction" : false,
   "fontName" : "DejaVu LGC Sans PED",
-  "keys" : {
-  },
+  "keys" : { },
   "decorations" : [ {
     "decoration" : "ruler",
     "startPoint" : {
@@ -115,7 +114,6 @@
       "x" : 0.0,
       "y" : 1.0
     },
-    "fontSize" : 0.03902439024390244,
     "lineWidth" : 0.0032,
     "labelAnchor" : "NONE",
     "multiplier" : 100.0,
@@ -128,7 +126,8 @@
     "suppressEndTick" : true,
     "suppressEndLabel" : true,
     "tickType" : "V",
-    "axis" : "Solvent"
+    "axis" : "Solvent",
+    "fontSize" : 0.03902439024390244
   }, {
     "decoration" : "ruler",
     "startPoint" : {
@@ -139,7 +138,6 @@
       "x" : 0.0,
       "y" : 1.0
     },
-    "fontSize" : 0.03902439024390244,
     "lineWidth" : 0.0032,
     "labelAnchor" : "NONE",
     "multiplier" : 100.0,
@@ -152,7 +150,8 @@
     "suppressEndTick" : true,
     "suppressEndLabel" : true,
     "tickType" : "V",
-    "axis" : "Solvent"
+    "axis" : "Solvent",
+    "fontSize" : 0.03902439024390244
   }, {
     "decoration" : "ruler",
     "startPoint" : {
@@ -163,7 +162,6 @@
       "x" : 1.0,
       "y" : 0.0
     },
-    "fontSize" : 0.07804878048780488,
     "lineWidth" : 0.0064,
     "labelAnchor" : "NONE",
     "multiplier" : 100.0,
@@ -175,7 +173,8 @@
     "suppressEndTick" : true,
     "suppressEndLabel" : true,
     "tickType" : "V",
-    "axis" : "B"
+    "axis" : "B",
+    "fontSize" : 0.07804878048780488
   }, {
     "decoration" : "curve",
     "curve" : {
@@ -517,7 +516,7 @@
     "yWeight" : 0.5,
     "x" : 0.4238078354083791,
     "y" : 0.5972921120300037,
-    "fontSize" : 1.8
+    "scale" : 1.8
   }, {
     "decoration" : "label",
     "text" : "A*",
@@ -525,7 +524,7 @@
     "yWeight" : 0.5,
     "x" : -0.022513204802504294,
     "y" : 0.5934958362873866,
-    "fontSize" : 1.8
+    "scale" : 1.8
   }, {
     "decoration" : "label",
     "text" : "phase separation",
@@ -534,7 +533,7 @@
     "x" : 0.24205499192592295,
     "y" : 0.42658715374106027,
     "angle" : 1.974594720965947,
-    "fontSize" : 1.8,
+    "scale" : 1.8,
     "opaque" : true
   }, {
     "decoration" : "label",
@@ -544,19 +543,19 @@
     "x" : -0.1832391584491822,
     "y" : 0.2771395244026603,
     "angle" : -0.0,
-    "fontSize" : 2.0
+    "scale" : 2.0
   }, {
     "decoration" : "label",
     "text" : "A",
     "xWeight" : 1.0,
     "x" : 0.017000000000000015,
     "y" : -0.03400000000000003,
-    "fontSize" : 1.8
+    "scale" : 1.8
   }, {
     "decoration" : "label",
     "text" : "B",
     "x" : 1.0,
-    "fontSize" : 1.8
+    "scale" : 1.8
   }, {
     "decoration" : "label",
     "text" : "1 phase<br>(unsaturated liquid)",
@@ -564,14 +563,14 @@
     "yWeight" : 0.5,
     "x" : 0.6103034333605631,
     "y" : 0.9410132448927588,
-    "fontSize" : 1.8
+    "scale" : 1.8
   }, {
     "decoration" : "label",
-    "text" : "Solvent<br><br>",
+    "text" : "Solvent<br>\n<br>\n",
     "xWeight" : 0.5,
     "yWeight" : 1.0,
     "y" : 1.0,
-    "fontSize" : 1.8
+    "scale" : 1.8
   }, {
     "decoration" : "label",
     "text" : "2 phases<br>(saturated liquid +<br>particular solid<br>solution of A and B)",
@@ -579,7 +578,7 @@
     "yWeight" : 0.5,
     "x" : 0.784846308504421,
     "y" : 0.5990389202749997,
-    "fontSize" : 1.8
+    "scale" : 1.8
   }, {
     "decoration" : "label",
     "text" : "P̃(X̃<sub>A</sub>,X̃<sub>B</sub>,X̃<sub>Solvent</sub>)",
@@ -587,7 +586,7 @@
     "yWeight" : 0.5,
     "x" : -0.10635353201751219,
     "y" : 0.7376029848805099,
-    "fontSize" : 1.8
+    "scale" : 1.8
   }, {
     "decoration" : "label",
     "text" : "X̃<sub>A</sub>",
@@ -595,28 +594,28 @@
     "yWeight" : 0.5,
     "x" : -0.10142691740610488,
     "y" : 0.9217223583974208,
-    "fontSize" : 1.8
+    "scale" : 1.8
   }, {
     "decoration" : "label",
     "text" : "X̃<sub>B</sub>",
     "xWeight" : 0.5,
     "x" : 0.19420223460253272,
     "y" : -0.03775512370204637,
-    "fontSize" : 1.8
+    "scale" : 1.8
   }, {
     "decoration" : "label",
     "text" : "X̃<sub>Solvent</sub>",
     "yWeight" : 1.0,
     "x" : 0.895478475834433,
     "y" : 0.13911156504346878,
-    "fontSize" : 1.8
+    "scale" : 1.8
   }, {
     "decoration" : "label",
     "text" : "Q̃(X̃<sub>A</sub>,X̃<sub>B</sub>,X̃<sub>Solvent</sub> = 0)",
     "xWeight" : 0.5,
     "x" : 0.6241921933905727,
     "y" : -0.08239257552470147,
-    "fontSize" : 1.8
+    "scale" : 1.8
   }, {
     "decoration" : "label",
     "text" : "x",
@@ -624,6 +623,6 @@
     "x" : 0.10877909139969322,
     "y" : -0.1200595222278742,
     "angle" : -0.0,
-    "fontSize" : 2.0
+    "scale" : 2.0
   } ]
 }
