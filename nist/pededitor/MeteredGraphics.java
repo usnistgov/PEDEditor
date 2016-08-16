@@ -74,13 +74,13 @@ public class MeteredGraphics extends Graphics2D {
         fill(getStroke().createStrokedShape(s));
     }
 
-    @Override public void draw3DRect(int x, int y, int width, int height, boolean raised) {
+    @Override public void draw3DRect(int x, int y, int width, int height,
+            boolean raised) {
         drawRect(x, y, width, height);
     }
 
-    @Override public void drawGlyphVector
-        (GlyphVector arg0, float arg1, float arg2) {
-        fill(arg0.getOutline(arg1, arg2));
+    @Override public void drawGlyphVector(GlyphVector g, float x, float y) {
+        fill(g.getOutline(x, y));
     }
 
     @Override public void drawImage(BufferedImage arg0,
@@ -131,8 +131,8 @@ public class MeteredGraphics extends Graphics2D {
     }
 
     @Override public void fill(Shape s) {
-        Rectangle2D.Double b = PathParam2D.create
-            (s.getPathIterator(getTransform(), getAccuracy()))
+        Rectangle2D.Double b = PathParam2D.create(
+                s.getPathIterator(getTransform(), getAccuracy()))
             .getBounds();
         if (b == null) {
             return;
@@ -144,7 +144,8 @@ public class MeteredGraphics extends Graphics2D {
         }
     }
 
-    @Override public void fill3DRect(int x, int y, int width, int height, boolean raised) {
+    @Override public void fill3DRect(int x, int y, int width, int height,
+            boolean raised) {
         fillRect(x, y, width, height);
     }
 
@@ -282,7 +283,6 @@ public class MeteredGraphics extends Graphics2D {
     }
 
     @Override public boolean drawImage(Image arg0, int arg1, int arg2, ImageObserver arg3) {
-        // TODO Auto-generated method stub
         System.err.println("Ignoring drawImage#5()");
         return false;
     }
@@ -290,36 +290,31 @@ public class MeteredGraphics extends Graphics2D {
     @Override public boolean drawImage(Image arg0, int arg1, int arg2, Color arg3,
                                                ImageObserver arg4) {
         System.err.println("Ignoring drawImage#6()");
-        // TODO Auto-generated method stub
         return false;
     }
 
     @Override public boolean drawImage(Image arg0, int arg1, int arg2, int arg3,
                                                int arg4, ImageObserver arg5) {
         System.err.println("Ignoring drawImage#7()");
-        // TODO Auto-generated method stub
         return false;
     }
 
     @Override public boolean drawImage(Image arg0, int arg1, int arg2, int arg3,
                                                int arg4, Color arg5, ImageObserver arg6) {
         System.err.println("Ignoring drawImage#8()");
-        // TODO Auto-generated method stub
         return false;
     }
 
     @Override public boolean drawImage(Image arg0, int arg1, int arg2, int arg3,
-                                               int arg4, int arg5, int arg6, int arg7, int arg8, ImageObserver arg9) {
+            int arg4, int arg5, int arg6, int arg7, int arg8, ImageObserver arg9) {
         System.err.println("Ignoring drawImage#9()");
-        // TODO Auto-generated method stub
         return false;
     }
 
     @Override public boolean drawImage(Image arg0, int arg1, int arg2, int arg3,
-                                               int arg4, int arg5, int arg6, int arg7, int arg8, Color arg9,
-                                               ImageObserver arg10) {
+            int arg4, int arg5, int arg6, int arg7, int arg8, Color arg9,
+            ImageObserver arg10) {
         System.err.println("Ignoring drawImage#10()");
-        // TODO Auto-generated method stub
         return false;
     }
 
@@ -366,8 +361,6 @@ public class MeteredGraphics extends Graphics2D {
     @Override public void fillArc(int arg0, int arg1, int arg2, int arg3, int arg4,
                                           int arg5) {
         System.err.println("Ignoring fillArc#2()");
-        // TODO Auto-generated method stub
-                
     }
 
     @Override public void fillOval(int arg0, int arg1, int arg2, int arg3) {
@@ -378,8 +371,8 @@ public class MeteredGraphics extends Graphics2D {
         fill(new Rectangle2D.Double(arg0, arg1, arg2, arg3));
     }
 
-    @Override public void fillRoundRect(int arg0, int arg1, int arg2, int arg3, int arg4,
-                                                int arg5) {
+    @Override public void fillRoundRect(int arg0, int arg1, int arg2, int arg3,
+            int arg4, int arg5) {
         fillRect(arg0, arg1, arg2, arg3);
     }
 
