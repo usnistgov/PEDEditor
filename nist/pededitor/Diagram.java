@@ -210,19 +210,31 @@ public class Diagram extends Observable implements Printable {
             return getClass().getSimpleName() + "[" + getItem() + ", " + vertexNo + "]";
         }
 
-        @Override public VertexHandle move(Point2D target) {
+        public VertexHandle move(Point2D target, boolean removeDuplicates) {
             CuspInterp2D path = getItem().getCurve();
-            /* Moving this point onto an adjacent control point deletes
-               the control point, since adjacent control points cannot
-               be duplicates of each other. */
-            for (int i: path.adjacentVertexes(vertexNo)) {
-                if (principalCoordinatesMatch(target, path.get(i), 1e-9)) {
-                    return remove();
+            if (removeDuplicates) {
+                // Moving this point onto an adjacent control point
+                // deletes the control point, since adjacent control
+                // points cannot be duplicates of each other. However,
+                // this can cause trouble if the adjacent point was
+                // also going to be moved, and if a list of
+                // VertexHandles was already generated with indexes
+                // that would be invalidated by removing one. So
+                // checking duplicates is not always correct.
+                for (int i: path.adjacentVertexes(vertexNo)) {
+                    if (principalCoordinatesMatch(target, path.get(i), 1e-9)) {
+                        return remove();
+                    }
                 }
             }
             path.set(vertexNo, target);
             propagateChange();
             return this;
+        }
+        
+        @Override public VertexHandle move(Point2D target) {
+            // Using a global here is a total hack.
+            return move(target, removeDuplicates);
         }
 
         @Override public VertexHandle copy(Point2D dest) {
@@ -251,6 +263,7 @@ public class Diagram extends Observable implements Printable {
         }
     }
 
+    static boolean removeDuplicates = false;
     
     class CurveDecoration implements ParameterizableDecoration {
         CuspFigure curve;
@@ -594,6 +607,16 @@ public class Diagram extends Observable implements Printable {
         @Override public double getAngle() {
             return getLabel().getAngle();
         }
+
+        @Override public void reflect() {
+            getItem().view = null;
+            getLabel().reflect();
+        }
+
+        @Override public void neaten(AffineTransform toPage) {
+            getItem().view = null;
+            getLabel().neaten(toPage);
+        }
     }
 
     class ArrowDecoration implements Decoration, DecorationHandle, Angled {
@@ -820,8 +843,10 @@ public class Diagram extends Observable implements Printable {
         }
 
         @Override public void setLineStyle(StandardStroke lineStyle) {
-            getItem().stroke = lineStyle;
-            propagateChange();
+            if (lineStyle != null) {
+                getItem().stroke = lineStyle;
+                propagateChange();
+            }
         }
 
         @Override public StandardStroke getLineStyle() {
@@ -1045,6 +1070,14 @@ public class Diagram extends Observable implements Printable {
         /** Return the VertexHandle closest to path(t). */
         public RulerHandle getHandle(double t) {
             return new RulerHandle(this, (t <= 0.5) ? 0 : 1);
+        }
+
+        @Override public void reflect() {
+            item.reflect();
+        }
+
+        @Override public void neaten(AffineTransform toPage) {
+            item.neaten(toPage);
         }
     }
 
@@ -1968,6 +2001,16 @@ public class Diagram extends Observable implements Printable {
         Point2D.Double offset;
         boolean interior; // true only if if in the open interior of
                           // the set, not on the border.
+
+        ProjectionAndOffset() {}
+
+        /** Treat point as if it is an interior point, which means
+            offset is zero. */
+        ProjectionAndOffset(Point2D point) {
+            projection = new Point2D.Double(point.getX(), point.getY());
+            offset = new Point2D.Double();
+            interior = true;
+        }
     }
 
     /** Conversions between mole and weight fraction produce ugly
@@ -2021,8 +2064,8 @@ public class Diagram extends Observable implements Printable {
         return new SideConcentrationTransform
             (sides,
              (len == 2)
-             ? new BinaryTransform(weights)
-             : new TernaryTransform(weights));
+             ? new BinaryMultiplierTransform(weights)
+             : new TernaryMultiplierTransform(weights));
     }
 
     public SideConcentrationTransform weightToMoleTransform() {
@@ -2036,7 +2079,7 @@ public class Diagram extends Observable implements Printable {
         the conversion cannot be performed for some reason, then
         return null. */
     public Point2D.Double moleToWeightFraction(Point2D p) {
-        return transform(p, moleToWeightTransform());
+        return transform(p, moleToWeightTransform(), true);
     }
 
     /** Transform the given point with the given transformation, with
@@ -2044,11 +2087,14 @@ public class Diagram extends Observable implements Printable {
      * transformed by projecting onto the closest point within
      * diagram, transforming that, and applying the inverse of the
      * projection vector afterwards. */
-    Point2D.Double transform(Point2D p, SideConcentrationTransform xform) {
+    Point2D.Double transform(Point2D p, SideConcentrationTransform xform,
+            boolean stopAtBorders) {
         if (xform == null) {
             return null;
         }
-        ProjectionAndOffset pao = projectOntoDiagram(p);
+        ProjectionAndOffset pao = stopAtBorders
+            ? projectOntoDiagram(p)
+            : new ProjectionAndOffset(p);
         Point2D.Double proj = pao.projection;
         Point2D.Double offs = pao.offset;
         proj = xform.transform(proj);
@@ -2057,28 +2103,20 @@ public class Diagram extends Observable implements Printable {
 
     /** Inverse of moleToWeightFraction(). */
     public Point2D.Double weightToMoleFraction(Point2D p) {
-        return transform(p, weightToMoleTransform());
+        return transform(p, weightToMoleTransform(), true);
     }
 
-    public boolean transformDiagram(boolean convertLabels,
-                                    SideConcentrationTransform xform) {
-        TernaryTransform ternary = 
-            (xform.xform instanceof TernaryTransform)
-            ? ((TernaryTransform) xform.xform)
-            : null;
-
-        BinaryTransform binary = 
-            (xform.xform instanceof BinaryTransform)
-            ? ((BinaryTransform) xform.xform)
-            : null;
-
+    public boolean transformDiagram(SideConcentrationTransform xform,
+            boolean stopAtBorders) {
         for (DecorationHandle hand: movementHandles()) {
             Point2D.Double p = hand.getLocation();
             Decoration d = hand.getDecoration();
-            Point2D.Double newP = transform(p, xform);
+            Point2D.Double newP = transform(p, xform, stopAtBorders);
 
             if (d instanceof Angled) {
-                ProjectionAndOffset pao = projectOntoDiagram(p);
+                ProjectionAndOffset pao = stopAtBorders
+                    ? projectOntoDiagram(p)
+                    : new ProjectionAndOffset(p);
                 if (!pao.interior && (d instanceof LabelDecoration)) {
                     AnchoredLabel label = ((LabelDecoration) d).getLabel();
                     String text = label.getText();
@@ -2099,16 +2137,13 @@ public class Diagram extends Observable implements Printable {
                 if (pao.interior) { // Only modify angles of points inside the diagram.
                     Angled a = (Angled) d;
                     double theta = a.getAngle();
-                    theta = (ternary != null)
-                        ? ternary.transformAngle(p, theta)
-                        : binary.transformAngle(p, theta);
-                    a.setAngle(theta);
+                    a.setAngle(xform.xform.transformAngle(p, theta));
                 }
             }
             hand.move(newP);
         }
-        computeMargins();
         transformDiagramCorners(xform);
+        computeMargins();
 
         return true;
     }
@@ -2179,7 +2214,7 @@ public class Diagram extends Observable implements Printable {
             }
         }
         setUsingWeightFraction(true);
-        return transformDiagram(convertLabels, xform);
+        return transformDiagram(xform, true);
     }
 
     /** @return true if all diagram components are single elements: O, not O2 or NaCl. */
@@ -2238,7 +2273,60 @@ public class Diagram extends Observable implements Printable {
             }
         }
         setUsingWeightFraction(false);
-        return transformDiagram(convertLabels, xform);
+        return transformDiagram(xform, true);
+    }
+
+    public void swapDiagramComponents(Side side1, Side side2) {
+        LinearAxis axis1 = getAxis(side1);
+        if (axis1 == null)
+            throw new IllegalArgumentException(
+                    "No component defined for side " + side1);
+        LinearAxis axis2 = getAxis(side2);
+        if (axis2 == null)
+            throw new IllegalArgumentException(
+                    "No component defined for side " + side2);
+        int i1 = -1;
+        int i2 = -1;
+        Side[] sides = sidesThatCanHaveComponents();
+        for (int i = 0; i < sides.length; ++i) {
+            Side side = sides[i];
+            if (side == side1) {
+                i1 = i;
+            } else if (side == side2) {
+                i2 = i;
+            }
+        }
+        int[] permutation = new int[isTernary() ? 3 : 2];
+        for (int i = 0; i < permutation.length; ++i) {
+            permutation[i] = i;
+        }
+        permutation[i1] = i2;
+        permutation[i2] = i1;
+        String name1 = (String) axis1.name;
+        String name2 = (String) axis2.name;
+        axis1.name = name2;
+        axis2.name = name1;
+        diagramComponents[side1.ordinal()] = name2;
+        diagramComponents[side2.ordinal()] = name1;
+
+        SideConcentrationTransform xform = new SideConcentrationTransform(
+                sides, new ConcentrationPermutation(permutation));
+        transformDiagram(xform, false);
+
+        for (LinearRuler r: rulers()) {
+            if (r.axis == axis1) {
+                r.axis = axis2;
+            } else if (r.axis == axis2) {
+                r.axis = axis1;
+            }
+        }
+
+        for (Decoration d: getDecorations()) {
+            d.reflect();
+            d.neaten(principalToStandardPage);
+        }
+        componentElements = null; // Invalidate cached copy
+        computeMargins();
     }
 
     /* Return true if all sides that could have components do have
@@ -2849,7 +2937,7 @@ public class Diagram extends Observable implements Printable {
             status.append(" = ");
 
             if ((isComponentAxis(axis) && suppressComponents)
-                || (axis.isPercentage() && !isProportion(axis.value(prin)))) {
+                    || (axis.isPercentage() && !isProportion(axis.value(prin)))) {
                 status.append("--");
             } else if (haveBoth && isComponentAxis(axis)) {
                 status.append(withFraction(axis, mole));
@@ -3046,7 +3134,7 @@ public class Diagram extends Observable implements Printable {
 
         str = NestedSubscripts.unicodify(str);
 
-        StringBuilder sb = new StringBuilder("<html><head");
+        StringBuilder sb = new StringBuilder("<html><head>");
         sb.append(style);
         sb.append("</head><body");
         if (width > 0) {
@@ -3134,15 +3222,11 @@ public class Diagram extends Observable implements Printable {
     }
 
     double principalToPageAngle(double theta) {
-        Point2D.Double p = new Point2D.Double(Math.cos(theta), Math.sin(theta));
-        principalToStandardPage.deltaTransform(p, p);
-        return Math.atan2(p.y, p.x);
+        return Geom.transformRadians(principalToStandardPage, theta);
     }
 
     double pageToPrincipalAngle(double theta) {
-        Point2D.Double p = new Point2D.Double(Math.cos(theta), Math.sin(theta));
-        standardPageToPrincipal.deltaTransform(p, p);
-        return Math.atan2(p.y, p.x);
+        return Geom.transformRadians(standardPageToPrincipal, theta);
     }
 
     Point2D.Double pageGradient(LinearAxis axis) {
@@ -4216,17 +4300,17 @@ public class Diagram extends Observable implements Printable {
         String oldFilename = getFilename();
         try (PrintWriter writer = new PrintWriter
              (Files.newBufferedWriter(path, StandardCharsets.UTF_8))) {
-                // Reset the filename before saving. This will
-                // re-relativize originalFilename so that it can still
-                // be found using a relative path even if the new
-                // filename is in a different directory from before.
-                if (updateFilename) {
-                    setFilename(path.toAbsolutePath().toString());
-                }
-                writer.print(Tabify.tabify(getObjectMapper().writeValueAsString(this)));
-                setSaveNeeded(false);
-                return true;
-            } catch (IOException x) {
+            // Reset the filename before saving. This will
+            // re-relativize originalFilename so that it can still
+            // be found using a relative path even if the new
+            // filename is in a different directory from before.
+            if (updateFilename) {
+                setFilename(path.toAbsolutePath().toString());
+            }
+            writer.print(Tabify.tabify(getObjectMapper().writeValueAsString(this)));
+            setSaveNeeded(false);
+            return true;
+        } catch (IOException x) {
             if (updateFilename) {
                 // Revert to the old filename;
                 setFilename(oldFilename);
@@ -5160,7 +5244,6 @@ public class Diagram extends Observable implements Printable {
         }
 
         // TODO: Exploit the labelToScaledPage transformation in htmlDraw.
-        View view = labelInfo.view;
         Affine toPage = getPrincipalToAlignedPage();
         Point2D.Double point = toPage.transform(label.getX(), label.getY());
         double angle = principalToPageAngle(label.getAngle());
@@ -5188,7 +5271,7 @@ public class Diagram extends Observable implements Printable {
                  lx, ly, angle);
             g.setFont(oldFont);
         } else {
-            htmlDraw(g, view, scale * label.getScale(),
+            htmlDraw(g, labelInfo.getView(), scale * label.getScale(),
                      angle, point.x * scale, point.y * scale,
                      label.getXWeight(), label.getYWeight(),
                      label.getBaselineXOffset(), label.getBaselineYOffset());
