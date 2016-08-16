@@ -480,11 +480,7 @@
     "yWeight" : 0.5,
     "x" : 0.21177766327065675,
     "y" : 0.5699839025656419,
-    "scale" : 0.75,
-    "location" : {
-      "x" : 0.21177766327065675,
-      "y" : 0.5699839025656419
-    }
+    "scale" : 0.75
   }, {
     "decoration" : "label",
     "text" : "f",
@@ -493,11 +489,7 @@
     "x" : 0.42552913723199887,
     "y" : 0.47479470663603174,
     "angle" : 1.5707963267948966,
-    "scale" : 0.75,
-    "location" : {
-      "x" : 0.42552913723199887,
-      "y" : 0.47479470663603174
-    }
+    "scale" : 0.75
   }, {
     "decoration" : "label",
     "text" : "f<sub>c</sub>",
@@ -506,33 +498,21 @@
     "x" : 0.2581970712111775,
     "y" : 0.604111241433717,
     "angle" : 0.3665191429188092,
-    "scale" : 1.0,
-    "location" : {
-      "x" : 0.2581970712111775,
-      "y" : 0.604111241433717
-    }
+    "scale" : 1.0
   }, {
     "decoration" : "label",
-    "text" : "θ: camming angle<br>\nf: fall force<br>\nφ: crack flare angle<br>\nμ: minimum coefficient of friction<br>\nf<sub>c</sub>: cam force (per crack side)",
+    "text" : "<table>\n  <tr><td align=right>θ:&nbsp;<td>camming angle\n  <tr><td align=right>f:&nbsp;<td>fall force\n  <tr><td align=right>φ:&nbsp;<td>crack flare angle\n  <tr><td align=right>μ:&nbsp;<td>minimum coefficient of friction\n  <tr><td align=right>f<sub>c</sub>:&nbsp;<td>cam force (per crack side)\n</table>\n",
     "yWeight" : 0.5,
-    "x" : 0.38083604292193646,
-    "y" : 0.8445158130746684,
-    "scale" : 1.0,
-    "location" : {
-      "x" : 0.38083604292193646,
-      "y" : 0.8445158130746684
-    }
+    "x" : 0.32516342702531137,
+    "y" : 0.8698810732453088,
+    "scale" : 1.0
   }, {
     "decoration" : "label",
     "text" : "φ",
     "xWeight" : 0.5,
     "x" : 0.22547873088631543,
     "y" : 0.8488984933129728,
-    "scale" : 1.0,
-    "location" : {
-      "x" : 0.22547873088631543,
-      "y" : 0.8488984933129728
-    }
+    "scale" : 1.0
   }, {
     "decoration" : "label",
     "text" : "φ",
@@ -540,11 +520,7 @@
     "yWeight" : 0.5,
     "x" : 0.20541998429194452,
     "y" : 0.5518753893735358,
-    "scale" : 0.8,
-    "location" : {
-      "x" : 0.20541998429194452,
-      "y" : 0.5518753893735358
-    }
+    "scale" : 0.8
   }, {
     "decoration" : "label",
     "text" : "f<sub>c</sub> sin θ",
@@ -553,11 +529,7 @@
     "x" : 0.1548198199748154,
     "y" : 0.623770050304178,
     "angle" : 1.3264502315156903,
-    "scale" : 0.75,
-    "location" : {
-      "x" : 0.1548198199748154,
-      "y" : 0.623770050304178
-    }
+    "scale" : 0.75
   }, {
     "decoration" : "label",
     "text" : "f<sub>c</sub> cos θ",
@@ -566,22 +538,14 @@
     "x" : 0.26954421112223836,
     "y" : 0.6710226926490099,
     "angle" : -0.24434609527920617,
-    "scale" : 0.75,
-    "location" : {
-      "x" : 0.26954421112223836,
-      "y" : 0.6710226926490099
-    }
+    "scale" : 0.75
   }, {
     "decoration" : "label",
     "text" : "f<sub>c</sub> sin θ = μ f<sub>c</sub> cos θ<br>\nμ = tan θ*<br>\n2 f<sub>c</sub> sin(θ-φ) = f<br>\n<span style=\"font-size: 75%;\">(2 b/c crack has two sides)</span><br>\nf<sub>c</sub> = f / (2 sin (θ-φ))",
     "yWeight" : 0.5,
     "x" : 0.4669858752342311,
     "y" : 0.697273816814723,
-    "scale" : 1.0,
-    "location" : {
-      "x" : 0.4669858752342311,
-      "y" : 0.697273816814723
-    }
+    "scale" : 1.0
   }, {
     "decoration" : "label",
     "text" : "θ",
@@ -589,11 +553,7 @@
     "yWeight" : 0.5,
     "x" : 0.3240384754006995,
     "y" : 0.6438503687954438,
-    "scale" : 0.75,
-    "location" : {
-      "x" : 0.3240384754006995,
-      "y" : 0.6438503687954438
-    }
+    "scale" : 0.75
   }, {
     "decoration" : "label",
     "text" : "f<sub>c</sub> sin (θ-φ)",
@@ -602,11 +562,7 @@
     "x" : 0.42552913723199887,
     "y" : 0.5942199032848567,
     "angle" : 1.5707963267948966,
-    "scale" : 0.6,
-    "location" : {
-      "x" : 0.42552913723199887,
-      "y" : 0.5942199032848567
-    }
+    "scale" : 0.6
   }, {
     "decoration" : "label",
     "text" : "Force diagram for a cam in a<br>symmetrical vertically flaring crack",
@@ -614,31 +570,21 @@
     "yWeight" : 0.5,
     "x" : 0.37155301971435556,
     "y" : 1.0002923248669464,
-    "scale" : 1.0,
-    "location" : {
-      "x" : 0.37155301971435556,
-      "y" : 1.0002923248669464
-    }
+    "scale" : 1.0
   }, {
     "decoration" : "label",
-    "text" : "<div style=\"width: 1250 px;\">\n<p>* Theoretical minimum coefficient of friction for cam to hold. Caveats from cam manufacturers: cam may grind soft rock surfaces into dust and skate out on that dust layer. (That is why Fat Cams exist.) Also, in a flare, if the cam loses contact with the rock and is pulled out fast enough, it may never reestablish contact.</div>",
-    "x" : 0.4660938547112121,
-    "y" : 0.4927926851785873,
+    "text" : "* Theoretical minimum coefficient of friction for cam to hold. Caveats from cam manufacturers: cam may grind soft rock surfaces into dust and skate out on that dust layer. (That is why Fat Cams exist.) Also, in a flare, if the cam loses contact with the rock and is pulled out fast enough, it may never reestablish contact.",
+    "x" : 0.4642012217906215,
+    "y" : 0.4239523231845145,
     "scale" : 0.6666666666666666,
-    "location" : {
-      "x" : 0.4660938547112121,
-      "y" : 0.4927926851785873
-    }
+    "autoWidth" : true
   }, {
     "decoration" : "label",
-    "text" : "<p style=\"width: 1250 px;\">For typical camming angles, about twice the supported force is exerted on the sides of a parallel crack. HIgher forces are needed in flaring cracks.</p>",
+    "text" : "For typical camming angles, about twice the supported force is exerted on the sides of a parallel crack. HIgher forces are needed in flaring cracks.",
     "x" : 0.4699401977962806,
     "y" : 0.5979595627011784,
     "scale" : 0.6666666666666666,
     "boxed" : true,
-    "location" : {
-      "x" : 0.4699401977962806,
-      "y" : 0.5979595627011784
-    }
+    "autoWidth" : true
   } ]
 }
