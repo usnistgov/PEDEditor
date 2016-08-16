@@ -89,6 +89,10 @@ public class EditFrame extends JFrame
     JMenu mnFile = new JMenu("File");
     JMenu mnCurve = new JMenu("Curve");
     JMenu mnProperties = new JMenu("Properties");
+    JMenu mnSwap = new JMenu("Swap");
+    {
+        mnSwap.setMnemonic(KeyEvent.VK_W);
+    }
     JMenu mnFont = new JMenu("Font");
     JMenu mnMargins = new JMenu("Margins");
     JMenu mnView = new JMenu("View");
@@ -635,6 +639,14 @@ public class EditFrame extends JFrame
         ("Set top component", KeyEvent.VK_T) {
             @Override public void actionPerformed(ActionEvent e) {
                 getEditor().setDiagramComponent(Side.TOP);
+                finishEvent();
+            }
+        };
+
+    protected Action swapBinary = new Action
+        ("Swap components", KeyEvent.VK_S) {
+            @Override public void actionPerformed(ActionEvent e) {
+                getEditor().swapDiagramComponents(Side.LEFT, Side.RIGHT);
                 finishEvent();
             }
         };
@@ -1473,6 +1485,32 @@ public class EditFrame extends JFrame
         mnComponents.add(setLeftComponent);
         mnComponents.add(setRightComponent);
         mnComponents.add(setTopComponent);
+        
+        mnComponents.add(swapBinary);
+
+        mnSwap.add(new Action
+                ("Left \u2194 Right", KeyEvent.VK_L) {
+                @Override public void actionPerformed(ActionEvent e) {
+                    getEditor().swapDiagramComponents(Side.LEFT, Side.RIGHT);
+                    finishEvent();
+                }
+            });
+        mnSwap.add(new Action
+                ("Left \u2194 Top", KeyEvent.VK_T) {
+                @Override public void actionPerformed(ActionEvent e) {
+                    getEditor().swapDiagramComponents(Side.LEFT, Side.TOP);
+                    finishEvent();
+                }
+            });
+        mnSwap.add(new Action
+                ("Top \u2194 Right", KeyEvent.VK_R) {
+                @Override public void actionPerformed(ActionEvent e) {
+                    getEditor().swapDiagramComponents(Side.TOP, Side.RIGHT);
+                    finishEvent();
+                }
+            });
+        mnComponents.add(mnSwap);
+        
         mnComponents.add(guessComponents);
         mnChem.add(mnComponents);
 
