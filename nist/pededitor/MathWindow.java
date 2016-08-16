@@ -178,11 +178,15 @@ public class MathWindow extends JDialog {
     }
 
     static double thetaToDegrees(double theta) {
-        // Semi-lame hack to turn values almost exactly equal to -90
-        // degrees into 90 degrees so it's not a coin flip whether a
-        // nearly-vertical line ends up being displayed as pointing
-        // upwards (90 degrees) or downwards (-90).
-        double deg = -theta * 180 / Math.PI;
+        return normalizeDegrees180(-theta * 180 / Math.PI);
+    }
+
+    /** Turn values almost exactly equal to 90 degrees into -90
+        degrees so it's not a coin flip whether a nearly-vertical line
+        ends up being displayed as pointing upwards (90 degrees) or
+        downwards (-90). Take angles that point leftwards and rotate
+        them 180 degrees so they point rightwards. */
+    static double normalizeDegrees180(double deg) {
         if (deg < -90 - 1e-10) {
             deg += 180;
         } else if (deg > 90 - 1e-10) {
@@ -191,13 +195,26 @@ public class MathWindow extends JDialog {
         return deg;
     }
 
+    /** Like normalizeDegrees180 but for radians.  */
+    static double normalizeRadians180(double theta) {
+        if (theta > Math.PI/2 + 1e-12) {
+            theta -= Math.PI;
+        } else if (theta < -Math.PI/2 + 1e-12) {
+            theta += Math.PI;
+        }
+        return theta;
+    }
+
     static public double degreesToTheta(double deg) {
         return -deg * Math.PI / 180;
     }
 
-    /** Return true if v1 and v2 are so close to parallel that they approach the limits of double precision floating point numbers. */
+    /** Return true if v1 and v2 are so close to parallel that they
+        approach the limits of double precision floating point
+        numbers. */
     static boolean nearlyParallel(Point2D.Double v1, Point2D.Double v2) {
-        return 1e13 * Math.abs(v1.x * v2.y - v1.y * v2.x) < Math.abs(v1.x * v2.x + v1.y * v2.y);
+        return 1e13 * Math.abs(v1.x * v2.y - v1.y * v2.x)
+            < Math.abs(v1.x * v2.x + v1.y * v2.y);
     }
 
     public double thetaToSlope(double theta) {
