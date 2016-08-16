@@ -85,9 +85,13 @@ public class AnchoredLabel extends TransformedShape {
         double theta = Geom.transformRadians(toPage, angle);
         if (theta != MathWindow.normalizeRadians180(theta)) {
             // Rotate the text 180 degrees so it's not pointing
-            // backwards.
+            // to the left.
             angle = Geom.normalizeRadians(Math.PI + angle);
-            reflect();
+            setXWeight(1.0 - getXWeight());
+            setYWeight(1.0 - getYWeight());
+            setText(SwapWhitespace.swap(getText()));
+            // Ideally I would also swap left and right padding (and
+            // not just top and bottom padding), but that's more work.
         }
     }
 
