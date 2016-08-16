@@ -145,8 +145,4 @@ public class RectangleTransform extends AffinePolygonTransform {
     @Override public String toString() {
         return PolygonTransformAdapter.toString(this) + "(" + super.toString() + ")";
     }
-
-    public void check() {
-        PolygonTransformAdapter.check(this);
-    }
 }

@@ -4414,12 +4414,12 @@ public class BasicEditor extends Diagram
                         }
 
                         double width = maxRight - minRight;
-                        double height = TriangleTransform.UNIT_TRIANGLE_HEIGHT
+                        double height = TriangleMultiplierTransform.UNIT_TRIANGLE_HEIGHT
                             * (maxTop - minTop);
                         // The height of the triangle formed by
                         // extending the nonparallel legs of the
                         // trapezoid until they meet.
-                        double triangleHt = TriangleTransform.UNIT_TRIANGLE_HEIGHT
+                        double triangleHt = TriangleMultiplierTransform.UNIT_TRIANGLE_HEIGHT
                             * width;
                         r = new Rescale(width, 0.0, maxDiagramWidth,
                                         height, 0.0, maxDiagramHeight);
@@ -4431,7 +4431,7 @@ public class BasicEditor extends Diagram
                             { new Point2D.Double(0.0, bottom),
                               new Point2D.Double(rx/2, bottom - triangleHt * r.t),
                               new Point2D.Double(rx, bottom) };
-                        principalToStandardPage = new TriangleTransform
+                        principalToStandardPage = new TriangleMultiplierTransform
                             (new Point2D.Double[]
                                 { new Point2D.Double(minRight, minTop),
                                   new Point2D.Double(minRight,
@@ -4650,7 +4650,7 @@ public class BasicEditor extends Diagram
                         }
 
                         if (tracing) {
-                            originalToPrincipal = new TriangleTransform(vertices,
+                            originalToPrincipal = new TriangleMultiplierTransform(vertices,
                                                                         trianglePoints);
                         }
 
@@ -4663,9 +4663,9 @@ public class BasicEditor extends Diagram
                         // proportions (though not the scale) for the limit
                         // points of the actual diagram.
 
-                        TriangleTransform xform = new TriangleTransform
+                        TriangleMultiplierTransform xform = new TriangleMultiplierTransform
                             (principalTrianglePoints,
-                             TriangleTransform.equilateralTriangleVertices());
+                             TriangleMultiplierTransform.equilateralTriangleVertices());
                         Point2D.Double[] xformed = {
                             xform.transform(trianglePoints[0]),
                             xform.transform(trianglePoints[1]),
@@ -4709,7 +4709,7 @@ public class BasicEditor extends Diagram
                             xformed[i] = xform.transform(trianglePoints[i]);
                         }
 
-                        principalToStandardPage = new TriangleTransform
+                        principalToStandardPage = new TriangleMultiplierTransform
                             (trianglePoints, xformed);
 
                         for (Axis axis: getAxes()) {
@@ -4721,18 +4721,18 @@ public class BasicEditor extends Diagram
                 case TERNARY:
                     {
                         if (tracing) {
-                            originalToPrincipal = new TriangleTransform
+                            originalToPrincipal = new TriangleMultiplierTransform
                                 (vertices, principalTrianglePoints);
                         }
 
                         r = new Rescale(1.0, 0.0, maxDiagramWidth,
-                                        TriangleTransform.UNIT_TRIANGLE_HEIGHT,
+                                        TriangleMultiplierTransform.UNIT_TRIANGLE_HEIGHT,
                                         0.0, maxDiagramHeight);
                         Point2D.Double[] trianglePagePositions =
                             { new Point2D.Double(0.0, r.height),
                               new Point2D.Double(r.width/2, 0.0),
                               new Point2D.Double(r.width, r.height) };
-                        principalToStandardPage = new TriangleTransform
+                        principalToStandardPage = new TriangleMultiplierTransform
                             (principalTrianglePoints, trianglePagePositions);
 
                         add(ternaryBottomRuler(0.0, 1.0));
