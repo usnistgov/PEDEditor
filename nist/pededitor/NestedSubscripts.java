@@ -22,24 +22,14 @@ public class NestedSubscripts {
             return;
         }
         String sub = "<(sub|sup)[^>]*>";
-        if (subPattern == null) {
-            try {
-                subPattern = Pattern.compile(sub);
-            } catch (PatternSyntaxException e) {
-                throw new IllegalStateException("Pattern '" + sub
-                                                + "' could not compile: " + e);
-            }
+        String unsub = "</su[bp][^>]*>";
+        try {
+            subPattern = Pattern.compile(sub);
+            unsubPattern = Pattern.compile(unsub);
+        } catch (PatternSyntaxException e) {
+            throw new IllegalStateException(e);
         }
 
-        String unsub = "</su[bp][^>]*>";
-        if (unsubPattern == null) {
-            try {
-                unsubPattern = Pattern.compile(unsub);
-            } catch (PatternSyntaxException e) {
-                throw new IllegalStateException("Pattern '" + unsub
-                                                + "' could not compile: " + e);
-            }
-        }
         subMap = new HashMap<Character, Character>() {{
                 put('0', '\u2080');
                 put('1', '\u2081');
@@ -105,8 +95,9 @@ public class NestedSubscripts {
                     res.append(unsubMatcher.group());
                 }
                 if (nestingLevel == 0) {
-                    System.err.println("Sub/superscript end tags outnumber start tags in "
-                                       + s0);
+                    System.err.println(
+                            "Sub/superscript end tags outnumber start tags in "
+                            + s0);
                     return s0.toString();
                 }
                 subStack.remove(subStack.size() - 1);
@@ -118,7 +109,8 @@ public class NestedSubscripts {
                 res.append(ch);
             } else if (nestingLevel >= 3) {
                 if (warnTooDeep) {
-                    System.err.println("Cannot render triple-nested sub/superscripts in " + s0);
+                    System.err.println(
+                            "Cannot render triple-nested sub/superscripts in " + s0);
                     warnTooDeep = false;
                 }
                 res.append(ch);
@@ -131,9 +123,9 @@ public class NestedSubscripts {
                 } else {
                     res.append(ch);
                     if (warnUnrenderable) {
-                        System.err.println
-                            ("Cannot render double-nested sub/superscript "
-                             + "character '" + ch + "'");
+                        System.err.println(
+                                "Cannot render double-nested sub/superscript "
+                                + "character '" + ch + "'");
                         warnUnrenderable = false;
                     }
                 }
@@ -142,7 +134,7 @@ public class NestedSubscripts {
         }
         if (subStack.size() > 0) {
             System.err.println("Unbalanced start/end sub/superscript tags in "
-                               + s0);
+                    + s0);
         }
         return res.toString();
     }
