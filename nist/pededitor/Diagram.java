@@ -2155,7 +2155,7 @@ public class Diagram extends Observable implements Printable {
         but with different vertices. */
     void transformDiagramCorners(SideConcentrationTransform xform) {
         AffinePolygonTransform p2s = principalToStandardPage;
-        if (p2s instanceof TriangleMultiplierTransform) {
+        if (p2s instanceof TriangleTransform) {
             Point2D.Double[] dvs = diagramVertices();
             int cnt = dvs.length;
             Point2D.Double[] resInputs = new Point2D.Double[cnt];
@@ -2166,7 +2166,7 @@ public class Diagram extends Observable implements Printable {
                 resOutputs[i] = p2s.transform(px);
             }
             principalToStandardPage
-                = new TriangleMultiplierTransform(resInputs, resOutputs);
+                = new TriangleTransform(resInputs, resOutputs);
         } else {
             RectangleTransform oldXform
                 =  (RectangleTransform) p2s;

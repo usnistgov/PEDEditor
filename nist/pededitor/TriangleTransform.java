@@ -14,7 +14,7 @@ import Jama.Matrix;
 
 /** Transform a triangle into any other triangle. All that is needed
     is an affine transformation. */
-public class TriangleMultiplierTransform extends AffinePolygonTransform {
+public class TriangleTransform extends AffinePolygonTransform {
 
     private static final long serialVersionUID = 1768608728396588446L;
 
@@ -32,23 +32,23 @@ public class TriangleMultiplierTransform extends AffinePolygonTransform {
     Point2D.Double[] inputVerts = equilateralTriangleVertices();
     Point2D.Double[] outputVerts = equilateralTriangleVertices();
 
-    public TriangleMultiplierTransform(TriangleMultiplierTransform other) {
+    public TriangleTransform(TriangleTransform other) {
         inputVerts = Geom.deepCopy(other.inputVerts);
         outputVerts = Geom.deepCopy(other.outputVerts);
         update();
     }
 
-    /** @return a new TriangleMultiplierTransform that represents the affine
+    /** @return a new TriangleTransform that represents the affine
         transform that transforms the three input vertices inpts[] into
         the three output vertices outpts[] */
-    public TriangleMultiplierTransform(@JsonProperty("input") Point2D.Double[] inpts,
+    public TriangleTransform(@JsonProperty("input") Point2D.Double[] inpts,
                              @JsonProperty("output") Point2D.Double[] outpts) {
         setInputVertices(inpts);
         setOutputVertices(outpts);
     }
 
-    @Override public TriangleMultiplierTransform clone() {
-        return new TriangleMultiplierTransform(this);
+    @Override public TriangleTransform clone() {
+        return new TriangleTransform(this);
     }
 
     /** Update the underlying affine transformation after changes to
@@ -71,8 +71,8 @@ public class TriangleMultiplierTransform extends AffinePolygonTransform {
                      m.get(2,0), m.get(2,1));
     }
 
-    @Override public TriangleMultiplierTransform createInverse() {
-        return new TriangleMultiplierTransform(outputVerts, inputVerts);
+    @Override public TriangleTransform createInverse() {
+        return new TriangleTransform(outputVerts, inputVerts);
     }
 
     @Override public Point2D.Double[] getInputVertices() {

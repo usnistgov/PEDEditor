@@ -16,7 +16,7 @@ import org.codehaus.jackson.annotate.JsonTypeInfo;
               property = "transform")
 @JsonSubTypes({
         @Type(value=RectangleTransform.class, name = "RectangleTransform"),
-        @Type(value=TriangleMultiplierTransform.class, name = "TriangleMultiplierTransform"),
+        @Type(value=TriangleTransform.class, name = "TriangleTransform"),
         @Type(value=QuadToRect.class, name = "QuadToRect"),
         @Type(value=QuadToQuad.class, name = "QuadToQuad") })
 interface PolygonTransform extends Transform2D {
