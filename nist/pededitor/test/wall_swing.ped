@@ -44,8 +44,7 @@
   } ],
   "usingWeightFraction" : false,
   "fontName" : "DejaVu LGC Sans PED",
-  "keys" : {
-  },
+  "keys" : { },
   "decorations" : [ {
     "decoration" : "curve",
     "curve" : {
