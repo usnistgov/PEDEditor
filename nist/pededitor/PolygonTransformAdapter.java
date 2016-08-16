@@ -8,76 +8,10 @@ import java.awt.geom.*;
 /** Simple abstract class that partly implements the PolygonTransform
     interface. */
 abstract public class PolygonTransformAdapter
-    extends Transform2DAdapter
     implements PolygonTransform {
-    @Override
-	abstract public Point2D.Double transform(double x, double y)
-        throws UnsolvableException;
-    @Override
-	abstract public Transform2D createInverse()
-        throws NoninvertibleTransformException;
-    @Override
-	abstract public void preConcatenate(Transform2D other);
-    @Override
-	abstract public void concatenate(Transform2D other);
-    @Override
-	abstract public PolygonTransformAdapter clone();
+    @Override abstract public PolygonTransformAdapter clone();
 
-    @Override
-	public Rectangle2D.Double inputBounds() {
-        return Geom.bounds(getInputVertices());
-    }
-    @Override
-	public Rectangle2D.Double outputBounds() {
-        return Geom.bounds(getOutputVertices());
-    }
-
-    /** Verify the consistency of this transform's internal state;
-        throw an IllegalStateException on failure. */
-    public void check() {
-        check(this);
-    }
-
-    /** Verify the consistency of xform's internal state; throw an
-        IllegalStateException on failure. */
-    static public void check(PolygonTransform xform) {
-        try {
-            Point2D.Double[] ivs = xform.getInputVertices();
-            Point2D.Double[] ovs = xform.getOutputVertices();
-
-            int cnt = ivs.length;
-            if (cnt != ovs.length) {
-                throw new IllegalStateException
-                    (xform + ": number of input vertices (" + ivs.length
-                     + ") does not equal number of output vertices ("
-                     + ovs.length + ")");
-            }
-    
-            for (int i = 0; i < cnt; ++i) {
-                Point2D.Double iv = ivs[i];
-                Point2D.Double ov = xform.transform(iv);
-                Point2D.Double ov2 = ovs[i];
-                if (!nearlyEqual(ov, ov2)) {
-                    throw new IllegalStateException
-                        ("In " + xform + ":\n" +
-                         "Vertex " + i + " consistency check failure: " + iv + " => " + ov +
-                         " != " + ov2);
-                }
-            }
-        } catch (Exception e) {
-            throw new RuntimeException(e);
-        }
-    }
-
-    /** @return true if either the absolute or relative difference of
-        a and b is small (<1e-6) */
-    static boolean nearlyEqual(Point2D.Double a, Point2D.Double b) {
-        return a.distanceSq(b) / (a.x * a.x + a.y * a.y + b.x * b.x + b.y * b.y + 1.0)
-            < 1e-12;
-    }
-
-    @Override
-	public String toString() {
+    @Override public String toString() {
         return toString(this);
     }
 
