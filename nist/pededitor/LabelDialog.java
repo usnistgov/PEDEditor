@@ -534,7 +534,6 @@ public class LabelDialog extends JDialog {
         Graphics2D g2d = (Graphics2D) g;
         FontMetrics fm = g.getFontMetrics();
         Rectangle2D bounds = fm.getStringBounds(str, g);
-
         x += -bounds.getX() - bounds.getWidth() * xWeight;
         y += -bounds.getY() - bounds.getHeight() * yWeight;
         g2d.drawString(str, (float) x, (float) y);
