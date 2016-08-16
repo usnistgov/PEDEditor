@@ -3,19 +3,12 @@
 
 package gov.nist.pededitor;
 
-import java.awt.geom.*;
-
 /** Common elements between AffineXY and AffineXYInverse. */
-abstract public class AffineXYCommon extends Transform2DAdapter
+abstract public class AffineXYCommon
     implements Transform2D {
 
-    @Override
-	abstract public Point2D.Double transform(double x, double y)
-        throws UnsolvableException;
-    @Override
-	abstract public AffineXYCommon createInverse();
-    @Override
-	abstract public AffineXYCommon clone();
+    @Override abstract public AffineXYCommon createInverse();
+    @Override abstract public AffineXYCommon clone();
 
     protected double xk = 0;
     protected double xkx = 0;
@@ -82,20 +75,20 @@ abstract public class AffineXYCommon extends Transform2DAdapter
     }
 
     @Override
-	public String toString() {
+        public String toString() {
         return getClass().getCanonicalName() + "(" +
             xk + plus(xkx) + " x" + plus(xky) + " y" + plus(xkxy) + " xy, " +
             yk + plus(ykx) + " x" + plus(yky) + " y" + plus(ykxy) + " xy)";
     }
 
     @Override
-	public void preConcatenate(Transform2D other) {
+        public void preConcatenate(Transform2D other) {
         throw new UnsupportedOperationException
             ("preConcatenate() implementation delayed pending need");
     }
 
     @Override
-	public void concatenate(Transform2D other) {
+        public void concatenate(Transform2D other) {
         throw new UnsupportedOperationException
             ("concatenate() implementation delayed pending need");
     }
