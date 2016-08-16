@@ -23,10 +23,10 @@ public class SwapWhitespace {
         // then optional one or more <br>s at the end. All lead <br>s
         // have an effect but only the second and subsequent <br>s at
         // the end have an effect.
-        String whites = "\\A((?:<br>\\n?)+)?(.*?)(?:<br>\n?((?:<br>\n?)*))?\\z";
+        String whites = "\\A((?:<br>\\n*)+)?(.*?)(?:<br>\n*((?:<br>\n*)*))?\\z";
         
         try {
-            whitespacePattern = Pattern.compile(whites);
+            whitespacePattern = Pattern.compile(whites, Pattern.DOTALL);
         } catch (PatternSyntaxException e) {
             throw new IllegalStateException(e);
         }
