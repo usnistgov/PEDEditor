@@ -3,6 +3,8 @@
 
 package gov.nist.pededitor;
 
+import java.awt.geom.AffineTransform;
+
 import org.codehaus.jackson.annotate.JsonProperty;
 import org.codehaus.jackson.map.annotate.JsonSerialize;
 import org.codehaus.jackson.map.annotate.JsonSerialize.Inclusion;
@@ -73,6 +75,21 @@ public class AnchoredLabel extends TransformedShape {
     /** If true, erase the label's background before drawing. */
     public boolean isOpaque() { return opaque; }
     public boolean isCutout() { return cutout; }
+
+    @Override public void reflect() {
+        setYWeight(1.0 - getYWeight());
+        setText(SwapWhitespace.swap(getText()));
+    }
+
+    public void neaten(AffineTransform toPage) {
+        double theta = Geom.transformRadians(toPage, angle);
+        if (theta != MathWindow.normalizeRadians180(theta)) {
+            // Rotate the text 180 degrees so it's not pointing
+            // backwards.
+            angle = Geom.normalizeRadians(Math.PI + angle);
+            reflect();
+        }
+    }
 
     @Override public String toString() {
         return "'" + text + "' x: " + x  + " y: " + y + " wx: " + xWeight
