@@ -253,6 +253,7 @@ public class BasicEditor extends Diagram
     }
 
     private static final String PREF_DIR = "dir";
+    private static final String PREF_FILE = "file";
     private static final long AUTO_SAVE_DELAY = 5 * 60 * 1000; // 5 minutes
 
     static final StandardStroke DEFAULT_LINE_STYLE = StandardStroke.SOLID;
@@ -1264,18 +1265,23 @@ public class BasicEditor extends Diagram
     public DecorationHandle moveSelection(Point2D.Double dest,
             boolean moveAll) {
         DecorationHandle res = null;
-        if (moveAll) {
-            Point2D.Double p = selection.getLocation();
+        try {
+            removeDuplicates = true;
+            if (moveAll) {
+                Point2D.Double p = selection.getLocation();
 
-            for (DecorationHandle sel: getDecorationHandles()) {
-                if (principalCoordinatesMatch(p, sel.getLocation())) {
-                    DecorationHandle res2 = sel.move(dest);
-                    if (sel.equals(selection))
-                        res = res2;
+                for (DecorationHandle sel: getDecorationHandles()) {
+                    if (principalCoordinatesMatch(p, sel.getLocation())) {
+                        DecorationHandle res2 = sel.move(dest);
+                        if (sel.equals(selection))
+                            res = res2;
+                    }
                 }
+            } else {
+                res = selection.move(dest);
             }
-        } else {
-            res = selection.move(dest);
+        } finally {
+            removeDuplicates = false;
         }
         propagateChange();
         return res;
@@ -4797,6 +4803,9 @@ public class BasicEditor extends Diagram
         super.initializeDiagram();
         editFrame.setAspectRatio.setEnabled(!isTernary());
         editFrame.setTopComponent.setEnabled(isTernary());
+        editFrame.mnSwap.setVisible(isTernary());
+        editFrame.swapBinary.setEnabled(
+                diagramType == DiagramType.BINARY);
         editFrame.scaleBoth.setEnabled(!isTernary());
         resetPixelModeVisible();
         bestFit();
@@ -5160,16 +5169,28 @@ public class BasicEditor extends Diagram
             (parent, "Open " + what + "  File", what + " files", pedFileExtensions());
     }
 
+    static Preferences getPreferences() {
+        return Preferences.userNodeForPackage(BasicEditor.class);
+    }
+
     /** Return the default directory to save to and load from. */
     public static String getCurrentDirectory() {
-        return Preferences.userNodeForPackage(BasicEditor.class)
-            .get(PREF_DIR,  null);
+        return getPreferences().get(PREF_DIR,  null);
     }
 
     /** Set the default directory to save to and load from. */
     public static void setCurrentDirectory(String dir) {
-        Preferences.userNodeForPackage(BasicEditor.class)
-            .put(PREF_DIR,  dir);
+        getPreferences().put(PREF_DIR,  dir);
+    }
+
+    /** Return the default directory to save to and load from. */
+    public static String getCurrentFile() {
+        return getPreferences().get(PREF_FILE,  null);
+    }
+
+    /** Set the default directory to save to and load from. */
+    public static void setCurrentFile(String dir) {
+        getPreferences().put(PREF_FILE,  dir);
     }
 
     public File[] openPEDOrImageFilesDialog(Component parent) {
@@ -5183,6 +5204,10 @@ public class BasicEditor extends Diagram
         if (dir != null) {
             chooser.setCurrentDirectory(new File(dir));
         }
+        String file = getCurrentFile();
+        if (file != null) {
+            chooser.setSelectedFile(new File(file));
+        }
        chooser.setFileFilter
             (new FileNameExtensionFilter("PED and image files", allExts));
        chooser.addChoosableFileFilter
@@ -5191,7 +5216,10 @@ public class BasicEditor extends Diagram
            (new FileNameExtensionFilter("Image files only", imageExts));
        if (chooser.showOpenDialog(parent) == JFileChooser.APPROVE_OPTION) {
            File[] files = chooser.getSelectedFiles();
-           setCurrentDirectory(files[0].getParent());
+           if (files != null) {
+               setCurrentDirectory(files[0].getParent());
+               setCurrentFile(files[0].toString());
+           }
            return files;
        } else {
            return null;
@@ -5201,12 +5229,16 @@ public class BasicEditor extends Diagram
     public static File[] openFilesDialog(Component parent, String title,
                                       String filterName, String[] suffixes) {
         Preferences prefs = Preferences.userNodeForPackage(CropFrame.class);
-        String dir = prefs.get(PREF_DIR,  null);
         JFileChooser chooser = new JFileChooser();
         chooser.setDialogTitle(title);
         chooser.setMultiSelectionEnabled(true);
+        String dir = prefs.get(PREF_DIR,  null);
         if (dir != null) {
             chooser.setCurrentDirectory(new File(dir));
+        }
+        String file = getCurrentFile();
+        if (file != null) {
+            chooser.setSelectedFile(new File(file));
         }
         chooser.setFileFilter
             (new FileNameExtensionFilter(filterName, suffixes));
@@ -5214,6 +5246,7 @@ public class BasicEditor extends Diagram
            File[] files = chooser.getSelectedFiles();
            if (files != null) {
                setCurrentDirectory(files[0].getParent());
+               setCurrentFile(files[0].toString());
            }
            return files;
         } else {
