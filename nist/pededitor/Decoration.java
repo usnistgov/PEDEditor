@@ -5,6 +5,7 @@ package gov.nist.pededitor;
 
 import java.awt.Color;
 import java.awt.Graphics2D;
+import java.awt.geom.AffineTransform;
 
 public interface Decoration {
     void draw(Graphics2D g, double scale);
@@ -19,6 +20,17 @@ public interface Decoration {
     Color getColor();
     void setColor(Color color);
     DecorationHandle[] getHandles();
+
+    /** Make the necessary changes to perform a reflection on this
+        Decoration, EXCLUDING the transform of the movement handles.  */
+    default void reflect() {}
+
+    /** Change this diagram to make it look nicer on the page after
+        the toPage transform is performed. Page Space is (x, y) where
+        y increases as you go down the page. For example, the
+        decoration might be changed so that upside down and backwards
+        text is put right right side up. */
+    default void neaten(AffineTransform toPage) {}
 
     /* getMovementHandles() returns a subset of the handles of this
      decoration that is sufficient to permit it to move. If this
