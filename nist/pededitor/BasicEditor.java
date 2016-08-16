@@ -1287,6 +1287,14 @@ public class BasicEditor extends Diagram
         return res;
     }
 
+    @Override public void swapDiagramComponents(Side side1, Side side2) {
+        try {
+            super.swapDiagramComponents(side1, side2);
+        } catch (IllegalArgumentException x) {
+            showError(x.toString());
+        }
+    }
+
     public void removeSelection() {
         boolean hadSelection = (selection != null);
         if (!hadSelection && !selectSomething()) {
