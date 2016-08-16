@@ -5,34 +5,22 @@ package gov.nist.pededitor;
 
 import java.awt.geom.Point2D;
 
-/** Class to perform concentration transformations.
-
-    A concentration is a vector <x_1, ..., x_n> such that each x_i >=
-    0 and sum_{i=0}^{i=n-1} x_i <= 1. There is an implicit x_{n+1}
-    element that equals one minus the sum of all other values.
-
-    The concentration transformations that are supported have the
-    following form:
-
-    1. Initially, each x_i (including for i=n+1) is transformed into c_i * x_i.
-
-    2. All coefficients are divided by the sum of all x_i, so the
-    resulting vector also appears as a concentration.
- */
-public class BinaryTransform extends ConcentrationTransform {
-    public BinaryTransform(double... cs) {
+/** Specialization of MultiplierConcentrationTransform for binary diagrams. */
+public class BinaryMultiplierTransform extends MultiplierConcentrationTransform
+    implements SlopeConcentrationTransform {
+    public BinaryMultiplierTransform(double... cs) {
         super(cs);
         if (cs.length != 2) {
-            throw new IllegalArgumentException("Expected array of length 3");
+            throw new IllegalArgumentException("Expected array of length 2");
         }
     }
 
-    @Override public BinaryTransform inverse() {
-        double[] ics = new double[cs.length];
-        for (int i = 0; i < cs.length; ++i) {
-            ics[i] = 1/cs[i];
-        }
-        return new BinaryTransform(ics);
+    @Override public BinaryMultiplierTransform createTransform(double... cs) {
+        return new BinaryMultiplierTransform(cs);
+    }
+
+    @Override public BinaryMultiplierTransform createInverse() {
+        return (BinaryMultiplierTransform) super.createInverse();
     }
 
     public double transform(double v) {
@@ -45,8 +33,8 @@ public class BinaryTransform extends ConcentrationTransform {
         given, return the slope of the transformation of that line or
         curve at the transformed point. This is useful for adjusting the
         angles of arrows and text inside a diagram. */
-    public Point2D.Double transformSlope(double x, double y,
-                                         double dx, double dy) {
+    @Override public Point2D.Double transformSlope(double x, double y,
+            double dx, double dy) {
         // dx is affected by component transformations, but dy is not.
 
         // As x increases, z decreases. The overall effect on dx is...
@@ -64,13 +52,5 @@ public class BinaryTransform extends ConcentrationTransform {
         double dDenom = dqx + dqz;
         double xformdx = (dqx * denom - qx * dDenom)/(denom * denom);
         return new Point2D.Double(xformdx, dy);
-    }
-
-    /** Like transformSlope(), but applied to an angle. */
-    public double transformAngle(Point2D p, double theta) {
-        Point2D.Double p2 = transformSlope
-            (p.getX(), p.getY(),
-             Math.cos(theta), Math.sin(theta));
-        return Math.atan2(p2.y, p2.x);
     }
 }
