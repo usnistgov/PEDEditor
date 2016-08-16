@@ -75,10 +75,10 @@ class LinearRuler implements BoundedParameterizable2D, Decorated {
     /** If true, use pow(10, x) for tick marks. */
     @JsonProperty boolean displayLog10 = false;
 
-    /** To simplify axis rotations, textAngle indicates the angle of
-        the text relative to the ray from startPoint to endPoint. So
-        for a vertical upwards-pointing axis, textAngle = 0 would mean
-        that lines of text flow upwards. */
+    /** To simplify axis rotations, textAngle indicates the angle in
+        radians of the text relative to the ray from startPoint to
+        endPoint. So for a vertical upwards-pointing axis, textAngle =
+        0 would mean that lines of text flow upwards. */
     @JsonProperty double textAngle = 0.0;
 
     /** True if ticks should extend from the right side of the ruler
@@ -666,5 +666,30 @@ class LinearRuler implements BoundedParameterizable2D, Decorated {
         }
 
         return minT;
+    }
+
+    void reflect() {
+        switch (labelAnchor) {
+        case LEFT:
+            labelAnchor = LabelAnchor.RIGHT;
+            break;
+        case RIGHT:
+            labelAnchor = LabelAnchor.LEFT;
+            break;
+        default:
+            break;
+        }
+        boolean tickTemp = tickLeft;
+        tickLeft = tickRight;
+        tickRight = tickTemp;
+    }
+
+    public void neaten(AffineTransform toPage) {
+        double theta = textAngle
+            +  Geom.transformRadians(toPage,
+                    Geom.toAngle(Geom.aMinusB(endPoint, startPoint)));
+        if (theta != MathWindow.normalizeRadians180(theta)) {
+            textAngle = Geom.normalizeRadians(Math.PI + textAngle);
+        }
     }
 }
