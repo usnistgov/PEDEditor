@@ -808,6 +808,12 @@ public class Geom {
         return res;
     }
 
+    public static double transformRadians(AffineTransform xform, double theta) {
+        Point2D.Double p = new Point2D.Double(Math.cos(theta), Math.sin(theta));
+        xform.deltaTransform(p, p);
+        return Math.atan2(p.y, p.x);
+    }
+
     /** Create a Line2D.Double that represents a ray starting at point
         p and pointing in direction v such that, if possible, the
         length of the ray equals the distance from the origin to p.
@@ -1102,7 +1108,18 @@ public class Geom {
         return Math.abs(d - Math.rint(d)) < 1e-8;
     }
 
+    /** Return a value in (-PI, PI]. */
+    public static double normalizeRadians(double theta) {
+        return theta - 2 * Math.PI * Math.ceil((theta / Math.PI - 1) / 2);
+    }
+
+    /** Return a value in (-180, 180]. */
+    public static double normalizeDegrees(double degrees) {
+        return degrees - 360 * Math.ceil((degrees / 180 - 1) / 2);
+    }
+
     public static void main(String[] args) {
         segmentTest(args);
     }
+
 }
