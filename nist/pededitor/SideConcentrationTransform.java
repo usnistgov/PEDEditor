@@ -7,16 +7,16 @@ import java.awt.geom.Point2D;
 
 public class SideConcentrationTransform {
     public Side[] sides;
-    public ConcentrationTransform xform;
+    public SlopeConcentrationTransform xform;
 
     public SideConcentrationTransform(Side[] sides,
-                                      ConcentrationTransform xform) {
+            SlopeConcentrationTransform xform) {
         this.sides = sides;
         this.xform = xform;
     }
 
     public SideConcentrationTransform inverse() {
-        return new SideConcentrationTransform(sides, xform.inverse());
+        return new SideConcentrationTransform(sides, xform.createInverse());
     }
 
     public double[] toValues(Point2D p) {
