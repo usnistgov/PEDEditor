@@ -89,4 +89,8 @@ public class TransformedShape implements Decorated {
     public double getScale() { return scale; }
     @JsonProperty("xWeight") public double getXWeight() { return xWeight; }
     @JsonProperty("yWeight") public double getYWeight() { return yWeight; }
+
+    public void reflect() {
+        setYWeight(1.0 - getYWeight());
+    }
 }
