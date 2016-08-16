@@ -14,7 +14,7 @@ import Jama.Matrix;
 
 /** Transform a triangle into any other triangle. All that is needed
     is an affine transformation. */
-public class TriangleTransform extends AffinePolygonTransform {
+public class TriangleMultiplierTransform extends AffinePolygonTransform {
 
     private static final long serialVersionUID = 1768608728396588446L;
 
@@ -32,24 +32,23 @@ public class TriangleTransform extends AffinePolygonTransform {
     Point2D.Double[] inputVerts = equilateralTriangleVertices();
     Point2D.Double[] outputVerts = equilateralTriangleVertices();
 
-    public TriangleTransform(TriangleTransform other) {
+    public TriangleMultiplierTransform(TriangleMultiplierTransform other) {
         inputVerts = Geom.deepCopy(other.inputVerts);
         outputVerts = Geom.deepCopy(other.outputVerts);
         update();
     }
 
-    /** @return a new TriangleTransform that represents the affine
+    /** @return a new TriangleMultiplierTransform that represents the affine
         transform that transforms the three input vertices inpts[] into
         the three output vertices outpts[] */
-    public TriangleTransform(@JsonProperty("input") Point2D.Double[] inpts,
+    public TriangleMultiplierTransform(@JsonProperty("input") Point2D.Double[] inpts,
                              @JsonProperty("output") Point2D.Double[] outpts) {
         setInputVertices(inpts);
         setOutputVertices(outpts);
     }
 
-    @Override
-	public TriangleTransform clone() {
-        return new TriangleTransform(this);
+    @Override public TriangleMultiplierTransform clone() {
+        return new TriangleMultiplierTransform(this);
     }
 
     /** Update the underlying affine transformation after changes to
@@ -72,24 +71,22 @@ public class TriangleTransform extends AffinePolygonTransform {
                      m.get(2,0), m.get(2,1));
     }
 
-    @Override
-	public TriangleTransform createInverse() {
-        return new TriangleTransform(outputVerts, inputVerts);
+    @Override public TriangleMultiplierTransform createInverse() {
+        return new TriangleMultiplierTransform(outputVerts, inputVerts);
     }
 
-    @Override
-	public Point2D.Double[] getInputVertices() {
+    @Override public Point2D.Double[] getInputVertices() {
         return Geom.deepCopy(inputVerts);
     }
 
-    @Override
-	public Point2D.Double[] getOutputVertices() {
+    @Override public Point2D.Double[] getOutputVertices() {
         return Geom.deepCopy(outputVerts);
     }
 
     public void setInputVertices(Point2D.Double[] inputVertices) {
         if (inputVertices.length != 3) {
-            throw new IllegalArgumentException("inputVertices.length " + inputVertices.length + " != 3");
+            throw new IllegalArgumentException(
+                    "inputVertices.length " + inputVertices.length + " != 3");
         }
         inputVerts = Geom.deepCopy(inputVertices);
         update();
@@ -125,13 +122,11 @@ public class TriangleTransform extends AffinePolygonTransform {
         update();
     }
 
-    @Override
-	public void preConcatenate(Transform2D other) {
+    @Override public void preConcatenate(Transform2D other) {
         concatSub(other, outputVerts);
     }
 
-    @Override
-	public void concatenate(Transform2D other) {
+    @Override public void concatenate(Transform2D other) {
         try {
             concatSub(other.createInverse(), inputVerts);
         } catch (NoninvertibleTransformException e) {
@@ -139,13 +134,11 @@ public class TriangleTransform extends AffinePolygonTransform {
         }
     }
 
-    @Override
-	public void preConcatenate(AffineTransform other) {
+    @Override public void preConcatenate(AffineTransform other) {
         concatSub(other, outputVerts);
     }
 
-    @Override
-	public void concatenate(AffineTransform other) {
+    @Override public void concatenate(AffineTransform other) {
         try {
             concatSub(other.createInverse(), inputVerts);
         } catch (NoninvertibleTransformException e) {
@@ -153,22 +146,15 @@ public class TriangleTransform extends AffinePolygonTransform {
         }
     }
 
-    @Override
-	public Rectangle2D.Double inputBounds() {
+    @Override public Rectangle2D.Double inputBounds() {
         return Geom.bounds(inputVerts);
     }
 
-    @Override
-	public Rectangle2D.Double outputBounds() {
+    @Override public Rectangle2D.Double outputBounds() {
         return Geom.bounds(outputVerts);
     }
 
-    @Override
-	public String toString() {
+    @Override public String toString() {
         return PolygonTransformAdapter.toString(this) + "(" + super.toString() + ")";
-    }
-
-    public void check() {
-        PolygonTransformAdapter.check(this);
     }
 }
