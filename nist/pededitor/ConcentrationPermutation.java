@@ -30,6 +30,10 @@ public class ConcentrationPermutation
         }
     }
 
+    @Override public ConcentrationPermutation clone() {
+        return new ConcentrationPermutation(fromIndexes);
+    }
+
     @Override public ConcentrationPermutation createInverse() {
         int[] toIndexes = new int[fromIndexes.length];
         for (int i = 0; i < fromIndexes.length; ++i) {
