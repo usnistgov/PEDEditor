@@ -893,7 +893,6 @@ public class BasicEditor extends Diagram
         }
  
         Decoration dec = selection.getDecoration();
-        dec.setLineStyle(lineStyle);
         dec.setColor(color);
         dec.setLineWidth(lineWidth);
         LabelDecoration ldec = getSelectedLabel();
@@ -903,8 +902,14 @@ public class BasicEditor extends Diagram
         }
 
         CuspFigure path = getSelectedCuspFigure();
-        if (path != null && path.isClosed()) {
-            path.setFill(fill);
+        if (path != null) {
+            if (fill != null && path.getFill() != null) {
+                path.setFill(fill);
+            }
+        }
+
+        if (lineStyle != null && dec.getLineStyle() != null) {
+            dec.setLineStyle(lineStyle);
         }
         
         if (!hadSelection) {
@@ -1290,6 +1295,14 @@ public class BasicEditor extends Diagram
     @Override public void swapDiagramComponents(Side side1, Side side2) {
         try {
             super.swapDiagramComponents(side1, side2);
+        } catch (IllegalArgumentException x) {
+            showError(x.toString());
+        }
+    }
+
+    @Override public void swapXY() {
+        try {
+            super.swapXY();
         } catch (IllegalArgumentException x) {
             showError(x.toString());
         }
@@ -4439,13 +4452,13 @@ public class BasicEditor extends Diagram
                             { new Point2D.Double(0.0, bottom),
                               new Point2D.Double(rx/2, bottom - triangleHt * r.t),
                               new Point2D.Double(rx, bottom) };
-                        principalToStandardPage = new TriangleTransform
+                        setPrincipalToStandardPage(new TriangleTransform
                             (new Point2D.Double[]
                                 { new Point2D.Double(minRight, minTop),
                                   new Point2D.Double(minRight,
                                                      maxRight - minRight + minTop),
                                   new Point2D.Double(maxRight, minTop) },
-                             trianglePagePositions);
+                             trianglePagePositions));
 
                         LinearRuler rule = ternaryBottomRuler
                             (minRight, maxRight, minTop);
@@ -4515,10 +4528,10 @@ public class BasicEditor extends Diagram
                             // correct.
                             r = new Rescale(dog.getAspectRatio(), 1.0, 1.0);
                         }
-                        principalToStandardPage = new RectangleTransform
+                        setPrincipalToStandardPage(new RectangleTransform
                             (domain,
                              new Rectangle2D.Double
-                             (0, r.height, r.width, -r.height));
+                             (0, r.height, r.width, -r.height)));
 
                         if (other) {
                             if (dog.isPixelMode()) {
@@ -4717,8 +4730,8 @@ public class BasicEditor extends Diagram
                             xformed[i] = xform.transform(trianglePoints[i]);
                         }
 
-                        principalToStandardPage = new TriangleTransform
-                            (trianglePoints, xformed);
+                        setPrincipalToStandardPage(new TriangleTransform
+                            (trianglePoints, xformed));
 
                         for (Axis axis: getAxes()) {
                             setPercentageDisplay(axis, isPercent);
@@ -4952,7 +4965,7 @@ public class BasicEditor extends Diagram
             }
         }
 
-        super.setAspectRatio(aspectRatio);
+        setAspectRatio(aspectRatio);
         bestFit();
         scaledOriginalImages = null;
     }
