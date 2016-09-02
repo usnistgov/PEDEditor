@@ -1,5 +1,5 @@
 <!DOCTYPE HTML>
-<html>
+<html lang=en>
 <head>
 <title>PED Edit Window Help</title>
 <link rel="stylesheet" href="http://nist.gov/style/nist-styles.css">
@@ -373,7 +373,7 @@ assign values to the page X and Y boundaries.
 <!--  <p>Turning on pixel mode also enables <a href="#Snap">Snap to
       grid</a>.-->
 
-<li><a id=Scale><b>Scale</b></a>: This option allows you to change the
+<li><b id=Scale>Scale</b>: This option allows you to change the
 units of the X and Y axis, while the positions of items on the screen
 remains the same. This feature allows you to change from units of
 Celsius to Kelvin, for example, or grams to kilograms.
@@ -384,6 +384,10 @@ operation, the dialog will be initialized with its endpoint values.
 <!-- <li><b id=Snap>Snap to grid</b> aligns (imperfectly) control points
 with pixel boundaries unless that would cause two different positions
 to overlap. It is only available in <a href=#PixelMode>pixel mode</a>. -->
+
+  <li><b>Swap X and Y axes</b> more or less reflects the diagram
+  across a mirror angled 45 degrees upwards. Not available for
+  diagrams with components or ternary diagrams.
 
 <li><b>Tags</b>: Allow the user to store free-form string data. The
 data are not displayed or otherwise used by the program.
@@ -506,7 +510,7 @@ in a text editor may give you an idea what is involved.</p>
 
 <ul>
 
-<li><p><b>Components</b>: Identify the diagram components for binary
+<li><p><b>Set components</b>: Identify the diagram components for binary
 and ternary diagrams. Binary diagrams whose X-axis indicates
 increasing the relative proportions of two substances have a left and
 right diagram component, while ternary diagrams have a left, right,
@@ -548,6 +552,12 @@ old values of 0 and 100 to new values of 0 and 1, respectively.
 the diagram components, you may use the <b>Guess components</b>
 feature to automatically set the components. There is no guarantee
 that the guesses will be correct.
+
+<li><p><b>Swap components</b> exchanges the position of the left and
+right components in binary diagrams. For ternary diagrams, any pair of
+components may be swapped, but the diagram may look odd after swapping
+the top component. All three components can be reordered using
+successive swaps.
 
 <li><p><b>Proportions/Already displaying weight fraction</b>: The
 program assumes that coordinates inside the diagram are defined by
