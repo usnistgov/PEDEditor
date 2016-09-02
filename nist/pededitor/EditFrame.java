@@ -89,7 +89,7 @@ public class EditFrame extends JFrame
     JMenu mnFile = new JMenu("File");
     JMenu mnCurve = new JMenu("Curve");
     JMenu mnProperties = new JMenu("Properties");
-    JMenu mnSwap = new JMenu("Swap");
+    JMenu mnSwap = new JMenu("Swap Components");
     {
         mnSwap.setMnemonic(KeyEvent.VK_W);
     }
@@ -488,6 +488,14 @@ public class EditFrame extends JFrame
     protected JSeparator mnVariablesSeparator = new JSeparator();
     protected JMenuItem mnEditVariable = new JMenuItem("Edit");
     protected JMenu mnVariables = new JMenu("Variables");
+
+    protected Action actSwapXY = new Action("Swap X and Y axes",
+            KeyEvent.VK_S) {
+            @Override public void actionPerformed(ActionEvent e) {
+                getEditor().swapXY();
+                finishEvent();
+            }
+        };
     protected JMenu mnScale = new JMenu("Scale");
     Action actAddTag = new Action("Add", KeyEvent.VK_A) {
             @Override public void actionPerformed(ActionEvent e) {
@@ -518,7 +526,8 @@ public class EditFrame extends JFrame
                     finishEvent();
                 }
             });
-    protected JMenu mnComponents = new JMenu("Components");
+    protected JMenu mnSetComponents = new JMenu("Set components");
+    protected JMenu mnSwapComponents = new JMenu("Swap components");
 
     JMenuItem mnCopyFormulas = new JMenuItem
         (new Action
@@ -620,7 +629,7 @@ public class EditFrame extends JFrame
     }
 
     protected Action setLeftComponent = new Action
-        ("Set left component", KeyEvent.VK_L) {
+        ("Left", KeyEvent.VK_L) {
             @Override public void actionPerformed(ActionEvent e) {
                 getEditor().setDiagramComponent(Side.LEFT);
                 finishEvent();
@@ -628,7 +637,7 @@ public class EditFrame extends JFrame
         };
 
     protected Action setRightComponent = new Action
-        ("Set right component", KeyEvent.VK_R) {
+        ("Right", KeyEvent.VK_R) {
             @Override public void actionPerformed(ActionEvent e) {
                 getEditor().setDiagramComponent(Side.RIGHT);
                 finishEvent();
@@ -636,7 +645,7 @@ public class EditFrame extends JFrame
         };
 
     protected Action setTopComponent = new Action
-        ("Set top component", KeyEvent.VK_T) {
+        ("Top", KeyEvent.VK_T) {
             @Override public void actionPerformed(ActionEvent e) {
                 getEditor().setDiagramComponent(Side.TOP);
                 finishEvent();
@@ -719,13 +728,12 @@ public class EditFrame extends JFrame
         String msg = getEditor().isEditable()
             ? ("<p>The conversion was canceled or could not be performed. "
                + "<p>Conversions can only be performed on "
-               + "<p>Conversions can only be performed on "
                + "diagrams for which the left, right, and (for ternary diagrams) "
                + "top components are defined (using the "
                + "<code>Chemistry/Components</code> "
                + "menu) in elemental formulas such as \"Ca + Mg\" or "
                + "\"Pb3(PO4)2\".")
-            : "<p>This diagram does not support mole&lt;-&gt;weight conversions.";
+            : "<p>This diagram does not support mole \u2194 weight conversions.";
         getEditor().showError(msg);
     }
 
@@ -1424,6 +1432,8 @@ public class EditFrame extends JFrame
         mnVariablesSeparator.setVisible(false);
         mnEditVariable.setVisible(false);
 
+        mnProperties.add(actSwapXY);
+
         setAspectRatio = new Action
             ("Aspect ratio", KeyEvent.VK_A) {
                 @Override public void actionPerformed(ActionEvent e) {
@@ -1480,13 +1490,15 @@ public class EditFrame extends JFrame
         mnChem.setMnemonic(KeyEvent.VK_M);
         menuBar.add(mnChem);
 
-        mnComponents.setMnemonic(KeyEvent.VK_C);
+        mnSetComponents.setMnemonic(KeyEvent.VK_C);
         setTopComponent.setEnabled(false);
-        mnComponents.add(setLeftComponent);
-        mnComponents.add(setRightComponent);
-        mnComponents.add(setTopComponent);
+        mnSetComponents.add(setLeftComponent);
+        mnSetComponents.add(setRightComponent);
+        mnSetComponents.add(setTopComponent);
+        mnSetComponents.add(guessComponents);
+        mnChem.add(mnSetComponents);
         
-        mnComponents.add(swapBinary);
+        mnChem.add(swapBinary);
 
         mnSwap.add(new Action
                 ("Left \u2194 Right", KeyEvent.VK_L) {
@@ -1509,10 +1521,7 @@ public class EditFrame extends JFrame
                     finishEvent();
                 }
             });
-        mnComponents.add(mnSwap);
-        
-        mnComponents.add(guessComponents);
-        mnChem.add(mnComponents);
+        mnChem.add(mnSwap);       
 
         {
             JMenu mnProp = new JMenu("Proportions");
@@ -1720,7 +1729,7 @@ public class EditFrame extends JFrame
 
         mnProperties.setVisible(getVisibleItemCount(mnProperties) > 0);
         mnImportCoordinates.setVisible(b);
-        mnComponents.setVisible(b);
+        mnSetComponents.setVisible(b);
 
         usingWeightFraction.setVisible(b);
         mnBackgroundImage.setVisible(b);
