@@ -56,6 +56,8 @@ import java.util.TreeMap;
 import java.util.TreeSet;
 import java.util.function.DoubleUnaryOperator;
 import java.util.function.Function;
+import java.util.function.ToDoubleFunction;
+import java.util.stream.IntStream;
 
 import javax.imageio.ImageIO;
 import javax.print.attribute.PrintRequestAttributeSet;
@@ -1296,8 +1298,7 @@ public class Diagram extends Observable implements Printable {
         originalToPrincipal = null;
         originalFilename = null;
         principalToOriginal = null;
-        principalToStandardPage = null;
-        standardPageToPrincipal = null;
+        setPrincipalToStandardPage(null);
         pageBounds = null;
         decorations = new ArrayList<>();
         removeAllTags();
@@ -1776,6 +1777,70 @@ public class Diagram extends Observable implements Printable {
         propagateChange();
     }
 
+    /** Rename the LinearAxis with the given name. If it's a diagram
+        component, update that as well to maintain consistency. Rulers
+        that use the axis oldName will still refer to the axis under
+        its new name. */
+    public void renameVariable(String oldName, String newName)
+        throws DuplicateComponentException, NoSuchVariableException {
+        // If the user wants to rename or add a component, they should
+        // use Chemistry/Components instead. The only time it makes
+        // sense to redirect to that is if the old value is a component.
+
+        for (Side side: Side.values()) {
+            Axis axis = getAxis(side);
+            if (axis != null && axis.name.equals(oldName)
+                && (isTernary() || diagramComponents[side.ordinal()] != null)) {
+                setDiagramComponent(side, newName);
+                return;
+            }
+        }
+
+        if (newName == null || "".equals(newName)) {
+            return;
+        }
+        for (Axis axis: getAxes()) {
+            if (axis.name.equals(newName)) {
+                throw new DuplicateComponentException(
+                        "A variable named " + axis.name + " already exists");
+            }
+        }
+
+        for (LinearAxis axis: getAxes()) {
+            if (axis.name.equals(oldName)) {
+                rename(axis, newName);
+                return;
+            }
+        }
+        
+        throw new NoSuchVariableException(oldName);
+    }
+    
+    void renameVariableMissingOK(String oldName, String newName)
+        throws DuplicateComponentException {
+        try {
+            renameVariable(oldName, newName);
+        } catch (NoSuchVariableException x) {
+            // That's fine
+        }
+    }
+
+    /* Swap the names of the axes named name1 and name2. Rulers that
+       refer to those axes will continue to refer to the same axis as
+       before, but using the new name. If only one of the two named
+       axes exist, then it will be renamed. */
+    public void swapVariableNames(String name1, String name2) {
+        try {
+            String arbitrary = "Blezmogon93";
+            renameVariableMissingOK(name1, arbitrary);
+            renameVariableMissingOK(name2, name1);
+            renameVariableMissingOK(arbitrary, name2);
+        } catch (DuplicateComponentException x) { // Should never happen.
+            throw new IllegalStateException(x);
+        }
+    }
+
+
     public void remove(LinearAxis axis) {
         // Remove all rulers that depend on this axis.
         for (Iterator<LinearRuler> it = rulers().iterator(); it.hasNext();) {
@@ -1906,14 +1971,14 @@ public class Diagram extends Observable implements Printable {
 
         LinearAxis leftAxis = getLeftAxis();
         if (isTernary()) {
-            double leftFraction = (leftAxis != null) ? leftAxis.value(x,y) :
+            double leftFraction = (leftAxis != null) ? leftAxis.applyAsDouble(x,y) :
                 (1 - x - y);
             return new SideDouble[] {
                 new SideDouble(Side.RIGHT, x),
                 new SideDouble(Side.TOP, y),
                 new SideDouble(Side.LEFT, leftFraction) };
         } else if (diagramComponents[Side.RIGHT.ordinal()] != null) {
-            double leftFraction = (leftAxis != null) ? leftAxis.value(x,y) :
+            double leftFraction = (leftAxis != null) ? leftAxis.applyAsDouble(x,y) :
                 (1 - x);
             return new SideDouble[] {
                 new SideDouble(Side.RIGHT, x),
@@ -2070,7 +2135,7 @@ public class Diagram extends Observable implements Printable {
 
     public SideConcentrationTransform weightToMoleTransform() {
         SideConcentrationTransform res = moleToWeightTransform();
-        return (res != null) ? res.inverse() : null;
+        return (res != null) ? res.createInverse() : null;
     }
 
     /** Convert the given point from mole fraction to weight fraction.
@@ -2082,13 +2147,23 @@ public class Diagram extends Observable implements Printable {
         return transform(p, moleToWeightTransform(), true);
     }
 
+    Point2D.Double transform(Point2D p, SideConcentrationTransform xform, 
+            boolean stopAtBorders) {
+        try {
+            return transform(p, (Transform2D) xform, stopAtBorders);
+        } catch (UnsolvableException x) {
+            throw new IllegalStateException(x); // Will never happen
+        }
+    }
+
     /** Transform the given point with the given transformation, with
      * an important exception: points outside the diagram are
      * transformed by projecting onto the closest point within
      * diagram, transforming that, and applying the inverse of the
-     * projection vector afterwards. */
-    Point2D.Double transform(Point2D p, SideConcentrationTransform xform,
-            boolean stopAtBorders) {
+     * projection vector afterwards. 
+     * @throws UnsolvableException */
+    Point2D.Double transform(Point2D p, Transform2D xform, 
+            boolean stopAtBorders) throws UnsolvableException {
         if (xform == null) {
             return null;
         }
@@ -2106,8 +2181,17 @@ public class Diagram extends Observable implements Printable {
         return transform(p, weightToMoleTransform(), true);
     }
 
-    public boolean transformDiagram(SideConcentrationTransform xform,
-            boolean stopAtBorders) {
+    /** Apply xform to the positions and angles of all decorations, then
+        transform the diagram corners.
+
+        @param stopAtBorders if true, handle points outside the
+        diagram differently: don't change the angle, just translate
+        the decoration position by a vector that equals the difference
+        between the closest point in the diagram p and
+        xform.transform(p). If false, apply xform to the entire
+        diagram and to all angles. */
+    public boolean transformDiagram(SlopeTransform2D xform,
+            boolean stopAtBorders) throws UnsolvableException {
         for (DecorationHandle hand: movementHandles()) {
             Point2D.Double p = hand.getLocation();
             Decoration d = hand.getDecoration();
@@ -2137,13 +2221,12 @@ public class Diagram extends Observable implements Printable {
                 if (pao.interior) { // Only modify angles of points inside the diagram.
                     Angled a = (Angled) d;
                     double theta = a.getAngle();
-                    a.setAngle(xform.xform.transformAngle(p, theta));
+                    a.setAngle(xform.transformAngle(p, theta));
                 }
             }
             hand.move(newP);
         }
         transformDiagramCorners(xform);
-        computeMargins();
 
         return true;
     }
@@ -2152,8 +2235,10 @@ public class Diagram extends Observable implements Printable {
         points are transformed. Basically this means converting
         principalToStandardPage from one kind of
         AffinePolygonTransform to another one that has the same effect
-        but with different vertices. */
-    void transformDiagramCorners(SideConcentrationTransform xform) {
+        but with different vertices.
+     
+        @throws UnsolvableException */
+    void transformDiagramCorners(Transform2D xform) throws UnsolvableException {
         AffinePolygonTransform p2s = principalToStandardPage;
         if (p2s instanceof TriangleTransform) {
             Point2D.Double[] dvs = diagramVertices();
@@ -2165,8 +2250,8 @@ public class Diagram extends Observable implements Printable {
                 resInputs[i] = px;
                 resOutputs[i] = p2s.transform(px);
             }
-            principalToStandardPage
-                = new TriangleTransform(resInputs, resOutputs);
+            setPrincipalToStandardPage(
+                    new TriangleTransform(resInputs, resOutputs));
         } else {
             RectangleTransform oldXform
                 =  (RectangleTransform) p2s;
@@ -2177,9 +2262,10 @@ public class Diagram extends Observable implements Printable {
                 (new Point2D.Double(inr.x + inr.width, inr.y + inr.height));
             Point2D.Double o1 = p2s.transform(i1);
             Point2D.Double o2 = p2s.transform(i2);
-            principalToStandardPage = new RectangleTransform
-                (new Rectangle2D.Double(i1.x, i1.y, i2.x - i1.x, i2.y - i1.y),
-                 new Rectangle2D.Double(o1.x, o1.y, o2.x - o1.x, o2.y - o1.y));
+            setPrincipalToStandardPage(
+                    new RectangleTransform(
+                            new Rectangle2D.Double(i1.x, i1.y, i2.x - i1.x, i2.y - i1.y),
+                            new Rectangle2D.Double(o1.x, o1.y, o2.x - o1.x, o2.y - o1.y)));
         }
     }
 
@@ -2214,7 +2300,13 @@ public class Diagram extends Observable implements Printable {
             }
         }
         setUsingWeightFraction(true);
-        return transformDiagram(xform, true);
+        try {
+            boolean res = transformDiagram(xform, true);
+            computeMargins();
+            return res;
+        } catch (UnsolvableException e) {
+            throw new IllegalStateException(); // Should never happen
+        }
     }
 
     /** @return true if all diagram components are single elements: O, not O2 or NaCl. */
@@ -2273,7 +2365,82 @@ public class Diagram extends Observable implements Printable {
             }
         }
         setUsingWeightFraction(false);
-        return transformDiagram(xform, true);
+        try {
+            boolean res = transformDiagram(xform, true);
+            computeMargins();
+            return res;
+        } catch (UnsolvableException e) {
+            throw new IllegalStateException(); // Should never happen
+        }
+    }
+
+    public void swapXY() {
+        if (principalToStandardPage == null) {
+            return;
+        }
+        if (isTernary())
+            throw new IllegalArgumentException(
+                    "Cannot swap X and Y axes of ternary diagrams");
+        for (String comp: diagramComponents) {
+            if (comp != null) {
+                throw new IllegalArgumentException(
+                        "Cannot swap X and Y axes for diagram with "
+                        + "defined component '" + comp + "'");
+            }
+        }
+
+        // transformDiagram() changes principalToStandardPage, so copy
+        // in and out before that happens.
+        Rectangle2D.Double in = ((RectangleTransform)
+                principalToStandardPage).inputRectangle();
+        {
+            double x = in.x;
+            in.x = in.y;
+            in.y = x;
+            double w = in.width;
+            in.width = in.height;
+            in.height = w;
+        }
+        Rectangle2D.Double out = ((RectangleTransform)
+                principalToStandardPage).outputRectangle();
+        {
+            double x = out.x;
+            out.x = out.y + out.height;
+            out.y = x + out.width;
+            double w = out.width;
+            out.width = -out.height;
+            out.height = -w;
+        }
+        double xRange[] = getRange(getXAxis());
+        double yRange[] = getRange(getYAxis());
+
+        try {
+            transformDiagram(new SwapXY(), false);
+        } catch (UnsolvableException e) {
+            throw new IllegalStateException(); // Should never happen
+        }
+
+        // Swap the X and Y components of all axes.
+        for (LinearAxis axis: getAxes()) {
+            double a= axis.getA();
+            axis.setA(axis.getB());
+            axis.setB(a);
+        }
+
+        setPrincipalToStandardPage(new RectangleTransform(in, out));
+        for (Decoration d: getDecorations()) {
+            d.reflect();
+            d.neaten(principalToStandardPage);
+        }
+
+        setPageBounds(Geom.bounds(
+                        IntStream.range(0,2)
+                        .mapToObj(i -> principalToStandardPage.transform
+                                (new Point2D.Double(yRange[i], xRange[i])))
+                        .toArray(size -> new Point2D.Double[size])));
+
+        swapVariableNames("page X", "page Y");
+        swapVariableNames("X", "Y");
     }
 
     public void swapDiagramComponents(Side side1, Side side2) {
@@ -2311,7 +2478,11 @@ public class Diagram extends Observable implements Printable {
 
         SideConcentrationTransform xform = new SideConcentrationTransform(
                 sides, new ConcentrationPermutation(permutation));
-        transformDiagram(xform, false);
+        try {
+            transformDiagram(xform, false);
+        } catch (UnsolvableException e) {
+            throw new IllegalStateException(); // Should never happen
+        }
 
         for (LinearRuler r: rulers()) {
             if (r.axis == axis1) {
@@ -2330,14 +2501,14 @@ public class Diagram extends Observable implements Printable {
     }
 
     /* Return true if all sides that could have components do have
-       them, those components' composiitions are known, and those
+       them, those components' compositions are known, and those
        components sum to 100%. */
     boolean haveComponentCompositions() {
         return sidesWithComponents() != null;
     }
 
     /* Return null unless all sides that could have components do have
-       them, those components' composiitions are known, and those
+       them, those components' compositions are known, and those
        components sum to 100%. Otherwise, return an array of those
        sides. */
     Side[] sidesWithComponents() {
@@ -2597,8 +2768,10 @@ public class Diagram extends Observable implements Printable {
 
         if (str != null) {
             for (Side aSide: Side.values()) {
-                if (aSide != side && str.equals(diagramComponents[aSide.ordinal()])) {
-                    throw new DuplicateComponentException();
+                if (aSide != side
+                    && str.equals(diagramComponents[aSide.ordinal()])) {
+                    throw new DuplicateComponentException(
+                            "A component named " + str + " already exists");
                 }
             }
         }
@@ -2625,12 +2798,12 @@ public class Diagram extends Observable implements Printable {
     }
 
     /** Like getRange(), but simply return max - min. */
-    double length(Axis ax) {
+    double length(ToDoubleFunction<Point2D> ax) {
         return length(ax, pageBounds);
     }
 
     /** Like getRange(), but simply return max - min. */
-    double length(Axis ax, Rectangle2D pageBounds) {
+    double length(ToDoubleFunction<Point2D> ax, Rectangle2D pageBounds) {
         double[] range = getRange(ax, pageBounds);
         return range[1] - range[0];
     }
@@ -2638,7 +2811,7 @@ public class Diagram extends Observable implements Printable {
     /** Return { min, max } representing the range of values that ax
         can take within the standard page. Assumes that the extremes
         are represented by corners of the page. */
-    public double[] getRange(Axis ax) {
+    public double[] getRange(ToDoubleFunction<Point2D> ax) {
         return getRange(ax, pageBounds);
     }
 
@@ -2646,7 +2819,7 @@ public class Diagram extends Observable implements Printable {
         can take within the pageBounds region of the standard page.
         Assumes that the extremes are represented by corners of the
         page. */
-    public double[] getRange(Axis ax, Rectangle2D pageBounds) {
+    public double[] getRange(ToDoubleFunction<Point2D> ax, Rectangle2D pageBounds) {
         if (principalToStandardPage == null || pageBounds == null) {
             return new double[] { 0, 0 };
         }
@@ -2657,7 +2830,7 @@ public class Diagram extends Observable implements Printable {
             { pageBounds.getMinX(), pageBounds.getMaxX() }) {
             for (double y: new double[]
                 { pageBounds.getMinY(), pageBounds.getMaxY() }) {
-                double v = ax.value(standardPageToPrincipal.transform(x,y));
+                double v = ax.applyAsDouble(standardPageToPrincipal.transform(x,y));
                 ++pointCnt;
                 if (pointCnt == 1) {
                     min = max = v;
@@ -2697,7 +2870,7 @@ public class Diagram extends Observable implements Printable {
     public String coordinates(CuspFigure path, LinearAxis v1, LinearAxis v2) {
         StringBuilder sb = new StringBuilder();
         for (Point2D.Double point: path.getPoints()) {
-            sb.append(v1.value(point) + ", " + v2.value(point));
+            sb.append(v1.applyAsDouble(point) + ", " + v2.applyAsDouble(point));
             sb.append('\n');
         }
         return sb.toString();
@@ -2716,7 +2889,7 @@ public class Diagram extends Observable implements Printable {
     }
 
     Point2D.Double transform(Point2D.Double p, LinearAxis v1, LinearAxis v2) {
-        return new Point2D.Double(v1.value(p), v2.value(p));
+        return new Point2D.Double(v1.applyAsDouble(p), v2.applyAsDouble(p));
     }
 
     Point2D.Double transform(Point2D.Double p, DoubleUnaryOperator f1, DoubleUnaryOperator f2) {
@@ -2920,7 +3093,7 @@ public class Diagram extends Observable implements Printable {
         // component values are invalid.
         boolean suppressComponents = false;
         for (LinearAxis axis: axes) {
-            if (isComponentAxis(axis) && !isProportion(axis.value(prin))) {
+            if (isComponentAxis(axis) && !isProportion(axis.applyAsDouble(prin))) {
                 suppressComponents = true;
                 break;
             }
@@ -2937,7 +3110,7 @@ public class Diagram extends Observable implements Printable {
             status.append(" = ");
 
             if ((isComponentAxis(axis) && suppressComponents)
-                    || (axis.isPercentage() && !isProportion(axis.value(prin)))) {
+                    || (axis.isPercentage() && !isProportion(axis.applyAsDouble(prin)))) {
                 status.append("--");
             } else if (haveBoth && isComponentAxis(axis)) {
                 status.append(withFraction(axis, mole));
@@ -2952,12 +3125,12 @@ public class Diagram extends Observable implements Printable {
     }
 
     String withFraction(LinearAxis axis, Point2D.Double p) {
-        String res = axis.valueAsString(p);
+        String res = axis.applyAsString(p);
 
         if (axisIsFractional(axis)) {
             // Express values in fractional terms if the decimal
             // value is a close approximation to a fraction.
-            double d = axis.value(p);
+            double d = axis.applyAsDouble(p);
             ContinuedFraction f = approximateFraction(d);
             if (f != null && f.numerator != 0 && f.denominator > 1) {
                 res = res + " (" + f + ")";
@@ -3875,14 +4048,21 @@ public class Diagram extends Observable implements Printable {
         }
     }
 
-    protected void initializeDiagram() {
-        try {
-            standardPageToPrincipal = principalToStandardPage.createInverse();
-        } catch (NoninvertibleTransformException e) {
-            System.err.println("This transform is not invertible");
-            System.exit(2);
+    public void setPrincipalToStandardPage(AffinePolygonTransform xform) {
+        principalToStandardPage = xform;
+        if (xform == null) {
+            standardPageToPrincipal = null;
+        } else {
+            try {
+                standardPageToPrincipal = principalToStandardPage.createInverse();
+            } catch (NoninvertibleTransformException e) {
+                System.err.println("Transform " + xform + " is not invertible");
+                System.exit(2);
+            }
         }
+    }
 
+    protected void initializeDiagram() {
         if (getOriginalFilename() != null) {
             try {
                 principalToOriginal = (PolygonTransform)
@@ -4136,7 +4316,7 @@ public class Diagram extends Observable implements Printable {
                 diagramType = other.diagramType;
                 diagramComponents = other.diagramComponents;
                 originalToPrincipal = other.originalToPrincipal;
-                principalToStandardPage = other.principalToStandardPage;
+                setPrincipalToStandardPage(other.principalToStandardPage);
                 pageBounds = other.pageBounds;
                 originalFilename = other.originalFilename;
                 filename = other.filename;
