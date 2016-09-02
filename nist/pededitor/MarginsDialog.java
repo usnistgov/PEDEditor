@@ -171,7 +171,7 @@ public class MarginsDialog extends JDialog {
         double m = (varNo == 0) ? g.x : g.y;
         Point2D.Double pOrigin = new Point2D.Double(0,0);
         fromPage.transform(pOrigin, pOrigin);
-        double b = axis.value(pOrigin);
+        double b = axis.applyAsDouble(pOrigin);
         double axisV = getNumberField(varNo, col).getValue();
 
         // m pageV + b = axisV ; solve for pageV
@@ -197,7 +197,7 @@ public class MarginsDialog extends JDialog {
             return null;
         } else {
             Point2D.Double vp = new Point2D.Double(v, v);
-            return axis.value(fromPage.transform(vp, vp));
+            return axis.applyAsDouble(fromPage.transform(vp, vp));
         }
     }
 

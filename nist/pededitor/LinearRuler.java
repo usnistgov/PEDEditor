@@ -222,12 +222,12 @@ class LinearRuler implements BoundedParameterizable2D, Decorated {
 
     /** Start of range of logical values covered by this axis. */
     double getStart() {
-        return mungeValue(axis.value(startPoint));
+        return mungeValue(axis.applyAsDouble(startPoint));
     }
 
     /** End of range of logical values covered by this axis. */
     double getEnd() {
-        return mungeValue(axis.value(endPoint));
+        return mungeValue(axis.applyAsDouble(endPoint));
     }
 
     CuspFigure spinePolyline() {
