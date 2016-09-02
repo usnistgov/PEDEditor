@@ -1303,6 +1303,7 @@ public class BasicEditor extends Diagram
     @Override public void swapXY() {
         try {
             super.swapXY();
+            bestFit();
         } catch (IllegalArgumentException x) {
             showError(x.toString());
         }
@@ -2446,6 +2447,42 @@ public class BasicEditor extends Diagram
         throw new IllegalStateException("No such variable '" + name + "'");
     }
 
+    /** Like renameVariable, but show errors to the user instead of
+        throwing exceptions. */
+    public void renameVariableGUI(String oldName, String newName) {
+        // If the user wants to rename or add a component, they should
+        // use Chemistry/Components instead. The only time it makes
+        // sense to redirect to that is if the old value is a component.
+
+        for (Side side: Side.values()) {
+            Axis axis = getAxis(side);
+            if (axis != null && axis.name.equals(oldName)
+                && (isTernary() || diagramComponents[side.ordinal()] != null)) {
+                setDiagramComponentGUI(side, newName);
+                return;
+            }
+        }
+
+        if (newName == null || "".equals(newName)) {
+            return;
+        }
+        for (Axis axis: axes) {
+            if (axis.name.equals(newName)) {
+                showError("A variable with that name already exists.");
+                return;
+            }
+        }
+
+        for (LinearAxis axis: axes) {
+            if (axis.name.equals(oldName)) {
+                rename(axis, newName);
+                return;
+            }
+        }
+        
+        throw new IllegalStateException("No such variable '" + oldName + "'");
+    }
+
     @Override public void rename(LinearAxis axis, String name) {
         if (axis.name != null) {
             editFrame.removeVariable((String) axis.name);
@@ -2453,6 +2490,7 @@ public class BasicEditor extends Diagram
         super.rename(axis, name);
         editFrame.addVariable(name);
         mathWindow.refresh();
+        super.rename(axis, name);
     }
 
     @Override public void add(LinearAxis axis) {
@@ -2840,7 +2878,7 @@ public class BasicEditor extends Diagram
                 sumIsKnown = false;
                 break;
             }
-            componentsSum += axis.value(fractions);
+            componentsSum += axis.applyAsDouble(fractions);
         }
         if (sumIsKnown && Math.abs(1 - componentsSum) > 1e-4) {
             showError("Components do not sum to 1", errorTitle);
@@ -3576,6 +3614,39 @@ public class BasicEditor extends Diagram
         }
         str = str.trim();
 
+        setDiagramComponentGUI(side, str);
+    }
+
+    void setSwapXYVisible() {
+        setSwapXYVisible(swapXYShouldBeVisible());  
+    }
+    
+    boolean swapXYShouldBeVisible() {
+        if (isTernary()) {
+            return false;
+        }
+        for (String s: diagramComponents) {
+            if (s != null) {
+                return false;
+            }   
+        }
+        return true;
+    }
+
+    @JsonIgnore void setSwapXYVisible(boolean b) {
+        setVisible(editFrame.actSwapXY, b);
+    }
+
+    
+    @Override public void setDiagramComponent(Side side, String str)
+        throws DuplicateComponentException {
+        super.setDiagramComponent(side, str);
+        setSwapXYVisible();
+    }
+
+    /** Like setDiagramComponent(Side, String), but show errors to the
+        user instead of throwing exceptions. */
+    void setDiagramComponentGUI(Side side, String str) {
         try {
             setDiagramComponent(side, str.isEmpty() ? null : str);
             mathWindow.refresh();
@@ -4753,8 +4824,8 @@ public class BasicEditor extends Diagram
                             { new Point2D.Double(0.0, r.height),
                               new Point2D.Double(r.width/2, 0.0),
                               new Point2D.Double(r.width, r.height) };
-                        principalToStandardPage = new TriangleTransform
-                            (principalTrianglePoints, trianglePagePositions);
+                        setPrincipalToStandardPage(new TriangleTransform
+                                (principalTrianglePoints, trianglePagePositions));
 
                         add(ternaryBottomRuler(0.0, 1.0));
                         add(ternaryLeftRuler(0.0, 1.0));
@@ -4825,8 +4896,8 @@ public class BasicEditor extends Diagram
         editFrame.setAspectRatio.setEnabled(!isTernary());
         editFrame.setTopComponent.setEnabled(isTernary());
         editFrame.mnSwap.setVisible(isTernary());
-        editFrame.swapBinary.setEnabled(
-                diagramType == DiagramType.BINARY);
+        setSwapXYVisible();
+        setVisible(editFrame.swapBinary, diagramType == DiagramType.BINARY);
         editFrame.scaleBoth.setEnabled(!isTernary());
         resetPixelModeVisible();
         bestFit();
@@ -5933,7 +6004,7 @@ public class BasicEditor extends Diagram
         for (int i = 0; i < cnt; ++i) {
             dog.setAxis(i, axes[i]);
             if (mprin != null) {
-                dog.setValue(i, axes[i].value(mprin));
+                dog.setValue(i, axes[i].applyAsDouble(mprin));
             } else {
                 dog.setValue(i, "");
             }
@@ -6890,8 +6961,8 @@ public class BasicEditor extends Diagram
         if (prin == null) {
             return "";
         }
-        return "(" + getXAxis().valueAsString(prin) + ", "
-            + getYAxis().valueAsString(prin) + ")";
+        return "(" + getXAxis().applyAsString(prin) + ", "
+            + getYAxis().applyAsString(prin) + ")";
     }
 
     void showPopupMenu(MousePress mp) {
