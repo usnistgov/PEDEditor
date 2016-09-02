@@ -3,13 +3,17 @@
 
 package gov.nist.pededitor;
 
-import java.awt.geom.*;
+import java.awt.geom.NoninvertibleTransformException;
+import java.awt.geom.Point2D;
 
 import org.codehaus.jackson.annotate.JsonIgnore;
 
 interface Transform2D {
     /** @return the inverse transform. */
-    Transform2D createInverse() throws NoninvertibleTransformException;
+    default Transform2D createInverse()
+        throws NoninvertibleTransformException {
+        throw new NoninvertibleTransformException("createInverse()");
+    }
 
     /** Change this transformation into one that represents the
         composition of this transformation with the other
