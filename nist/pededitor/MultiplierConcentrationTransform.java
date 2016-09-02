@@ -25,6 +25,10 @@ public class MultiplierConcentrationTransform
             }
         }
     }
+
+    @Override public MultiplierConcentrationTransform clone() {
+        return new MultiplierConcentrationTransform(cs);
+    }
     
     public MultiplierConcentrationTransform createTransform(double... cs) {
         return new MultiplierConcentrationTransform(cs);

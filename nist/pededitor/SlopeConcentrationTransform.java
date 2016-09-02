@@ -22,4 +22,5 @@ interface SlopeConcentrationTransform extends ConcentrationTransform {
     }
 
     @Override SlopeConcentrationTransform createInverse();
+    SlopeConcentrationTransform clone();
 }
