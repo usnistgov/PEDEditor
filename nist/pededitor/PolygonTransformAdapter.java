@@ -18,15 +18,16 @@ abstract public class PolygonTransformAdapter
     public static String toString(PolygonTransform xform) {
         Point2D.Double[] ivs = xform.getInputVertices();
         Point2D.Double[] ovs = xform.getOutputVertices();
-        StringBuilder out = new StringBuilder(xform.getClass().getCanonicalName());
+        StringBuilder res = new StringBuilder(xform.getClass().getCanonicalName());
+        res.append(")");
         for (int i = 0; i < ivs.length; ++i) {
-            out.append(Geom.toString(ivs[i]) + ":" + Geom.toString(ovs[i]));
+            res.append(Geom.toString(ivs[i]) + ":" + Geom.toString(ovs[i]));
             if (i + 1 < ivs.length) {
-                out.append(", ");
+                res.append(", ");
             }
         }
-        out.append(")");
-        return out.toString();
+        res.append(")");
+        return res.toString();
     }
 
 }
