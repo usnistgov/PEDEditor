@@ -17,7 +17,8 @@
 
     <resources>
         <j2se version="1.8+" href="http://java.sun.com/products/autodl/j2se"/>
-        <jar href="PEDEditor.jar" main="true"/>
+        <jar href="PEDEditor.jar" main="true" version="4.1.7"/>
+        <property name="jnlp.versionEnabled" value="true"/>
     </resources>
     <security>
       <all-permissions/>
@@ -25,5 +26,4 @@
     <application-desc main-class="gov.nist.pededitor.Editor">
       <argument>-launch</argument>
     </application-desc>
-     <update check="timeout"/>
 </jnlp>
