@@ -1,0 +1,954 @@
+{
+  "tags" : [ ],
+  "originalToPrincipal" : {
+    "transform" : "TriangleTransform",
+    "input" : [ {
+      "x" : 209.0,
+      "y" : 1173.0
+    }, {
+      "x" : 765.0,
+      "y" : 158.0
+    }, {
+      "x" : 1340.0,
+      "y" : 1169.0
+    } ],
+    "output" : [ {
+      "x" : 0.0,
+      "y" : 0.0
+    }, {
+      "x" : 0.0,
+      "y" : 1.0
+    }, {
+      "x" : 1.0,
+      "y" : 0.0
+    } ]
+  },
+  "principalToStandardPage" : {
+    "transform" : "TriangleTransform",
+    "input" : [ {
+      "x" : 0.0,
+      "y" : 0.0
+    }, {
+      "x" : 0.0,
+      "y" : 1.0
+    }, {
+      "x" : 1.0,
+      "y" : 0.0
+    } ],
+    "output" : [ {
+      "x" : 0.0,
+      "y" : 0.8660254037844386
+    }, {
+      "x" : 0.5,
+      "y" : 0.0
+    }, {
+      "x" : 1.0,
+      "y" : 0.8660254037844386
+    } ]
+  },
+  "pageBounds" : {
+    "x" : -0.08,
+    "y" : -0.06,
+    "width" : 1.1600000000000001,
+    "height" : 1.0360254037844387
+  },
+  "diagramType" : "TERNARY",
+  "diagramComponents" : [ "Fe", null, "Ge", "Gd" ],
+  "originalFilename" : "..\\test\\PED_TERNARY.PNG",
+  "axes" : [ {
+    "format" : {
+      "type" : "DecimalFormat",
+      "pattern" : "#0.0%"
+    },
+    "a" : 0.0,
+    "b" : 1.0,
+    "c" : 0.0,
+    "name" : "Fe"
+  }, {
+    "format" : {
+      "type" : "DecimalFormat",
+      "pattern" : "#0.0%"
+    },
+    "a" : 1.0,
+    "b" : 0.0,
+    "c" : 0.0,
+    "name" : "Gd"
+  }, {
+    "format" : {
+      "type" : "DecimalFormat",
+      "pattern" : "#0.0%"
+    },
+    "a" : -1.0,
+    "b" : -1.0,
+    "c" : 1.0,
+    "name" : "Ge"
+  }, {
+    "format" : {
+      "type" : "DecimalFormat",
+      "pattern" : "#0.000"
+    },
+    "a" : 1.0,
+    "b" : 0.5,
+    "c" : 0.0,
+    "name" : "page X"
+  }, {
+    "format" : {
+      "type" : "DecimalFormat",
+      "pattern" : "#0.000"
+    },
+    "a" : 0.0,
+    "b" : -0.8660254037844386,
+    "c" : 0.8660254037844386,
+    "name" : "page Y"
+  } ],
+  "usingWeightFraction" : false,
+  "fontName" : "DejaVu LGC Sans PED",
+  "keys" : {
+  },
+  "decorations" : [ {
+    "decoration" : "ruler",
+    "startPoint" : {
+      "x" : 0.0,
+      "y" : 0.0
+    },
+    "endPoint" : {
+      "x" : 0.0,
+      "y" : 1.0
+    },
+    "lineWidth" : 0.0016,
+    "labelAnchor" : "LEFT",
+    "multiplier" : 100.0,
+    "textAngle" : 1.0471975511965976,
+    "tickRight" : true,
+    "tickPadding" : 3.0,
+    "suppressStartTick" : true,
+    "suppressStartLabel" : true,
+    "suppressEndTick" : true,
+    "suppressEndLabel" : true,
+    "tickType" : "V",
+    "drawSpine" : false,
+    "axis" : "Fe",
+    "fontSize" : 0.01951219512195122
+  }, {
+    "decoration" : "curve",
+    "curve" : {
+      "points" : [ {
+	"x" : -0.05984148038465509,
+	"y" : 0.6321592428680498
+      }, {
+	"x" : -0.023936366646515495,
+	"y" : 0.6321592428680498
+      }, {
+	"x" : -0.010156715840619057,
+	"y" : 0.6045999412562568
+      }, {
+	"x" : -0.04606182957875865,
+	"y" : 0.6045999412562567
+      } ],
+      "smoothed" : [ false, false, false, false ],
+      "closed" : true
+    },
+    "color" : {
+      "rgb" : -1
+    },
+    "lineWidth" : 0.0024,
+    "fillStyle" : "SOLID",
+    "id" : 51
+  }, {
+    "decoration" : "ruler",
+    "startPoint" : {
+      "x" : 0.0,
+      "y" : 0.0
+    },
+    "endPoint" : {
+      "x" : 1.0,
+      "y" : 0.0
+    },
+    "lineWidth" : 0.0016,
+    "labelAnchor" : "RIGHT",
+    "multiplier" : 100.0,
+    "tickLeft" : true,
+    "tickPadding" : 3.0,
+    "suppressStartTick" : true,
+    "suppressStartLabel" : true,
+    "suppressEndTick" : true,
+    "suppressEndLabel" : true,
+    "tickType" : "V",
+    "drawSpine" : false,
+    "axis" : "Gd",
+    "fontSize" : 0.01951219512195122
+  }, {
+    "decoration" : "ruler",
+    "startPoint" : {
+      "x" : 1.0,
+      "y" : 0.0
+    },
+    "endPoint" : {
+      "x" : 0.0,
+      "y" : 1.0
+    },
+    "lineWidth" : 0.0016,
+    "labelAnchor" : "RIGHT",
+    "multiplier" : 100.0,
+    "textAngle" : 2.0943951023931953,
+    "tickLeft" : true,
+    "tickPadding" : 3.0,
+    "suppressStartTick" : true,
+    "suppressStartLabel" : true,
+    "suppressEndTick" : true,
+    "suppressEndLabel" : true,
+    "tickType" : "V",
+    "drawSpine" : false,
+    "axis" : "Fe",
+    "fontSize" : 0.01951219512195122
+  }, {
+    "decoration" : "curve",
+    "curve" : {
+      "points" : [ {
+	"x" : 0.0,
+	"y" : 0.0
+      }, {
+	"x" : 0.0,
+	"y" : 1.0
+      }, {
+	"x" : 1.0,
+	"y" : 0.0
+      } ],
+      "smoothed" : [ false, false, false ],
+      "closed" : true
+    },
+    "lineWidth" : 0.0016,
+    "lineStyle" : "SOLID",
+    "id" : 0
+  }, {
+    "decoration" : "curve",
+    "curve" : {
+      "points" : [ {
+	"x" : 0.39999999999999997,
+	"y" : 0.2000000000000001
+      }, {
+	"x" : 0.2,
+	"y" : 0.4
+      }, {
+	"x" : 0.0,
+	"y" : 0.5000000000000001
+      } ],
+      "smoothed" : [ false, false, false ],
+      "closed" : false
+    },
+    "lineWidth" : 0.0016,
+    "lineStyle" : "SOLID",
+    "id" : 1
+  }, {
+    "decoration" : "curve",
+    "curve" : {
+      "points" : [ {
+	"x" : 0.5,
+	"y" : 0.0
+      }, {
+	"x" : 0.0,
+	"y" : 1.0
+      } ],
+      "smoothed" : [ false, false ],
+      "closed" : false
+    },
+    "lineWidth" : 0.0016,
+    "lineStyle" : "SOLID",
+    "id" : 2
+  }, {
+    "decoration" : "curve",
+    "curve" : {
+      "points" : [ {
+	"x" : 0.10526315789473681,
+	"y" : 0.8947368421052629
+      }, {
+	"x" : 0.625,
+	"y" : 0.0
+      }, {
+	"x" : 0.20689655172413796,
+	"y" : 0.7931034482758621
+      } ],
+      "smoothed" : [ false, false, false ],
+      "closed" : false
+    },
+    "lineWidth" : 0.0016,
+    "lineStyle" : "SOLID",
+    "id" : 3
+  }, {
+    "decoration" : "curve",
+    "curve" : {
+      "points" : [ {
+	"x" : 0.25000000000000006,
+	"y" : 0.7500000000000002
+      }, {
+	"x" : 0.6249999999999992,
+	"y" : 1.4210854715202006E-15
+      }, {
+	"x" : 0.3333333333333333,
+	"y" : 0.6666666666666665
+      } ],
+      "smoothed" : [ false, false, false ],
+      "closed" : false
+    },
+    "lineWidth" : 0.0016,
+    "lineStyle" : "SOLID",
+    "id" : 4
+  }, {
+    "decoration" : "curve",
+    "curve" : {
+      "points" : [ {
+	"x" : 0.6249999999999951,
+	"y" : 9.379164112033321E-15
+      }, {
+	"x" : 0.0,
+	"y" : 1.0
+      }, {
+	"x" : 0.5555555555555557,
+	"y" : 0.0
+      }, {
+	"x" : 0.39999999999999997,
+	"y" : 0.2000000000000001
+      } ],
+      "smoothed" : [ false, false, false, false ],
+      "closed" : false
+    },
+    "lineWidth" : 0.0016,
+    "lineStyle" : "SOLID",
+    "id" : 5
+  }, {
+    "decoration" : "curve",
+    "curve" : {
+      "points" : [ {
+	"x" : 0.5,
+	"y" : 0.0
+      }, {
+	"x" : 0.2,
+	"y" : 0.4
+      }, {
+	"x" : 0.39999999999999986,
+	"y" : 0.0
+      } ],
+      "smoothed" : [ false, false, false ],
+      "closed" : false
+    },
+    "lineWidth" : 0.0016,
+    "lineStyle" : "SOLID",
+    "id" : 6
+  }, {
+    "decoration" : "curve",
+    "curve" : {
+      "points" : [ {
+	"x" : 0.0,
+	"y" : 0.75
+      }, {
+	"x" : 0.2,
+	"y" : 0.4
+      }, {
+	"x" : 0.0,
+	"y" : 1.0
+      } ],
+      "smoothed" : [ false, false, false ],
+      "closed" : false
+    },
+    "lineWidth" : 0.0016,
+    "lineStyle" : "SOLID",
+    "id" : 7
+  }, {
+    "decoration" : "curve",
+    "curve" : {
+      "points" : [ {
+	"x" : 0.0,
+	"y" : 0.3333333333333332
+      } ],
+      "smoothed" : [ false ],
+      "closed" : false
+    },
+    "lineWidth" : 0.0016,
+    "lineStyle" : "SOLID",
+    "id" : 8
+  }, {
+    "decoration" : "curve",
+    "curve" : {
+      "points" : [ {
+	"x" : 0.0,
+	"y" : 0.5454545454545455
+      } ],
+      "smoothed" : [ false ],
+      "closed" : false
+    },
+    "lineWidth" : 0.0016,
+    "lineStyle" : "SOLID",
+    "id" : 9
+  }, {
+    "decoration" : "curve",
+    "curve" : {
+      "points" : [ {
+	"x" : 0.0,
+	"y" : 0.8000000000000002
+      }, {
+	"x" : 0.1999999999999999,
+	"y" : 0.4000000000000003
+      } ],
+      "smoothed" : [ false, false ],
+      "closed" : false
+    },
+    "lineWidth" : 0.0016,
+    "lineStyle" : "SOLID",
+    "id" : 12
+  }, {
+    "decoration" : "curve",
+    "curve" : {
+      "points" : [ {
+	"x" : 0.0,
+	"y" : 1.0
+      }, {
+	"x" : 0.0,
+	"y" : 0.8000000000000002
+      } ],
+      "smoothed" : [ false, false ],
+      "closed" : false
+    },
+    "lineWidth" : 0.0048,
+    "lineStyle" : "SOLID",
+    "id" : 13
+  }, {
+    "decoration" : "curve",
+    "curve" : {
+      "points" : [ {
+	"x" : 0.19999999999999976,
+	"y" : 0.40000000000000036
+      } ],
+      "smoothed" : [ false ],
+      "closed" : false
+    },
+    "lineWidth" : 0.0016,
+    "lineStyle" : "SOLID",
+    "id" : 14
+  }, {
+    "decoration" : "curve",
+    "curve" : {
+      "points" : [ {
+	"x" : 0.39999999999999997,
+	"y" : 0.2000000000000001
+      } ],
+      "smoothed" : [ false ],
+      "closed" : false
+    },
+    "lineWidth" : 0.0016,
+    "lineStyle" : "SOLID",
+    "id" : 15
+  }, {
+    "decoration" : "curve",
+    "curve" : {
+      "points" : [ {
+	"x" : 0.1052631578947369,
+	"y" : 0.8947368421052627
+      } ],
+      "smoothed" : [ false ],
+      "closed" : false
+    },
+    "lineWidth" : 0.0016,
+    "lineStyle" : "SOLID",
+    "id" : 16
+  }, {
+    "decoration" : "curve",
+    "curve" : {
+      "points" : [ {
+	"x" : 0.20689655172413793,
+	"y" : 0.7931034482758623
+      } ],
+      "smoothed" : [ false ],
+      "closed" : false
+    },
+    "lineWidth" : 0.0016,
+    "lineStyle" : "SOLID",
+    "id" : 17
+  }, {
+    "decoration" : "curve",
+    "curve" : {
+      "points" : [ {
+	"x" : 0.25000000000000006,
+	"y" : 0.7500000000000002
+      } ],
+      "smoothed" : [ false ],
+      "closed" : false
+    },
+    "lineWidth" : 0.0016,
+    "lineStyle" : "SOLID",
+    "id" : 18
+  }, {
+    "decoration" : "curve",
+    "curve" : {
+      "points" : [ {
+	"x" : 0.3333333333333333,
+	"y" : 0.6666666666666665
+      } ],
+      "smoothed" : [ false ],
+      "closed" : false
+    },
+    "lineWidth" : 0.0016,
+    "lineStyle" : "SOLID",
+    "id" : 19
+  }, {
+    "decoration" : "curve",
+    "curve" : {
+      "points" : [ {
+	"x" : 0.6249999999999865,
+	"y" : 2.375877272697835E-14
+      } ],
+      "smoothed" : [ false ],
+      "closed" : false
+    },
+    "lineWidth" : 0.0016,
+    "lineStyle" : "SOLID",
+    "id" : 20
+  }, {
+    "decoration" : "curve",
+    "curve" : {
+      "points" : [ {
+	"x" : 0.5555555555555557,
+	"y" : 0.0
+      } ],
+      "smoothed" : [ false ],
+      "closed" : false
+    },
+    "lineWidth" : 0.0016,
+    "lineStyle" : "SOLID",
+    "id" : 21
+  }, {
+    "decoration" : "curve",
+    "curve" : {
+      "points" : [ {
+	"x" : 0.5,
+	"y" : 0.0
+      } ],
+      "smoothed" : [ false ],
+      "closed" : false
+    },
+    "lineWidth" : 0.0016,
+    "lineStyle" : "SOLID",
+    "id" : 22
+  }, {
+    "decoration" : "curve",
+    "curve" : {
+      "points" : [ {
+	"x" : 0.39999999999999986,
+	"y" : 0.0
+      } ],
+      "smoothed" : [ false ],
+      "closed" : false
+    },
+    "lineWidth" : 0.0016,
+    "lineStyle" : "SOLID",
+    "id" : 23
+  }, {
+    "decoration" : "curve",
+    "curve" : {
+      "points" : [ {
+	"x" : 0.0,
+	"y" : 0.6000000000000001
+      }, {
+	"x" : 0.0,
+	"y" : 0.6363636363636364
+      } ],
+      "smoothed" : [ false, false ],
+      "closed" : false
+    },
+    "lineWidth" : 0.0048,
+    "lineStyle" : "SOLID",
+    "id" : 24
+  }, {
+    "decoration" : "curve",
+    "curve" : {
+      "points" : [ {
+	"x" : 0.0,
+	"y" : 0.6000000000000001
+      }, {
+	"x" : 0.0769230769230769,
+	"y" : 0.4615384615384613
+      }, {
+	"x" : 0.0,
+	"y" : 0.3333333333333332
+      } ],
+      "smoothed" : [ false, false, false ],
+      "closed" : false
+    },
+    "lineWidth" : 0.0016,
+    "lineStyle" : "SOLID",
+    "id" : 25
+  }, {
+    "decoration" : "curve",
+    "curve" : {
+      "points" : [ {
+	"x" : 0.0,
+	"y" : 0.0
+      }, {
+	"x" : 0.07692307692307696,
+	"y" : 0.4615384615384613
+      }, {
+	"x" : 0.0,
+	"y" : 0.6363636363636362
+      } ],
+      "smoothed" : [ false, false, false ],
+      "closed" : false
+    },
+    "lineWidth" : 0.0016,
+    "lineStyle" : "SOLID",
+    "id" : 26
+  }, {
+    "decoration" : "curve",
+    "curve" : {
+      "points" : [ {
+	"x" : 0.07692307692307687,
+	"y" : 0.46153846153846156
+      } ],
+      "smoothed" : [ false ],
+      "closed" : false
+    },
+    "lineWidth" : 0.0016,
+    "lineStyle" : "SOLID",
+    "id" : 27
+  }, {
+    "decoration" : "curve",
+    "curve" : {
+      "points" : [ {
+	"x" : 0.0,
+	"y" : 0.5454545454545455
+      }, {
+	"x" : 0.07692307692307696,
+	"y" : 0.4615384615384613
+      }, {
+	"x" : 0.28571428571428575,
+	"y" : 0.14285714285714293
+      }, {
+	"x" : 0.39999999999999986,
+	"y" : 0.0
+      }, {
+	"x" : 0.3076923076923076,
+	"y" : 0.0769230769230769
+      }, {
+	"x" : 1.1102230246251559E-16,
+	"y" : 3.3306690738754676E-16
+      } ],
+      "smoothed" : [ false, false, false, false, false, false ],
+      "closed" : false
+    },
+    "lineWidth" : 0.0016,
+    "lineStyle" : "SOLID",
+    "id" : 29
+  }, {
+    "decoration" : "curve",
+    "curve" : {
+      "points" : [ {
+	"x" : 0.3076923076923076,
+	"y" : 0.0769230769230769
+      }, {
+	"x" : 0.28571428571428575,
+	"y" : 0.14285714285714265
+      } ],
+      "smoothed" : [ false, false ],
+      "closed" : false
+    },
+    "lineWidth" : 0.0048,
+    "lineStyle" : "SOLID",
+    "id" : 30
+  }, {
+    "decoration" : "curve",
+    "curve" : {
+      "points" : [ {
+	"x" : 0.0,
+	"y" : 0.6363636363636362
+      }, {
+	"x" : 0.19999999999999976,
+	"y" : 0.40000000000000036
+      }, {
+	"x" : 0.28571428571428575,
+	"y" : 0.14285714285714293
+      } ],
+      "smoothed" : [ false, false, false ],
+      "closed" : false
+    },
+    "lineWidth" : 0.0016,
+    "lineStyle" : "SOLID",
+    "id" : 31
+  }, {
+    "decoration" : "curve",
+    "curve" : {
+      "points" : [ {
+	"x" : 0.0,
+	"y" : 0.75
+      } ],
+      "smoothed" : [ false ],
+      "closed" : false
+    },
+    "lineWidth" : 0.0016,
+    "lineStyle" : "SOLID",
+    "id" : 32
+  }, {
+    "decoration" : "curve",
+    "curve" : {
+      "points" : [ {
+	"x" : 0.28571428571428575,
+	"y" : 0.14285714285714293
+      }, {
+	"x" : 2.3314683517128287E-15,
+	"y" : 7.771561172376094E-16
+      } ],
+      "smoothed" : [ false, false ],
+      "closed" : false
+    },
+    "lineWidth" : 0.0016,
+    "lineStyle" : "SOLID",
+    "id" : 33
+  }, {
+    "decoration" : "curve",
+    "curve" : {
+      "points" : [ {
+	"x" : 0.3748279772079339,
+	"y" : 0.0
+      }, {
+	"x" : 0.3076923076923077,
+	"y" : 0.07692307692307676
+      } ],
+      "smoothed" : [ false, false ],
+      "closed" : false
+    },
+    "lineWidth" : 0.0016,
+    "lineStyle" : "SOLID",
+    "id" : 34
+  }, {
+    "decoration" : "curve",
+    "curve" : {
+      "points" : [ {
+	"x" : 0.3748279772079339,
+	"y" : 0.0
+      } ],
+      "smoothed" : [ false ],
+      "closed" : false
+    },
+    "lineWidth" : 0.0016,
+    "lineStyle" : "SOLID",
+    "id" : 35
+  }, {
+    "decoration" : "curve",
+    "curve" : {
+      "points" : [ {
+	"x" : 0.0,
+	"y" : 0.5000000000000001
+      } ],
+      "smoothed" : [ false ],
+      "closed" : false
+    },
+    "lineWidth" : 0.0016,
+    "lineStyle" : "SOLID",
+    "id" : 36
+  }, {
+    "decoration" : "curve",
+    "curve" : {
+      "points" : [ {
+	"x" : 0.26495490648728204,
+	"y" : 0.7848517347452242
+      }, {
+	"x" : 0.23543506821349444,
+	"y" : 0.7886068584472709
+      } ],
+      "smoothed" : [ false, false ],
+      "closed" : false
+    },
+    "lineWidth" : 0.0016,
+    "lineStyle" : "SOLID",
+    "id" : 50
+  }, {
+    "decoration" : "arrow",
+    "x" : 0.23543506821349444,
+    "y" : 0.7886068584472709,
+    "size" : 0.0016,
+    "angle" : 3.015062541447423
+  }, {
+    "decoration" : "label",
+    "text" : "C",
+    "yWeight" : 0.5,
+    "x" : 0.39999999999999997,
+    "y" : 0.2000000000000001,
+    "angle" : -0.0,
+    "scale" : 1.5
+  }, {
+    "decoration" : "label",
+    "text" : "B",
+    "yWeight" : 0.5,
+    "x" : 0.2,
+    "y" : 0.4,
+    "angle" : -0.0,
+    "scale" : 1.5
+  }, {
+    "decoration" : "label",
+    "text" : "FeGe<sub>2</sub>",
+    "xWeight" : 1.0,
+    "yWeight" : 0.5,
+    "y" : 0.3333333333333332,
+    "angle" : -0.0,
+    "scale" : 1.25
+  }, {
+    "decoration" : "label",
+    "text" : "FeGe",
+    "xWeight" : 1.0,
+    "yWeight" : 0.5,
+    "y" : 0.5000000000000001,
+    "angle" : -0.0,
+    "scale" : 1.2
+  }, {
+    "decoration" : "label",
+    "text" : "Fe<sub>6</sub>Ge<sub>5</sub>",
+    "xWeight" : 1.0,
+    "yWeight" : 0.5,
+    "y" : 0.5454545454545455,
+    "angle" : -0.0,
+    "scale" : 1.2
+  }, {
+    "decoration" : "label",
+    "text" : "Fe<sub>3</sub>Ge",
+    "xWeight" : 1.0,
+    "yWeight" : 0.5,
+    "y" : 0.75,
+    "angle" : -0.0,
+    "scale" : 1.2
+  }, {
+    "decoration" : "label",
+    "text" : "",
+    "xWeight" : 1.0,
+    "x" : 0.02020973421005707,
+    "y" : -0.11525141663528501,
+    "angle" : -0.0,
+    "scale" : 1.5
+  }, {
+    "decoration" : "label",
+    "text" : "Ge",
+    "xWeight" : 1.0,
+    "angle" : -0.0,
+    "scale" : 2.0
+  }, {
+    "decoration" : "label",
+    "text" : "Fe",
+    "xWeight" : 0.5,
+    "yWeight" : 1.0,
+    "y" : 1.0,
+    "angle" : -0.0,
+    "scale" : 2.0
+  }, {
+    "decoration" : "label",
+    "text" : "Gd",
+    "x" : 1.0,
+    "angle" : -0.0,
+    "scale" : 2.0
+  }, {
+    "decoration" : "label",
+    "text" : "GdFe<sub>2</sub>",
+    "yWeight" : 0.5,
+    "x" : 0.3333333333333335,
+    "y" : 0.6666666666666666,
+    "angle" : -0.0,
+    "scale" : 1.2
+  }, {
+    "decoration" : "label",
+    "text" : "GdFe<sub>3</sub>",
+    "yWeight" : 0.5,
+    "x" : 0.25000000000000006,
+    "y" : 0.7500000000000002,
+    "angle" : -0.0,
+    "scale" : 1.2
+  }, {
+    "decoration" : "label",
+    "text" : "Gd<sub>6</sub>Fe<sub>23</sub>",
+    "yWeight" : 0.5,
+    "x" : 0.26195441955781734,
+    "y" : 0.7810966110431781,
+    "angle" : -0.0,
+    "scale" : 1.2
+  }, {
+    "decoration" : "label",
+    "text" : "Gd<sub>2</sub>Fe<sub>17</sub>",
+    "yWeight" : 0.5,
+    "x" : 0.10526315789473692,
+    "y" : 0.8947368421052633,
+    "angle" : -0.0,
+    "scale" : 1.2
+  }, {
+    "decoration" : "label",
+    "text" : "SS<sub>1</sub>",
+    "xWeight" : 0.5,
+    "yWeight" : 1.0,
+    "y" : 0.8776102748945678,
+    "angle" : 1.5707963267948966,
+    "scale" : 1.2
+  }, {
+    "decoration" : "label",
+    "text" : "A",
+    "yWeight" : 1.0,
+    "x" : 0.07692307692307687,
+    "y" : 0.46153846153846156,
+    "angle" : -0.0,
+    "scale" : 1.5
+  }, {
+    "decoration" : "label",
+    "text" : "D",
+    "xWeight" : 1.0,
+    "yWeight" : 0.5,
+    "x" : 0.2992591974617629,
+    "y" : 0.10222240761471124,
+    "angle" : -0.0,
+    "scale" : 1.5
+  }, {
+    "decoration" : "label",
+    "text" : "GdGe<sub>2-x</sub>",
+    "xWeight" : 1.0,
+    "yWeight" : 1.0,
+    "x" : 0.3748279772079339,
+    "angle" : 2.0344439357957027,
+    "scale" : 1.2
+  }, {
+    "decoration" : "label",
+    "text" : "Gd<sub>2</sub>Ge<sub>3</sub>",
+    "xWeight" : 1.0,
+    "yWeight" : 0.5,
+    "x" : 0.40230588934427136,
+    "y" : -0.004586612984182503,
+    "angle" : 2.0344439357957027,
+    "scale" : 1.2,
+    "opaque" : true
+  }, {
+    "decoration" : "label",
+    "text" : "GdGe",
+    "xWeight" : 1.0,
+    "yWeight" : 0.5,
+    "x" : 0.5,
+    "angle" : 2.0344439357957027,
+    "scale" : 1.2
+  }, {
+    "decoration" : "label",
+    "text" : "Gd<sub>5</sub>Ge<sub>4</sub>",
+    "xWeight" : 1.0,
+    "yWeight" : 0.5,
+    "x" : 0.5555555555555557,
+    "angle" : 2.0344439357957027,
+    "scale" : 1.2
+  }, {
+    "decoration" : "label",
+    "text" : "Gd<sub>5</sub>Ge<sub>3</sub>",
+    "xWeight" : 1.0,
+    "yWeight" : 0.5,
+    "x" : 0.6249999999999865,
+    "y" : 2.375877272697835E-14,
+    "angle" : 2.0344439357957027,
+    "scale" : 1.2
+  }, {
+    "decoration" : "label",
+    "text" : "SS<sub>2</sub>",
+    "xWeight" : 0.5,
+    "yWeight" : 1.0,
+    "x" : -0.004964973547812168,
+    "y" : 0.6190004379048439,
+    "angle" : 1.5707963267948966,
+    "scale" : 1.2,
+    "opaque" : true
+  } ]
+}

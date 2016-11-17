@@ -1,0 +1,131 @@
+<!DOCTYPE HTML>
+<html>
+<head>
+<title>PED Editor Ruler Settings</title>
+<link rel="stylesheet" href="http://nist.gov/style/nist-styles.css">
+</head>
+<body>
+
+<h1>PED Editor Ruler Settings</h1>
+
+<ul>
+  <li><a href="#Labels">Tick labels</a>
+  <li><a href="#Display">Display variable/component</a>
+  <li><a href="#Angle">Label angle with respect to axis</a>
+  <li><a href="#WhiteSpace">Minimum white space between tick labels, in
+    multiples of label height</a>
+  <li><a href="#Ticks">Left/right/top/bottom-side tick marks</a>
+  <li><a href="#VTicks">V-shaped tick marks</a>
+  <li><a href="#RulerPercent">Use percentages in labels</a>
+  <li><a href="#Pow10">Display 10<sup>x</sup> in labels</a>
+  <li><a href="#Arrows">Top/bottom/left/right arrow</a>
+  <li><a href="#SuppressTick">Suppress top/bottom/left/right tick</a>
+  <li><a href="#SuppressLabel">Suppress top/bottom/left/right label</a>
+  <li><a href="#SuppressSmallTicks">Suppress small ticks</a>
+  <li><a href="#BigStepSize">Big tick step size</a>
+  <li><a href="#SmallStepSize">Small tick step size</a>
+  <li><a href="#MinTick">Minimum/maximum tick value</a>
+</ul>
+
+<p>Rulers are diagram decorations that display regularly spaced tick
+  marks and/or labels. Rulers may contain one size of tick mark or two
+  different sizes ("big ticks" and "small ticks").
+
+<p><b id=Labels>Tick labels</b>: Select where and if number labels are
+  displayed on the ruler. Labels are placed next adjacent to where big
+  ticks appear (or would appear, if tick marks are not enabled).
+
+<p><b id=Display>Display variable/component</b>: Select the variable
+  or diagram component whose value this ruler represents. The value of
+  that variable at a given position determines the ruler's value at
+  that position as well. If no existing variable has the values you
+  need your ruler to display in the positions where your ruler needs
+  them, you may need to create a new variable (see the main PED Editor
+  help file).
+
+<p><b id=Angle>Label angle with respect to axis</b>: This setting
+  determines whether the label text is horizontal, vertical, or even
+  backwards. A zero degree angle means that the label text is parallel
+  to the ruler axis (which does not mean that the label text is
+  horizontal unless the ruler itself is horizontal). Positive angles
+  are clockwise with respect to that. If you leave the label angle at
+  its original setting, the label text will initially be horizontal.
+
+<p><b id=WhiteSpace>Minimum white space between tick labels, in
+    multiples of label height</b>: If you do not explicitly set the
+    tick step size, the distance between big ticks will be set at
+    least high enough that the labels would not overlap. (That minimum
+    distance applies even if you
+    choose <b>Tick&nbsp;labels:&nbsp;None</b>.) You can increase the
+    separation between labels by entering larger values here.
+    The actual tick step will be a round number large enough to exceed
+    this minimum, so, depending on circumstances, a slight change to
+    this value may not affect the actual tick step.
+
+<p>A minimum white space value of 0 tends to produce labels that are
+    close together. A value of 3 produces labels that are more widely
+    spaced.
+
+<p><b id=Ticks>Left/right/top/bottom-side tick marks</b>: Check to
+  display tick marks on the given side of the axis. Checking both
+  boxes causes tick marks to extend from both sides.
+
+<p><b id=VTicks>V-shaped tick marks</b> are used mainly for ternary
+  diagrams. Check this box if you need them.
+
+<p><b id=RulerPercent>Use percentages in labels</b>: If this box is
+  checked, then the ruler displays percentage values, or 100 times the
+  fraction value. A tick mark for a variable whose value at that
+  position is displayed as 50% or 0.5 in the gray status bar at the
+  bottom of the edit window will be labeled display as either 50 or
+  0.5, depending on whether this box is checked or not.
+
+<p><b id=Pow10>Display 10<sup>x</sup> in labels</b>: Check this box
+  for logarithmic plots where you wish the labels to be powers of 10
+  instead logarithms -- for instance, 1, 10, and 100 instead of 0, 1,
+  and 2.
+
+<p><b id=Arrows>Top/bottom/left/right arrow</b>: Check this box to add
+  an arrow at the given ruler endpoint.
+
+<p><b id=SuppressTick>Suppress top/bottom/left/right tick</b>: Check
+  this box to suppress any tick mark that might otherwise appear at
+  the given ruler endpoint.
+
+<p><b id=SuppressLabel>Suppress top/bottom/left/right label</b>: Check
+  this box to suppress any label that might otherwise appear at the
+  given ruler endpoint.
+
+<p>When drawing two rulers that cross in the middle, such as for a
+  Cartesian graph that displays four quadrants for the negative and
+  positive X and Y values, there may be difficulties where the rulers
+  cross (typically at the origin). The X-axis label at x=0 will
+  typically be overstruck by the Y-axis, and the Y-axis label at y=0
+  will typically be overstruck by the X-axis. A solution to that is to
+  replace each individual ruler with two separate ones that lie along
+  the same line and meet at the origin, so there are 4 rulers that
+  each have one endpoint at the origin, and to suppress the labels and
+  ticks for each ruler at that end.
+
+<p><b id=SuppressSmallTicks>Suppress small ticks</b>: Check this to
+  prevent all small tick marks from being displayed.
+
+<p><b id=BigStepSize>Big tick step size (optional)</b>: You may specify what the
+  difference between big ticks should be or leave this blank to allow
+  the program to choose a reasonable value. On its own, the program
+  will always choose values that are 1, 2, or 5 times a power of 10.
+
+<p><b id=SmallStepSize>Small tick step size (optional)</b>: You may
+  specify what the difference between big ticks should be or leave
+  this blank to allow the program to choose a reasonable value
+  (normally the largest round number that divides the big tick step
+  size).
+
+<p><b id=MinTick>Minimum/maximum tick value (optional)</b>: Usually
+  you want the ticks to extend the length of the ruler, possibly
+  leaving out the start or endpoints. In that case, leave this blank.
+  But if you want to explicitly specify the minimum and maximum tick
+  values, you may do so here.
+
+</body>
+</html>

@@ -1,0 +1,393 @@
+{
+  "tags" : [ ],
+  "principalToStandardPage" : {
+    "transform" : "RectangleTransform",
+    "input" : {
+      "x" : 0.0,
+      "y" : 0.0,
+      "width" : 1.0,
+      "height" : 1.0
+    },
+    "output" : {
+      "x" : 0.0,
+      "y" : 1.0,
+      "width" : 1.0,
+      "height" : -1.0
+    }
+  },
+  "pageBounds" : {
+    "x" : -0.46617410704244205,
+    "y" : -0.14791434487655403,
+    "width" : 1.4823455437006912,
+    "height" : 1.5723679252444347
+  },
+  "diagramType" : "BINARY",
+  "diagramComponents" : [ null, null, null, null ],
+  "axes" : [ {
+    "format" : {
+      "type" : "DecimalFormat",
+      "pattern" : "#0.0000"
+    },
+    "a" : 1.0,
+    "b" : 0.0,
+    "c" : 0.0,
+    "name" : "X"
+  }, {
+    "format" : {
+      "type" : "DecimalFormat",
+      "pattern" : "#0.0000"
+    },
+    "a" : 0.0,
+    "b" : 1.0,
+    "c" : 0.0,
+    "name" : "Y"
+  }, {
+    "format" : {
+      "type" : "DecimalFormat",
+      "pattern" : "#0.0000"
+    },
+    "a" : 1.0,
+    "b" : 0.0,
+    "c" : 0.0,
+    "name" : "page X"
+  }, {
+    "format" : {
+      "type" : "DecimalFormat",
+      "pattern" : "#0.0000"
+    },
+    "a" : 0.0,
+    "b" : -1.0,
+    "c" : 1.0,
+    "name" : "page Y"
+  } ],
+  "usingWeightFraction" : false,
+  "fontName" : "DejaVu LGC Sans PED",
+  "keys" : {
+  },
+  "decorations" : [ {
+    "decoration" : "ruler",
+    "startPoint" : {
+      "x" : -0.45,
+      "y" : 0.0
+    },
+    "endPoint" : {
+      "x" : 0.0,
+      "y" : 0.0
+    },
+    "lineWidth" : 0.0024,
+    "labelAnchor" : "RIGHT",
+    "tickRight" : true,
+    "tickLeft" : true,
+    "tickPadding" : 3.0,
+    "suppressEndLabel" : true,
+    "axis" : "X",
+    "fontSize" : 0.020325203252032523
+  }, {
+    "decoration" : "ruler",
+    "startPoint" : {
+      "x" : 0.0,
+      "y" : -0.4
+    },
+    "endPoint" : {
+      "x" : 0.0,
+      "y" : 0.0
+    },
+    "lineWidth" : 0.0024,
+    "labelAnchor" : "LEFT",
+    "textAngle" : 1.5707963267948966,
+    "tickRight" : true,
+    "tickLeft" : true,
+    "tickPadding" : 3.0,
+    "suppressEndTick" : true,
+    "suppressEndLabel" : true,
+    "axis" : "Y",
+    "fontSize" : 0.020325203252032523
+  }, {
+    "decoration" : "curve",
+    "curve" : {
+      "points" : [ {
+	"x" : -0.45,
+	"y" : 0.2025
+      }, {
+	"x" : -0.4,
+	"y" : 0.16
+      }, {
+	"x" : -0.35,
+	"y" : 0.1225
+      }, {
+	"x" : -0.3,
+	"y" : 0.09
+      }, {
+	"x" : -0.25,
+	"y" : 0.0625
+      }, {
+	"x" : -0.2,
+	"y" : 0.04
+      }, {
+	"x" : -0.15,
+	"y" : 0.0225
+      }, {
+	"x" : -0.1,
+	"y" : 0.01
+      }, {
+	"x" : -0.05,
+	"y" : 0.0025
+      }, {
+	"x" : 0.0,
+	"y" : 0.0
+      }, {
+	"x" : 0.05,
+	"y" : 0.0025
+      }, {
+	"x" : 0.1,
+	"y" : 0.01
+      }, {
+	"x" : 0.15,
+	"y" : 0.0225
+      }, {
+	"x" : 0.2,
+	"y" : 0.04
+      }, {
+	"x" : 0.25,
+	"y" : 0.0625
+      }, {
+	"x" : 0.3,
+	"y" : 0.09
+      }, {
+	"x" : 0.35,
+	"y" : 0.1225
+      }, {
+	"x" : 0.4,
+	"y" : 0.16
+      }, {
+	"x" : 0.45,
+	"y" : 0.2025
+      }, {
+	"x" : 0.5,
+	"y" : 0.25
+      }, {
+	"x" : 0.55,
+	"y" : 0.3025
+      }, {
+	"x" : 0.6,
+	"y" : 0.36
+      }, {
+	"x" : 0.65,
+	"y" : 0.4225
+      }, {
+	"x" : 0.7,
+	"y" : 0.49
+      }, {
+	"x" : 0.75,
+	"y" : 0.5625
+      }, {
+	"x" : 0.8,
+	"y" : 0.64
+      }, {
+	"x" : 0.85,
+	"y" : 0.7225
+      }, {
+	"x" : 0.9,
+	"y" : 0.81
+      }, {
+	"x" : 0.95,
+	"y" : 0.9025
+      }, {
+	"x" : 1.0,
+	"y" : 1.0
+      } ],
+      "smoothed" : [ true, true, true, true, true, true, true, true, true, true, true, true, true, true, true, true, true, true, true, true, true, true, true, true, true, true, true, true, true, true ],
+      "closed" : false
+    },
+    "lineWidth" : 0.0024,
+    "lineStyle" : "SOLID",
+    "id" : 10
+  }, {
+    "decoration" : "curve",
+    "curve" : {
+      "points" : [ {
+	"x" : 0.8,
+	"y" : 0.0
+      }, {
+	"x" : 0.8,
+	"y" : 0.64
+      }, {
+	"x" : 0.4003941791770046,
+	"y" : 0.0
+      }, {
+	"x" : 0.3999999999999395,
+	"y" : 0.15999999999995163
+      }, {
+	"x" : 0.19878035570057895,
+	"y" : 0.0
+      }, {
+	"x" : 0.19878035570057895,
+	"y" : 0.03950723171684367
+      }, {
+	"x" : 0.10099652586334851,
+	"y" : 3.3306690738754696E-16
+      }, {
+	"x" : 0.1009965258633484,
+	"y" : 0.01020029434032188
+      } ],
+      "smoothed" : [ false, false, false, false, false, false, false, false ],
+      "closed" : false
+    },
+    "lineWidth" : 0.0048,
+    "lineStyle" : "SOLID",
+    "id" : 12
+  }, {
+    "decoration" : "label",
+    "text" : "Linear convergence of Newton's method on a parabola",
+    "xWeight" : 0.5,
+    "yWeight" : 0.5,
+    "x" : 0.275,
+    "y" : 1.1160427754808142,
+    "scale" : 2.0
+  }, {
+    "decoration" : "arrow",
+    "x" : 0.40039417917700476,
+    "y" : 3.3306690738754696E-16,
+    "size" : 0.0048,
+    "angle" : -2.128952621582683,
+    "color" : {
+      "rgb" : -16777216
+    }
+  }, {
+    "decoration" : "arrow",
+    "x" : 0.39999999999993396,
+    "y" : 0.15999999999994718,
+    "size" : 0.0048,
+    "angle" : 1.573239787747689,
+    "color" : {
+      "rgb" : -16777216
+    }
+  }, {
+    "decoration" : "arrow",
+    "x" : 0.19878035570057895,
+    "y" : 0.0,
+    "size" : 0.0048,
+    "angle" : -2.4698154244971757,
+    "color" : {
+      "rgb" : -16777216
+    }
+  }, {
+    "decoration" : "arrow",
+    "x" : 0.19878035570057895,
+    "y" : 0.03950723171684367,
+    "size" : 0.0048,
+    "angle" : 1.5707963267948966,
+    "color" : {
+      "rgb" : -16777216
+    }
+  }, {
+    "decoration" : "arrow",
+    "x" : 0.10099652586334851,
+    "y" : 4.440892098500626E-16,
+    "size" : 0.0048,
+    "angle" : -2.7576202181510405,
+    "color" : {
+      "rgb" : -16777216
+    }
+  }, {
+    "decoration" : "arrow",
+    "x" : 0.7999999999999455,
+    "y" : 0.6399999999999127,
+    "size" : 0.0048,
+    "angle" : 1.5707963267948966,
+    "color" : {
+      "rgb" : -16777216
+    }
+  }, {
+    "decoration" : "label",
+    "text" : "1",
+    "xWeight" : 1.0,
+    "yWeight" : 1.0,
+    "x" : 0.8,
+    "y" : 0.64,
+    "scale" : 1.2,
+    "color" : {
+      "rgb" : -16777216
+    }
+  }, {
+    "decoration" : "label",
+    "text" : "2",
+    "xWeight" : 1.0,
+    "yWeight" : 1.0,
+    "x" : 0.39999999999993396,
+    "y" : 0.15999999999994718,
+    "scale" : 1.2,
+    "color" : {
+      "rgb" : -16777216
+    }
+  }, {
+    "decoration" : "label",
+    "text" : "3",
+    "xWeight" : 1.0,
+    "yWeight" : 1.0,
+    "x" : 0.19878035570057895,
+    "y" : 0.03950723171684367,
+    "scale" : 1.2,
+    "color" : {
+      "rgb" : -16777216
+    }
+  }, {
+    "decoration" : "label",
+    "text" : "4",
+    "xWeight" : 1.0,
+    "yWeight" : 1.0,
+    "x" : 0.1009965258633484,
+    "y" : 0.01020029434032188,
+    "scale" : 1.2,
+    "color" : {
+      "rgb" : -16777216
+    }
+  }, {
+    "decoration" : "ruler",
+    "startPoint" : {
+      "x" : 0.0,
+      "y" : 0.0
+    },
+    "endPoint" : {
+      "x" : -2.7482629650665835E-4,
+      "y" : 1.0007773388593209
+    },
+    "lineWidth" : 0.0024,
+    "labelAnchor" : "LEFT",
+    "textAngle" : 1.5707963267948966,
+    "tickRight" : true,
+    "tickLeft" : true,
+    "tickPadding" : 3.0,
+    "tickDelta" : 0.0,
+    "suppressStartLabel" : true,
+    "axis" : "Y",
+    "fontSize" : 0.020325203252032523
+  }, {
+    "decoration" : "ruler",
+    "startPoint" : {
+      "x" : 0.0,
+      "y" : 0.0
+    },
+    "endPoint" : {
+      "x" : 1.0,
+      "y" : -0.0
+    },
+    "lineWidth" : 0.0024,
+    "labelAnchor" : "RIGHT",
+    "tickRight" : true,
+    "tickLeft" : true,
+    "tickPadding" : 3.0,
+    "suppressStartTick" : true,
+    "suppressStartLabel" : true,
+    "axis" : "X",
+    "fontSize" : 0.020325203252032523
+  }, {
+    "decoration" : "label",
+    "text" : "○",
+    "xWeight" : 0.5,
+    "yWeight" : 0.5,
+    "x" : 0.8,
+    "scale" : 1.35,
+    "cutout" : true
+  } ]
+}

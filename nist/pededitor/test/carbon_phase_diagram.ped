@@ -1,0 +1,552 @@
+{
+  "tags" : [ "WARN missing diagram component" ],
+  "principalToStandardPage" : {
+    "transform" : "RectangleTransform",
+    "input" : {
+      "x" : 0.0,
+      "y" : 0.0,
+      "width" : 10.0,
+      "height" : 1.0
+    },
+    "output" : {
+      "x" : 0.0,
+      "y" : 1.0,
+      "width" : 1.3,
+      "height" : -1.0
+    }
+  },
+  "pageBounds" : {
+    "x" : -0.25,
+    "y" : -0.1,
+    "width" : 1.75,
+    "height" : 1.3
+  },
+  "diagramType" : "BINARY",
+  "diagramComponents" : [ null, null, null, null ],
+  "axes" : [ {
+    "format" : {
+      "type" : "DecimalFormat",
+      "pattern" : "#0.000"
+    },
+    "a" : 1.0,
+    "b" : 0.0,
+    "c" : 0.0,
+    "name" : "X"
+  }, {
+    "format" : {
+      "type" : "DecimalFormat",
+      "pattern" : "#0.000"
+    },
+    "a" : 0.0,
+    "b" : 1.0,
+    "c" : 0.0,
+    "name" : "Y"
+  }, {
+    "format" : {
+      "type" : "DecimalFormat",
+      "pattern" : "#0.000"
+    },
+    "a" : 0.1,
+    "b" : 0.0,
+    "c" : 0.0,
+    "name" : "page X"
+  }, {
+    "format" : {
+      "type" : "DecimalFormat",
+      "pattern" : "#0.000"
+    },
+    "a" : 0.0,
+    "b" : -1.0,
+    "c" : 1.0,
+    "name" : "page Y"
+  } ],
+  "usingWeightFraction" : false,
+  "fontName" : "DejaVu LGC Sans PED",
+  "keys" : {
+  },
+  "decorations" : [ {
+    "decoration" : "ruler",
+    "startPoint" : {
+      "x" : 10.0,
+      "y" : 0.0
+    },
+    "endPoint" : {
+      "x" : 10.0,
+      "y" : 1.0
+    },
+    "fontSize" : 0.03902439024390244,
+    "lineWidth" : 0.0032,
+    "labelAnchor" : "NONE",
+    "textAngle" : 1.5707963267948966,
+    "tickPadding" : 3.0,
+    "bigTickDelta" : -1.0,
+    "tickDelta" : -1.0,
+    "axis" : "Y"
+  }, {
+    "decoration" : "ruler",
+    "startPoint" : {
+      "x" : 0.0,
+      "y" : 0.0
+    },
+    "endPoint" : {
+      "x" : 0.0,
+      "y" : 1.0
+    },
+    "fontSize" : 0.03902439024390244,
+    "lineWidth" : 0.0032,
+    "labelAnchor" : "NONE",
+    "textAngle" : 1.5707963267948966,
+    "tickPadding" : 3.0,
+    "bigTickDelta" : -1.0,
+    "tickDelta" : -1.0,
+    "axis" : "Y"
+  }, {
+    "decoration" : "ruler",
+    "startPoint" : {
+      "x" : 0.0,
+      "y" : 1.0
+    },
+    "endPoint" : {
+      "x" : 10.0,
+      "y" : 1.0
+    },
+    "fontSize" : 0.03902439024390244,
+    "lineWidth" : 0.0032,
+    "labelAnchor" : "LEFT",
+    "tickRight" : true,
+    "bigTickDelta" : -1.0,
+    "tickDelta" : -1.0,
+    "axis" : "X"
+  }, {
+    "decoration" : "ruler",
+    "startPoint" : {
+      "x" : 0.0,
+      "y" : 0.0
+    },
+    "endPoint" : {
+      "x" : 10.0,
+      "y" : 0.0
+    },
+    "fontSize" : 0.03902439024390244,
+    "lineWidth" : 0.0032,
+    "labelAnchor" : "RIGHT",
+    "tickLeft" : true,
+    "bigTickDelta" : -1.0,
+    "tickDelta" : -1.0,
+    "axis" : "X"
+  }, {
+    "decoration" : "curve",
+    "curve" : {
+      "points" : [ {
+	"x" : 0.0,
+	"y" : 0.0
+      }, {
+	"x" : 4.487628876810325,
+	"y" : 0.6618062180100246
+      } ],
+      "smoothed" : [ false, false ],
+      "closed" : false
+    },
+    "lineWidth" : 0.0016,
+    "lineStyle" : "DASH",
+    "id" : 0
+  }, {
+    "decoration" : "curve",
+    "curve" : {
+      "points" : [ {
+	"x" : 10.0,
+	"y" : 0.90896068955474
+      }, {
+	"x" : 8.95917359225748,
+	"y" : 0.8943265432132765
+      }, {
+	"x" : 7.772181722338781,
+	"y" : 0.8601802017498619
+      }, {
+	"x" : 6.325027250794065,
+	"y" : 0.7967655676035205
+      }, {
+	"x" : 5.203076031281871,
+	"y" : 0.7235948358962034
+      }, {
+	"x" : 4.487628876810325,
+	"y" : 0.6618062180100246
+      } ],
+      "smoothed" : [ true, true, true, true, true, true ],
+      "closed" : false
+    },
+    "lineWidth" : 0.0016,
+    "lineStyle" : "SOLID",
+    "id" : 1
+  }, {
+    "decoration" : "curve",
+    "curve" : {
+      "points" : [ {
+	"x" : 10.0,
+	"y" : 0.90896068955474
+      }, {
+	"x" : 0.0,
+	"y" : 1.0
+      } ],
+      "smoothed" : [ false, false ],
+      "closed" : false
+    },
+    "lineWidth" : 0.0016,
+    "lineStyle" : "DASH",
+    "id" : 2
+  }, {
+    "decoration" : "curve",
+    "curve" : {
+      "points" : [ {
+	"x" : 4.487628876810325,
+	"y" : 0.6618062180100246
+      }, {
+	"x" : 3.5770597711192673,
+	"y" : 0.6455460554083985
+      }, {
+	"x" : 2.5201492020135765,
+	"y" : 0.6260338602864473
+      }, {
+	"x" : 1.3656776572981297,
+	"y" : 0.5967655676035204
+      }, {
+	"x" : 0.5038890394119508,
+	"y" : 0.565871258660431
+      }, {
+	"x" : 0.0,
+	"y" : 0.5463590635384798
+      } ],
+      "smoothed" : [ true, true, true, true, true, true ],
+      "closed" : false
+    },
+    "lineWidth" : 0.0016,
+    "lineStyle" : "SOLID",
+    "id" : 3
+  }, {
+    "decoration" : "curve",
+    "curve" : {
+      "points" : [ {
+	"x" : 4.487628876810325,
+	"y" : 0.6618062180100246
+      }, {
+	"x" : 4.657163745919286,
+	"y" : 0.5280282609341788
+      }, {
+	"x" : 4.714854225986893,
+	"y" : 0.44392003914823586
+      }, {
+	"x" : 4.7087594871929,
+	"y" : 0.3779363529303391
+      }, {
+	"x" : 4.643323975656037,
+	"y" : 0.29663142388784625
+      }, {
+	"x" : 4.471368714208699,
+	"y" : 0.1528631285791302
+      } ],
+      "smoothed" : [ true, true, true, true, true, true ],
+      "closed" : false
+    },
+    "lineWidth" : 0.0016,
+    "lineStyle" : "SOLID",
+    "id" : 4
+  }, {
+    "decoration" : "curve",
+    "curve" : {
+      "points" : [ {
+	"x" : 4.487628876810318,
+	"y" : 0.6618062180100245
+      }, {
+	"x" : 0.0,
+	"y" : 0.765871258660431
+      } ],
+      "smoothed" : [ false, false ],
+      "closed" : false
+    },
+    "lineWidth" : 0.0016,
+    "lineStyle" : "DASH",
+    "id" : 5
+  }, {
+    "decoration" : "curve",
+    "curve" : {
+      "points" : [ {
+	"x" : 4.0,
+	"y" : 0.0
+      }, {
+	"x" : 4.170764169701715,
+	"y" : 0.08294442939213842
+      }, {
+	"x" : 4.471368714208699,
+	"y" : 0.1528631285791302
+      }, {
+	"x" : 5.146373925799274,
+	"y" : 0.25692816922953654
+      }, {
+	"x" : 6.016084161363171,
+	"y" : 0.325220852156366
+      }, {
+	"x" : 7.105515055672114,
+	"y" : 0.3740013399612441
+      }, {
+	"x" : 8.633970340224959,
+	"y" : 0.39676556760352044
+      }, {
+	"x" : 10.0,
+	"y" : 0.4081476814246586
+      } ],
+      "smoothed" : [ true, true, true, true, true, true, true, true ],
+      "closed" : false
+    },
+    "lineWidth" : 0.0016,
+    "lineStyle" : "SOLID",
+    "id" : 6
+  }, {
+    "decoration" : "curve",
+    "curve" : {
+      "points" : [ {
+	"x" : 10.0,
+	"y" : 0.6146517464653091
+      }, {
+	"x" : 4.699010990631463,
+	"y" : 0.46505825053034977
+      }, {
+	"x" : 2.747791478436341,
+	"y" : 0.4032696326441708
+      }, {
+	"x" : 1.642100421525772,
+	"y" : 0.3561151610994554
+      }, {
+	"x" : 0.5851898524200807,
+	"y" : 0.23578995784742285
+      }, {
+	"x" : 0.3087670881924387,
+	"y" : 0.10733467329457735
+      }, {
+	"x" : 0.32502725079406464,
+	"y" : 0.0
+      } ],
+      "smoothed" : [ true, true, true, true, true, true, true ],
+      "closed" : false
+    },
+    "lineWidth" : 0.0032,
+    "lineStyle" : "DOT",
+    "id" : 7
+  }, {
+    "decoration" : "curve",
+    "curve" : {
+      "points" : [ {
+	"x" : 4.7087594871929,
+	"y" : 0.3779363529303391
+      }, {
+	"x" : 6.016084161363171,
+	"y" : 0.325220852156366
+      } ],
+      "smoothed" : [ false, false ],
+      "closed" : false
+    },
+    "lineWidth" : 0.0016,
+    "lineStyle" : "DASH",
+    "id" : 8
+  }, {
+    "decoration" : "curve",
+    "curve" : {
+      "points" : [ {
+	"x" : 6.935177129727383,
+	"y" : 1.0
+      }, {
+	"x" : 6.612679627000692,
+	"y" : 0.9397986206562438
+      }, {
+	"x" : 6.3959512246478205,
+	"y" : 0.9081379035780778
+      }, {
+	"x" : 5.995701068300104,
+	"y" : 0.8568280571462801
+      }, {
+	"x" : 4.528117161691807,
+	"y" : 0.7310827996937056
+      }, {
+	"x" : 4.133426035293362,
+	"y" : 0.7000078222772648
+      }, {
+	"x" : 3.599759160163074,
+	"y" : 0.6631514537135792
+      }, {
+	"x" : 3.0216200454385933,
+	"y" : 0.6277404329367047
+      }, {
+	"x" : 2.0710259241127646,
+	"y" : 0.5670358258906342
+      }, {
+	"x" : 1.2983207611636995,
+	"y" : 0.504163197164347
+      }, {
+	"x" : 0.6367961972001113,
+	"y" : 0.4138289604886468
+      }, {
+	"x" : 0.3310495499900492,
+	"y" : 0.26712616012730994
+      }, {
+	"x" : 0.29213634034513225,
+	"y" : 0.10886057747148348
+      }, {
+	"x" : 0.3052115611504278,
+	"y" : 0.04501060905942578
+      }, {
+	"x" : 0.32502725079406464,
+	"y" : 0.0
+      } ],
+      "smoothed" : [ true, true, true, true, true, true, true, true, true, true, true, true, true, true, true ],
+      "closed" : false
+    },
+    "lineWidth" : 0.0032,
+    "lineStyle" : "DOT",
+    "id" : 9
+  }, {
+    "decoration" : "label",
+    "text" : "ΔV(p)=-0.1·ΔV(T)",
+    "xWeight" : 0.5,
+    "yWeight" : 1.0,
+    "x" : 8.322103466309406,
+    "y" : 0.5762435909029977,
+    "angle" : 0.02736476825857537,
+    "fontSize" : 1.5
+  }, {
+    "decoration" : "label",
+    "text" : "○",
+    "xWeight" : 0.5,
+    "yWeight" : 0.5,
+    "x" : 4.487628876810325,
+    "y" : 0.6618062180100246,
+    "angle" : -0.0,
+    "fontSize" : 2.0
+  }, {
+    "decoration" : "label",
+    "text" : "○",
+    "xWeight" : 0.5,
+    "yWeight" : 0.5,
+    "x" : 4.471368714208699,
+    "y" : 0.1528631285791302,
+    "angle" : -0.0,
+    "fontSize" : 2.0
+  }, {
+    "decoration" : "label",
+    "text" : "○",
+    "xWeight" : 0.5,
+    "yWeight" : 0.5,
+    "x" : 6.016084161363171,
+    "y" : 0.325220852156366,
+    "angle" : -0.0,
+    "fontSize" : 1.1
+  }, {
+    "decoration" : "label",
+    "text" : "○",
+    "xWeight" : 0.5,
+    "yWeight" : 0.5,
+    "x" : 4.7087594871929,
+    "y" : 0.3779363529303391,
+    "angle" : -0.0,
+    "fontSize" : 1.1
+  }, {
+    "decoration" : "label",
+    "text" : "graphite",
+    "xWeight" : 0.5,
+    "yWeight" : 0.5,
+    "x" : 3.155314715718629,
+    "y" : 0.21364829201529556,
+    "angle" : -0.0,
+    "fontSize" : 2.2
+  }, {
+    "decoration" : "label",
+    "text" : "liquid",
+    "xWeight" : 0.5,
+    "yWeight" : 0.5,
+    "x" : 6.290607607109081,
+    "y" : 0.4579120679863885,
+    "angle" : -0.0,
+    "fontSize" : 2.2
+  }, {
+    "decoration" : "label",
+    "text" : "diamond",
+    "xWeight" : 0.5,
+    "yWeight" : 0.5,
+    "x" : 3.7779260700372985,
+    "y" : 0.85682805714628,
+    "angle" : -0.0,
+    "fontSize" : 2.2
+  }, {
+    "decoration" : "label",
+    "text" : "vapor",
+    "xWeight" : 0.5,
+    "yWeight" : 0.5,
+    "x" : 7.3746184472174825,
+    "y" : 0.21148027033507877,
+    "angle" : -0.0,
+    "fontSize" : 2.2
+  }, {
+    "decoration" : "label",
+    "text" : "Temperature, in 10<sup>3</sup> K",
+    "xWeight" : 0.5,
+    "x" : 4.998842122095874,
+    "fontSize" : 2.0
+  }, {
+    "decoration" : "label",
+    "text" : "Pressure, in GPa",
+    "xWeight" : 0.5,
+    "yWeight" : 1.0,
+    "y" : 0.5162055699990957,
+    "angle" : 1.5707963267948961,
+    "fontSize" : 2.0
+  }, {
+    "decoration" : "label",
+    "text" : "diamond +<br>metastable graphite",
+    "xWeight" : 0.5,
+    "yWeight" : 0.5,
+    "x" : 1.4650916596419123,
+    "y" : 0.6783276054750971,
+    "fontSize" : 1.5
+  }, {
+    "decoration" : "label",
+    "text" : "graphite +<br>metastable diamond",
+    "xWeight" : 0.5,
+    "yWeight" : 0.5,
+    "x" : 2.143293313453325,
+    "y" : 0.5670358258906342,
+    "fontSize" : 1.5
+  }, {
+    "decoration" : "label",
+    "text" : "ΔV(p) = -ΔV(T)",
+    "xWeight" : 0.5,
+    "yWeight" : 1.0,
+    "x" : 5.465594946596937,
+    "y" : 0.8144632415134148,
+    "angle" : 0.08583370874902317,
+    "fontSize" : 1.5
+  }, {
+    "decoration" : "label",
+    "text" : "metal?",
+    "xWeight" : 0.5,
+    "yWeight" : 0.5,
+    "x" : 9.103198809944185,
+    "y" : 0.9536663588626306,
+    "angle" : -0.0,
+    "fontSize" : 2.2
+  }, {
+    "decoration" : "label",
+    "text" : "metastable<br>liquid",
+    "xWeight" : 0.5,
+    "yWeight" : 0.5,
+    "x" : 5.161846575909025,
+    "y" : 0.31482263709207936,
+    "fontSize" : 1.0
+  }, {
+    "decoration" : "label",
+    "text" : "Pressure, in bar",
+    "xWeight" : 0.5,
+    "yWeight" : 1.0,
+    "x" : 10.0,
+    "y" : 0.5233615333018481,
+    "angle" : -1.5707963267948961,
+    "fontSize" : 2.0
+  } ]
+}

@@ -1,0 +1,161 @@
+{
+  "tags" : [ ],
+  "principalToStandardPage" : {
+    "transform" : "TriangleTransform",
+    "input" : [ {
+      "x" : 0.0,
+      "y" : 0.0
+    }, {
+      "x" : 0.0,
+      "y" : 0.98
+    }, {
+      "x" : 0.98,
+      "y" : 0.0
+    } ],
+    "output" : [ {
+      "x" : 0.0,
+      "y" : 0.8660254037844386
+    }, {
+      "x" : 0.5,
+      "y" : 0.0
+    }, {
+      "x" : 1.0,
+      "y" : 0.8660254037844386
+    } ]
+  },
+  "pageBounds" : {
+    "x" : -0.15,
+    "y" : -0.15,
+    "width" : 1.2999999999999998,
+    "height" : 1.1660254037844384
+  },
+  "diagramType" : "TERNARY",
+  "diagramComponents" : [ "Fe", null, "Ge", "Gd" ],
+  "axes" : [ {
+    "format" : {
+      "type" : "DecimalFormat",
+      "pattern" : "#0.00%"
+    },
+    "a" : 0.0,
+    "b" : 0.0,
+    "c" : 0.02,
+    "name" : "Au"
+  }, {
+    "format" : {
+      "type" : "DecimalFormat",
+      "pattern" : "#0.00%"
+    },
+    "a" : 0.0,
+    "b" : 1.0,
+    "c" : 0.0,
+    "name" : "Fe"
+  }, {
+    "format" : {
+      "type" : "DecimalFormat",
+      "pattern" : "#0.00%"
+    },
+    "a" : 1.0,
+    "b" : 0.0,
+    "c" : 0.0,
+    "name" : "Gd"
+  }, {
+    "format" : {
+      "type" : "DecimalFormat",
+      "pattern" : "#0.00%"
+    },
+    "a" : -1.0000000000000004,
+    "b" : -1.0000000000000004,
+    "c" : 0.9800000000000004,
+    "name" : "Ge"
+  }, {
+    "format" : {
+      "type" : "DecimalFormat",
+      "pattern" : "#0.0000"
+    },
+    "a" : 1.0204081632653061,
+    "b" : 0.5102040816326531,
+    "c" : 0.0,
+    "name" : "page X"
+  }, {
+    "format" : {
+      "type" : "DecimalFormat",
+      "pattern" : "#0.0000"
+    },
+    "a" : 0.0,
+    "b" : -0.8836993916167741,
+    "c" : 0.8660254037844386,
+    "name" : "page Y"
+  } ],
+  "usingWeightFraction" : false,
+  "fontName" : "DejaVu LGC Sans PED",
+  "keys" : {
+  },
+  "decorations" : [ {
+    "decoration" : "ruler",
+    "startPoint" : {
+      "x" : 0.0,
+      "y" : 0.0
+    },
+    "endPoint" : {
+      "x" : 0.98,
+      "y" : 0.0
+    },
+    "fontSize" : 0.024390243902439025,
+    "lineWidth" : 0.0024,
+    "labelAnchor" : "RIGHT",
+    "multiplier" : 100.0,
+    "tickLeft" : true,
+    "tickPadding" : 3.0,
+    "tickDelta" : 0.0,
+    "suppressStartTick" : true,
+    "suppressEndTick" : true,
+    "tickType" : "V",
+    "axis" : "Gd"
+  }, {
+    "decoration" : "ruler",
+    "startPoint" : {
+      "x" : 0.98,
+      "y" : 0.0
+    },
+    "endPoint" : {
+      "x" : 0.0,
+      "y" : 0.98
+    },
+    "fontSize" : 0.024390243902439025,
+    "lineWidth" : 0.0024,
+    "labelAnchor" : "NONE",
+    "multiplier" : 100.0,
+    "textAngle" : 2.0943951023931953,
+    "tickLeft" : true,
+    "tickPadding" : 3.0,
+    "tickDelta" : 0.0,
+    "suppressStartTick" : true,
+    "suppressEndTick" : true,
+    "tickType" : "V",
+    "axis" : "Fe"
+  }, {
+    "decoration" : "ruler",
+    "startPoint" : {
+      "x" : 0.0,
+      "y" : 0.0
+    },
+    "endPoint" : {
+      "x" : 0.0,
+      "y" : 0.98
+    },
+    "fontSize" : 0.024390243902439025,
+    "lineWidth" : 0.0024,
+    "labelAnchor" : "NONE",
+    "multiplier" : 100.0,
+    "textAngle" : 1.0471975511965976,
+    "tickRight" : true,
+    "tickPadding" : 3.0,
+    "tickDelta" : 0.0,
+    "suppressStartTick" : true,
+    "suppressStartLabel" : true,
+    "suppressEndTick" : true,
+    "suppressEndLabel" : true,
+    "tickType" : "V",
+    "axis" : "Fe"
+  } ]
+}

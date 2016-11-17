@@ -1,0 +1,1070 @@
+<!DOCTYPE HTML>
+<html>
+<head>
+<title>PED Edit Window Help</title>
+<link rel="stylesheet" href="http://nist.gov/style/nist-styles.css">
+</head>
+<body>
+
+<h1>PED Edit Window Help</h1>
+
+<p><i>Please note that this file will open using the default browser
+you have chosen for your computer, either full- or partial-screen,
+according to its last usage. If the last view was not full screen, the
+PED Figure Search interface will remain partially visible
+underneath.</i>
+
+<p>The PED (Phase Equilibria Diagram) Editor was written by Eric
+Boesch to digitize phase diagrams for the PED Data Center. The editor
+can also be used for general scientifc drawing and two-dimensional
+visualization. The latest version is available for downloading as
+freeware with some restrictions;
+see <a href="http://www.nist.gov/srd/nist31.cfm">http://www.nist.gov/srd/nist31.cfm</a>.
+
+<p>Some features may be accessed through the menu bar along the top
+edge of the Viewer screen, while others are accessed through a menu
+that is raised by pressing the right mouse button (if your mouse does
+not have a right button, use whatever control you normally use to
+raise popup menus). These functions (and their keyboard shortcuts) are
+described below.
+
+<ul>
+
+<li><a href="#File">File</a>
+
+<li><a href="#Position">Position</a>
+
+<li><a href="#Curve">Curve</a>
+
+<li><a href="#Properties">Properties</a>
+
+<li><a href="#Digitize">Digitize</a>
+
+<li><a href="#Chemistry">Chemistry</a>
+
+<li><a href="#View">View</a>
+
+<li><a href="#Popup">Popup menu</a>
+
+  <ul>
+
+    <li><a href="#PositionPopup">Position</a>
+
+    <li><a href="#ViewPopup">View</a>
+
+    <li><a href="#AddDecoration">Add decoration</a>
+
+      <ul>
+        <li><a href="#Label">Label</a>
+        <li><a href="#Arrowhead">Arrowhead</a>
+        <li><a href="#Ruler">Ruler</a>
+        <li><a href="#TieLines">Tie Lines</a>
+      </ul>
+
+    <li><a href="#Edit">Edit selection / Edit nearest item</a>
+
+    <li><a href="#Layer">Layer</a>
+
+  </ul>
+
+<li>Drawing common shapes
+
+  <ul>
+    <li><a href="#Rectangle">Rectangle</a>
+    <li><a href="#Parallel">Parallel lines</a>
+    <li><a href="#Circle">Circle</a>
+  </ul>
+
+
+</ul>
+
+<h2><a id="File">File</a></h2>
+
+<h3>New diagram</h3>
+
+<p>Create a new diagram from scratch. If you wish to digitize a
+scanned image of an existing diagram, use the
+<a href="#open"><code>File/Open</code></a> option instead.</p>
+
+<p>You are presented with a selection of diagram types. Select the
+"Binary or Cartesian" type for Cartesian graphs, binary diagrams,
+quaternary diagrams, and all other diagrams based on a rectangular
+graph. For ternary diagrams, select one of the "Ternary" subtypes. If
+none of the given categories apply, select the "Free-form" type to
+start with a blank page.
+
+<h3><a id="open">Open</a></h3>
+
+<p>Open either an image file saved in GIF, JPEG, or PNG format or a
+diagram that was previously saved in this program's native PED
+format.</p>
+
+<p>If you open an image file, a window will open that allows you to
+select the boundary of a diagram within that image and then create a
+new diagram traced from the old one. That window has its own Help menu
+option which provides more information.</p>
+
+<h3>Save / Save as PED</h3>
+
+<p>Save a diagram as a file in this program's native PED format. This
+is the only choice that allows you to reload the diagram later with
+this program and continue where you left off.</p>
+
+<h3>Save as PDF</h3>
+
+<p>Save an image of the diagram. Diagrams saved as PDF stay sharp at
+higher magnification.
+
+<h3>Save as PNG</h3>
+<h3>Save as GIF</h3>
+<h3>Save as JPEG</h3>
+
+<p>Save an image of the diagram. Diagrams saved in these formats do
+not stay sharp at higher magnification.
+
+<h3>Print</h3>
+
+<p>Print the diagram. The image will be scaled so that its margins
+just fit on the sheet. You can make the printed image appear smaller
+or larger by <a href="#Margins">adjusting the margins</a>.
+
+<h3>Next File</h3>
+
+<p>(<code>Control+Right Arrow</code>) Switch to the next selected
+diagram, if any. This option is only enabled if you opened multiple
+files at once.
+
+<h3>Refresh</h3>
+
+<p>Refresh the current diagram from disk if the diagram was previously
+opened or saved in PED format.
+
+<h3>Close</h3>
+
+<p>Close this diagram only.
+
+<h3>Exit</h3>
+
+<p>Close all diagrams and exit the program.
+
+<h3>Refresh</h3>
+
+<p>Refresh the current diagram from disk if the diagram was previously
+opened or saved in PED format.
+
+<p><a href="#Top">Return to top</a>
+
+<h2><a id="Position">Position</a></h2>
+
+<p>This menu includes functions to move the mouse pointer within the diagram.
+
+<h3 id=Autoposition>Auto-positioning</h3>
+
+<p>Holding the shift key down while moving the mouse causes the mouse
+to be attracted to nearby curves and points of special interest,
+including
+
+<ul>
+
+<li><a href="#NearestPoint">Key points</a> are highlighted in olive.
+
+<li><b>Curves and rulers</b>: If no key point is close, the nearest
+point on a curve or ruler may be highlighted in orange.
+
+<li><p><b>Vertical and horizontal lines</b>: If an item is selected,
+then for purposes of identifying key points and curves, the program
+behaves as if the diagram contains invisible horizontal and vertical
+lines through the selection point, if any.
+
+<li><p>The program may also include invisible lines through the
+selection at <b>other special angles</b>. These angles include the
+value indicated in <a href=#MathWindow>the math window</a>, lines
+in ternary diagrams at 60 or 120 degrees, and lines of zero change for
+user-defined variables created using
+<a href="#Variable"><code>Properties/Variables/Add</code></a>.
+</ul>
+
+<p>Sometimes the auto-positioning is attracted by a key point that
+prevents you from clicking on what you really want. You may sidestep
+this problem by <a href="#DragToZoom">zooming in</a> until the screen
+distance becomes large enough that the key point no longer attracts
+the mouse pointer.</p>
+
+<ul>
+
+<li><b><a id="Enter">Enter coordinates</a></b> (<code>Enter</code>) allows you to type
+in the coordinates you would like the mouse to move to. If you enter
+coordinates that are off the diagram page, the page will be enlarged
+to put the position on its edge.
+
+<li><p><b>Jump to selection</b> (<code>j</code>) moves the mouse
+pointer to the currently selected item, if an item is
+selected.</p></li>
+
+<li><p>To protect users against involuntary mouse movements, the
+cursor stays at the chosen position after you perform a mouse
+positioning command even if the mouse shifts by a couple pixels. The
+chosen position will be marked with a yellow cross if that position is
+different from the mouse position. To cause the cursor to resume
+following the mouse, either move the mouse pointer a longer distance
+or use the <b>Unstick mouse</b> (<code>u</code>) command. In addition,
+the mouse may automatically become unstuck before you perform an
+operation that would otherwise be redundant, such as adding the same
+vertex to a curve twice in a row.
+
+</ul>
+
+<p><a href="#Top">Return to top</a>
+
+<h2><a id="Curve">Curve</a></h2>
+
+<p>The first step of using curves is to <a href=#Smooth>make sure the
+smoothing settings are correct</a>, which is easier than fixing them
+later. The second step is to <a href=#AddVertex>add some points</a>.
+
+<ul>
+
+<li><p><b>Fill style</b> fills the interior of a closed curve with the
+    chosen pattern in the current default color. You
+    must <a href=#ToggleClosure>close the curve</a> before you can
+    fill it.
+
+  <p>Fill patterns can hide decorations underneath them, so you may
+    need to <a href="#Layer">lower the layer of the fill pattern</a>,
+    raise the layer of those decorations, or use a partially
+    transparent fill pattern. All fill patterns except the first,
+    solid one are transparent.</p>
+
+<li><p><b>Line style</b> changes the line style for the currently
+    selected item, if any, and the initial style of any subsequently
+    added items. Only curves and tie lines have line styles. The
+    spacing of dots and dashes is proportional to the line width: if
+    you reduce the width of a dashed line by half, then the length of
+    the dashes is also reduced by half.</p>
+
+<li><p><b>Line width</b> changes the line width for the currently
+    selected item (if any) and the initial line width of any
+    subsequently created items. Line width values apply to curves, tie
+    lines, rulers, and arrowheads.</p>
+
+<li><p>Select or unselect the <b id=Smooth>Smooth through new
+      points</b> check box or press <code>s</code> to turn on or off
+      curve smoothing for new points you add to curves. To change
+      smoothing for an existing vertex,
+      use <a href=#ToggleSmoothing>Toggle point smoothing</a>.
+
+  <p>Unsmoothed curves of three or more points are presented as a
+series of connected line segments or (for closed curves) a polygon.</p>
+
+<li><p><b id=ToggleClosure>Toggle closure</b> (<code>o</code>) changes
+    an open curve to a closed one or vice versa. All new curves are
+    initially open. Closed curves have an extra segment looping back
+    from the last vertex to the first. If that segment does not appear
+    to be smoothed properly, you may need
+    to <a href=#ToggleSmoothing>toggle smoothing</a> for one or
+    both of the curve's endpoints.</p>
+
+<li><p><b id=ToggleSmoothing>Toggle smoothing of selected point</b>
+    (<code>,</code>, the comma key) changes the selected vertex from
+    smoothed to un-smoothed or vice versa. To change the smoothing
+    setting for a whole curve, toggle smoothing for each vertex
+    individually.
+
+<li><p><b>Select left vertex</b> (<code>[</code>) and <b>Select right
+      vertex</b> (<code>]</code>) shift the selection one vertex to
+      the left or right. You must have already selected a vertex.
+
+</ul>
+
+<p>Position the mouse where the new vertex goes and
+press <code>x</code> or the left mouse button. To add a point at the
+auto-position location instead, press <code>Shift+X</code>
+or <code>Shift+left mouse button</code>.
+
+<p>If a vertex (curve control point) is currently selected, then it is
+marked by a small solid green circle. Other control points on the same
+curve are indicated by small open green circles.</p>
+
+<h3 id=NewCurve>Starting a new curve</h3>
+
+<p>If a curve is already selected, press <code>Escape</code> to
+deselect it.
+
+<p>Position the mouse where the first vertex of the new curve belongs
+and press <code>x</code> or the left mouse button. To start a new
+curve at the auto-position location instead, hold down the shift key
+as you do this.
+
+<p>A curve consisting of a single point is represented as a dot twice
+as wide as the current line width. It may be tempting to mark data
+points this way, but for various reasons, it usually works better to
+mark data points using 1-character labels.
+
+<h3>Adding a point to a curve</h3>
+
+<p>As described in the <code>Position Menu</code> section, you may
+press <code>Shift+W</code> or <code>Shift+Q</code> to select a place
+on the curve to add a new vertex.
+
+<p>For curves, of at least two points, the program not only has a
+selected vertex but a selected side where new points will be added.
+The red line that follows the mouse should provide a hint which side
+of the vertex is selected; if the red line is twisted, then you
+probably want to move to the other side. You can shift the selected
+vertex and the selected side of that vertex using <code>Select left
+vertex</code> (<code>[</code>) or <code>Select right vertex</code>
+(<code>]</code>).
+
+<p><a href="#Top">Return to top</a>
+
+<h2><a id=Properties>Properties</a></h2>
+
+<ul>
+
+<li><b>Aspect Ratio</b>: change the ratio of the diagram's width to
+its height by uniformly rescaling its horizontal dimension. This may
+cause existing curve intersections to shift (so lines that used to
+intersect may not quite do so anymore, or they may intersect at a
+slightly different location), so it is best to set the aspect ratio
+early in the editing process.
+
+<li><p><b>Font</b>: The program uses variants of the DejaVu LGC Serif
+and Sans Serif font families. <code>Serif (widely spaced lines)</code>
+exists for backwards compatibility, and is not recommended for use in
+new diagrams.</p>
+
+<p>Currrently, you may only change the font for the entire diagram at
+once.
+
+<li><b>Key/Value Pairs</b>: Allows the user to store data in the form
+of keys and values alongside the diagram. Except for the title, the
+data are not displayed or otherwise used by the program.
+
+<li><a id="Margins"><b>Margins</b></a>: <code>Expand all</code> adds
+extra space on all sides. Afterward you can use <code>Auto-fit</code>
+to eliminate all excess white space. Use <code>Set</code> to manually
+assign values to the page X and Y boundaries.
+
+<li><h3 id=PixelMode>Pixel mode</h3>
+
+  <p>Pixel mode is only available for diagrams of type "Picture or
+    map" that have uniform aspect (the X and Y units have equal length).
+    It is intended for drawing icons or other pixelated pictures whose
+    edges should align with pixel boundaries for maximum sharpness.</p>
+
+  <ul>
+    <li>Curve endpoints are squared off instead of rounded
+    <li><code>Show Grid</code> is turned on
+    <li>Line width is initially set to one user unit wide
+    <li>When you press the mouse button to add a point or press 'g' to
+    go to the nearest grid point, the mouse aligns to the nearest
+    half-grid width. Grid lines are useful for outlining fill regions,
+    whereas grid box centers (halfway between grid lines) are good for creating
+    curves.
+    <li>When creating a new curve, starting on a grid line starts a
+      fill region by default, whereas starting in the center of a grid
+      box starts a curve.
+    <li>Unfilled curves containing just a single point appear as
+      one-unit squares. So if you click in the center of a grid box
+      and then press <code>End</code>, you fill that single
+      pixel.</li>
+  </ul>
+
+<!--  <p>Turning on pixel mode also enables <a href="#Snap">Snap to
+      grid</a>.-->
+
+<li><a id=Scale><b>Scale</b></a>: This option allows you to change the
+units of the X and Y axis, while the positions of items on the screen
+remains the same. This feature allows you to change from units of
+Celsius to Kelvin, for example, or grams to kilograms.
+
+<p>If you highlight a ruler or line segment before choosing this
+operation, the dialog will be initialized with its endpoint values.
+
+<!-- <li><b id=Snap>Snap to grid</b> aligns (imperfectly) control points
+with pixel boundaries unless that would cause two different positions
+to overlap. It is only available in <a href=#PixelMode>pixel mode</a>. -->
+
+<li><b>Tags</b>: Allow the user to store free-form string data. The
+data are not displayed or otherwise used by the program.
+
+<li><b>Title</b>: Change the title of the diagram as displayed in the
+menu bar and in printouts. To delete the title, change it to the empty
+string ("").
+
+<li><b><a id=Variable>Variables</a></b>: You can add or delete a
+variable, rename a variable, or change whether a variable and its
+rulers are displayed as percentages. Variables must be defined as
+
+  <blockquote><code>a x + b y + c</code></blockquote>
+
+<p>where <code>x</code> and <code>y</code> are preexisting variables.
+In this program, variable values must change at a constant rate as you
+move across the diagram. You cannot define a single variable whose
+value changes at a varying rate or has the same value in two different
+places (such as in insets that magnify part of the main diagram).
+Where a logical variable's value has discontinuities or overlaps, the
+best you can do is to define several variables such that at least one
+of those variables displays correctly at each point.
+
+<p>New variables will be shown in the gray status bar at the bottom of
+the edit window and may be used to define rulers.
+
+<li><p>Unchecking the <b>Show editing options</b> box hides options
+related to diagram editing, which may make the program easier to
+follow for users who do not need those options. Check the box to make
+those options visible again.
+
+</ul>
+
+<p><a href="#Top">Return to top</a>
+
+<h2><a id=Digitize>Digitize</a></h2>
+
+<ul>
+
+<li><p><b>Export text to clipboard</b>: Export all labels, key values,
+tags, and diagram components to the clipboard, with duplicates and
+HTML tags removed. Each entry is terminated by a newline. If you
+selected a label, then only that label is exported.
+
+<li><p><b>Export selected curve or label's coordinates</b>: You must
+already have selected a <a href="#SelectCurve">curve</a>
+or <a href="#SelectPoint">label or data point</a>. If you selected a
+curve, this will export the coordinates of all of its control points
+to a file or to the clipboard. If you selected a label or data point,
+this will export the coordinates of all similar labels or data points.
+
+<li><p><b>Export all curve and label coordinates</b>: Export the
+coordinates of all curve control points and all labels to a file or to
+the clipboard. Coordinates belonging to a single curve and labels that
+share the same text are grouped together; groups are separated from
+each other by empty lines or comments.
+
+<p>Checking the <code>Add comments</code> box will make the output
+easier to interpret but may make it harder to import the data into
+other programs. Comments begin with the sharp sign (#).
+
+<li><p><b>Import curve or label coordinates</b>: This is the reverse
+of <b>Export all curve and label coordinates</b> and <b>Export
+selected curve or label's coordinates</b>.
+
+<p>If a curve was highlighted before this command was used, then
+points will be added to it. If a label is highlighted, then similar
+labels will be added. If nothing is highlighted, one or more new
+curves will be created, with empty lines or lines that contain only a
+comment (beginning with the sharp sign #) marking the beginning of a
+new curve.
+
+<p>Information about line styles and labels on exported data is not
+used when the data are imported, so data that were exported usually
+look different after they are imported again. That allows you to mark
+data points and then draw a line or curve between them by exporting
+and then reimporting data. If you have marked a set of data points
+using labels containing identical symbols, then you can select one of
+those symbols, choose <code>Export selected curve or label's
+coordinates</code>, press <code>Escape</code> to deselect them, then
+choose <code>Import label or curve coordinates</code> to create a
+curve between those points.
+
+</ul>
+
+<h3>Digitization format</h3>
+
+<p>All data imported from or exported to a file use the UTF-8
+character encoding. If you export coordinates without comments,
+however, the output file will contain ASCII characters only, so most
+programs capable of reading plain text will be able to read and
+display the file. (Do not, however, use Windows Notepad. Use WordPad
+instead.)
+
+<p>For coordinate import and export, the only format supported is any
+number of text lines of either of two types. The first type of text
+line defines a single coordinate pair in the form of a number, a
+comma, and another number, possibly ending with a comment. The second
+line type separates data sets; these lines are empty or contain
+whitespace only, possibly followed by a comment. Any other line format
+is an error, and additional characters such as parentheses are not
+allowed.
+
+<p>Comments start with a sharp sign (#) and extend to the end of the
+line. Comments are ignored during data import.
+
+<p>Numbers are exported as either fixed point ("-3.7") or floating
+point ("1.7E15"). Imported numbers may be fixed point, floating point,
+fractions ("1/3"), or percentages ("37.2%").
+
+<p>If you need to export data in ways that are more advanced than
+these menu items allow, you could work directly from the PED files,
+which are in human-readable JSON format. The PED file format does not
+have a formal specification and may change, but looking at PED files
+in a text editor may give you an idea what is involved.</p>
+
+<p><a href="#Top">Return to top</a>
+
+<h2><a id=Chemistry>Chemistry</a></h2>
+
+<ul>
+
+<li><p><b>Components</b>: Identify the diagram components for binary
+and ternary diagrams. Binary diagrams whose X-axis indicates
+increasing the relative proportions of two substances have a left and
+right diagram component, while ternary diagrams have a left, right,
+and top component. In this context, the diagram components are the
+compounds that correspond to 0 and 100% of your independent variables,
+even if the displayed domain is a subset of that.
+
+<p>You must identify the diagram components in a way the program can
+understand before most of the chemistry functions can be used.
+
+<p><i><a id="chemical_syntax">Chemical formula syntax</a></i>: The
+program understands simple chemical formulas, possibly including
+parentheses or square brackets, as well as simple chemical formulas
+combined with leading coefficients and plus signs or colons (for
+example: <code>CO:6H<sub>2</sub>O</code>). Numbers may be entered as
+integers, fractions, fixed-point decimals, or percentages.
+
+<p>As soon as all diagram components are defined, the gray status bar
+at the bottom of the edit window will show additional information
+about points on the screen. If a position in the diagram matches a
+round formula exactly, that formula will be shown; otherwise, a
+decimal approximation is shown. Component values will be shown as a
+pair <code>mole percent/weight percent</code>.
+
+<p>The chemistry functions work best and the status bar shows the most
+information if coordinates are entered exactly, with values like 1/3 entered as 1/3 instead of as 0.33.
+
+<p>Also pay attention to your percent symbols and to the <code>Use
+percentages in labels</code> check box that appears in the "Edit
+Ruler" dialog. If you wish to show percentage values (that is, values
+that are 100 times greater than the proportion values) in a ruler,
+that box should be checked. Check the status bar: a proportion such as
+77% should be displayed as either "0.77" or "77%". If 77% displays as
+"77" or "7700%" in the status bar, then you need
+to <a href="#Scale">update the scale</a> for that variable, mapping
+old values of 0 and 100 to new values of 0 and 1, respectively.
+
+<li><p>If you have already created labels in your diagram for all of
+the diagram components, you may use the <b>Guess components</b>
+feature to automatically set the components. There is no guarantee
+that the guesses will be correct.
+
+<li><p><b>Proportions/Already displaying weight fraction</b>: The
+program assumes that coordinates inside the diagram are defined by
+mole fraction or mole percent instead of weight fraction/weight
+percent, until you tell it differently. (In other words, it assumes
+that a point located halfway between a concentration of 0% and 100% of
+a given component corresponds to a 50-50 molecular or atomic ratio,
+not a 50-50 weight ratio.) If the first element of the supposed mole
+percent/weight percent pair is actually showing the weight percent,
+then you need to check this box to tell the program that the
+coordinates are based on weight fraction or weight percent values. If
+the second element of the pair is actually showing mole fraction or
+mole percent, then you need to un-check this box to tell the program
+the diagram is not showing weight percent values.
+
+<li><p><b>Proportions/Convert to [weight/mole] fraction</b>: Transform
+the entire diagram between weight and mole fraction values.
+
+<p>There is no guarantee that every point on every curve of the
+diagram will be correct after you perform a conversion. The diagram
+may look funny, especially if there is a wide divergence between the
+mole and weight percents. Arrows and isotherm labels may no longer
+align with the curves they annotate.
+
+<li><p><b>Copy all formulas to clipboard</b>: Copy all unique formulas
+in the diagram to the clipboard in alphabetical order, one per line.
+For example, if there is a label that reads "Salt In H2O", then the
+formula list will include "In", for Indium, and "H2O".
+
+<li><p><b>Formula to mole/weight fraction</b> (also available by
+pressing the <code>%</code> key, that is <code>Shift+5</code> on US
+keyboards): Enter a chemical formula, and the molecular weight of the
+that formula and its representation in the Hill system will be
+displayed. You can also use this to check whether the program can
+parse the expression for use as a diagram component.
+
+<p>If the diagram components are properly defined and the formula
+corresponds to a point inside the diagram, you may press the <b>Locate
+compound in diagram</b> button to go there. A final step might be
+to <a href="#Label">create a label</a> at that point. In Microsoft
+Windows, you can press <code>Control-V</code> to paste your formula
+into the text window.
+
+</ul>
+
+<p><a href="#Top">Return to top</a>
+
+<h2><a id=View>View</a></h2>
+
+<p><a id=DragToZoom>Usually, the easiest way to zoom in is to press
+the left button and drag the mouse until a red zoom rectangle
+forms.</a>
+
+<p>Once you have zoomed in, you can use <b id=BestFit>Best fit</b>
+(<code>Control+B</code>) to zoom all the way back out again.
+
+<p><b id=ShowGrid>Show grid</b> (<code>Control+G</code> to toggle)
+overlays a grid onto the diagram. <a href="#NearestGridPoint">Nearest
+grid point</a> moves the mouse to the nearest intersection on that
+grid.
+
+<p>If you are tracing an image, you may use the <b>Background
+Image</b> submenu to select how to display the original image (if any)
+in the background of the new diagram. <b>Hide</b>
+(<code>Control+H</code>) changes the original image from visible to
+hidden and vice versa. <b>Detach</b> permanently removes the linkage
+from the new diagram to the original image; the background image
+disappears and the Zoom window closes.
+
+<p>The <b id=MathWindow>Show math window</b> checkbox can be used to
+close or reopen the math window, which displays information about the
+most recently selected point on a curve. The window displays some or
+all of the following values:
+
+<ul>
+  <li>the slope at that point
+  <li>the angle at that point
+  <li>the arc length from the left end of the curve to that point
+  <li>the total length of the curve
+  <li>the integral under the curve between the left end of the curve and that point
+  <li>the total area under the curve, or, for closed curves, the total area inside the curve
+</ul>
+
+<p>You can type angles or slope values into the math window to
+convert between them or to allow auto-positioning along the given
+angle.
+
+<p>Since you are already reading the help file, you do not need to
+read the <b>Hints</b>.
+
+<p><a href="#Top">Return to top</a>
+
+<h2><a id="Popup">Popup Menu</a></h2>
+
+<p>To open the popup menu, press the right mouse button while the
+mouse is inside the diagram. If you hold down the <code>Shift</code>
+key as you do this, the operation will apply
+to <a href="#Autoposition">the nearest point of special interest</a>.
+Otherwise, the operation will apply to the current mouse position.
+
+<ul>
+
+<li>If you previously <a href="#SelectPoint">selected an item</a>
+(usually highlighted in <span style="color:green;">green</span>),
+then <b>Deselect</b> (<code>Escape</code>) will un-highlight the item.
+
+<li><h3 id=PositionPopup>Position popup menu</h3>
+
+    <ul>
+
+      <li><b>Auto-position</b> moves the mouse
+      to <a href="#Autoposition">the nearest point of special
+      interest</a>.
+
+      <li><p><b id=NearestGridPoint>Nearest grid point</b> (<code>g</code>)
+          moves the mouse to the nearest round number coordinate.</p>
+
+      <li><p><b id=NearestPoint>Nearest key point</b> (<code>q</code>)
+          moves the mouse to the nearest key point, including</p>
+
+        <ul>
+          <li>decoration anchors and curve vertexes, as
+            for <a href="#SelectPoint">Select nearest point</a>
+          <li>curve and line intersections
+          <li>corners of the diagram
+          <li>segment midpoints
+          <li>If an item is selected, then the point on the curve
+            nearest the mouse that is nearest to the selection point
+            is also considered to be a key point. (In other words,
+            first identify the curve closest to the mouse. The point
+            on that curve that is closest to the selection point is a
+            key point.)
+        </ul>
+
+      <li><b id=NearestCurve>Nearest line/curve</b> (<code>w</code>)
+        moves the mouse to the the nearest point on any ruler or curve
+        and selects the nearest vertex on that ruler or curve.
+
+      <li><b id=SelectPoint>Select nearest point</b>
+        (<code>Shift+Q</code>) moves the mouse to decoration anchors
+        and curve vertexes, including
+
+        <ul>
+          <li>arrows
+          <li>curve vertex
+          <li>label anchors and label centers
+          <li>tie line region corners
+          <li>ruler endpoints
+        </ul>
+
+        <p>If this operation does not highlight the item you want the
+          first time, you may use the <code>Shift+Q</code> shortcut
+          again and again to highlight other items located nearby.</p>
+
+      <li><b>Select nearest line/curve</b> (<code>Shift+W</code>)
+        moves the mouse pointer to and selects the nearest vertex of
+        the nearest ruler or curve.
+
+    </ul>
+
+<p><a href="#Top">Return to top</a>
+
+<li><b>Jump Up, Down, Left,</b> or <b>Right</b>
+(<code>Shift+Up/Down/Left/Right</code> arrow) moves the mouse to the
+closest curve in the given direction. For example, in binary
+temperature/composition diagrams, <code>Shift+Left</code>
+and <code>Shift+Right</code> allow you to see each phase transition
+for a fixed temperature, while <code>Shift+Up</code>
+and <code>Shift+Down</code> allow you to see each phase transition for
+a fixed composition.
+
+<li><b>Step Up, Down, Left,</b> or <b> Right</b>
+(<code>Up/Down/Left/Right</code> arrow) moves the mouse in small
+increments.
+
+<li><h3 id=ViewPopup>View popup menu</h3>
+
+  <ul>
+    <li><b>Zoom in</b> (<code>Control++</code>, press <code>+</code>
+    (shift is not needed) while holding down the <code>Control</code>
+    key) zooms in by a fixed increment. This is an alternative to
+    zooming in by <a href="#DragToZoom">dragging the mouse</a>.
+
+    <li><b>Zoom out</b> (<code>Control+-</code>, press <code>-</code>
+    while holding down the <code>Control</code> key)
+    (<code>Control-Minus</code>) zooms out by a fixed increment. This
+    is an alternative to <a href="#BestFit">Best fit</a>.
+
+    <li><p><b>Center mouse</b> (<code>Control+L</code>) brings the
+        part of the diagram under the mouse towards the center of the
+        edit window. This has no effectd unless the diagram is zoomed
+        in.
+  </ul>
+
+<p><a href="#Top">Return to top</a>
+
+<li><p><b id=AddVertex>Add vertex</b> (<code>x</code>, or press the
+    left mouse button) starts a new curve if none is selected, or adds
+    a new vertex to an existing curve.
+
+<li><p><b id=AddAutopositionVertex>Add auto-positioned vertex</b>
+    (<code>Shift+X</code>, or press the left mouse button while
+    holding down the Shift key) is the same except that the new point
+    will be added <a href="#Autoposition">at the auto-position
+    location</a>.
+
+<li><h3 id=AddDecoration>Add decoration</h3>
+
+<ul>
+
+  <li><p><b id=Label>Label</b> (<code>t</code>) adds text or a symbol
+      anchored at the current mouse position. A window will open,
+      permitting you to choose the text, font size, angle, and anchor
+      orientation for the label.</p>
+
+    <p>The standard font size has characters whose height is about 2%
+      of the height of binary diagrams and 2% of the length of the
+      longest side of ternary diagrams. </p>
+
+    <ul>
+
+      <li>The <code>H2SO4-&gt;H<sub>2</sub>SO<sub>4</sub></code> button
+        converts numbers that appear to be meant as subscripts in
+        chemical formulas into actual subscripts.
+
+      <li>The <code>Table</code> button converts comma-separated
+      values into a table whose columns and rows align. A newline
+      starts a new row, and a comma starts a new cell. For example:
+
+        <blockquote>
+          1,2&lt;br&gt;<br>
+          one,two&lt;br&gt;<br>
+          uno,dos&lt;br&gt;<br>
+        </blockquote>
+
+        becomes
+
+        <blockquote>
+          <table>
+            <tr><td style="text-align:right">1&nbsp;<td>2</tr>
+            <tr><td style="text-align:right">one&nbsp;<td>two</tr>
+            <tr><td style="text-align:right">uno&nbsp;<td>dos</tr>
+          </table>
+        </blockquote>
+
+        <p>By default, the first column is right-aligned and the other
+        columns are left-aligned, but you can change that by removing
+        or adding "align=left" or "align=right" to the &lt;td&gt; tags
+        created during conversion.
+
+      <li>The nine anchor buttons in the lower right determine whether
+        the label will be centered at the anchor or will have a corner
+        or center of one side located there. The anchors use the text's
+        frame of reference: for example, if the label reads "Foo" and
+        the lower right button is selected, then the corner of the F
+        will lie closest to the anchor, no matter what text angle is
+        selected.
+
+      <li>If you check the box for <b id=LabelWhiteBackground>White label
+          background</b>, a white rectangle will be printed behind the
+        label. White label backgrounds only obscure decorations in lower
+        layers, so you may need to <a href="#Layer">raise the label</a>
+        as well.
+
+      <li>If you check the box for <b id=LabelWhiteHoles>White character
+          holes</b>, the insides of hollow letters and characters will
+        be painted white. This option is mostly useful for symbols,
+        and it insures that a hollow circle stands out when plotted
+        over a solid line. White character holes only obscure
+        decorations in lower layers, so you may need
+        to <a href="#Layer">raise the label</a> as well.
+
+      <li>If you check the box for <b>Label border</b>, the label will be
+        surrounded by a thin border.
+
+      <li>If you check the box for <b>Compact label</b>, the label
+      text wraps to achieve a good compromise between height and
+      width.
+
+    </ul>
+
+    <p>The <a href="#Copy">copy command</a> is the best way to create
+      many duplicates of a label, such as when marking data
+      points.</p>
+
+    <p><a href="#Top">Return to top</a>
+
+  <li><p><b id=Isotherm>Isotherm/Line Label</b> (<code>i</code>)
+      creates a label in the middle of the closest line.</p>
+
+  <li><p><b id=Arrowhead>Right Arrowhead</b> (<code>&gt;</code>) draws
+    an arrowhead that points at the angle indicated in the math
+    window. <b>Left Arrowhead</b> (<code>&lt;</code>) draws an
+    arrowhead that points in the opposite direction, press '&lt;'. The
+    size of the arrowhead is determined by the line width indicated in
+    the math window.</p>
+
+    <p><a href="#Top">Return to top</a>
+
+  <li><p><b id=Ruler>Ruler</b> creates a ruler or axis. However, you
+    must create and select a line segment that marks the ruler's
+    endpoints first. If you have done this, a window will open to
+    allow you to edit the ruler's properties.</p>
+
+    <p>There is currently no way to automatically generate a ruler that
+      displays weight percent values in a mole-percent diagram or vice
+      versa. All you can do is convert the entire diagram between the
+      two states.</p>
+
+    <p>Rulers in this program display values of a known variable or
+      component. You may choose to have the tick labels display the
+      basic value (which is the fractional value for components), a
+      percentage (100 times the basic value) or 10<sup>value</sup> for
+      logarithmic plots. For example, if <code>Si</code> is one of the
+      components of your diagram and you select it in the "Create Ruler"
+      dialog window's "Display variable/component" selection box, and
+      you check the <a href="#RulerPercent">Use percentages in
+        labels</a> box, then if there is a label displayed at the position
+      where your ruler crosses the 50% Si threshold, the label will
+      equal 50.</p>
+
+    <p>If no existing variable has the values you need your ruler to
+      display in the positions where your ruler needs them, you may need
+      to <a href="#Variable">create a new variable</a>.
+
+    <p>For more information on rulers, press the <b>Help</b> button
+      for the Create/Edit Ruler dialog.
+
+    <p><a href="#Top">Return to top</a>
+
+  <li><p><b id=TieLines>Tie Lines</b></p>
+
+    <p>To create a set of tie lines, select the<b>Tie Lines</b>
+      option of the <code>Add decoration</code> popup menu and
+      follow the instructions in the window that opens. </p>
+
+    <p>If tie lines connect two segments or curves, instead of
+      connecting a curve to a point, then the tie lines should
+      tend to converge to a point someplace outside of the region
+      defined by the tie lines. If that is not the case, then the
+      Tie Line decoration may not be suited to your need, and you
+      may need to draw the individal tie lines manually.
+
+    <p><a href="#Top">Return to top</a>
+
+</ul>
+
+<li><h3 id=Edit>Edit selection / Edit nearest item popup menus</h3>
+
+  <p>The commands in the <b>Edit selection</b> menu apply to the
+    currently selected item, usually highlighted
+    in <span style="color:green;">green</span>. If no item is
+    selected, the <b>Edit nearest item</b> menu allows you to apply
+    some of these operations to the item closest to the mouse pointer.</p>
+
+    <ul>
+
+      <li><p><b id=Color>Color</b> (<code>r</code>) changes the item's
+          color. If the selection is highlighted, you will not see its
+          true color until you deselect it. The color you choose
+          becomes the default color for new decorations until you
+          change it again.
+
+        <p>White decorations may seem to disappear, and curves and
+          labels that are filled in white may make items in
+          lower <a href="#Layer">layers</a> seem to disappear.</p>
+
+      <li><p><b id=Copy>Copy</b> (<code>c</code>) creates a new
+          copy of the selection at the current mouse position.</p>
+
+      <li><p><b id=CopyRegion>Copy everything in selected region</b>
+            (<code>Shift+C</code>) copies all decorations that are
+            entirely contained in that region.</p>
+
+      <li><p><b id=Delete>Delete</b> (<code>Delete</code>)
+          deletes a single vertex or decoration.</p>
+
+      <li><p><b id=DeleteAll>Delete all</b> deletes a curve, if a
+          curve is the selected or nearest item, or all labels that
+          share the same text, if a label is the selected or nearest
+          item. Otherwise, it deletes the selected or nearest
+          decoration.</p>
+
+      <li><p><b>Move selection only</b> (<code>Shift+V</code>) moves
+          the selected vertex or item to the current mouse position.</p>
+
+        <p>When moving labels that are not anchored in the center, it
+          makes a difference whether you select the label's center
+          (the green circle is empty) or its anchor (the green circle
+          is solid). Even if a label is anchored on the upper left
+          corner, for example, a label whose center is moved will end
+          up with its center, not the upper-left corner, at the new
+          position.</p>
+
+      <li><p><b>Move everything at selected point</b> (<code>v</code>)
+          moves the selected vertex or item and all other items at the
+          same location.</p>
+
+      <li><p><b>Move everything in selected region</b>
+          (<code>Shift+R</code>) moves the selected curve or ruler and
+          all selectable key points that lie on or in that curve or
+          ruler. This is most often used with closed curves.</p>
+
+      <li><p><b>Properties</b> (<code>e</code>) brings up a special
+          menu to edit the selected item's properties. Labels, rulers,
+          and tie lines may be edited this way.</p>
+
+      <li><p><b>Revert properties to default</b> (<code>d</code>)
+          changes the selected item's color, line thickness (if
+          applicable), and line style (if applicable) to the current
+          default values.</p>
+
+      <li><p><b>Make selection's properties the new default</b>
+          (<code>Shift+D</code>) changes the current default values
+          for color, line thickness (if applicable), and line style
+          (if applicable) to match the selected item.</p>
+
+        <p>Pressing <code>Shift+D</code> on one item and then
+          pressing <code>d</code> on others is a quick way to change
+          many things to match the first thing.</p>
+    </ul>
+
+<li><p>The <b id=Layer>Layer</b> menu determines the order in
+    which decorations are printed. Lower layers are printed
+    before higher layers -- to put it another way, the lower
+    layers form the background for the higher layers. For
+    instance, if you have two decorations that intersect, and
+    one is solid black while the other is solid red, then the
+    intersection will be red if the red decoration is higher or
+    black if the black decoration is higher. New decorations are
+    initially placed above all old ones.
+
+  <p>Plain black decorations never stand out against a black
+    background, regardless of layering, because the "white"
+    parts of the decoration are just holes that allow the
+    background to show through. To make a label stand out
+    against a black background, color the label non-black or
+    check <a href="#LabelWhiteBackground">White label
+      background</a> or, for data points,
+    possibly <a href="#LabelWhiteHoles">White character
+      holes</a>. In either case, the label needs to be moved to a
+    higher layer than the background before it can be
+    visible.</p>
+
+  <p><b>Lower</b> moves the selected or nearest item farther
+    into the background, while <b>Raise</b> moves the item
+    closer to the foreground. <b>To bottom</b> moves the item
+    all the way into the background, and <b>To top</b> moves the
+    item all the way into the foreground.</p>
+
+<li><p><b>Copy coordinates to clipboard</b> copies all of the
+    coordinate information in the gray status bar at the bottom of the
+    Editor screen to the clipboard.</p>
+
+</ul>
+
+<p><a href="#Top">Return to top</a>
+
+<h2>Drawing common shapes</h2>
+
+<h3 id=Rectangle>Rectangle</h3>
+
+<p>To draw a rectangle as a 4-point unsmoothed curve:
+
+<ol> 
+
+<li>If necessary, <a href="#Smooth">unselect the <code>Curve/Smooth
+  through new points</code> check box</a>. Also, if a curve is already
+  selected, press <code>Escape</code> to unselect it.
+
+<li>Add the bottom left corner of the rectangle using any of the
+various mouse positioning methods described elsewhere.
+
+<li>Move the mouse near the intended bottom right corner and
+press <code>Shift+left mouse button</code>.
+
+<li>Move the mouse near the intended upper right corner and
+  press <code>Shift+left mouse button</code>.
+
+<li><a href=#ToggleClosure>Press <code>o</code></a> to make a closed
+polygon.
+
+<li>Move the mouse near the intended upper left corner and
+  press <code>Shift+left mouse button</code> when you see the
+  olive-colored crosshairs.
+
+</ol>
+
+<h3 id=Parallel>Parallel lines</h3>
+
+<p>To create vertical or horizontal lines, just use the Shift key for
+auto-positioning. To create other parallel lines:</p>
+
+<ol>
+
+<li>Add the first vertex of the line using one of the procedures
+already described. Let the new vertex remain selected.
+
+<li>Press <code>w</code> to select the line you want the new line to
+  be parallel to. This will enter the slope of that line in the math
+  window so auto-position will prefer points at the given slope with
+  respect to your first vertex.
+
+<li>Move the mouse near the other intended endpoint and
+  press <code>Shift+left mouse button</code>.
+
+</ol>
+
+<h3 id=Circle>Circle</h3>
+
+<p>The program does not currently support perfect circles, but a close
+approximation can be obtained with the same procedure
+as <a href=#Rectangle>how to draw a rectangle</a> to draw a rough
+square, with one difference: make sure that <code>Curve/Smooth through
+new points</code> is checked before you start. A smoothed curve
+through the four corners of an almost square rectangle is almost
+circular.
+
+</body>
+</html>

@@ -1,0 +1,297 @@
+{
+  "tags" : [ ],
+  "principalToStandardPage" : {
+    "transform" : "RectangleTransform",
+    "input" : {
+      "x" : 0.0,
+      "y" : 0.0,
+      "width" : 1.0,
+      "height" : 1.0
+    },
+    "output" : {
+      "x" : 0.0,
+      "y" : 1.0,
+      "width" : 1.0,
+      "height" : -1.0
+    }
+  },
+  "pageBounds" : {
+    "x" : 0.0143770669607914,
+    "y" : 0.0958928523428415,
+    "width" : 0.5570349219972592,
+    "height" : 1.0645038197612318
+  },
+  "diagramType" : "OTHER",
+  "diagramComponents" : [ null, null, null, null ],
+  "axes" : [ {
+    "format" : {
+      "type" : "DecimalFormat",
+      "pattern" : "#0.0000"
+    },
+    "a" : 1.0,
+    "b" : 0.0,
+    "c" : 0.0,
+    "name" : "X"
+  }, {
+    "format" : {
+      "type" : "DecimalFormat",
+      "pattern" : "#0.0000"
+    },
+    "a" : 0.0,
+    "b" : 1.0,
+    "c" : 0.0,
+    "name" : "Y"
+  } ],
+  "usingWeightFraction" : false,
+  "fontName" : "DejaVu LGC Sans PED",
+  "keys" : { },
+  "decorations" : [ {
+    "decoration" : "curve",
+    "curve" : {
+      "points" : [ {
+	"x" : 0.06496645696945898,
+	"y" : 0.09071780509252536
+      }, {
+	"x" : 0.12875610496856194,
+	"y" : 0.2684091549197931
+      }, {
+	"x" : 0.1286749540274666,
+	"y" : 0.7332571956106477
+      }, {
+	"x" : 0.47703984215139084,
+	"y" : 0.7332571956106477
+      }, {
+	"x" : 0.4517415511623091,
+	"y" : 0.7527600380676738
+      }, {
+	"x" : 0.06848521612736237,
+	"y" : 0.7536772909189089
+      }, {
+	"x" : 0.07674715121742756,
+	"y" : 0.7288387435241568
+      }, {
+	"x" : 0.07282025313477138,
+	"y" : 0.6355749140610721
+      }, {
+	"x" : 0.10423543779602093,
+	"y" : 0.5756897183005651
+      } ],
+      "smoothed" : [ false, false, false, false, false, false, false, false, false ],
+      "closed" : true
+    },
+    "color" : {
+      "rgb" : -6710887
+    },
+    "lineWidth" : 0.006,
+    "fillStyle" : "SOLID",
+    "id" : 14
+  }, {
+    "decoration" : "label",
+    "text" : "Adding vertical distance to a fall reduces<br>\nthe horizontal energy of swinging into a wall",
+    "xWeight" : 0.5,
+    "yWeight" : 1.0,
+    "x" : 0.2928906110038453,
+    "y" : 0.8432291223045395,
+    "scale" : 1.2
+  }, {
+    "decoration" : "label",
+    "text" : "1 meter horizontal offset<br>\nbetween climber and protection",
+    "xWeight" : 0.5,
+    "yWeight" : 0.5,
+    "x" : 0.3028573980894287,
+    "y" : 0.7919491061097873,
+    "scale" : 1.1
+  }, {
+    "decoration" : "label",
+    "text" : "●",
+    "xWeight" : 0.5,
+    "yWeight" : 0.5,
+    "x" : 0.47703984215139084,
+    "y" : 0.7332571956106477,
+    "scale" : 1.3,
+    "color" : {
+      "rgb" : -16777216
+    }
+  }, {
+    "decoration" : "curve",
+    "curve" : {
+      "points" : [ {
+	"x" : 0.47703984215139084,
+	"y" : 0.7332571956106477
+      }, {
+	"x" : 0.47703984215139084,
+	"y" : 0.057353581152816635
+      } ],
+      "smoothed" : [ false, false ],
+      "closed" : false
+    },
+    "lineWidth" : 0.0048,
+    "lineStyle" : "DASH2",
+    "id" : 1
+  }, {
+    "decoration" : "label",
+    "text" : "climber falls n meters<br>\nspeed when rope starts to come taut = sqrt(2gn)",
+    "xWeight" : 0.5,
+    "yWeight" : 1.0,
+    "x" : 0.49241364053521364,
+    "y" : 0.4322244933731262,
+    "angle" : -1.5707963267948966,
+    "scale" : 1.1
+  }, {
+    "decoration" : "curve",
+    "curve" : {
+      "points" : [ {
+	"x" : 0.1286749540274666,
+	"y" : 0.7332571956106477
+      }, {
+	"x" : 0.47703984215139084,
+	"y" : 0.057353581152816635
+      } ],
+      "smoothed" : [ false, false ],
+      "closed" : false
+    },
+    "lineWidth" : 0.0024,
+    "lineStyle" : "SOLID",
+    "id" : 2
+  }, {
+    "decoration" : "curve",
+    "curve" : {
+      "points" : [ {
+	"x" : 0.47703984215139084,
+	"y" : 0.057353581152816635
+      }, {
+	"x" : 0.15770796734608622,
+	"y" : 0.2848474016272782
+      } ],
+      "smoothed" : [ false, false ],
+      "closed" : false
+    },
+    "color" : {
+      "rgb" : -16777216
+    },
+    "lineWidth" : 0.0048,
+    "lineStyle" : "DASH2",
+    "id" : 3
+  }, {
+    "decoration" : "arrow",
+    "x" : 0.15770796734608622,
+    "y" : 0.2848474016272782,
+    "size" : 0.0048,
+    "angle" : 2.5225892059777513,
+    "color" : {
+      "rgb" : -16777216
+    }
+  }, {
+    "decoration" : "arrow",
+    "x" : 0.47703984215139084,
+    "y" : 0.057353581152816635,
+    "size" : 0.0048,
+    "angle" : -1.5707963267948966,
+    "color" : {
+      "rgb" : -16777216
+    }
+  }, {
+    "decoration" : "label",
+    "text" : "Worst case: climber rebounds<br>\ninstantly with no energy loss<br>\nv = sqrt(2gn)",
+    "xWeight" : 0.5,
+    "x" : 0.30242947047222063,
+    "y" : 0.17954129842122113,
+    "angle" : -0.6195918844579871,
+    "scale" : 0.9
+  }, {
+    "decoration" : "label",
+    "text" : "rope rest length = sqrt(1 + n<sup>2</sup>)",
+    "xWeight" : 0.5,
+    "yWeight" : 1.0,
+    "x" : 0.3028573980894287,
+    "y" : 0.3953053883817322,
+    "angle" : -1.0943214410004447,
+    "scale" : 1.1
+  }, {
+    "decoration" : "curve",
+    "curve" : {
+      "points" : [ {
+	"x" : 0.15770796734608622,
+	"y" : 0.2848474016272782
+      }, {
+	"x" : 0.15770796734608622,
+	"y" : 0.057353581152816635
+      }, {
+	"x" : 0.47703984215139084,
+	"y" : 0.057353581152816635
+      } ],
+      "smoothed" : [ false, false, false ],
+      "closed" : false
+    },
+    "lineWidth" : 0.0024,
+    "lineStyle" : "DASH2",
+    "id" : 5
+  }, {
+    "decoration" : "label",
+    "text" : "v<sub>x</sub> = sin(2θ) sqrt(2gn)<br>\nsin(2θ) ≤ 2 tan θ ≤ 2/n<br>\nv<sub>x</sub> ≤ (2/n) sqrt(2gn) ≤ 2 sqrt(2g/n)<br>\nE<sub>K<sub>x</sub></sub> ≤ 4mg/n",
+    "xWeight" : 0.5,
+    "x" : 0.3173739047487385,
+    "y" : 0.057353581152816635,
+    "scale" : 1.1
+  }, {
+    "decoration" : "label",
+    "text" : "θ",
+    "xWeight" : 0.5,
+    "yWeight" : 0.5,
+    "x" : 0.45621368036137366,
+    "y" : 0.1576978152319901,
+    "scale" : 1.3,
+    "color" : {
+      "rgb" : -16777216
+    }
+  }, {
+    "decoration" : "label",
+    "text" : "θ",
+    "xWeight" : 0.5,
+    "yWeight" : 0.5,
+    "x" : 0.4069882070395148,
+    "y" : 0.13687165344197294,
+    "scale" : 1.3,
+    "color" : {
+      "rgb" : -16777216
+    }
+  }, {
+    "decoration" : "label",
+    "text" : "○",
+    "xWeight" : 0.5,
+    "yWeight" : 0.5,
+    "x" : 0.1286749540274666,
+    "y" : 0.7332571956106477,
+    "scale" : 1.6,
+    "cutout" : true
+  }, {
+    "decoration" : "label",
+    "text" : "More rope stretch means more potential<br>\nenergy expended, but less converted<br>\nto horizontal velocity.",
+    "xWeight" : 0.5,
+    "x" : 0.2978142441145838,
+    "y" : -0.08882463050419354,
+    "scale" : 0.9
+  }, {
+    "decoration" : "curve",
+    "curve" : {
+      "points" : [ {
+	"x" : 0.4068832550772112,
+	"y" : -0.030489311680492737
+      }, {
+	"x" : 0.23235615512003616,
+	"y" : -0.030489311680492737
+      }, {
+	"x" : 0.23235615512003616,
+	"y" : -0.0691356680430073
+      }, {
+	"x" : 0.40688325507721124,
+	"y" : -0.0691356680430073
+      } ],
+      "smoothed" : [ false, false, false, false ],
+      "closed" : true
+    },
+    "lineWidth" : 0.0024,
+    "lineStyle" : "SOLID",
+    "id" : 15
+  } ]
+}

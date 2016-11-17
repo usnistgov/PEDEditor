@@ -1,0 +1,897 @@
+{
+  "tags" : [ ],
+  "principalToStandardPage" : {
+    "transform" : "RectangleTransform",
+    "input" : {
+      "x" : 0.0,
+      "y" : 0.0,
+      "width" : 1.0,
+      "height" : 1.0
+    },
+    "output" : {
+      "x" : 0.0,
+      "y" : 1.0,
+      "width" : 1.0,
+      "height" : -1.0
+    }
+  },
+  "pageBounds" : {
+    "x" : 0.03572886664283218,
+    "y" : -0.01277518609154282,
+    "width" : 0.9461739902896869,
+    "height" : 1.0071639723850485
+  },
+  "diagramType" : "OTHER",
+  "diagramComponents" : [ null, null, null, null ],
+  "axes" : [ {
+    "format" : {
+      "type" : "DecimalFormat",
+      "pattern" : "#0.000"
+    },
+    "a" : 1.0,
+    "b" : 0.0,
+    "c" : 0.0,
+    "name" : "X"
+  }, {
+    "format" : {
+      "type" : "DecimalFormat",
+      "pattern" : "#0.0000"
+    },
+    "a" : 894.4404570212026,
+    "b" : 0.0,
+    "c" : -515.7436178124074,
+    "name" : "X-axis"
+  }, {
+    "format" : {
+      "type" : "DecimalFormat",
+      "pattern" : "#0.000"
+    },
+    "a" : 0.0,
+    "b" : 1.0,
+    "c" : 0.0,
+    "name" : "Y"
+  }, {
+    "format" : {
+      "type" : "DecimalFormat",
+      "pattern" : "#0.0000"
+    },
+    "a" : 0.0,
+    "b" : 24.829059829059567,
+    "c" : -11.380804447699209,
+    "name" : "exponent"
+  }, {
+    "format" : {
+      "type" : "DecimalFormat",
+      "pattern" : "#0.000"
+    },
+    "a" : 1.0,
+    "b" : 0.0,
+    "c" : 0.0,
+    "name" : "page X"
+  }, {
+    "format" : {
+      "type" : "DecimalFormat",
+      "pattern" : "#0.000"
+    },
+    "a" : 0.0,
+    "b" : -1.0,
+    "c" : 1.0,
+    "name" : "page Y"
+  } ],
+  "usingWeightFraction" : false,
+  "fontName" : "DejaVu LGC Serif PED",
+  "keys" : { },
+  "decorations" : [ {
+    "decoration" : "ruler",
+    "startPoint" : {
+      "x" : 0.4788147649386234,
+      "y" : 0.10597323309739903
+    },
+    "endPoint" : {
+      "x" : 0.4788147649386234,
+      "y" : 0.39415295382956317
+    },
+    "lineWidth" : 0.0016,
+    "labelAnchor" : "LEFT",
+    "tickRight" : true,
+    "tickLeft" : true,
+    "axis" : "Y",
+    "fontSize" : 0.016260162601626018
+  }, {
+    "decoration" : "curve",
+    "curve" : {
+      "points" : [ {
+	"x" : 0.4077882347925092,
+	"y" : 0.6931291964001514
+      } ],
+      "smoothed" : [ false ],
+      "closed" : false
+    },
+    "lineWidth" : 0.0016,
+    "lineStyle" : "SOLID",
+    "id" : 15
+  }, {
+    "decoration" : "curve",
+    "curve" : {
+      "points" : [ {
+	"x" : 0.477218172233878,
+	"y" : 0.4593671936197805
+      } ],
+      "smoothed" : [ false ],
+      "closed" : false
+    },
+    "lineWidth" : 0.0016,
+    "lineStyle" : "SOLID",
+    "id" : 16
+  }, {
+    "decoration" : "curve",
+    "curve" : {
+      "points" : [ {
+	"x" : 0.5,
+	"y" : 1.0
+      } ],
+      "smoothed" : [ false ],
+      "closed" : false
+    },
+    "lineWidth" : 0.0016,
+    "lineStyle" : "SOLID",
+    "id" : 18
+  }, {
+    "decoration" : "curve",
+    "curve" : {
+      "points" : [ {
+	"x" : 0.8157418428178242,
+	"y" : 0.2741702620080031
+      } ],
+      "smoothed" : [ false ],
+      "closed" : false
+    },
+    "lineWidth" : 0.0032,
+    "lineStyle" : "SOLID",
+    "id" : 19
+  }, {
+    "decoration" : "curve",
+    "curve" : {
+      "points" : [ {
+	"x" : 0.23006370068916257,
+	"y" : 0.7016436163840082
+      } ],
+      "smoothed" : [ false ],
+      "closed" : false
+    },
+    "lineWidth" : 0.0032,
+    "lineStyle" : "SOLID",
+    "id" : 20
+  }, {
+    "decoration" : "curve",
+    "curve" : {
+      "points" : [ {
+	"x" : 0.6185116851476343,
+	"y" : 0.6559604837583157
+      } ],
+      "smoothed" : [ false ],
+      "closed" : false
+    },
+    "lineWidth" : 0.0032,
+    "lineStyle" : "SOLID",
+    "id" : 21
+  }, {
+    "decoration" : "curve",
+    "curve" : {
+      "points" : [ {
+	"x" : 0.5448004813365371,
+	"y" : 0.3748143480913252
+      }, {
+	"x" : 0.9650230502826584,
+	"y" : 0.3748143480913252
+      } ],
+      "smoothed" : [ false, false ],
+      "closed" : false
+    },
+    "lineWidth" : 0.0024,
+    "lineStyle" : "SOLID",
+    "id" : 22
+  }, {
+    "decoration" : "curve",
+    "curve" : {
+      "points" : [ {
+	"x" : 0.42780662611935494,
+	"y" : 0.2925682084429442
+      } ],
+      "smoothed" : [ false ],
+      "closed" : false
+    },
+    "lineWidth" : 0.0024,
+    "lineStyle" : "SOLID",
+    "id" : 23
+  }, {
+    "decoration" : "curve",
+    "curve" : {
+      "points" : [ {
+	"x" : 0.787787277924935,
+	"y" : 0.3748143480913252
+      }, {
+	"x" : 0.7883620241151953,
+	"y" : 0.48512634797782794
+      } ],
+      "smoothed" : [ false, false ],
+      "closed" : false
+    },
+    "lineWidth" : 0.0024,
+    "lineStyle" : "SOLID",
+    "id" : 24
+  }, {
+    "decoration" : "curve",
+    "curve" : {
+      "points" : [ {
+	"x" : 0.7503889039411951,
+	"y" : 0.3748143480913252
+      }, {
+	"x" : 0.7502224892314744,
+	"y" : 0.4916379758848046
+      } ],
+      "smoothed" : [ false, false ],
+      "closed" : false
+    },
+    "lineWidth" : 0.0024,
+    "lineStyle" : "SOLID",
+    "id" : 25
+  }, {
+    "decoration" : "curve",
+    "curve" : {
+      "points" : [ {
+	"x" : 0.7048604486566422,
+	"y" : 0.3748143480913252
+      }, {
+	"x" : 0.7046410938826372,
+	"y" : 0.3083821619313163
+      } ],
+      "smoothed" : [ false, false ],
+      "closed" : false
+    },
+    "lineWidth" : 0.0024,
+    "lineStyle" : "SOLID",
+    "id" : 26
+  }, {
+    "decoration" : "curve",
+    "curve" : {
+      "points" : [ {
+	"x" : 0.6560799608517642,
+	"y" : 0.3748143480913252
+      }, {
+	"x" : 0.6562690008593814,
+	"y" : 0.3083821619313163
+      } ],
+      "smoothed" : [ false, false ],
+      "closed" : false
+    },
+    "lineWidth" : 0.0024,
+    "lineStyle" : "SOLID",
+    "id" : 27
+  }, {
+    "decoration" : "curve",
+    "curve" : {
+      "points" : [ {
+	"x" : 0.05212862340706364,
+	"y" : 0.19595041062147645
+      }, {
+	"x" : 0.05212862340706364,
+	"y" : 0.03487485254193956
+      }, {
+	"x" : 0.368874519496354,
+	"y" : 0.03487485254193956
+      } ],
+      "smoothed" : [ false, false, false ],
+      "closed" : true
+    },
+    "lineWidth" : 0.0024,
+    "lineStyle" : "SOLID",
+    "id" : 51
+  }, {
+    "decoration" : "curve",
+    "curve" : {
+      "points" : [ {
+	"x" : 0.0665116869052307,
+	"y" : 0.18863615648759624
+      }, {
+	"x" : 0.06651168690523071,
+	"y" : 0.03487485254193956
+      } ],
+      "smoothed" : [ false, false ],
+      "closed" : false
+    },
+    "lineWidth" : 0.0024,
+    "lineStyle" : "SOLID",
+    "id" : 52
+  }, {
+    "decoration" : "curve",
+    "curve" : {
+      "points" : [ {
+	"x" : 0.09935877003897929,
+	"y" : 0.17193234970627014
+      }, {
+	"x" : 0.0993587700389793,
+	"y" : 0.03487485254193956
+      } ],
+      "smoothed" : [ false, false ],
+      "closed" : false
+    },
+    "lineWidth" : 0.0024,
+    "lineStyle" : "SOLID",
+    "id" : 53
+  }, {
+    "decoration" : "curve",
+    "curve" : {
+      "points" : [ {
+	"x" : 0.13477765922869156,
+	"y" : 0.1539206961592834
+      }, {
+	"x" : 0.1347776592286916,
+	"y" : 0.03487485254193956
+      } ],
+      "smoothed" : [ false, false ],
+      "closed" : false
+    },
+    "lineWidth" : 0.0024,
+    "lineStyle" : "SOLID",
+    "id" : 54
+  }, {
+    "decoration" : "curve",
+    "curve" : {
+      "points" : [ {
+	"x" : 0.1710984665144188,
+	"y" : 0.13545038801739484
+      }, {
+	"x" : 0.1710984665144188,
+	"y" : 0.03487485254193956
+      } ],
+      "smoothed" : [ false, false ],
+      "closed" : false
+    },
+    "lineWidth" : 0.0024,
+    "lineStyle" : "SOLID",
+    "id" : 55
+  }, {
+    "decoration" : "curve",
+    "curve" : {
+      "points" : [ {
+	"x" : 0.21222355039080038,
+	"y" : 0.11453694945909831
+      }, {
+	"x" : 0.21222355039080038,
+	"y" : 0.03487485254193956
+      } ],
+      "smoothed" : [ false, false ],
+      "closed" : false
+    },
+    "lineWidth" : 0.0024,
+    "lineStyle" : "SOLID",
+    "id" : 56
+  }, {
+    "decoration" : "curve",
+    "curve" : {
+      "points" : [ {
+	"x" : 0.2428530461267563,
+	"y" : 0.09896085777084773
+      }, {
+	"x" : 0.2428530461267563,
+	"y" : 0.03487485254193956
+      } ],
+      "smoothed" : [ false, false ],
+      "closed" : false
+    },
+    "lineWidth" : 0.0024,
+    "lineStyle" : "SOLID",
+    "id" : 57
+  }, {
+    "decoration" : "curve",
+    "curve" : {
+      "points" : [ {
+	"x" : 0.27521196237025247,
+	"y" : 0.08250529968115172
+      }, {
+	"x" : 0.27521196237025247,
+	"y" : 0.03487485254193956
+      } ],
+      "smoothed" : [ false, false ],
+      "closed" : false
+    },
+    "lineWidth" : 0.0024,
+    "lineStyle" : "SOLID",
+    "id" : 58
+  }, {
+    "decoration" : "curve",
+    "curve" : {
+      "points" : [ {
+	"x" : 0.3089311973262203,
+	"y" : 0.065357975420267
+      }, {
+	"x" : 0.3089311973262203,
+	"y" : 0.03487485254193956
+      } ],
+      "smoothed" : [ false, false ],
+      "closed" : false
+    },
+    "lineWidth" : 0.0024,
+    "lineStyle" : "SOLID",
+    "id" : 59
+  }, {
+    "decoration" : "curve",
+    "curve" : {
+      "points" : [ {
+	"x" : 0.34306418348795065,
+	"y" : 0.048000245256110574
+      }, {
+	"x" : 0.34306418348795065,
+	"y" : 0.03487485254193956
+      } ],
+      "smoothed" : [ false, false ],
+      "closed" : false
+    },
+    "lineWidth" : 0.0024,
+    "lineStyle" : "SOLID",
+    "id" : 60
+  }, {
+    "decoration" : "label",
+    "text" : "Labels Test",
+    "xWeight" : 0.5,
+    "x" : 0.5,
+    "y" : 1.0,
+    "angle" : -0.0,
+    "scale" : 2.0,
+    "boxed" : true
+  }, {
+    "decoration" : "label",
+    "text" : "Upside down",
+    "xWeight" : 0.5,
+    "x" : 0.4077882347925092,
+    "y" : 0.6931291964001514,
+    "angle" : -3.141592653589793,
+    "scale" : 1.0,
+    "boxed" : true
+  }, {
+    "decoration" : "label",
+    "text" : "Northwest",
+    "x" : 0.477218172233878,
+    "y" : 0.4593671936197805,
+    "scale" : 2.0,
+    "boxed" : true
+  }, {
+    "decoration" : "label",
+    "text" : "C⁺ C⁻ C<sub>2</sub> C<sub>3</sub> C<sub>4</sub> C<sub>5</sub> C<sub>6</sub> Ã ○ ● ◓ ◉ ⦵ ✕ □ ■ △ ▲ ▽ ▼ ◇ ◆ ✡ ✶",
+    "xWeight" : 0.5,
+    "yWeight" : 0.5,
+    "x" : 0.33954924376612194,
+    "y" : 0.5660970292527423,
+    "scale" : 1.4,
+    "boxed" : true,
+    "autoWidth" : true
+  }, {
+    "decoration" : "label",
+    "text" : "√2°𝜋𝑒 →←±≅∫∇⇌∞≡≠≥≤",
+    "xWeight" : 0.5,
+    "yWeight" : 0.5,
+    "x" : 0.48941890237157926,
+    "y" : 0.8607462561017611,
+    "scale" : 1.4,
+    "boxed" : true
+  }, {
+    "decoration" : "label",
+    "text" : "Southeast",
+    "xWeight" : 1.0,
+    "yWeight" : 1.0,
+    "x" : 0.8157418428178242,
+    "y" : 0.2741702620080031,
+    "angle" : 0.7853981633974483,
+    "scale" : 2.0,
+    "boxed" : true
+  }, {
+    "decoration" : "label",
+    "text" : "m",
+    "xWeight" : 1.0,
+    "yWeight" : 1.0,
+    "x" : 0.23006370068916257,
+    "y" : 0.7016436163840082,
+    "angle" : -0.0,
+    "scale" : 3.0,
+    "boxed" : true
+  }, {
+    "decoration" : "label",
+    "text" : "p",
+    "xWeight" : 1.0,
+    "yWeight" : 1.0,
+    "x" : 0.6185116851476343,
+    "y" : 0.6559604837583157,
+    "angle" : -0.0,
+    "scale" : 4.0,
+    "boxed" : true
+  }, {
+    "decoration" : "label",
+    "text" : "E=mc<sup>2</sup>",
+    "xWeight" : 0.5,
+    "yWeight" : 0.5,
+    "x" : 0.5018503962082186,
+    "y" : 0.06373099914061853,
+    "scale" : 2.0,
+    "boxed" : true
+  }, {
+    "decoration" : "label",
+    "text" : "○",
+    "xWeight" : 0.5,
+    "yWeight" : 0.5,
+    "x" : 0.6560799608517642,
+    "y" : 0.3748143480913252,
+    "scale" : 2.0
+  }, {
+    "decoration" : "label",
+    "text" : "◉",
+    "xWeight" : 0.5,
+    "yWeight" : 0.5,
+    "x" : 0.7048604486566422,
+    "y" : 0.3748143480913252,
+    "scale" : 2.0
+  }, {
+    "decoration" : "label",
+    "text" : "□",
+    "xWeight" : 0.5,
+    "yWeight" : 0.5,
+    "x" : 0.7503889039411951,
+    "y" : 0.3748143480913252,
+    "scale" : 2.0
+  }, {
+    "decoration" : "label",
+    "text" : "△",
+    "xWeight" : 0.5,
+    "yWeight" : 0.5,
+    "x" : 0.787787277924935,
+    "y" : 0.3748143480913252,
+    "scale" : 2.0
+  }, {
+    "decoration" : "label",
+    "text" : "There once was a man from St. Paul<br>who fell in a spring in the fall<br>'Twould have been a sad thing<br>had he died in the spring,<br>but he didn't; he died in the fall.",
+    "xWeight" : 1.0,
+    "yWeight" : 0.5,
+    "x" : 0.42780662611935494,
+    "y" : 0.2925682084429442,
+    "scale" : 1.0,
+    "boxed" : true
+  }, {
+    "decoration" : "label",
+    "text" : "<i>red italic</i>",
+    "xWeight" : 0.5,
+    "yWeight" : 0.5,
+    "x" : 0.31913032484055975,
+    "y" : 0.7912137259964491,
+    "scale" : 1.4,
+    "color" : {
+      "rgb" : -52429
+    },
+    "boxed" : true
+  }, {
+    "decoration" : "label",
+    "text" : "normal <b>bold</b>",
+    "xWeight" : 0.5,
+    "yWeight" : 0.5,
+    "x" : 0.3263788665961435,
+    "y" : 0.7486211334038565,
+    "scale" : 1.0,
+    "boxed" : true
+  }, {
+    "decoration" : "label",
+    "text" : "<u>under</u>",
+    "xWeight" : 0.5,
+    "yWeight" : 0.5,
+    "x" : 0.4365640517813287,
+    "y" : 0.7865840963668195,
+    "scale" : 1.0,
+    "boxed" : true
+  }, {
+    "decoration" : "label",
+    "text" : "▽",
+    "xWeight" : 0.5,
+    "yWeight" : 0.5,
+    "x" : 0.8824999093221194,
+    "y" : 0.3748143480913252,
+    "scale" : 2.0,
+    "cutout" : true
+  }, {
+    "decoration" : "label",
+    "text" : "◓",
+    "xWeight" : 0.5,
+    "yWeight" : 0.5,
+    "x" : 0.6165034262789182,
+    "y" : 0.3748143480913252,
+    "scale" : 2.0
+  }, {
+    "decoration" : "label",
+    "text" : "⦵",
+    "xWeight" : 0.5,
+    "yWeight" : 0.5,
+    "x" : 0.0665116869052307,
+    "y" : 0.18863615648759624,
+    "scale" : 2.0
+  }, {
+    "decoration" : "label",
+    "text" : "✕",
+    "xWeight" : 0.5,
+    "yWeight" : 0.5,
+    "x" : 0.09935877003897929,
+    "y" : 0.17193234970627014,
+    "scale" : 2.0
+  }, {
+    "decoration" : "label",
+    "text" : "●",
+    "xWeight" : 0.5,
+    "yWeight" : 0.5,
+    "x" : 0.13477765922869156,
+    "y" : 0.1539206961592834,
+    "scale" : 2.0
+  }, {
+    "decoration" : "label",
+    "text" : "■",
+    "xWeight" : 0.5,
+    "yWeight" : 0.5,
+    "x" : 0.1710984665144188,
+    "y" : 0.13545038801739484,
+    "scale" : 2.0
+  }, {
+    "decoration" : "label",
+    "text" : "▲",
+    "xWeight" : 0.5,
+    "yWeight" : 0.5,
+    "x" : 0.21222355039080038,
+    "y" : 0.11453694945909831,
+    "scale" : 2.0
+  }, {
+    "decoration" : "label",
+    "text" : "▼",
+    "xWeight" : 0.5,
+    "yWeight" : 0.5,
+    "x" : 0.2428530461267563,
+    "y" : 0.09896085777084773,
+    "scale" : 2.0
+  }, {
+    "decoration" : "label",
+    "text" : "◇",
+    "xWeight" : 0.5,
+    "yWeight" : 0.5,
+    "x" : 0.27521196237025247,
+    "y" : 0.08250529968115172,
+    "scale" : 2.0
+  }, {
+    "decoration" : "label",
+    "text" : "◆",
+    "xWeight" : 0.5,
+    "yWeight" : 0.5,
+    "x" : 0.3089311973262203,
+    "y" : 0.065357975420267,
+    "scale" : 2.0
+  }, {
+    "decoration" : "label",
+    "text" : "✡",
+    "xWeight" : 0.5,
+    "yWeight" : 0.5,
+    "x" : 0.34306418348795065,
+    "y" : 0.048000245256110574,
+    "scale" : 2.0
+  }, {
+    "decoration" : "label",
+    "text" : "✶",
+    "xWeight" : 0.5,
+    "yWeight" : 0.5,
+    "x" : 0.3688745194963543,
+    "y" : 0.03487485254193956,
+    "scale" : 2.0
+  }, {
+    "decoration" : "label",
+    "text" : "Henry Ⅳ",
+    "xWeight" : 0.5,
+    "yWeight" : 0.5,
+    "x" : 0.09823180672210206,
+    "y" : 0.9522621559562734,
+    "scale" : 1.2
+  }, {
+    "decoration" : "label",
+    "text" : "αβγΑΒΓπφ",
+    "xWeight" : 0.5,
+    "yWeight" : 0.5,
+    "x" : 0.22752524776087787,
+    "y" : 0.9522621559562734,
+    "scale" : 1.2
+  }, {
+    "decoration" : "label",
+    "text" : "M",
+    "xWeight" : 0.5,
+    "yWeight" : 0.5,
+    "x" : 0.11604511552645412,
+    "y" : 0.6518447927304266,
+    "scale" : 3.0,
+    "boxed" : true
+  }, {
+    "decoration" : "label",
+    "text" : "○",
+    "xWeight" : 0.5,
+    "yWeight" : 0.5,
+    "x" : 0.9238017617462675,
+    "y" : 0.3748143480913252,
+    "scale" : 2.0,
+    "color" : {
+      "rgb" : -16777216
+    },
+    "cutout" : true
+  }, {
+    "decoration" : "curve",
+    "curve" : {
+      "points" : [ {
+	"x" : 0.9238017617462675,
+	"y" : 0.32843895528317546
+      }, {
+	"x" : 0.9238017617462675,
+	"y" : 0.27466174657639897
+      } ],
+      "smoothed" : [ false, false ],
+      "closed" : false
+    },
+    "color" : {
+      "rgb" : -16777216
+    },
+    "lineWidth" : 0.0024,
+    "lineStyle" : "SOLID",
+    "id" : 117
+  }, {
+    "decoration" : "arrow",
+    "x" : 0.9238017617462675,
+    "y" : 0.32843895528317546,
+    "size" : 0.0024,
+    "angle" : 1.570796326794897,
+    "color" : {
+      "rgb" : -16777216
+    }
+  }, {
+    "decoration" : "label",
+    "text" : "White<br>\ncharacter<br>\nholes",
+    "xWeight" : 0.5,
+    "x" : 0.9225213520151536,
+    "y" : 0.2631380589963703,
+    "scale" : 1.0,
+    "color" : {
+      "rgb" : -16777216
+    }
+  }, {
+    "decoration" : "label",
+    "text" : "✡",
+    "xWeight" : 0.5,
+    "yWeight" : 0.5,
+    "x" : 0.840773108302642,
+    "y" : 0.3748143480913252,
+    "scale" : 2.0,
+    "color" : {
+      "rgb" : -16777216
+    },
+    "cutout" : true
+  }, {
+    "decoration" : "ruler",
+    "startPoint" : {
+      "x" : 0.1488626091632272,
+      "y" : 0.5791924682894407
+    },
+    "endPoint" : {
+      "x" : 0.1488626091632272,
+      "y" : 0.3778155319727432
+    },
+    "lineWidth" : 0.0017,
+    "color" : {
+      "rgb" : -16777216
+    },
+    "labelAnchor" : "RIGHT",
+    "displayLog10" : true,
+    "textAngle" : -1.5707963267948966,
+    "tickRight" : true,
+    "tickLeft" : true,
+    "axis" : "exponent",
+    "fontSize" : 0.014397018970189702
+  }, {
+    "decoration" : "label",
+    "text" : "<span style=\"font-size: 75%;\">small</span> normal <span style=\"font-size: 133%;\">big</span> compact label yadda yadda",
+    "xWeight" : 0.5,
+    "yWeight" : 0.5,
+    "x" : 0.15989351778925553,
+    "y" : 0.8777071214846749,
+    "scale" : 1.2,
+    "boxed" : true,
+    "autoWidth" : true
+  }, {
+    "decoration" : "label",
+    "text" : "P<sub>O<sub>2-x</sub></sub>",
+    "xWeight" : 0.5,
+    "yWeight" : 0.5,
+    "x" : 0.32829068123389893,
+    "y" : 0.17504269847824938,
+    "scale" : 2.0,
+    "color" : {
+      "rgb" : -16777216
+    },
+    "boxed" : true
+  }, {
+    "decoration" : "label",
+    "text" : "Table<br>\n<table>\n  <tr><td>1&nbsp;<td>2&nbsp;<td>3&nbsp;<td>4\n  <tr><td>uno&nbsp;<td>dos&nbsp;<td>tres&nbsp;<td>cuatro\n  <tr><td>one&nbsp;<td>two&nbsp;<td>three&nbsp;<td>four\n</table>\n",
+    "xWeight" : 0.5,
+    "yWeight" : 0.5,
+    "x" : 0.8274247196453598,
+    "y" : 0.9092058714815147,
+    "scale" : 1.15,
+    "color" : {
+      "rgb" : -16777216
+    },
+    "boxed" : true
+  }, {
+    "decoration" : "curve",
+    "curve" : {
+      "points" : [ {
+	"x" : 0.7163625177983385,
+	"y" : 0.7327644389208382
+      }, {
+	"x" : 0.7598409724943636,
+	"y" : 0.7731372897100043
+      }, {
+	"x" : 0.8209178493292558,
+	"y" : 0.7482924584551328
+      }, {
+	"x" : 0.7898618102606665,
+	"y" : 0.6799691725042365
+      }, {
+	"x" : 0.7329257386349195,
+	"y" : 0.7006731985499626
+      } ],
+      "smoothed" : [ true, true, true, true, true ],
+      "closed" : true
+    },
+    "color" : {
+      "rgb" : -16777216
+    },
+    "lineWidth" : 0.0034,
+    "lineStyle" : "SOLID",
+    "id" : 129
+  }, {
+    "decoration" : "label",
+    "text" : "iso",
+    "xWeight" : 0.5,
+    "yWeight" : 0.5,
+    "x" : 0.8086034882884264,
+    "y" : 0.7639631465065855,
+    "angle" : -0.6405358354819191,
+    "scale" : 0.8,
+    "color" : {
+      "rgb" : -16777216
+    },
+    "opaque" : true,
+    "autoWidth" : true
+  }, {
+    "decoration" : "ruler",
+    "startPoint" : {
+      "x" : 0.5766103419896867,
+      "y" : 0.5723082370664603
+    },
+    "endPoint" : {
+      "x" : 0.9120155639304565,
+      "y" : 0.5723082370664603
+    },
+    "lineWidth" : 0.0024,
+    "color" : {
+      "rgb" : -16777216
+    },
+    "labelAnchor" : "RIGHT",
+    "tickRight" : true,
+    "axis" : "X-axis",
+    "fontSize" : 0.02032520325203252
+  }, {
+    "decoration" : "arrow",
+    "x" : 0.726481592721376,
+    "y" : 0.7079669059857372,
+    "size" : 0.0024,
+    "angle" : 2.2345929525486667,
+    "color" : {
+      "rgb" : -16777216
+    }
+  } ]
+}
