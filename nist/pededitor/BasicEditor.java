@@ -92,7 +92,6 @@ import javax.swing.filechooser.FileNameExtensionFilter;
 import org.codehaus.jackson.annotate.JsonIgnore;
 
 import Jama.Matrix;
-import gov.nist.pededitor.EditFrame.BackgroundImageType;
 
 /** Main driver class for Phase Equilibria Diagram digitization and creation. */
 public class BasicEditor extends Diagram
@@ -353,8 +352,8 @@ public class BasicEditor extends Diagram
     /** True if imageBlinker is enabled and the original image should
         be displayed in the background at this time. */
     transient boolean backgroundImageEnabled;
-    protected transient BackgroundImageType backgroundType = null;
-    protected transient BackgroundImageType oldBackgroundType = null;
+    protected transient BackgroundImageType oldBackgroundType =
+        BackgroundImageType.NONE;
 
     protected transient boolean preserveMprin = false;
     protected transient boolean isShiftDown = false;
@@ -546,13 +545,19 @@ public class BasicEditor extends Diagram
         principalFocus = null;
         paintSuppressionRequestCnt = 0;
         setBackgroundType((backgroundType == null)
-                          ? BackgroundImageType.LIGHT_GRAY
+                          ? BackgroundImageType.NONE
                           : backgroundType);
+        setBlink(false);
         tieLineDialog.setVisible(false);
         tieLineCorners = new ArrayList<>();
         originalImage = null;
         triedToLoadOriginalImage = false;
         majorSaveNeeded = false;
+
+        if (Stuff.isFileAssociationBroken()) {
+            // Enable directory monitoring.
+            editFrame.mnMonitor.setVisible(Stuff.isFileAssociationBroken());
+        }
     }
 
     @Override void clear() {
@@ -845,8 +850,8 @@ public class BasicEditor extends Diagram
     }
 
     @Override public void detachOriginalImage() {
-        originalImage = null;
         super.detachOriginalImage();
+        revalidateZoomFrame();
     }
 
     public void setDefaultSettingsFromSelection() {
@@ -966,24 +971,44 @@ public class BasicEditor extends Diagram
         }
     }
 
-    public synchronized void setBackgroundType(BackgroundImageType value) {
-        if (backgroundType != oldBackgroundType) {
-            oldBackgroundType = backgroundType;
-        }
-        backgroundType = value;
+    @JsonIgnore public boolean isBlink() {
+        return imageBlinker != null;
+    }
 
-        // Turn blinking off
-        if (imageBlinker != null) {
-            imageBlinker.cancel();
-        }
-        imageBlinker = null;
-        darkImage = null;
-
-        if (value == BackgroundImageType.BLINK) {
+    @JsonIgnore public void setBlink(boolean blink) {
+        if (blink == isBlink())
+            return;
+        
+        if (blink) {
             imageBlinker = new Timer("ImageBlinker", true);
             imageBlinker.scheduleAtFixedRate(new ImageBlinker(), 500, 500);
             backgroundImageEnabled = true;
+            if (getBackgroundType() == BackgroundImageType.NONE) {
+                setBackgroundType(BackgroundImageType.BLACK);
+            }
+        } else {
+            if (imageBlinker != null) {
+                imageBlinker.cancel();
+            }
+            imageBlinker = null;
         }
+        if (editFrame.isBlink() != blink) {
+            editFrame.setBackgroundType(
+                    blink ? BackgroundImageType.BLINK :
+                    getBackgroundType());
+        }
+    }
+
+    @Override public synchronized void setBackgroundType(BackgroundImageType value) {
+        if (value == null) {
+            value = BackgroundImageType.NONE;
+        }
+        if (value == backgroundType) {
+            return;
+        }
+        oldBackgroundType = backgroundType;
+        super.setBackgroundType(value);
+        darkImage = null;
         editFrame.setBackgroundType(value);
 
         // The rest is handed in paintDiagram().
@@ -996,6 +1021,12 @@ public class BasicEditor extends Diagram
        This exists just to allow control-H to hide the background
        image and then uh-hide it. */
     public synchronized void toggleBackgroundType(BackgroundImageType value) {
+        if (oldBackgroundType == backgroundType) {
+            // Make them different, so toggling has a visible effect.
+            oldBackgroundType = (backgroundType == BackgroundImageType.NONE)
+                ? BackgroundImageType.LIGHT_GRAY // Arbitrary
+                : BackgroundImageType.NONE;
+        }
         setBackgroundType(value == backgroundType ? oldBackgroundType : value);
     }
 
@@ -1511,7 +1542,7 @@ public class BasicEditor extends Diagram
     static final double DEFAULT_BACKGROUND_IMAGE_ALPHA = 1.0/3;
 
     double getBackgroundImageAlpha() {
-        switch (editFrame.getBackgroundImage()) {
+        switch (getBackgroundType()) {
         case LIGHT_GRAY:
             return DEFAULT_BACKGROUND_IMAGE_ALPHA;
         case DARK_GRAY:
@@ -1738,11 +1769,10 @@ public class BasicEditor extends Diagram
     }
 
     public void paintScreenBackground(Graphics2D g, double scale, Color color) {
-        BackgroundImageType back = editFrame.getBackgroundImage();
+        BackgroundImageType back = getBackgroundType();
         boolean showBackgroundImage = tracingImage()
             && back != BackgroundImageType.NONE
-            && (back != BackgroundImageType.BLINK
-                || backgroundImageEnabled);
+            && (imageBlinker == null || backgroundImageEnabled);
 
         if (showBackgroundImage) {
             paintBackgroundImage(g, scale);
@@ -2768,7 +2798,7 @@ public class BasicEditor extends Diagram
                 showError(nonEditableError);
             } else {
                 StringBuilder message = new StringBuilder
-                    ("The following diagram component(s) were not successfully\n"
+                    ("The following diagram component(s) were not successfully "
                      + "parsed as compounds:\n");
                 int sideNo = -1;
                 for (Side side: badSides) {
@@ -3563,6 +3593,7 @@ public class BasicEditor extends Diagram
         propagateChange();
     }
 
+    /** Scale both axes by the same amount. */
     public void scaleBoth() {
         BoundedParam2D b = getPrincipalParameterization(selection);
         double oldV = (b == null) ? 1 
@@ -4380,6 +4411,9 @@ public class BasicEditor extends Diagram
                 clear();
                 setOriginalFilename(originalFilename);
                 revalidateZoomFrame();
+                if (backgroundType == BackgroundImageType.NONE) {
+                    setBackgroundType(BackgroundImageType.LIGHT_GRAY);
+                }
 
                 add(defaultAxis(Side.RIGHT));
                 add(defaultAxis(Side.TOP));
@@ -5115,6 +5149,11 @@ public class BasicEditor extends Diagram
     }
 
     /** Invoked from the EditFrame menu */
+    public void submit() {
+        throw new RuntimeException("Stub!"); // UNDO
+    }
+
+    /** Invoked from the EditFrame menu */
     public void reloadDiagram() {
         if (!verifyCloseDiagram()) {
             return;
@@ -5142,6 +5181,7 @@ public class BasicEditor extends Diagram
     @Override void cannibalize(Diagram other) {
         removeAllVariables();
         removeAllTags();
+        setBlink(false);
         super.cannibalize(other);
         for (LinearAxis axis: axes) {
             editFrame.addVariable((String) axis.name);
@@ -5153,53 +5193,11 @@ public class BasicEditor extends Diagram
     }
 
     @Override public BufferedImage getOriginalImage() {
-        if (originalImage != null) {
-            return originalImage;
-        }
-
-        if (triedToLoadOriginalImage) {
+        try {
+            return super.getOriginalImage();
+        } catch (IOException x) {
             return null;
         }
-        triedToLoadOriginalImage = true;
-
-        String ofn = getAbsoluteOriginalFilename();
-        if (ofn == null) {
-            return null;
-        }
-        File originalFile = new File(ofn);
-        
-        boolean changedOriginal = false;
-        do {
-            try {
-                originalImage = loadImage(originalFile);
-
-                if (changedOriginal) {
-                    setOriginalFilename(originalFile.getName());
-                }
-                return originalImage;
-            } catch (IOException e) {
-                if (JOptionPane.showOptionDialog
-                    (editFrame,
-                     htmlify("Original image unavailable: '" + ofn + "':\n"
-                             +  e.toString() + "\n"
-                             + "You may hide the original image or try to locate a "
-                             + "readable copy of this file."),
-                     "Image load error",
-                     JOptionPane.YES_NO_OPTION,
-                     JOptionPane.WARNING_MESSAGE,
-                     null,
-                     new Object[] { "Hide original image", "Locate original image" },
-                     null) == JOptionPane.NO_OPTION) {
-                    originalFile = openImageFileDialog(editFrame);
-                    if (originalFile == null) {
-                        return null;
-                    }
-                    changedOriginal = true;
-                } else {
-                    return null;
-                }
-            }
-        } while (true);
     }
 
     /** If the zoom frame is not needed, then then make sure it's null
@@ -6616,6 +6614,7 @@ public class BasicEditor extends Diagram
             mess = successfulAssociationMessage();
         } else {
             title = "Installation partly successful";
+            Stuff.setFileAssociationBroken(true);
             mess = failedAssociationMessage(haveOptions);
         }
         if (haveOptions) {
