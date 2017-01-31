@@ -109,12 +109,15 @@ public class EditFrame extends JFrame
                     getEditor().open();
                 }
             });
-    protected JMenuItem mnMonitor = new JMenuItem
-        (new Action("Monitor Directory", KeyEvent.VK_M) {
-                @Override public void actionPerformed(ActionEvent e) {
-                    getEditor().monitor();
-                }
-            });
+
+    protected Action actMonitor = new Action("Monitor Directory",
+            KeyEvent.VK_M, "control shift D") {
+            @Override public void actionPerformed(ActionEvent e) {
+                getEditor().monitor();
+            }
+        };
+
+    protected JMenuItem mnMonitor = new JMenuItem(actMonitor);
     {
         mnMonitor.setVisible(false);
     }
@@ -125,8 +128,19 @@ public class EditFrame extends JFrame
                 getEditor().save();
             }
         };
+    protected Action actSubmit = new Action("Submit", KeyEvent.VK_S,
+                                          KeyStroke.getKeyStroke("control S")) {
+            { setEnabled(false); }
+            @Override public void actionPerformed(ActionEvent e) {
+                getEditor().submit();
+            }
+        };
     protected JMenu mnSaveAs = new JMenu("Save as");
     protected JMenuItem mnSave = toMenuItem(actSave);
+    protected JMenuItem mnSubmit = toMenuItem(actSubmit);
+    {
+        mnSubmit.setVisible(false);
+    }
     protected Action actSaveAsPED = new Action("PED", KeyEvent.VK_P) {
             { 
                 putValue(SHORT_DESCRIPTION,
@@ -579,23 +593,17 @@ public class EditFrame extends JFrame
     protected transient BackgroundImageType backgroundType = null;
     protected transient BackgroundImageType oldBackgroundType = null;
 
-    // How to show the original scanned image in the background of
-    // the new diagram:
-    enum BackgroundImageType
-    { LIGHT_GRAY, // White parts look white, black parts appear light gray
-      DARK_GRAY, // Halfway between light gray and black
-      BLACK, // Original appearance
-      BLINK, // Blinks on and off
-      NONE // Not shown
-      };
-
-    public BackgroundImageType getBackgroundImage() {
+    public BackgroundImageType getBackgroundType() {
         return !mnBackgroundImage.isEnabled() ? BackgroundImageType.NONE
             : lightGrayBackgroundImage.isSelected() ? BackgroundImageType.LIGHT_GRAY
             : blinkBackgroundImage.isSelected() ? BackgroundImageType.BLINK
             : darkGrayBackgroundImage.isSelected() ? BackgroundImageType.DARK_GRAY
             : blackBackgroundImage.isSelected() ? BackgroundImageType.BLACK
             : BackgroundImageType.NONE;
+    }
+
+    public boolean isBlink() {
+        return mnBackgroundImage.isEnabled() && blinkBackgroundImage.isSelected();
     }
 
     public void setBackgroundType(BackgroundImageType value) {
@@ -1015,7 +1023,11 @@ public class EditFrame extends JFrame
         }
 
         @Override public void actionPerformed(ActionEvent e) {
-            getEditor().toggleBackgroundType(value);
+            boolean blink = value == BackgroundImageType.BLINK;
+            getEditor().setBlink(blink);
+            if (!blink) {
+                getEditor().toggleBackgroundType(value);
+            }
             finishEvent();
         }
     }
@@ -1191,6 +1203,7 @@ public class EditFrame extends JFrame
         mnFile.add(mnOpen);
         mnFile.add(mnMonitor);
         mnFile.add(mnSave);
+        mnFile.add(mnSubmit);
 
         // "Save As" submenu
         mnSaveAs.setMnemonic(KeyEvent.VK_A);
@@ -1629,9 +1642,11 @@ public class EditFrame extends JFrame
         }
 
         // Enable shortcuts for actions that do not appear in the top
-        // menu because they are position-sensitive.
+        // menu because they are position-sensitive, or in the case of
+        // actMonitor, semi-secret.
         for (Action act: new Action[]
             { actAutoPosition,
+              actMonitor,
               actNearestPoint,
               actNearestGridPoint,
               actNearestCurve,
