@@ -29,8 +29,8 @@ import java.awt.print.PageFormat;
 import java.awt.print.Printable;
 import java.awt.print.PrinterException;
 import java.awt.print.PrinterJob;
+import java.io.ByteArrayInputStream;
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.PrintWriter;
@@ -1239,7 +1239,9 @@ public class Diagram extends Observable implements Printable {
         componentElements = null;
 
     protected String originalFilename;
+    protected byte[] originalImageBytes;
 
+    protected BackgroundImageType backgroundType = BackgroundImageType.NONE;
     protected ArrayList<LinearAxis> axes = new ArrayList<>();
 
     protected double labelXMargin = Double.NaN;
@@ -1617,18 +1619,34 @@ public class Diagram extends Observable implements Printable {
         }
     }
 
-    public void paintDiagram(Graphics2D g, double scale, Color backColor) {
-        g.setRenderingHint(RenderingHints.KEY_ANTIALIASING,
-                           RenderingHints.VALUE_ANTIALIAS_ON);
-        g.setRenderingHint(RenderingHints.KEY_RENDERING,
-                            RenderingHints.VALUE_RENDER_QUALITY);
-        paintBackground(g, scale, backColor);
+    /** Paint the diagram.
 
-        ArrayList<Decoration> decorations = getDecorations();
+        @param backColor If not null, paint pageBounds this color
+        before all other painting is done.
 
-        for (Decoration decoration: decorations) {
-            g.setColor(thisOrBlack(decoration.getColor()));
-            decoration.draw(g, scale);
+        @param clip If true, clip everything outside pageBounds. If
+        false, even items outside the page bounds may still be seen
+        (which may be useful during editing). */
+    public void paintDiagram(Graphics2D g, double scale, Color backColor,
+            boolean clip) {
+        Shape oldClip = null;
+        try {
+            oldClip = g.getClip();
+            g.clip(scaledPageBounds(scale));
+            g.setRenderingHint(RenderingHints.KEY_ANTIALIASING,
+                    RenderingHints.VALUE_ANTIALIAS_ON);
+            g.setRenderingHint(RenderingHints.KEY_RENDERING,
+                    RenderingHints.VALUE_RENDER_QUALITY);
+            paintBackground(g, scale, backColor);
+
+            ArrayList<Decoration> decorations = getDecorations();
+
+            for (Decoration decoration: decorations) {
+                g.setColor(thisOrBlack(decoration.getColor()));
+                decoration.draw(g, scale);
+            }
+        } finally {
+            g.setClip(oldClip);
         }
     }
 
@@ -3917,6 +3935,9 @@ public class Diagram extends Observable implements Printable {
     }
 
     public void setOriginalFilename(String filename) {
+        if (filename == null) {
+            setBackgroundType(BackgroundImageType.NONE);
+        }
         originalFilename = filename;
         relativizeOriginalFilename();
         propagateChange();
@@ -3928,6 +3949,8 @@ public class Diagram extends Observable implements Printable {
         originalToPrincipal = null;
         principalToOriginal = null;
         setOriginalFilename(null);
+        originalImage = null;
+        originalImageBytes = null;
         propagateChange();
     }
 
@@ -4251,7 +4274,7 @@ public class Diagram extends Observable implements Printable {
         }
         MeteredGraphics mg = new MeteredGraphics();
         double mscale = 10000;
-        paintDiagram(mg, mscale, null);
+        paintDiagram(mg, mscale, null, false);
         Rectangle2D.Double bounds = mg.getBounds();
         if (bounds == null) {
             return;
@@ -4340,6 +4363,9 @@ public class Diagram extends Observable implements Printable {
                 }
                 setPixelMode(other.isPixelMode());
                 setUsingWeightFraction(other.isUsingWeightFraction());
+                setBackgroundType(other.getBackgroundType());
+                originalImageBytes = other.originalImageBytes;
+                other.originalImageBytes = null;
             }
         propagateChange1();
     }
@@ -4424,7 +4450,7 @@ public class Diagram extends Observable implements Printable {
         }
         Graphics2D g = (Graphics2D) res.getGraphics();
         paintDiagram(g, bestFitScale(new Dimension(width, height)),
-                backColor);
+                backColor, false);
         return res;
     }
 
@@ -4480,14 +4506,14 @@ public class Diagram extends Observable implements Printable {
         String oldFilename = getFilename();
         try (PrintWriter writer = new PrintWriter
              (Files.newBufferedWriter(path, StandardCharsets.UTF_8))) {
-            // Reset the filename before saving. This will
-            // re-relativize originalFilename so that it can still
-            // be found using a relative path even if the new
-            // filename is in a different directory from before.
             if (updateFilename) {
+                // Reset the filename before saving. This will
+                // re-relativize originalFilename so that it can still
+                // be found using a relative path even if the new
+                // filename is in a different directory from before.
                 setFilename(path.toAbsolutePath().toString());
             }
-            writer.print(Tabify.tabify(getObjectMapper().writeValueAsString(this)));
+            writer.print(toString());
             setSaveNeeded(false);
             return true;
         } catch (IOException x) {
@@ -4496,6 +4522,16 @@ public class Diagram extends Observable implements Printable {
                 setFilename(oldFilename);
             }
             throw x;
+        }
+    }
+
+    /** @return this diagram as a JSON string. */
+    @Override public String toString() {
+
+        try {
+            return Tabify.tabify(getObjectMapper().writeValueAsString(this));
+        } catch (IOException e) {
+            return super.toString();
         }
     }
 
@@ -4861,7 +4897,7 @@ public class Diagram extends Observable implements Printable {
         g.setFont(getFont());
         double scale = Math.min((bounds.height - deltaY) / pageBounds.height,
                                 bounds.width / pageBounds.width);
-        paintDiagram(g, scale, null);
+        paintDiagram(g, scale, null, true);
         g.setTransform(oldTransform);
 
         return Printable.PAGE_EXISTS;
@@ -6013,29 +6049,49 @@ public class Diagram extends Observable implements Printable {
             return originalImage;
         }
 
-        if (triedToLoadOriginalImage) {
+        byte[] imageBytes = getOriginalImageBytesUnsafe();
+        if (imageBytes == null) {
             return null;
         }
-        triedToLoadOriginalImage = true;
-        
-        String filename = getAbsoluteOriginalFilename();
-        if (filename == null) {
-            return null;
-        }
-        
-        originalImage = loadImage(new File(filename));
+
+        originalImage = ImageIO.read(new ByteArrayInputStream(imageBytes));
         return originalImage;
     }
 
-    BufferedImage loadImage(File file) throws IOException {
-        if (Files.notExists(file.toPath())) {
-            throw new FileNotFoundException(file.toString());
+    public BackgroundImageType getBackgroundType() {
+        return backgroundType;
+    }
+
+    public synchronized void setBackgroundType(BackgroundImageType value) {
+        if (value == null) {
+            value = BackgroundImageType.NONE;
         }
-        BufferedImage res = ImageIO.read(file);
-        if (res == null) {
-            throw new IOException(file + ": unknown image format");
+        backgroundType = value;
+    }
+
+    /** @return the binary contents of the original image. Changing
+        the array contents is not safe. */
+    @JsonProperty("originalImageBytes")
+    protected byte[] getOriginalImageBytesUnsafe() throws IOException {
+        if (!triedToLoadOriginalImage && originalImageBytes == null) {
+            triedToLoadOriginalImage = true;
+        
+            String filename = getAbsoluteOriginalFilename();
+            if (filename == null) {
+                return null;
+            }
+
+            originalImageBytes = Files.readAllBytes(Paths.get(filename));
+            propagateChange();
         }
-        return res;
+
+        return originalImageBytes;
+    }
+
+    /** The input array is stolen, not copied -- hence "unsafe". */ 
+    @JsonProperty("originalImageBytes")
+    protected void setOriginalImageBytesUnsafe(byte[] bytes) {
+        originalImageBytes = bytes;
     }
 
     /** Scale the diagram by the given amount, placing the upper-left
