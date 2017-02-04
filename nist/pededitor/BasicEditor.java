@@ -381,12 +381,6 @@ public class BasicEditor extends Diagram
     /** Because rescaling an image is slow, keep a cache of locations
         and sizes that have been rescaled. */
     protected transient ArrayList<ScaledCroppedImage> scaledOriginalImages;
-    /** This is the darkened version of the original image, or null if
-        no darkened version exists. At most one dark image is kept in
-        memory at a time. */
-    protected transient ScaledCroppedImage darkImage;
-    /** Alpha value of darkImage. */
-    protected transient double darkImageAlpha = 0;
 
     protected transient double lineWidth = STANDARD_LINE_WIDTH;
     protected transient StandardStroke lineStyle = DEFAULT_LINE_STYLE;
@@ -1008,7 +1002,6 @@ public class BasicEditor extends Diagram
         }
         oldBackgroundType = backgroundType;
         super.setBackgroundType(value);
-        darkImage = null;
         editFrame.setBackgroundType(value);
 
         // The rest is handed in paintDiagram().
@@ -1558,29 +1551,8 @@ public class BasicEditor extends Diagram
 
     void paintBackgroundImage(Graphics2D g, double scale) {
         ScaledCroppedImage im = getScaledOriginalImage();
-        double alpha = getBackgroundImageAlpha();
-        if (alpha != DEFAULT_BACKGROUND_IMAGE_ALPHA) {
-            if (darkImage != null
-                && im.imageBounds.equals(darkImage.imageBounds)
-                && im.cropBounds.equals(darkImage.cropBounds)
-                && darkImageAlpha == alpha) {
-                // The cached image darkImage can be used.
-                im = darkImage;
-            } else {
-                // Darken this image and cache it.
-                darkImage = new ScaledCroppedImage();
-                darkImage.imageBounds = (Rectangle) im.imageBounds.clone();
-                darkImage.cropBounds = (Rectangle) im.cropBounds.clone();
-                BufferedImage src = im.croppedImage;
-                darkImage.croppedImage = new BufferedImage
-                    (src.getWidth(), src.getHeight(), BufferedImage.TYPE_INT_RGB);
-                fade(src, darkImage.croppedImage,
-                     alpha / DEFAULT_BACKGROUND_IMAGE_ALPHA);
-                darkImageAlpha = alpha;
-                im = darkImage;
-            }
-        }
-        g.drawImage(im.croppedImage, im.cropBounds.x, im.cropBounds.y, null);
+        SourceImage.draw(g, im.croppedImage, (float) getBackgroundImageAlpha(),
+                im.cropBounds.x, im.cropBounds.y);
     }
 
     static Color toColor(AutoPositionType ap) {
@@ -1774,10 +1746,9 @@ public class BasicEditor extends Diagram
             && back != BackgroundImageType.NONE
             && (imageBlinker == null || backgroundImageEnabled);
 
+        super.paintBackground(g, scale, Color.WHITE);
         if (showBackgroundImage) {
             paintBackgroundImage(g, scale);
-        } else {
-            super.paintBackground(g, scale, Color.WHITE);
         }
     }
 
@@ -6914,8 +6885,7 @@ public class BasicEditor extends Diagram
             : ImageTransform.DithererType.GOOD;
 
         im.croppedImage = transformOriginalImage(
-                cropBounds, scale, dither,
-                DEFAULT_BACKGROUND_IMAGE_ALPHA,
+                cropBounds, scale, dither, 1.0,
                 Color.WHITE, BufferedImage.TYPE_INT_RGB);
         scaledOriginalImages.add(im);
         return im;
