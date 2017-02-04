@@ -5,7 +5,7 @@ package gov.nist.pededitor;
 
 import java.awt.geom.Point2D;
 
-public class SideConcentrationTransform {
+public class SideConcentrationTransform implements SlopeTransform2D {
     public Side[] sides;
     public SlopeConcentrationTransform xform;
 
@@ -15,32 +15,36 @@ public class SideConcentrationTransform {
         this.xform = xform;
     }
 
-    public SideConcentrationTransform inverse() {
+    @Override public SideConcentrationTransform createInverse() {
         return new SideConcentrationTransform(sides, xform.createInverse());
     }
 
-    public double[] toValues(Point2D p) {
+    @Override public SideConcentrationTransform clone() {
+        return new SideConcentrationTransform(sides, xform.clone());
+    }
+
+    public double[] toValues(double x, double y) {
         int len = sides.length;
         double[] res = new double[len];
         for (int i = 0; i < len; ++i) {
             double d = 0;
             switch (sides[i]) {
             case RIGHT:
-                d = p.getX();
+                d = x;
                 break;
             case TOP:
-                d = p.getY();
+                d = y;
                 break;
             case BOTTOM:
-                d = 1 - p.getY();
+                d = 1 - y;
                 break;
             case LEFT:
                 switch (len) {
                 case 3:
-                    d = 1 - p.getY() - p.getX();
+                    d = 1 - x - y;
                     break;
                 case 2:
-                    d = 1 - p.getX();
+                    d = 1 - x;
                     break;
                 default:
                     throw new IllegalArgumentException("Wrong dimension");
@@ -51,13 +55,17 @@ public class SideConcentrationTransform {
         return res;
     }
 
-    public Point2D.Double transform(Point2D p) {
-        double[] values = toValues(p);
+    @Override public Point2D.Double transform(double x, double y) {
+        double[] values = toValues(x,y);
         xform.transform(values);
         if (xform.componentCnt() == 2) {
-            return new Point2D.Double(values[0], p.getY());
+            return new Point2D.Double(values[0], y);
         } else {
             return new Point2D.Double(values[0], values[1]);
         }
+    }
+
+    @Override public Point2D.Double transformSlope(double x, double y, double dx, double dy) {
+        return xform.transformSlope(x, y, dx, dy);
     }
 }

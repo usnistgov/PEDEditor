@@ -22,9 +22,9 @@ public class LinearAxis extends Axis {
 
     /** Create a LinearAxisInfo for the formula a*x + b*y + c. */
     public LinearAxis(@JsonProperty("format") NumberFormat format,
-                          @JsonProperty("a") double a,
-                          @JsonProperty("b") double b,
-                          @JsonProperty("c") double c) {
+            @JsonProperty("a") double a,
+            @JsonProperty("b") double b,
+            @JsonProperty("c") double c) {
         super(format);
         this.a = a;
         this.b = b;
@@ -47,7 +47,7 @@ public class LinearAxis extends Axis {
         return axis;
     }
 
-    @Override public double value(double px, double py) {
+    @Override public double applyAsDouble(double px, double py) {
         return a * px + b * py + c;
     }
 

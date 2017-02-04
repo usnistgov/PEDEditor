@@ -68,8 +68,14 @@ public class Stuff {
         return System.getProperty("os.name").contains("OS X");
     }
 
+    static boolean fileAssociationBroken = false;
+    
+    public static void setFileAssociationBroken(boolean b) {
+        fileAssociationBroken = b;
+    }
+
     /** Return true if file associations aren't even supposed to work for this OS. */
     public static boolean isFileAssociationBroken() {
-        return isOSX();
+        return isOSX() || fileAssociationBroken;
     }
 }

@@ -92,7 +92,6 @@ import javax.swing.filechooser.FileNameExtensionFilter;
 import org.codehaus.jackson.annotate.JsonIgnore;
 
 import Jama.Matrix;
-import gov.nist.pededitor.EditFrame.BackgroundImageType;
 
 /** Main driver class for Phase Equilibria Diagram digitization and creation. */
 public class BasicEditor extends Diagram
@@ -353,8 +352,8 @@ public class BasicEditor extends Diagram
     /** True if imageBlinker is enabled and the original image should
         be displayed in the background at this time. */
     transient boolean backgroundImageEnabled;
-    protected transient BackgroundImageType backgroundType = null;
-    protected transient BackgroundImageType oldBackgroundType = null;
+    protected transient BackgroundImageType oldBackgroundType =
+        BackgroundImageType.NONE;
 
     protected transient boolean preserveMprin = false;
     protected transient boolean isShiftDown = false;
@@ -382,12 +381,6 @@ public class BasicEditor extends Diagram
     /** Because rescaling an image is slow, keep a cache of locations
         and sizes that have been rescaled. */
     protected transient ArrayList<ScaledCroppedImage> scaledOriginalImages;
-    /** This is the darkened version of the original image, or null if
-        no darkened version exists. At most one dark image is kept in
-        memory at a time. */
-    protected transient ScaledCroppedImage darkImage;
-    /** Alpha value of darkImage. */
-    protected transient double darkImageAlpha = 0;
 
     protected transient double lineWidth = STANDARD_LINE_WIDTH;
     protected transient StandardStroke lineStyle = DEFAULT_LINE_STYLE;
@@ -546,13 +539,19 @@ public class BasicEditor extends Diagram
         principalFocus = null;
         paintSuppressionRequestCnt = 0;
         setBackgroundType((backgroundType == null)
-                          ? BackgroundImageType.LIGHT_GRAY
+                          ? BackgroundImageType.NONE
                           : backgroundType);
+        setBlink(false);
         tieLineDialog.setVisible(false);
         tieLineCorners = new ArrayList<>();
         originalImage = null;
         triedToLoadOriginalImage = false;
         majorSaveNeeded = false;
+
+        if (Stuff.isFileAssociationBroken()) {
+            // Enable directory monitoring.
+            editFrame.mnMonitor.setVisible(Stuff.isFileAssociationBroken());
+        }
     }
 
     @Override void clear() {
@@ -845,8 +844,8 @@ public class BasicEditor extends Diagram
     }
 
     @Override public void detachOriginalImage() {
-        originalImage = null;
         super.detachOriginalImage();
+        revalidateZoomFrame();
     }
 
     public void setDefaultSettingsFromSelection() {
@@ -893,7 +892,6 @@ public class BasicEditor extends Diagram
         }
  
         Decoration dec = selection.getDecoration();
-        dec.setLineStyle(lineStyle);
         dec.setColor(color);
         dec.setLineWidth(lineWidth);
         LabelDecoration ldec = getSelectedLabel();
@@ -903,8 +901,14 @@ public class BasicEditor extends Diagram
         }
 
         CuspFigure path = getSelectedCuspFigure();
-        if (path != null && path.isClosed()) {
-            path.setFill(fill);
+        if (path != null) {
+            if (fill != null && path.getFill() != null) {
+                path.setFill(fill);
+            }
+        }
+
+        if (lineStyle != null && dec.getLineStyle() != null) {
+            dec.setLineStyle(lineStyle);
         }
         
         if (!hadSelection) {
@@ -961,24 +965,43 @@ public class BasicEditor extends Diagram
         }
     }
 
-    public synchronized void setBackgroundType(BackgroundImageType value) {
-        if (backgroundType != oldBackgroundType) {
-            oldBackgroundType = backgroundType;
-        }
-        backgroundType = value;
+    @JsonIgnore public boolean isBlink() {
+        return imageBlinker != null;
+    }
 
-        // Turn blinking off
-        if (imageBlinker != null) {
-            imageBlinker.cancel();
-        }
-        imageBlinker = null;
-        darkImage = null;
-
-        if (value == BackgroundImageType.BLINK) {
+    @JsonIgnore public void setBlink(boolean blink) {
+        if (blink == isBlink())
+            return;
+        
+        if (blink) {
             imageBlinker = new Timer("ImageBlinker", true);
             imageBlinker.scheduleAtFixedRate(new ImageBlinker(), 500, 500);
             backgroundImageEnabled = true;
+            if (getBackgroundType() == BackgroundImageType.NONE) {
+                setBackgroundType(BackgroundImageType.BLACK);
+            }
+        } else {
+            if (imageBlinker != null) {
+                imageBlinker.cancel();
+            }
+            imageBlinker = null;
         }
+        if (editFrame.isBlink() != blink) {
+            editFrame.setBackgroundType(
+                    blink ? BackgroundImageType.BLINK :
+                    getBackgroundType());
+        }
+    }
+
+    @Override public synchronized void setBackgroundType(BackgroundImageType value) {
+        if (value == null) {
+            value = BackgroundImageType.NONE;
+        }
+        if (value == backgroundType) {
+            return;
+        }
+        oldBackgroundType = backgroundType;
+        super.setBackgroundType(value);
         editFrame.setBackgroundType(value);
 
         // The rest is handed in paintDiagram().
@@ -991,6 +1014,12 @@ public class BasicEditor extends Diagram
        This exists just to allow control-H to hide the background
        image and then uh-hide it. */
     public synchronized void toggleBackgroundType(BackgroundImageType value) {
+        if (oldBackgroundType == backgroundType) {
+            // Make them different, so toggling has a visible effect.
+            oldBackgroundType = (backgroundType == BackgroundImageType.NONE)
+                ? BackgroundImageType.LIGHT_GRAY // Arbitrary
+                : BackgroundImageType.NONE;
+        }
         setBackgroundType(value == backgroundType ? oldBackgroundType : value);
     }
 
@@ -1295,6 +1324,15 @@ public class BasicEditor extends Diagram
         }
     }
 
+    @Override public void swapXY() {
+        try {
+            super.swapXY();
+            bestFit();
+        } catch (IllegalArgumentException x) {
+            showError(x.toString());
+        }
+    }
+
     public void removeSelection() {
         boolean hadSelection = (selection != null);
         if (!hadSelection && !selectSomething()) {
@@ -1497,7 +1535,7 @@ public class BasicEditor extends Diagram
     static final double DEFAULT_BACKGROUND_IMAGE_ALPHA = 1.0/3;
 
     double getBackgroundImageAlpha() {
-        switch (editFrame.getBackgroundImage()) {
+        switch (getBackgroundType()) {
         case LIGHT_GRAY:
             return DEFAULT_BACKGROUND_IMAGE_ALPHA;
         case DARK_GRAY:
@@ -1513,29 +1551,8 @@ public class BasicEditor extends Diagram
 
     void paintBackgroundImage(Graphics2D g, double scale) {
         ScaledCroppedImage im = getScaledOriginalImage();
-        double alpha = getBackgroundImageAlpha();
-        if (alpha != DEFAULT_BACKGROUND_IMAGE_ALPHA) {
-            if (darkImage != null
-                && im.imageBounds.equals(darkImage.imageBounds)
-                && im.cropBounds.equals(darkImage.cropBounds)
-                && darkImageAlpha == alpha) {
-                // The cached image darkImage can be used.
-                im = darkImage;
-            } else {
-                // Darken this image and cache it.
-                darkImage = new ScaledCroppedImage();
-                darkImage.imageBounds = (Rectangle) im.imageBounds.clone();
-                darkImage.cropBounds = (Rectangle) im.cropBounds.clone();
-                BufferedImage src = im.croppedImage;
-                darkImage.croppedImage = new BufferedImage
-                    (src.getWidth(), src.getHeight(), BufferedImage.TYPE_INT_RGB);
-                fade(src, darkImage.croppedImage,
-                     alpha / DEFAULT_BACKGROUND_IMAGE_ALPHA);
-                darkImageAlpha = alpha;
-                im = darkImage;
-            }
-        }
-        g.drawImage(im.croppedImage, im.cropBounds.x, im.cropBounds.y, null);
+        SourceImage.draw(g, im.croppedImage, (float) getBackgroundImageAlpha(),
+                im.cropBounds.x, im.cropBounds.y);
     }
 
     static Color toColor(AutoPositionType ap) {
@@ -1724,16 +1741,14 @@ public class BasicEditor extends Diagram
     }
 
     public void paintScreenBackground(Graphics2D g, double scale, Color color) {
-        BackgroundImageType back = editFrame.getBackgroundImage();
+        BackgroundImageType back = getBackgroundType();
         boolean showBackgroundImage = tracingImage()
             && back != BackgroundImageType.NONE
-            && (back != BackgroundImageType.BLINK
-                || backgroundImageEnabled);
+            && (imageBlinker == null || backgroundImageEnabled);
 
+        super.paintBackground(g, scale, Color.WHITE);
         if (showBackgroundImage) {
             paintBackgroundImage(g, scale);
-        } else {
-            super.paintBackground(g, scale, Color.WHITE);
         }
     }
 
@@ -2433,6 +2448,42 @@ public class BasicEditor extends Diagram
         throw new IllegalStateException("No such variable '" + name + "'");
     }
 
+    /** Like renameVariable, but show errors to the user instead of
+        throwing exceptions. */
+    public void renameVariableGUI(String oldName, String newName) {
+        // If the user wants to rename or add a component, they should
+        // use Chemistry/Components instead. The only time it makes
+        // sense to redirect to that is if the old value is a component.
+
+        for (Side side: Side.values()) {
+            Axis axis = getAxis(side);
+            if (axis != null && axis.name.equals(oldName)
+                && (isTernary() || diagramComponents[side.ordinal()] != null)) {
+                setDiagramComponentGUI(side, newName);
+                return;
+            }
+        }
+
+        if (newName == null || "".equals(newName)) {
+            return;
+        }
+        for (Axis axis: axes) {
+            if (axis.name.equals(newName)) {
+                showError("A variable with that name already exists.");
+                return;
+            }
+        }
+
+        for (LinearAxis axis: axes) {
+            if (axis.name.equals(oldName)) {
+                rename(axis, newName);
+                return;
+            }
+        }
+        
+        throw new IllegalStateException("No such variable '" + oldName + "'");
+    }
+
     @Override public void rename(LinearAxis axis, String name) {
         if (axis.name != null) {
             editFrame.removeVariable((String) axis.name);
@@ -2440,6 +2491,7 @@ public class BasicEditor extends Diagram
         super.rename(axis, name);
         editFrame.addVariable(name);
         mathWindow.refresh();
+        super.rename(axis, name);
     }
 
     @Override public void add(LinearAxis axis) {
@@ -2717,7 +2769,7 @@ public class BasicEditor extends Diagram
                 showError(nonEditableError);
             } else {
                 StringBuilder message = new StringBuilder
-                    ("The following diagram component(s) were not successfully\n"
+                    ("The following diagram component(s) were not successfully "
                      + "parsed as compounds:\n");
                 int sideNo = -1;
                 for (Side side: badSides) {
@@ -2827,7 +2879,7 @@ public class BasicEditor extends Diagram
                 sumIsKnown = false;
                 break;
             }
-            componentsSum += axis.value(fractions);
+            componentsSum += axis.applyAsDouble(fractions);
         }
         if (sumIsKnown && Math.abs(1 - componentsSum) > 1e-4) {
             showError("Components do not sum to 1", errorTitle);
@@ -3512,6 +3564,7 @@ public class BasicEditor extends Diagram
         propagateChange();
     }
 
+    /** Scale both axes by the same amount. */
     public void scaleBoth() {
         BoundedParam2D b = getPrincipalParameterization(selection);
         double oldV = (b == null) ? 1 
@@ -3563,6 +3616,39 @@ public class BasicEditor extends Diagram
         }
         str = str.trim();
 
+        setDiagramComponentGUI(side, str);
+    }
+
+    void setSwapXYVisible() {
+        setSwapXYVisible(swapXYShouldBeVisible());  
+    }
+    
+    boolean swapXYShouldBeVisible() {
+        if (isTernary()) {
+            return false;
+        }
+        for (String s: diagramComponents) {
+            if (s != null) {
+                return false;
+            }   
+        }
+        return true;
+    }
+
+    @JsonIgnore void setSwapXYVisible(boolean b) {
+        setVisible(editFrame.actSwapXY, b);
+    }
+
+    
+    @Override public void setDiagramComponent(Side side, String str)
+        throws DuplicateComponentException {
+        super.setDiagramComponent(side, str);
+        setSwapXYVisible();
+    }
+
+    /** Like setDiagramComponent(Side, String), but show errors to the
+        user instead of throwing exceptions. */
+    void setDiagramComponentGUI(Side side, String str) {
         try {
             setDiagramComponent(side, str.isEmpty() ? null : str);
             mathWindow.refresh();
@@ -4296,6 +4382,9 @@ public class BasicEditor extends Diagram
                 clear();
                 setOriginalFilename(originalFilename);
                 revalidateZoomFrame();
+                if (backgroundType == BackgroundImageType.NONE) {
+                    setBackgroundType(BackgroundImageType.LIGHT_GRAY);
+                }
 
                 add(defaultAxis(Side.RIGHT));
                 add(defaultAxis(Side.TOP));
@@ -4439,13 +4528,13 @@ public class BasicEditor extends Diagram
                             { new Point2D.Double(0.0, bottom),
                               new Point2D.Double(rx/2, bottom - triangleHt * r.t),
                               new Point2D.Double(rx, bottom) };
-                        principalToStandardPage = new TriangleTransform
+                        setPrincipalToStandardPage(new TriangleTransform
                             (new Point2D.Double[]
                                 { new Point2D.Double(minRight, minTop),
                                   new Point2D.Double(minRight,
                                                      maxRight - minRight + minTop),
                                   new Point2D.Double(maxRight, minTop) },
-                             trianglePagePositions);
+                             trianglePagePositions));
 
                         LinearRuler rule = ternaryBottomRuler
                             (minRight, maxRight, minTop);
@@ -4515,10 +4604,10 @@ public class BasicEditor extends Diagram
                             // correct.
                             r = new Rescale(dog.getAspectRatio(), 1.0, 1.0);
                         }
-                        principalToStandardPage = new RectangleTransform
+                        setPrincipalToStandardPage(new RectangleTransform
                             (domain,
                              new Rectangle2D.Double
-                             (0, r.height, r.width, -r.height));
+                             (0, r.height, r.width, -r.height)));
 
                         if (other) {
                             if (dog.isPixelMode()) {
@@ -4717,8 +4806,8 @@ public class BasicEditor extends Diagram
                             xformed[i] = xform.transform(trianglePoints[i]);
                         }
 
-                        principalToStandardPage = new TriangleTransform
-                            (trianglePoints, xformed);
+                        setPrincipalToStandardPage(new TriangleTransform
+                            (trianglePoints, xformed));
 
                         for (Axis axis: getAxes()) {
                             setPercentageDisplay(axis, isPercent);
@@ -4740,8 +4829,8 @@ public class BasicEditor extends Diagram
                             { new Point2D.Double(0.0, r.height),
                               new Point2D.Double(r.width/2, 0.0),
                               new Point2D.Double(r.width, r.height) };
-                        principalToStandardPage = new TriangleTransform
-                            (principalTrianglePoints, trianglePagePositions);
+                        setPrincipalToStandardPage(new TriangleTransform
+                                (principalTrianglePoints, trianglePagePositions));
 
                         add(ternaryBottomRuler(0.0, 1.0));
                         add(ternaryLeftRuler(0.0, 1.0));
@@ -4812,8 +4901,8 @@ public class BasicEditor extends Diagram
         editFrame.setAspectRatio.setEnabled(!isTernary());
         editFrame.setTopComponent.setEnabled(isTernary());
         editFrame.mnSwap.setVisible(isTernary());
-        editFrame.swapBinary.setEnabled(
-                diagramType == DiagramType.BINARY);
+        setSwapXYVisible();
+        setVisible(editFrame.swapBinary, diagramType == DiagramType.BINARY);
         editFrame.scaleBoth.setEnabled(!isTernary());
         resetPixelModeVisible();
         bestFit();
@@ -4952,7 +5041,7 @@ public class BasicEditor extends Diagram
             }
         }
 
-        super.setAspectRatio(aspectRatio);
+        setAspectRatio(aspectRatio);
         bestFit();
         scaledOriginalImages = null;
     }
@@ -5031,6 +5120,11 @@ public class BasicEditor extends Diagram
     }
 
     /** Invoked from the EditFrame menu */
+    public void submit() {
+        throw new RuntimeException("Stub!"); // UNDO
+    }
+
+    /** Invoked from the EditFrame menu */
     public void reloadDiagram() {
         if (!verifyCloseDiagram()) {
             return;
@@ -5058,6 +5152,7 @@ public class BasicEditor extends Diagram
     @Override void cannibalize(Diagram other) {
         removeAllVariables();
         removeAllTags();
+        setBlink(false);
         super.cannibalize(other);
         for (LinearAxis axis: axes) {
             editFrame.addVariable((String) axis.name);
@@ -5069,53 +5164,11 @@ public class BasicEditor extends Diagram
     }
 
     @Override public BufferedImage getOriginalImage() {
-        if (originalImage != null) {
-            return originalImage;
-        }
-
-        if (triedToLoadOriginalImage) {
+        try {
+            return super.getOriginalImage();
+        } catch (IOException x) {
             return null;
         }
-        triedToLoadOriginalImage = true;
-
-        String ofn = getAbsoluteOriginalFilename();
-        if (ofn == null) {
-            return null;
-        }
-        File originalFile = new File(ofn);
-        
-        boolean changedOriginal = false;
-        do {
-            try {
-                originalImage = loadImage(originalFile);
-
-                if (changedOriginal) {
-                    setOriginalFilename(originalFile.getName());
-                }
-                return originalImage;
-            } catch (IOException e) {
-                if (JOptionPane.showOptionDialog
-                    (editFrame,
-                     htmlify("Original image unavailable: '" + ofn + "':\n"
-                             +  e.toString() + "\n"
-                             + "You may hide the original image or try to locate a "
-                             + "readable copy of this file."),
-                     "Image load error",
-                     JOptionPane.YES_NO_OPTION,
-                     JOptionPane.WARNING_MESSAGE,
-                     null,
-                     new Object[] { "Hide original image", "Locate original image" },
-                     null) == JOptionPane.NO_OPTION) {
-                    originalFile = openImageFileDialog(editFrame);
-                    if (originalFile == null) {
-                        return null;
-                    }
-                    changedOriginal = true;
-                } else {
-                    return null;
-                }
-            }
-        } while (true);
     }
 
     /** If the zoom frame is not needed, then then make sure it's null
@@ -5920,7 +5973,7 @@ public class BasicEditor extends Diagram
         for (int i = 0; i < cnt; ++i) {
             dog.setAxis(i, axes[i]);
             if (mprin != null) {
-                dog.setValue(i, axes[i].value(mprin));
+                dog.setValue(i, axes[i].applyAsDouble(mprin));
             } else {
                 dog.setValue(i, "");
             }
@@ -6532,6 +6585,7 @@ public class BasicEditor extends Diagram
             mess = successfulAssociationMessage();
         } else {
             title = "Installation partly successful";
+            Stuff.setFileAssociationBroken(true);
             mess = failedAssociationMessage(haveOptions);
         }
         if (haveOptions) {
@@ -6831,8 +6885,7 @@ public class BasicEditor extends Diagram
             : ImageTransform.DithererType.GOOD;
 
         im.croppedImage = transformOriginalImage(
-                cropBounds, scale, dither,
-                DEFAULT_BACKGROUND_IMAGE_ALPHA,
+                cropBounds, scale, dither, 1.0,
                 Color.WHITE, BufferedImage.TYPE_INT_RGB);
         scaledOriginalImages.add(im);
         return im;
@@ -6877,8 +6930,8 @@ public class BasicEditor extends Diagram
         if (prin == null) {
             return "";
         }
-        return "(" + getXAxis().valueAsString(prin) + ", "
-            + getYAxis().valueAsString(prin) + ")";
+        return "(" + getXAxis().applyAsString(prin) + ", "
+            + getYAxis().applyAsString(prin) + ")";
     }
 
     void showPopupMenu(MousePress mp) {

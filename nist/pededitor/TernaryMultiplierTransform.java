@@ -19,6 +19,10 @@ public class TernaryMultiplierTransform extends MultiplierConcentrationTransform
         }
     }
 
+    @Override public TernaryMultiplierTransform clone() {
+        return (TernaryMultiplierTransform) super.clone();
+    }
+
     @Override public TernaryMultiplierTransform createTransform(double... cs) {
         return new TernaryMultiplierTransform(cs);
     }

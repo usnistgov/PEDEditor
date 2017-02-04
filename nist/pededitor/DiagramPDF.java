@@ -121,7 +121,7 @@ public class DiagramPDF {
         // using real fonts seems to work. -- EB 6/29/2015
         Graphics2D g2 = createGraphics
             (d, cb, (float) bounds.width, (float) bounds.height, true);
-        d.paintDiagram(g2, d.deviceScale(g2, bounds), null);
+        d.paintDiagram(g2, d.deviceScale(g2, bounds), null, true);
         g2.dispose();
         cb.addTemplate(tp, doc.left(), doc.bottom());
     }

@@ -89,7 +89,7 @@ public class EditFrame extends JFrame
     JMenu mnFile = new JMenu("File");
     JMenu mnCurve = new JMenu("Curve");
     JMenu mnProperties = new JMenu("Properties");
-    JMenu mnSwap = new JMenu("Swap");
+    JMenu mnSwap = new JMenu("Swap Components");
     {
         mnSwap.setMnemonic(KeyEvent.VK_W);
     }
@@ -109,12 +109,15 @@ public class EditFrame extends JFrame
                     getEditor().open();
                 }
             });
-    protected JMenuItem mnMonitor = new JMenuItem
-        (new Action("Monitor Directory", KeyEvent.VK_M) {
-                @Override public void actionPerformed(ActionEvent e) {
-                    getEditor().monitor();
-                }
-            });
+
+    protected Action actMonitor = new Action("Monitor Directory",
+            KeyEvent.VK_M, "control shift D") {
+            @Override public void actionPerformed(ActionEvent e) {
+                getEditor().monitor();
+            }
+        };
+
+    protected JMenuItem mnMonitor = new JMenuItem(actMonitor);
     {
         mnMonitor.setVisible(false);
     }
@@ -125,8 +128,19 @@ public class EditFrame extends JFrame
                 getEditor().save();
             }
         };
+    protected Action actSubmit = new Action("Submit", KeyEvent.VK_S,
+                                          KeyStroke.getKeyStroke("control S")) {
+            { setEnabled(false); }
+            @Override public void actionPerformed(ActionEvent e) {
+                getEditor().submit();
+            }
+        };
     protected JMenu mnSaveAs = new JMenu("Save as");
     protected JMenuItem mnSave = toMenuItem(actSave);
+    protected JMenuItem mnSubmit = toMenuItem(actSubmit);
+    {
+        mnSubmit.setVisible(false);
+    }
     protected Action actSaveAsPED = new Action("PED", KeyEvent.VK_P) {
             { 
                 putValue(SHORT_DESCRIPTION,
@@ -488,6 +502,14 @@ public class EditFrame extends JFrame
     protected JSeparator mnVariablesSeparator = new JSeparator();
     protected JMenuItem mnEditVariable = new JMenuItem("Edit");
     protected JMenu mnVariables = new JMenu("Variables");
+
+    protected Action actSwapXY = new Action("Swap X and Y axes",
+            KeyEvent.VK_S) {
+            @Override public void actionPerformed(ActionEvent e) {
+                getEditor().swapXY();
+                finishEvent();
+            }
+        };
     protected JMenu mnScale = new JMenu("Scale");
     Action actAddTag = new Action("Add", KeyEvent.VK_A) {
             @Override public void actionPerformed(ActionEvent e) {
@@ -518,7 +540,8 @@ public class EditFrame extends JFrame
                     finishEvent();
                 }
             });
-    protected JMenu mnComponents = new JMenu("Components");
+    protected JMenu mnSetComponents = new JMenu("Set components");
+    protected JMenu mnSwapComponents = new JMenu("Swap components");
 
     JMenuItem mnCopyFormulas = new JMenuItem
         (new Action
@@ -570,23 +593,17 @@ public class EditFrame extends JFrame
     protected transient BackgroundImageType backgroundType = null;
     protected transient BackgroundImageType oldBackgroundType = null;
 
-    // How to show the original scanned image in the background of
-    // the new diagram:
-    enum BackgroundImageType
-    { LIGHT_GRAY, // White parts look white, black parts appear light gray
-      DARK_GRAY, // Halfway between light gray and black
-      BLACK, // Original appearance
-      BLINK, // Blinks on and off
-      NONE // Not shown
-      };
-
-    public BackgroundImageType getBackgroundImage() {
+    public BackgroundImageType getBackgroundType() {
         return !mnBackgroundImage.isEnabled() ? BackgroundImageType.NONE
             : lightGrayBackgroundImage.isSelected() ? BackgroundImageType.LIGHT_GRAY
             : blinkBackgroundImage.isSelected() ? BackgroundImageType.BLINK
             : darkGrayBackgroundImage.isSelected() ? BackgroundImageType.DARK_GRAY
             : blackBackgroundImage.isSelected() ? BackgroundImageType.BLACK
             : BackgroundImageType.NONE;
+    }
+
+    public boolean isBlink() {
+        return mnBackgroundImage.isEnabled() && blinkBackgroundImage.isSelected();
     }
 
     public void setBackgroundType(BackgroundImageType value) {
@@ -620,7 +637,7 @@ public class EditFrame extends JFrame
     }
 
     protected Action setLeftComponent = new Action
-        ("Set left component", KeyEvent.VK_L) {
+        ("Left", KeyEvent.VK_L) {
             @Override public void actionPerformed(ActionEvent e) {
                 getEditor().setDiagramComponent(Side.LEFT);
                 finishEvent();
@@ -628,7 +645,7 @@ public class EditFrame extends JFrame
         };
 
     protected Action setRightComponent = new Action
-        ("Set right component", KeyEvent.VK_R) {
+        ("Right", KeyEvent.VK_R) {
             @Override public void actionPerformed(ActionEvent e) {
                 getEditor().setDiagramComponent(Side.RIGHT);
                 finishEvent();
@@ -636,7 +653,7 @@ public class EditFrame extends JFrame
         };
 
     protected Action setTopComponent = new Action
-        ("Set top component", KeyEvent.VK_T) {
+        ("Top", KeyEvent.VK_T) {
             @Override public void actionPerformed(ActionEvent e) {
                 getEditor().setDiagramComponent(Side.TOP);
                 finishEvent();
@@ -719,13 +736,12 @@ public class EditFrame extends JFrame
         String msg = getEditor().isEditable()
             ? ("<p>The conversion was canceled or could not be performed. "
                + "<p>Conversions can only be performed on "
-               + "<p>Conversions can only be performed on "
                + "diagrams for which the left, right, and (for ternary diagrams) "
                + "top components are defined (using the "
                + "<code>Chemistry/Components</code> "
                + "menu) in elemental formulas such as \"Ca + Mg\" or "
                + "\"Pb3(PO4)2\".")
-            : "<p>This diagram does not support mole&lt;-&gt;weight conversions.";
+            : "<p>This diagram does not support mole \u2194 weight conversions.";
         getEditor().showError(msg);
     }
 
@@ -1007,7 +1023,11 @@ public class EditFrame extends JFrame
         }
 
         @Override public void actionPerformed(ActionEvent e) {
-            getEditor().toggleBackgroundType(value);
+            boolean blink = value == BackgroundImageType.BLINK;
+            getEditor().setBlink(blink);
+            if (!blink) {
+                getEditor().toggleBackgroundType(value);
+            }
             finishEvent();
         }
     }
@@ -1183,6 +1203,7 @@ public class EditFrame extends JFrame
         mnFile.add(mnOpen);
         mnFile.add(mnMonitor);
         mnFile.add(mnSave);
+        mnFile.add(mnSubmit);
 
         // "Save As" submenu
         mnSaveAs.setMnemonic(KeyEvent.VK_A);
@@ -1424,6 +1445,8 @@ public class EditFrame extends JFrame
         mnVariablesSeparator.setVisible(false);
         mnEditVariable.setVisible(false);
 
+        mnProperties.add(actSwapXY);
+
         setAspectRatio = new Action
             ("Aspect ratio", KeyEvent.VK_A) {
                 @Override public void actionPerformed(ActionEvent e) {
@@ -1480,13 +1503,15 @@ public class EditFrame extends JFrame
         mnChem.setMnemonic(KeyEvent.VK_M);
         menuBar.add(mnChem);
 
-        mnComponents.setMnemonic(KeyEvent.VK_C);
+        mnSetComponents.setMnemonic(KeyEvent.VK_C);
         setTopComponent.setEnabled(false);
-        mnComponents.add(setLeftComponent);
-        mnComponents.add(setRightComponent);
-        mnComponents.add(setTopComponent);
+        mnSetComponents.add(setLeftComponent);
+        mnSetComponents.add(setRightComponent);
+        mnSetComponents.add(setTopComponent);
+        mnSetComponents.add(guessComponents);
+        mnChem.add(mnSetComponents);
         
-        mnComponents.add(swapBinary);
+        mnChem.add(swapBinary);
 
         mnSwap.add(new Action
                 ("Left \u2194 Right", KeyEvent.VK_L) {
@@ -1509,10 +1534,7 @@ public class EditFrame extends JFrame
                     finishEvent();
                 }
             });
-        mnComponents.add(mnSwap);
-        
-        mnComponents.add(guessComponents);
-        mnChem.add(mnComponents);
+        mnChem.add(mnSwap);       
 
         {
             JMenu mnProp = new JMenu("Proportions");
@@ -1620,9 +1642,11 @@ public class EditFrame extends JFrame
         }
 
         // Enable shortcuts for actions that do not appear in the top
-        // menu because they are position-sensitive.
+        // menu because they are position-sensitive, or in the case of
+        // actMonitor, semi-secret.
         for (Action act: new Action[]
             { actAutoPosition,
+              actMonitor,
               actNearestPoint,
               actNearestGridPoint,
               actNearestCurve,
@@ -1720,7 +1744,7 @@ public class EditFrame extends JFrame
 
         mnProperties.setVisible(getVisibleItemCount(mnProperties) > 0);
         mnImportCoordinates.setVisible(b);
-        mnComponents.setVisible(b);
+        mnSetComponents.setVisible(b);
 
         usingWeightFraction.setVisible(b);
         mnBackgroundImage.setVisible(b);

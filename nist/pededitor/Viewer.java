@@ -94,10 +94,6 @@ public class Viewer extends Editor {
                 // OK, let it be
             }
         }
-
-        if (Stuff.isFileAssociationBroken()) {
-            ef.mnMonitor.setVisible(true); // Enable directory monitoring.
-        }
         
         setSaveNeeded(false);
     }
@@ -109,13 +105,14 @@ public class Viewer extends Editor {
     /** Standard installation message for Macintosh, on which file associations don't work. */
     @Override void doFileAssociationsBrokenMessage() {
         doFileAssociationsBrokenMessage
-            ("On Macintosh systems, you may view downloaded diagrams (.PEDV files) either one at a time "
-             + "using the <code>File/Open</code> menu option, or you may have this program "
-             + "automatically scan for newly downloaded diagrams using the "
-             + "<code>File/Monitor Directory</code> option. "
-             + "<p>At any time, you can "
-             + "uninstall, run, or create a shortcut for it by opening the Java Control "
-             + "Panel's General tab and and pressing the \"View...\" button.",
+            ("On Macintosh systems, you may view downloaded diagrams (.PEDV files) manually "
+                    + "using the <code>File/Open</code> menu option, or you may have this program "
+                    + "automatically scan for newly downloaded diagrams "
+                    + "for as long as it remains open using the "
+                    + "<code>File/Monitor Directory</code> option. "
+                    + "<p>At any time, you can "
+                    + "uninstall, run, or create a shortcut for the Viewer by opening the Java Control "
+                    + "Panel's General tab and and pressing the \"View...\" button.",
              fallbackTitle());
     }
 
@@ -135,7 +132,7 @@ public class Viewer extends Editor {
     }
 
     @Override public void run() {
-        open();
+        // Do nothing.
     }
 
     @Override public String[] pedFileExtensions() {
@@ -160,16 +157,16 @@ public class Viewer extends Editor {
         String res = fallbackTitle() + " could not register as the handler for "
             + "PED Viewer diagrams (.PEDV files).";
         if (haveOptions) {
-            res = res + "<p>You can still view any .PEDV files you download " +
-                "(using the \"View Diagram\" button of the PED Online Search) " +
-                "by pressing \"Run Now\" " +
-                "and selecting the file to display when the " +
-                "\"Open PED/PEDV file\" dialog opens. Then, as long as you keep the PED " +
-                "Viewer open, you can display additional diagrams using its " +
-                "File/Open menu item. You can reopen the PED Viewer at " +
-                "any time by clicking on the desktop shortcut if available or clicking " +
-                "on the same link you used to run this program in the first place. " +
-                "<p>For more information, please contact phase3@ceramics.org.";
+            res +=
+                "You may still view downloaded diagrams (.PEDV files) manually "
+                + "using the <code>File/Open</code> menu option, or you may have this program "
+                + "automatically scan for newly downloaded diagrams "
+                + "for as long as it remains open using the "
+                + "<code>File/Monitor Directory</code> option. "
+                + "<p>You can reopen the PED Viewer at "
+                + "any time by clicking on the desktop shortcut if available or clicking "
+                + "on the same link you used to run this program in the first place. "
+                + "<p>For more information, please contact phase3@ceramics.org.";
         }
         return res;
     }

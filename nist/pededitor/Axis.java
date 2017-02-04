@@ -3,13 +3,14 @@
 
 package gov.nist.pededitor;
 
-import java.awt.geom.*;
-import java.text.*;
+import java.awt.geom.Point2D;
+import java.text.NumberFormat;
+import java.util.function.ToDoubleFunction;
 
 import org.codehaus.jackson.annotate.JsonIgnore;
 
 /** Simple class to hold information about an axis/variable. */
-abstract public class Axis implements Comparable<Axis> {
+abstract public class Axis implements Comparable<Axis>, ToDoubleFunction<Point2D> {
 
     public Axis() {
         format = NumberFormat.getInstance();
@@ -32,22 +33,22 @@ abstract public class Axis implements Comparable<Axis> {
 
         @return the value of this variable corresponding to the given
         location in principal coordinates. */
-    abstract public double value(double px, double py);
+    abstract public double applyAsDouble(double px, double py);
 
     /** Convenience variation of value(double, double). */
-    public double value(Point2D p) {
-        return value(p.getX(), p.getY());
+    @Override public double applyAsDouble(Point2D p) {
+        return applyAsDouble(p.getX(), p.getY());
     }
 
     /** Same as value(), but return as a string formatted
         appropriately. */
-    public String valueAsString(double px, double py) {
-        return format.format(value(px, py));
+    public String applyAsString(double px, double py) {
+        return format.format(applyAsDouble(px, py));
     }
 
     /** Convenience variation of valueAsString(double, double). */
-    public String valueAsString(Point2D p) {
-        return format.format(value(p.getX(), p.getY()));
+    public String applyAsString(Point2D p) {
+        return format.format(applyAsDouble(p.getX(), p.getY()));
     }
 
     @Override public String toString() {
@@ -56,7 +57,7 @@ abstract public class Axis implements Comparable<Axis> {
     }
 
     @JsonIgnore public boolean isPercentage() {
-        return valueAsString(0.5, 0.5).indexOf('%') >= 0;
+        return applyAsString(0.5, 0.5).indexOf('%') >= 0;
     }
 
     @Override public int compareTo(Axis other) {

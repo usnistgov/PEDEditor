@@ -15,6 +15,10 @@ public class BinaryMultiplierTransform extends MultiplierConcentrationTransform
         }
     }
 
+    @Override public BinaryMultiplierTransform clone() {
+        return (BinaryMultiplierTransform) super.clone();
+    }
+
     @Override public BinaryMultiplierTransform createTransform(double... cs) {
         return new BinaryMultiplierTransform(cs);
     }
