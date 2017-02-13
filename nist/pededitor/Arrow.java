@@ -3,7 +3,8 @@
 
 package gov.nist.pededitor;
 
-import java.awt.Color;
+import java.awt.Graphics2D;
+import java.awt.Shape;
 import java.awt.geom.*;
 
 import org.codehaus.jackson.annotate.JsonIgnore;
@@ -11,74 +12,63 @@ import org.codehaus.jackson.annotate.JsonIgnoreProperties;
 import org.codehaus.jackson.annotate.JsonProperty;
 
 @JsonIgnoreProperties
-    ({"bounds2D", "bounds", "windingRule", "currentPoint"})
-public class Arrow extends Path2D.Double implements Decorated {
-    private static final long serialVersionUID = -3704208186216534922L;
+({"lineWidth", "lineStyle"})
+public class Arrow extends TransformedShape implements Cloneable {
 
-    @JsonProperty public double x;
-    @JsonProperty public double y;
-    @JsonProperty public double size;
-    @JsonIgnore public double theta;
-
-    Color color = null;
-
-    /** @param size The "size" of the arrow is a bit arbitrary, but
+    /** @param scale The "scale" of the arrow is a bit arbitrary, but
         it should be roughly equal to the line width of any line that
-        is attached to the arrow.
+        is attached to the arrow. For legacy reasons, accepts the
+        "scale" property being called "size" instead.
+        
+        @param angle In radians.
     */
     public Arrow(@JsonProperty("x") double x,
                  @JsonProperty("y") double y,
-                 @JsonProperty("size") double size,
-                 @JsonProperty("angle") double theta) {
-        this.x = x;
-        this.y = y;
-        this.size = size;
-        this.theta = theta;
-        addArrow();
+                 @JsonProperty("size") double scale,
+                 @JsonProperty("angle") double angle) {
+        super(x, y, scale, angle);
     }
 
-    void addArrow() {
-        addArrow(this, x, y, size, theta);
+    public Arrow() {
     }
 
-    /** @return null unless this has been assigned a color. */
-    public Color getColor() {
-        return color;
-    }
-
-    public double getAngle() {
-        return theta;
-    }
-
-    public void setAngle(double theta) {
-        this.theta = theta;
-        reset();
-        addArrow();
-    }
-
-    /** Set the color. Use null to indicate that the color should be
-        the same as whatever was last chosen for the graphics
-        context. */
-    public void setColor(Color color) {
-        this.color = color;
+    void addArrow(Path2D.Double res) {
+        addArrow(res, x, y, scale, angle);
     }
 
     /** For some reason, the clone() method is declared final in
         Path2D.Double, so I had to give my clone method a different
         name. */
-    public Arrow clonus() {
-        Arrow output = new Arrow(x, y, size, theta);
-        output.setColor(getColor());
-        return output;
+    @Override public Arrow clone() {
+        Arrow res = new Arrow(getX(), getY(), getScale(), getAngle());
+        res.setColor(getColor());
+        return res;
     }
 
-    /** Add an arrow to the path "output". */
+    @Override @JsonIgnore public Point2D.Double getLocation() {
+        return new Point2D.Double(x,y);
+    }
+
+    @JsonIgnore public Shape getShape() {
+        Path2D.Double res = new Path2D.Double();
+        addArrow(res);
+        return res;
+    }
+
+    static public Shape getShape(double x, double y, double scale,
+            double angle) {
+        Path2D.Double res = new Path2D.Double();
+        addArrow(res, x, y, scale, angle);
+        return res;
+    }
+
+    /** Add an arrow to the path "res". */
     static public void addArrow
-        (Path2D.Double output, double x, double y,
-         double size, double theta) {
+        (Path2D.Double res, double x, double y,
+         double scale, double theta) {
         AffineTransform xform = AffineTransform.getTranslateInstance(x,y);
         xform.rotate(theta);
-        xform.scale(size, size);
+        xform.scale(scale, scale);
 
         // Sharp, pointy arrows ordinarily look best, but those can be
         // difficult to coordinate with the segments that form the
@@ -117,23 +107,32 @@ public class Arrow extends Path2D.Double implements Decorated {
         xform.transform(points, 0, points, 0, points.length / 2);
 
         int p = 0;
-        output.moveTo(points[p], points[p+1]); p += 2;
-        output.lineTo(points[p], points[p+1]); p += 2;
-        output.lineTo(points[p], points[p+1]); p += 2;
-        output.quadTo(points[p], points[p+1],
+        res.moveTo(points[p], points[p+1]); p += 2;
+        res.lineTo(points[p], points[p+1]); p += 2;
+        res.lineTo(points[p], points[p+1]); p += 2;
+        res.quadTo(points[p], points[p+1],
                       points[p+2], points[p+3]);
         p += 4;
-        output.quadTo(points[p], points[p+1],
+        res.quadTo(points[p], points[p+1],
                       points[p+2], points[p+3]);
         p += 4;
-        output.lineTo(points[p], points[p+1]); p += 2;
+        res.lineTo(points[p], points[p+1]); p += 2;
         if (p != points.length) {
             throw new IllegalStateException();
         }
-        output.closePath();
+        res.closePath();
+    }
+
+    @Override public void draw(Graphics2D g) {
+        g.fill(getShape(x, y, scale, angle));
+    }
+
+    @Override public void draw(Graphics2D g, double scale) {
+        g.fill(getShape(x * scale, y * scale, scale * this.scale, angle));
     }
 
     @Override public String toString() {
-        return "Arrow[(" + x + ", " + y + ") s=" + size + " th=" + theta + "]";
+        return getClass().getSimpleName() + "[(" + x + ", " + y + ") s=" + scale
+            + " ang=" + angle + "]";
     }
 }
