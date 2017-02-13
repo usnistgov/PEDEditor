@@ -8,17 +8,17 @@ import java.awt.geom.Line2D;
 import java.awt.geom.Point2D;
 import java.awt.geom.Rectangle2D;
 
-/* Interface for curves in two dimensions parameterized by t. Many
-   methods take t0,t1 parameters which indicate that the answer should
-   apply only for the t in [t0,t1] subset of the curve. */
+/** Interface for curves in two dimensions parameterized by t. Many
+    methods take t0,t1 parameters which indicate that the answer should
+    apply only for the t in [t0,t1] subset of the curve. */
 public interface Param2D {
-    /* Return the t value of the vertex whose t value is least among
-     those greater than t. A vertex is a location that was explicitly
-     assigned to lie on the curve. */
+    /** Return the t value of the vertex whose t value is least among
+        those greater than t. A vertex is a location that was
+        explicitly assigned to lie on the curve. */
     double getNextVertex(double t);
-    /* Return the t value of the vertex whose t value is greatest
-     among those less than or equal to t. A vertex is a location that
-     was explicitly assigned to lie on the curve. */
+    /** Return the t value of the vertex whose t value is greatest
+        among those less than or equal to t. A vertex is a location
+        that was explicitly assigned to lie on the curve. */
     double getLastVertex(double t);
 
     Point2D.Double getLocation(double t);
@@ -57,7 +57,7 @@ public interface Param2D {
         too narrow. */
     Rectangle2D.Double getBounds(double t0, double t1);
 
-    /** Return {min,max} for the function f(x) = x(t) * xc + y(t) * yc. */
+    /** Return {min,max} for the function f(t) = x(t) * xc + y(t) * yc. */
     double[] getBounds(double xc, double yc, double t0, double t1);
 
     /** @return an array of t values where segment intersects this. */
@@ -87,7 +87,7 @@ public interface Param2D {
         t.) */
     double area(double t0, double t1);
 
-    /** Return a BoundedParam2D that covers the t in (t0,t1) range
+    /** Return a BoundedParam2D that covers the t in [t0, t1] range
         of this item. */
     BoundedParam2D createSubset(double t0, double t1);
 
@@ -97,4 +97,14 @@ public interface Param2D {
         Unless this is a single point, at least two objects should be
         returned. */
     BoundedParam2D[] subdivide(double t0, double t1);
+
+    /** @return an array of straight segments over the given T range,
+        each with getMinT() < getMaxT(). Do not modify any of the
+        BoundedParam2D objects that are returned. */
+    BoundedParam2D[] straightSegments(double startT, double endT);
+
+    /** @return an array of curved sections over the given T range,
+        each with getMinT() < getMaxT(). Do not modify any of the
+        BoundedParam2D objects that are returned. */
+    BoundedParam2D[] curvedSegments(double startT, double endT);
 }
