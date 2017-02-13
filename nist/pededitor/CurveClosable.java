@@ -3,7 +3,7 @@
 
 package gov.nist.pededitor;
 
-interface CurveClosable {
+interface CurveCloseable {
     boolean isClosed();
     void setClosed(boolean b);
 }
