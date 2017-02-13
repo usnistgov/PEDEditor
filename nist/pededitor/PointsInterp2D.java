@@ -6,43 +6,43 @@ package gov.nist.pededitor;
 import java.awt.geom.Point2D;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collection;
+import java.util.List;
 
 import org.codehaus.jackson.annotate.JsonIgnore;
 import org.codehaus.jackson.annotate.JsonProperty;
+import org.codehaus.jackson.map.ObjectMapper;
 
 // The annotations below for deserializing this GeneralPolyline into
 // its appropriate subtype were recommended on Programmer Bruce's
 // blog, "Deserialize JSON with Jackson into Polymorphic Types". -- EB
 
-/** A class for pairing the anchor points of a possibly smoothed
-    polyline with its associated color, StandardStroke, and the line
-    width multiplier to use with the StandardStroke. */
-public abstract class PointsInterp2D extends Interp2D {
+/** An Interp2D paired with an ArrayList of points. */
+abstract public class PointsInterp2D implements Interp2D {
     protected ArrayList<Point2D.Double> points;
+    protected transient BoundedParam2D param = null;
 
-    public PointsInterp2D(boolean closed) {
-        super(closed);
+    public PointsInterp2D() {
         points = new ArrayList<>();
     }
 
-    public PointsInterp2D(Point2D[] points, boolean closed) {
-        super(closed);
-        if (points != null) {
-            this.points = new ArrayList<>(points.length);
-            for (Point2D p: points) {
-                this.points.add(new Point2D.Double(p.getX(), p.getY()));
-            }
-        } else {
-            this.points = new ArrayList<>();
-        }
+    public <T extends Point2D> PointsInterp2D(List<T> points) {
+        setPoints(points);
     }
+
+    @Override abstract public PointsInterp2D clone();
 
     @Override public Point2D.Double[] getPoints() {
         return Geom.deepCopy(points.toArray(new Point2D.Double[0]));
     }
 
-    @JsonIgnore public <T extends Point2D> void setPoints(Collection<T> points) {
+    @Override @JsonIgnore public BoundedParam2D getParameterization() {
+        if (param == null) {
+            param = PathParam2D.create(getShape());
+        }
+        return param;
+    }
+
+    @Override public <T extends Point2D> void setPoints(List<T> points) {
         this.points = new ArrayList<Point2D.Double>
             (Arrays.asList(Geom.deepCopy(points.toArray
                                         (new Point2D.Double[0]))));
@@ -50,9 +50,11 @@ public abstract class PointsInterp2D extends Interp2D {
     }
 
     @JsonProperty("points") public void setPoints(Point2D.Double[] points) {
-        this.points = new ArrayList<Point2D.Double>
-            (Arrays.asList(Geom.deepCopy(points)));
-        param = null;
+        setPoints(Arrays.asList(points));
+    }
+
+    public <T extends Point2D> void setPoints(T[] points) {
+        setPoints(Arrays.asList(points));
     }
 
     /* Return control point #i. For closed curves, control points may
@@ -84,5 +86,23 @@ public abstract class PointsInterp2D extends Interp2D {
        closed curves, the return trip to point #0 does not count). */
     @Override public int size() {
         return points.size();
+    }
+
+    @Override public void setClosed(boolean closed) {
+        if (closed != isClosed()) {
+            param = null;
+        }
+        // The work of actually setting closed to the given value must
+        // be done by a subclass.
+    }
+
+    @Override public String toString() {
+        try {
+            return getClass().getCanonicalName()
+                + (new ObjectMapper()).writeValueAsString(this);
+        } catch (Exception e) {
+            System.err.println(e);
+            return getClass().getCanonicalName() + "[ERROR]";
+        }
     }
 }
