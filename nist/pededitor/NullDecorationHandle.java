@@ -21,10 +21,6 @@ public class NullDecorationHandle implements DecorationHandle {
         y= p.getY();
     }
 
-    @Override public DecorationHandle remove() {
-        return null;
-    }
-
     @Override public DecorationHandle move(Point2D dest) {
         return null;
     }
@@ -33,7 +29,7 @@ public class NullDecorationHandle implements DecorationHandle {
         return null;
     }
 
-    @Override public java.awt.geom.Point2D.Double getLocation() {
+    @Override public Point2D.Double getLocation() {
         return new Point2D.Double(x,y);
     }
 
