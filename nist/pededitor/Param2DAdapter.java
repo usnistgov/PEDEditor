@@ -9,7 +9,8 @@ import java.awt.geom.Point2D;
     with a defined derivative. */
 abstract public class Param2DAdapter
     implements Param2D {
-    Param2D deriv = null;
+    // Cache potentially expensive computations.
+    transient Param2D deriv = null;
 
     abstract protected Param2D computeDerivative();
 
