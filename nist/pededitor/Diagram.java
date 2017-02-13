@@ -2630,6 +2630,41 @@ public class Diagram extends Observable implements Printable {
         return new DecorationDistance(decs.get(di.index), di.distance);
     }
 
+    /** Return a list of every decoration that is completely inside the selected region. */
+    ArrayList<Decoration> decorationsInside(Interp2D pagePath) {
+        ArrayList<Decoration> res = new ArrayList<>();
+
+        boolean isClosed = pagePath.isClosed();
+        Shape region = isClosed ? pagePath.getShape() : null;
+        BoundedParam2D param = pagePath.getParameterization();
+        double maxDistance = pageMatchDistance();
+
+        for (Decoration d: getDecorations()) {
+            boolean inside = true;
+            for (DecorationHandle hand: d.getHandles(
+                            DecorationHandle.Type.CONTROL_POINT)) {
+                Point2D page = principalToStandardPage.transform(
+                        hand.getLocation());
+                inside = isClosed && region.contains(page);
+                if (!inside) {
+                    // Check if the point is very close to the path
+                    // border.
+                    CurveDistanceRange cdr = param.distance(
+                            page, maxDistance, 1000);
+                    inside = cdr != null && cdr.distance <= maxDistance * 2;
+                }
+                if (!inside) {
+                    break;
+                }
+            }
+
+            if (inside)
+                res.add(d);
+        }
+
+        return res;
+    }
+
     /** Toggle the closed/open status of curve #pathNo. Throws
         IllegalArgumentException if that curve is filled, since you
         can't turn off closure for a filled curve. */
