@@ -4,10 +4,10 @@
 package gov.nist.pededitor;
 
 import java.awt.Color;
+import java.awt.geom.AffineTransform;
 import java.awt.geom.Point2D;
 
 import org.codehaus.jackson.annotate.JsonIgnore;
-import org.codehaus.jackson.annotate.JsonProperty;
 import org.codehaus.jackson.map.annotate.JsonSerialize;
 import org.codehaus.jackson.map.annotate.JsonSerialize.Inclusion;
 
@@ -15,38 +15,15 @@ import org.codehaus.jackson.map.annotate.JsonSerialize.Inclusion;
     with a given color, anchored at a specific location within the
     shape's bounding box. */
 @JsonSerialize(include = Inclusion.NON_DEFAULT)
-public class TransformedShape implements Decorated {
+abstract public class TransformedShape
+    implements Angled, Cloneable, Decoration, DecorationHandle {
 
     /** x position of the anchor point */
     double x;
     /** y position of the anchor point */
     double y;
 
-    /** Positioning relative to the anchor point. 0.0 = The
-        anchor point lies along the left edge of the shape in
-        baseline coordinates (if the shape is rotated, then this edge
-        may not be on the left in physical coordinates; for example,
-        if the shape is rotated by an angle of PI/2, then this will be
-        the top edge in physical coordinates); 0.5 = the anchor point
-        lies along the vertical line (in baseline coordinates) that
-        bisects the shape; 1.0 = the anchor point lies along the
-        right edge (in baseline coordinates) of the shape */
-    double xWeight;
-
-    /** Positioning relative to the anchor point. 0.0 = The
-        anchor point lies along the top edge of the shape in
-        baseline coordinates (if the shape is rotated, then this edge
-        may not be on top in physical coordinates; for example, if the
-        shape is rotated by an angle of PI/2, then this will be the
-        right edge in physical coordinates); 0.5 = the anchor point
-        lies along the horizontal line (in baseline coordinates) that
-        bisects the shape; 1.0 = the anchor point lies along the
-        bottom edge (in baseline coordinates) of the shape */
-    double yWeight;
-
-    /** Printing angle in clockwise radians. 0 represents
-        left-to-right text; Math.PI/2 represents text where lines
-        extend downwards. */
+    /** angle in radians */
     double angle = 0.0;
 
     /** A multiple of a standard scale (1.0 = normal), where the
@@ -55,42 +32,77 @@ public class TransformedShape implements Decorated {
 
     Color color = null;
 
-    public TransformedShape() {
+    public TransformedShape() { }
+
+    public TransformedShape(double x,
+                            double y,
+                            double scale,
+                            double angle) {
+        this.x = x;
+        this.y = y;
+        this.scale = scale;
+        this.angle = angle;
     }
 
-    public TransformedShape(double xWeight, double yWeight) {
-        this.xWeight = xWeight;
-        this.yWeight = yWeight;
-    }
+    @Override abstract public TransformedShape clone();
 
     public void setX(double x) { this.x = x; }
     public void setY(double y) { this.y = y; }
-    public void setXWeight(double xWeight) { this.xWeight = xWeight; }
-    public void setYWeight(double yWeight) { this.yWeight = yWeight; }
-    public void setAngle(double angle) { this.angle = angle; }
+    @Override public void setAngle(double angle) { this.angle = angle; }
     public void setScale(double scale) { this.scale = scale; }
 
     /** @return null unless this has been assigned a color. */
-    public Color getColor() {
+    @Override public Color getColor() {
         return color;
     }
 
     /** Set the color. Use null to indicate that the color should be
         the same as whatever was last chosen for the graphics
         context. */
-    public void setColor(Color color) {
+    @Override public void setColor(Color color) {
         this.color = color;
     }
 
     public double getX() { return x; }
     public double getY() { return y; }
-    @JsonIgnore public Point2D.Double getLocation() { return new Point2D.Double(getX(), getY()); }
-    public double getAngle() { return angle; }
-    public double getScale() { return scale; }
-    @JsonProperty("xWeight") public double getXWeight() { return xWeight; }
-    @JsonProperty("yWeight") public double getYWeight() { return yWeight; }
-
-    public void reflect() {
-        setYWeight(1.0 - getYWeight());
+    @Override @JsonIgnore public Point2D.Double getLocation() {
+        return new Point2D.Double(getX(), getY());
     }
+    @Override public double getAngle() { return angle; }
+    public double getScale() { return scale; }
+
+    @Override public void transform(AffineTransform xform) {
+        Point2D.Double p = new Point2D.Double(getX(), getY());
+        xform.transform(p, p);
+        setX(p.x);
+        setY(p.y);
+        setAngle(Geom.transformRadians(xform, getAngle()));
+    }
+
+    @Override public TransformedShape move(Point2D dest) {
+        setX(dest.getX());
+        setY(dest.getY());
+        return this;
+    }
+
+    @Override public TransformedShape copy(Point2D dest) {
+        TransformedShape res = clone();
+        res.move(dest);
+        return res;
+    }
+
+    @Override public TransformedShape createTransformed(AffineTransform xform) {
+        TransformedShape res = clone();
+        res.transform(xform);
+        return res;
+    }
+
+    @Override public DecorationHandle[] getHandles(DecorationHandle.Type type) {
+        return new TransformedShape[] { this };
+    }
+
+    @JsonIgnore @Override public TransformedShape getDecoration() {
+        return this;
+    }
+
 }
