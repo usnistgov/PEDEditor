@@ -7,6 +7,7 @@ import java.awt.geom.AffineTransform;
 import java.awt.geom.Line2D;
 import java.awt.geom.Point2D;
 import java.awt.geom.Rectangle2D;
+import java.awt.geom.Rectangle2D.Double;
 
 /** Class to build a BoundedParam2D from a Param2D. */
 public class Param2DBounder implements BoundedParam2D {
@@ -25,7 +26,7 @@ public class Param2DBounder implements BoundedParam2D {
         this.t1 = t1;
     }
 
-    @Override public Param2D getUnboundedCurve() {
+    public Param2D getUnboundedCurve() {
         return c;
     }
 
@@ -110,7 +111,7 @@ public class Param2DBounder implements BoundedParam2D {
     }
 
     @Override public Estimate length(double absoluteError,
-                                          double relativeError, int maxSteps) {
+                                     double relativeError, int maxSteps) {
         return c.length(absoluteError, relativeError, maxSteps, t0, t1);
     }
 
@@ -122,4 +123,56 @@ public class Param2DBounder implements BoundedParam2D {
         return getClass().getSimpleName()
             + "[t in [" + getMinT() + ", " + getMaxT() + "] " + c + "]";
     }
+
+    @Override public CurveDistanceRange distance
+        (Point2D p, double t0, double t1) {
+        return c.distance(p, t0, t1);
+    }
+
+    @Override public CurveDistanceRange distance(Point2D p, double maxError,
+                                                 int maxSteps, double t0, double t1) {
+        return c.distance(p, maxError, maxSteps, t0, t1);
+    }
+
+    @Override public Double getBounds(double t0, double t1) {
+        return c.getBounds(t0, t1);
+    }
+
+    @Override public double[] getBounds(double xc, double yc, double t0, double t1) {
+        return c.getBounds(xc, yc, t0, t1);
+    }
+
+    @Override public double[] segIntersections(Line2D segment, double t0, double t1) {
+        return c.segIntersections(segment, t0, t1);
+    }
+
+    @Override public double[] lineIntersections(Line2D segment, double t0, double t1) {
+        return c.lineIntersections(segment, t0, t1);
+    }
+
+    @Override public Estimate length(double t0, double t1) {
+        return c.length(t0, t1);
+    }
+
+    @Override public Estimate length(double absoluteError, double relativeError,
+                                     int maxSteps, double t0, double t1) {
+        return c.length(absoluteError, relativeError, maxSteps, t0, t1);
+    }
+
+    @Override public double area(double t0, double t1) {
+        return c.area(t0, t1);
+    }
+
+    @Override public BoundedParam2D[] subdivide(double t0, double t1) {
+        return c.subdivide(t0, t1);
+    }
+
+    @Override public BoundedParam2D[] curvedSegments(double t0, double t1) {
+        return c.curvedSegments(t0, t1);
+    }
+
+    @Override public BoundedParam2D[] straightSegments(double t0, double t1) {
+        return c.straightSegments(t0, t1);
+    }
+
 }
