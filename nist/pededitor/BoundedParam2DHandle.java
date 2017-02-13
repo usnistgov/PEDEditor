@@ -3,9 +3,11 @@
 
 package gov.nist.pededitor;
 
+import org.codehaus.jackson.annotate.JsonIgnore;
+
 /** Interface for a DecorationHandle that is associated with a point
     on a BoundedParam2D. */
 public interface BoundedParam2DHandle extends DecorationHandle, BoundedParameterizable2D {
     @Override BoundedParam2D getParameterization();
-    double getT();
+    @JsonIgnore double getT();
 }
