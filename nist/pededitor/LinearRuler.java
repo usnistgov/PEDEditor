@@ -11,8 +11,10 @@ import java.awt.Graphics2D;
 import java.awt.Stroke;
 import java.awt.geom.AffineTransform;
 import java.awt.geom.Line2D;
+import java.awt.geom.NoninvertibleTransformException;
 import java.awt.geom.Point2D;
 import java.awt.geom.Rectangle2D;
+import java.util.List;
 
 import org.codehaus.jackson.annotate.JsonIgnore;
 import org.codehaus.jackson.annotate.JsonProperty;
@@ -22,7 +24,7 @@ import org.codehaus.jackson.map.annotate.JsonSerialize.Inclusion;
 /** Class describing a ruler whose tick marks describe values from a
     LinearAxis. */
 @JsonSerialize(include = Inclusion.NON_DEFAULT)
-class LinearRuler implements BoundedParameterizable2D, Decorated {
+class LinearRuler implements Interp2DDecoration, SegmentInterp2D {
     public static enum LabelAnchor { NONE, LEFT, RIGHT };
 
     /** Most applications use straight tick marks, but ternary
@@ -186,24 +188,20 @@ class LinearRuler implements BoundedParameterizable2D, Decorated {
         o.tickStartD = tickStartD;
         o.tickEndD = tickEndD;
         o.axisName = axisName;
+        o.color = color;
         return o;
     }
 
-    /** Functions required for the CurveParameterization interface. */
-    @JsonIgnore @Override public BoundedParam2D getParameterization() {
-        return BezierParam2D.create(startPoint, endPoint);
-    }
-
-    /** @return null unless this polyline has been assigned a
+    /** @return null unless this ruler has been assigned a
         color. */
-    public Color getColor() {
+    @Override public Color getColor() {
         return color;
     }
 
     /** Set the color. Use null to indicate that the color should be
         the same as whatever was last chosen for the graphics
         context. */
-    public void setColor(Color color) {
+    @Override public void setColor(Color color) {
         this.color = color;
     }
 
@@ -221,12 +219,12 @@ class LinearRuler implements BoundedParameterizable2D, Decorated {
     }
 
     /** Start of range of logical values covered by this axis. */
-    double getStart() {
+    double getLogicalStart() {
         return mungeValue(axis.applyAsDouble(startPoint));
     }
 
     /** End of range of logical values covered by this axis. */
-    double getEnd() {
+    double getLogicalEnd() {
         return mungeValue(axis.applyAsDouble(endPoint));
     }
 
@@ -289,52 +287,69 @@ class LinearRuler implements BoundedParameterizable2D, Decorated {
     /** Linear function mapping logical values to points in 2D. */
     Point2D.Double toPhysical(double logical,
                               Point2D startPoint, Point2D endPoint) {
-        double start = getStart();
-        double end = getEnd();
+        double start = getLogicalStart();
+        double end = getLogicalEnd();
         double t = (logical - start)/(end - start);
         return new Point2D.Double
             (startPoint.getX() + (endPoint.getX() - startPoint.getX()) * t,
              startPoint.getY() + (endPoint.getY() - startPoint.getY()) * t);
     }
 
-    /** draw this ruler to the given graphics context. The ruler's
-        logical coordinates for this path should be defined in the
-        "Original" coordinate system, but line width and font size are
-        defined with respect to the "SquarePixel" coordinate system.
-        Also, the output is scaled by "scale" before being drawn.
-    */
-    public void draw(Graphics2D g,
-                     AffineTransform originalToSquarePixel,
-                     double scale) {
-        Point2D.Double pageStartPoint = new Point2D.Double();
-        Point2D.Double pageEndPoint = new Point2D.Double();
-        AffineTransform xform = AffineTransform.getScaleInstance(scale, scale);
-        xform.concatenate(originalToSquarePixel);
-        xform.transform(startPoint, pageStartPoint);
-        xform.transform(endPoint, pageEndPoint);
+    /** Transform the physical coordinates by xform, while leaving the
+        logical coordinates unchanged. */
+    @Override public void transform(AffineTransform xform) {
+        try {
+            axis = axis.clone();
+            axis.concatenate(xform.createInverse());
+        } catch (NoninvertibleTransformException x) {
+            throw new IllegalStateException(x);
+        }
+        int size = this.size();
+        for (int i = 0; i < size; ++i) {
+            Point2D.Double p = get(i);
+            xform.transform(p, p);
+            set(i, p);
+        }
+    }
 
+    @Override public void setStart(Point2D p) {
+        startPoint = new Point2D.Double(p.getX(), p.getY());
+    }
+
+    @Override public void setEnd(Point2D p) {
+        endPoint = new Point2D.Double(p.getX(), p.getY());
+    }
+
+    @Override public void draw(Graphics2D g, double scale) {
+        Interp2DDecoration dt = createTransformed(
+                AffineTransform.getScaleInstance(scale, scale));
+        dt.setLineWidth(dt.getLineWidth() * scale);
+        dt.draw(g);
+    }
+    
+    /** Draw this ruler to the given graphics context. */
+    @Override public void draw(Graphics2D g) {
         Stroke oldStroke = g.getStroke();
-        double scaledLineWidth = scale * lineWidth;
         // CAP_SQUARE is not appropriate at endpoints that have arrows
         // (the arrows get ugly square noses), but it is appropriate
         // for endpoints that have no arrows, and no cap type is
         // appropriate for lines that have an arrow at just one of the
         // two ends. The solution is to use CAP_BUTT and move the
         // endpoint to simulate CAP_SQUARE when necessary.
-        g.setStroke(new BasicStroke((float) scaledLineWidth,
+        g.setStroke(new BasicStroke((float) lineWidth,
                                     BasicStroke.CAP_BUTT,
                                     BasicStroke.JOIN_MITER));
         
         if (drawSpine) {
             Point2D.Double vec = Geom.normalize
                 (new Point2D.Double
-                 (pageEndPoint.x - pageStartPoint.x,
-                  (pageEndPoint.y - pageStartPoint.y)));
-            Point2D.Double psp = (Point2D.Double) pageStartPoint.clone();
-            Point2D.Double pep = (Point2D.Double) pageEndPoint.clone();
+                 (endPoint.x - startPoint.x,
+                  (endPoint.y - startPoint.y)));
+            Point2D.Double psp = (Point2D.Double) startPoint.clone();
+            Point2D.Double pep = (Point2D.Double) endPoint.clone();
             if (vec != null) {
-                vec.x *= scaledLineWidth / 2;
-                vec.y *= scaledLineWidth / 2;
+                vec.x *= lineWidth / 2;
+                vec.y *= lineWidth / 2;
                 if (!startArrow) {
                     // Extend the endpoint to simulate CAP_SQUARE.
                     psp.x -= vec.x;
@@ -349,8 +364,8 @@ class LinearRuler implements BoundedParameterizable2D, Decorated {
             g.draw(new Line2D.Double(psp, pep));
         }
 
-        double start = getStart();
-        double end = getEnd();
+        double start = getLogicalStart();
+        double end = getLogicalEnd();
         if (start == end) {
             g.setStroke(oldStroke);
             return; // Weird corner case.
@@ -364,15 +379,15 @@ class LinearRuler implements BoundedParameterizable2D, Decorated {
         double yWeight = ws[1];
 
         Font oldFont = g.getFont();
-        g.setFont(oldFont.deriveFont((float) (fontSize * scale)));
+        g.setFont(oldFont.deriveFont((float) fontSize));
         FontMetrics fm = g.getFontMetrics();
 
         Rectangle2D digitBounds = fm.getStringBounds("8", g);
 
-        double distance = pageStartPoint.distance(pageEndPoint);
+        double distance = startPoint.distance(endPoint);
         Point2D.Double pageDelta
-            = new Point2D.Double(pageEndPoint.x - pageStartPoint.x,
-                                 pageEndPoint.y - pageStartPoint.y);
+            = new Point2D.Double(endPoint.x - startPoint.x,
+                                 endPoint.y - startPoint.y);
         double theta = Math.atan2(pageDelta.y, pageDelta.x);
 
         // m = page distance divided by logical distance.
@@ -449,10 +464,10 @@ class LinearRuler implements BoundedParameterizable2D, Decorated {
             ? RulerTick.nextSmallerRound(bigTickD)
             : tickDelta;
 
-        g.setStroke(new BasicStroke((float) (scale * lineWidth),
+        g.setStroke(new BasicStroke((float) (lineWidth),
                                     BasicStroke.CAP_BUTT, BasicStroke.JOIN_BEVEL));
 
-        double tickLength = scale * lineWidth * 4;
+        double tickLength = lineWidth * 4;
         Point2D.Double tickOffset
             = new Point2D.Double(-pageDelta.y * tickLength / distance,
                                  pageDelta.x * tickLength / distance);
@@ -462,7 +477,7 @@ class LinearRuler implements BoundedParameterizable2D, Decorated {
 
         double minTickPageDelta = (tickType == TickType.V)
             ? (Geom.length(tickVOffset) * 4)
-            : (3 * scale * lineWidth);
+            : (3 * lineWidth);
         double minTickDelta = minTickPageDelta / m;
 
         double clearDistance = Math.abs(tickLength * 2 / m);
@@ -505,7 +520,7 @@ class LinearRuler implements BoundedParameterizable2D, Decorated {
                     continue;
                 }
                 Point2D.Double location
-                    = toPhysical(logical, pageStartPoint, pageEndPoint);
+                    = toPhysical(logical, startPoint, endPoint);
                 if (tickRight) {
                     if (tickType == TickType.V) {
                         tmpPoint.x = location.x + tickOffset.x + tickVOffset.x;
@@ -559,7 +574,7 @@ class LinearRuler implements BoundedParameterizable2D, Decorated {
                  (logical < bigTickEnd) == (bigTickD > 0);
                  logical += bigTickD) {
                 Point2D.Double location
-                    = toPhysical(logical, pageStartPoint, pageEndPoint);
+                    = toPhysical(logical, startPoint, endPoint);
 
                 if (!((sst && Math.abs(logical - astart) < clearDistance)
                       || (set && Math.abs(logical - aend) < clearDistance))) {
@@ -625,23 +640,21 @@ class LinearRuler implements BoundedParameterizable2D, Decorated {
                         ? LogRulerTick.pow10String(logical)
                         : String.format(formatString, logical).trim();
                     s = " " + ContinuedFraction.fixMinusZero(s) + " ";
-                    LabelDialog.drawString
-                        (g, s, anchor.x, anchor.y, xWeight, yWeight);
+                    LabelDialog.drawString(g, s, anchor.x, anchor.y,
+                            xWeight, yWeight);
                     g.setTransform(oldTransform);
                 }
             }
         }
 
         if (startArrow) {
-            g.fill(new Arrow
-                   (pageStartPoint.x, pageStartPoint.y,
-                    scale * lineWidth, theta + Math.PI));
+            g.fill(new Arrow(startPoint.x, startPoint.y,
+                            lineWidth, theta + Math.PI).getShape());
         }
 
         if (endArrow) {
-            g.fill(new Arrow
-                   (pageEndPoint.x, pageEndPoint.y,
-                    scale * lineWidth, theta));
+            g.fill(new Arrow(endPoint.x, endPoint.y,
+                            lineWidth, theta).getShape());
         }
 
         g.setStroke(oldStroke);
@@ -668,7 +681,96 @@ class LinearRuler implements BoundedParameterizable2D, Decorated {
         return minT;
     }
 
-    void reflect() {
+    @JsonIgnore @Override public StandardStroke getLineStyle() {
+        return StandardStroke.SOLID;
+    }
+
+    @Override public int size() {
+        return 2;
+    }
+
+    @Override public void set(int index, Point2D point) {
+        Point2D.Double p = new Point2D.Double(point.getX(), point.getY());
+        switch (index) {
+        case 0:
+        	startPoint = p;
+        	break;
+        case 1:
+        	endPoint = p;
+        	break;
+        default:
+        	throw new IllegalArgumentException("index = " + index);
+        }
+    }
+
+    @Override public Point2D.Double getStart() {
+        return new Point2D.Double(startPoint.x, startPoint.y);
+    }
+
+    @Override public Point2D.Double getEnd() {
+        return new Point2D.Double(endPoint.x, endPoint.y);
+    }
+
+    @Override @JsonIgnore public <T extends Point2D> void setPoints(
+            List<T> points) {
+        if (points == null) {
+            throw new IllegalArgumentException
+                ("setPoints(null)");
+        }
+        if (points.size() != 2) {
+            throw new IllegalArgumentException
+                ("setPoints(): need 2 points, not "
+                 + points.size());
+        }
+        startPoint = new Point2D.Double(points.get(0).getX(), points.get(0).getY());
+        endPoint = new Point2D.Double(points.get(1).getX(), points.get(1).getY());
+    }
+
+    @Override public double getLineWidth() {
+        return lineWidth;
+    }
+
+    /** Set the line style. If not null, this unsets the fill. */
+    @Override public void setLineStyle(StandardStroke stroke) {
+    }
+
+    /** Set the fill. If not null, this unsets the stroke. 
+     * @throws UnsupportedOperationException */
+    @Override @JsonIgnore public void setFill(StandardFill fill)
+        throws UnsupportedOperationException {
+        throw new UnsupportedOperationException();
+    }
+
+    /** @return null unless this has been assigned a fill. */
+    @Override @JsonIgnore public StandardFill getFill() {
+        return null;
+    }
+
+    @Override @JsonIgnore public boolean isFilled() {
+        return false;
+    }
+
+    /** This is a little clumsy, but setLineWidth() also changes
+        fontSize by an equal ratio. The users don't notice because
+        they're never even given the opportunity to adjust the font
+        size independently of the line width. */
+    @Override public void setLineWidth(double lineWidth) {
+        double ratio  = lineWidth / this.lineWidth;
+        this.lineWidth = lineWidth;
+        fontSize *= ratio;
+    }
+
+    @Override @JsonIgnore public LinearRuler getCurve() {
+        return this;
+    }
+        
+    @Override public LinearRuler createTransformed(AffineTransform xform) {
+        LinearRuler res = clone();
+        res.transform(xform);
+        return res;
+    }
+
+    @Override public void reflect() {
         switch (labelAnchor) {
         case LEFT:
             labelAnchor = LabelAnchor.RIGHT;
@@ -684,7 +786,7 @@ class LinearRuler implements BoundedParameterizable2D, Decorated {
         tickRight = tickTemp;
     }
 
-    public void neaten(AffineTransform toPage) {
+    @Override public void neaten(AffineTransform toPage) {
         double theta = Geom.normalizeRadians(
                 textAngle
                 +  Geom.transformRadians(toPage,
@@ -692,5 +794,20 @@ class LinearRuler implements BoundedParameterizable2D, Decorated {
         if (theta != MathWindow.normalizeRadians180(theta)) {
             textAngle = Geom.normalizeRadians(Math.PI + textAngle);
         }
+    }
+
+    /** Used only during serialization and deserialization. */
+    protected int jsonId = -1;
+
+    @JsonProperty("id") @Override public int getJSONId() {
+        if (jsonId == -1) {
+            jsonId = IdGenerator.id();
+        }
+        return jsonId;
+    }
+
+    @JsonProperty("id") public void setJSONId(int id) {
+        IdGenerator.idInUse(id);
+        jsonId = id;
     }
 }
