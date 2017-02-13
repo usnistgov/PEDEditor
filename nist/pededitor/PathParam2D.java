@@ -13,7 +13,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 
-/** Param2D that can be constructed from a PathIterator. The
+/** Param2D that can be constructed from a Shape or PathIterator. The
     individual segments of the PathIterator are converted into
     OffsetParam2Ds.
 
@@ -397,31 +397,33 @@ public class PathParam2D extends Param2DAdapter
         return segments.toArray(new BoundedParam2D[0]);
     }
 
-    public Line2D.Double[] lineSegments() {
-        ArrayList<Line2D.Double> res = new ArrayList<>();
+    @Override public BoundedParam2D[] curvedSegments(double t0, double t1) {
+        ArrayList<BoundedParam2D> res = new ArrayList<>();
+
+        // TODO Collapse contiguous curved sections. Shouldn't be
+        // hard, but I want to debug it this way first.
         for (OffsetParam2D seg: segments) {
-            BoundedParam2D bp = seg.getContents();
-            if (!(bp instanceof Param2DBounder)) {
-                continue;
-            }
-            Param2DBounder pb = (Param2DBounder) bp;
-            if (pb.getUnboundedCurve() instanceof SegmentParam2D) {
-                res.add(new Line2D.Double(seg.getStart(), seg.getEnd()));
+            double minT = Math.max(t0, seg.getMinT());
+            double maxT = Math.max(t1, seg.getMaxT());
+            if (minT < maxT) {
+                for (BoundedParam2D bp: seg.curvedSegments(minT, maxT)) {
+                    res.add(bp);
+                }
             }
         }
-        return res.toArray(new Line2D.Double[0]);
+        return res.toArray(new BoundedParam2D[0]);
     }
 
-    public BoundedParam2D[] curvedSegments() {
+    @Override public BoundedParam2D[] straightSegments(double t0, double t1) {
         ArrayList<BoundedParam2D> res = new ArrayList<>();
         for (OffsetParam2D seg: segments) {
-            BoundedParam2D bp = seg.getContents();
-            if (!(bp instanceof Param2DBounder)) {
-                continue;
-            }
-            Param2DBounder pb = (Param2DBounder) bp;
-            if (pb.getUnboundedCurve() instanceof BezierParam2D) {
-                res.add(seg);
+            double minT = Math.max(t0, seg.getMinT());
+            double maxT = Math.max(t1, seg.getMaxT());
+
+            if (minT < maxT) {
+                for (BoundedParam2D bp: seg.straightSegments(minT, maxT)) {
+                    res.add(bp);
+                }
             }
         }
         return res.toArray(new BoundedParam2D[0]);
