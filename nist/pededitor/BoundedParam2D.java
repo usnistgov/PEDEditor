@@ -10,32 +10,18 @@ import java.awt.geom.Rectangle2D;
 
 /* Interface for curves in two dimensions parameterized by t over the
    domain [getMinT(), getMaxT()]. */
-public interface BoundedParam2D {
-    Param2D getUnboundedCurve();
-
-    /** Return the maximum valid t value for this curve. */
-    double getMinT();
+public interface BoundedParam2D extends Param2D {
     /** Return the minimum valid t value for this curve. */
+    double getMinT();
+    /** Return the maximum valid t value for this curve. */
     double getMaxT();
 
     /** Return a subset BoundedParam2D that is only valid for t
         values in [minT, maxT]. minT must be greater than or equal to
         the old getMinT(), and maxT must be less than or equal to the
         old getMaxT(). */
-    BoundedParam2D createSubset(double minT, double maxT);
-
-    /* Return the t value of the vertex whose t value is least among
-     those greater than t. A vertex is a location that was explicitly
-     assigned to lie on the curve. */
-    double getNextVertex(double t);
-    /* Return the t value of the vertex whose t value is greatest
-     among those less than or equal to t. A vertex is a location that
-     was explicitly assigned to lie on the curve. */
-    double getLastVertex(double t);
-
-    Point2D.Double getLocation(double t);
-    Point2D.Double getDerivative(double t);
-    BoundedParam2D createTransformed(AffineTransform xform);
+    @Override BoundedParam2D createSubset(double minT, double maxT);
+    @Override BoundedParam2D createTransformed(AffineTransform xform);
 
     /** Return getLocation(getMinT()). */
     Point2D.Double getStart();
@@ -61,12 +47,9 @@ public interface BoundedParam2D {
         at that time. */
     CurveDistanceRange distance(Point2D p, double maxError, int maxSteps);
 
-    /** Return the distance between p and getLocation(t). */
-    CurveDistance distance(Point2D p, double t);
-
     /** Return the derivative of this curve with respect to t, or null
         if the derivative is undefined. */
-    BoundedParam2D derivative();
+    @Override BoundedParam2D derivative();
 
     /** Return bounds for this curve for t in [minT, maxT]. If the
         bounds cannot be computed exactly, then they should be wider
@@ -89,6 +72,30 @@ public interface BoundedParam2D {
     /** @return an array of t values where segment intersects this. */
     double[] segIntersections(Line2D segment);
 
+    /** @return an array of pairs [startT, endT] of straight sections,
+        with startT < endT for each section. Do not modify any of the
+        BoundedParam2D objects that are returned. */
+    default BoundedParam2D[] straightSegments() {
+        return straightSegments(getMinT(), getMaxT());
+    }
+
+    /** @return an array of pairs [startT, endT] of curved sections,
+        with startT < endT for each section. Do not modify any of the
+        BoundedParam2D objects that are returned. */
+    default BoundedParam2D[] curvedSegments() {
+        return curvedSegments(getMinT(), getMaxT());
+    }
+
+    /** Like createSubset(), but possibly faster because it is allowed
+        to reuse this object. The return value should not be
+        changed. */
+    default BoundedParam2D thisOrSubset(double t0, double t1) {
+        if (t0 <= getMinT() && t1 >= getMaxT()) {
+            return this;
+        }
+        return createSubset(t0, t1);
+    }
+
     /** @return an array of t values where the line through segment
         intersects this. */
     double[] lineIntersections(Line2D segment);
@@ -99,4 +106,16 @@ public interface BoundedParam2D {
         efficient. Unless this is a single point, at least two objects
         should be returned. */
     BoundedParam2D[] subdivide();
+        
+    /** Return the t value of the vertex closest to the given t
+        value. */
+    default double getNearestVertex(double t) {
+        Point2D p = getLocation(t);
+        double t1 = getLastVertex(t);
+        double t2 = getNextVertex(t);
+        return
+            (t2 > getMaxT()
+                    || p.distanceSq(getLocation(t1)) <= p.distanceSq(getLocation(t2)))
+            ? t1 : t2;
+    }
 }
