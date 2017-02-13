@@ -8,63 +8,57 @@ import java.awt.geom.Line2D;
 import java.awt.geom.Path2D;
 import java.awt.geom.Point2D;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+
+import org.codehaus.jackson.annotate.JsonIgnore;
 import org.codehaus.jackson.annotate.JsonProperty;
 
 /** Interpolation where control points may be individually marked
     as smoothed or un-smoothed. */
-public class CuspInterp2D extends PointsInterp2D {
+public class CuspInterp2D extends PointsInterp2D
+    implements Smoothable, CurveClosable {
     protected ArrayList<Boolean> smoothed = new ArrayList<>();
+    protected boolean closed;
 
     public CuspInterp2D(boolean closed) {
-        super(null, closed);
+        this.closed = closed;
     }
 
-    public CuspInterp2D(Point2D.Double[] points,
-                        ArrayList<Boolean> smoothed, 
+    public <T extends Point2D> CuspInterp2D(List<T> points,
+                        List<Boolean> smoothed,
                         boolean closed) {
-        super(points, closed);
-        if (smoothed.size() != points.length) {
+        super(points);
+        this.closed = closed;
+        if (smoothed.size() != points.size()) {
             throw new IllegalArgumentException("smoothed.size() " + smoothed.size()
-                                               + " != points.length " + points.length);
+                                               + " != points.length " + points.size());
         }
         this.smoothed = new ArrayList<>(smoothed);
     }
 
     public CuspInterp2D
-        (@JsonProperty("points") Point2D.Double[] points,
-         @JsonProperty("smoothed") boolean[] smoothed,
+        (@JsonProperty("points") ArrayList<Point2D.Double> points,
+         @JsonProperty("smoothed") ArrayList<Boolean> smoothed,
          @JsonProperty("closed") boolean closed) {
-        super(points, closed);
-        this.smoothed = new ArrayList<>(smoothed.length);
-        for (int i = 0; i < smoothed.length; ++i) {
-            this.smoothed.add(smoothed[i]);
-        }
+        this(points, (List<Boolean>) smoothed, closed);
     }
 
-    public CuspInterp2D
-        ( Point2D[] points,
-          boolean[] smoothed,
-          boolean closed) {
-        super(points, closed);
-        this.smoothed = new ArrayList<>(smoothed.length);
-        for (int i = 0; i < smoothed.length; ++i) {
-            this.smoothed.add(smoothed[i]);
-        }
-    }
-
-    public CuspInterp2D(Point2D.Double[] points,
+    public <T extends Point2D> CuspInterp2D(List<T> points,
                         boolean smoothed,
                         boolean closed) {
-        super(points, closed);
-        this.smoothed = new ArrayList<>(points.length);
-        for (int i = points.length; i > 0; --i) {
+        super(points);
+        this.closed = closed;
+        this.smoothed = new ArrayList<>(points.size());
+        for (int i = points.size(); i > 0; --i) {
             this.smoothed.add(smoothed);
         }
     }
 
     /** Shorthand to create a line segment. */
     public CuspInterp2D(Point2D a, Point2D b) {
-        this(new Point2D.Double[] { new Point2D.Double(a.getX(), a.getY()), new Point2D.Double(b.getX(), b.getY()) }, false, false);
+        add(a);
+        add(b);
     }
 
     /** Shorthand to create a line segment. */
@@ -76,31 +70,20 @@ public class CuspInterp2D extends PointsInterp2D {
         If the curve is not closed or if the curve contains two or
         fewer points, then the smoothing settings for the first and
         last points have no immediate effect. */
-    public final boolean isSmoothed(int vertexNo) {
+    @Override public final boolean isSmoothed(int vertexNo) {
         return smoothed.get
             ((vertexNo == smoothed.size() && isClosed()) ? 0 : vertexNo);
-    }
-
-    /** Return true if this point looks like an endpoint of the curve. */
-    public final boolean isEndpoint(int vertexNo) {
-        int s = size();
-        return s <= 2 || (!isClosed() && (vertexNo == 0 || vertexNo == s-1));
     }
 
     @JsonProperty("smoothed") ArrayList<Boolean> getSmoothed() {
         return smoothed;
     }
 
-    public final void setSmoothed(int vertexNo, boolean value) {
+    @Override public final void setSmoothed(int vertexNo, boolean value) {
         if (value != isSmoothed(vertexNo)) {
             param = null;
             smoothed.set(vertexNo, value);
         }
-    }
-
-    public final void toggleSmoothed(int vertexNo) {
-        smoothed.set(vertexNo, !smoothed.get(vertexNo));
-        param = null;
     }
 
     int nextUnsmoothed(int n) {
@@ -122,7 +105,26 @@ public class CuspInterp2D extends PointsInterp2D {
         return -1;
     }
 
-    @Override public Path2D.Double getPath() {
+    /* @return the indices of all vertices that are cusps, that is,
+       where the curve is not smooth in an interval around that
+       vertex. Endpoints and unsmoothed vertices are generally
+       cusps. */
+    @JsonIgnore ArrayList<Integer> getCusps() {
+            ArrayList<Integer> res = new ArrayList<>();
+            int size = this.size();
+            for (int j = 0; j < size; ++j) {
+                if (isEndpoint(j) || !smoothed.get(j)) {
+                    res.add(j);
+                }
+            }
+            return res;
+    }
+
+    @Override @JsonIgnore public Path2D.Double getShape() {
+        return getPath();
+    }
+
+    @JsonIgnore public Path2D.Double getPath() {
         Point2D.Double temp;
         int s = size();
         Path2D.Double res = new Path2D.Double();
@@ -231,7 +233,8 @@ public class CuspInterp2D extends PointsInterp2D {
     }
 
     @Override public CuspInterp2D createTransformed(AffineTransform xform) {
-        return new CuspInterp2D(transformPoints(xform), smoothed, isClosed());
+        return new CuspInterp2D(Arrays.asList(transformPoints(xform)),
+                smoothed, isClosed());
     }
 
     @Override public String toString() {
@@ -248,4 +251,18 @@ public class CuspInterp2D extends PointsInterp2D {
         res.append("]");
         return res.toString();
     }
+
+    @Override public CuspInterp2D clone() {
+        return new CuspInterp2D(points, smoothed, isClosed());
+    }
+
+    @Override public boolean isClosed() {
+        return closed;
+    }
+
+    @Override public void setClosed(boolean b) {
+        super.setClosed(b);
+        closed = b;
+    }
+
 }
