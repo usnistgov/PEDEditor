@@ -9,8 +9,7 @@ import java.awt.geom.Point2D;
 import java.awt.geom.Rectangle2D;
 
 /** Parameterize a line segment. */
-public class SegmentParam2D extends Param2DAdapter
-    implements Param2D {
+public class SegmentParam2D extends Param2DAdapter {
     Point2D.Double p0;
     Point2D.Double pEnd;
 
@@ -121,5 +120,17 @@ public class SegmentParam2D extends Param2DAdapter
              + Geom.toString(pEnd));
         s.append("]");
         return s.toString();
+    }
+
+    @Override public BoundedParam2D[] straightSegments(double t0, double t1) {
+        if (t0 < t1) {
+            return new BoundedParam2D[] { createSubset(t0, t1) };
+        } else {
+            return new BoundedParam2D[0];
+        }
+    }
+
+    @Override public BoundedParam2D[] curvedSegments(double t0, double t1) {
+        return new BoundedParam2D[0];
     }
 }

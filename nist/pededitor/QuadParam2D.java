@@ -69,6 +69,10 @@ public class QuadParam2D extends BezierParam2D {
         double py = p.getY();
         double oneMinusZero;
 
+        Point2D p0 = points[0];
+        Point2D p1 = points[1];
+        Point2D pEnd = points[2];
+
         double p1x = p1.getX();
         double p0x = p0.getX();
         oneMinusZero = p1x - p0x;
