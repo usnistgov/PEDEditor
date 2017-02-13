@@ -11,13 +11,12 @@ import java.util.ArrayList;
 import java.util.Arrays;
 
 /** Parameterize a Bezier curve of arbitary degree. */
-abstract public class BezierParam2D extends Param2DAdapter {
+abstract public class BezierParam2D extends BoundedParam2DAdapter
+{
     /** Polynomial x(t) coefficients */
     final double[] xCoefficients;
     /** Polynomial y(t) coefficients */
     final double[] yCoefficients;
-    final Point2D.Double p0;
-    final Point2D.Double pEnd;
 
     /** Bezier control points. #0 is the start and #(length-1) is the
         end, but intermediate control points usually do not lie on the
@@ -26,7 +25,7 @@ abstract public class BezierParam2D extends Param2DAdapter {
 
     /** @param points The array of Bezier control points.
     */
-    public BezierParam2D(Point2D[] points) {
+    public BezierParam2D(Point2D... points) {
         this.points = Geom.deepCopy(points);
         int len = points.length;
         double[] xs = new double[len];
@@ -37,38 +36,32 @@ abstract public class BezierParam2D extends Param2DAdapter {
         }
         xCoefficients = bezierToPoly(xs);
         yCoefficients = bezierToPoly(ys);
-        p0 = new Point2D.Double(points[0].getX(), points[0].getY());
-        pEnd = new Point2D.Double(points[len - 1].getX(), points[len - 1].getY());
     }
 
     public static BoundedParam2D create(Point2D... points) {
-        return createUnbounded(points).createSubset(0, 1);
-    }
-
-    public static Param2D createUnbounded(Point2D... points) {
         switch (points.length) {
         case 4:
             return new CubicParam2D(points);
         case 3:
             return new QuadParam2D(points);
         case 2:
-            return new SegmentParam2D(points[0], points[1]);
+            return new SegmentParam2D(points[0], points[1]).createSubset(0,1);
         case 1:
-            return new SegmentParam2D(points[0], points[0]);
+            return new PointParam2D(points[0]);
         default:
             throw new IllegalArgumentException
                 ("create() can only handle 1-4 control points");
         }
     }
 
-    @Override public Param2D createTransformed(AffineTransform xform) {
+    @Override public BoundedParam2D createTransformed(AffineTransform xform) {
         Point2D.Double[] xpoints = new Point2D.Double[points.length];
         int i=-1;
         for (Point2D.Double point: points) {
             ++i;
             xform.transform(point, xpoints[i] = new Point2D.Double());
         }
-        return createUnbounded(xpoints);
+        return create(xpoints);
     }
 
     protected void init(Point2D[] points) {
@@ -207,12 +200,12 @@ abstract public class BezierParam2D extends Param2DAdapter {
         }
     }
 
-    @Override protected Param2D computeDerivative() {
+    @Override protected BoundedParam2D computeDerivative() {
         double[] xd = Polynomial.derivative(xCoefficients);
         polyToBezier(xd, xd);
         double[] yd = Polynomial.derivative(yCoefficients);
         polyToBezier(yd, yd);
-        return createUnbounded(Geom.merge(xd, yd));
+        return create(Geom.merge(xd, yd));
     }
 
     @Override public double[] segIntersections
@@ -403,5 +396,40 @@ abstract public class BezierParam2D extends Param2DAdapter {
         }
         s.append("]");
         return s.toString();
+    }
+
+    @Override public Point2D.Double getStart() {
+        return (Point2D.Double) points[0].clone();
+    }
+
+    @Override public Point2D.Double getEnd() {
+        return (Point2D.Double) points[points.length - 1].clone();
+    }
+    
+    @Override public BoundedParam2D derivative() {
+        if (deriv == null) {
+            deriv = computeDerivative();
+        }
+        return (BoundedParam2D) deriv;
+    }
+
+    @Override public double getMinT() {
+        return 0;
+    }
+
+    @Override public double getMaxT() {
+        return 1;
+    }
+
+    @Override public BoundedParam2D[] straightSegments(double t0, double t1) {
+        return new BoundedParam2D[0];
+    }
+
+    @Override public BoundedParam2D[] curvedSegments(double t0, double t1) {
+        if (t0 < t1) {
+            return new BoundedParam2D[] { thisOrSubset(t0, t1) };
+        } else {
+            return new BoundedParam2D[0];
+        }
     }
 }
