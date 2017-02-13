@@ -9,20 +9,36 @@ import java.awt.geom.AffineTransform;
 import java.awt.geom.Line2D;
 import java.awt.geom.Path2D;
 import java.awt.geom.Point2D;
+import java.util.ArrayList;
+import java.util.List;
 
 import org.codehaus.jackson.annotate.JsonCreator;
 import org.codehaus.jackson.annotate.JsonIgnore;
 import org.codehaus.jackson.annotate.JsonProperty;
 
-public class TieLine implements Decorated {
+public class TieLine implements Decoration, Cloneable {
     /** Number of tie lines. Lines are painted only on the interior of
         the tie line region; the angle at which
         outerEdge(ot1)innerEdge(it1) and outerEdge(ot2)innerEdge(it2)
         meet is sectioned into lineCnt+1 equal parts. */
     public int lineCnt;
-    public StandardStroke stroke;
+    public StandardStroke lineStyle;
     public double lineWidth = 1.0;
     protected Color color = null;
+
+    @Override public TieLine clone() {
+        TieLine res = new TieLine(lineCnt, lineStyle);
+        res.lineStyle = lineStyle;
+        res.it1 = it1;
+        res.it2 = it2;
+        res.ot1 = ot1;
+        res.ot2 = ot2;
+        res.color = color;
+        res.lineWidth = lineWidth;
+        res.innerEdge = innerEdge;
+        res.outerEdge = outerEdge;
+        return res;
+    }
 
     /** Each tie line starts at innerEdge somewhere along [it1, it2]
         (the two values may be equal for triangular tie line regions)
@@ -30,7 +46,7 @@ public class TieLine implements Decorated {
 
     @JsonProperty("innerT1") public double it1 = -1.0;
     @JsonProperty("innerT2") public double it2 = -1.0;
-    @JsonIgnore public CuspFigure innerEdge;
+    @JsonIgnore public TransformableParameterizable2D innerEdge;
 
     /** Used only during JSON deserialization. Later, use getInnerID()
         instead. */
@@ -38,20 +54,22 @@ public class TieLine implements Decorated {
 
     @JsonProperty("outerT1") public double ot1 = -1.0;
     @JsonProperty("outerT2") public double ot2 = -1.0;
-    @JsonIgnore public CuspFigure outerEdge;
+    @JsonIgnore public TransformableParameterizable2D outerEdge;
 
     /** Used only during JSON deserialization. Later, use getOuterID()
         instead. */
     int outerId = -1;
 
-    public TieLine(int lineCnt, StandardStroke stroke) {
+    public TieLine() { }
+
+    public TieLine(int lineCnt, StandardStroke lineStyle) {
         this.lineCnt = lineCnt;
-        this.stroke = stroke;
+        this.lineStyle = lineStyle;
     }
 
     @JsonCreator
     TieLine(@JsonProperty("lineCnt") int lineCnt,
-            @JsonProperty("lineStyle") StandardStroke stroke,
+            @JsonProperty("lineStyle") StandardStroke lineStyle,
             @JsonProperty("innerId") int innerId,
             @JsonProperty("innerT1") double it1,
             @JsonProperty("innerT2") double it2,
@@ -59,7 +77,7 @@ public class TieLine implements Decorated {
             @JsonProperty("outerT1") double ot1,
             @JsonProperty("outerT2") double ot2) {
         this.lineCnt = lineCnt;
-        this.stroke = stroke;
+        this.lineStyle = lineStyle;
 
         this.innerId = innerId;
         this.it1 = it1;
@@ -72,33 +90,39 @@ public class TieLine implements Decorated {
 
     /** @return null unless this polyline has been assigned a
         color. */
-    public Color getColor() {
+    @Override public Color getColor() {
         return color;
     }
 
+    // TODO All that TieLine requires for the inner and outer edge is
+    // a Param2D. However, the ID is attached to the Decoration.
+
+    // The essence of what the TieLine needs is something that
+    // supports getJSONId() and getParameterization().
+    
     /** Set the color. Use null to indicate that the color should be
         the same as whatever was last chosen for the graphics
         context. */
-    public void setColor(Color color) {
+    @Override public void setColor(Color color) {
         this.color = color;
     }
 
     /** Used during JSON serialization. */
     @JsonProperty int getInnerId() {
-        return (innerEdge == null) ? -1 : innerEdge.getJSONId();
+        return (innerEdge == null) ? -1 : ((HasJSONId) innerEdge).getJSONId();
     }
 
     /** Used during JSON serialization. */
     @JsonProperty int getOuterId() {
-        return (outerEdge == null) ? -1 : outerEdge.getJSONId();
+        return (outerEdge == null) ? -1 : ((HasJSONId) outerEdge).getJSONId();
     }
 
     public Point2D.Double getInnerEdge(double t) {
-        return innerEdge.getLocation(t);
+        return innerEdge.getParameterization().getLocation(t);
     }
 
     public Point2D.Double getOuterEdge(double t) {
-        return outerEdge.getLocation(t);
+        return outerEdge.getParameterization().getLocation(t);
     }
 
     /** Return the location of endpoint #1 of the inner edge. */
@@ -156,11 +180,11 @@ public class TieLine implements Decorated {
         BoundedParam2D innerParam = innerEdge.getParameterization();
         BoundedParam2D outerParam = outerEdge.getParameterization();
         AdaptiveRombergIntegral innerLength = Param2Ds.lengthIntegral
-            (innerParam.getUnboundedCurve(),
+            (innerParam,
              Math.min(it1,it2),
              Math.max(it1,it2));
         AdaptiveRombergIntegral outerLength = Param2Ds.lengthIntegral
-            (outerParam.getUnboundedCurve(),
+            (outerParam,
              Math.min(ot1,ot2),
              Math.max(ot1,ot2));
         Precision p = new Precision();
@@ -186,46 +210,84 @@ public class TieLine implements Decorated {
         return output;
     }
 
-    /** @return a new TieLines that is like this one, but xform has
-        been applied to its control points. Note that the smooth of
-        the transform is generally not the same as the transform of
-        the smoothing. */
-    public TieLine createTransformed(AffineTransform xform) {
-        TieLine res = new TieLine(lineCnt, stroke);
-        res.it1 = it1;
-        res.it2 = it2;
-        res.ot1 = ot1;
-        res.ot2 = ot2;
-        res.lineWidth = lineWidth;
-        res.innerEdge = innerEdge.createTransformed(xform);
-        res.outerEdge = outerEdge.createTransformed(xform);
-        res.setColor(getColor());
+    @Override public void setLineWidth(double lineWidth) {
+        this.lineWidth = lineWidth;
+    }
+
+    @Override public double getLineWidth() {
+        return lineWidth;
+    }
+
+    @Override public void setLineStyle(StandardStroke lineStyle) {
+        if (lineStyle != null) {
+            this.lineStyle = lineStyle;
+        }
+    }
+
+    /** For legacy deserialization, equivalent to setLineStyle(). */
+    @Deprecated @JsonProperty public void setStroke(StandardStroke lineStyle) {
+        setLineStyle(lineStyle);
+    }
+
+    @Override public StandardStroke getLineStyle() {
+        return lineStyle;
+    }
+
+    /** Create a new TieLine linked to a transformed version of the
+        curve this tie line is connected to. */
+    @Override public void transform(AffineTransform xform) {
+        innerEdge = innerEdge.createTransformed(xform);
+        outerEdge = outerEdge.createTransformed(xform);
+    }
+
+    /** Create a new TieLine linked to a transformed version of the
+        curve this tie line is connected to. */
+    @Override public TieLine createTransformed(AffineTransform xform) {
+        TieLine res = clone();
+        res.transform(xform);
         return res;
     }
 
-    /** Draw the path of this TieLine. The coordinates for
-        this path should be defined in the "Original" coordinate
-        system, but line widths are defined with respect to the
-        "SquarePixel" coordinate system. Also, the output is scaled by
-        "scale" before being drawn.
-    */
-    public void draw(Graphics2D g,
-                     AffineTransform originalToSquarePixel,
-                     double scale) {
-        AffineTransform xform = AffineTransform.getScaleInstance(scale, scale);
-        xform.concatenate(originalToSquarePixel);
-        createTransformed(xform).draw(g, scale);
+    @Override public void draw(Graphics2D g) {
+        lineStyle.getStroke().draw(g, getPath(), lineWidth);
     }
 
-    public void draw(Graphics2D g, double scale) {
-        stroke.getStroke().draw(g, getPath(), scale * lineWidth);
+    @Override public void draw(Graphics2D g, double scale) {
+        TieLine dt = createTransformed(AffineTransform.getScaleInstance(
+                        scale, scale));
+        dt.setLineWidth(scale * getLineWidth());
+        dt.draw(g);
+    }
+
+    @Override public TieLineHandle[] getHandles(DecorationHandle.Type type) {
+        if (type == DecorationHandle.Type.MOVE) {
+            // Moving the curves these tie lines attach to will move
+            // the tie lines also, so return an empty array.
+            return new TieLineHandle[0];
+        }
+        ArrayList<TieLineHandle> output = new ArrayList<>();
+        for (TieLineHandle.Type handle: TieLineHandle.Type.values()) {
+            output.add(new TieLineHandle(this, handle));
+        }
+        return output.toArray(new TieLineHandle[0]);
     }
 
     @Override public String toString() {
-        return "TieLines[lineCnt=" + lineCnt + ", stroke = " + stroke
+        return "TieLines[lineCnt=" + lineCnt + ", lineStyle = " + lineStyle
             + ", lineWidth = " + lineWidth
             + ", inner = " + innerEdge + ",  outer = " + outerEdge
             + ", ot1 = " + ot1 + ", ot2 = " + ot2
             + ", it1 = " + it1 + ", it2 = " + it2 + "]";
+    }
+
+    @Override public List<Decoration> requiredDecorations() {
+        ArrayList<Decoration> res = new ArrayList<>();
+        if (innerEdge instanceof Decoration) {
+            res.add((Decoration) innerEdge);
+        }
+        if (outerEdge instanceof Decoration && innerEdge != outerEdge) {
+            res.add((Decoration) outerEdge);
+        }
+        return res;
     }
 }
