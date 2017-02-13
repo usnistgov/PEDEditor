@@ -6,18 +6,18 @@ package gov.nist.pededitor;
 import java.awt.geom.Point2D;
 
 /** DecorationHandle that really just identifies a random point on a
-    ParameterizableDecoration. Kind of a hack, and misleading because
+    Interp2DDecoration. Kind of a hack, and misleading because
     it doesn't really implement the interface. */
 class NullParameterizableHandle implements BoundedParam2DHandle {
-    ParameterizableDecoration dec;
+    Interp2DDecoration dec;
     double t;
-    Transform2D xform;
+    Point2D.Double point;
 
-    public NullParameterizableHandle(ParameterizableDecoration dec, double t,
-                                     Transform2D xform) {
+    public NullParameterizableHandle(Interp2DDecoration dec, double t,
+                                     Point2D.Double point) {
         this.dec = dec;
         this.t = t;
-        this.xform = xform;
+        this.point = point;
     }
 
     @Override public BoundedParam2D getParameterization() {
@@ -28,20 +28,12 @@ class NullParameterizableHandle implements BoundedParam2DHandle {
         return t;
     }
 
-    @Override public ParameterizableDecoration getDecoration() {
+    @Override public Interp2DDecoration getDecoration() {
         return dec;
     }
 
     @Override public Point2D.Double getLocation() {
-        try {
-            return xform.transform(getParameterization().getLocation(t));
-        } catch (UnsolvableException e) {
-            throw new IllegalStateException(e);
-        }
-    }
-
-    @Override public DecorationHandle remove() {
-        return null;
+        return (Point2D.Double) point.clone();
     }
 
     @Override public DecorationHandle move(Point2D dest) {
