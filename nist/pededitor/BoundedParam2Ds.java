@@ -22,20 +22,6 @@ public class BoundedParam2Ds {
         return (t < minT) ? minT
             : (t > maxT) ? maxT : t;
     }
-        
-    public static double getNearestVertex(BoundedParam2D c, double t) {
-        Point2D p = c.getLocation(t);
-        if (p == null) {
-            return 0;
-        }
-
-        double t1 = c.getLastVertex(t);
-        double t2 = c.getNextVertex(t);
-        return
-            (t2 > c.getMaxT()
-             || p.distanceSq(c.getLocation(t1)) <= p.distanceSq(c.getLocation(t2)))
-            ? t1 : t2;
-    }
 
     /** If either the derivative() function is not reliable or its
         getBounds() can return values with large relative error, then
@@ -425,10 +411,12 @@ public class BoundedParam2Ds {
          double maxError, int maxSteps)
     throws FailedToConvergeException {
         ArrayList<Point2D.Double> res = new ArrayList<>();
-        if (intersections(res, a, b, maxError, maxSteps) > maxSteps) {
+        int steps = intersections(res, a, b, maxError, maxSteps);
+        if (steps > maxSteps) {
             throw new FailedToConvergeException
                 ("Could not compute intersections to within " + maxError
-                 + " accuracy within " + maxSteps + " steps.");
+                 + " accuracy within " + maxSteps + " steps for "
+                 + a + " and " + b);
         }
         return res;
     }
@@ -789,8 +777,7 @@ public class BoundedParam2Ds {
     }
 
     static public AdaptiveRombergIntegral lengthIntegral(BoundedParam2D c) {
-        DoubleUnaryOperator dsdt =
-            new Param2Ds.DLengthDT(c.getUnboundedCurve());
+        DoubleUnaryOperator dsdt = new Param2Ds.DLengthDT(c);
         return new AdaptiveRombergIntegral(dsdt, c.getMinT(), c.getMaxT());
     }
 }
