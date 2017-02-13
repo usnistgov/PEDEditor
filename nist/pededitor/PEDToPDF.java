@@ -47,11 +47,9 @@ public class PEDToPDF {
 
     /** Load the PED file with the given filename, crop it, guess
         diagram components, remove the x3 and y3 keys (which are used
-        to guess diagram components), and remove baseline offsets
-        (which are artifacts from the GRUMP conversion). */
+        to guess diagram components). */
     public static Diagram loadAndFix(String filename, boolean crop) throws IOException {
         Diagram d = Diagram.loadFrom(new File(filename));
-        d.zeroBaselineOffsets();
         Rectangle2D bounds = new Rectangle2D.Double(-0.5, -0.5, 2.0, 2.0);
         if (crop && d.crop(bounds)) {
             System.err.println(filename + " did not fit in the normal page bounds.");
