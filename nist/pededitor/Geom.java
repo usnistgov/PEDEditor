@@ -193,6 +193,12 @@ public class Geom {
         }
     }
 
+    public static Rectangle2D.Double scale(Rectangle2D r, double scale) {
+        return new Rectangle2D.Double(
+                r.getX() * scale, r.getY() * scale,
+                r.getWidth() * scale, r.getHeight() * scale);
+    }
+
     public static String toString(Rectangle2D r) {
         if (r == null) {
             return "null rect";
@@ -268,8 +274,7 @@ public class Geom {
         rotateRightInPlace(arr, -amount);
     }
 
-    public static Rectangle2D.Double createRectangle2DDouble
-        (Rectangle2D r) {
+    public static Rectangle2D.Double createRectangle2DDouble (Rectangle2D r) {
         return new Rectangle2D.Double
             (r.getX(), r.getY(), r.getWidth(), r.getHeight());
     }
@@ -808,6 +813,9 @@ public class Geom {
         return res;
     }
 
+    /** If a ray in the original space is oriented at angle theta
+        radians from horizontal, return the angle of the ray in the
+        transformed space. */
     public static double transformRadians(AffineTransform xform, double theta) {
         Point2D.Double p = new Point2D.Double(Math.cos(theta), Math.sin(theta));
         xform.deltaTransform(p, p);
