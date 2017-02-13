@@ -9,7 +9,6 @@ import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.Rectangle;
 import java.awt.RenderingHints;
-import java.awt.geom.AffineTransform;
 import java.awt.geom.Point2D;
 
 import javax.swing.JFrame;
@@ -43,7 +42,7 @@ class TestPanelZ extends JPanel {
 
       ((Graphics2D) g).setRenderingHint(RenderingHints.KEY_ANTIALIASING,
                          RenderingHints.VALUE_ANTIALIAS_ON);
-      r.draw((Graphics2D) g, new AffineTransform(), 1.0);
+      r.draw((Graphics2D) g);
    }
 }
 
