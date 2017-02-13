@@ -10,16 +10,13 @@ import java.awt.geom.Rectangle2D;
 import java.awt.geom.Rectangle2D.Double;
 
 /** Parameterize a single point over t in [0,0]. Not real interesting... */
-public class PointParam2D implements BoundedParam2D, Param2D {
+public class PointParam2D implements BoundedParam2D {
     Point2D.Double p0;
 
     public PointParam2D(Point2D p0) {
         this.p0 = new Point2D.Double(p0.getX(), p0.getY());
     }
 
-    @Override public PointParam2D getUnboundedCurve() {
-        return this;
-    }
     @Override public PointParam2D clone() {
         return new PointParam2D(p0);
     }
@@ -163,5 +160,13 @@ public class PointParam2D implements BoundedParam2D, Param2D {
     @Override
     public BoundedParam2D[] subdivide(double t0, double t1) {
         return new BoundedParam2D[] { this };
+    }
+
+    @Override public BoundedParam2D[] straightSegments(double t0, double t1) {
+        return new BoundedParam2D[0];
+    }
+
+    @Override public BoundedParam2D[] curvedSegments(double t0, double t1) {
+        return new BoundedParam2D[0];
     }
 }
