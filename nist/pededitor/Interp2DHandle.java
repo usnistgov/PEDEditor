@@ -9,7 +9,7 @@ import java.awt.geom.Point2D;
 import org.codehaus.jackson.annotate.JsonIgnore;
 
 /** Class for a handle (control point) of a PointsDecoration. */
-public class Interp2DHandle implements DecorationHandle {
+public class Interp2DHandle implements BoundedParam2DHandle {
     Interp2DDecoration decoration;
     int index; // index of control point this handle controls
 
