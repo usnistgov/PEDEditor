@@ -11,8 +11,7 @@ import org.codehaus.jackson.annotate.JsonIgnore;
 import org.codehaus.jackson.annotate.JsonIgnoreProperties;
 import org.codehaus.jackson.annotate.JsonProperty;
 
-@JsonIgnoreProperties
-({"lineWidth", "lineStyle"})
+@JsonIgnoreProperties({"lineStyle"})
 public class Arrow extends TransformedShape implements Cloneable {
 
     /** @param scale The "scale" of the arrow is a bit arbitrary, but
@@ -47,6 +46,16 @@ public class Arrow extends TransformedShape implements Cloneable {
 
     @Override @JsonIgnore public Point2D.Double getLocation() {
         return new Point2D.Double(x,y);
+    }
+
+    /** Alias so decoration.setLineWidth(x) invokes setScale(x). */
+    @JsonIgnore @Override public void setLineWidth(double lineWidth) {
+        setScale(lineWidth);
+    }
+    
+    /** Alias so decoration.getLineWidth(x) invokes getScale(x). */
+    @JsonIgnore @Override public double getLineWidth() {
+        return getScale();
     }
 
     @JsonIgnore public Shape getShape() {
@@ -134,5 +143,9 @@ public class Arrow extends TransformedShape implements Cloneable {
     @Override public String toString() {
         return getClass().getSimpleName() + "[(" + x + ", " + y + ") s=" + scale
             + " ang=" + angle + "]";
+    }
+
+    @Override public String typeName() {
+        return "Arrow";
     }
 }
