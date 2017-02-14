@@ -17,7 +17,7 @@ import org.codehaus.jackson.annotate.JsonProperty;
 /** Interpolation where control points may be individually marked
     as smoothed or un-smoothed. */
 public class CuspInterp2D extends PointsInterp2D
-    implements Smoothable, CurveClosable {
+    implements Smoothable, CurveCloseable {
     protected ArrayList<Boolean> smoothed = new ArrayList<>();
     protected boolean closed;
 
