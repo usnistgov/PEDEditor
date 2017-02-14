@@ -332,11 +332,13 @@ public class Diagram extends Observable implements Printable {
         propagateChange();
     }
 
-    CuspFigure idToCurve(int id) {
-        for (CuspFigure path: paths()) {
-            if (path.getJSONId() == id) {
-                return path;
-            }
+    Interp2DDecoration idToCurve(int id) {
+        for (Decoration d: decorations) {
+            if (!(d instanceof Interp2DDecoration))
+                continue;
+            Interp2DDecoration idec = (Interp2DDecoration) d;
+            if (idec.getJSONId() == id)
+                return idec;
         }
         System.err.println("No curve found with id " + id + ".");
         return null;
@@ -887,19 +889,6 @@ public class Diagram extends Observable implements Printable {
             }
         }
         propagateChange();
-    }
-
-    public void remove(CuspFigure path) {
-        // Remove all associated tie lines.
-        for (int i = decorations.size() - 1; i >= 0; --i) {
-            Decoration d = decorations.get(i);
-            if (d instanceof TieLine) {
-                TieLine tie = (TieLine) d;
-                if (tie.innerEdge == path || tie.outerEdge == path) {
-                    decorations.remove(i);
-                }
-            }
-        }
     }
 
     static class StringComposition {
@@ -1623,16 +1612,8 @@ public class Diagram extends Observable implements Printable {
         }
     }
 
-    public Iterable<Arrow> arrows() {
-        return () -> new DecorationIterator<Arrow>(new Arrow());
-    }
-
     public Iterable<AnchoredLabel> labels() {
         return () -> new DecorationIterator<AnchoredLabel>(new AnchoredLabel());
-    }
-
-    public Iterable<CuspFigure> paths() {
-        return () -> new DecorationIterator<CuspFigure>(new CuspFigure());
     }
 
     public Iterable<TieLine> tieLines() {
@@ -1791,7 +1772,7 @@ public class Diagram extends Observable implements Printable {
         (LinearAxis v1, DoubleUnaryOperator f1, LinearAxis v2, DoubleUnaryOperator f2,
          boolean addComments, int sigFigs) {
         ArrayList<String> groupStartTags = new ArrayList<>();
-        ArrayList<ArrayList<Point2D.Double>> rawCoordinateGroups
+        ArrayList<List<Point2D.Double>> rawCoordinateGroups
             = new ArrayList<>();
 
         TreeSet<String> labelTexts = new TreeSet<>();
@@ -1820,15 +1801,24 @@ public class Diagram extends Observable implements Printable {
             rawCoordinateGroups.add(labelCoordinates(labelText));
         }
 
-        for (CuspFigure path: paths()) {
+        for (Decoration d: decorations) {
+            if (!(d instanceof DecorationHasInterp2D))
+                continue; // I could show rulers too, but nobody cares.
+
+            Interp2DDecoration path = (Interp2DDecoration) d;
+
             String groupStartTag = null;
             if (addComments) {
-                groupStartTag = "# " + path.getLineStyle() + " LINE\n";
+                StandardStroke lineStyle = path.getLineStyle();
+                if (lineStyle != null) {
+                    groupStartTag = "# " + path.getLineStyle() + " "
+                        + d.typeName() + "\n";
+                } else {
+                    groupStartTag = "# " + d.typeName() + "\n";
+                }
             }
             groupStartTags.add(groupStartTag);
-            rawCoordinateGroups.add
-                (new ArrayList<Point2D.Double>
-                 (Arrays.asList(path.getCurve().getPoints())));
+            rawCoordinateGroups.add(Arrays.asList(path.getCurve().getPoints()));
         }
 
         StringBuilder sb = new StringBuilder();
@@ -1853,7 +1843,7 @@ public class Diagram extends Observable implements Printable {
             sb.append("\n\n");
         }
         int i = -1;
-        for (ArrayList<Point2D.Double> g: rawCoordinateGroups) {
+        for (List<Point2D.Double> g: rawCoordinateGroups) {
             ++i;
             String s = groupStartTags.get(i);
             if (s != null) {
@@ -2668,7 +2658,7 @@ public class Diagram extends Observable implements Printable {
     /** Toggle the closed/open status of curve #pathNo. Throws
         IllegalArgumentException if that curve is filled, since you
         can't turn off closure for a filled curve. */
-    public void toggleCurveClosure(CurveClosable dec)
+    public void toggleCurveClosure(CurveCloseable dec)
         throws IllegalArgumentException {
         dec.setClosed(!dec.isClosed());
         propagateChange();
@@ -3888,37 +3878,11 @@ public class Diagram extends Observable implements Printable {
         propagateChange();
     }
 
-    /** Apply the given transform to all curve vertices, all label
-        locations, all arrow locations, and all ruler start- and
-        endpoints. */
+    /** Apply the given transform to all decorations. */
     public void transformPrincipalCoordinates(AffineTransform trans) {
-        for (CuspFigure path: paths()) {
-            path.setCurve(path.getCurve().createTransformed(trans));
+        for (Decoration d: decorations) {
+            d.transform(trans);
         }
-
-        Point2D.Double tmp = new Point2D.Double();
-
-        for (AnchoredLabel label: labels()) {
-            tmp.x = label.x;
-            tmp.y = label.y;
-            trans.transform(tmp, tmp);
-            label.x = tmp.x;
-            label.y = tmp.y;
-        }
-
-        for (Arrow arrow: arrows()) {
-            tmp.x = arrow.x;
-            tmp.y = arrow.y;
-            trans.transform(tmp, tmp);
-            arrow.x = tmp.x;
-            arrow.y = tmp.y;
-        }
-
-        for (LinearRuler ruler: rulers()) {
-            trans.transform(ruler.startPoint, ruler.startPoint);
-            trans.transform(ruler.endPoint, ruler.endPoint);
-        }
-
         propagateChange();
     }
 
