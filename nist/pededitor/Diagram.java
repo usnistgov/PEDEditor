@@ -4815,7 +4815,7 @@ abstract class ColorAnnotations extends Color {
               include = JsonTypeInfo.As.PROPERTY,
               property = "decoration")
 @JsonSubTypes({
-        @Type(value=CuspFigure.class, name = "curve"),
+        @Type(value=CuspDecoration.class, name = "curve"),
         @Type(value=AnchoredLabel.class, name = "label"),
         @Type(value=LinearRuler.class, name = "ruler"),
         @Type(value=Arrow.class, name = "arrow"),

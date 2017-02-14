@@ -771,9 +771,9 @@ public class BasicEditor extends Diagram
             : null;
     }
 
-    @JsonIgnore CuspFigure getSelectedCuspFigure() {
+    @JsonIgnore CuspDecoration getSelectedCuspFigure() {
         Decoration d = getSelectedDecoration();
-        return (d instanceof CuspFigure) ? ((CuspFigure) d) : null;
+        return (d instanceof CuspDecoration) ? ((CuspDecoration) d) : null;
     }
 
     @JsonIgnore LabelHandle getLabelHandle() {
@@ -1253,7 +1253,7 @@ public class BasicEditor extends Diagram
             boolean moveAll) {
         DecorationHandle res = null;
         try {
-            CuspFigure.removeDuplicates = true;
+            CuspDecoration.removeDuplicates = true;
             if (moveAll) {
                 Point2D.Double p = selection.getLocation();
 
@@ -1268,7 +1268,7 @@ public class BasicEditor extends Diagram
                 res = selection.move(prin);
             }
         } finally {
-            CuspFigure.removeDuplicates = false;
+            CuspDecoration.removeDuplicates = false;
         }
         propagateChange();
         return res;
@@ -1765,10 +1765,10 @@ public class BasicEditor extends Diagram
 
         Decoration sel = showSel ? selection.getDecoration() : null;
 
-        // As long as curve highlighting only works for CuspFigure's,
+        // As long as curve highlighting only works for CuspDecoration's,
         // ignore all other kinds here.
 
-        Interp2DHandle curveHandle = (sel instanceof CuspFigure) ? getInterp2DHandle() : null; // TODO Change when ready.
+        Interp2DHandle curveHandle = (sel instanceof CuspDecoration) ? getInterp2DHandle() : null; // TODO Change when ready.
         for (int dn = 0; dn < decorations.size(); ++dn) {
             Decoration decoration = decorations.get(dn);
             if (decoration.equals(sel) && curveHandle == null) {
@@ -2067,7 +2067,7 @@ public class BasicEditor extends Diagram
             // Start a new curve consisting of a single point, and
             // make it the new selection.
 
-            CuspFigure curve = null;
+            CuspDecoration curve = null;
 
             if (isPixelMode()) {
                 // If point is integer coordinates, assume this is the
@@ -2076,19 +2076,19 @@ public class BasicEditor extends Diagram
                 // but that's less likely.
                 
                 if (Geom.integerish(point.x) && Geom.integerish(point.y)) {
-                    curve = new CuspFigure(new CuspInterp2D(true), fill1);
+                    curve = new CuspDecoration(new CuspInterp2D(true), fill1);
                 }
 
                 // If point has integer-and-a-half coordinates, assume
                 // this is a line, not a fill region.
                 if (Geom.integerish(point.x + 0.5) && Geom.integerish(point.y + 0.5)) {
-                    curve = new CuspFigure(new CuspInterp2D(false), ls);
+                    curve = new CuspDecoration(new CuspInterp2D(false), ls);
                 }
             }
 
             if (curve == null) {
-                curve = (fill != null) ? new CuspFigure(new CuspInterp2D(true), fill)
-                    : new CuspFigure(new CuspInterp2D(false), ls);
+                curve = (fill != null) ? new CuspDecoration(new CuspInterp2D(true), fill)
+                    : new CuspDecoration(new CuspInterp2D(false), ls);
             }
             curve.setLineWidth(lineWidth);
 
@@ -2243,7 +2243,7 @@ public class BasicEditor extends Diagram
 
     public void addRuler() {
         String errorTitle = "Cannot create ruler";
-        CuspFigure cdec = getSelectedCuspFigure();
+        CuspDecoration cdec = getSelectedCuspFigure();
         if (cdec == null || cdec.getCurve().size() != 2) {
             showError
                 ("Before you can create a new ruler, "
@@ -2423,7 +2423,7 @@ public class BasicEditor extends Diagram
 
     public void addVariable() {
         String errorTitle = "Cannot add variable";
-        CuspFigure cdec = getSelectedCuspFigure();
+        CuspDecoration cdec = getSelectedCuspFigure();
         if (cdec == null || cdec.getCurve().size() != 3) {
             showError(
 "To add a user variable, first select a curve consisting of three points "
@@ -5730,7 +5730,7 @@ public class BasicEditor extends Diagram
                         continue;
                     }
                     gridLine = Geom.transform(standardPageToPrincipal, gridLine);
-                    addDecoration(new CuspFigure(new CuspInterp2D(gridLine),
+                    addDecoration(new CuspDecoration(new CuspInterp2D(gridLine),
                                          StandardStroke.INVISIBLE, 0));
                 }
 
@@ -6282,7 +6282,7 @@ public class BasicEditor extends Diagram
     }
 
     double getLineWidth() {
-        CuspFigure path = getSelectedCuspFigure();
+        CuspDecoration path = getSelectedCuspFigure();
         if (path != null) {
             return path.getLineWidth();
         }

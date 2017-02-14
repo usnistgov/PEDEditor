@@ -18,29 +18,29 @@ import org.codehaus.jackson.map.SerializationConfig;
 
 /** A class for pairing a CuspInterp2D with its color, stroke, fill,
     and/or line width. */
-public class CuspFigure extends DecorationHasInterp2D
+public class CuspDecoration extends DecorationHasInterp2D
     implements CurveCloseable, Fillable {
-    public CuspFigure() { }
-    public CuspFigure(Interp2D curve) {
+    public CuspDecoration() { }
+    public CuspDecoration(Interp2D curve) {
         super(curve);
     }
 
-    public CuspFigure(CuspInterp2D curve, StandardStroke stroke) {
+    public CuspDecoration(CuspInterp2D curve, StandardStroke stroke) {
         super(curve, stroke);
     }
 
-    public CuspFigure(Interp2D curve,
+    public CuspDecoration(Interp2D curve,
                               StandardStroke stroke,
                               double lineWidth) {
         super(curve, stroke, lineWidth);
     }
 
-    public CuspFigure(Interp2D curve, StandardFill fill) {
+    public CuspDecoration(Interp2D curve, StandardFill fill) {
         super(curve, fill);
     }
 
-    @Override public CuspFigure clone() {
-        CuspFigure res = new CuspFigure();
+    @Override public CuspDecoration clone() {
+        CuspDecoration res = new CuspDecoration();
         res.copyFrom(this);
         return res;
     }
@@ -109,14 +109,14 @@ public class CuspFigure extends DecorationHasInterp2D
                  Arrays.asList(true, true, false, true),
                  true);
         
-        CuspFigure o = new CuspFigure(pol, null, 1.3);
+        CuspDecoration o = new CuspDecoration(pol, null, 1.3);
 
         try {
             ObjectMapper mapper = new ObjectMapper();
             mapper.configure(SerializationConfig.Feature.INDENT_OUTPUT, true);
             mapper.writeValue(new File(filename), o);
-            CuspFigure o2 = mapper.readValue(new File(filename),
-                                               CuspFigure.class);
+            CuspDecoration o2 = mapper.readValue(new File(filename),
+                                               CuspDecoration.class);
             System.out.println(o2);
         } catch (JsonGenerationException e) {
             e.printStackTrace();
