@@ -94,4 +94,7 @@ public class DecorationHasInterp2D extends Interp2DDecorationAdapter {
         res.copyFrom(this);
         return res;
     }
+    @Override public String typeName() {
+        return "generic curve";
+    }
 }

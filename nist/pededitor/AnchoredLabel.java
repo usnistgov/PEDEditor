@@ -555,4 +555,8 @@ public class AnchoredLabel extends AnchoredTransformedShape {
         }
     }
 
+    @Override public String typeName() {
+        return "Label";
+    }
+
 }

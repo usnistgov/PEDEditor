@@ -290,4 +290,8 @@ public class TieLine implements Decoration, Cloneable {
         }
         return res;
     }
+
+    @Override public String typeName() {
+        return "tie line";
+    }
 }

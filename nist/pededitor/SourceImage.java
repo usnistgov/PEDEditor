@@ -14,10 +14,14 @@ import java.io.IOException;
 
 import org.codehaus.jackson.annotate.JsonProperty;
 
+import gov.nist.pededitor.DecorationHandle.Type;
+
 /** Main driver class for Phase Equilibria Diagram digitization and creation. */
-public class SourceImage {
+public class SourceImage implements Decoration {
     public PolygonTransform originalToPrincipal;
     protected transient PolygonTransform principalToOriginal;
+
+    protected double alpha = 0.0;
     protected BackgroundImageType backgroundType = BackgroundImageType.NONE;
     protected String filename;
     protected byte[] bytes;
@@ -26,6 +30,10 @@ public class SourceImage {
     public BufferedImage getImage() throws IOException {
         return image; // XXX TODO
     }
+
+    public double getAlpha() { return alpha; }
+
+    public void setAlpha(double alpha) { this.alpha = alpha; }
 
     static void draw(Graphics2D g, BufferedImage im, float alpha) {
         draw(g, im, alpha, 0, 0);
@@ -48,7 +56,7 @@ public class SourceImage {
         if (alpha == 1) {
             return img;
         }
-        
+
         return image; // XXX TODO
     }
 
@@ -116,11 +124,35 @@ public class SourceImage {
         originalToCrop.preConcatenate
             (new Affine(AffineTransform.getTranslateInstance
                         ((double) -cropBounds.x, (double) -cropBounds.y)));
-        
+
         System.out.println("Resizing original image (" + dither + ")...");
         BufferedImage img = ImageTransform.run(originalToCrop, input,
                 backColor, cropBounds.getSize(), dither, imageType);
         draw(g, img, (float) alpha);
         return res;
+    }
+
+    @Override public void draw(Graphics2D g, double scale) {
+        // TODO Auto-generated method stub
+    }
+
+    @Override public Color getColor() {
+        return null;
+    }
+
+    @Override public void setColor(Color color) {
+    }
+
+    @Override public DecorationHandle[] getHandles(Type type) {
+        // TODO Auto-generated method stub
+        return new DecorationHandle[0];
+    }
+
+    @Override public void transform(AffineTransform xform) {
+        // TODO Auto-generated method stub
+    }
+
+    @Override public String typeName() {
+        return "image";
     }
 }

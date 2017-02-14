@@ -11,7 +11,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 
 import org.codehaus.jackson.JsonGenerationException;
-import org.codehaus.jackson.annotate.JsonIgnore;
 import org.codehaus.jackson.annotate.JsonProperty;
 import org.codehaus.jackson.map.JsonMappingException;
 import org.codehaus.jackson.map.ObjectMapper;
@@ -20,7 +19,7 @@ import org.codehaus.jackson.map.SerializationConfig;
 /** A class for pairing a CuspInterp2D with its color, stroke, fill,
     and/or line width. */
 public class CuspFigure extends DecorationHasInterp2D
-    implements CurveClosable, Fillable {
+    implements CurveCloseable, Fillable {
     public CuspFigure() { }
     public CuspFigure(Interp2D curve) {
         super(curve);
@@ -146,5 +145,9 @@ public class CuspFigure extends DecorationHasInterp2D
         } finally {
             setLineWidth(oldWidth);
         }
+    }
+
+    @Override public String typeName() {
+        return "curve";
     }
 }

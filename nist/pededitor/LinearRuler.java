@@ -810,4 +810,7 @@ class LinearRuler implements Interp2DDecoration, SegmentInterp2D {
         IdGenerator.idInUse(id);
         jsonId = id;
     }
+    @Override public String typeName() {
+        return "ruler";
+    }
 }
