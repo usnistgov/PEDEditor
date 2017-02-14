@@ -62,11 +62,11 @@ public class Interp2DHandle implements BoundedParam2DHandle {
             + index + "]";
     }
 
-    @JsonIgnore public double getT() {
+    @Override @JsonIgnore public double getT() {
         return index;
     }
 
-    @JsonIgnore public BoundedParam2D getParameterization() {
+    @Override @JsonIgnore public BoundedParam2D getParameterization() {
         return getDecoration().getParameterization();
     }
 
