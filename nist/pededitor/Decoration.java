@@ -48,4 +48,6 @@ interface Decoration {
     default List<Decoration> requiredDecorations() {
         return new ArrayList<Decoration>();
     }
+
+    String typeName();
 }
