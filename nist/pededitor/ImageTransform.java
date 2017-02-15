@@ -19,24 +19,26 @@ public class ImageTransform {
 
     enum DithererType { FAST, GOOD };
 
-    /** run() with default size and black background.
+    /** run() with default size and either black or clear background,
+        depending on whether the image type supports an alpha channel.
 
         @param imageType The BufferedImage imageType, such as
         BufferedImage.TYPE_INT_RGB.
     */
     public static BufferedImage run(PolygonTransform xform,
             BufferedImage imageIn, int imageType) {
-        return run(xform, imageIn, Color.BLACK, imageType);
+        return run(xform, imageIn, (Color) null, imageType);
     }
 
-    /** run() with default size and black background.
+    /** run() with default size and either black or clear background,
+        depending on whether the image type supports an alpha channel.
 
         @param ditherer Either ImageTransform.DithererType.FAST or
         ImageTransform.DithererType.GOOD.
     */
     public static BufferedImage run(PolygonTransform xform,
             BufferedImage imageIn, DithererType ditherer, int imageType) {
-        return run(xform, imageIn, Color.BLACK, ditherer, imageType);
+        return run(xform, imageIn, null, ditherer, imageType);
     }
 
     protected static Dimension defaultSize(PolygonTransform xform) {
@@ -154,33 +156,45 @@ public class ImageTransform {
                         // points in the input image whose colors should
                         // be averaged to set the color for this pixel in
                         // the output image.
+                        int a = 0;
                         int r = 0;
                         int g = 0;
                         int b = 0;
                         for (int pos = 0; pos < points.length; pos += 2) {
                             double xd = points[pos];
                             double yd = points[pos+1];
-                            int prgb = (xd >= 0. && xd < inWidth && yd >= 0. && yd < inHeight)
-                                ? input.getRGB((int) xd, (int) yd) : backRGB;
-                            r += (prgb >> 16) & 255;
-                            g += (prgb >> 8) & 255;
-                            b += prgb & 255;
+                            int prgb = (xd >= 0 && xd < inWidth && yd >= 0
+                                    && yd < inHeight)
+                                ? input.getRGB((int) xd, (int) yd)
+                                : backRGB;
+                            // The (& 0xff) part below is necessary:
+                            // it converts the result to an unsigned
+                            // value!
+                            int a1 = (prgb >> 24) & 0xff;
+                            r += ((prgb >> 16) & 0xff) * a1;
+                            g += ((prgb >> 8) & 0xff) * a1;
+                            b += (prgb & 0xff) * a1;
+                            a += a1;
                         }
 
-                        // Round values over 1/2 up in the integer
-                        // division
-                        int half = samplesPerPixel / 2;
-                        r = (r + half) / samplesPerPixel;
-                        g = (g + half) / samplesPerPixel;
-                        b = (b + half) / samplesPerPixel;
+                        if (a == 0) {
+                            // The RGB values of a 100% transparent
+                            // pixel are irrelevant.
+                            rgb = 0xff000000;
+                        } else {
+                            int half = a / 2; // for rounding purposes
+                            r = (r + half) / a;
+                            g = (g + half) / a;
+                            b = (b + half) / a;
+                            a = (a + samplesPerPixel/2) / samplesPerPixel;
+                        }
 
-                        rgb =  (r << 16) + (g << 8) + b;
+                        rgb =  (a << 24) + (r << 16) + (g << 8) + b;
                     } catch (UnsolvableException e) {
                         rgb = backRGB;
                     }
 
                     output[y * outputWidth + x] = rgb;
-                    // System.out.println(String.format("output[%d * %d + %d] = %x", y, outputWidth, x, output[index]));
                 }
             }
         }
@@ -273,6 +287,10 @@ public class ImageTransform {
         s.start();
 
         BufferedImage output = new BufferedImage(width, height, imageType);
+        if (background == null) {
+            background = (output.getAlphaRaster() == null)
+                ? Color.BLACK : new Color(0, 0, 0, 0);
+        }
         Transform2D inverseTransform;
 
         try {
@@ -305,17 +323,13 @@ public class ImageTransform {
     }
 
     /** Just a test harness. */
-    public static void main(String[] args) {
+    public static void main(String[] args) throws IOException {
         BufferedImage input;
         if (args.length != 1) {
             System.err.println("Usage: java ImageTransform <filename>");
             return;
         }
-        try {
-            input = ImageIO.read(new File(args[0]));
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
+        input = ImageIO.read(new File(args[0]));
 
         if (input == null) {
             System.err.println("Read of " + args[0] + " failed.");
@@ -325,18 +339,18 @@ public class ImageTransform {
         double[][] coords = {{0,4}, {4,4}, {2,5}, {2, 0}}; // kite_reverse
         Point2D.Double[] points = Geom.toPoint2DDoubles(coords);
         Geom.sort(points, true);
-        QuadToRect xform = new QuadToRect();
-        // RectToQuad xform = new RectToQuad();
+        // QuadToRect xform = new QuadToRect();
+        RectToQuad xform = new RectToQuad();
         xform.setVertices(points);
 
         System.out.println(xform);
 
         {
             Rectangle2D.Double inb = xform.inputBounds();
-            Affine af = new Affine();
-            af.setToScale((inb.x + inb.width)/input.getWidth(),
-                          (inb.y + inb.height)/input.getHeight());
-            xform.concatenate(af);
+            AffineTransform af = AffineTransform.getScaleInstance(
+                    (inb.x + inb.width)/input.getWidth(),
+                    (inb.y + inb.height)/input.getHeight());
+            xform.concatenate(new Affine(af));
         }
 
         // int outWidth = 800;
@@ -351,9 +365,8 @@ public class ImageTransform {
             Rectangle2D.Double outb = xform.outputBounds();
             double outScale = Math.min(outWidth/(outb.x + outb.width),
                                        outHeight/(outb.y + outb.height));
-            Affine af = new Affine();
-            af.setToScale(outScale, outScale);
-            xform.preConcatenate(af);
+            AffineTransform af = AffineTransform.getScaleInstance(outScale, outScale);
+            xform.preConcatenate(new Affine(af));
         }
 
         System.out.println(xform);
