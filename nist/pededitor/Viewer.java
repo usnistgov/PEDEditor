@@ -83,7 +83,7 @@ public class Viewer extends Editor {
             setVisible(act, false);
         }
             
-        detachOriginalImage();
+        removeImage();
         setEditable(false);
         // Page X and Page Y are only useful during editing.
         for (String var: new String[] {"page X", "page Y"}) {
