@@ -13,7 +13,6 @@ import java.awt.AWTException;
 import java.awt.BasicStroke;
 import java.awt.Color;
 import java.awt.Component;
-import java.awt.Cursor;
 import java.awt.Dimension;
 import java.awt.Frame;
 import java.awt.Graphics;
@@ -60,7 +59,9 @@ import java.text.DecimalFormat;
 import java.text.NumberFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Observable;
 import java.util.Observer;
@@ -102,13 +103,6 @@ public class BasicEditor extends Diagram
 
         Action(String name) {
             super(name);
-        }
-    }
-
-    class ImageBlinker extends TimerTask {
-        @Override public void run() {
-            backgroundImageEnabled = !backgroundImageEnabled;
-            redraw();
         }
     }
 
@@ -341,15 +335,7 @@ public class BasicEditor extends Diagram
 
     /** The item (vertex, label, etc.) that is selected, or null if nothing is. */
     protected transient DecorationHandle selection;
-    /** If the timer exists, the original image (if any) upon which
-        the new diagram is overlaid will blink. */
-    transient Timer imageBlinker = null;
     transient Timer fileSaver = null;
-    /** True if imageBlinker is enabled and the original image should
-        be displayed in the background at this time. */
-    transient boolean backgroundImageEnabled;
-    protected transient BackgroundImageType oldBackgroundType =
-        BackgroundImageType.NONE;
 
     protected transient boolean preserveMprin = false;
     protected transient boolean isShiftDown = false;
@@ -373,10 +359,6 @@ public class BasicEditor extends Diagram
     protected transient boolean mouseIsStuck;
 
     protected transient boolean exitIfLastWindowCloses = true;
-
-    /** Because rescaling an image is slow, keep a cache of locations
-        and sizes that have been rescaled. */
-    protected transient ArrayList<ScaledCroppedImage> scaledOriginalImages;
 
     protected transient double lineWidth = STANDARD_LINE_WIDTH;
     protected transient StandardStroke lineStyle = DEFAULT_LINE_STYLE;
@@ -525,7 +507,6 @@ public class BasicEditor extends Diagram
     private void init() {
         scale = BASE_SCALE;
         mprin = null;
-        scaledOriginalImages = null;
         mathWindow.refresh();
         mathWindow.setLineWidth(lineWidth);
         mouseIsStuck = false;
@@ -534,14 +515,8 @@ public class BasicEditor extends Diagram
         rightClick = null;
         principalFocus = null;
         paintSuppressionRequestCnt = 0;
-        setBackgroundType((backgroundType == null)
-                          ? BackgroundImageType.NONE
-                          : backgroundType);
-        setBlink(false);
         tieLineDialog.setVisible(false);
         tieLineCorners = new ArrayList<>();
-        originalImage = null;
-        triedToLoadOriginalImage = false;
         majorSaveNeeded = false;
 
         if (Stuff.isFileAssociationBroken()) {
@@ -820,8 +795,10 @@ public class BasicEditor extends Diagram
         editFrame.removeTag(tag);
     }
 
-    @Override public void detachOriginalImage() {
-        super.detachOriginalImage();
+    public void removeImage() {
+        SourceImage image = firstImage();
+        if (image != null)
+            removeDecoration(image);
         revalidateZoomFrame();
     }
 
@@ -941,79 +918,47 @@ public class BasicEditor extends Diagram
         }
     }
 
-    @JsonIgnore public boolean isBlink() {
-        return imageBlinker != null;
+    protected void setImageAlpha(double value) {
+        SourceImage image = selectedOrFirstImage();
+        if (image != null) {
+            image.setAlpha(value);
+        }
+        editFrame.setAlpha(value);
+        propagateChange();
     }
 
-    @JsonIgnore public void setBlink(boolean blink) {
-        if (blink == isBlink())
-            return;
-        
-        if (blink) {
-            imageBlinker = new Timer("ImageBlinker", true);
-            imageBlinker.scheduleAtFixedRate(new ImageBlinker(), 500, 500);
-            backgroundImageEnabled = true;
-            if (getBackgroundType() == BackgroundImageType.NONE) {
-                setBackgroundType(BackgroundImageType.BLACK);
-            }
-        } else {
-            if (imageBlinker != null) {
-                imageBlinker.cancel();
-            }
-            imageBlinker = null;
-        }
-        if (editFrame.isBlink() != blink) {
-            editFrame.setBackgroundType(
-                    blink ? BackgroundImageType.BLINK :
-                    getBackgroundType());
-        }
+    protected SourceImage selectedOrFirstImage() {
+        if (selection instanceof ImageHandle)
+            return (SourceImage) selection.getDecoration();
+        return firstImage();
     }
 
-    @Override public synchronized void setBackgroundType(BackgroundImageType value) {
-        if (value == null) {
-            value = BackgroundImageType.NONE;
-        }
-        if (value == backgroundType) {
-            return;
-        }
-        oldBackgroundType = backgroundType;
-        super.setBackgroundType(value);
-        editFrame.setBackgroundType(value);
-
-        // The rest is handed in paintDiagram().
-
-        redraw();
-    }
-
-    /* Like setBackgroundType(), but attempting to set the background
+    /* Like setImageAlpha(), but attempting to set the background
        to its current value causes it to revert to its previous value.
        This exists just to allow control-H to hide the background
        image and then uh-hide it. */
-    public synchronized void toggleBackgroundType(BackgroundImageType value) {
-        if (oldBackgroundType == backgroundType) {
-            // Make them different, so toggling has a visible effect.
-            oldBackgroundType = (backgroundType == BackgroundImageType.NONE)
-                ? BackgroundImageType.LIGHT_GRAY // Arbitrary
-                : BackgroundImageType.NONE;
+    protected void toggleImageAlpha(double value) {
+        SourceImage image = selectedOrFirstImage();
+        if (image != null) {
+            image.toggleAlpha(value);
         }
-        setBackgroundType(value == backgroundType ? oldBackgroundType : value);
+        editFrame.setAlpha(value);
+        propagateChange();
     }
 
     /** Return a list of every decoration that is completely inside
         the closed border of the selection. */
-    ArrayList<Decoration> decorationsInsideSelection() {
+    List<Decoration> decorationsInsideSelection() {
         Decoration d = getSelectedDecoration();
         if (d == null) {
-            return new ArrayList<>();
+            return Collections.emptyList();
         } else if (d instanceof Interp2DDecoration) {
             return decorationsInside(
                     ((Interp2DHandle) d).getCurve().createTransformed(
                             principalToStandardPage));
         } else {
             // The decoration itself always counts.
-            ArrayList<Decoration> res = new ArrayList<>();
-            res.add(d);
-            return res;
+            return Collections.singletonList(d);
         }
     }
 
@@ -1491,29 +1436,6 @@ public class BasicEditor extends Diagram
         paintDiagramWithSelection((Graphics2D) g, scale);
     }
 
-    static final double DEFAULT_BACKGROUND_IMAGE_ALPHA = 1.0/3;
-
-    double getBackgroundImageAlpha() {
-        switch (getBackgroundType()) {
-        case LIGHT_GRAY:
-            return DEFAULT_BACKGROUND_IMAGE_ALPHA;
-        case DARK_GRAY:
-            return 0.577; // Geometric mean of 1/3 and 1
-        case BLACK:
-            return 1.0;
-        case BLINK:
-            return 1.0;
-        default:
-            return Double.NaN;
-        }
-    }
-
-    void paintBackgroundImage(Graphics2D g, double scale) {
-        ScaledCroppedImage im = getScaledOriginalImage();
-        SourceImage.draw(g, im.croppedImage, (float) getBackgroundImageAlpha(),
-                im.cropBounds.x, im.cropBounds.y);
-    }
-
     static Color toColor(AutoPositionType ap) {
         return ap == AutoPositionType.NONE ? Color.RED
             : ap == AutoPositionType.CURVE
@@ -1652,18 +1574,6 @@ public class BasicEditor extends Diagram
             : Color.GREEN;
     }
 
-    public void paintScreenBackground(Graphics2D g, double scale, Color color) {
-        BackgroundImageType back = getBackgroundType();
-        boolean showBackgroundImage = tracingImage()
-            && back != BackgroundImageType.NONE
-            && (imageBlinker == null || backgroundImageEnabled);
-
-        super.paintBackground(g, scale, Color.WHITE);
-        if (showBackgroundImage) {
-            paintBackgroundImage(g, scale);
-        }
-    }
-
     public double gridStep(LinearAxis ax, double scale) {
         if (isTernary()) {
             return 0.1;
@@ -1755,7 +1665,7 @@ public class BasicEditor extends Diagram
         }
 
         applyRenderingHints(g);
-        paintScreenBackground(g, scale, Color.WHITE);
+        paintBackground(g, scale, Color.WHITE);
         if (showGrid) {
             paintGridLines(g, scale);
         }
@@ -4062,17 +3972,6 @@ public class BasicEditor extends Diagram
         }
     }
 
-    @Override public void setOriginalFilename(String filename) {
-        boolean isNew = (filename != originalFilename)
-            && (filename == null || !filename.equals(originalFilename));
-        super.setOriginalFilename(filename);
-        if (isNew) {
-            originalImage = null;
-            triedToLoadOriginalImage = false;
-            revalidateZoomFrame();
-        }
-    }
-
     public String mimeType() {
         return "application/x-pededitor";
     }
@@ -4166,14 +4065,6 @@ public class BasicEditor extends Diagram
         return new BasicEditor();
     }
 
-    public BasicEditor findEmptyEditor() {
-        if (haveDiagram()) {
-            return createNew();
-        } else {
-            return this;
-        }
-    }
-
     /** Start on a blank new diagram.
 
         @param overwrite This only affects behavior when a diagram is
@@ -4265,11 +4156,14 @@ public class BasicEditor extends Diagram
         boolean tracing = (vertices != null);
         try (UpdateSuppressor us = new UpdateSuppressor()) {
                 clear();
-                setOriginalFilename(originalFilename);
-                revalidateZoomFrame();
-                if (backgroundType == BackgroundImageType.NONE) {
-                    setBackgroundType(BackgroundImageType.LIGHT_GRAY);
+                SourceImage image = null;
+                if (tracing) {
+                    image = new SourceImage();
+                    image.setFilename(originalFilename);
+                    addDecoration(image);
+                    setImageAlpha(StandardAlpha.LIGHT_GRAY.getAlpha());
                 }
+                revalidateZoomFrame();
 
                 add(defaultAxis(Side.RIGHT));
                 add(defaultAxis(Side.TOP));
@@ -4392,7 +4286,8 @@ public class BasicEditor extends Diagram
                               new Point2D.Double(maxRight, minTop) };
 
                         if (tracing) {
-                            originalToPrincipal = new QuadToQuad(vertices, outputVertices);
+                            image.setTransform(new QuadToQuad(vertices,
+                                            outputVertices));
                         }
 
                         double width = maxRight - minRight;
@@ -4474,7 +4369,7 @@ public class BasicEditor extends Diagram
                             QuadToRect q = new QuadToRect();
                             q.setVertices(vertices);
                             q.setRectangle(domain);
-                            originalToPrincipal = q;
+                            image.setTransform(q);
                         }
 
                         if (dog.isUniformScale()) {
@@ -4632,8 +4527,8 @@ public class BasicEditor extends Diagram
                         }
 
                         if (tracing) {
-                            originalToPrincipal = new TriangleTransform(vertices,
-                                                                        trianglePoints);
+                            image.setTransform(new TriangleTransform(
+                                            vertices, trianglePoints));
                         }
 
                         // xform is fixed -- three vertices of an equilateral
@@ -4703,8 +4598,8 @@ public class BasicEditor extends Diagram
                 case TERNARY:
                     {
                         if (tracing) {
-                            originalToPrincipal = new TriangleTransform
-                                (vertices, principalTrianglePoints);
+                            image.setTransform(new TriangleTransform(vertices,
+                                            principalTrianglePoints));
                         }
 
                         r = new Rescale(1.0, 0.0, maxDiagramWidth,
@@ -4928,7 +4823,6 @@ public class BasicEditor extends Diagram
 
         setAspectRatio(aspectRatio);
         bestFit();
-        scaledOriginalImages = null;
     }
 
     void scaleEditPane() {
@@ -5031,13 +4925,11 @@ public class BasicEditor extends Diagram
     @Override public void setPageBounds(Rectangle2D rect) {
         super.setPageBounds(rect);
         scaleEditPane();
-        scaledOriginalImages = null;
     }
 
     @Override void cannibalize(Diagram other) {
         removeAllVariables();
         removeAllTags();
-        setBlink(false);
         super.cannibalize(other);
         for (LinearAxis axis: axes) {
             editFrame.addVariable((String) axis.name);
@@ -5060,23 +4952,24 @@ public class BasicEditor extends Diagram
         or invisible. Otherwise, make sure the zoom frame is non-null,
         initialized, visible, and shows the correct image. */
     void revalidateZoomFrame() {
-        BufferedImage im = getOriginalImage();
-        if (im != null) {
+        SourceImage image = firstImage();
+        if (image != null && image.getImage() != null) {
+            BufferedImage bi = image.getImage();
             editFrame.setBackgroundTypeEnabled(true);
             initializeZoomFrame();
-            zoomFrame.setImage(im);
+            zoomFrame.setImage(bi);
             initializeCrosshairs();
             zoomFrame.getImageZoomPane().crosshairs = crosshairs;
             editFrame.mnBackgroundImage.setEnabled(true);
             zoomFrame.setTitle
-                ("Zoom " + getOriginalFilename());
+                ("Zoom " + image.getFilename());
             zoomFrame.pack();
             zoomFrame.setVisible(true);
         } else {
             if (zoomFrame != null) {
                 zoomFrame.setVisible(false);
             }
-            if (getOriginalFilename() == null) {
+            if (!tracingImage()) {
                 editFrame.mnBackgroundImage.setEnabled(false);
             } else {
                 editFrame.setBackgroundTypeEnabled(false);
@@ -5504,9 +5397,8 @@ public class BasicEditor extends Diagram
         }
 
         try {
-            double alpha = (tracingImage() && dog.isShowOriginalImage())
-                ? getBackgroundImageAlpha() : 0;
-            saveAsImage(file, ext, size.width, size.height, alpha,
+            saveAsImage(file, ext, size.width, size.height,
+                    dog.isShowOriginalImage(),
                     maybeTransparent && dog.isTransparent());
         } catch (IOException x) {
             showError("File error: " + x);
@@ -6011,12 +5903,6 @@ public class BasicEditor extends Diagram
         }
     }
 
-    /** @return true if the diagram is currently being traced from
-        another image. */
-    boolean tracingImage() {
-        return getOriginalImage() != null;
-    }
-
     /** The mouse was moved in the edit window. Update the coordinates
         in the edit window status bar, repaint the diagram, and update
         the position in the zoom window,. */
@@ -6069,11 +5955,12 @@ public class BasicEditor extends Diagram
         }
 
         if (mprin != null) {
-            if (tracingImage()) {
+            SourceImage image = selectedOrFirstImage();
+            if (image != null && image.getImage() != null) {
                 try {
                     // Update image zoom frame.
 
-                    Point2D.Double orig = principalToOriginal.transform(mprin);
+                    Point2D.Double orig = image.inverseTransform(mprin);
                     zoomFrame.setImageFocus((int) Math.floor(orig.x),
                                             (int) Math.floor(orig.y));
                 } catch (UnsolvableException ex) {
@@ -6279,14 +6166,6 @@ public class BasicEditor extends Diagram
 
         scaleEditPane();
         setViewportRelation(prin, viewportPoint);
-    }
-
-    double getLineWidth() {
-        CuspDecoration path = getSelectedCuspFigure();
-        if (path != null) {
-            return path.getLineWidth();
-        }
-        return lineWidth;
     }
 
     void customLineWidth() {
@@ -6591,195 +6470,6 @@ public class BasicEditor extends Diagram
         }
     }
 
-    /* Override changes: suppress painting while the operation
-       completes, and use WAIT_CURSOR until the operation
-       completes. */
-    @Override synchronized BufferedImage transformOriginalImage(
-            Rectangle cropBounds, double scale,
-            ImageTransform.DithererType dither, double alpha,
-            Color backColor, int imageType) {
-        try {
-            Cursor oldCursor = editFrame.getCursor();
-            try {
-                ++paintSuppressionRequestCnt;
-                editFrame.setCursor(new Cursor(Cursor.WAIT_CURSOR));
-                return super.transformOriginalImage(cropBounds, scale, dither,
-                        alpha, backColor, imageType);
-            } finally {
-                --paintSuppressionRequestCnt;
-                editFrame.setCursor(oldCursor);
-            }
-        } catch (IOException x) {
-            throw new IllegalStateException(x); // This shouldn't happen.
-        }
-    }
-
-    ScaledCroppedImage getScaledOriginalImage() {
-        Rectangle viewBounds = getViewRect();
-        Rectangle imageBounds = scaledPageBounds(scale);
-        Rectangle imageViewBounds = viewBounds.intersection(imageBounds);
-
-        // Attempt to work around a bug where Rectangle#intersection
-        // returns negative widths or heights.
-        if (imageViewBounds.width <= 0 || imageViewBounds.height <= 0) {
-            imageViewBounds = null;
-        }
-
-        int totalMemoryUsage = 0;
-        int maxScoreIndex = -1;
-        int maxScore = 0;
-
-        if (scaledOriginalImages == null) {
-            scaledOriginalImages = new ArrayList<ScaledCroppedImage>();
-        }
-        int cnt = scaledOriginalImages.size();
-
-        for (int i = cnt - 1; i>=0; --i) {
-            ScaledCroppedImage im = scaledOriginalImages.get(i);
-            if (Math.abs(1.0 - scale / im.scale) < 1e-6
-                && (imageViewBounds == null
-                    || im.cropBounds.contains(imageViewBounds))) {
-                // Found a match.
-
-                // Promote this image to the front of the LRU queue (last
-                // position in the ArrayList).
-                scaledOriginalImages.remove(i);
-                scaledOriginalImages.add(im);
-                return im;
-            }
-
-            // Lower scores are better. Penalties are given for memory
-            // usage and distance back in the queue (implying the
-            // image has not been used recently).
-
-            int mu = im.getMemoryUsage();
-            totalMemoryUsage += mu;
-
-            int thisScore = mu * (cnt - i);
-            if (thisScore > maxScore) {
-                maxScore = thisScore;
-                maxScoreIndex = i;
-            }
-        }
-
-        // Save memory if we're at the limit.
-
-        int totalMemoryLimit = 20000000; // Limit is 20 megapixels total.
-        int totalImageCntLimit = 50;
-        if (totalMemoryUsage > totalMemoryLimit) {
-            scaledOriginalImages.remove(maxScoreIndex);
-        } else if (cnt >= totalImageCntLimit) {
-            // Remove the oldest image.
-            scaledOriginalImages.remove(0);
-        }
-
-        // Create a new ScaledCroppedImage that is big enough to hold
-        // all of a medium-sized scaled image and that is also at
-        // least several times the viewport size if the scaled image
-        // is big enough to need to be cropped.
-
-        // Creating a cropped image that is double the viewport size
-        // in both dimensions is near optimal in the sense that for a
-        // double-sized cropped image, if the user drags the mouse in
-        // a fixed direction, the frequency with which the scaled
-        // image has to be updated times the approximate cost of each
-        // update is minimized.
-
-        Dimension maxCropSize = new Dimension
-            (Math.max(2000, viewBounds.width * 2),
-             Math.max(1500, viewBounds.height * 2));
-
-        Rectangle cropBounds = new Rectangle();
-
-        if (imageBounds.width * 3 <= maxCropSize.width * 4) {
-            // If allowing a little extra space beyond the normal
-            // maximum can make cropping unnecessary, then do it.
-            cropBounds.x = 0;
-            cropBounds.width = imageBounds.width;
-        } else {
-            int margin1 = (maxCropSize.width - imageViewBounds.width) / 2;
-            int margin2 = margin1;
-
-            int ivmin = imageViewBounds.x;
-            int ivmax = ivmin + imageViewBounds.width;
-            int immax = imageBounds.x + imageBounds.width;
-
-            int extra = margin1 - ivmin;
-            if (extra > 0) {
-                // We don't need so much of a margin on this side, so
-                // we can have extra on the other side.
-                margin2 += extra;
-                margin1 -= extra;
-            }
-
-            extra = margin2 - (immax - ivmax);
-            if (extra > 0) {
-                // We don't need so much of a margin on this side, so
-                // we can have extra on the other side.
-                margin2 -= extra;
-                margin1 += extra;
-            }
-
-            cropBounds.x = imageViewBounds.x - margin1;
-            cropBounds.width = imageViewBounds.width + margin1 + margin2;
-        }
-
-        if (imageBounds.height * 3 <= maxCropSize.height  * 4) {
-            // If allowing a little extra space beyond the normal
-            // maximum can make cropping unnecessary, then do it.
-            cropBounds.y = 0;
-            cropBounds.height = imageBounds.height;
-        } else {
-            int margin1 = (maxCropSize.height - imageViewBounds.height) / 2;
-            int margin2 = margin1;
-
-            int ivmin = imageViewBounds.y;
-            int ivmax = ivmin + imageViewBounds.height;
-            int immax = imageBounds.y + imageBounds.height;
-
-            int extra = margin1 - ivmin;
-            if (extra > 0) {
-                // We don't need so much of a margin on this side, so
-                // we can have extra on the other side.
-                margin2 += extra;
-                margin1 -= extra;
-            }
-
-            extra = margin2- (immax - ivmax);
-            if (extra > 0) {
-                // We don't need so much of a margin on this side, so
-                // we can have extra on the other side.
-                margin2 -= extra;
-                margin1 += extra;
-            }
-
-            cropBounds.y = imageViewBounds.y - margin1;
-            cropBounds.height = imageViewBounds.height + margin1 + margin2;
-        }
-
-        ScaledCroppedImage im = new ScaledCroppedImage();
-        im.scale = scale;
-        im.imageBounds = imageBounds;
-        im.cropBounds = cropBounds;
-        ImageTransform.DithererType dither
-            = (cropBounds.getWidth() * cropBounds.getHeight() > 3000000)
-            ? ImageTransform.DithererType.FAST
-            : ImageTransform.DithererType.GOOD;
-
-        im.croppedImage = transformOriginalImage(
-                cropBounds, scale, dither, 1.0,
-                Color.WHITE, BufferedImage.TYPE_INT_RGB);
-        scaledOriginalImages.add(im);
-        return im;
-    }
-
-    BufferedImage transformOriginalImage(Dimension size) {
-        return transformOriginalImage(
-                new Rectangle(size), bestFitScale(size), 
-                ImageTransform.DithererType.FAST, getBackgroundImageAlpha(),
-                Color.WHITE, BufferedImage.TYPE_INT_RGB);
-    }
-
     @Override public boolean setFontName(String s) {
         boolean res = super.setFontName(s);
         if (res) {
@@ -6822,31 +6512,5 @@ public class BasicEditor extends Diagram
             mnRightClick.setCoordinates(formatCoordinates(mp.prin));
         }
         mnRightClick.show(mp.e.getComponent(), mp.e.getX(), mp.e.getY());
-    }
-}
-
-class ScaledCroppedImage {
-    double scale;
-
-    int getMemoryUsage() {
-        return cropBounds.width * cropBounds.height;
-    }
-
-    /** The bounds of the entire image at this scale. */
-    Rectangle imageBounds;
-    /** The image of coveredRegion at this scale. */
-    BufferedImage croppedImage;
-    /** The bounds of the portion of the scaled image that is stored
-        in croppedImage. */
-    Rectangle cropBounds;
-
-    boolean isCropped() {
-        return cropBounds.width < imageBounds.width
-            || cropBounds.height < imageBounds.height;
-    }
-
-    @Override public String toString() {
-        return "Scale: " + scale + " image: " + imageBounds
-            + " crop: " + cropBounds;
     }
 }
