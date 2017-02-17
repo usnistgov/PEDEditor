@@ -4,6 +4,7 @@
 package gov.nist.pededitor;
 
 import java.awt.geom.*;
+import java.util.Arrays;
 
 import org.codehaus.jackson.annotate.JsonIgnoreProperties;
 
@@ -21,4 +22,13 @@ public abstract class AffinePolygonTransform extends Affine
     @Override public abstract Rectangle2D.Double inputBounds();
     @Override public abstract Rectangle2D.Double outputBounds();
     @Override public abstract AffinePolygonTransform clone();
+
+    @Override public boolean equals(Object other0) {
+        if (this == other0) return true;
+        if (other0 == null || getClass() != other0.getClass()) return false;
+        AffinePolygonTransform other = (AffinePolygonTransform) other0;
+
+        return Arrays.equals(getInputVertices(), other.getInputVertices())
+            && Arrays.equals(getOutputVertices(), other.getOutputVertices());
+    }
 }
