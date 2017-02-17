@@ -3318,8 +3318,7 @@ public class BasicEditor extends Diagram
         Point2D.Double p2 = null;
 
         BoundedParam2D param = getSelectedParameterization();
-
-        if (param instanceof SegmentParam2D) {
+        if (param != null && param.isLineSegment()) {
             p1 = param.getStart();
             p2 = param.getEnd();
         }
