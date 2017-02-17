@@ -11,6 +11,7 @@ import java.awt.FontFormatException;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.GraphicsEnvironment;
+import java.awt.Point;
 import java.awt.Rectangle;
 import java.awt.RenderingHints;
 import java.awt.Shape;
@@ -27,7 +28,6 @@ import java.awt.print.PageFormat;
 import java.awt.print.Printable;
 import java.awt.print.PrinterException;
 import java.awt.print.PrinterJob;
-import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
@@ -90,7 +90,7 @@ public class Diagram extends Observable implements Printable {
             removeDecoration(d);
             return null;
         }
-        
+
         int oldVertexCnt = path.size();
         int index = hand.index;
 
@@ -126,7 +126,7 @@ public class Diagram extends Observable implements Printable {
             return null;
         }
     }
-    
+
     /** Apply the NIST MML PED standard binary diagram axis style. */
     static LinearRuler defaultBinaryRuler() {
         LinearRuler r = new LinearRuler();
@@ -200,22 +200,12 @@ public class Diagram extends Observable implements Printable {
     protected Map<String,String> keyValues = null;
     protected Set<String> tags = new HashSet<>();
 
-    /** Transform from original coordinates to principal coordinates.
-        Original coordinates are (x,y) positions within a scanned
-        image. Principal coordinates are either the natural (x,y)
-        coordinates of a Cartesian graph or binary diagram (for
-        example, y may equal a temperature while x equals the atomic
-        fraction of the second diagram component), or the fraction
-        of the right and top components respectively for a ternary
-        diagram. */
-    @JsonProperty protected PolygonTransform originalToPrincipal;
-    protected PolygonTransform principalToOriginal;
     @JsonProperty protected AffinePolygonTransform principalToStandardPage;
     protected transient Affine standardPageToPrincipal;
     /** Bounds of the entire page in standardPage space. */
     protected Rectangle2D.Double pageBounds;
     protected DiagramType diagramType = null;
-    protected ArrayList<Decoration> decorations;
+    protected ArrayList<Decoration> decorations = null;
     /** In pixel mode, one-point lines are shown as squares at the
         normal line width and line ends; CAP_SQUARE and JOIN_MITER are
         the default settings for lines; and the grid length is one
@@ -233,12 +223,7 @@ public class Diagram extends Observable implements Printable {
     protected transient double[/* Side */][/* elementNo */]
         componentElements = null;
 
-    protected String originalFilename;
-    protected byte[] originalImageBytes;
-
-    protected BackgroundImageType backgroundType = BackgroundImageType.NONE;
     protected ArrayList<LinearAxis> axes = new ArrayList<>();
-
     protected double labelXMargin = Double.NaN;
     protected double labelYMargin = Double.NaN;
     protected double boxedLabelXMargin = Double.NaN;
@@ -261,12 +246,6 @@ public class Diagram extends Observable implements Printable {
         making transient changes that will be undone later. */
     transient int suppressUpdateCnt = 0;
     transient boolean saveNeeded = false;
-    
-    /** True if the program already tried and failed to load the image
-        named originalFilename. */
-    protected transient boolean triedToLoadOriginalImage = false;
-    protected transient BufferedImage originalImage;
-
 
     /** If an UpdateSuppressor object is created, then all changes are
         treated like no change at all, until the object is closed
@@ -292,9 +271,6 @@ public class Diagram extends Observable implements Printable {
     }
 
     private void init() {
-        originalToPrincipal = null;
-        originalFilename = null;
-        principalToOriginal = null;
         setPrincipalToStandardPage(null);
         pageBounds = null;
         decorations = new ArrayList<>();
@@ -633,6 +609,11 @@ public class Diagram extends Observable implements Printable {
         (which may be useful during editing). */
     public void paintDiagram(Graphics2D g, double scale, Color backColor,
             boolean clip) {
+        paintDiagram(g, scale, backColor, clip, true);
+    }
+
+    void paintDiagram(Graphics2D g, double scale, Color backColor,
+            boolean clip, boolean showImages) {
         Shape oldClip = null;
         try {
             oldClip = g.getClip();
@@ -645,7 +626,9 @@ public class Diagram extends Observable implements Printable {
             ArrayList<Decoration> decorations = getDecorations();
 
             for (Decoration d: decorations) {
-                draw(g, d, scale);
+                if (showImages || !(d instanceof SourceImage)) {
+                    draw(g, d, scale);
+                }
             }
         } finally {
             g.setClip(oldClip);
@@ -658,6 +641,8 @@ public class Diagram extends Observable implements Printable {
 
         if (d instanceof Interp2DDecoration)
             ((Interp2DDecoration) d).setRoundedStroke(!isPixelMode());
+        if (d instanceof SourceImage)
+            ((SourceImage) d).setPageBounds(new Rectangle2D.Double(0, 0, pageBounds.width, pageBounds.height));
         d.draw(g, toPage, scale);
     }
 
@@ -669,9 +654,9 @@ public class Diagram extends Observable implements Printable {
         if (interp.size() == interp.maxSize()) {
             return false;
         }
-        
+
         ArrayList<Double> segments = getPathSegments(path);
-        
+
         if (path.getCurve().size() > 0) {
             int segCnt = interp.getSegmentCnt();
 
@@ -781,7 +766,12 @@ public class Diagram extends Observable implements Printable {
         decorations.add(d);
         propagateChange();
     }
-        
+
+    public void addDecoration(Decoration d, int index) {
+        decorations.add(index, d);
+        propagateChange();
+    }
+
     public void add(TieLine tie) {
         addDecoration(tie);
     }
@@ -843,10 +833,10 @@ public class Diagram extends Observable implements Printable {
                 return;
             }
         }
-        
+
         throw new NoSuchVariableException(oldName);
     }
-    
+
     void renameVariableMissingOK(String oldName, String newName)
         throws DuplicateComponentException {
         try {
@@ -1165,7 +1155,7 @@ public class Diagram extends Observable implements Printable {
         return transform(p, moleToWeightTransform(), true);
     }
 
-    Point2D.Double transform(Point2D p, SideConcentrationTransform xform, 
+    Point2D.Double transform(Point2D p, SideConcentrationTransform xform,
             boolean stopAtBorders) {
         try {
             return transform(p, (Transform2D) xform, stopAtBorders);
@@ -1178,9 +1168,9 @@ public class Diagram extends Observable implements Printable {
      * an important exception: points outside the diagram are
      * transformed by projecting onto the closest point within
      * diagram, transforming that, and applying the inverse of the
-     * projection vector afterwards. 
+     * projection vector afterwards.
      * @throws UnsolvableException */
-    Point2D.Double transform(Point2D p, Transform2D xform, 
+    Point2D.Double transform(Point2D p, Transform2D xform,
             boolean stopAtBorders) throws UnsolvableException {
         if (xform == null) {
             return null;
@@ -1254,7 +1244,7 @@ public class Diagram extends Observable implements Printable {
         principalToStandardPage from one kind of
         AffinePolygonTransform to another one that has the same effect
         but with different vertices.
-     
+
         @throws UnsolvableException */
     void transformDiagramCorners(Transform2D xform) throws UnsolvableException {
         AffinePolygonTransform p2s = principalToStandardPage;
@@ -1616,6 +1606,30 @@ public class Diagram extends Observable implements Printable {
         return () -> new DecorationIterator<AnchoredLabel>(new AnchoredLabel());
     }
 
+    public Iterable<SourceImage> images() {
+        return () -> new DecorationIterator<SourceImage>(new SourceImage());
+    }
+
+    // For now, the assumption remains that only one SourceImage is present.
+    SourceImage firstImage() {
+        for (SourceImage image: images()) {
+            return image;
+        }
+        return null;
+    }
+
+    // If firstImage() would return null, then create a new empty
+    // SourceImage and return that instead. For old save file versions.
+    SourceImage createFirstImage() {
+        for (SourceImage image: images()) {
+            return image;
+        }
+        SourceImage image = new SourceImage();
+        image.setAlpha(StandardAlpha.LIGHT_GRAY.getAlpha());
+        addDecoration(image, 0);
+        return image;
+    }
+
     public Iterable<TieLine> tieLines() {
         return () -> new DecorationIterator<TieLine>(new TieLine());
     }
@@ -1940,7 +1954,7 @@ public class Diagram extends Observable implements Printable {
         fixAxisFormat(axis);
     }
 
-    
+
     /** Don't display proportion values less than 0 or greater than 1,
         but allow a little bit of fudge factor. */
     boolean isProportion(double v) {
@@ -2047,7 +2061,7 @@ public class Diagram extends Observable implements Printable {
         if (res == null) {
             throw new IllegalStateException("No X axis found.");
         }
-        
+
         return res;
     }
 
@@ -2075,7 +2089,7 @@ public class Diagram extends Observable implements Printable {
         if (res == null) {
             throw new IllegalStateException("No Y axis found.");
         }
-        
+
         return res;
     }
 
@@ -2103,7 +2117,7 @@ public class Diagram extends Observable implements Printable {
         }
         LinearAxis[] res2 = res.toArray(new LinearAxis[0]);
         Arrays.sort(res2);
-        
+
         // Put Page X / Page Y first if they exist.
         int i = -1;
         for (LinearAxis axis: res2) {
@@ -2150,7 +2164,7 @@ public class Diagram extends Observable implements Printable {
                 return axis;
             }
         }
-        
+
         return null;
     }
 
@@ -2462,7 +2476,10 @@ public class Diagram extends Observable implements Printable {
     }
 
     @JsonProperty("decorations") void setJSONDecorations(Decoration[] objects) {
-        decorations = new ArrayList<>(Arrays.asList(objects));
+        if (decorations == null) {
+            decorations = new ArrayList<>();
+        }
+        decorations.addAll(Arrays.asList(objects));
         if (!axes.isEmpty()) {
             linkAxesAndRulers();
         }
@@ -2488,6 +2505,23 @@ public class Diagram extends Observable implements Printable {
             if (r.axisName != null) {
                 throw new IllegalStateException
                     ("Unknown axis name '" + r.axisName + "'");
+            }
+        }
+    }
+
+    void relinkAxesAndRulers() {
+        for (LinearRuler r: rulers()) {
+            String name = (String) r.axis.name;
+            r.axis = null;
+            for (LinearAxis axis: axes) {
+                if (axis.name.equals(name)) {
+                    r.axis = axis;
+                    break;
+                }
+            }
+            if (r.axis == null) {
+                throw new IllegalStateException
+                    ("Unknown axis name '" + name + "'");
             }
         }
     }
@@ -2520,7 +2554,7 @@ public class Diagram extends Observable implements Printable {
                     res.add(curve.getLocation(t));
                 }
             }
-            
+
             for (int j = i+1; j < cs; ++j) {
                 BoundedParam2D curve2 = curves[j];
                 try {
@@ -2673,39 +2707,6 @@ public class Diagram extends Observable implements Printable {
         return xform;
     }
 
-    /** @return the name of the image file that this diagram was
-        digitized from converted to an absolute path, or null if this
-        diagram is not known to be digitized from a file. */
-    @JsonIgnore public String getAbsoluteOriginalFilename() {
-        if (filename == null || originalFilename == null) {
-            return originalFilename;
-        }
-
-        Path op = Paths.get(originalFilename);
-        if (op.isAbsolute()) {
-            return originalFilename;
-        }
-
-        // Convert originalFilename from a relative path starting from
-        // the directory that filename belongs to into an absolute
-        // path.
-
-        Path absolute = Paths.get(Paths.get(filename).getParent().toString(),
-                                  originalFilename).toAbsolutePath();
-        try {
-            return absolute.toRealPath().toString();
-        } catch (IOException x) {
-            return absolute.toString(); // Settle for the unreal path.
-        }
-    }
-
-    /** @return the name of the image file that this diagram was
-        digitized from, or null if this diagram is not known to be
-        digitized from a file. */
-    public String getOriginalFilename() {
-        return originalFilename;
-    }
-
     public void setTitle(String title) {
         put("title", title);
     }
@@ -2747,13 +2748,16 @@ public class Diagram extends Observable implements Printable {
             titleBuf.append(str);
         }
 
-        str = getOriginalFilename();
-        if (str != null) {
-            str = Paths.get(str).getFileName().toString();
-            if (titleBuf.length() > 0) {
-                titleBuf.append(" ");
+        SourceImage image = firstImage();
+        if (image != null) {
+            str = image.getFilename();
+            if (str != null) {
+                str = Paths.get(str).getFileName().toString();
+                if (titleBuf.length() > 0) {
+                    titleBuf.append(" ");
+                }
+                titleBuf.append(str);
             }
-            titleBuf.append(str);
         }
 
         return titleBuf.length() > 0 ? titleBuf.toString() : fallbackTitle();
@@ -2807,88 +2811,69 @@ public class Diagram extends Observable implements Printable {
         return str.toString();
     }
 
-    public void setOriginalFilename(String filename) {
-        if (filename == null) {
-            setBackgroundType(BackgroundImageType.NONE);
-        }
-        originalFilename = filename;
-        relativizeOriginalFilename();
-        propagateChange();
-    }
+    /** For old save file versions: make the filename absolute if
+        possible. Helps to deal with old PED files that have relative
+        filenames which need to be resolved relative to the PED
+        filename. */
+    void fixFilename(SourceImage image) {
+        String originalFilename = image.getFilename();
+        if (originalFilename == null)
+            return;
 
-    /** Remove the association between this diagram and the original
-        image, including the originalToPrincipal transform. */
-    public void detachOriginalImage() {
-        originalToPrincipal = null;
-        principalToOriginal = null;
-        setOriginalFilename(null);
-        originalImage = null;
-        originalImageBytes = null;
-        propagateChange();
-    }
-
-    public void setFilename(String fn) {
-        if ((filename == null && fn == null)
-            || (filename != null && filename.equals(fn))) {
+        Path op = Paths.get(originalFilename);
+        if (op.isAbsolute()) {
             return;
         }
-        String ofn = getAbsoluteOriginalFilename();
-        filename = fn;
-        setOriginalFilename(ofn);
+
+        String diagramFilename = this.filename;
+        if (diagramFilename == null) {
+            return;
+        }
+
+        // Convert originalFilename from a relative path starting from
+        // the directory that filename belongs to into an absolute
+        // path.
+
+        Path absolute = Paths.get(
+                Paths.get(diagramFilename).getParent().toString(),
+                originalFilename).toAbsolutePath();
+        try {
+            originalFilename = absolute.toRealPath().toString();
+        } catch (IOException x) {
+            originalFilename = absolute.toString(); // Settle for the unreal path.
+        }
+        image.setFilename(originalFilename);
+    }
+
+    /** For old save file versions. */
+    @JsonProperty void setOriginalFilename(String filename) {
+        if (filename == null && firstImage() == null) {
+            return;
+        }
+        SourceImage image = createFirstImage();
+        image.setFilename(filename);
+        fixFilename(image);
         propagateChange();
     }
 
-    /** Convert originalFilename to be relative to filename if
-        possible. */
-    void relativizeOriginalFilename() {
-        if (filename == null || originalFilename == null) {
-            return;
-        }
-        originalFilename = relativizeFilename(getAbsoluteOriginalFilename());
+    /** For old save file versions. */
+    @JsonProperty void setOriginalToPrincipal(PolygonTransform xform) {
+        createFirstImage().setTransform(xform);
+        propagateChange();
     }
 
-    /** @return fn converted to be relative to the directory that
-        contains getFilename(). For example, if
-        getFilename.equals("a/b/c") and fn.equals("a/x/y") then
-        "../x/y" would be returned. */
-    public String relativizeFilename(String fn) {
-        if (fn == null || filename == null) {
-            return fn;
+    public void setFilename(String filename) {
+        if ((this.filename == null && filename == null)
+            || (this.filename != null && this.filename.equals(filename))) {
+            return;
         }
-        Path op = Paths.get(fn).toAbsolutePath();
-        Path p = Paths.get(filename).toAbsolutePath();
-        int pnc = p.getNameCount();
-        int opnc = op.getNameCount();
-        Path proot = p.getRoot();
-        Path oproot = op.getRoot();
-
-        if (proot != null || oproot != null) {
-            if (!proot.equals(oproot)) {
-                return fn;
-            }
+        this.filename = filename;
+        // For old save file versions.
+        SourceImage image = firstImage();
+        if (image != null) {
+            fixFilename(image);
         }
-
-        int commonCnt;
-        for (commonCnt = 0;
-             commonCnt < pnc-1 && commonCnt < opnc - 1;
-             ++commonCnt) {
-            if (!p.getName(commonCnt).equals(op.getName(commonCnt))) {
-                break;
-            }
-        }
-        int parentCnt = pnc - 1 - commonCnt;
-        if (parentCnt == 0 || (commonCnt > 0 && parentCnt <= 3)) {
-            ArrayList<String> names = new ArrayList<>();
-            for (int i = commonCnt; i < pnc-1; ++i) {
-                names.add("..");
-            }
-            names.add(op.subpath(commonCnt, opnc).toString());
-            fn = Paths.get(names.get(0),
-                           names.subList(1, names.size())
-                           .toArray(new String[0]))
-                .toString();
-        }
-        return fn;
+        propagateChange();
     }
 
     protected static double normalFontSize() {
@@ -2959,17 +2944,6 @@ public class Diagram extends Observable implements Printable {
     }
 
     protected void initializeDiagram() {
-        if (getOriginalFilename() != null) {
-            try {
-                principalToOriginal = (PolygonTransform)
-                    originalToPrincipal.createInverse();
-            } catch (NoninvertibleTransformException e) {
-                System.err.println("This transform is not invertible");
-                System.exit(2);
-            }
-        }
-
-        setOriginalFilename(getOriginalFilename());
         fixAxisFormats();
     }
 
@@ -3085,7 +3059,7 @@ public class Diagram extends Observable implements Printable {
             System.err.println("This transform is not invertible");
             System.exit(2);
         }
-        
+
         for (TieLine tie: tieLines()) {
             tie.innerEdge = idToCurve(tie.innerId);
             tie.outerEdge = idToCurve(tie.outerId);
@@ -3094,6 +3068,14 @@ public class Diagram extends Observable implements Printable {
             computeMargins();
         }
         setSaveNeeded(false);
+        while (true) {
+            SourceImage image = firstImage();
+            if (image != null && image.getImage() == null) {
+                removeDecoration(image);
+            } else {
+                break;
+            }
+        }
     }
 
     /** Invoked from the EditFrame menu */
@@ -3211,10 +3193,8 @@ public class Diagram extends Observable implements Printable {
         try (UpdateSuppressor us = new UpdateSuppressor()) {
                 diagramType = other.diagramType;
                 diagramComponents = other.diagramComponents;
-                originalToPrincipal = other.originalToPrincipal;
                 setPrincipalToStandardPage(other.principalToStandardPage);
                 pageBounds = other.pageBounds;
-                originalFilename = other.originalFilename;
                 filename = other.filename;
 
                 boolean haveBounds = (pageBounds != null);
@@ -3234,9 +3214,6 @@ public class Diagram extends Observable implements Printable {
                 }
                 setPixelMode(other.isPixelMode());
                 setUsingWeightFraction(other.isUsingWeightFraction());
-                setBackgroundType(other.getBackgroundType());
-                originalImageBytes = other.originalImageBytes;
-                other.originalImageBytes = null;
             }
         propagateChange1();
     }
@@ -3269,13 +3246,13 @@ public class Diagram extends Observable implements Printable {
     /** Return a BufferedImage of the diagram which is no larger than
         width x height. */
     public BufferedImage createImage(int width, int height) {
-        return createImage(width, height, 0, false);
+        return createImage(width, height, false, false);
     }
 
     /** Return a BufferedImage of the diagram which is no larger than
         width x height. */
     public BufferedImage createImage(int width, int height,
-            double alpha, boolean transparent) {
+            boolean showImages, boolean transparent) {
         if (width == 0 || height == 0) {
             throw new IllegalArgumentException(
                     "Cannot make image with width " + width
@@ -3284,7 +3261,7 @@ public class Diagram extends Observable implements Printable {
         Dimension size = bestFitSize(width, height);
         width = size.width;
         height = size.height;
-        
+
         // Images in the editor are normally displayed without font
         // hinting, but saving at low resolution can cause font
         // hinting to significantly rearrange the positions of letters
@@ -3293,7 +3270,7 @@ public class Diagram extends Observable implements Printable {
         // problem.
         int scale = Math.max(1, 400 / (width + height));
         BufferedImage res = createImageSub(width * scale, height * scale,
-                    alpha, transparent);
+                    showImages, transparent);
         if (scale > 1) {
             res = ScaleImage.downscale(res, scale);
         }
@@ -3301,30 +3278,16 @@ public class Diagram extends Observable implements Printable {
     }
 
     BufferedImage createImageSub(int width, int height,
-            double alpha, boolean transparent) {
-        BufferedImage res = null;
-        Color backColor = transparent ? new Color(0, 0, 0, 0) :
-            Color.WHITE;
+            boolean showImages, boolean transparent) {
+
         int imageType = transparent ? BufferedImage.TYPE_INT_ARGB
             : BufferedImage.TYPE_INT_RGB;
-        if (alpha > 0) {
-            Dimension size = new Dimension(width, height);
-            try {
-                res = transformOriginalImage(
-                        new Rectangle(size), bestFitScale(size), 
-                        ImageTransform.DithererType.GOOD, alpha, backColor,
-                        imageType);
-                backColor = null;
-            } catch (IOException x) {
-                // OK, fall through
-            }
-        }
-        if (res == null) {
-            res = new BufferedImage(width, height, imageType);
-        }
-        Graphics2D g = (Graphics2D) res.getGraphics();
-        paintDiagram(g, bestFitScale(new Dimension(width, height)),
-                backColor, false);
+        BufferedImage res = new BufferedImage(width, height, imageType);
+
+        Color backColor = transparent ? new Color(0, 0, 0, 0) :
+            Color.WHITE;
+        paintDiagram(res.createGraphics(), bestFitScale(new Dimension(width, height)),
+                backColor, true);
         return res;
     }
 
@@ -3342,21 +3305,17 @@ public class Diagram extends Observable implements Printable {
 
     public void saveAsImage(File file, String format, int width, int height)
         throws IOException {
-        saveAsImage(file, format, width, height, 0, false);
+        saveAsImage(file, format, width, height, true, false);
     }
 
     /** Save the diagram as an image.
 
        @param transparent If true and the format supports it, the returned image may be partly transparent. Otherwise the image will be as if painted on a white background.
 
-       @param alpha If nonzero, then the original image (assuming it
-       exists) will be shown in the background of the returned image,
-       with the given alpha channel value (0 = don't show background
-       image at all, 0.5 = show at half normal alpha value, 1 = show
-       background image at full alpha value). */
+       @param showImages If false, any SourceImages will be ignored. */
     public void saveAsImage(File file, String format, int width, int height,
-                            double alpha, boolean transparent) throws IOException {
-        BufferedImage save = createImage(width, height, alpha, transparent);
+                            boolean showImages, boolean transparent) throws IOException {
+        BufferedImage save = createImage(width, height, showImages, transparent);
         ImageIO.write(save, format, file);
     }
 
@@ -3381,11 +3340,7 @@ public class Diagram extends Observable implements Printable {
         try (PrintWriter writer = new PrintWriter
              (Files.newBufferedWriter(path, StandardCharsets.UTF_8))) {
             if (updateFilename) {
-                // Reset the filename before saving. This will
-                // re-relativize originalFilename so that it can still
-                // be found using a relative path even if the new
-                // filename is in a different directory from before.
-                setFilename(path.toAbsolutePath().toString());
+                setFilename(path.toString());
             }
             writer.print(toJsonString());
             setSaveNeeded(false);
@@ -3679,7 +3634,7 @@ public class Diagram extends Observable implements Printable {
             // positions above is a waste of time, but it shouldn't
             // hurt anything.
             return nearestChemical(Geom.midpoint(ltarget, rtarget), maxDist);
-            
+
         default:
             throw new IllegalArgumentException("No such component 'BOTTOM'");
         }
@@ -3799,7 +3754,7 @@ public class Diagram extends Observable implements Printable {
         double maxDist = deltaLength * tolerance;
         double maxDistSq = maxDist * maxDist;
         Line2D.Double res = null;
-        
+
         for (Point2D.Double v: vectors) {
             principalToStandardPage.deltaTransform(v, v);
             Point2D.Double projection = Geom.nearestPointOnLine
@@ -3898,6 +3853,10 @@ public class Diagram extends Observable implements Printable {
         the range you really want. */
     public void invisiblyTransformPrincipalCoordinates(AffineTransform trans) {
         transformPrincipalCoordinates(trans);
+        // Transforming a ruler creates a new axis. We don't want
+        // new axes, we want the old ones with the same names.
+        relinkAxesAndRulers();
+
         ArrayList<LinearAxis> mainAxes = new ArrayList<>();
         mainAxes.add(getXAxis());
         mainAxes.add(getYAxis());
@@ -3915,12 +3874,8 @@ public class Diagram extends Observable implements Printable {
                                             + " is not invertible");
         }
 
-        if (originalToPrincipal != null) {
-            originalToPrincipal.preConcatenate(atrans);
-            principalToOriginal.concatenate(itrans);
-        }
-
         // Convert all angles from principal to page coordinates.
+        // We'll convert back again below.
         for (Decoration d: decorations) {
             if (d instanceof Angled) {
                 Angled a = (Angled) d;
@@ -3957,7 +3912,7 @@ public class Diagram extends Observable implements Printable {
     }
 
     /** This is crude and untested, and I'm pretty sure it can fail
-        when two points get mapped to the same target, but even so, it's 
+        when two points get mapped to the same target, but even so, it's
         sometimes useful. */
     public void snapToGrid() {
         ArrayList<Double> xs = new ArrayList<>();
@@ -4223,6 +4178,10 @@ public class Diagram extends Observable implements Printable {
                                     Rectangle2DDoubleAnnotations.class);
             des.addMixInAnnotations(Rectangle2D.Double.class,
                                     Rectangle2DDoubleAnnotations.class);
+
+            ser.addMixInAnnotations(Point.class, PointAnnotations.class);
+
+            ser.addMixInAnnotations(Dimension.class, DimensionAnnotations.class);
 
             ser.addMixInAnnotations(DecimalFormat.class,
                                     DecimalFormatAnnotations.class);
@@ -4598,107 +4557,21 @@ public class Diagram extends Observable implements Printable {
     }
 
     @JsonIgnore public BufferedImage getOriginalImage() throws IOException {
-        if (originalImage != null) {
-            return originalImage;
+        SourceImage image = firstImage();
+        if (image != null) {
+            return image.getImage();
         }
-
-        byte[] imageBytes = getOriginalImageBytesUnsafe();
-        if (imageBytes == null) {
-            return null;
-        }
-
-        originalImage = ImageIO.read(new ByteArrayInputStream(imageBytes));
-        return originalImage;
+        return null;
     }
 
-    public BackgroundImageType getBackgroundType() {
-        return backgroundType;
-    }
-
-    public synchronized void setBackgroundType(BackgroundImageType value) {
-        if (value == null) {
-            value = BackgroundImageType.NONE;
+    /** @return true if the diagram is currently being traced from
+        another image. */
+    protected boolean tracingImage() {
+        try {
+            return getOriginalImage() != null;
+        } catch (IOException e) {
+            return false;
         }
-        backgroundType = value;
-    }
-
-    /** @return the binary contents of the original image. Changing
-        the array contents is not safe. */
-    @JsonProperty("originalImageBytes")
-    protected byte[] getOriginalImageBytesUnsafe() throws IOException {
-        if (!triedToLoadOriginalImage && originalImageBytes == null) {
-            triedToLoadOriginalImage = true;
-        
-            String filename = getAbsoluteOriginalFilename();
-            if (filename == null) {
-                return null;
-            }
-
-            originalImageBytes = Files.readAllBytes(Paths.get(filename));
-            propagateChange();
-        }
-
-        return originalImageBytes;
-    }
-
-    /** The input array is stolen, not copied -- hence "unsafe". */ 
-    @JsonProperty("originalImageBytes")
-    protected void setOriginalImageBytesUnsafe(byte[] bytes) {
-        originalImageBytes = bytes;
-    }
-
-    /** Scale the diagram by the given amount, placing the upper-left
-        corner in position (0,0), but don't actually draw the diagram.
-        Instead, just return the portion of originalImage, adjusted to
-        the current background image alpha (mixed with a background of
-        pure white), that would sit in the background of the cropRect
-        portion of the scaled diagram.
-
-        TODO: the way fade() works here is doubtful. It makes more
-        sense to use an RGBA image type than to use RGB and mix the
-        color with pure white according to the alpha value. Only real
-        RGBA allows bitmaps to be layered in nontrivial ways.
-    */
-    synchronized BufferedImage transformOriginalImage(
-            Rectangle cropBounds, double scale,
-            ImageTransform.DithererType dither, double alpha,
-            Color backColor, int imageType) throws IOException {
-        BufferedImage input = null;
-        if (alpha > 0) {
-            try {
-                input = getOriginalImage();
-            } catch (IOException x) {
-                // Oh well, treat original image as blank.
-            }
-        }
-
-        if (input == null) {
-            BufferedImage res = new BufferedImage(
-                    cropBounds.width, cropBounds.height, imageType);
-            Graphics2D g2d = res.createGraphics();
-            g2d.setPaint(backColor);
-            g2d.fill(cropBounds);
-            return res;
-        }
-
-        // Create the transformed, cropped, and faded image of the
-        // original diagram.
-        PolygonTransform originalToCrop = originalToPrincipal.clone();
-        originalToCrop.preConcatenate(principalToScaledPage(scale));
-
-        // Shift the transform so that location (cropBounds.x,
-        // cropBounds.y) is mapped to location (0,0).
-
-        originalToCrop.preConcatenate
-            (new Affine(AffineTransform.getTranslateInstance
-                        ((double) -cropBounds.x, (double) -cropBounds.y)));
-        
-        System.out.println("Resizing original image (" + dither + ")...");
-        BufferedImage res = ImageTransform.run(originalToCrop, input,
-                backColor, cropBounds.getSize(), dither, imageType);
-        fade(res, res, alpha);
-
-        return res;
     }
 
     /** Compress the brightness into the upper "frac" portion of the range
@@ -4763,6 +4636,19 @@ abstract class Rectangle2DDoubleAnnotations
     @Override @JsonIgnore abstract public Rectangle2D getFrame();
     @Override @JsonIgnore abstract public double getCenterX();
     @Override @JsonIgnore abstract public double getCenterY();
+}
+
+@SuppressWarnings("serial")
+abstract class PointAnnotations
+    extends Point {
+    @Override @JsonIgnore abstract public Point getLocation();
+}
+
+@SuppressWarnings("serial")
+abstract class DimensionAnnotations
+    extends Dimension {
+    @Override @JsonIgnore
+    public abstract Dimension getSize();
 }
 
 @SuppressWarnings("serial")
