@@ -5,30 +5,32 @@ package gov.nist.pededitor;
 
 import java.awt.geom.*;
 
+import org.codehaus.jackson.annotate.JsonIgnore;
+
 /** Abstract class containing elements common to RectToQuad and
     QuadToRect. */
 abstract public class RectToQuadCommon
     extends PolygonTransformAdapter
     implements QuadrilateralTransform {
     @Override
-	abstract public Transform2D createInverse();
+    abstract public Transform2D createInverse();
     @Override
-	abstract public void preConcatenate(Transform2D other);
+    abstract public void preConcatenate(Transform2D other);
     @Override
-	abstract public void concatenate(Transform2D other);
+    abstract public void concatenate(Transform2D other);
     @Override
-	abstract public Transform2D squareToDomain();
+    abstract public Transform2D squareToDomain();
     @Override
-	abstract public RectToQuadCommon clone();
+    abstract public RectToQuadCommon clone();
 
     @Override
-	public Point2D.Double transform(double x, double y)
+    public Point2D.Double transform(double x, double y)
         throws UnsolvableException {
         return xform.transform(x,y);
     }
 
     @Override
-	public void transform(double[] srcPts, int srcOff,
+    public void transform(double[] srcPts, int srcOff,
                           double[] dstPts, int dstOff, int numPts)
         throws UnsolvableException {
         xform.transform(srcPts, srcOff, dstPts, dstOff, numPts);
@@ -54,39 +56,40 @@ abstract public class RectToQuadCommon
     /** Height of rectangle */
     public double getH() { return h; }
 
-    // These attributes define the output (for RectToQuad) or input (for
-    // QuadToRect) rectangle. llx is the x value of the "lower left"
-    // vertex, ury is the y value of the "upper right" vertex (whichever
-    // vertex is diagonal from the "lower left" vertex), and so on)
+    // These attributes define the output (for RectToQuad) or input
+    // (for QuadToRect) quadrilateral. llx is the x value of the
+    // "lower left" vertex, ury is the y value of the "upper right"
+    // vertex (whichever vertex is diagonal from the "lower left"
+    // vertex), and so on.
 
     protected double llx, lly, ulx, uly, urx, ury, lrx, lry;
 
-    public double getLlx() { return llx; }
-    public double getLly() { return lly; }
-    public double getUlx() { return ulx; }
-    public double getUly() { return uly; }
-    public double getUrx() { return urx; }
-    public double getUry() { return ury; }
-    public double getLrx() { return lrx; }
-    public double getLry() { return lry; }
+    @JsonIgnore public double getLlx() { return llx; }
+    @JsonIgnore public double getLly() { return lly; }
+    @JsonIgnore public double getUlx() { return ulx; }
+    @JsonIgnore public double getUly() { return uly; }
+    @JsonIgnore public double getUrx() { return urx; }
+    @JsonIgnore public double getUry() { return ury; }
+    @JsonIgnore public double getLrx() { return lrx; }
+    @JsonIgnore public double getLry() { return lry; }
 
-    public void setLlx(double v) { llx = v; update(); }
-    public void setLly(double v) { lly = v; update(); }
-    public void setUlx(double v) { ulx = v; update(); }
-    public void setUly(double v) { uly = v; update(); }
-    public void setUrx(double v) { urx = v; update(); }
-    public void setUry(double v) { ury = v; update(); }
-    public void setLrx(double v) { lrx = v; update(); }
-    public void setLry(double v) { lry = v; update(); }
-    public void setW(double v) { w = v; update(); }
-    public void setH(double v) { h = v; update(); }
-    public void setHeight(double v) { setH(v); }
-    public void setWidth(double v) { setW(v); }
-    public void setX(double v) { x = v; update(); }
-    public void setY(double v) { y = v; update(); }
+    @JsonIgnore public void setLlx(double v) { llx = v; update(); }
+    @JsonIgnore public void setLly(double v) { lly = v; update(); }
+    @JsonIgnore public void setUlx(double v) { ulx = v; update(); }
+    @JsonIgnore public void setUly(double v) { uly = v; update(); }
+    @JsonIgnore public void setUrx(double v) { urx = v; update(); }
+    @JsonIgnore public void setUry(double v) { ury = v; update(); }
+    @JsonIgnore public void setLrx(double v) { lrx = v; update(); }
+    @JsonIgnore public void setLry(double v) { lry = v; update(); }
+    @JsonIgnore public void setW(double v) { w = v; update(); }
+    @JsonIgnore public void setH(double v) { h = v; update(); }
+    @JsonIgnore public void setHeight(double v) { setH(v); }
+    @JsonIgnore public void setWidth(double v) { setW(v); }
+    @JsonIgnore public void setX(double v) { x = v; update(); }
+    @JsonIgnore public void setY(double v) { y = v; update(); }
 
 
-    public void setRectangle(Rectangle2D rect) {
+    @JsonIgnore public void setRectangle(Rectangle2D rect) {
         x = rect.getX();
         y = rect.getY();
         w = rect.getWidth();
@@ -95,12 +98,12 @@ abstract public class RectToQuadCommon
     }
 
 
-    Rectangle2D.Double getRectangle() {
+    @JsonIgnore public Rectangle2D.Double getRectangle() {
         return new Rectangle2D.Double(x, y, w, h);
     }
 
 
-    public void setVertices(Point2D.Double[] vertices) {
+    @JsonIgnore public void setVertices(Point2D.Double[] vertices) {
         llx = vertices[0].x;
         lly = vertices[0].y;
         ulx = vertices[1].x;
@@ -172,10 +175,10 @@ abstract public class RectToQuadCommon
         // UL(1 - (x - @x)/@w)(y - @y)/@h +
         // LR(1 - (y - @y)/@h)(x - @x)/@w
         // UR((x - @x)/@w)(y - @y)/@h +
- 
+
         // Let XW = 1 + @x/@w
         // Let YH = 1 + @y/@h
-        // 
+        //
         // | -  | 1          | x      | y      | xy    |
         // | LL | XW YH      | - YH/w | - XW/h | 1/wh  |
         // | UL | XW (-@y/h) | @y/hw  | XW/h   | -1/wh |
@@ -234,5 +237,16 @@ abstract public class RectToQuadCommon
             ("implemented only for Affine transformations\n"
              + "with no shear, not for\n"
              + other);
+    }
+
+    @Override public boolean equals(Object other0) {
+        if (this == other0) return true;
+        if (other0 == null || getClass() != other0.getClass()) return false;
+        RectToQuadCommon other = (RectToQuadCommon) other0;
+        return x == other.x && y == other.y && w == other.w && h == other.h
+            && llx == other.llx && lly == other.lly
+            && ulx == other.ulx && uly == other.uly
+            && lrx == other.lrx && lry == other.lry
+            && urx == other.urx && ury == other.ury;
     }
 }
