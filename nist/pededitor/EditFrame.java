@@ -70,7 +70,6 @@ public class EditFrame extends JFrame
     protected JRadioButtonMenuItem lightGrayBackgroundImage;
     protected JRadioButtonMenuItem darkGrayBackgroundImage;
     protected JRadioButtonMenuItem blackBackgroundImage;
-    protected JRadioButtonMenuItem blinkBackgroundImage;
     protected JRadioButtonMenuItem noBackgroundImage;
     protected JRadioButtonMenuItem customLineWidth =
         new JRadioButtonMenuItem(new AbstractAction("Custom...") {
@@ -590,23 +589,7 @@ public class EditFrame extends JFrame
       new LayerAction("To bottom", KeyEvent.VK_B, null, -1000000),
       new LayerAction("To top", KeyEvent.VK_T, null, +1000000) };
 
-    protected transient BackgroundImageType backgroundType = null;
-    protected transient BackgroundImageType oldBackgroundType = null;
-
-    public BackgroundImageType getBackgroundType() {
-        return !mnBackgroundImage.isEnabled() ? BackgroundImageType.NONE
-            : lightGrayBackgroundImage.isSelected() ? BackgroundImageType.LIGHT_GRAY
-            : blinkBackgroundImage.isSelected() ? BackgroundImageType.BLINK
-            : darkGrayBackgroundImage.isSelected() ? BackgroundImageType.DARK_GRAY
-            : blackBackgroundImage.isSelected() ? BackgroundImageType.BLACK
-            : BackgroundImageType.NONE;
-    }
-
-    public boolean isBlink() {
-        return mnBackgroundImage.isEnabled() && blinkBackgroundImage.isSelected();
-    }
-
-    public void setBackgroundType(BackgroundImageType value) {
+    public void setBackgroundType(StandardAlpha value) {
         switch (value) {
         case NONE:
             noBackgroundImage.setSelected(true);
@@ -620,10 +603,17 @@ public class EditFrame extends JFrame
         case BLACK:
             blackBackgroundImage.setSelected(true);
             break;
-        case BLINK:
-            blinkBackgroundImage.setSelected(true);
-            break;
         }
+    }
+
+    public void setAlpha(double value) {
+        for (StandardAlpha alpha: StandardAlpha.values()) {
+            if (alpha.getAlpha() == value) {
+                setBackgroundType(alpha);
+                return;
+            }
+        }
+        System.err.println("Nonstandard alpha value " + value);
     }
 
     /** setBackgroundTypeEnabled(false) disables all of the background
@@ -633,7 +623,6 @@ public class EditFrame extends JFrame
         lightGrayBackgroundImage.getAction().setEnabled(enabled);
         darkGrayBackgroundImage.getAction().setEnabled(enabled);
         blackBackgroundImage.getAction().setEnabled(enabled);
-        blinkBackgroundImage.getAction().setEnabled(enabled);
     }
 
     protected Action setLeftComponent = new Action
@@ -1013,9 +1002,9 @@ public class EditFrame extends JFrame
     }
 
     class BackgroundImageAction extends AbstractAction {
-        BackgroundImageType value;
+        StandardAlpha value;
 
-        BackgroundImageAction(String name, BackgroundImageType value,
+        BackgroundImageAction(String name, StandardAlpha value,
                               int mnemonic) {
             super(name);
             putValue(MNEMONIC_KEY, new Integer(mnemonic));
@@ -1023,11 +1012,7 @@ public class EditFrame extends JFrame
         }
 
         @Override public void actionPerformed(ActionEvent e) {
-            boolean blink = value == BackgroundImageType.BLINK;
-            getEditor().setBlink(blink);
-            if (!blink) {
-                getEditor().toggleBackgroundType(value);
-            }
+            getEditor().toggleImageAlpha(value.getAlpha());
             finishEvent();
         }
     }
@@ -1035,7 +1020,7 @@ public class EditFrame extends JFrame
     
 
     class BackgroundImageMenuItem extends JRadioButtonMenuItem {
-        BackgroundImageMenuItem(String name, BackgroundImageType back,
+        BackgroundImageMenuItem(String name, StandardAlpha back,
                                 int mnemonic) {
             super(new BackgroundImageAction(name, back, mnemonic));
             backgroundImageGroup.add(this);
@@ -1561,19 +1546,16 @@ public class EditFrame extends JFrame
         mnBackgroundImage.setMnemonic(KeyEvent.VK_B);
         mnBackgroundImage.setEnabled(false);
         lightGrayBackgroundImage = new BackgroundImageMenuItem
-            ("Light", BackgroundImageType.LIGHT_GRAY, KeyEvent.VK_L);
+            ("Light", StandardAlpha.LIGHT_GRAY, KeyEvent.VK_L);
         mnBackgroundImage.add(lightGrayBackgroundImage);
         darkGrayBackgroundImage = new BackgroundImageMenuItem
-            ("Medium", BackgroundImageType.DARK_GRAY, KeyEvent.VK_M);
+            ("Medium", StandardAlpha.DARK_GRAY, KeyEvent.VK_M);
         mnBackgroundImage.add(darkGrayBackgroundImage);
         blackBackgroundImage = new BackgroundImageMenuItem
-            ("Dark", BackgroundImageType.BLACK, KeyEvent.VK_D);
+            ("Dark", StandardAlpha.BLACK, KeyEvent.VK_D);
         mnBackgroundImage.add(blackBackgroundImage);
-        blinkBackgroundImage = new BackgroundImageMenuItem
-            ("Blink", BackgroundImageType.BLINK, KeyEvent.VK_B);
-        mnBackgroundImage.add(blinkBackgroundImage);
         noBackgroundImage = new BackgroundImageMenuItem
-            ("Hide", BackgroundImageType.NONE, KeyEvent.VK_N);
+            ("Hide", StandardAlpha.NONE, KeyEvent.VK_N);
         noBackgroundImage.getAction().putValue
             (AbstractAction.ACCELERATOR_KEY,
              KeyStroke.getKeyStroke("control H"));
@@ -1581,7 +1563,7 @@ public class EditFrame extends JFrame
         mnBackgroundImage.add
             (new Action("Detach", KeyEvent.VK_E) {
                     @Override public void actionPerformed(ActionEvent e) {
-                        getEditor().detachOriginalImage();
+                        getEditor().removeImage();
                         finishEvent();
                     }
                 });
@@ -1807,7 +1789,7 @@ public class EditFrame extends JFrame
     }
 
     @Override public void update(Observable o, Object arg) {
-        BasicEditor e = getEditor();
+        Diagram e = getEditor();
         if (e != null) {
             setTitle(e.getProvisionalTitle());
             repaint();
