@@ -73,4 +73,51 @@ interface PolygonTransform extends Transform2D {
         return a.distanceSq(b) / (a.x * a.x + a.y * a.y + b.x * b.x + b.y * b.y + 1.0)
             < 1e-12;
     }
+
+    static boolean nearlyEqual(double v1, double len1, double v2, double len2) {
+        double maxError = Math.min(Math.abs(len1) + Math.abs(v1),
+                Math.abs(len2) + Math.abs(v2)) * 0.5e-8;
+        return Math.abs(len1 - len2) <= maxError && Math.abs(v1 - v2) <= maxError;
+    }
+
+    static double relativeError100(double v1, double len1,
+            double v2, double len2) {
+        return Math.min(Math.max(Math.abs(v1 + len1), Math.abs(v1)),
+                Math.max(Math.abs(v2 + len2), Math.abs(v2)));
+    }
+
+    static Point2D.Double errorBounds(Rectangle2D r1, Rectangle2D r2,
+            double relativeError) {
+        double ex = relativeError100(r1.getX(), r1.getWidth(),
+                r2.getX(), r2.getWidth());
+        double ey = relativeError100(r1.getY(), r1.getHeight(),
+                r2.getY(), r2.getHeight());
+        return new Point2D.Double(ex * relativeError, ey * relativeError);
+    }
+
+    static boolean nearlyEqual(Point2D.Double[] v1, Point2D.Double[] v2,
+                                       double relativeError) {
+        if (v1.length != v2.length)
+            return false;
+        Point2D.Double errorBounds = errorBounds(
+                Geom.bounds(v1), Geom.bounds(v2), relativeError);
+        for (int i = 0; i < v1.length; ++i) {
+            if (Math.abs(v1[i].x - v2[i].x) > errorBounds.x ||
+                    Math.abs(v1[i].y - v2[i].y) > errorBounds.y)
+                return false;
+        }
+        return true;
+    }
+
+    /** Return false unless the distance in both the X and Y
+        dimensions between every pair of corresponding vertices is
+        always no more than relativeError times the maximum coordinate
+        value in the corresponding dimension. */
+    default boolean nearlyEquals(Object other0, double relativeError) {
+        if (this == other0) return true;
+        if (other0 == null || getClass() != other0.getClass()) return false;
+        PolygonTransform other = (PolygonTransform) other0;
+        return nearlyEqual(getInputVertices(), other.getInputVertices(), relativeError)
+            && nearlyEqual(getOutputVertices(), other.getOutputVertices(), relativeError);
+    }
 }
