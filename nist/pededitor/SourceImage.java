@@ -38,12 +38,13 @@ public class SourceImage implements Decoration {
         of the right and top components respectively for a ternary
         diagram. */
     protected PolygonTransform transform = null;
-    protected transient Transform2D reverseTransform = null;
+    protected transient Transform2D inverseTransform = null;
 
     protected double alpha = 0.0;
     protected transient double oldAlpha = 0.0;
     protected String filename;
     protected byte[] bytes;
+    protected Rectangle2D pageBounds;
     protected transient BufferedImage image = null;
     protected transient boolean triedToLoad = false;
 
@@ -69,7 +70,7 @@ public class SourceImage implements Decoration {
         and sizes that have been rescaled. All of these images have
         had oldTransform applied to them; if a new transform is attempted,
         the cache gets emptied. */
-    protected transient ArrayList<ScaledCroppedImage> transformedImages
+    protected transient ArrayList<CroppedTransformedImage> transformedImages
         = new ArrayList<>();
 
     @JsonIgnore public BufferedImage getImage() {
@@ -86,10 +87,17 @@ public class SourceImage implements Decoration {
 
             image = ImageIO.read(new ByteArrayInputStream(bytes));
         } catch (IOException x) {
+            x.printStackTrace();
             // No better option than to live with it.
             bytes = null;
         }
         return image;
+    }
+
+    /** There's no reason why the image page bounds shouldn't be
+        saveable, but currently you can't do that. */
+    @JsonIgnore public void setPageBounds(Rectangle2D pageBounds) {
+        this.pageBounds = (Rectangle2D) pageBounds.clone();
     }
 
     public double getAlpha() { return alpha; }
@@ -115,7 +123,7 @@ public class SourceImage implements Decoration {
 
     public void setTransform(PolygonTransform xform) {
         this.transform = xform.clone();
-        reverseTransform = null;
+        inverseTransform = null;
     }
 
     public PolygonTransform getTransform() {
@@ -124,17 +132,17 @@ public class SourceImage implements Decoration {
 
     /** @return the inverse transform of p. */
     public Point2D.Double inverseTransform(Point2D p) throws UnsolvableException {
-        if (reverseTransform == null) {
+        if (inverseTransform == null) {
             if (transform == null)
                 return null;
             try {
-                reverseTransform = transform.createInverse();
+                inverseTransform = transform.createInverse();
             } catch (NoninvertibleTransformException e) {
                 System.err.println("This transform is not invertible");
                 System.exit(2);
             }
         }
-        return reverseTransform.transform(p);
+        return inverseTransform.transform(p);
     }
 
     /* Like setAlpha, but trying to set the value to what it already
@@ -182,25 +190,34 @@ public class SourceImage implements Decoration {
     public void draw(Graphics2D g, AffineTransform xform, double scale) {
         if (alpha == 0)
             return;
-        try {
-            AffineTransform xform2 = AffineTransform.getScaleInstance(scale, scale);
-            xform2.concatenate(xform);
-            Rectangle clip = g.getClip().getBounds();
+        PolygonTransform xform0 = transform.clone();
+        xform0.preConcatenate(new Affine(xform));
+        xform0.preConcatenate(new Affine(
+                        AffineTransform.getScaleInstance(scale, scale)));
+        CroppedTransformedImage im = getCroppedTransformedImage(
+                getImage(), transformedImages, xform0,
+                g.getClip().getBounds(),
+                toScaledRectangle(pageBounds, scale));
+        if (im == null)
+            return;
+        draw(g, im.croppedImage, (float) alpha,
+                im.cropBounds.x, im.cropBounds.y);
+    }
+
+    /* This is the procedure to use if you don't want to cache the result.
+
             BufferedImage image2 = transform(clip, xform2, ImageTransform.DithererType.FAST,
                     alpha);
             g.drawImage(image2, clip.x, clip.y, null); // UNDO
-        } catch (IOException x) {
-            // OK, fall through
-        }
-    }
+    */
 
-    public BufferedImage getImage(double alpha) throws IOException {
-        BufferedImage img = getImage();
-        if (alpha == 1) {
-            return img;
-        }
-
-        return image; // XXX TODO
+    static Rectangle toScaledRectangle(Rectangle2D rect, double scale) {
+        rect = Geom.createScaled(rect, scale);
+        int x = (int) Math.floor(rect.getX());
+        int x2 = (int) Math.ceil(rect.getX() + rect.getWidth());
+        int y = (int) Math.floor(rect.getY());
+        int y2 = (int) Math.ceil(rect.getY() + rect.getHeight());
+        return new Rectangle(x, y, x2-x, y2-y);
     }
 
     /** @param imageBounds the rectangle to crop the image into
@@ -216,18 +233,11 @@ public class SourceImage implements Decoration {
         version of the image that is larger than viewBounds but not
         larger than imageBounds, and clipping it to the view region,
         can be faster than recomputing from scratch each time. */
-    ScaledCroppedImage getScaledOriginalImage(
-            AffineTransform principalToAlignedPage,
-            double scale, Rectangle viewBounds, Rectangle2D imageBoundsD) {
-        AffineTransform principalToScaledPage = (AffineTransform) principalToAlignedPage.clone();
-        principalToScaledPage.preConcatenate(AffineTransform.getScaleInstance(scale,  scale));
-        imageBoundsD = Geom.createScaled(imageBoundsD, scale);
-        int x = (int) Math.floor(imageBoundsD.getX());
-        int x2 = (int) Math.ceil(imageBoundsD.getX() + imageBoundsD.getWidth());
-        int y = (int) Math.floor(imageBoundsD.getY());
-        int y2 = (int) Math.ceil(imageBoundsD.getY() + imageBoundsD.getHeight());
-        Rectangle imageBounds = new Rectangle(x, y, x2-x, y2-y);
-
+    static CroppedTransformedImage getCroppedTransformedImage(
+            BufferedImage input,
+            ArrayList<CroppedTransformedImage> transformedImages,
+            PolygonTransform xform,
+            Rectangle viewBounds, Rectangle imageBounds) {
         Rectangle imageViewBounds = imageBounds.intersection(viewBounds);
 
         // Attempt to work around a bug where Rectangle#intersection
@@ -240,16 +250,12 @@ public class SourceImage implements Decoration {
         int maxScoreIndex = -1;
         int maxScore = 0;
 
-        if (transformedImages == null) {
-            transformedImages = new ArrayList<ScaledCroppedImage>();
-        }
         int cnt = transformedImages.size();
 
         for (int i = cnt - 1; i>=0; --i) {
-            ScaledCroppedImage im = transformedImages.get(i);
-            if (Math.abs(1.0 - scale / im.scale) < 1e-6
-                && (imageViewBounds == null
-                    || im.cropBounds.contains(imageViewBounds))) {
+            CroppedTransformedImage im = transformedImages.get(i);
+            if (xform.nearlyEquals(im.transform, 1e-6)
+                    && im.cropBounds.contains(imageViewBounds)) {
                 // Found a match.
 
                 // Promote this image to the front of the LRU queue (last
@@ -284,7 +290,7 @@ public class SourceImage implements Decoration {
             transformedImages.remove(0);
         }
 
-        // Create a new ScaledCroppedImage that is big enough to hold
+        // Create a new CroppedTransformedImage that is big enough to hold
         // all of a medium-sized scaled image and that is also at
         // least several times the viewport size if the scaled image
         // is big enough to need to be cropped.
@@ -368,21 +374,15 @@ public class SourceImage implements Decoration {
             cropBounds.height = imageViewBounds.height + margin1 + margin2;
         }
 
-        ScaledCroppedImage im = new ScaledCroppedImage();
-        im.scale = scale;
-        im.imageBounds = imageBounds;
+        CroppedTransformedImage im = new CroppedTransformedImage();
+        im.transform = xform;
         im.cropBounds = cropBounds;
         ImageTransform.DithererType dither
             = (cropBounds.getWidth() * cropBounds.getHeight() > 3000000)
             ? ImageTransform.DithererType.FAST
             : ImageTransform.DithererType.GOOD;
 
-        try {
-            im.croppedImage = transform(cropBounds, principalToScaledPage, dither, 1.0);
-        } catch (IOException e) {
-            // TODO Auto-generated catch block // UNDO
-            e.printStackTrace();
-        }
+        im.croppedImage = transform(input, cropBounds, xform, dither, 1.0);
         transformedImages.add(im);
         return im;
     }
@@ -457,7 +457,7 @@ public class SourceImage implements Decoration {
     }
 
     @Override public void draw(Graphics2D g, double scale) {
-        // TODO Auto-generated method stub
+        draw(g, new AffineTransform(), scale);
     }
 
     @Override @JsonIgnore public Color getColor() {
@@ -488,4 +488,6 @@ public class SourceImage implements Decoration {
         res.transform(xform);
         return res;
     }
+
+    @Override @JsonIgnore public double getLineWidth() { return 0; }
 }
