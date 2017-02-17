@@ -77,8 +77,8 @@ public class DecorationHasInterp2D extends Interp2DDecorationAdapter {
     }
 
     @Override void copyFrom(Interp2DDecoration other) {
-        super.copyFrom(other);
         setCurve(other.getCurve().clone());
+        super.copyFrom(other);
     }
 
     @Override public void transform(AffineTransform xform) {
