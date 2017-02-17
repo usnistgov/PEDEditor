@@ -27,30 +27,30 @@ public class RectToQuad extends RectToQuadCommon {
 
     /** @return the inverse transformation as a QuadToRect object. */
     @Override
-	public QuadrilateralTransform createInverse() {
+    public QuadrilateralTransform createInverse() {
         QuadToRect inv = new QuadToRect();
         inv.copyFieldsFrom(this);
         return inv;
     }
 
     @Override
-	public Point2D.Double[] getInputVertices() {
+    public Point2D.Double[] getInputVertices() {
         return rectVertices();
     }
 
     @Override
-	public Point2D.Double[] getOutputVertices() {
+    public Point2D.Double[] getOutputVertices() {
         return quadVertices();
     }
 
     // Returns a transformation from the unit square to the input rectangle
     @Override
-	public Affine squareToDomain() {
+    public Affine squareToDomain() {
         return new Affine(w, 0, 0, h, x, y);
     }
 
     @Override
-	protected void update() {
+    protected void update() {
         super.update();
         // This could be turned off if speed becomes critical, but
         // right now transformation updates are not that frequent.
@@ -58,12 +58,12 @@ public class RectToQuad extends RectToQuadCommon {
     }
 
     @Override
-	public void preConcatenate(Transform2D other) {
+    public void preConcatenate(Transform2D other) {
         transformQuad(other);
     }
 
     @Override
-	public void concatenate(Transform2D other) {
+    public void concatenate(Transform2D other) {
         try {
             transformRect(other.createInverse());
         } catch (NoninvertibleTransformException e) {
