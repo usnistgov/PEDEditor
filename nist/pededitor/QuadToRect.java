@@ -9,10 +9,10 @@ import org.codehaus.jackson.annotate.JsonIgnore;
 import org.codehaus.jackson.annotate.JsonProperty;
 
 /** Transform a rectangles with sides parallel to the coordinate axes
-to an arbitrary quadrilaterals. These transformations have to be
-non-affine in general: three point translations define an affine
-transformation, so how do you make the fourth point fit? By adding an
-extra xy dependency to both the x and y coordinates. */
+    to an arbitrary quadrilaterals. These transformations have to be
+    non-affine in general: three point translations define an affine
+    transformation, so how do you make the fourth point fit? By adding
+    an extra xy dependency to both the x and y coordinates. */
 public class QuadToRect extends RectToQuadCommon
                                 implements QuadrilateralTransform {
 
@@ -26,7 +26,7 @@ public class QuadToRect extends RectToQuadCommon
     }
 
     public QuadToRect(@JsonProperty("input") Point2D.Double[] inpts,
-                      @JsonProperty("output") Rectangle2D rect) {
+            @JsonProperty("output") Rectangle2D rect) {
         this();
         setVertices(inpts);
         setRectangle(rect);
@@ -66,8 +66,7 @@ public class QuadToRect extends RectToQuadCommon
         return output;
     }
 
-    @Override
-	protected void update() {
+    @Override protected void update() {
         super.update();
         ((AffineXYInverse) xform).includeInRange(x + w/2, y + h/2);
         // This could be turned off if speed becomes critical, but
@@ -75,13 +74,11 @@ public class QuadToRect extends RectToQuadCommon
         check();
     }
 
-    @Override
-	public void preConcatenate(Transform2D other) {
+    @Override public void preConcatenate(Transform2D other) {
         transformRect(other);
     }
 
-    @Override
-	public void concatenate(Transform2D other) {
+    @Override public void concatenate(Transform2D other) {
         try {
             transformQuad(other.createInverse());
         } catch (NoninvertibleTransformException e) {
