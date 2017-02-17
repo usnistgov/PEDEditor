@@ -193,7 +193,7 @@ public class Geom {
         }
     }
 
-    public static Rectangle2D.Double scale(Rectangle2D r, double scale) {
+    public static Rectangle2D.Double createScaled(Rectangle2D r, double scale) {
         return new Rectangle2D.Double(
                 r.getX() * scale, r.getY() * scale,
                 r.getWidth() * scale, r.getHeight() * scale);
