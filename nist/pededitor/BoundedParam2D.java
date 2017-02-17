@@ -118,4 +118,11 @@ public interface BoundedParam2D extends Param2D {
                     || p.distanceSq(getLocation(t1)) <= p.distanceSq(getLocation(t2)))
             ? t1 : t2;
     }
+
+    default boolean isLineSegment() {
+        BoundedParam2D[] ssegs = straightSegments();
+            return ssegs.length == 1
+                    && ssegs[0].getMinT() == getMinT()
+                    && ssegs[0].getMaxT() == getMaxT();
+    }
 }
