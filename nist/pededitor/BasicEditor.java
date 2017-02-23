@@ -1883,7 +1883,7 @@ public class BasicEditor extends Diagram
         if (hand instanceof BoundedParam2DHandle) {
             BoundedParam2DHandle bp = (BoundedParam2DHandle) hand;
             showTangent(bp.getDecoration(), bp.getT());
-        } else {
+        } else if (hand != null) {
             showTangent(hand.getDecoration());
         }
     }
@@ -2008,7 +2008,7 @@ public class BasicEditor extends Diagram
         bad. */
     boolean isDuplicate(Point2D prin) {
         Interp2D path = getSelectedInterp2D();
-        return (path == null || isDuplicate(prin, path, vertexInsertionIndex());
+        return path != null && isDuplicate(prin, path, vertexInsertionIndex());
     }
 
     boolean isDuplicate(Point2D prin, Interp2D path, int index) {
