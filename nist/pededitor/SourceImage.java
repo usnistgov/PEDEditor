@@ -204,13 +204,6 @@ public class SourceImage implements Decoration {
                 im.cropBounds.x, im.cropBounds.y);
     }
 
-    /* This is the procedure to use if you don't want to cache the result.
-
-            BufferedImage image2 = transform(clip, xform2, ImageTransform.DithererType.FAST,
-                    alpha);
-            g.drawImage(image2, clip.x, clip.y, null); // UNDO
-    */
-
     static Rectangle toScaledRectangle(Rectangle2D rect, double scale) {
         rect = Geom.createScaled(rect, scale);
         int x = (int) Math.floor(rect.getX());
