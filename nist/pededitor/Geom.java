@@ -3,10 +3,18 @@
 
 package gov.nist.pededitor;
 
-import java.awt.*;
-import java.awt.geom.*;
-import java.util.*;
+import java.awt.Point;
+import java.awt.Polygon;
+import java.awt.Rectangle;
+import java.awt.geom.AffineTransform;
+import java.awt.geom.Line2D;
+import java.awt.geom.Point2D;
+import java.awt.geom.Rectangle2D;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
+import java.util.Comparator;
+import java.util.List;
 
 /** Utility functions for working with points and polygons. */
 public class Geom {
@@ -367,10 +375,8 @@ public class Geom {
 
     /* @see sortIndices()
 
-       Sort the given vertices in place into clockwise order, starting
-       with the lower-left corner. Do not modify the input array.
-
-       @return the resulting array. */
+       Sorts the given vertices into clockwise order, starting with the
+       lower-left corner. Does not modify the input array. */
     static Point2D.Double[] sortExternal(Point2D.Double[] points,
                                          boolean yAxisPointsDown) {
         int[] indices = sortIndices(points, yAxisPointsDown);
@@ -478,8 +484,19 @@ public class Geom {
         return sortToPolygon(points.toArray(new Point[0]), yAxisPointsDown);
     }
 
+    public static <T extends Point2D> ArrayList<Point2D.Double> deepCopy(
+            List<T> original) {
+        int length = original.size();
+        ArrayList<Point2D.Double> res = new ArrayList<>();
+        for (int i = 0; i < length; ++i) {
+            Point2D p = original.get(i);
+            res.add(new Point2D.Double(p.getX(), p.getY()));
+        }
+        return res;
+    }
+
     /** @return a deep copy of the given array. */
-    public static Point2D.Double[] deepCopy(Point2D[] original) {
+    public static <T extends Point2D> Point2D.Double[] deepCopy(T[] original) {
         int length = original.length;
         Point2D.Double[] output = new Point2D.Double[length];
         for (int i = 0; i < length; ++i) {
@@ -1107,6 +1124,26 @@ public class Geom {
             res[i] = new Point2D.Double(xs[i], ys[i]);
         }
         return res;
+    }
+
+    /** @return true if angle a lies in range [a1, a2]. If a1==a2 then
+        the range is assumed to be just a single point, but if
+        a1==a2+360 then the range is assumed to be the whole circle.
+        Otherwise, all angles are reduced to points on the circle. For
+        example, degreesInRange(250, 20, 10) is true, because the
+        interval starting at 20 and ending at 10 includes all of the
+        circle except angles greater than 10 and less than 20
+        degrees. */
+    public static boolean degreesInRange(double a, double a1, double a2) {
+        if (a2 == a1 + 360) {
+            return true;
+        }
+
+        a -= a1;
+        a2 -= a1;
+        a -= Math.floor(a/360);
+        a2 -= Math.floor(a2/360);
+        return (a <= a2);
     }
 
     /** Return true if d nearly equals an integer. This will also
