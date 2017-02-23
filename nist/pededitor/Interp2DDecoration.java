@@ -31,7 +31,7 @@ interface Interp2DDecoration extends Decoration,
     @Override Interp2DDecoration createTransformed(AffineTransform xform);
 
     /** Return true if this object is invisible. */
-    default @JsonIgnore boolean isDegenerate() {
+    @Override @JsonIgnore default boolean isDegenerate() {
         return getCurve().size() < 1 || (isFilled() && getCurve().size() <= 2);
     }
 
