@@ -83,6 +83,10 @@ public class Diagram extends Observable implements Printable {
     protected static final DecimalFormat STANDARD_PERCENT_FORMAT
         = new DecimalFormat("##0.00%");
 
+    public Interp2DHandle removeVertex(Interp2DDecoration d, int index) {
+        return removeVertex(d.createHandle(index));
+    }
+
     public Interp2DHandle removeVertex(Interp2DHandle hand) {
         Interp2DDecoration d = hand.getDecoration();
         Interp2D path = d.getCurve();
@@ -114,10 +118,6 @@ public class Diagram extends Observable implements Printable {
                 if (previous.equals(next)) {
                     return removeVertex(d.createHandle(index));
                 }
-            }
-            if (d.isDegenerate()) {
-                removeDecoration(d);
-                return null;
             }
             propagateChange();
             return d.createHandle((index > 0) ? (index - 1) : 0);
@@ -4706,7 +4706,8 @@ abstract class ColorAnnotations extends Color {
         @Type(value=LinearRuler.class, name = "ruler"),
         @Type(value=Arrow.class, name = "arrow"),
         @Type(value=TieLine.class, name = "tie line"),
-        @Type(value=SourceImage.class, name = "image")
+        @Type(value=SourceImage.class, name = "image"),
+        @Type(value=ArcDecoration.class, name = "arc")
             })
 interface DecorationAnnotations extends Decoration {
 }
