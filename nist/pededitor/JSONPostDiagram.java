@@ -6,76 +6,80 @@
 
 package gov.nist.pededitor;
 
-import java.io.BufferedReader;
 import java.io.IOException;
-import java.io.InputStreamReader;
+import java.io.OutputStream;
+import java.io.UnsupportedEncodingException;
+import java.net.HttpURLConnection;
 import java.net.URL;
 import java.net.URLConnection;
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
+import java.util.Collections;
+import java.util.Map;
+import java.util.StringJoiner;
 import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
-
-import javax.jnlp.ServiceManager;
-import javax.jnlp.SingleInstanceService;
-import javax.jnlp.UnavailableServiceException;
 
 /** Class to start the PED BasicEditor as a PED Viewer. The differences are
     that the editable flag is off by default, and the PED file is
     fetched using an HTTP connection to the url args[0]. */
 
-public class JSONPostDiagram {
+public class JsonPostDiagram {
 
-    public static void run(String urlStr, String data) {
+    static byte[] encodeForHttp(Map<String,String> args) {
+        StringJoiner sj = new StringJoiner("&");
+        for(Map.Entry<String,String> entry : args.entrySet())
+            try {
+                sj.add(URLEncoder.encode(entry.getKey(), "UTF-8") + "="
+                        + URLEncoder.encode(entry.getValue(), "UTF-8"));
+            } catch (UnsupportedEncodingException x) {
+                throw new IllegalStateException(x);
+            }
+        return sj.toString().getBytes(StandardCharsets.UTF_8);
+    }
+
+    static byte[] encodeForHttp(String key, String value) {
+        return encodeForHttp(
+                Collections.singletonMap(key, value));
+    }
+
+    /** @return the HTTP response code. 200 is success. */
+    public static void sendBytes(String urlStr, byte[] bytes)
+            throws IOException {
+        URL url = null;
         try {
             // Sanitize the urlStr argument.
             if (!Pattern.matches
-                ("^https?://[A-Za-z0-9_.]+(?::\\d+)?/[/A-Za-z0-9_.?&;%]+$",
+                ("^https?://[A-Za-z0-9_.]+(?::\\d+)?/[-/A-Za-z0-9_.?&;%]+$",
                  urlStr)) {
                 throw new IllegalArgumentException
                     ("URL " + urlStr + ": illegal URL syntax");
             }
-                URLConnection conn = url.openConnection();
-                Diagram d = Diagram.loadFrom(conn.getInputStream());
-                Viewer e = new Viewer();
-                e.copyFrom(d);
-
-                EditFrame ef = e.editFrame;
-                ef.toFront();
-                ef.repaint();
-        } catch (IOException x) {
-            if (url != null) {
-                System.err.println("While connecting to " + url + ":");
+            url = new URL(urlStr);
+            URLConnection conn = url.openConnection();
+            HttpURLConnection http = (HttpURLConnection) conn;
+            http.setRequestMethod("POST");
+            http.setDoOutput(true);
+            http.setFixedLengthStreamingMode(bytes.length);
+            http.setRequestProperty("Content-Type",
+                    "application/x-www-form-urlencoded; charset=UTF-8");
+            http.connect();
+            try(OutputStream os = http.getOutputStream()) {
+                os.write(bytes);
             }
-            System.err.println("Error " + x);
+            int code = http.getResponseCode();
+            if (code != 200) {
+                throw new IOException("Connection to " + urlStr + " returned " + code);
+            }
+
         } catch (PatternSyntaxException x) {
             throw new IllegalStateException("Pattern could not compile: " + x);
         }
     }
 
-
-    static String resourceToString(String path) throws IOException {
-        URL url = JSONPostDiagram.class.getResource(path);
-
-        try (BufferedReader in = new BufferedReader
-             (new InputStreamReader(url.openStream()))) {
-                return in.readLine();
-            }
-    }
-
-    public static void main(String[] args) {
-        try {
-            SingleInstanceService sis = (SingleInstanceService)
-                ServiceManager.lookup("javax.jnlp.SingleInstanceService");
-            BasicEditorSingleInstanceListener listen
-                = new BasicEditorSingleInstanceListener
-                (new BasicEditorCreator() {
-                        @Override public BasicEditor run() {
-                            return new Viewer();
-                        }});
-            sis.addSingleInstanceListener(listen);
-            listen.newActivation(args);
-        } catch(UnavailableServiceException x) {
-            // I guess we're not running via JWS...
-            run(args);
-        }
+    public static void main(String[] args) throws IOException {
+        String url = "http://crystaldbdev.nist.gov:8080/page/Test";
+        String value = "{\"cow\":5}";
+        sendBytes(url, encodeForHttp("diagram", value));
     }
 }
