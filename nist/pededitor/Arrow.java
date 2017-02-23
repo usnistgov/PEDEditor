@@ -35,17 +35,10 @@ public class Arrow extends TransformedShape implements Cloneable {
         addArrow(res, x, y, scale, angle);
     }
 
-    /** For some reason, the clone() method is declared final in
-        Path2D.Double, so I had to give my clone method a different
-        name. */
     @Override public Arrow clone() {
         Arrow res = new Arrow(getX(), getY(), getScale(), getAngle());
         res.setColor(getColor());
         return res;
-    }
-
-    @Override @JsonIgnore public Point2D.Double getLocation() {
-        return new Point2D.Double(x,y);
     }
 
     /** Alias so decoration.setLineWidth(x) invokes setScale(x). */
