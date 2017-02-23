@@ -254,7 +254,7 @@ public class EditFrame extends JFrame
         ("Deselect", KeyEvent.VK_S, "pressed ESCAPE") {
             { setEnabled(false); }
             @Override public void actionPerformed(ActionEvent e) {
-                getEditor().deselectCurve();
+                getEditor().clearSelection();
                 finishEvent();
             }
         };
@@ -483,6 +483,13 @@ public class EditFrame extends JFrame
         ("Tie lines", KeyEvent.VK_I, KeyStroke.getKeyStroke("shift T")) {
             @Override public void actionPerformed(ActionEvent e) {
                 getEditor().addTieLine();
+                finishEvent();
+            }
+        };
+    Action actCircle = new Action
+        ("Circle", KeyEvent.VK_C) {
+            @Override public void actionPerformed(ActionEvent e) {
+                getEditor().addCircle();
                 finishEvent();
             }
         };
@@ -1627,37 +1634,40 @@ public class EditFrame extends JFrame
         // menu because they are position-sensitive, or in the case of
         // actMonitor, semi-secret.
         for (Action act: new Action[]
-            { actAutoPosition,
-              actMonitor,
-              actNearestPoint,
-              actNearestGridPoint,
-              actNearestCurve,
-              actSelectNearestPoint,
-              actSelectNearestCurve,
-              actShiftPressed,
-              actShiftReleased,
-              actColor,
-              actDeselect,
-              actRemoveSelection,
-              actRemoveAll,
-              actMoveSelection,
-              actEditSelection,
-              actResetToDefault,
-              actMakeDefault,
-              actMovePoint,
-              actMoveRegion,
-              actAddVertex,
+            {
               actAddAutoPositionedVertex,
-              actText,
+              actAddVertex,
+              actAutoPosition,
+              actCenterMouse,
+              actCircle,
+              actColor,
+              actCopy,
+              actCopyRegion,
+              actCopyStatusBar,
+              actDeselect,
+              actEditSelection,
               actIsotherm,
               actLeftArrow,
+              actMakeDefault,
+              actMonitor,
+              actMovePoint,
+              actMoveRegion,
+              actMoveSelection,
+              actNearestCurve,
+              actNearestGridPoint,
+              actNearestPoint,
+              actRemoveAll,
+              actRemoveSelection,
+              actResetToDefault,
               actRightArrow,
               actRuler,
+              actSelectNearestCurve,
+              actSelectNearestPoint,
+              actShiftPressed,
+              actShiftReleased,
+              actText,
               actTieLine,
-              actCopyStatusBar,
-              actCenterMouse,
-              actCopy,
-              actCopyRegion }) {
+            }) {
             enable(act);
         }
 
@@ -1694,6 +1704,7 @@ public class EditFrame extends JFrame
         mn.add(actLeftArrow);
         mn.add(actRightArrow);
         mn.add(actRuler);
+        mn.add(actCircle);
         mn.add(actTieLine);
         return mn;
     }
