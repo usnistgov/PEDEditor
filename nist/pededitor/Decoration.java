@@ -49,5 +49,12 @@ interface Decoration {
         return new ArrayList<Decoration>();
     }
 
+    /** Return true if this decoration doesn't have enough points to
+        display properly. Examples: a filled curve with zero area or a
+        ruler with just one point. */
+    default boolean isDegenerate() { return false; }
+
+    Decoration clone();
+
     String typeName();
 }
