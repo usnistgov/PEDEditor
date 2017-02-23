@@ -3,6 +3,9 @@
 
 package gov.nist.pededitor;
 
+import org.codehaus.jackson.map.annotate.JsonSerialize;
+import org.codehaus.jackson.map.annotate.JsonSerialize.Inclusion;
+
 public interface HasJSONId {
-    int getJSONId();
+    @JsonSerialize(include=Inclusion.ALWAYS) int getJSONId();
 }
