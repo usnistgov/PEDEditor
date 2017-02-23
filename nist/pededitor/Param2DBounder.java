@@ -160,6 +160,7 @@ public class Param2DBounder implements BoundedParam2D {
     }
 
     @Override public double area(double t0, double t1) {
+        assert(t0 >= getMinT() && t1 <= getMaxT());
         return c.area(t0, t1);
     }
 
