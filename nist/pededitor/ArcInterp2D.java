@@ -52,10 +52,15 @@ public class ArcInterp2D extends PointsInterp2D {
 
     @Override public RectangularShape getShape() {
         try {
-            return isClosed() ? ellipse(points) : arc(points);
+            return getShape2();
         } catch (UnsolvableException e) {
             return null;
         }
+    }
+
+    @JsonIgnore
+    public RectangularShape getShape2() throws UnsolvableException {
+        return isClosed() ? ellipse(points) : arc(points);
     }
 
     @JsonIgnore @Override public boolean isClosed() {
@@ -219,7 +224,11 @@ public class ArcInterp2D extends PointsInterp2D {
 
     @Override @JsonIgnore public ArcParam2D getParameterization() {
         if (param == null) {
-            param = new ArcParam2D(this);
+            try {
+                param = new ArcParam2D(this);
+            } catch (UnsolvableException e) {
+                return null;
+            }
         }
         return (ArcParam2D) param;
     }

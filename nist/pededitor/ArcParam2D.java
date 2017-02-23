@@ -54,9 +54,9 @@ public class ArcParam2D extends BoundedParam2DAdapter
 
     /** @return an unbounded parameterization of the ellipse
         containing the arc. */
-    public ArcParam2D(ArcInterp2D ai) {
+    public ArcParam2D(ArcInterp2D ai) throws UnsolvableException {
         if (ai.isClosed()) {
-            arc = new Arc2D.Double(ai.getShape().getBounds2D(), 0, 360,
+            arc = new Arc2D.Double(ai.getShape2().getBounds2D(), 0, 360,
                                    Arc2D.OPEN);
         } else {
             arc = (Arc2D.Double) ai.getShape();
@@ -168,7 +168,7 @@ public class ArcParam2D extends BoundedParam2DAdapter
     public double indexToT(int index) {
         return ts[index];
     }
-    
+
     @Override public CurveDistanceRange distance
         (Point2D p, double maxError, int maxSteps, double t0, double t1) {
         return BoundedParam2Ds.distance
@@ -179,8 +179,9 @@ public class ArcParam2D extends BoundedParam2DAdapter
         return new CurveDistance(t, pt, pt.distance(p));
     }
 
-    /** @return a bounded parameterization of the arc. */
-    public static BoundedParam2D create(ArcInterp2D ai) {
+    /** @return a bounded parameterization of the arc.
+     * @throws UnsolvableException */
+    public static BoundedParam2D create(ArcInterp2D ai) throws UnsolvableException {
         ArcParam2D ep = new ArcParam2D(ai);
         return ep.createSubset(ep.arc.start, ep.arc.start + ep.arc.extent);
     }
@@ -213,7 +214,7 @@ public class ArcParam2D extends BoundedParam2DAdapter
             (arc.getX() + arc.getWidth() / 2 * (1 + Math.cos(t * PI_OVER_180)),
              arc.getY() + arc.getHeight() / 2 * (1 + Math.sin(t * PI_OVER_180)));
     }
-        
+
     /** For consistency with Arc2D, t is an angle in degrees. */
     @Override public Point2D.Double getDerivative(double t) {
         return new Point2D.Double
@@ -310,7 +311,7 @@ public class ArcParam2D extends BoundedParam2DAdapter
             double y = m * x + b;
             double t = toAngle(swapxy ? new Point2D.Double(y,x)
                                : new Point2D.Double(x,y));
-            
+
             if (!degreeInRange(t, t0, t1)) {
                 continue;
             }
@@ -336,10 +337,10 @@ public class ArcParam2D extends BoundedParam2DAdapter
     @Override public double area(double t0, double t1) {
         // Convert t to radians. It won't affect the result because y is
         // integrated with respect to x, not with respect to t.
-        
+
         t0 *= PI_OVER_180;
         t1 *= PI_OVER_180;
-        
+
         // y(t) = c_y + r_y sin t
 
         // x(t) = c_x + r_x cos t
@@ -421,7 +422,7 @@ public class ArcParam2D extends BoundedParam2DAdapter
         // Rotate the system so circleMax corresponds to an angle of
         // zero. The maximum value of the function occurs at the
         // endpoint nearest to angle zero.
-        
+
         t0 = Math.abs(t0 - deg);
         t1 = Math.abs(t1 - deg);
         t0 -= Math.floor(t0/360) * 360;
