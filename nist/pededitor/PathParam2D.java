@@ -418,7 +418,7 @@ public class PathParam2D extends Param2DAdapter
         ArrayList<BoundedParam2D> res = new ArrayList<>();
         for (OffsetParam2D seg: segments) {
             double minT = Math.max(t0, seg.getMinT());
-            double maxT = Math.max(t1, seg.getMaxT());
+            double maxT = Math.min(t1, seg.getMaxT());
 
             if (minT < maxT) {
                 for (BoundedParam2D bp: seg.straightSegments(minT, maxT)) {
