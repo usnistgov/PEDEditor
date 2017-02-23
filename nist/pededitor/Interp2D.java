@@ -61,9 +61,9 @@ public interface Interp2D extends TransformableParameterizable2D, Cloneable {
         return -1;
     }
     /* Return the minimum number of control points usable with this
-       object, or 0 for no minimum. */
+       object. */
     default int minSize() {
-        return 0;
+        return 1;
     }
 
     /* @param round If round is false, then when stroke is drawn, a
@@ -87,7 +87,10 @@ public interface Interp2D extends TransformableParameterizable2D, Cloneable {
         if (lineStyle == null) {
             throw new IllegalArgumentException("draw(): null lineStyle in " + this);
         }
-        lineStyle.getStroke().draw(g, getShape(), lineWidth, round);
+        Shape shape = getShape();
+        if (shape != null) {
+            lineStyle.getStroke().draw(g, shape, lineWidth, round);
+        }
         g.setColor(oldColor);
     }
 
