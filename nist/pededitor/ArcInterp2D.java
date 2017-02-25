@@ -13,58 +13,87 @@ import java.util.List;
 
 import org.codehaus.jackson.annotate.JsonIgnore;
 
-import Jama.Matrix;
-
 public class ArcInterp2D extends PointsInterp2D {
     protected boolean closed;
-    protected boolean reversed = false;
+    transient protected boolean endsSwapped = false;
 
     public ArcInterp2D(boolean closed) {
         setClosed(closed);
     }
 
-    /** @return true if the control points are oriented clockwise
-        around the ellipse, or false otherwise. Also arbitrarily true
-        if there are fewer than three control points. If there are
-        four or more control points with no consistent orientation,
-        may return true or false.
-    */
-    boolean clockwiseControlPoints() {
-        return clockwiseControlPoints(points);
-    }
-    
-    static <T extends Point2D> boolean clockwiseControlPoints(List<T> points) {
-        return (points.size() <= 2) ? true
-            : (Geom.signedArea(points.get(1), points.get(0), points.get(2)) < 0);
+    public boolean hasSwappedEnds() {
+        if (param == null) {
+            if (isClosed())
+                return false;
+            getParameterization();
+            if (param == null)
+                return false;
+            Point2D start = param.getStart();
+            endsSwapped = start.distanceSq(points.get(0))
+                > start.distanceSq(points.get(size() - 1));
+        }
+        return endsSwapped;
     }
 
     @Override public void setClosed(boolean b) {
+        if (size() <= 2)
+            return;
         super.setClosed(b);
         closed = b;
     }
 
     public ArcInterp2D() { }
+
+    /** @param closed If false, this is an arc or a circle or ellipse,
+        not the whole thing. The first point is at one end, the last
+        point is at the other; and if there are three or more points,
+        the second point is on the arc as well. */
     public <T extends Point2D> ArcInterp2D(List<T> points,
                                            boolean closed) {
         super(points);
         setClosed(closed);
     }
 
+    public ArcInterp2D(Point2D center, double r) {
+        this(Arrays.asList(new Point2D.Double[] {
+                            new Point2D.Double(center.getX() - r, center.getY()),
+                            new Point2D.Double(center.getX() + r, center.getY()) }),
+                true);
+
+    }
+
     @Override public RectangularShape getShape() {
         try {
-            return getShape2();
+            RectangularShape res = getShape2();
+            if (res instanceof Arc2D.Double) {
+                Arc2D.Double arc = (Arc2D.Double) res;
+
+                // I have to mirror the arc
+                // to make Graphics2D draw what I want.
+                arc.start = -(arc.start + arc.extent);
+                return arc;
+            }
+            return res;
         } catch (UnsolvableException e) {
             return null;
         }
     }
 
-    @JsonIgnore
-    public RectangularShape getShape2() throws UnsolvableException {
-        return isClosed() ? ellipse(points) : arc(points);
+    @JsonIgnore public RectangularShape getShape2() throws UnsolvableException
+    {
+        return isClosed() ? ArcMath.ellipse(points) : arc(points);
     }
 
-    @JsonIgnore @Override public boolean isClosed() {
-        return closed;
+    public boolean hasSwappedEndpoints() {
+        try {
+            return !isClosed() && arcAndSwapping(points).hasSwappedEndpoints;
+        } catch (UnsolvableException e) {
+            return false;
+        }
+    }
+
+    @Override public boolean isClosed() {
+        return size() <= 2 || closed;
     }
 
     @Override public int minSize() {
@@ -75,151 +104,53 @@ public class ArcInterp2D extends PointsInterp2D {
         return 4;
     }
 
-    /** Return [c, cx, cy, cxx, cyy] for the ellipse equation
-        c + cx x + cy y + cxx x^2 + cyy y^2 = 0 */
-    static double[] quadraticCoefs(RectangularShape shape) {
-        double rx = shape.getWidth() / 2;
-        double ry = shape.getHeight() / 2;
-        double centx = shape.getX() + rx;
-        double centy = shape.getY() + ry;
-        // (x/rx - centx/rx)^2 + (y/ry - centy/ry)^2 = 1
-
-        // (1/rx)^2 x^2 - (2 centx / rx^2) x + centx^2/rx^2 +
-        // (1/ry)^2 y^2 - (2 centy / ry^2) y + centy^2/ry^2 - 1 = 0
-
-        double rxx = 1/(rx*rx);
-        double ryy = 1/(ry*ry);
-        
-        return new double[]
-            { centx * centx * rxx + centy * centy * ryy - 1,
-              -2 * centx * rxx, -2 * centy * ryy, rxx, ryy };
-    }
-
-    static <T extends Point2D> Ellipse2D.Double ellipse(List<T> points)
+    static <T extends Point2D> Arc2D.Double arc(List<T> points)
         throws UnsolvableException {
-        // A conic whose x^2 coefficient is nonzero (as is the case
-        // for all arcs) can be expressed as
-
-        // C0 + C1 x + C2 y + C3 y^2 + C4 xy + x^2
-
-        // For now, I will assume C4 is always zero.
-
-        int size = points.size();
-        
-        if (size == 1) {
-            return new Ellipse2D.Double(points.get(0).getX(), points.get(0).getY(), 0, 0);
-        } else if (size == 2) {
-            return circle(points.get(0), points.get(1));
-        }
-
-        if (size < 2 || size > 4) {
-            throw new IllegalArgumentException
-                ("ArcInterp2D.ellipse() requires 2-4 points, not " 
-                 + size + " points.");
-        }
-
-        Matrix rhs = new Matrix(size, 1);
-        Matrix lhs = new Matrix(size, size);
-        double cxy = 0;
-        double cyy = 1; // If size == 3
-        
-        for (int i = 0; i < size; ++i) {
-            Point2D p = points.get(i);
-            double x = p.getX();
-            double y = p.getY();
-            double rh = -x*x; // right-hand side for this row.
-            lhs.set(i, 0, 1.0);
-            lhs.set(i, 1, x);
-            lhs.set(i, 2, y);
-            if (size > 3) {
-                lhs.set(i, 3, y*y);
-            } else {
-                rh -= cyy * y*y;
-            }
-            if (size > 4) {
-                lhs.set(i, 4, x*y);
-            } else {
-                cxy = 0;
-            }
-            rhs.set(i, 0, rh);
-        }
-
-        Matrix s = null;
-        try {
-            s = lhs.solve(rhs);
-        } catch (RuntimeException x) {
-            throw new UnsolvableException
-                (points.toString() + " do not define an ellipse");
-        }
-
-        double c = s.get(0, 0);
-        double cx = s.get(1, 0);
-        double cy = s.get(2, 0);
-
-        if (size >= 4)
-            cyy = s.get(3,0);
-        if (size >= 5)
-            cxy = s.get(4,0);
-
-        // (x - centx)^2 / rx^2 + (y - centy)^2 / ry^2 - 1 = 0
-
-        // We're solving coefficients of
-
-        // (x - centx)^2 + (y - centy)^2 (rx^2 / ry^2) - rx^2 = 0
-
-        if (cxy != 0) {
-            double disc = cxy * cxy - 4 * cyy;
-            if (disc >= 0) {
-                throw new UnsolvableException(
-                        "These points define a parabola or hyperbola, "
-                        + "not an ellipse");
-            }
-
-            throw new UnsupportedOperationException
-                ("TODO Missing support for 5-point ellipses...");
-        } else {
-            // cxx = 1
-            // cx = -2 x0
-            // cyy = rx^2 / ry^2
-            // cy = -2 y0 (rx^2/ry^2) = -2 y0 cyy
-            // c = x0^2 + cyy y0^2 - rx^2
-         double centx = -cx / 2;
-            double centy = - cy / cyy / 2;
-            double rx = Math.sqrt(centx * centx + cyy * centy * centy - c);
-            double ry = rx / Math.sqrt(cyy);
-            return new Ellipse2D.Double(centx - rx, centy - ry,
-                                        rx * 2, ry * 2);
-        }
+        return arcAndSwapping(points).arc;
     }
 
-    /** Return a circle that passes through both points and has its
-        center at the midpoint of p1p2. */
-    static Ellipse2D.Double circle(Point2D p1, Point2D p2) {
-        double dx = p2.getX() - p1.getX();
-        double dy = p2.getY() - p1.getY();
-        double r = Math.sqrt(dx*dx + dy*dy) / 2;
-        double x = (p1.getX() + p2.getX()) / 2 - r;
-        double y = (p1.getY() + p2.getY()) / 2 - r;
-        return new Ellipse2D.Double(x, y, r*2, r*2);
+    public static class ArcAndBool {
+        Arc2D.Double arc;
+        boolean hasSwappedEndpoints;
     }
 
-    static <T extends Point2D> Arc2D.Double arc(List<T> points) throws UnsolvableException {
-        Ellipse2D.Double el = ellipse(points);
-        Arc2D.Double res = new Arc2D.Double(el.getBounds2D(), 0, 0,
+    static <T extends Point2D> ArcAndBool arcAndSwapping(List<T> points)
+        throws UnsolvableException {
+        Ellipse2D.Double el = ArcMath.ellipse(points);
+        Arc2D.Double a = new Arc2D.Double(el.getBounds2D(), 0, 0,
                                             Arc2D.OPEN);
-        Point2D p1 = points.get(0);
-        Point2D p2 = points.get(points.size()-1);
-
-        if (clockwiseControlPoints(points)) {
-            res.setAngles(p2, p1);
+        ArcAndBool res = new ArcAndBool();
+        res.arc = a;
+        Point2D p0 = points.get(0);
+        double a0 = ArcMath.toAngle(a, p0);
+        Point2D p1 = points.get(1);
+        double a1 = ArcMath.toAngle(a, p1);
+        Point2D p2 = points.get(points.size() - 1);
+        double a2 = ArcMath.toAngle(a, p2);
+        res.hasSwappedEndpoints = !Geom.degreesInRange(a1, a0, a2);
+        if (res.hasSwappedEndpoints) {
+            a.start = a2;
+            a.extent = a0 - a2;
         } else {
-            res.setAngles(p1, p2);
+            a.start = a0;
+            a.extent = a2 - a0;
         }
+        a.extent -= Math.floor(a.extent / 360) * 360;
         return res;
     }
 
     @Override public ArcInterp2D clone() {
         return new ArcInterp2D(points, isClosed());
+    }
+
+    protected ArcPointInfo fix(ArcPointInfo info) {
+        if (hasSwappedEnds()) {
+            info.beforeIndex = !info.beforeIndex;
+            int tmp = info.lastIndex;
+            info.lastIndex = info.nextIndex;
+            info.nextIndex = tmp;
+        }
+        return info;
     }
 
     @Override @JsonIgnore public ArcParam2D getParameterization() {
@@ -233,21 +164,137 @@ public class ArcInterp2D extends PointsInterp2D {
         return (ArcParam2D) param;
     }
 
-    @Override public int tToIndex(double t) {
-        return getParameterization().tToIndex(t);
+    @Override public double indexToT(int index) {
+        return toT(points.get(index));
     }
 
-    @Override public double indexToT(int index) {
-        return getParameterization().indexToT(index);
+    public double toT(Point2D p) {
+        ArcParam2D param = getParameterization();
+        double minT = param.getMinT();
+        double deg = ArcMath.toAngle(param.arc, p);
+        return deg - Math.floor((deg - minT) / 360) * 360;
+    }
+
+    @Override public int tToIndex(double t) {
+        if (size() <= 1) {
+            return 0;
+        }
+        int nearestIndex = -1;
+        double leastDistance = 1e6;
+        for (int i = 0; i < size(); ++i) {
+            double distance = Math.abs(ArcMath.coerce180(t - indexToT(i)));
+            if (distance < leastDistance) {
+                leastDistance = distance;
+                nearestIndex = i;
+            }
+        }
+        return nearestIndex;
+    }
+
+    static class ArcPointInfo extends ParamPointInfo {
+        int nextIndex = -1;
+        int lastIndex = -1;
+    }
+
+    @Override public ArcPointInfo info(double t) {
+        ArcParam2D param = getParameterization();
+        if (param == null)
+            return null;
+
+        // Figure out the closest control points on both sides and
+        // which is closest overall.
+
+        double minT = param.getMinT();
+        double maxT = param.getMaxT();
+
+        // Index of the control point with the least t value greater
+        // than t. "Greater than t" means it's not t and either the
+        // path is closed or its projection on the arc is between t and maxT.
+        // "Least" means least rotation in the direction of increasing
+        // angle starting from t.
+        int nextIndex = -1;
+        double minDirectedDist = 360;
+
+        // Index of the control point with the greatest t less than or
+        // equal to t. "Less than or equal" means either the path is
+        // closed or its projection on the arc is between t and minT.
+        int lastIndex = -1;
+        double maxDirectedDist = 0;
+
+        for (int i = 0; i < size(); ++i) {
+            double ct = indexToT(i);
+            if (!Geom.degreesInRange(ct, minT, maxT))
+                continue; // Ignore points outside the arc.
+
+            // Coerce the signed angular distance to [0, 360).
+            double directedDist = ct - Math.floor((ct - t) / 360) * 360;
+
+            if (ct != t
+                    && (isClosed() || Geom.degreesInRange(ct, t, maxT))
+                    && directedDist < minDirectedDist) {
+                nextIndex = i;
+                minDirectedDist = directedDist;
+            }
+
+            if ((isClosed() || Geom.degreesInRange(ct, minT, t))
+                    && directedDist >= maxDirectedDist) {
+                lastIndex = i;
+                maxDirectedDist = directedDist;
+            }
+        }
+
+        ArcPointInfo res = new ArcPointInfo();
+        res.t = t;
+        res.lastIndex = lastIndex;
+        res.nextIndex = nextIndex;
+
+        if (nextIndex == -1) {
+            if (lastIndex == -1)
+                return null;
+            res.index = lastIndex;
+            return fix(res);
+        } else {
+            res.beforeIndex = true;
+            if (lastIndex >= 0) {
+                Point2D p = getLocation(t);
+                Point2D pn = get(nextIndex);
+                Point2D pl = get(lastIndex);
+
+                res.beforeIndex = p.distanceSq(pn) < p.distanceSq(pl);
+            }
+            res.index = res.beforeIndex ? nextIndex : lastIndex;
+            return fix(res);
+        }
+    }
+
+    @Override public double getNearestVertex(double t) {
+        ParamPointInfo info = info(t);
+        return (info == null) ? Double.NaN : indexToT(info.index);
+    }
+
+    /** Return the index of the control point that is on or inside the
+        arc and for which the arc from the control point proceeding
+        counterclockwise to t is shortest. */
+    @Override public double getLastVertex(double t) {
+        return info(t).lastIndex;
+    }
+
+    /** Return the index of the control point that is on or inside the
+        arc and for which the arc from the control point proceeding
+        counterclockwise to t is shortest. */
+    @Override public double getNextVertex(double t) {
+        return info(t).nextIndex;
     }
 
     @Override public ArcInterp2D createTransformed(AffineTransform xform) {
         return new ArcInterp2D(Arrays.asList(transformPoints(xform)),
                 isClosed());
     }
-    
+
     public static void main(String[] args) throws UnsolvableException {
-        ellipse(Arrays.asList(new Point2D.Double[]
-                { new Point2D.Double(7.0, 3.0), new Point2D.Double(11.0, 3.0), new Point2D.Double(9.0, 5.0) }));
+        ArcMath.ellipse(Arrays.asList(new Point2D.Double[]
+                { new Point2D.Double(7.0, 3.0),
+                  new Point2D.Double(11.0, 3.0),
+                  new Point2D.Double(9.0, 5.0) }));
     }
  }
