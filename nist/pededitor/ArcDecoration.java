@@ -41,6 +41,12 @@ public class ArcDecoration extends DecorationHasInterp2D
         return "arc";
     }
 
+    @Override public ArcDecoration clone() {
+        ArcDecoration res = new ArcDecoration();
+        res.copyFrom(this);
+        return res;
+    }
+
     /** For testing purposes only; could be safely deleted. */
     public static void main(String[] args) {
         String filename = "/eb/arc-test.json";
