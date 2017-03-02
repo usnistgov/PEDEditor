@@ -7,14 +7,13 @@ import java.awt.Color;
 import java.awt.geom.AffineTransform;
 import java.awt.geom.Point2D;
 
-import org.codehaus.jackson.annotate.JsonIgnore;
-import org.codehaus.jackson.map.annotate.JsonSerialize;
-import org.codehaus.jackson.map.annotate.JsonSerialize.Inclusion;
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonInclude;
 
 /** Class to hold a shape drawn at a given angle, scale, position,
     with a given color, anchored at a specific location within the
     shape's bounding box. */
-@JsonSerialize(include = Inclusion.NON_DEFAULT)
+@JsonInclude(JsonInclude.Include.NON_DEFAULT)
 abstract public class TransformedShape
     implements Angled, Cloneable, Decoration, DecorationHandle {
 
@@ -79,15 +78,22 @@ abstract public class TransformedShape
         setAngle(Geom.transformRadians(xform, getAngle()));
     }
 
-    @Override public TransformedShape move(Point2D dest) {
-        setX(dest.getX());
-        setY(dest.getY());
+    @Override public void transform(SlopeTransform2D xform) throws UnsolvableException {
+        Point2D.Double p = xform.transform(getX(), getY());
+        setX(p.getX());
+        setY(p.getY());
+        setAngle(xform.transformAngle(p, getAngle()));
+    }
+
+    @Override public TransformedShape moveHandle(double dx, double dy) {
+        setX(getX() + dx);
+        setY(getY() + dy);
         return this;
     }
 
-    @Override public TransformedShape copy(Point2D dest) {
+    @Override public TransformedShape copy(double dx, double dy) {
         TransformedShape res = clone();
-        res.move(dest);
+        res.moveHandle(dx, dy);
         return res;
     }
 
@@ -105,4 +111,11 @@ abstract public class TransformedShape
         return this;
     }
 
+    @Override public DecorationHandle copyFor(Decoration other) {
+        return (other instanceof TransformedShape) ? ((TransformedShape) other) : null;
+    }
+
+    @Override public Point2D.Double getLocation(AffineTransform xform) {
+        return DecorationHandle.simpleLocation(this, xform);
+    }
 }
