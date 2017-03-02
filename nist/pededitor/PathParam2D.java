@@ -44,8 +44,8 @@ import java.util.Comparator;
     a point on segment #0; and the t value (segments.size())
     represents the endpoint of segment #segments.size()-1).
  */
-public class PathParam2D extends Param2DAdapter
-    implements Param2D, Iterable<OffsetParam2D> {
+public class PathParam2D extends BoundedParam2DAdapter
+    implements Iterable<OffsetParam2D> {
     ArrayList<OffsetParam2D> segments = new ArrayList<>();
     double t0 = 0;
     double t1 = 0;
@@ -56,14 +56,13 @@ public class PathParam2D extends Param2DAdapter
     }
 
     /** Create a BoundedParam2D that follows the given path. */
-    public static Param2DBounder create(PathIterator pit) {
-        PathParam2D p = new PathParam2D(pit);
-        return new Param2DBounder(p, p.t0, p.t1);
+    public static PathParam2D create(PathIterator pit) {
+        return new PathParam2D(pit);
     }
 
     /** Create a BoundedParam2D that follows shape's outline as
         returned by getPathIterator(). */
-    public static Param2DBounder create(Shape shape) {
+    public static PathParam2D create(Shape shape) {
         return create(shape.getPathIterator(null));
     }
 
@@ -220,14 +219,6 @@ public class PathParam2D extends Param2DAdapter
 
     @Override public Point2D.Double getDerivative(double t) {
         return getSegment(t).getDerivative(t);
-    }
-
-    @Override public double getNextVertex(double t) {
-        return Math.floor(t) + 1;
-    }
-
-    @Override public double getLastVertex(double t) {
-        return Math.floor(t);
     }
 
     /** Return the distance between p and s, or return a distance of 0
@@ -553,5 +544,13 @@ public class PathParam2D extends Param2DAdapter
             remainderLength.value -= cl.length.value;
         }
         return res;
+    }
+
+    @Override public double getMinT() {
+        return t0;
+    }
+
+    @Override public double getMaxT() {
+        return t1;
     }
 }
