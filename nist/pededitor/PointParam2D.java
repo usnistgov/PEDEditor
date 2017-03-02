@@ -27,9 +27,6 @@ public class PointParam2D implements BoundedParam2D {
     @Override public Point2D.Double getLocation(double t) {
         return (Point2D.Double) p0.clone();
     }
-
-    @Override public double getNextVertex(double t) { return 0; }
-    @Override public double getLastVertex(double t) { return 0; }
         
     @Override public Point2D.Double getDerivative(double t) {
         return null;
