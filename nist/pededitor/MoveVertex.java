@@ -3,29 +3,27 @@
 
 package gov.nist.pededitor;
 
-import java.awt.geom.Point2D;
-
 /** Undoable that holds information about moving a vertex. */
 public class MoveVertex implements Undoable {
-    Point2D src;
-    Point2D dest;
+    double dx;
+    double dy;
     DecorationHandle h;
 
-    public MoveVertex(DecorationHandle h, Point2D dest) {
+    public MoveVertex(DecorationHandle h, double dx, double dy) {
         this.h = h;
-        this.src = h.getLocation();
-        this.dest = new Point2D.Double(dest.getX(), dest.getY());
+        this.dx = dx;
+        this.dy = dy;
     }
 
     @Override public void undo() {
-        move(src);
+        move(-dx, -dy);
     }
 
     @Override public void execute() {
-        move(dest);
+        move(dx, dy);
     }
 
-    void move(Point2D where) {
-        h.move(where);
+    void move(double dx, double dy) {
+        h.moveHandle(dx, dy);
     }
 }
