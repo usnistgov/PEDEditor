@@ -53,7 +53,6 @@ import java.util.Set;
 import java.util.TreeMap;
 import java.util.TreeSet;
 import java.util.function.DoubleUnaryOperator;
-import java.util.function.Function;
 import java.util.function.ToDoubleFunction;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
@@ -63,18 +62,18 @@ import javax.print.attribute.PrintRequestAttributeSet;
 import javax.swing.JLabel;
 import javax.swing.text.View;
 
-import org.codehaus.jackson.annotate.JsonIgnore;
-import org.codehaus.jackson.annotate.JsonIgnoreProperties;
-import org.codehaus.jackson.annotate.JsonProperty;
-import org.codehaus.jackson.annotate.JsonSubTypes;
-import org.codehaus.jackson.annotate.JsonSubTypes.Type;
-import org.codehaus.jackson.annotate.JsonTypeInfo;
-import org.codehaus.jackson.map.DeserializationConfig;
-import org.codehaus.jackson.map.ObjectMapper;
-import org.codehaus.jackson.map.SerializationConfig;
-import org.codehaus.jackson.map.annotate.JsonDeserialize;
-import org.codehaus.jackson.map.annotate.JsonSerialize;
-import org.codehaus.jackson.map.annotate.JsonSerialize.Inclusion;
+import com.fasterxml.jackson.annotation.JsonAutoDetect;
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonSubTypes;
+import com.fasterxml.jackson.annotation.JsonSubTypes.Type;
+import com.fasterxml.jackson.annotation.JsonTypeInfo;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.SerializationFeature;
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 
 /** Main class for Phase Equilibria Diagrams and their presentation,
     but not including GUI elements such as menus and windows. */
@@ -154,21 +153,21 @@ public class Diagram extends Observable implements Printable {
         return r;
     }
 
-    class PathAndT {
-        Interp2DDecoration path;
+    class DecorationAndT {
+        Interp2DDecoration d;
         double t;
 
-        PathAndT(Interp2DDecoration interp2DDecoration, double t) {
-            this.path = interp2DDecoration;
+        DecorationAndT(Interp2DDecoration d, double t) {
+            this.d = d;
             this.t = t;
         }
 
-        PathAndT(Interp2DHandle hand) {
+        DecorationAndT(Interp2DHandle hand) {
             this(hand.getDecoration(), hand.getT());
         }
 
         @Override public String toString() {
-            return "PathAndT[" + path + ", " + t + "]";
+            return "DecorationAndT[" + d + ", " + t + "]";
         }
     }
 
@@ -298,7 +297,7 @@ public class Diagram extends Observable implements Printable {
         propagateChange();
     }
 
-    @JsonSerialize(include = Inclusion.NON_DEFAULT)
+    @JsonInclude(JsonInclude.Include.NON_DEFAULT)
     public boolean isPixelMode() {
         return pixelMode;
     }
@@ -308,12 +307,12 @@ public class Diagram extends Observable implements Printable {
         propagateChange();
     }
 
-    Interp2DDecoration idToCurve(int id) {
-        for (Decoration d: decorations) {
+    static Interp2DDecoration idToCurve(int id, List<Decoration> ds) {
+        for (Decoration d: ds) {
             if (!(d instanceof Interp2DDecoration))
                 continue;
             Interp2DDecoration idec = (Interp2DDecoration) d;
-            if (idec.getJSONId() == id)
+            if (idec.getJsonId() == id)
                 return idec;
         }
         System.err.println("No curve found with id " + id + ".");
@@ -484,6 +483,13 @@ public class Diagram extends Observable implements Printable {
         transformations to the standard page are very close. */
     boolean principalCoordinatesMatch(Point2D p1, Point2D p2) {
         return principalCoordinatesMatch(p1, p2, pageMatchDistance());
+    }
+
+    /** Return true if p1 and p2's
+        transformations to the standard page are very close. */
+    boolean pageCoordinatesMatch(Point2D p1, Point2D p2) {
+        double threshold = pageMatchDistance();
+        return p1.distanceSq(p2) < threshold * threshold;
     }
 
     double pageMatchDistance() {
@@ -1200,12 +1206,10 @@ public class Diagram extends Observable implements Printable {
         diagram and to all angles. */
     public boolean transformDiagram(SlopeTransform2D xform,
             boolean stopAtBorders) throws UnsolvableException {
-        for (DecorationHandle hand: movementHandles()) {
-            Point2D.Double p = hand.getLocation();
-            Decoration d = hand.getDecoration();
-            Point2D.Double newP = transform(p, xform, stopAtBorders);
-
-            if (d instanceof Angled) {
+        for (Decoration d: decorations) {
+            if (d instanceof TransformedShape) {
+                Point2D.Double p = ((TransformedShape) d).getLocation();
+                Point2D.Double newP = transform(p, xform, stopAtBorders);
                 ProjectionAndOffset pao = stopAtBorders
                     ? projectOntoDiagram(p)
                     : new ProjectionAndOffset(p);
@@ -1231,8 +1235,10 @@ public class Diagram extends Observable implements Printable {
                     double theta = a.getAngle();
                     a.setAngle(xform.transformAngle(p, theta));
                 }
+                d.move(newP.x - p.x, newP.y - p.y);
+            } else {
+                d.transform(xform);
             }
-            hand.move(newP);
         }
         transformDiagramCorners(xform);
 
@@ -2268,10 +2274,13 @@ public class Diagram extends Observable implements Printable {
     static class DecorationDistance implements Comparable<DecorationDistance> {
         Decoration decoration;
         CurveDistance distance;
+        Interp2D pageCurve;
 
-        public DecorationDistance(Decoration de, CurveDistance di) {
+        public DecorationDistance(Decoration de, CurveDistance di,
+                Interp2D pageCurve) {
             decoration = de;
             distance = di;
+            this.pageCurve = pageCurve;
         }
 
         @Override public int compareTo(DecorationDistance other) {
@@ -2334,18 +2343,6 @@ public class Diagram extends Observable implements Printable {
         propagateChange();
     }
 
-    /** @return a list of DecorationHandles such that moving all of
-        those handles will move every decoration in the diagram. */
-    ArrayList<DecorationHandle> movementHandles() {
-        ArrayList<DecorationHandle> res = new ArrayList<>();
-        for (Decoration d: getDecorations()) {
-            for (DecorationHandle h: d.getHandles(DecorationHandle.Type.MOVE)) {
-                res.add(h);
-            }
-        }
-        return res;
-    }
-
     public double pagePerimeter() {
         return 2 * (pageBounds.width + pageBounds.height);
     }
@@ -2363,8 +2360,7 @@ public class Diagram extends Observable implements Printable {
             double minDistSq = 0;
             DecorationHandle nearestHandle = null;
             for (DecorationHandle h: d.getHandles(DecorationHandle.Type.SELECTION)) {
-                Point2D.Double p2 = h.getLocation();
-                p2 = principalToStandardPage.transform(p2);
+                Point2D.Double p2 = h.getLocation(principalToStandardPage);
                 double distSq = pagePoint.distanceSq(p2);
                 if (nearestHandle == null || distSq < minDistSq) {
                     nearestHandle = h;
@@ -2386,6 +2382,27 @@ public class Diagram extends Observable implements Printable {
         return res;
     }
 
+    /**
+     * @return the location on the page of the selection handle
+     * closest to pagePoint. */
+    Point2D.Double nearestPagePoint(Point2D.Double pagePoint,
+            DecorationHandle.Type type) {
+        double minDistSq = 0;
+        Point2D.Double res = null;
+        for (Decoration d: getDecorations()) {
+            for (DecorationHandle h: d.getHandles(type)) {
+                Point2D.Double p2 = h.getLocation(principalToStandardPage);
+                double distSq = pagePoint.distanceSq(p2);
+                if (res == null || distSq < minDistSq) {
+                    res = p2;
+                    minDistSq = distSq;
+                }
+            }
+        }
+
+        return res;
+    }
+
     /** Like nearestHandles(p), but return only handles of the given type.
 
         @param oneHandleOnly If true, return only the closest handle. */
@@ -2401,10 +2418,9 @@ public class Diagram extends Observable implements Printable {
                 if (!c.isInstance(h)) {
                     continue;
                 }
-                Point2D.Double p2 = h.getLocation();
-                p2 = principalToStandardPage.transform(p2);
-                HandleAndDistance had = new HandleAndDistance
-                    (h, pagePoint.distanceSq(p2));
+                Point2D.Double p2 = pageLocation(h);
+                HandleAndDistance had = new HandleAndDistance(
+                        h, pagePoint.distanceSq(p2));
 
                 if (oneHandleOnly) {
                     if (nearestHandle == null
@@ -2430,15 +2446,12 @@ public class Diagram extends Observable implements Printable {
         return res;
     }
 
-    /** @return a list of all key points in the diagram. Key points
-        that are not decoration handles are cast to type
-        NullDecorationHandle just to wrap the Point (hacky). Some
-        duplication is likely.
-
-        @param includeSmoothingPoints If true, include smoothed
-        internal control points. If false, exclude such points.
-
- */
+    /**
+     * @return a list of all key points in the diagram. Key points
+     * that are not decoration handles are cast to type
+     * NullDecorationHandle just to wrap the Point2D (hacky). Some
+     * duplication is likely.
+     */
     public ArrayList<DecorationHandle> keyPointHandles(
             DecorationHandle.Type type) {
         ArrayList<DecorationHandle> res = new ArrayList<>();
@@ -2453,19 +2466,11 @@ public class Diagram extends Observable implements Printable {
         res.addAll(getDecorationHandles(type));
         // Add all segment midpoints.
         for (Line2D.Double s: getLineSegments()) {
-            res.add(new NullDecorationHandle
-                    ((s.getX1() + s.getX2()) / 2,
-                     (s.getY1() + s.getY2()) / 2));
+            Point2D p = standardPageToPrincipal.transform(
+                    Geom.midpoint(s));
+            res.add(new NullDecorationHandle(p.getX(), p.getY()));
         }
 
-        return res;
-    }
-
-    public ArrayList<Point2D.Double> keyPoints(DecorationHandle.Type type) {
-        ArrayList<Point2D.Double> res = new ArrayList<>();
-        for (DecorationHandle h: keyPointHandles(type)) {
-            res.add(h.getLocation());
-        }
         return res;
     }
 
@@ -2481,48 +2486,44 @@ public class Diagram extends Observable implements Printable {
         }
         decorations.addAll(Arrays.asList(objects));
         if (!axes.isEmpty()) {
-            linkAxesAndRulers();
+            linkRulersWithAxes();
         }
     }
 
-    void linkAxesAndRulers() {
+    void linkRulersWithAxes() {
         for (LinearRuler r: rulers()) {
-            if (r.axis != null) {
-                continue;
+            linkRulerWithAxis(r, axes);
+        }
+    }
+
+    static void linkRulerWithAxis(LinearRuler r, List<LinearAxis> axes) {
+        // If r has an assigned axisName, look for an axis with that
+        // name, and set axisName to null. If r has an assigned axis,
+        // look for an axis with the same name in axes and use that
+        // one instead.
+
+        if (r.axis != null) {
+            String name = (String) r.axis.name;
+            for (LinearAxis axis: axes) {
+                if (axis.name.equals(name)) {
+                    r.axis = axis;
+                    return;
+                }
             }
+            throw new IllegalStateException("Unknown axis name '" + name + "'");
+        } else {
             String name = r.axisName;
             if (name == null) {
-                throw new IllegalStateException
-                    ("No axis name assigned yet for " + r);
+                throw new IllegalStateException("No axis name assigned yet for " + r);
             }
             for (LinearAxis axis: axes) {
                 if (axis.name.equals(name)) {
                     r.axis = axis;
                     r.axisName = null;
-                    break;
+                    return;
                 }
             }
-            if (r.axisName != null) {
-                throw new IllegalStateException
-                    ("Unknown axis name '" + r.axisName + "'");
-            }
-        }
-    }
-
-    void relinkAxesAndRulers() {
-        for (LinearRuler r: rulers()) {
-            String name = (String) r.axis.name;
-            r.axis = null;
-            for (LinearAxis axis: axes) {
-                if (axis.name.equals(name)) {
-                    r.axis = axis;
-                    break;
-                }
-            }
-            if (r.axis == null) {
-                throw new IllegalStateException
-                    ("Unknown axis name '" + name + "'");
-            }
+            throw new IllegalStateException("Unknown axis name '" + r.axisName + "'");
         }
     }
 
@@ -2531,15 +2532,18 @@ public class Diagram extends Observable implements Printable {
             DecorationHandle.Type type) {
         ArrayList<DecorationHandle> res = new ArrayList<>();
 
-        for (Decoration selectable: getDecorations()) {
-            res.addAll(Arrays.asList(selectable.getHandles(type)));
+        for (Decoration d: getDecorations()) {
+            res.addAll(Arrays.asList(d.getHandles(type)));
         }
         return res;
     }
 
 
-    /** @return all point intersections involves curves and/or line
-        segments. */
+    /**
+     * @return all point intersections involves curves and/or line segments. The
+     *         calculation is done in page space, but the points are translated
+     *         back into principal space.
+     */
     List<Point2D.Double> intersections() {
         ArrayList<Point2D.Double> res = new ArrayList<>();
         Line2D.Double[] segs = getLineSegments();
@@ -2597,7 +2601,7 @@ public class Diagram extends Observable implements Printable {
         return res.toArray(new BoundedParam2D[0]);
     }
 
-    /** @return an array of all curved segments defined for this
+    /** @return an array of all straight segments defined for this
         diagram in page coordinates. */
     @JsonIgnore public BoundedParam2D[] getStraightSegments() {
         ArrayList<BoundedParam2D> res = new ArrayList<>();
@@ -2632,15 +2636,18 @@ public class Diagram extends Observable implements Printable {
        of the input and output values. */
     DecorationDistance nearestCurve(Point2D pagePoint) {
         ArrayList<Decoration> decs = new ArrayList<>();
+        ArrayList<Interp2D> curves = new ArrayList<>();
         ArrayList<BoundedParam2D> params = new ArrayList<>();
-        for (Decoration dec: getDecorations()) {
-            BoundedParam2D b = getStandardPageParameterization(dec);
-            if (b != null) {
-                if (b.getMinT() == b.getMaxT()) {
-                    // That's a point, not a curve.
-                    continue;
-                }
+        for (Decoration dec0: getDecorations()) {
+            if (!(dec0 instanceof Interp2DDecoration)) {
+                continue;
+            }
+            Interp2DDecoration dec = (Interp2DDecoration) dec0;
+            Interp2D curve = dec.getCurve().createTransformed(principalToStandardPage);
+            BoundedParam2D b = curve.getParameterization();
+            if (curve.size() >= 2 && b != null) {
                 decs.add(dec);
+                curves.add(curve);
                 params.add(b);
             }
         }
@@ -2651,7 +2658,7 @@ public class Diagram extends Observable implements Printable {
 
         OffsetParam2D.DistanceIndex di
             = OffsetParam2D.distance(params, pagePoint, 1e-6, 2000);
-        return new DecorationDistance(decs.get(di.index), di.distance);
+        return new DecorationDistance(decs.get(di.index), di.distance, curves.get(di.index));
     }
 
     /** Return a list of every decoration that is completely inside the selected region. */
@@ -2668,7 +2675,7 @@ public class Diagram extends Observable implements Printable {
             for (DecorationHandle hand: d.getHandles(
                             DecorationHandle.Type.CONTROL_POINT)) {
                 Point2D page = principalToStandardPage.transform(
-                        hand.getLocation());
+                        pageLocation(hand));
                 inside = isClosed && region.contains(page);
                 if (!inside) {
                     // Check if the point is very close to the path
@@ -3050,20 +3057,37 @@ public class Diagram extends Observable implements Printable {
         return res;
     }
 
+    void finishDeserialization(List<Decoration> ds) {
+        Iterator<Decoration> it = ds.iterator();
+        while (it.hasNext()) {
+            Decoration d = it.next();
+            if (d instanceof TieLine) {
+                TieLine tie = (TieLine) d;
+                tie.innerEdge = idToCurve(tie.innerId, ds);
+                tie.outerEdge = idToCurve(tie.outerId, ds);
+                if (tie.innerEdge == null || tie.outerEdge == null) {
+                    it.remove();
+                }
+            }
+            if (d instanceof LinearRuler) {
+                linkRulerWithAxis((LinearRuler) d, axes);
+            }
+        }
+    }
+
     /** Final setup steps to be taken after a Diagram in JSON format
      * has been deserialized. */
     void finishDeserialization() {
         try {
-            standardPageToPrincipal = principalToStandardPage.createInverse();
+            if (principalToStandardPage != null) {
+                standardPageToPrincipal = principalToStandardPage.createInverse();
+            }
         } catch (NoninvertibleTransformException e) {
             System.err.println("This transform is not invertible");
             System.exit(2);
         }
 
-        for (TieLine tie: tieLines()) {
-            tie.innerEdge = idToCurve(tie.innerId);
-            tie.outerEdge = idToCurve(tie.outerId);
-        }
+        finishDeserialization(decorations);
         if (pageBounds == null) {
             computeMargins();
         }
@@ -3230,7 +3254,7 @@ public class Diagram extends Observable implements Printable {
             add(axis);
         }
         if (!decorations.isEmpty()) {
-            linkAxesAndRulers();
+            linkRulersWithAxes();
         }
     }
 
@@ -3369,6 +3393,15 @@ public class Diagram extends Observable implements Printable {
         return Tabify.tabify(getObjectMapper().writeValueAsString(this));
     }
 
+    static ArrayList<Decoration> jsonStringToDecorations(String str) throws IOException {
+        try {
+            ObjectMapper mapper = getObjectMapper();
+            return mapper.readValue(str, DecorationsWrapper.class).decorations;
+        } catch (Exception e) {
+            throw new IOException("Parse error: " + e);
+        }
+    }
+
     /** Remove every decoration that has at least one handle for which
         principalToStandardPage.transform(handle.getLocation()) lies
         outside r. Return true if at least one decoration was
@@ -3378,17 +3411,19 @@ public class Diagram extends Observable implements Printable {
         boolean finished = false;
         while (!finished) {
             finished = true;
-            for (DecorationHandle hand: movementHandles()) {
-                Point2D page = principalToStandardPage.transform
-                    (hand.getLocation());
-                if (Geom.distanceSq(page, r) > 1e-12) {
-                    System.err.println("Removing handle " + hand
-                                       + " at " + Geom.toString(page)
-                                       + " outside  " + Geom.toString(r) + ")");
-                    removeDecoration(hand.getDecoration());
-                    finished = false;
-                    res = true;
-                    break;
+            for (Decoration d: decorations) {
+                for (DecorationHandle hand: d.getHandles(
+                        DecorationHandle.Type.CONTROL_POINT)) {
+                    Point2D page = pageLocation(hand);
+                    if (Geom.distanceSq(page, r) > 1e-12) {
+                        System.err.println("Removing handle " + hand
+                                           + " at " + Geom.toString(page)
+                                           + " outside  " + Geom.toString(r) + ")");
+                        removeDecoration(hand.getDecoration());
+                        finished = false;
+                        res = true;
+                        break;
+                    }
                 }
             }
         }
@@ -3408,8 +3443,7 @@ public class Diagram extends Observable implements Printable {
             if (!hand.isCentered()) {
                 continue;
             }
-            Point2D.Double handPage = principalToStandardPage.transform
-                (hand.getLocation());
+            Point2D.Double handPage = pageLocation(hand);
             if (handPage.distanceSq(page) > maxDistanceSq) {
                 break;
             }
@@ -3732,6 +3766,21 @@ public class Diagram extends Observable implements Printable {
         return Printable.PAGE_EXISTS;
     }
 
+    Point2D.Double pageLocation(DecorationHandle hand) {
+        return (hand == null) ? null : hand.getLocation(principalToStandardPage);
+    }
+
+    /**
+     * Some handles' locations have to be computed in page space and
+     * then translated back to principal space. So as long as the
+     * canonical form uses principal coordinates, we're stuck with
+     * potentially expensive computations that seem like they should
+     * be cheap. */
+    Point2D.Double principalLocation(DecorationHandle hand) {
+        Point2D.Double page = pageLocation(hand);
+        return (page == null) ? null : standardPageToPrincipal.transform(page);
+    }
+
     /** @param segment A line on the standard page
 
         Return one of the vectors (which, inconsistently, is defined in
@@ -3772,7 +3821,14 @@ public class Diagram extends Observable implements Printable {
             return null;
         }
 
-        // Extend res to the limits of pageBounds.
+        return pageSegmentToLine(res);
+    }
+
+    /**
+     * Extend seg, which is a segment on the standard page, so both
+     * ends extend beyond beyond pageBounds. */
+    Line2D.Double pageSegmentToLine(Line2D.Double seg) {
+
         Rectangle2D b = pageBounds;
 
         Point2D.Double[] vertexes =
@@ -3785,7 +3841,7 @@ public class Diagram extends Observable implements Printable {
 
         for (int i = 0; i < 4; ++i) {
             double t = Geom.lineSegmentIntersectionT
-                (res.getP1(), res.getP2(),
+                (seg.getP1(), seg.getP2(),
                  vertexes[i], vertexes[(i+1) % 4]);
             if (Double.isNaN(t)) {
                 continue;
@@ -3805,15 +3861,15 @@ public class Diagram extends Observable implements Printable {
             return null;
         }
 
-        double x1 = res.getX1();
-        double y1 = res.getY1();
-        double dx = res.getX2() - x1;
-        double dy = res.getY2() - y1;
+        double x1 = seg.getX1();
+        double y1 = seg.getY1();
+        double dx = seg.getX2() - x1;
+        double dy = seg.getY2() - y1;
 
         // Midpoints of segments are key points, but the midpoint of
-        // the grid line is not really interesting. Double the
-        // difference of minT and maxT to put the grid line's midpoint
-        // on the edge of the diagram.
+        // the grid line is uninteresting. Double the difference of
+        // minT and maxT to put the grid line's midpoint on the edge
+        // of the diagram.
 
         double pastMax = maxT + (maxT - minT);
 
@@ -3822,20 +3878,11 @@ public class Diagram extends Observable implements Printable {
              x1 + pastMax * dx, y1 + pastMax * dy);
     }
 
-    /** Apply the given transform to all curve vertices, all label
-        locations, all arrow locations, and all ruler start- and
-        endpoints. */
-    public void transformPrincipalCoordinates(Function<? super Point2D.Double,
-                                              ? extends Point2D> xform) {
-        for (DecorationHandle hand: movementHandles()) {
-            hand.move(xform.apply(hand.getLocation()));
-        }
-        propagateChange();
-    }
-
     /** Apply the given transform to all decorations. */
     public void transformPrincipalCoordinates(AffineTransform trans) {
         for (Decoration d: decorations) {
+            if (d instanceof TieLine)
+                continue;
             d.transform(trans);
         }
         propagateChange();
@@ -3855,7 +3902,7 @@ public class Diagram extends Observable implements Printable {
         transformPrincipalCoordinates(trans);
         // Transforming a ruler creates a new axis. We don't want
         // new axes, we want the old ones with the same names.
-        relinkAxesAndRulers();
+        linkRulersWithAxes();
 
         ArrayList<LinearAxis> mainAxes = new ArrayList<>();
         mainAxes.add(getXAxis());
@@ -3909,25 +3956,6 @@ public class Diagram extends Observable implements Printable {
         }
 
         fixAxisFormats();
-    }
-
-    /** This is crude and untested, and I'm pretty sure it can fail
-        when two points get mapped to the same target, but even so, it's
-        sometimes useful. */
-    public void snapToGrid() {
-        ArrayList<Double> xs = new ArrayList<>();
-        ArrayList<Double> ys = new ArrayList<>();
-        for (DecorationHandle hand: movementHandles()) {
-            Point2D p = hand.getLocation();
-            xs.add(p.getX());
-            ys.add(p.getY());
-        }
-        SnapToGrid snapX = new SnapToGrid(SnapToGrid.toDoubleArray(xs),
-                                          length(getXAxis()) * 1e-8);
-        SnapToGrid snapY = new SnapToGrid(SnapToGrid.toDoubleArray(ys),
-                                          length(getYAxis()) * 1e-8);
-        transformPrincipalCoordinates
-            (p -> new Point2D.Double(snapX.snap(p.getX()), snapY.snap(p.getY())));
     }
 
     /** Make sure that the axis formats still make sense after a
@@ -4160,48 +4188,20 @@ public class Diagram extends Observable implements Printable {
     static ObjectMapper getObjectMapper() {
         if (objectMapper == null) {
             objectMapper = new ObjectMapper();
-            objectMapper.configure(SerializationConfig.Feature.INDENT_OUTPUT,
-                                   true);
-            objectMapper.setSerializationInclusion(Inclusion.NON_NULL);
-            SerializationConfig ser = objectMapper.getSerializationConfig();
-            DeserializationConfig des = objectMapper.getDeserializationConfig();
+            objectMapper.configure(SerializationFeature.INDENT_OUTPUT, true);
+            objectMapper.setSerializationInclusion(JsonInclude.Include.NON_NULL);
+            ObjectMapper map = objectMapper;
 
-            ser.addMixInAnnotations(Point2D.class, Point2DAnnotations.class);
-            des.addMixInAnnotations(Point2D.class, Point2DAnnotations.class);
-
-            ser.addMixInAnnotations(Rectangle2D.class,
-                                    Rectangle2DAnnotations.class);
-            des.addMixInAnnotations(Rectangle2D.class,
-                                    Rectangle2DAnnotations.class);
-
-            ser.addMixInAnnotations(Rectangle2D.Double.class,
-                                    Rectangle2DDoubleAnnotations.class);
-            des.addMixInAnnotations(Rectangle2D.Double.class,
-                                    Rectangle2DDoubleAnnotations.class);
-
-            ser.addMixInAnnotations(Point.class, PointAnnotations.class);
-
-            ser.addMixInAnnotations(Dimension.class, DimensionAnnotations.class);
-
-            ser.addMixInAnnotations(DecimalFormat.class,
-                                    DecimalFormatAnnotations.class);
-            des.addMixInAnnotations(DecimalFormat.class,
-                                    DecimalFormatAnnotations.class);
-
-            ser.addMixInAnnotations(NumberFormat.class,
-                                    NumberFormatAnnotations.class);
-            des.addMixInAnnotations(NumberFormat.class,
-                                    NumberFormatAnnotations.class);
-
-            ser.addMixInAnnotations(Color.class,
-                                    ColorAnnotations.class);
-            des.addMixInAnnotations(Color.class,
-                                    ColorAnnotations.class);
-
-            ser.addMixInAnnotations(Decoration.class,
-                                    DecorationAnnotations.class);
-            des.addMixInAnnotations(Decoration.class,
-                                    DecorationAnnotations.class);
+            map.addMixIn(Point2D.class, Point2DAnnotations.class);
+            map.addMixIn(Point2D.class, Point2DAnnotations.class);
+            map.addMixIn(Rectangle2D.class, Rectangle2DAnnotations.class);
+            map.addMixIn(Rectangle2D.Double.class, Rectangle2DDoubleAnnotations.class);
+            map.addMixIn(Point.class, PointAnnotations.class);
+            map.addMixIn(Dimension.class, DimensionAnnotations.class);
+            map.addMixIn(DecimalFormat.class, DecimalFormatAnnotations.class);
+            map.addMixIn(NumberFormat.class, NumberFormatAnnotations.class);
+            map.addMixIn(Color.class, ColorAnnotations.class);
+            map.addMixIn(Decoration.class, DecorationAnnotations.class);
         }
 
         return objectMapper;
@@ -4574,6 +4574,18 @@ public class Diagram extends Observable implements Printable {
         }
     }
 
+    // For boring reasons relating to type erasure, serializing a bare
+    // ArrayList loses JsonTypeInfo. This fixes the problem.
+    static class DecorationsWrapper {
+        @JsonProperty ArrayList<Decoration> decorations;
+    }
+
+    protected String toJsonString(ArrayList<Decoration> copies) throws IOException {
+        DecorationsWrapper tmp = new DecorationsWrapper();
+        tmp.decorations = copies;
+        return Tabify.tabify(getObjectMapper().writeValueAsString(tmp));
+    }
+
     /** Compress the brightness into the upper "frac" portion of the range
         0..255. */
     static int fade(int i, double frac) {
@@ -4687,13 +4699,22 @@ abstract class NumberFormatAnnotations extends NumberFormat {
 }
 
 @SuppressWarnings("serial")
-@JsonIgnoreProperties
-    ({"alpha", "red", "green", "blue",
-            "colorSpace", "transparency"})
+@JsonAutoDetect(
+        fieldVisibility = JsonAutoDetect.Visibility.NONE,
+        isGetterVisibility = JsonAutoDetect.Visibility.NONE,
+        getterVisibility = JsonAutoDetect.Visibility.NONE,
+        setterVisibility = JsonAutoDetect.Visibility.NONE)
 abstract class ColorAnnotations extends Color {
-    ColorAnnotations(@JsonProperty("rgb") int rgb) {
+    @JsonCreator public ColorAnnotations(@JsonProperty("rgb") int rgb) {
         super(rgb);
     }
+    @Override
+    @JsonProperty abstract public int getRGB();
+    @JsonIgnore public ColorAnnotations(int r, int g, int b, int a) {
+        // For save file compatibility, override the default serialization of
+        // Color introduced in later versions of Jackson.
+        super(0);
+    };
 }
 
 @JsonTypeInfo(
