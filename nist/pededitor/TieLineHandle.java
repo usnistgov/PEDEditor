@@ -3,7 +3,9 @@
 
 package gov.nist.pededitor;
 
+import java.awt.geom.AffineTransform;
 import java.awt.geom.Point2D;
+import java.awt.geom.Point2D.Double;
 
 class TieLineHandle implements DecorationHandle {
     static enum Type { INNER1, INNER2, OUTER1, OUTER2 };
@@ -18,7 +20,7 @@ class TieLineHandle implements DecorationHandle {
         this.handle = handle;
     }
 
-    @Override public TieLineHandle copy(Point2D dest) {
+    @Override public TieLineHandle copy(double dx, double dy) {
         throw new UnsupportedOperationException
             ("Tie lines cannot be copied.");
     }
@@ -38,7 +40,7 @@ class TieLineHandle implements DecorationHandle {
         return null;
     }
 
-    @Override public TieLineHandle move(Point2D dest) {
+    @Override public TieLineHandle moveHandle(double dx, double dy) {
         // Tie line movement happens indirectly: normally,
         // everything at a key point moves at once, which means
         // that the control point that delimits the tie line moves
@@ -58,5 +60,15 @@ class TieLineHandle implements DecorationHandle {
 
     @Override public TieLine getDecoration() {
         return decoration;
+    }
+
+    @Override
+    public DecorationHandle copyFor(Decoration other) {
+        return new TieLineHandle((TieLine) other, handle);
+    }
+
+    @Override
+    public Double getLocation(AffineTransform xform) {
+        return DecorationHandle.slowLocation(this, xform);
     }
 }
