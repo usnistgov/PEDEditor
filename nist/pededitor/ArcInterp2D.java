@@ -11,10 +11,10 @@ import java.awt.geom.RectangularShape;
 import java.util.Arrays;
 import java.util.List;
 
-import org.codehaus.jackson.annotate.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 
 public class ArcInterp2D extends PointsInterp2D {
-    protected boolean closed;
+    protected boolean closed = true;
     transient protected boolean endsSwapped = false;
 
     public ArcInterp2D(boolean closed) {
@@ -22,24 +22,15 @@ public class ArcInterp2D extends PointsInterp2D {
     }
 
     public boolean hasSwappedEnds() {
-        if (param == null) {
-            if (isClosed())
-                return false;
-            getParameterization();
-            if (param == null)
-                return false;
-            Point2D start = param.getStart();
-            endsSwapped = start.distanceSq(points.get(0))
-                > start.distanceSq(points.get(size() - 1));
-        }
+        getParameterization();
         return endsSwapped;
     }
 
     @Override public void setClosed(boolean b) {
+        closed = b;
         if (size() <= 2)
             return;
         super.setClosed(b);
-        closed = b;
     }
 
     public ArcInterp2D() { }
@@ -49,17 +40,17 @@ public class ArcInterp2D extends PointsInterp2D {
         point is at the other; and if there are three or more points,
         the second point is on the arc as well. */
     public <T extends Point2D> ArcInterp2D(List<T> points,
-                                           boolean closed) {
+            boolean closed) {
         super(points);
         setClosed(closed);
     }
 
-    public ArcInterp2D(Point2D center, double r) {
-        this(Arrays.asList(new Point2D.Double[] {
-                            new Point2D.Double(center.getX() - r, center.getY()),
-                            new Point2D.Double(center.getX() + r, center.getY()) }),
-                true);
-
+    /** @param closed If false, this is an arc or a circle or ellipse,
+        not the whole thing. The first point is at one end, the last
+        point is at the other; and if there are three or more points,
+        the second point is on the arc as well. */
+    public <T extends Point2D> ArcInterp2D(List<T> points) {
+        this(points, true);
     }
 
     @Override public RectangularShape getShape() {
@@ -157,6 +148,10 @@ public class ArcInterp2D extends PointsInterp2D {
         if (param == null) {
             try {
                 param = new ArcParam2D(this);
+                Point2D start = param.getStart();
+                endsSwapped = !isClosed()
+                    && (start.distanceSq(points.get(0))
+                            > start.distanceSq(points.get(size()-1)));
             } catch (UnsolvableException e) {
                 return null;
             }
@@ -252,7 +247,6 @@ public class ArcInterp2D extends PointsInterp2D {
             if (lastIndex == -1)
                 return null;
             res.index = lastIndex;
-            return fix(res);
         } else {
             res.beforeIndex = true;
             if (lastIndex >= 0) {
@@ -263,8 +257,8 @@ public class ArcInterp2D extends PointsInterp2D {
                 res.beforeIndex = p.distanceSq(pn) < p.distanceSq(pl);
             }
             res.index = res.beforeIndex ? nextIndex : lastIndex;
-            return fix(res);
         }
+        return fix(res);
     }
 
     @Override public double getNearestVertex(double t) {
