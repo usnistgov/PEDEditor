@@ -6,13 +6,14 @@ package gov.nist.pededitor;
 import java.awt.geom.Point2D;
 import java.io.File;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Arrays;
 
-import org.codehaus.jackson.JsonGenerationException;
-import org.codehaus.jackson.annotate.JsonProperty;
-import org.codehaus.jackson.map.JsonMappingException;
-import org.codehaus.jackson.map.ObjectMapper;
-import org.codehaus.jackson.map.SerializationConfig;
+import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.core.JsonGenerationException;
+import com.fasterxml.jackson.databind.JsonMappingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.SerializationFeature;
 
 /** A class for pairing a CuspInterp2D with its color, stroke, fill,
     and/or line width. */
@@ -47,6 +48,24 @@ public class ArcDecoration extends DecorationHasInterp2D
         return res;
     }
 
+    @Override public DecorationHandle[] getHandles(DecorationHandle.Type type) {
+        if (type == DecorationHandle.Type.SELECTION) {
+            ArrayList<DecorationHandle> res = new ArrayList<>();
+            res.add(new ArcCenterHandle(this));
+            if (!isClosed()) {
+                res.add(createHandle(0));
+                res.add(createHandle(getCurve().size() - 1));
+            }
+            return res.toArray(new DecorationHandle[0]);
+        }
+        int size = getCurve().size();
+        Interp2DHandle[] res = new Interp2DHandle[size];
+        for (int j = 0; j < size; ++j) {
+            res[j] = createHandle(j);
+        }
+        return res;
+    }
+
     /** For testing purposes only; could be safely deleted. */
     public static void main(String[] args) {
         String filename = "/eb/arc-test.json";
@@ -65,7 +84,7 @@ public class ArcDecoration extends DecorationHasInterp2D
 
         try {
             ObjectMapper mapper = new ObjectMapper();
-            mapper.configure(SerializationConfig.Feature.INDENT_OUTPUT, true);
+            mapper.configure(SerializationFeature.INDENT_OUTPUT, true);
             mapper.writeValue(new File(filename), o);
             ArcDecoration o2 = mapper.readValue(new File(filename),
                                                ArcDecoration.class);
