@@ -19,15 +19,14 @@ import java.awt.geom.Rectangle2D;
 import javax.swing.JLabel;
 import javax.swing.text.View;
 
-import org.codehaus.jackson.annotate.JsonIgnore;
-import org.codehaus.jackson.annotate.JsonIgnoreProperties;
-import org.codehaus.jackson.annotate.JsonProperty;
-import org.codehaus.jackson.map.annotate.JsonSerialize;
-import org.codehaus.jackson.map.annotate.JsonSerialize.Inclusion;
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonProperty;
 
 /** Class to hold definitions of a text or HTML string anchored to a
     location in space and possibly drawn at an angle. */
-@JsonSerialize(include = Inclusion.NON_DEFAULT)
+@JsonInclude(JsonInclude.Include.NON_DEFAULT)
 @JsonIgnoreProperties
 ({"lineWidth", "lineStyle", "font"})
 public class AnchoredLabel extends AnchoredTransformedShape {
@@ -544,8 +543,9 @@ public class AnchoredLabel extends AnchoredTransformedShape {
         return Diagram.STANDARD_FONT_SIZE / Diagram.BASE_SCALE;
     }
 
-    @JsonIgnore @Override public DecorationHandle[] getHandles(DecorationHandle.Type type) {
-        if (type != DecorationHandle.Type.MOVE && (getXWeight() != 0.5 || getYWeight() != 0.5)) {
+    @JsonIgnore @Override
+    public DecorationHandle[] getHandles(DecorationHandle.Type type) {
+        if (getXWeight() != 0.5 || getYWeight() != 0.5) {
             return new DecorationHandle[]
                 { new LabelHandle(this, LabelHandle.Type.ANCHOR),
                   new LabelHandle(this, LabelHandle.Type.CENTER) };
@@ -558,5 +558,4 @@ public class AnchoredLabel extends AnchoredTransformedShape {
     @Override public String typeName() {
         return "Label";
     }
-
 }
