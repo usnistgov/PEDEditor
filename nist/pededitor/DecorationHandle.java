@@ -3,9 +3,10 @@
 
 package gov.nist.pededitor;
 
+import java.awt.geom.AffineTransform;
 import java.awt.geom.Point2D;
 
-import org.codehaus.jackson.annotate.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 
 /** Interface for the combination of a Decoration and a location on
     it. For example, to display a dragged object, you need to know
@@ -39,13 +40,44 @@ interface DecorationHandle {
     // the middle), but only one MOVE handle, since moving one handle
     // also moves the other one.
 
-    static enum Type { CONTROL_POINT, SELECTION, MOVE };
+    static enum Type { CONTROL_POINT, SELECTION };
 
-    DecorationHandle move(Point2D dest);
+    DecorationHandle moveHandle(double dx, double dy);
 
     /** Copy this selection, placing the copy at dest. Return the
         SelectionHandle object that represents the copy. */
-    DecorationHandle copy(Point2D dest);
+    DecorationHandle copy(double dx, double dy);
     @JsonIgnore Point2D.Double getLocation();
+
+    /**
+     * Assuming other is a transformed version of getDecoration(),
+     * return the corresponding handle for that decoration, or null if
+     * not applicable. */
+    DecorationHandle copyFor(Decoration other);
+
+    /**
+     * Return the locations where this handle would be if
+     * transform(xform) were called on its underlying decoration.
+     * Depending on the decoration, it may be computable quickly as
+     * xform.transform(getLocation(), ...) or it may require actually
+     * transforming the decoration. */
+    Point2D.Double getLocation(AffineTransform xform);
     @JsonIgnore Decoration getDecoration();
+
+    /**
+     * Implementation of getLocation(xform) that works if transforming
+     * the handle location has the same effect as transforming the
+     * decoration. */
+    static Point2D.Double simpleLocation(DecorationHandle hand,
+            AffineTransform xform) {
+        Point2D.Double res = hand.getLocation();
+        xform.transform(res, res);
+        return res;
+    }
+
+    static Point2D.Double slowLocation(DecorationHandle hand,
+            AffineTransform xform) {
+        hand = hand.copyFor(hand.getDecoration().createTransformed(xform));
+        return (hand == null) ? null : hand.getLocation();
+    }
 }
