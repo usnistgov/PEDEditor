@@ -33,6 +33,23 @@ public class CurveDistanceRange extends CurveDistance {
         this.minDistance = minDistance;
     }
 
+    /** Assuming both CurveDistanceRanges are accurate and the
+        'distance' field contains a minimum known distance while the
+        'minDistance' field contains a lower bound on the possible
+        distances, merge them to create a result at least as accurate
+        as either one. */
+
+    public void add(CurveDistanceRange other) {
+        if (other == null)
+            return;
+        if (other.distance < distance) {
+            this.t = other.t;
+            this.point = other.point;
+            this.distance = other.distance;
+        }
+        minDistance = Math.max(minDistance, other.minDistance);
+    }
+
     /** @return other if other is not null and its distance is less
         than this, or this otherwise. */
     public static CurveDistanceRange min(CurveDistanceRange c1, CurveDistanceRange c2) {
@@ -42,8 +59,7 @@ public class CurveDistanceRange extends CurveDistance {
                                      Math.min(c1.minDistance, c2.minDistance));
     }
 
-    @Override
-	public String toString() {
+    @Override public String toString() {
         if (minDistance == distance)  {
             return getClass().getSimpleName() + "[t = " + t + ", p = " + point + ", "
                 + " d = " + distance + "]";
