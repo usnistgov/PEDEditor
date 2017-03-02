@@ -3,9 +3,11 @@
 
 package gov.nist.pededitor;
 
+import java.awt.geom.AffineTransform;
 import java.awt.geom.Point2D;
+import java.awt.geom.Point2D.Double;
 
-import org.codehaus.jackson.annotate.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 
 public class LabelHandle implements DecorationHandle {
     static enum Type { CENTER, ANCHOR };
@@ -29,14 +31,13 @@ public class LabelHandle implements DecorationHandle {
         return handle;
     }
 
-    @Override public LabelHandle move(Point2D dest) {
-        getDecoration().move(getAnchorLocation(dest));
+    @Override public LabelHandle moveHandle(double dx, double dy) {
+        getDecoration().moveHandle(dx, dy);
         return this;
     }
 
-    @Override public LabelHandle copy(Point2D dest) {
-        Point2D.Double destAnchor = getAnchorLocation(dest);
-        AnchoredLabel label = (AnchoredLabel) getDecoration().copy(destAnchor);
+    @Override public LabelHandle copy(double dx, double dy) {
+        AnchoredLabel label = (AnchoredLabel) getDecoration().copy(dx, dy);
         return new LabelHandle(label, handle);
     }
 
@@ -87,5 +88,21 @@ public class LabelHandle implements DecorationHandle {
     @Override public String toString() {
         return getClass().getSimpleName() + "[" + getDecoration() + ", "
             + handle + "]";
+    }
+
+    @Override
+    public DecorationHandle copyFor(Decoration other) {
+        return new LabelHandle((AnchoredLabel) other, handle);
+    }
+
+    @Override
+    public Double getLocation(AffineTransform xform) {
+        // The anchor is translated by xform. The center's transformed position
+        // is more complicated.
+        if (handle == Type.ANCHOR) {
+            return DecorationHandle.simpleLocation(this,  xform);
+        } else {
+            return DecorationHandle.slowLocation(this,  xform);
+        }
     }
 }
