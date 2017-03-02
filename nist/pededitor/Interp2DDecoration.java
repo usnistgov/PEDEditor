@@ -8,9 +8,9 @@ import java.awt.Graphics2D;
 import java.awt.geom.AffineTransform;
 import java.awt.geom.Point2D;
 
-import org.codehaus.jackson.annotate.JsonIgnore;
-import org.codehaus.jackson.annotate.JsonProperty;
-import org.codehaus.jackson.map.ObjectMapper;
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 interface Interp2DDecoration extends Decoration,
                                      TransformableParameterizable2D, HasJSONId {
@@ -35,7 +35,7 @@ interface Interp2DDecoration extends Decoration,
         return getCurve().size() < 1 || (isFilled() && getCurve().size() <= 2);
     }
 
-    @Override default Interp2DHandle[] getHandles(DecorationHandle.Type type) {
+    @Override default DecorationHandle[] getHandles(DecorationHandle.Type type) {
         int size = getCurve().size();
         Interp2DHandle[] res = new Interp2DHandle[size];
         for (int j = 0; j < size; ++j) {
@@ -47,8 +47,9 @@ interface Interp2DDecoration extends Decoration,
     /** This should not usually be called directly. It exists to allow
         Interp2DHandle to respond polymorphically to
         move(). */
-    default Interp2DHandle move(Interp2DHandle handle, Point2D dest) {
-        getCurve().set(handle.index, dest);
+    default Interp2DHandle move(Interp2DHandle handle, double dx, double dy) {
+        Point2D.Double p = getCurve().get(handle.index);
+        getCurve().set(handle.index, new Point2D.Double(p.x + dx, p.y + dy));
         return handle;
     }
 
@@ -108,22 +109,6 @@ interface Interp2DDecoration extends Decoration,
             return getClass().getCanonicalName() + "[ERROR]";
         }
     }
-
-    default Interp2DHandle nearestHandle(double t,
-            BooleanHolder beforeThisHandle) {
-        double handleT = getParameterization().getNearestVertex(t);
-        if (beforeThisHandle != null) {
-            // We chose the lesser side of this handle if t <
-            // handleT. But if we grabbed the 0th vertex exactly, we
-            // probably want the lesser side, since extending the
-            // curve is more common than inserting points inside it.
-            beforeThisHandle.value = (t < handleT)
-                || (t == 0 && getCurve().size() >= 2);
-        }
-        int index = getCurve().tToIndex(handleT);
-        if (getCurve().isClosed()) {
-            index = index % getCurve().size();
-        }
-        return new Interp2DHandle(this, index);
-    }
+    
+    @Override Interp2DDecoration clone();
 }
