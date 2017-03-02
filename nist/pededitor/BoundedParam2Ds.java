@@ -10,8 +10,9 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.function.DoubleUnaryOperator;
 
-/** The main method of interest in this class is {@link #is class primarily exists to provide the intersections() and distance() methods. */
-
+/**
+ * This class primarily exists to provide the {@link #intersections}
+ * and {@link #distance} methods. */
 public class BoundedParam2Ds {
     static final boolean debug = false;
     /** Return the t value that is closest to t that is also in the
@@ -43,9 +44,8 @@ public class BoundedParam2Ds {
         @see {@link OffsetParam2D#distance(ArrayList<BoundedParam2D>,
         Point2D)} for a more generally useful variant of distance()
         that also identifies which curve is closest. */
-    static <T extends BoundedParam2D> CurveDistanceRange distance
-        (Iterable<T> ocps, Point2D p,
-         double maxError, double maxSteps) {
+    static <T extends BoundedParam2D> CurveDistanceRange distance(
+            Iterable<T> ocps, Point2D p, double maxError, double maxSteps) {
     	ArrayList<BoundedParam2D> cps = new ArrayList<>();
     	for (BoundedParam2D cp: ocps) {
     		cps.add(cp);
@@ -149,7 +149,7 @@ public class BoundedParam2Ds {
         for all t in [-deltaT, deltaT] there exists a vector del in
         dfdtBounds such that f(t) = f0 + del * t. The "1" in the
         method name reflects that this this lower bound is computed
-        using the bounds on the first derivative. 
+        using the bounds on the first derivative.
      * @return */
     public static double distanceLowerBound1
         (Point2D p, Point2D f0, double deltaT, Rectangle2D dfdtBounds) {
@@ -406,10 +406,10 @@ public class BoundedParam2Ds {
         @throws FailedToConvergeException if maxSteps is not enough to
         identify all intersections to the requested error threshold..
     */
-    public static ArrayList<Point2D.Double> intersections
-        (BoundedParam2D a, BoundedParam2D b,
-         double maxError, int maxSteps)
-    throws FailedToConvergeException {
+    public static ArrayList<Point2D.Double> intersections(
+            BoundedParam2D a, BoundedParam2D b,
+            double maxError, int maxSteps)
+        throws FailedToConvergeException {
         ArrayList<Point2D.Double> res = new ArrayList<>();
         int steps = intersections(res, a, b, maxError, maxSteps);
         if (steps > maxSteps) {
@@ -426,14 +426,13 @@ public class BoundedParam2Ds {
         given ArrayList and returns the number of steps actually
         needed. If the return value is greater than maxSteps then no
         error guarantee is provided. */
-    public static int intersections
-        (ArrayList<Point2D.Double> is,
-         BoundedParam2D a, BoundedParam2D b,
-         double maxError, int maxSteps) {
+    public static int intersections(ArrayList<Point2D.Double> is,
+            BoundedParam2D a, BoundedParam2D b,
+            double maxError, int maxSteps) {
         Rectangle2D.Double ab = a.getBounds();
         Rectangle2D.Double bb = b.getBounds();
         if (debug) {
-            System.out.println(a + ", " + b);
+            System.out.println("Intersect " + a + ", " + b);
             System.out.println("a[" + a.getMinT() + ", " + a.getMaxT() + "], "
                                + Geom.toString(a.getStart()) + " - "
                                + Geom.toString(a.getEnd()) + ", "
@@ -715,8 +714,7 @@ public class BoundedParam2Ds {
         computing the distance from p to c.getBounds(). (The "0"
         reflects that the bounds of the zeroth derivative -- that is,
         the function itself -- are used to determine the answer.) */
-    public static double distanceLowerBound0
-        (BoundedParam2D c, Point2D p) {
+    public static double distanceLowerBound0(BoundedParam2D c, Point2D p) {
         return Geom.distance(p, c.getBounds());
     }
 
@@ -729,9 +727,8 @@ public class BoundedParam2Ds {
         Point2D, double, double) for a more efficient way to measure
         the distance to the nearest of several curves.
     */
-    public static CurveDistanceRange distance
-        (BoundedParam2D c, Point2D p,
-         double maxError, int maxSteps) {
+    public static CurveDistanceRange distance(BoundedParam2D c, Point2D p,
+            double maxError, int maxSteps) {
         ArrayList<BoundedParam2D> cps = new ArrayList<>();
         cps.add(c);
 
@@ -779,5 +776,26 @@ public class BoundedParam2Ds {
     static public AdaptiveRombergIntegral lengthIntegral(BoundedParam2D c) {
         DoubleUnaryOperator dsdt = new Param2Ds.DLengthDT(c);
         return new AdaptiveRombergIntegral(dsdt, c.getMinT(), c.getMaxT());
+    }
+
+    static public void verifyBounds(BoundedParam2D c) {
+        Rectangle2D bounds = c.getBounds();
+        ArrayList<Point2D.Double> points = new ArrayList<>();
+        int pointCnt = 20;
+        for (int i = 0; i < pointCnt; ++i) {
+            double t = (c.getMaxT() - c.getMinT()) * i / pointCnt;
+            Point2D.Double p = c.getLocation(t);
+            points.add(p);
+            if (!bounds.contains(p)) {
+                throw new IllegalStateException("location(" + t + ") = " + Geom.toString(p)
+                        + " out of bounds for " + c);
+            }
+        }
+        Rectangle2D.Double bounds2 = Geom.bounds(points.toArray(new Point2D.Double[0]));
+        if (bounds2.width * 0.8 < bounds.getWidth()
+                || bounds2.height * 0.8 < bounds.getHeight()) {
+            System.out.println("Suspect wide bounds: " +
+                    Geom.toString(bounds) + ", verified " + Geom.toString(bounds2));
+        }
     }
 }
