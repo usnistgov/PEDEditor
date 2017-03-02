@@ -32,12 +32,6 @@ public class OffsetParam2D implements BoundedParam2D {
     public BoundedParam2D getContents() { return c; }
     @Override public double getMinT() { return c.getMinT() + offset; }
     @Override public double getMaxT() { return c.getMaxT() + offset; }
-    @Override public double getNextVertex(double t) {
-        return c.getNextVertex(t - offset) + offset;
-    }
-    @Override public double getLastVertex(double t) {
-        return c.getLastVertex(t - offset) + offset;
-    }
     @Override public Point2D.Double getLocation(double t) {
         return c.getLocation(t - offset);
     }
@@ -97,8 +91,7 @@ public class OffsetParam2D implements BoundedParam2D {
         return res;
     }
 
-    @Override public OffsetParam2D createSubset
-        (double minT, double maxT) {
+    @Override public OffsetParam2D createSubset(double minT, double maxT) {
         return new OffsetParam2D
             (c.createSubset(minT - offset, maxT - offset), offset);
     }
@@ -152,12 +145,11 @@ public class OffsetParam2D implements BoundedParam2D {
      @see BoundedParam2Ds.distance(BoundedParam2D, p, maxError,
      maxSteps).
     */
-    public static DistanceIndex distance
-        (ArrayList<BoundedParam2D> params, Point2D p,
-         double maxError, int maxSteps) {
+    public static DistanceIndex distance(ArrayList<BoundedParam2D> params,
+            Point2D p, double maxError, int maxSteps) {
         ArrayList<OffsetParam2D> oparams = separate(params);
-        CurveDistance dist = BoundedParam2Ds.distance
-            (oparams, p, maxError, maxSteps);
+        CurveDistance dist = BoundedParam2Ds.distance(oparams, p,
+                maxError, maxSteps);
         if (dist == null) {
             return null;
         }
