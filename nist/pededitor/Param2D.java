@@ -12,15 +12,6 @@ import java.awt.geom.Rectangle2D;
     methods take t0,t1 parameters which indicate that the answer should
     apply only for the t in [t0,t1] subset of the curve. */
 public interface Param2D {
-    /** Return the t value of the vertex whose t value is least among
-        those greater than t. A vertex is a location that was
-        explicitly assigned to lie on the curve. */
-    double getNextVertex(double t);
-    /** Return the t value of the vertex whose t value is greatest
-        among those less than or equal to t. A vertex is a location
-        that was explicitly assigned to lie on the curve. */
-    double getLastVertex(double t);
-
     Point2D.Double getLocation(double t);
     Point2D.Double getDerivative(double t);
 

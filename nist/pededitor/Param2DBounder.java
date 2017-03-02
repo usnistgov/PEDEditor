@@ -36,13 +36,6 @@ public class Param2DBounder implements BoundedParam2D {
     @Override public BoundedParam2D createSubset(double t0, double t1) {
         return new Param2DBounder(c, t0, t1);
     }
-
-    @Override public double getNextVertex(double t) {
-        return c.getNextVertex(t);
-    }
-    @Override public double getLastVertex(double t) {
-        return c.getLastVertex(t);
-    }
     @Override public Point2D.Double getLocation(double t) {
         return c.getLocation(t);
     }

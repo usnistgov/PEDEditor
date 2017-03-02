@@ -21,8 +21,6 @@ abstract public class Param2DAdapter
         return deriv;
     }
 
-    @Override public double getLastVertex(double t) { return 0; }
-    @Override public double getNextVertex(double t) { return 1; }
     @Override public CurveDistanceRange distance
         (Point2D p, double maxError, int maxSteps, double t0, double t1) {
         return BoundedParam2Ds.distance
