@@ -464,8 +464,6 @@ public class ArcMath {
         // In addition to the ellipseDistance lower bound on the
         // minimum distance, also consider the distance from the
         // bounding box of the (t0,t1) arc to p.
-        
-        System.out.println("distance(" + Geom.toString(p) + ", " + t0 + ", " + t1 + ")"); // UNDO
 
         CurveDistance cd = distance(arc, p, t0).minWith(distance(arc, p, t1));
         double minDist = Geom.distance(p, getBounds(arc));
