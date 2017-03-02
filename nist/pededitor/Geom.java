@@ -75,6 +75,11 @@ public class Geom {
                                   (p1.getY() + p2.getY()) / 2);
     }
 
+    public static Point2D.Double midpoint(Line2D line) {
+        return new Point2D.Double((line.getX1() + line.getX2()) / 2,
+                (line.getY1() + line.getY2()) / 2);
+    }
+
     public static Point toPoint(Point2D.Double point) {
         return new Point((int) Math.round(point.x), (int) Math.round(point.y));
     }
@@ -1141,8 +1146,8 @@ public class Geom {
 
         a -= a1;
         a2 -= a1;
-        a -= Math.floor(a/360);
-        a2 -= Math.floor(a2/360);
+        a -= Math.floor(a/360) * 360;
+        a2 -= Math.floor(a2/360) * 360;
         return (a <= a2);
     }
 
