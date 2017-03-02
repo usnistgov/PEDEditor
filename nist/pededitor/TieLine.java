@@ -12,9 +12,9 @@ import java.awt.geom.Point2D;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.codehaus.jackson.annotate.JsonCreator;
-import org.codehaus.jackson.annotate.JsonIgnore;
-import org.codehaus.jackson.annotate.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonProperty;
 
 public class TieLine implements Decoration, Cloneable {
     /** Number of tie lines. Lines are painted only on the interior of
@@ -46,7 +46,7 @@ public class TieLine implements Decoration, Cloneable {
 
     @JsonProperty("innerT1") public double it1 = -1.0;
     @JsonProperty("innerT2") public double it2 = -1.0;
-    @JsonIgnore public TransformableParameterizable2D innerEdge;
+    @JsonIgnore public Interp2DDecoration innerEdge;
 
     /** Used only during JSON deserialization. Later, use getInnerID()
         instead. */
@@ -54,7 +54,7 @@ public class TieLine implements Decoration, Cloneable {
 
     @JsonProperty("outerT1") public double ot1 = -1.0;
     @JsonProperty("outerT2") public double ot2 = -1.0;
-    @JsonIgnore public TransformableParameterizable2D outerEdge;
+    @JsonIgnore public Interp2DDecoration outerEdge;
 
     /** Used only during JSON deserialization. Later, use getOuterID()
         instead. */
@@ -99,7 +99,7 @@ public class TieLine implements Decoration, Cloneable {
 
     // The essence of what the TieLine needs is something that
     // supports getJSONId() and getParameterization().
-    
+
     /** Set the color. Use null to indicate that the color should be
         the same as whatever was last chosen for the graphics
         context. */
@@ -109,12 +109,12 @@ public class TieLine implements Decoration, Cloneable {
 
     /** Used during JSON serialization. */
     @JsonProperty int getInnerId() {
-        return (innerEdge == null) ? -1 : ((HasJSONId) innerEdge).getJSONId();
+        return (innerEdge == null) ? -1 : ((HasJSONId) innerEdge).getJsonId();
     }
 
     /** Used during JSON serialization. */
     @JsonProperty int getOuterId() {
-        return (outerEdge == null) ? -1 : ((HasJSONId) outerEdge).getJSONId();
+        return (outerEdge == null) ? -1 : ((HasJSONId) outerEdge).getJsonId();
     }
 
     public Point2D.Double getInnerEdge(double t) {
@@ -260,11 +260,6 @@ public class TieLine implements Decoration, Cloneable {
     }
 
     @Override public TieLineHandle[] getHandles(DecorationHandle.Type type) {
-        if (type == DecorationHandle.Type.MOVE) {
-            // Moving the curves these tie lines attach to will move
-            // the tie lines also, so return an empty array.
-            return new TieLineHandle[0];
-        }
         ArrayList<TieLineHandle> output = new ArrayList<>();
         for (TieLineHandle.Type handle: TieLineHandle.Type.values()) {
             output.add(new TieLineHandle(this, handle));
@@ -293,5 +288,13 @@ public class TieLine implements Decoration, Cloneable {
 
     @Override public String typeName() {
         return "tie line";
+    }
+
+    @Override
+    public void transform(SlopeTransform2D xform) throws UnsolvableException {
+        innerEdge = innerEdge.clone();
+        innerEdge.transform(xform);
+        outerEdge = outerEdge.clone();
+        outerEdge.transform(xform);
     }
 }
