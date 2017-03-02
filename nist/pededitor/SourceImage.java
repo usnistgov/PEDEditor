@@ -22,13 +22,14 @@ import java.util.ArrayList;
 
 import javax.imageio.ImageIO;
 
-import org.codehaus.jackson.annotate.JsonIgnore;
-import org.codehaus.jackson.annotate.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonProperty;
 
 import gov.nist.pededitor.DecorationHandle.Type;
 
 /** Main driver class for Phase Equilibria Diagram digitization and creation. */
 public class SourceImage implements Decoration {
+    static int readFailures = 0;
     /** Transform from original coordinates to principal coordinates.
         Original coordinates are (x,y) positions within a scanned
         image. Principal coordinates are either the natural (x,y)
@@ -87,6 +88,7 @@ public class SourceImage implements Decoration {
 
             image = ImageIO.read(new ByteArrayInputStream(bytes));
         } catch (IOException x) {
+            SourceImage.readFailures++;
             x.printStackTrace();
             // No better option than to live with it.
             bytes = null;
@@ -483,4 +485,10 @@ public class SourceImage implements Decoration {
     }
 
     @Override @JsonIgnore public double getLineWidth() { return 0; }
+
+    @Override
+    public void transform(SlopeTransform2D xform) throws UnsolvableException {
+        // TODO Auto-generated method stub
+        
+    }
 }

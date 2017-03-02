@@ -5,7 +5,7 @@ package gov.nist.pededitor;
 
 import java.awt.geom.*;
 
-import org.codehaus.jackson.annotate.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonProperty;
 
 /** Class that transforms the boundary of an arbitrary convex
     quadrilateral into the boundary of another arbitrary convex

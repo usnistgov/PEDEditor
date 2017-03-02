@@ -6,7 +6,7 @@ package gov.nist.pededitor;
 import java.awt.geom.NoninvertibleTransformException;
 import java.awt.geom.Point2D;
 
-import org.codehaus.jackson.annotate.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 
 interface Transform2D {
     /** @return the inverse transform. */

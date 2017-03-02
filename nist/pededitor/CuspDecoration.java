@@ -10,11 +10,11 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 
-import org.codehaus.jackson.JsonGenerationException;
-import org.codehaus.jackson.annotate.JsonProperty;
-import org.codehaus.jackson.map.JsonMappingException;
-import org.codehaus.jackson.map.ObjectMapper;
-import org.codehaus.jackson.map.SerializationConfig;
+import com.fasterxml.jackson.core.JsonGenerationException;
+import com.fasterxml.jackson.databind.JsonMappingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.SerializationFeature;
+import com.fasterxml.jackson.annotation.JsonProperty;
 
 /** A class for pairing a CuspInterp2D with its color, stroke, fill,
     and/or line width. */
@@ -45,10 +45,9 @@ public class CuspDecoration extends DecorationHasInterp2D
         return res;
     }
 
-    @Override public Interp2DHandle[] getHandles
-        (DecorationHandle.Type type) {
-        if (type == DecorationHandle.Type.SELECTION
-                && getCurve().size() >= 6) {
+    @Override public DecorationHandle[] getHandles(
+            DecorationHandle.Type type) {
+        if (type == DecorationHandle.Type.SELECTION) {
             // If this figure has many control points,
             // only select on the pointy control points.
             ArrayList<Interp2DHandle> res = new ArrayList<>();
@@ -64,7 +63,10 @@ public class CuspDecoration extends DecorationHasInterp2D
     static boolean removeDuplicates = false;
 
     @Override public Interp2DHandle move(Interp2DHandle handle,
-            Point2D dest) {
+            double dx, double dy) {
+        Point2D.Double dest = getCurve().get(handle.index);
+        dest.x += dx;
+        dest.y += dy;
         if (removeDuplicates) {
             // Moving this point onto an adjacent control point
             // deletes the control point, since adjacent control
@@ -113,7 +115,7 @@ public class CuspDecoration extends DecorationHasInterp2D
 
         try {
             ObjectMapper mapper = new ObjectMapper();
-            mapper.configure(SerializationConfig.Feature.INDENT_OUTPUT, true);
+            mapper.configure(SerializationFeature.INDENT_OUTPUT, true);
             mapper.writeValue(new File(filename), o);
             CuspDecoration o2 = mapper.readValue(new File(filename),
                                                CuspDecoration.class);

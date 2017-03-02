@@ -1082,7 +1082,7 @@ public class BasicEditor extends Diagram
 
         AffineTransform toPrin = AffineTransform.getTranslateInstance(mprin.x, mprin.y);
         try {
-            ArrayList<Decoration> ds = jsonToDecorations(Stuff.getClipboardString());
+            ArrayList<Decoration> ds = jsonStringToDecorations(Stuff.getClipboardString());
             finishDeserialization(ds);
             for (Decoration d : ds) {
                 if (!(d instanceof TieLine)) {

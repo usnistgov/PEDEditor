@@ -13,4 +13,6 @@ public interface TransformableParameterizable2D
        control points, not the transform of the parameterization of
        the original control points. */
     BoundedParam2D getParameterization(AffineTransform xform);
+
+    TransformableParameterizable2D clone();
 }

@@ -11,8 +11,8 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-import org.codehaus.jackson.annotate.JsonIgnore;
-import org.codehaus.jackson.annotate.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonProperty;
 
 /** Interpolation where control points may be individually marked
     as smoothed or un-smoothed. */
@@ -121,10 +121,6 @@ public class CuspInterp2D extends PointsInterp2D
     }
 
     @Override @JsonIgnore public Path2D.Double getShape() {
-        return getPath();
-    }
-
-    @JsonIgnore public Path2D.Double getPath() {
         Point2D.Double temp;
         int s = size();
         Path2D.Double res = new Path2D.Double();
@@ -136,6 +132,8 @@ public class CuspInterp2D extends PointsInterp2D
                     temp = points.get(1);
                 }
                 res.lineTo(temp.x, temp.y);
+                // It seems that without the lineTo(), single-point
+                // paths are invisible.
             }
             return res;
         }

@@ -5,8 +5,8 @@ package gov.nist.pededitor;
 
 import java.awt.geom.*;
 
-import org.codehaus.jackson.annotate.JsonIgnore;
-import org.codehaus.jackson.annotate.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonProperty;
 
 /** Transform a rectangles with sides parallel to the coordinate axes
     to an arbitrary quadrilaterals. These transformations have to be

@@ -16,14 +16,13 @@ import java.awt.geom.Point2D;
 import java.awt.geom.Rectangle2D;
 import java.util.List;
 
-import org.codehaus.jackson.annotate.JsonIgnore;
-import org.codehaus.jackson.annotate.JsonProperty;
-import org.codehaus.jackson.map.annotate.JsonSerialize;
-import org.codehaus.jackson.map.annotate.JsonSerialize.Inclusion;
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonProperty;
 
 /** Class describing a ruler whose tick marks describe values from a
     LinearAxis. */
-@JsonSerialize(include = Inclusion.NON_DEFAULT)
+@JsonInclude(JsonInclude.Include.NON_DEFAULT)
 class LinearRuler implements Interp2DDecoration, SegmentInterp2D {
     public static enum LabelAnchor { NONE, LEFT, RIGHT };
 
@@ -786,6 +785,10 @@ class LinearRuler implements Interp2DDecoration, SegmentInterp2D {
         tickRight = tickTemp;
     }
 
+    @Override public void transform(SlopeTransform2D xform) throws UnsolvableException {
+        SegmentInterp2D.super.transform(xform);
+    }
+
     @Override public void neaten(AffineTransform toPage) {
         double theta = Geom.normalizeRadians(
                 textAngle
@@ -799,15 +802,15 @@ class LinearRuler implements Interp2DDecoration, SegmentInterp2D {
     /** Used only during serialization and deserialization. */
     protected int jsonId = -1;
 
-    @JsonProperty("id") @Override public int getJSONId() {
+    @JsonProperty("id") @Override public int getJsonId() {
         if (jsonId == -1) {
-            jsonId = IdGenerator.id();
+            jsonId = IdGenerator.getInstance().id();
         }
         return jsonId;
     }
 
-    @JsonProperty("id") public void setJSONId(int id) {
-        IdGenerator.idInUse(id);
+    @Override @JsonProperty("id") public void setJsonId(int id) {
+        IdGenerator.getInstance().idInUse(id);
         jsonId = id;
     }
     @Override public String typeName() {

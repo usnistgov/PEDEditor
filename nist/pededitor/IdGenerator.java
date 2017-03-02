@@ -5,18 +5,26 @@ package gov.nist.pededitor;
 
 /** Simple class to generate sequence (ID) numbers. */ 
 public class IdGenerator {
-    static private int maxUsedId = 0;
+    private int maxUsedId = 0;
 
-    public static int id() {
+    public int id() {
         return ++maxUsedId;
     }
 
-    public static void idInUse(int id) {
+    public void idInUse(int id) {
         if (id > maxUsedId)
             maxUsedId = id;
     }
 
-    public static int getMaxUsedId() {
+    public int getMaxUsedId() {
         return maxUsedId;
+    }
+
+    static private IdGenerator singleton = null;
+    static public IdGenerator getInstance() {
+        if (singleton == null) {
+            singleton = new IdGenerator();
+        }
+        return singleton;
     }
 }

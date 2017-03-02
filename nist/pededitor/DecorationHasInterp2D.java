@@ -5,11 +5,11 @@ package gov.nist.pededitor;
 
 import java.awt.geom.AffineTransform;
 
-import org.codehaus.jackson.annotate.JsonIgnore;
-import org.codehaus.jackson.map.annotate.JsonSerialize;
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonInclude;
 
 /** Interp2DDecorationAdapter with a field to store an Interp2D. */
-@JsonSerialize(include = JsonSerialize.Inclusion.NON_DEFAULT)
+@JsonInclude(JsonInclude.Include.NON_DEFAULT)
 public class DecorationHasInterp2D extends Interp2DDecorationAdapter {
     Interp2D curve = null;
 
@@ -34,7 +34,7 @@ public class DecorationHasInterp2D extends Interp2DDecorationAdapter {
         super(fill);
         this.curve = curve;
     }
-    
+
     @Override public BoundedParam2D getParameterization(
             AffineTransform xform) {
         return getCurve().getParameterization(xform);
@@ -51,7 +51,7 @@ public class DecorationHasInterp2D extends Interp2DDecorationAdapter {
     /** Modifications to this method's return value will modify this
         object. I don't see a good alternative to that. */
     @Override public Interp2D getCurve() { return curve; }
-    
+
     /** Future modifications to the object passed in will modify this
         object. I don't see a good alternative to that,
         performance-wise. */
@@ -84,7 +84,7 @@ public class DecorationHasInterp2D extends Interp2DDecorationAdapter {
     @Override public void transform(AffineTransform xform) {
         getCurve().transform(xform);
     }
-    
+
     @JsonIgnore @Override public BoundedParam2D getParameterization() {
         return getCurve().getParameterization();
     }
@@ -96,5 +96,9 @@ public class DecorationHasInterp2D extends Interp2DDecorationAdapter {
     }
     @Override public String typeName() {
         return "generic curve";
+    }
+    @Override
+    public void transform(SlopeTransform2D xform) throws UnsolvableException {
+        getCurve().transform(xform);
     }
 }

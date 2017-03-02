@@ -5,7 +5,7 @@ package gov.nist.pededitor;
 
 import java.awt.geom.*;
 
-import org.codehaus.jackson.annotate.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 
 /** Abstract class containing elements common to RectToQuad and
     QuadToRect. */

@@ -7,7 +7,7 @@ import java.awt.geom.Point2D;
 import java.text.NumberFormat;
 import java.util.function.ToDoubleFunction;
 
-import org.codehaus.jackson.annotate.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 
 /** Simple class to hold information about an axis/variable. */
 abstract public class Axis implements Comparable<Axis>, ToDoubleFunction<Point2D> {

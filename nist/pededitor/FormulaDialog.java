@@ -250,7 +250,7 @@ public class FormulaDialog extends JDialog {
         }
 
         // Can't set the clipboard? Don't worry about it.
-        Stuff.copyToClipboard(getFormula().trim(), true);
+        Stuff.setClipboardString(getFormula().trim(), true);
         return getPlainFormula();
     }
 

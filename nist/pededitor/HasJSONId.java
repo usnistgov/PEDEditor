@@ -3,9 +3,12 @@
 
 package gov.nist.pededitor;
 
-import org.codehaus.jackson.map.annotate.JsonSerialize;
-import org.codehaus.jackson.map.annotate.JsonSerialize.Inclusion;
+import com.fasterxml.jackson.annotation.JsonInclude;
 
 public interface HasJSONId {
-    @JsonSerialize(include=Inclusion.ALWAYS) int getJSONId();
+    @JsonInclude(JsonInclude.Include.ALWAYS) int getJsonId();
+
+    void setJsonId(int id);
+
+    default void clearJsonId() { setJsonId(-1); }
 }

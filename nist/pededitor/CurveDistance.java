@@ -14,8 +14,7 @@ public class CurveDistance implements Comparable<CurveDistance> {
         this.distance = distance;
     }
 
-    @Override
-	public String toString() {
+    @Override public String toString() {
         return "CurveDistance[t = " + t + ", p = " + point + ", d = "
             + distance + "]";
     }
@@ -27,8 +26,7 @@ public class CurveDistance implements Comparable<CurveDistance> {
     /** Distance at closest approach. */
     public double distance;
 
-    @Override
-	public int compareTo(CurveDistance other) {
+    @Override public int compareTo(CurveDistance other) {
         return (distance < other.distance) ? -1
             : (distance > other.distance) ? 1 : 0;
     }

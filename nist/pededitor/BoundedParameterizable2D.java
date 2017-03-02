@@ -3,7 +3,7 @@
 
 package gov.nist.pededitor;
 
-import org.codehaus.jackson.annotate.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 
 public interface BoundedParameterizable2D {
     @JsonIgnore BoundedParam2D getParameterization();

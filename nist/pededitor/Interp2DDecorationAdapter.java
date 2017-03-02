@@ -6,11 +6,11 @@ package gov.nist.pededitor;
 import java.awt.Color;
 import java.awt.geom.AffineTransform;
 
-import org.codehaus.jackson.annotate.JsonIgnore;
-import org.codehaus.jackson.annotate.JsonProperty;
-import org.codehaus.jackson.map.annotate.JsonSerialize;
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonProperty;
 
-@JsonSerialize(include = JsonSerialize.Inclusion.NON_DEFAULT)
+@JsonInclude(JsonInclude.Include.NON_DEFAULT)
 abstract public class Interp2DDecorationAdapter implements Interp2DDecoration {
     protected double lineWidth = 1.0;
     protected StandardStroke stroke = null;
@@ -111,15 +111,15 @@ abstract public class Interp2DDecorationAdapter implements Interp2DDecoration {
     /** Used only during serialization and deserialization. */
     protected int jsonId = -1;
 
-    @JsonProperty("id") @Override public int getJSONId() {
+    @JsonProperty("id") @Override public int getJsonId() {
         if (jsonId == -1) {
-            jsonId = IdGenerator.id();
+            jsonId = IdGenerator.getInstance().id();
         }
         return jsonId;
     }
 
-    @JsonProperty("id") public void setJSONId(int id) {
-        IdGenerator.idInUse(id);
+    @Override @JsonProperty("id") public void setJsonId(int id) {
+        IdGenerator.getInstance().idInUse(id);
         jsonId = id;
     }
 

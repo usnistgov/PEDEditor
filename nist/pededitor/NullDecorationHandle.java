@@ -3,7 +3,9 @@
 
 package gov.nist.pededitor;
 
+import java.awt.geom.AffineTransform;
 import java.awt.geom.Point2D;
+import java.awt.geom.Point2D.Double;
 
 /** DecorationHandle that isn't actually the handle to anything. It
     has a location but that's it. */
@@ -21,19 +23,31 @@ public class NullDecorationHandle implements DecorationHandle {
         y= p.getY();
     }
 
-    @Override public DecorationHandle move(Point2D dest) {
-        return null;
-    }
-
-    @Override public DecorationHandle copy(Point2D dest) {
-        return null;
-    }
-
     @Override public Point2D.Double getLocation() {
         return new Point2D.Double(x,y);
     }
 
     @Override public Decoration getDecoration() {
+        return null;
+    }
+
+    @Override
+    public DecorationHandle copyFor(Decoration other) {
+        return new NullDecorationHandle(x,y);
+    }
+
+    @Override
+    public Double getLocation(AffineTransform xform) {
+        return DecorationHandle.simpleLocation(this, xform);
+    }
+
+    @Override
+    public DecorationHandle moveHandle(double dx, double dy) {
+        return null;
+    }
+
+    @Override
+    public DecorationHandle copy(double dx, double dy) {
         return null;
     }
 }

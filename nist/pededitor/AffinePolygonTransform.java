@@ -6,7 +6,7 @@ package gov.nist.pededitor;
 import java.awt.geom.*;
 import java.util.Arrays;
 
-import org.codehaus.jackson.annotate.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 
 @JsonIgnoreProperties
     ({"scaleX", "scaleY", "shearX", "shearY", "translateX", "translateY",

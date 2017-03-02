@@ -5,8 +5,9 @@ package gov.nist.pededitor;
 
 import java.awt.geom.AffineTransform;
 import java.awt.geom.Point2D;
+import java.awt.geom.Point2D.Double;
 
-import org.codehaus.jackson.annotate.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 
 /** Class for a handle (control point) of a PointsDecoration. */
 public class Interp2DHandle implements BoundedParam2DHandle {
@@ -20,8 +21,8 @@ public class Interp2DHandle implements BoundedParam2DHandle {
         this.index = index;
     }
 
-    @Override public Interp2DHandle move(Point2D dest) {
-        return getDecoration().move(this, dest);
+    @Override public Interp2DHandle moveHandle(double dx, double dy) {
+        return getDecoration().move(this, dx, dy);
     }
     
     public void moveAll(Point2D dest) {
@@ -32,12 +33,9 @@ public class Interp2DHandle implements BoundedParam2DHandle {
 
     /** Copy this selection, placing the copy at dest. Return the
         SelectionHandle object that represents the copy. */
-    @Override public Interp2DHandle copy(Point2D dest) {
-        Point2D.Double loc = getLocation();
-        Interp2DDecoration dec = (Interp2DDecoration)
-            decoration.createTransformed
-            (AffineTransform.getTranslateInstance
-             (dest.getX() - loc.x, dest.getY() - loc.y));
+    @Override public Interp2DHandle copy(double dx, double dy) {
+        Interp2DDecoration dec = (Interp2DDecoration) decoration
+                .createTransformed(AffineTransform.getTranslateInstance(dx, dy));
         return new Interp2DHandle(dec, index);
     }
         
@@ -80,5 +78,15 @@ public class Interp2DHandle implements BoundedParam2DHandle {
 
     public Interp2D getCurve() {
         return getDecoration().getCurve();
+    }
+
+    @Override
+    public DecorationHandle copyFor(Decoration other) {
+        return ((Interp2DDecoration) other).createHandle(index);
+    }
+
+    @Override
+    public Double getLocation(AffineTransform xform) {
+        return DecorationHandle.simpleLocation(this,  xform);
     }
 }

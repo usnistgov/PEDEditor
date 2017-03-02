@@ -3,13 +3,12 @@
 
 package gov.nist.pededitor;
 
-import org.codehaus.jackson.map.annotate.JsonSerialize;
-import org.codehaus.jackson.map.annotate.JsonSerialize.Inclusion;
+import com.fasterxml.jackson.annotation.JsonInclude;
 
 /** Class to hold a shape drawn at a given angle, scale, position,
     with a given color, anchored at a specific location within the
     shape's bounding box. */
-@JsonSerialize(include = Inclusion.NON_DEFAULT)
+@JsonInclude(JsonInclude.Include.NON_DEFAULT)
 abstract public class AnchoredTransformedShape extends TransformedShape {
 
     /** Positioning relative to the anchor point. 0.0 = The

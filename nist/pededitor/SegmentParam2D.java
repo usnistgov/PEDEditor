@@ -123,7 +123,7 @@ public class SegmentParam2D extends Param2DAdapter {
     }
 
     @Override public BoundedParam2D[] straightSegments(double t0, double t1) {
-        if (t0 < t1) {
+        if (t0 < t1 && !p0.equals(pEnd)) {
             return new BoundedParam2D[] { createSubset(t0, t1) };
         } else {
             return new BoundedParam2D[0];

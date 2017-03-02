@@ -3,7 +3,7 @@
 
 package gov.nist.pededitor;
 
-import org.codehaus.jackson.annotate.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 
 /** Interface for a DecorationHandle that is associated with a point
     on a BoundedParam2D. */
