@@ -29,13 +29,13 @@ public class RightClickMenu extends BasicRightClickMenu {
 
         for (Object obj: new Object[]
             { ef.actColor,
+              ef.actCut,
+              ef.actPaste,
               ef.actCopy,
-              ef.actCopyRegion,
+              ef.actCutRegion,
               ef.actRemoveSelection,
-              ef.actRemoveAll,
               ef.actMoveSelection,
               ef.actMovePoint,
-              ef.actMoveRegion,
               ef.actEditSelection,
               ef.actResetToDefault,
               ef.actMakeDefault }) {
@@ -46,13 +46,8 @@ public class RightClickMenu extends BasicRightClickMenu {
             }
         }
 
-        for (Object obj: new Object[]
-            { ef.actColor,
-              ef.actRemoveSelection,
-              ef.actRemoveAll,
-              ef.actEditSelection,
-              ef.actResetToDefault,
-              ef.actMakeDefault }) {
+        for (Object obj : new Object[] { ef.actColor, ef.actCut, ef.actRemoveSelection, ef.actEditSelection,
+                ef.actResetToDefault, ef.actMakeDefault }) {
             if (obj instanceof Action) {
                 mnEditNear.add((Action) obj);
             } else {

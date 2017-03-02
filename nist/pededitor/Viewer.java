@@ -45,26 +45,26 @@ public class Viewer extends Editor {
 
         for (AbstractAction act: new AbstractAction[]
             { (AbstractAction) ef.mnUnstickMouse.getAction(),
-              ef.actColor,
-              ef.actRemoveSelection,
-              ef.actRemoveAll,
-              ef.actMoveSelection,
-              ef.actEditSelection,
-              ef.actResetToDefault,
-              ef.actMakeDefault,
-              ef.actMovePoint,
-              ef.actMoveRegion,
-              ef.actAddVertex,
               ef.actAddAutoPositionedVertex,
-              ef.actText,
+              ef.actAddVertex,
+              ef.actColor,
+              ef.actCopy,
+              ef.actCutRegion,
+              ef.actCut,
+              ef.actEditSelection,
               ef.actIsotherm,
               ef.actLeftArrow,
+              ef.actMakeDefault,
+              ef.actMovePoint,
+              ef.actMoveSelection,
+              ef.actMoveSelection,
+              ef.actPaste,
+              ef.actRemoveSelection,
+              ef.actResetToDefault,
               ef.actRightArrow,
               ef.actRuler,
-              ef.actTieLine,
-              ef.actMoveSelection,
-              ef.actCopy,
-              ef.actCopyRegion
+              ef.actText,
+              ef.actTieLine
             }) {
             // Make these actions vanish from the interface.
             act.setEnabled(false);
