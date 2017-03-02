@@ -3,13 +3,16 @@
 
 package gov.nist.pededitor;
 
-import java.awt.geom.*;
+import java.awt.geom.AffineTransform;
+import java.awt.geom.NoninvertibleTransformException;
+import java.awt.geom.Point2D;
+import java.util.function.UnaryOperator;
 
-import org.codehaus.jackson.annotate.JsonIgnoreProperties;
-import org.codehaus.jackson.annotate.JsonProperty;
-import org.codehaus.jackson.annotate.JsonSubTypes;
-import org.codehaus.jackson.annotate.JsonSubTypes.Type;
-import org.codehaus.jackson.annotate.JsonTypeInfo;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonSubTypes;
+import com.fasterxml.jackson.annotation.JsonSubTypes.Type;
+import com.fasterxml.jackson.annotation.JsonTypeInfo;
 
 /** Just a Transform2D-implementing wrapper around
  * awt.geom.AffineTransform. */
@@ -23,7 +26,8 @@ import org.codehaus.jackson.annotate.JsonTypeInfo;
 @JsonIgnoreProperties
     ({"scaleX", "scaleY", "shearX", "shearY", "translateX", "translateY",
       "identity", "determinant", "type" })
-public class Affine extends AffineTransform implements Transform2D {
+      public class Affine extends AffineTransform implements SlopeTransform2D,
+                                                             UnaryOperator<Point2D> {
 
     private static final long serialVersionUID = -867608180933463982L;
 
@@ -59,6 +63,10 @@ public class Affine extends AffineTransform implements Transform2D {
     }
 
     @Override public Point2D.Double transform(Point2D p) {
+        return transform(p.getX(), p.getY());
+    }
+
+    @Override public Point2D.Double apply(Point2D p) {
         return transform(p.getX(), p.getY());
     }
 
@@ -112,5 +120,12 @@ public class Affine extends AffineTransform implements Transform2D {
 
     @Override public String toString() {
         return "Affine(" + super.toString() + ")";
+    }
+
+    @Override public Point2D.Double transformSlope(double x, double y,
+            double dx, double dy) {
+        Point2D.Double p = new Point2D.Double(dx,  dy);
+        deltaTransform(p, p);
+        return p;
     }
 }
