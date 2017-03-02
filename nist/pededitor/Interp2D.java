@@ -12,12 +12,12 @@ import java.awt.geom.Line2D;
 import java.awt.geom.Point2D;
 import java.util.List;
 
-import org.codehaus.jackson.annotate.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 
 /** An interface for curves generated from control points. */
 public interface Interp2D extends TransformableParameterizable2D, Cloneable {
 
-    Interp2D clone();
+    @Override Interp2D clone();
     @JsonIgnore Shape getShape();
     Point2D.Double[] getPoints();
     <T extends Point2D> void setPoints(List<T> points);
@@ -28,6 +28,14 @@ public interface Interp2D extends TransformableParameterizable2D, Cloneable {
             Point2D.Double p = get(i);
             xform.transform(p, p);
             set(i, p);
+        }
+    }
+
+    default void transform(SlopeTransform2D xform) throws UnsolvableException {
+        int size = this.size();
+        for (int i = 0; i < size; ++i) {
+            Point2D.Double p = get(i);
+            set(i, xform.transform(p));
         }
     }
 
@@ -302,5 +310,45 @@ public interface Interp2D extends TransformableParameterizable2D, Cloneable {
     /** Return true if this is the t value of a vertex. */
     default boolean tIsVertex(double t) {
         return indexToT(tToIndex(t)) == t;
+    }
+
+    default ParamPointInfo info(double t) {
+        double handleT = getNearestVertex(t);
+        // We chose the lesser side of this handle if t < handleT. But
+        // if we grabbed the 0th vertex exactly, we probably want the
+        // lesser side, since extending the curve is more common than
+        // inserting points inside it.
+        boolean beforeIndex =  (t < handleT) || (t == 0 && size() >= 2);
+        int index = tToIndex(handleT);
+        if (isClosed()) {
+            index = index % size();
+        }
+        return new ParamPointInfo(t, index, beforeIndex);
+    }
+
+    /** Return the t value of the vertex closest to the given t
+        value. */
+    default double getNearestVertex(double t) {
+        Point2D p = getLocation(t);
+        double t1 = getLastVertex(t);
+        double t2 = getNextVertex(t);
+        return
+            (t2 > getParameterization().getMaxT()
+                    || p.distanceSq(getLocation(t1)) <= p.distanceSq(getLocation(t2)))
+            ? t1 : t2;
+    }
+
+    /** Return the t value of the vertex whose t value is least among
+        those greater than t. A vertex is a location that was
+        explicitly assigned to lie on the curve. */
+    default double getNextVertex(double t) {
+        return Math.floor(t) + 1;
+    }
+
+    /** Return the t value of the vertex whose t value is greatest
+        among those less than or equal to t. A vertex is a location
+        that was explicitly assigned to lie on the curve. */
+    default double getLastVertex(double t) {
+        return Math.floor(t);
     }
 }

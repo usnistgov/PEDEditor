@@ -106,23 +106,11 @@ public interface BoundedParam2D extends Param2D {
         efficient. Unless this is a single point, at least two objects
         should be returned. */
     BoundedParam2D[] subdivide();
-        
-    /** Return the t value of the vertex closest to the given t
-        value. */
-    default double getNearestVertex(double t) {
-        Point2D p = getLocation(t);
-        double t1 = getLastVertex(t);
-        double t2 = getNextVertex(t);
-        return
-            (t2 > getMaxT()
-                    || p.distanceSq(getLocation(t1)) <= p.distanceSq(getLocation(t2)))
-            ? t1 : t2;
-    }
 
     default boolean isLineSegment() {
         BoundedParam2D[] ssegs = straightSegments();
-            return ssegs.length == 1
-                    && ssegs[0].getMinT() == getMinT()
-                    && ssegs[0].getMaxT() == getMaxT();
+        return ssegs.length == 1
+            && ssegs[0].getMinT() == getMinT()
+            && ssegs[0].getMaxT() == getMaxT();
     }
 }
