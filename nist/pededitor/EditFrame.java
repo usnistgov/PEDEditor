@@ -79,8 +79,6 @@ public class EditFrame extends JFrame
                 }
             });
     protected Action setAspectRatio;
-    static final boolean showSnap = false;
-    protected Action snapToGrid;
     protected String longHelpFile = "edithelp.html";
     protected String shortHelpFile = "viewhelp.html";
     protected String helpAboutFile = "about.html";
@@ -141,7 +139,7 @@ public class EditFrame extends JFrame
         mnSubmit.setVisible(false);
     }
     protected Action actSaveAsPED = new Action("PED", KeyEvent.VK_P) {
-            { 
+            {
                 putValue(SHORT_DESCRIPTION,
                          "Save diagram in PED Editor's native format");
             }
@@ -152,7 +150,7 @@ public class EditFrame extends JFrame
     protected JMenuItem mnSaveAsPED = toMenuItem(actSaveAsPED);
     protected JMenuItem mnReload = toMenuItem
         (new Action("Refresh", KeyEvent.VK_R) {
-                { 
+                {
                     putValue(SHORT_DESCRIPTION,
                              "Reload the current diagram");
                 }
@@ -163,7 +161,7 @@ public class EditFrame extends JFrame
     JMenuItem mnNextFile = toMenuItem
         (new Action("Next", KeyEvent.VK_R,
                     KeyStroke.getKeyStroke("control RIGHT")) {
-                { 
+                {
                     putValue(SHORT_DESCRIPTION,
                              "Show next diagram");
                 }
@@ -193,135 +191,135 @@ public class EditFrame extends JFrame
                 }
             });
 
-   Action actShiftPressed = new Action
-       ("Shift Pressed", 0, "pressed SHIFT") {
-         @Override public void actionPerformed(ActionEvent e) {
+    Action actShiftPressed = new Action("Shift Pressed", 0, "pressed SHIFT") {
+        @Override
+        public void actionPerformed(ActionEvent e) {
             getEditor().setShiftDown(true);
             finishEvent();
-         }
-      };
+        }
+    };
 
-   Action actShiftReleased = new Action
-       ("Shift Released", 0, "released SHIFT") {
-         @Override public void actionPerformed(ActionEvent e) {
+    Action actShiftReleased = new Action("Shift Released", 0, "released SHIFT") {
+        @Override
+        public void actionPerformed(ActionEvent e) {
             getEditor().setShiftDown(false);
             finishEvent();
-         }
-      };
+        }
+    };
 
-   Action actCopy = new Action
-       ("Copy selection", KeyEvent.VK_C, KeyStroke.getKeyStroke('c')) {
-           @Override public void actionPerformed(ActionEvent e) {
-               getEditor().copySelection();
-               finishEvent();
-           }
-       };
+    Action actCopy = new Action("Copy selection", KeyEvent.VK_C, KeyStroke.getKeyStroke("control C")) {
+        @Override
+        public void actionPerformed(ActionEvent e) {
+            getEditor().copySelection();
+            finishEvent();
+        }
+    };
 
-   Action actCopyRegion = new Action
-       ("Copy everything in selected region",
-        KeyEvent.VK_O, KeyStroke.getKeyStroke("shift C")) {
-           @Override public void actionPerformed(ActionEvent e) {
-               getEditor().copyRegion();
-               finishEvent();
-           }
-       };
+    Action actCutRegion = new Action("Cut everything in selected region", KeyEvent.VK_O,
+            KeyStroke.getKeyStroke("control shift X")) {
+        @Override
+        public void actionPerformed(ActionEvent e) {
+            getEditor().cutRegion();
+            finishEvent();
+        }
+    };
 
-   Action actColor = new Action
-       ("Color...", KeyEvent.VK_R, KeyStroke.getKeyStroke('r')) {
-           @Override public void actionPerformed(ActionEvent e) {
-               getEditor().colorSelection();
-               finishEvent();
-           }
-       };
+    Action actColor = new Action("Color...", KeyEvent.VK_R, KeyStroke.getKeyStroke('r')) {
+        @Override
+        public void actionPerformed(ActionEvent e) {
+            getEditor().colorSelection();
+            finishEvent();
+        }
+    };
 
-   Action actRemoveSelection = new Action
-       ("Delete", KeyEvent.VK_D, Stuff.isOSX() ? "BACK_SPACE" : "DELETE") {
-           @Override public void actionPerformed(ActionEvent e) {
-               getEditor().removeSelection();
-               finishEvent();
-           }
-       };
+    Action actPaste = new Action("Paste", KeyEvent.VK_P, KeyStroke.getKeyStroke("control V")) {
+        @Override
+        public void actionPerformed(ActionEvent e) {
+            getEditor().paste();
+            finishEvent();
+        }
+    };
 
-    Action actRemoveAll = new Action
-        ("Delete all", KeyEvent.VK_A, KeyStroke.getKeyStroke("control D")) {
-            @Override public void actionPerformed(ActionEvent e) {
-                getEditor().removeLikeSelection();
-                finishEvent();
-            }
-        };
+    Action actRemoveSelection = new Action("Delete", KeyEvent.VK_D, Stuff.isOSX() ? "BACK_SPACE" : "DELETE") {
+        @Override
+        public void actionPerformed(ActionEvent e) {
+            getEditor().removeSelection();
+            finishEvent();
+        }
+    };
 
-    Action actDeselect = new Action
-        ("Deselect", KeyEvent.VK_S, "pressed ESCAPE") {
-            { setEnabled(false); }
-            @Override public void actionPerformed(ActionEvent e) {
-                getEditor().clearSelection();
-                finishEvent();
-            }
-        };
+    Action actCut = new Action("Cut", KeyEvent.VK_C, KeyStroke.getKeyStroke("control X")) {
+        @Override
+        public void actionPerformed(ActionEvent e) {
+            getEditor().cutSelection();
+            finishEvent();
+        }
+    };
 
-    Action actEditSelection = new Action
-        ("Properties...", KeyEvent.VK_P, KeyStroke.getKeyStroke('e')) {
-            @Override public void actionPerformed(ActionEvent e) {
-                getEditor().editSelection();
-                finishEvent();
-            }
-        };
+    Action actDeselect = new Action("Deselect", KeyEvent.VK_S, "pressed ESCAPE") {
+        {
+            setEnabled(false);
+        }
 
-    Action actResetToDefault = new Action
-        ("Revert properties to default", KeyEvent.VK_T, 
-         KeyStroke.getKeyStroke('d')) {
-            @Override public void actionPerformed(ActionEvent e) {
-                getEditor().resetSelectionToDefaultSettings();
-                finishEvent();
-            }
-        };
+        @Override
+        public void actionPerformed(ActionEvent e) {
+            getEditor().clearSelection();
+            finishEvent();
+        }
+    };
 
-    Action actMakeDefault = new Action
-        ("Make selection's properties the new default",
-         KeyEvent.VK_F, KeyStroke.getKeyStroke("shift D")) {
-            @Override public void actionPerformed(ActionEvent e) {
-                getEditor().setDefaultSettingsFromSelection();
-                finishEvent();
-            }
-        };
+    Action actEditSelection = new Action("Properties...", KeyEvent.VK_P, KeyStroke.getKeyStroke('e')) {
+        @Override
+        public void actionPerformed(ActionEvent e) {
+            getEditor().editSelection();
+            finishEvent();
+        }
+    };
 
-    Action actMoveSelection = new Action
-        ("Move selection only", KeyEvent.VK_V,
-         KeyStroke.getKeyStroke("shift V")) {
-            @Override public void actionPerformed(ActionEvent e) {
-                getEditor().moveSelection(false);
-                finishEvent();
-            }
-        };
-    Action actMovePoint = new Action
-        ("Move everything at selected point",
-         KeyEvent.VK_M, KeyStroke.getKeyStroke('v')) {
-            @Override public void actionPerformed(ActionEvent e) {
-                getEditor().moveSelection(true);
-                finishEvent();
-            }
-        };
-    Action actMoveRegion = new Action
-        ("Move everything in selected region",
-         KeyEvent.VK_R, KeyStroke.getKeyStroke("shift R")) {
-            @Override public void actionPerformed(ActionEvent e) {
-                getEditor().moveRegion();
-                finishEvent();
-            }
-        };
+    Action actResetToDefault = new Action("Revert properties to default", KeyEvent.VK_T, KeyStroke.getKeyStroke('d')) {
+        @Override
+        public void actionPerformed(ActionEvent e) {
+            getEditor().resetSelectionToDefaultSettings();
+            finishEvent();
+        }
+    };
 
-    Action actAutoPosition = new Action
-        ("Auto-position",
-         KeyEvent.VK_A, KeyStroke.getKeyStroke("shift A")) {
-            { 
-                putValue(SHORT_DESCRIPTION,
-                         "Move the mouse to the closest key point or curve");
-            }
-            @Override public void actionPerformed(ActionEvent e) {
-                getEditor().autoPosition();
-                finishEvent();
-            }
-        };
+    Action actMakeDefault = new Action("Make selection's properties the new default", KeyEvent.VK_F,
+            KeyStroke.getKeyStroke("shift D")) {
+        @Override
+        public void actionPerformed(ActionEvent e) {
+            getEditor().setDefaultSettingsFromSelection();
+            finishEvent();
+        }
+    };
+
+    Action actMoveSelection = new Action("Move selection only", KeyEvent.VK_V, KeyStroke.getKeyStroke("shift V")) {
+        @Override
+        public void actionPerformed(ActionEvent e) {
+            getEditor().moveSelection(false);
+            finishEvent();
+        }
+    };
+
+    Action actMovePoint = new Action("Move everything at selected point", KeyEvent.VK_M, KeyStroke.getKeyStroke('v')) {
+        @Override
+        public void actionPerformed(ActionEvent e) {
+            getEditor().moveSelection(true);
+            finishEvent();
+        }
+    };
+
+    Action actAutoPosition = new Action("Auto-position", KeyEvent.VK_A, KeyStroke.getKeyStroke("shift A")) {
+        {
+            putValue(SHORT_DESCRIPTION, "Move the mouse to the closest key point or curve");
+        }
+
+        @Override
+        public void actionPerformed(ActionEvent e) {
+            getEditor().autoPosition();
+            finishEvent();
+        }
+    };
 
     JMenuItem mnEnterCoordinates = toMenuItem
         (new Action("Enter coordinates",
@@ -337,7 +335,7 @@ public class EditFrame extends JFrame
         (new Action("Jump to selection",
                     KeyEvent.VK_J,
                     KeyStroke.getKeyStroke('j')) {
-                { 
+                {
                     putValue(SHORT_DESCRIPTION,
                              "Move the mouse to the selected item");
                 }
@@ -350,7 +348,7 @@ public class EditFrame extends JFrame
     Action actNearestGridPoint = new Action
         ("Nearest grid point",
          KeyEvent.VK_G, KeyStroke.getKeyStroke('g')) {
-            { 
+            {
                 putValue(SHORT_DESCRIPTION,
                          "Move the mouse to the closest integer coordinates");
             }
@@ -359,11 +357,11 @@ public class EditFrame extends JFrame
                 finishEvent();
                 }
             };
-    
+
     Action actNearestPoint = new Action
         ("Nearest key point",
          KeyEvent.VK_N, KeyStroke.getKeyStroke('q')) {
-            { 
+            {
                 putValue(SHORT_DESCRIPTION,
                          "Move the mouse to the nearest data point, label, "
                          + "arrow, curve endpoint, curve intersection, etc.");
@@ -376,7 +374,7 @@ public class EditFrame extends JFrame
     Action actNearestCurve = new Action
         ("Nearest line/curve",
          KeyEvent.VK_L, KeyStroke.getKeyStroke('w')) {
-            { 
+            {
                 putValue(SHORT_DESCRIPTION,
                          "Move the mouse to the nearest point on any curve "
                          + "or ruler.");
@@ -718,8 +716,6 @@ public class EditFrame extends JFrame
     /** Internal use; called from BasicEditor.java. */
     void setPixelMode(boolean b) {
         pixelMode.setSelected(b);
-        if (showSnap)
-            snapToGrid.setEnabled(b && getEditor().isEditable());
     }
 
     /** Internal use; called from BasicEditor.java. */
@@ -933,7 +929,7 @@ public class EditFrame extends JFrame
             System.exit(3);
             return null;
         }
-    } 
+    }
 
     static Icon getLineWidthIcon(double lineWidth) {
         int w = (int) Math.round(lineWidth / 0.0008);
@@ -1024,7 +1020,7 @@ public class EditFrame extends JFrame
         }
     }
 
-    
+
 
     class BackgroundImageMenuItem extends JRadioButtonMenuItem {
         BackgroundImageMenuItem(String name, StandardAlpha back,
@@ -1253,8 +1249,8 @@ public class EditFrame extends JFrame
 
         JMenu mnLineStyle = new JMenu("Line style");
         mnLineStyle.setMnemonic(KeyEvent.VK_L);
-        
-        LineStyleMenuItem solidLineItem = 
+
+        LineStyleMenuItem solidLineItem =
             new LineStyleMenuItem(StandardStroke.SOLID, 59, 2, 2.0);
         solidLineItem.setSelected(true);
         mnLineStyle.add(solidLineItem);
@@ -1268,7 +1264,7 @@ public class EditFrame extends JFrame
             mnDensity.setIcon(icon(StandardStroke.DASH3, 60, 2, 2.0));
 
             for (StandardStroke stroke:
-                     EnumSet.range(StandardStroke.DASH1, 
+                     EnumSet.range(StandardStroke.DASH1,
                                    StandardStroke.DASH5)) {
                 mnDensity.add(new LineStyleMenuItem(stroke, 104, 4, 2.0));
             }
@@ -1280,7 +1276,7 @@ public class EditFrame extends JFrame
             mnDensity.setIcon(icon(StandardStroke.DOT3, 56, 4, 2.0));
 
             for (StandardStroke stroke:
-                     EnumSet.range(StandardStroke.DOT1, 
+                     EnumSet.range(StandardStroke.DOT1,
                                    StandardStroke.DOT5)) {
                 mnDensity.add(new LineStyleMenuItem(stroke, 104, 4, 2.0));
             }
@@ -1349,7 +1345,7 @@ public class EditFrame extends JFrame
             });
 
         menuBar.add(mnCurve);
-    
+
         // "Properties" top-level menu
         mnProperties.setMnemonic(KeyEvent.VK_R);
 
@@ -1448,17 +1444,6 @@ public class EditFrame extends JFrame
             };
         setAspectRatio.setEnabled(false);
         mnProperties.add(setAspectRatio);
-
-        snapToGrid = new Action
-            ("Snap to grid", KeyEvent.VK_G) {
-                @Override public void actionPerformed(ActionEvent e) {
-                    getEditor().snapToGrid();
-                    finishEvent();
-                }
-            };
-        if (showSnap) {
-            mnProperties.add(snapToGrid);
-        }
         mnProperties.add(mnSetTitle);
 
         mnProperties.add(pixelMode);
@@ -1472,8 +1457,8 @@ public class EditFrame extends JFrame
         mnDigit.add(mnExportText);
 
         mnDigit.add(new Action("Export selected curve or label's coordinates",
-                              KeyEvent.VK_P,
-                              KeyStroke.getKeyStroke("control C")) {
+                        KeyEvent.VK_P,
+                        KeyStroke.getKeyStroke('c')) {
                 @Override public void actionPerformed(ActionEvent e) {
                     getEditor().exportSelectedCoordinates();
                     finishEvent();
@@ -1502,7 +1487,7 @@ public class EditFrame extends JFrame
         mnSetComponents.add(setTopComponent);
         mnSetComponents.add(guessComponents);
         mnChem.add(mnSetComponents);
-        
+
         mnChem.add(swapBinary);
 
         mnSwap.add(new Action
@@ -1526,7 +1511,7 @@ public class EditFrame extends JFrame
                     finishEvent();
                 }
             });
-        mnChem.add(mnSwap);       
+        mnChem.add(mnSwap);
 
         {
             JMenu mnProp = new JMenu("Proportions");
@@ -1579,7 +1564,7 @@ public class EditFrame extends JFrame
 
         mnView.add(new Action("Best fit (100% zoom)", KeyEvent.VK_B,
                               KeyStroke.getKeyStroke("control B")) {
-                { 
+                {
                     putValue(SHORT_DESCRIPTION,
                              "Adjust the zoom ratio so the diagram is fully visible");
                 }
@@ -1642,8 +1627,9 @@ public class EditFrame extends JFrame
               actCircle,
               actColor,
               actCopy,
-              actCopyRegion,
+              actCutRegion,
               actCopyStatusBar,
+              actCut,
               actDeselect,
               actEditSelection,
               actIsotherm,
@@ -1651,12 +1637,11 @@ public class EditFrame extends JFrame
               actMakeDefault,
               actMonitor,
               actMovePoint,
-              actMoveRegion,
               actMoveSelection,
               actNearestCurve,
               actNearestGridPoint,
               actNearestPoint,
-              actRemoveAll,
+              actPaste,
               actRemoveSelection,
               actResetToDefault,
               actRightArrow,
@@ -1723,8 +1708,6 @@ public class EditFrame extends JFrame
         mnCurve.setVisible(b);
         mnFont.setVisible(b);
         e.setVisible(setAspectRatio, b);
-        if (showSnap)
-            e.setVisible(snapToGrid, b);
         mnKeys.setVisible(b);
         e.setVisible(actAddKey, b);
         mnMargins.setVisible(b);
@@ -1745,7 +1728,6 @@ public class EditFrame extends JFrame
         for (Action act: new Action[]
             { actMoveSelection,
               actMovePoint,
-              actMoveRegion,
               actAddVertex,
               actAddAutoPositionedVertex,
               actText,
@@ -1754,7 +1736,7 @@ public class EditFrame extends JFrame
               actRightArrow}) {
             act.setEnabled(b);
         }
-        
+
         if (isEditingEnabled() != b) {
             setEditingEnabled(b);
         }
