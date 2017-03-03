@@ -2359,7 +2359,7 @@ public class Diagram extends Observable implements Printable {
         for (Decoration d: getDecorations()) {
             double minDistSq = 0;
             DecorationHandle nearestHandle = null;
-            for (DecorationHandle h: d.getHandles(DecorationHandle.Type.SELECTION)) {
+            for (DecorationHandle h: selectionHandles(d)) {
                 Point2D.Double p2 = h.getLocation(principalToStandardPage);
                 double distSq = pagePoint.distanceSq(p2);
                 if (nearestHandle == null || distSq < minDistSq) {
@@ -2382,68 +2382,8 @@ public class Diagram extends Observable implements Printable {
         return res;
     }
 
-    /**
-     * @return the location on the page of the selection handle
-     * closest to pagePoint. */
-    Point2D.Double nearestPagePoint(Point2D.Double pagePoint,
-            DecorationHandle.Type type) {
-        double minDistSq = 0;
-        Point2D.Double res = null;
-        for (Decoration d: getDecorations()) {
-            for (DecorationHandle h: d.getHandles(type)) {
-                Point2D.Double p2 = h.getLocation(principalToStandardPage);
-                double distSq = pagePoint.distanceSq(p2);
-                if (res == null || distSq < minDistSq) {
-                    res = p2;
-                    minDistSq = distSq;
-                }
-            }
-        }
-
-        return res;
-    }
-
-    /** Like nearestHandles(p), but return only handles of the given type.
-
-        @param oneHandleOnly If true, return only the closest handle. */
-    @SuppressWarnings("unchecked")
-    <T> ArrayList<T> nearestHandles(Point2D.Double p, T handleType, boolean oneHandleOnly) {
-        Point2D.Double pagePoint = principalToStandardPage.transform(p);
-
-        ArrayList<HandleAndDistance> hads = new ArrayList<>();
-        Class<? extends Object> c = handleType.getClass();
-        for (Decoration d: getDecorations()) {
-            HandleAndDistance nearestHandle = null;
-            for (DecorationHandle h: d.getHandles(DecorationHandle.Type.SELECTION)) {
-                if (!c.isInstance(h)) {
-                    continue;
-                }
-                Point2D.Double p2 = pageLocation(h);
-                HandleAndDistance had = new HandleAndDistance(
-                        h, pagePoint.distanceSq(p2));
-
-                if (oneHandleOnly) {
-                    if (nearestHandle == null
-                        || had.distance < nearestHandle.distance) {
-                        nearestHandle = had;
-                    }
-                } else {
-                    hads.add(had);
-                }
-            }
-            if (nearestHandle != null) {
-                hads.add(nearestHandle);
-            }
-        }
-
-        Collections.sort(hads);
-
-        ArrayList<T> res = new ArrayList<>();
-        for (HandleAndDistance h: hads) {
-            res.add((T) h.handle);
-        }
-
-        return res;
+    List<DecorationHandle> selectionHandles(Decoration d) {
+        return Arrays.asList(d.getHandles(DecorationHandle.Type.SELECTION));
     }
 
     /**
@@ -2459,8 +2399,10 @@ public class Diagram extends Observable implements Printable {
             res.add(new NullDecorationHandle(p));
         }
 
-        for (Point2D.Double p: principalToStandardPage.getInputVertices()) {
-            res.add(new NullDecorationHandle(p));
+        if (diagramType != diagramType.OTHER) {
+            for (Point2D.Double p: principalToStandardPage.getInputVertices()) {
+                res.add(new NullDecorationHandle(p));
+            }
         }
 
         res.addAll(getDecorationHandles(type));
@@ -2471,6 +2413,25 @@ public class Diagram extends Observable implements Printable {
             res.add(new NullDecorationHandle(p.getX(), p.getY()));
         }
 
+        return res;
+    }
+
+    /**
+     * @return the page coordinates of the handle closest to pagePt. */
+    public DecorationHandle nearest(List<DecorationHandle> hands, Point2D pagePt) {
+        DecorationHandle res = null;
+        double minDist = 0;
+        for (DecorationHandle h: hands) {
+            Point2D.Double p = pageLocation(h);
+            if (p == null) {
+                continue;
+            }
+            double dist = pagePt.distance(p);
+            if (res == null || minDist > dist) {
+                minDist = dist;
+                res = h;
+            }
+        }
         return res;
     }
 
@@ -3435,24 +3396,32 @@ public class Diagram extends Observable implements Printable {
         coordinates, or null if none is found. */
     public String nearestChemical(Point2D.Double prin,
                                   double maxPageDist) {
-        double maxDistanceSq = maxPageDist * maxPageDist;
         Point2D.Double page = principalToStandardPage
             .transform(prin);
+        
+        double minDistSq = 0;
+        AnchoredLabel nearest = null;
 
-        for (LabelHandle hand: nearestHandles(prin, new LabelHandle(), false)) {
-            if (!hand.isCentered()) {
-                continue;
+        for (AnchoredLabel label: labels()) {
+            for (LabelHandle hand : label.getHandles(DecorationHandle.Type.SELECTION)) {
+                if (!hand.isCentered()) {
+                    continue;
+                }
+                Point2D.Double handPage = pageLocation(hand);
+                double distSq = handPage.distanceSq(page);
+                if (nearest == null || distSq < minDistSq) {
+                    nearest = label;
+                    minDistSq = distSq;
+                }
             }
-            Point2D.Double handPage = pageLocation(hand);
-            if (handPage.distanceSq(page) > maxDistanceSq) {
-                break;
-            }
-            String text = HtmlToText.htmlToText(hand.getDecoration().getText());
-            ChemicalString.Match match = ChemicalString
-                .maybeQuotedComposition(text);
-            if (match != null) {
-                return match.within(text).trim();
-            }
+        }
+        if (nearest == null || minDistSq > maxPageDist * maxPageDist) {
+            return null;
+        }
+        String text = HtmlToText.htmlToText(nearest.getText());
+        ChemicalString.Match match = ChemicalString.maybeQuotedComposition(text);
+        if (match != null) {
+            return match.within(text).trim();
         }
 
         return null;

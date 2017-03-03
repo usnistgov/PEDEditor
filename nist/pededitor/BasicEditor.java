@@ -3,11 +3,11 @@
 
 package gov.nist.pededitor;
 
-import static gov.nist.pededitor.Stuff.setClipboardString;
 import static gov.nist.pededitor.Stuff.getExtension;
 import static gov.nist.pededitor.Stuff.htmlify;
 import static gov.nist.pededitor.Stuff.isFileAssociationBroken;
 import static gov.nist.pededitor.Stuff.removeExtension;
+import static gov.nist.pededitor.Stuff.setClipboardString;
 
 import java.awt.AWTException;
 import java.awt.BasicStroke;
@@ -66,6 +66,7 @@ import java.util.Timer;
 import java.util.TimerTask;
 import java.util.function.DoubleUnaryOperator;
 import java.util.prefs.Preferences;
+
 import javax.imageio.ImageIO;
 import javax.jnlp.IntegrationService;
 import javax.jnlp.ServiceManager;
@@ -383,6 +384,7 @@ public class BasicEditor extends Diagram
     // Number of times paintEditPane() has been called.
     protected transient int paintCnt = 0;
     protected transient boolean removeDegenerateDecorations = true;
+    protected transient boolean updateMathWindow = true;
     protected transient WatchNewFiles watchNewFiles = null;
     protected boolean mEditable = true;
     protected boolean exitOnClose = true;
@@ -1123,6 +1125,11 @@ public class BasicEditor extends Diagram
             return;
         }
 
+        if (selection instanceof Interp2DHandle2) {
+            // Move the selection to the nearest vertex.
+            selection = ((Interp2DHandle2) selection).indexHandle();
+        }
+
         if (mouseIsStuckAtSelection()) {
             setMouseStuck(false);
         }
@@ -1263,7 +1270,7 @@ public class BasicEditor extends Diagram
             if (moveAll) {
                 Point2D.Double p = principalLocation(selection);
 
-                for (DecorationHandle sel: getDecorationHandles(DecorationHandle.Type.SELECTION)) {
+                for (DecorationHandle sel: getDecorationHandles(DecorationHandle.Type.CONTROL_POINT)) {
                     if (sel.getDecoration() == selection.getDecoration())
                         continue;
                     if (principalCoordinatesMatch(p, principalLocation(sel))) {
@@ -1391,11 +1398,11 @@ public class BasicEditor extends Diagram
             return;
         }
 
-        Point2D.Double mousePage = principalToStandardPage.transform(mprin);
+        Point2D.Double mousePage = mousePage();
         mousePage.x += dx / scale;
         mousePage.y += dy / scale;
-        moveMouseAndMaybeSelection
-            (standardPageToPrincipal.transform(mousePage));
+        moveMouseAndMaybeSelection(
+                standardPageToPrincipal.transform(mousePage));
     }
 
     /** Like move(), but move in the given direction until you run
@@ -1407,7 +1414,7 @@ public class BasicEditor extends Diagram
             return;
         }
 
-        Point2D.Double mousePage = principalToStandardPage.transform(mprin);
+        Point2D.Double mousePage = mousePage();
 
         double bigBump = pageBounds.width + pageBounds.height +
                 Math.abs(pageBounds.x) + Math.abs(pageBounds.y);
@@ -1573,15 +1580,19 @@ public class BasicEditor extends Diagram
             }
 
             if (extraVertex != null) {
+                boolean oldR = removeDegenerateDecorations;
+                boolean oldU = updateMathWindow;
                 try {
                     removeDegenerateDecorations = false;
+                    updateMathWindow = false;
                     try (DoThenUndo thing = new DoThenUndo(
                                 clickCommand(hand, extraVertex))) {
                     curve.setColor(toColor(ap.position));
                     draw(g, curve, scale);
                     }
                 } finally {
-                    removeDegenerateDecorations = true;
+                    removeDegenerateDecorations = oldR;
+                    updateMathWindow = oldU;
                 }
             }
 
@@ -1813,15 +1824,17 @@ public class BasicEditor extends Diagram
             return;
         }
 
-        if (selection != null) {
-            Decoration oldDecoration = selection.getDecoration();
-            if (removeDegenerateDecorations && oldDecoration.isDegenerate() &&
-                    (hand == null || oldDecoration != hand.getDecoration())) {
-                removeDecoration(oldDecoration);
+        DecorationHandle oldSel = selection;
+        selection = hand;
+
+       if (oldSel != null) {
+            Decoration oldd = oldSel.getDecoration();
+             if (removeDegenerateDecorations && oldd.isDegenerate() &&
+                    (hand == null || oldd != hand.getDecoration())) {
+                removeDecorationIfFound(oldd);
             }
         }
 
-        selection = hand;
         boolean haveSel = (hand != null);
         getEditFrame().actDeselect.setEnabled(haveSel);
         mnRightClick.setHasSelection(haveSel);
@@ -1912,8 +1925,11 @@ public class BasicEditor extends Diagram
     }
 
     public void showTangent(Decoration dec, double t) {
+        if (!updateMathWindow) {
+            return;
+        }
         Point2D.Double g = derivative(dec, t);
-        if (g != null) {
+        if (g != null && (g.x != 0 || g.y != 0)) {
             mathWindow.setScreenDerivative(g);
         }
         BoundedParam2D b = null;
@@ -1976,7 +1992,7 @@ public class BasicEditor extends Diagram
     }
 
     public void showTangent(Decoration dec) {
-        if (dec == null) {
+        if (dec == null || !updateMathWindow) {
             return;
         }
         if (dec instanceof Angled) {
@@ -3301,6 +3317,40 @@ public class BasicEditor extends Diagram
         tieLineDialog.toFront();
     }
 
+    @Override List<DecorationHandle> selectionHandles(Decoration d) {
+        return Arrays.asList(d.getHandles(
+                        (selection != null && d == selection.getDecoration())
+                        ? DecorationHandle.Type.CONTROL_POINT
+                        : DecorationHandle.Type.SELECTION));
+    }
+
+    /**
+     * @return the location on the page of the selection handle
+     * closest to pagePoint. */
+    Point2D.Double nearestPagePoint(Point2D.Double pagePoint,
+            DecorationHandle.Type type) {
+        double minDistSq = 0;
+        Point2D.Double res = null;
+        for (Decoration d: getDecorations()) {
+            DecorationHandle.Type type2 = (selection != null && d == selection.getDecoration())
+                    ? DecorationHandle.Type.CONTROL_POINT : type;
+            for (DecorationHandle h: d.getHandles(type2)) {
+                Point2D.Double p2 = pageLocation(h);
+                double distSq = pagePoint.distanceSq(p2);
+                if (res == null || distSq < minDistSq) {
+                    res = p2;
+                    minDistSq = distSq;
+                }
+            }
+        }
+
+        return res;
+    }
+
+    final private Point2D.Double mousePage() {
+        return (mprin == null) ? null : principalToStandardPage.transform(mprin);
+    }
+
     /** Move the mouse to the nearest key point.
 
         @param select If true, exclude unselectable points, and select
@@ -3321,8 +3371,9 @@ public class BasicEditor extends Diagram
         Point2D.Double pagePoint;
 
         if (!select) {
-            pagePoint = nearestPagePoint(principalToStandardPage.transform(mprin),
+            ArrayList<DecorationHandle> hands = keyPointHandles(
                     DecorationHandle.Type.SELECTION);
+            pagePoint = pageLocation(nearest(hands, mousePage()));
             if (pagePoint == null) {
                 return;
             }
@@ -3949,20 +4000,6 @@ public class BasicEditor extends Diagram
         return nearestHandles(principalFocus);
     }
 
-    @Override public ArrayList<DecorationHandle> keyPointHandles(
-            DecorationHandle.Type type) {
-        ArrayList<DecorationHandle> res = super.keyPointHandles(type);
-
-        if (selection != null) {
-            // Include all control points of the selected curve.
-            for (DecorationHandle hand: selection.getDecoration().getHandles(
-                            DecorationHandle.Type.CONTROL_POINT)) {
-                res.add(hand);
-            }
-        }
-        return res;
-    }
-
     /** Like seekNearestPoint(), but locate the nearest decoration
         outline (as measured by distance on the standard page) instead
         of the nearest key point.
@@ -3987,7 +4024,7 @@ public class BasicEditor extends Diagram
             return;
         }
 
-        Point2D.Double mousePage = principalToStandardPage.transform(mprin);
+        Point2D.Double mousePage = mousePage();
         DecorationDistance dist = nearestCurve(mousePage);
 
         if (dist == null) {
@@ -5694,9 +5731,18 @@ public class BasicEditor extends Diagram
                 ArrayList<Point2D> selections = new ArrayList<>();
                 int oldSize = decorations.size();
 
-                Point2D.Double selPoint = principalLocation(selection);
-                if (selPoint != null) {
-                    selections.add(selPoint);
+                Point2D.Double selPoint = null;
+                if (selection != null) {
+                    // For autopositioning purposes, ignore the
+                    // precise spot we picked and focus on the
+                    // highlighted vertex.
+                    DecorationHandle d = (selection instanceof Interp2DHandle2)
+                        ? ((Interp2DHandle2) selection).indexHandle()
+                        : selection;
+                    selPoint = principalLocation(d);
+                    if (selPoint != null) {
+                        selections.add(selPoint);
+                    }
                 }
                 Point2D.Double point2 = secondarySelectionLocation();
                 if (point2 != null) {
@@ -5742,71 +5788,65 @@ public class BasicEditor extends Diagram
 
                 ArrayList<DecorationHandle> hands = keyPointHandles(
                         DecorationHandle.Type.SELECTION);
-                if (hands != null) {
-                    for (DecorationHandle h: hands) {
-                        Point2D.Double pagePt = pageLocation(h);
-                        double dist = pagePt.distance(mousePage);
-                        if (dist < pageDist) {
-                            newPage = pagePt;
+                res = nearest(hands, mousePage);
+                if (res != null) {
+                    newPage = pageLocation(res);
+                    pageDist = mousePage.distance(newPage);
+                }
+
+                final double OVERLAP_DISTANCE = 1e-10;
+                int parameterizableCnt = 0;
+                for (DecorationHandle h: hands) {
+                    Point2D.Double pagePt = pageLocation(h);
+                    if (pagePt.distance(newPage) > OVERLAP_DISTANCE) {
+                        continue;
+                    }
+
+                    // Two or more handles are in the same place,
+                    // so do nitpicky stuff to get the
+                    // parameterization right. If there's only one
+                    // parameterizable handle, use it. If there
+                    // are two or more, use neither of them,
+                    // because it's ambiguous.
+
+                    if (h instanceof BoundedParameterizable2D) {
+                        ++parameterizableCnt;
+                        if (parameterizableCnt > 1) {
+                            // If there are two or more, use
+                            // neither, because it's ambiguous.
+                            res = new NullDecorationHandle(principalLocation(h));
+                            break;
+                        } else {
+                            // If there's only one parameterizable
+                            // handle, use it.
                             res = h;
-                            pageDist = dist;
                         }
                     }
+                }
 
-                    final double OVERLAP_DISTANCE = 1e-10;
-                    int parameterizableCnt = 0;
-                    for (DecorationHandle h: hands) {
-                        Point2D.Double pagePt = pageLocation(h);
-                        if (pagePt.distance(newPage) > OVERLAP_DISTANCE) {
-                            continue;
-                        }
+                if (res != null) {
 
-                        // Two or more handles are in the same place,
-                        // so do nitpicky stuff to get the
-                        // parameterization right. If there's only one
-                        // parameterizable handle, use it. If there
-                        // are two or more, use neither of them,
-                        // because it's ambiguous.
+                    // Subtract keyPointPixelDist (converted to page
+                    // coordinates) from keyPointDist before comparing
+                    // with curves, in order to express the preference for
+                    // key points over curves when the mouse is close to
+                    // both.
+                    double keyPointPixelDist = 10;
+                    pageDist -= keyPointPixelDist / scale;
+                    ap.position = AutoPositionType.POINT;
+                }
 
-                        if (h instanceof BoundedParameterizable2D) {
-                            ++parameterizableCnt;
-                            if (parameterizableCnt > 1) {
-                                // If there are two or more, use
-                                // neither, because it's ambiguous.
-                                res = new NullDecorationHandle(principalLocation(h));
-                                break;
-                            } else {
-                                // If there's only one parameterizable
-                                // handle, use it.
-                                res = h;
-                            }
-                        }
-                    }
+                // Only jump to the nearest curve if it is at
+                // least three times closer than pageDist.
 
-                    if (res != null) {
-
-                        // Subtract keyPointPixelDist (converted to page
-                        // coordinates) from keyPointDist before comparing
-                        // with curves, in order to express the preference for
-                        // key points over curves when the mouse is close to
-                        // both.
-                        double keyPointPixelDist = 10;
-                        pageDist -= keyPointPixelDist / scale;
-                        ap.position = AutoPositionType.POINT;
-                    }
-
-                    // Only jump to the nearest curve if it is at
-                    // least three times closer than pageDist.
-
-                    DecorationDistance nc;
-                    if (pageDist > 0
+                DecorationDistance nc;
+                if (pageDist > 0
                         && (nc = nearestCurve(mousePage)) != null
                         && pageDist > 3 * nc.distance.distance) {
-                        ap.position = AutoPositionType.CURVE;
-                        res = toHandle(nc);
-                        newPage = nc.distance.point;
-                        pageDist = nc.distance.distance;
-                    }
+                    ap.position = AutoPositionType.CURVE;
+                    res = toHandle(nc);
+                    newPage = nc.distance.point;
+                    pageDist = nc.distance.distance;
                 }
 
                 double maxMovePixels = 50; // Maximum number of pixels to
@@ -6210,8 +6250,7 @@ public class BasicEditor extends Diagram
         // If mprin is in the new window, leave it be. If mprin is not
         // in the new window, move it to the center of the new window.
         if ((mprin == null)
-            || !roughlyInside(principalToStandardPage.transform(mprin),
-                              pageBounds)) {
+                || !roughlyInside(mousePage(), pageBounds)) {
             mprin = center;
             mouseIsStuck = false;
         }
