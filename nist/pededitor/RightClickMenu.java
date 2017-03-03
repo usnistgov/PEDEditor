@@ -29,13 +29,13 @@ public class RightClickMenu extends BasicRightClickMenu {
 
         for (Object obj: new Object[]
             { ef.actColor,
-              ef.actCut,
-              ef.actPaste,
               ef.actCopy,
+              ef.actCut,
               ef.actCutRegion,
               ef.actRemoveSelection,
               ef.actMoveSelection,
               ef.actMovePoint,
+              ef.actPaste,
               ef.actEditSelection,
               ef.actResetToDefault,
               ef.actMakeDefault }) {
