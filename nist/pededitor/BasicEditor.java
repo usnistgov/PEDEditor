@@ -236,7 +236,7 @@ public class BasicEditor extends Diagram
     /** Set selection to the nearest DecorationHandle. Return true for
         success, false if that was not possible. */
     boolean selectSomething() {
-        for (DecorationHandle handle: nearestHandles()) {
+        for (DecorationHandle handle: nearestHandles(DecorationHandle.Type.SELECTION)) {
             setSelection(handle);
             return true;
         }
@@ -252,7 +252,7 @@ public class BasicEditor extends Diagram
         if (selection == null) {
             // Find the nearest editable item, and edit it.
 
-            for (DecorationHandle handle: nearestHandles()) {
+            for (DecorationHandle handle: nearestHandles(DecorationHandle.Type.SELECTION)) {
                 if (editable(handle.getDecoration())) {
                     setSelection(handle);
                     break;
@@ -1266,15 +1266,14 @@ public class BasicEditor extends Diagram
         standardPageToPrincipal.deltaTransform(delta, delta);
         try {
             CuspDecoration.removeDuplicates = true;
+            Point2D.Double selPage = pageLocation(selection);
             res = selection.moveHandle(delta.x, delta.y);
             if (moveAll) {
-                Point2D.Double p = principalLocation(selection);
-
-                for (DecorationHandle sel: getDecorationHandles(DecorationHandle.Type.CONTROL_POINT)) {
-                    if (sel.getDecoration() == selection.getDecoration())
+                for (DecorationHandle h: getDecorationHandles(DecorationHandle.Type.CONTROL_POINT)) {
+                    if (h.getDecoration() == selection.getDecoration())
                         continue;
-                    if (principalCoordinatesMatch(p, principalLocation(sel))) {
-                        sel.moveHandle(delta.x, delta.y);
+                    if (pageCoordinatesMatch(selPage, pageLocation(h))) {
+                        h.moveHandle(delta.x, delta.y);
                     }
                 }
             }
@@ -3317,11 +3316,12 @@ public class BasicEditor extends Diagram
         tieLineDialog.toFront();
     }
 
-    @Override List<DecorationHandle> selectionHandles(Decoration d) {
-        return Arrays.asList(d.getHandles(
-                        (selection != null && d == selection.getDecoration())
-                        ? DecorationHandle.Type.CONTROL_POINT
-                        : DecorationHandle.Type.SELECTION));
+    @Override List<DecorationHandle> getHandles(Decoration d,
+            DecorationHandle.Type type) {
+        DecorationHandle.Type type2 =
+            (selection != null && d == selection.getDecoration())
+            ? DecorationHandle.Type.CONTROL_POINT : type;
+        return Arrays.asList(d.getHandles(type2));
     }
 
     /**
@@ -3371,15 +3371,13 @@ public class BasicEditor extends Diagram
         Point2D.Double pagePoint;
 
         if (!select) {
-            ArrayList<DecorationHandle> hands = keyPointHandles(
-                    DecorationHandle.Type.SELECTION);
-            pagePoint = pageLocation(nearest(hands, mousePage()));
+            pagePoint = pageLocation(getAutoPositionHandle(null, true));
             if (pagePoint == null) {
                 return;
             }
         } else {
             boolean haveFocus = (principalFocus != null);
-            ArrayList<DecorationHandle> hands = nearestHandles();
+            ArrayList<DecorationHandle> hands = nearestHandles(DecorationHandle.Type.CONTROL_POINT);
             if (hands.isEmpty()) {
                 return;
             }
@@ -3733,18 +3731,14 @@ public class BasicEditor extends Diagram
     }
 
     public void edit(AnchoredLabel label) {
-        double oldAngle = label.getAngle();
         AnchoredLabel newLabel = null;
         LabelDialog dog = getLabelDialog();
         dog.setTitle("Edit Label");
-        dog.set(label);
-        try {
-            label.setAngle(principalToPageAngle(oldAngle));
-            newLabel = dog.showModal();
-            editFrame.toFront();
-        } finally {
-            label.setAngle(oldAngle);
-        }
+        AnchoredLabel tmp = (AnchoredLabel) label.clone();
+        tmp.setAngle(principalToPageAngle(label.getAngle()));
+        dog.set(tmp);
+        newLabel = dog.showModal();
+        editFrame.toFront();
         if (newLabel == null || !check(newLabel)) {
             return;
         }
@@ -3989,7 +3983,7 @@ public class BasicEditor extends Diagram
 
     /** @return a list of all DecorationHandles in order of their
         distance from principalFocus (if not null) or mprin (otherwise). */
-    ArrayList<DecorationHandle> nearestHandles() {
+    ArrayList<DecorationHandle> nearestHandles(DecorationHandle.Type type) {
         if (mprin == null) {
             return new ArrayList<>();
         }
@@ -3997,7 +3991,7 @@ public class BasicEditor extends Diagram
             principalFocus = mprin;
         }
 
-        return nearestHandles(principalFocus);
+        return nearestHandles(principalFocus, type);
     }
 
     /** Like seekNearestPoint(), but locate the nearest decoration
@@ -5672,10 +5666,6 @@ public class BasicEditor extends Diagram
         return null;
     }
 
-    public Point2D.Double secondarySelectionLocation() {
-        return principalLocation(secondarySelection());
-    }
-
     static enum AutoPositionType { NONE, CURVE, POINT };
     static class AutoPositionHolder {
         AutoPositionType position = AutoPositionType.NONE;
@@ -5688,7 +5678,7 @@ public class BasicEditor extends Diagram
     }
 
     public Point2D.Double getAutoPosition(AutoPositionHolder ap) {
-        DecorationHandle h = getAutoPositionHandle(ap);
+        DecorationHandle h = getAutoPositionHandle(ap, false);
         return (h == null) ? null : principalLocation(h);
     }
 
@@ -5710,8 +5700,13 @@ public class BasicEditor extends Diagram
         AutoPositionType.POINT to reflect whether the autoposition is
         the regular mouse position, the nearest curve, or the nearest
         key point.
+
+        @param keypointsOnly If true, return the closest key point,
+        never mind how far away it may be.
     */
-    DecorationHandle getAutoPositionHandle(AutoPositionHolder ap) {
+    DecorationHandle getAutoPositionHandle(AutoPositionHolder ap,
+            boolean keypointsOnly) {
+        double maxMovePixels = 50; // Maximum number of pixels to
         if (ap == null) {
             ap = new AutoPositionHolder();
         }
@@ -5727,9 +5722,10 @@ public class BasicEditor extends Diagram
         Point2D.Double newPage = null;
         double pageDist = 1e100;
 
+        int oldSize = decorations.size();
+
         try (UpdateSuppressor us = new UpdateSuppressor()) {
                 ArrayList<Point2D> selections = new ArrayList<>();
-                int oldSize = decorations.size();
 
                 Point2D.Double selPoint = null;
                 if (selection != null) {
@@ -5744,7 +5740,7 @@ public class BasicEditor extends Diagram
                         selections.add(selPoint);
                     }
                 }
-                Point2D.Double point2 = secondarySelectionLocation();
+                Point2D.Double point2 = principalLocation(secondarySelection());
                 if (point2 != null) {
                     selections.add(point2);
                     double dx = selPoint.x - point2.x;
@@ -5758,20 +5754,23 @@ public class BasicEditor extends Diagram
                                         new ArcInterp2D(Arrays.asList(diameter))));
                     }
 
-                    // Add the line through the midpoint of (selPoint, point2).
-                    Point2D.Double midpoint = Geom.midpoint(selPoint, point2);
-                    Point2D[] midpointLine = { midpoint,
-                                               new Point2D.Double(midpoint.x - dy, midpoint.y + dx) };
-                    principalToStandardPage.transform(midpointLine, 0, midpointLine, 0,
-                            midpointLine.length);
-                    Line2D.Double pageSeg = pageSegmentToLine(new Line2D.Double(
-                                    midpointLine[0], midpointLine[1]));
-                    midpointLine[0] = pageSeg.getP1();
-                    midpointLine[1] = pageSeg.getP2();
-                    standardPageToPrincipal.transform(midpointLine, 0, midpointLine, 0,
-                            midpointLine.length);
-                    addDecoration(new CuspDecoration(
-                                    new CuspInterp2D(Arrays.asList(midpointLine), false, false)));
+                    double distPixels = point2.distance(selPoint) * scale;
+                    if (distPixels > maxMovePixels * 2) {
+                        // Add the line through the midpoint of (selPoint, point2).
+                        Point2D.Double midpoint = Geom.midpoint(selPoint, point2);
+                        Point2D[] midpointLine = { midpoint,
+                                                   new Point2D.Double(midpoint.x - dy, midpoint.y + dx) };
+                        principalToStandardPage.transform(midpointLine, 0, midpointLine, 0,
+                                midpointLine.length);
+                        Line2D.Double pageSeg = pageSegmentToLine(new Line2D.Double(
+                                        midpointLine[0], midpointLine[1]));
+                        midpointLine[0] = pageSeg.getP1();
+                        midpointLine[1] = pageSeg.getP2();
+                        standardPageToPrincipal.transform(midpointLine, 0, midpointLine, 0,
+                                midpointLine.length);
+                        addDecoration(new CuspDecoration(
+                                        new CuspInterp2D(Arrays.asList(midpointLine), false, false)));
+                    }
                 }
 
                 for (Point2D p: selections) {
@@ -5824,46 +5823,54 @@ public class BasicEditor extends Diagram
                     }
                 }
 
-                if (res != null) {
+                if (!keypointsOnly) {
+                    if (res != null) {
+                        // Subtract keyPointPixelDist (converted to page
+                        // coordinates) from keyPointDist before comparing
+                        // with curves, in order to express the preference for
+                        // key points over curves when the mouse is close to
+                        // both.
+                        double keyPointPixelDist = 10;
+                        pageDist -= keyPointPixelDist / scale;
+                        ap.position = AutoPositionType.POINT;
+                    }
 
-                    // Subtract keyPointPixelDist (converted to page
-                    // coordinates) from keyPointDist before comparing
-                    // with curves, in order to express the preference for
-                    // key points over curves when the mouse is close to
-                    // both.
-                    double keyPointPixelDist = 10;
-                    pageDist -= keyPointPixelDist / scale;
-                    ap.position = AutoPositionType.POINT;
-                }
+                    // Only jump to the nearest curve if it is at
+                    // least three times closer than pageDist.
 
-                // Only jump to the nearest curve if it is at
-                // least three times closer than pageDist.
+                    DecorationDistance nc;
+                    if (pageDist > 0
+                            && (nc = nearestCurve(mousePage)) != null
+                            && pageDist > 3 * nc.distance.distance) {
+                        ap.position = AutoPositionType.CURVE;
+                        res = toHandle(nc);
+                        newPage = nc.distance.point;
+                        pageDist = nc.distance.distance;
+                    }
 
-                DecorationDistance nc;
-                if (pageDist > 0
-                        && (nc = nearestCurve(mousePage)) != null
-                        && pageDist > 3 * nc.distance.distance) {
-                    ap.position = AutoPositionType.CURVE;
-                    res = toHandle(nc);
-                    newPage = nc.distance.point;
-                    pageDist = nc.distance.distance;
-                }
-
-                double maxMovePixels = 50; // Maximum number of pixels to
-                // move the mouse
-                if (newPage == null
-                    || pageDist * scale > maxMovePixels) {
-                    ap.position = AutoPositionType.NONE;
-                    newPage = mousePage; // Leave the mouse where it is.
-                    res = new NullDecorationHandle(mprin2);
-                }
-
-                while (decorations.size() > oldSize) {
-                    removeDecoration(decorations.get(decorations.size()-1));
+                    // move the mouse
+                    if (newPage == null
+                            || pageDist * scale > maxMovePixels) {
+                        ap.position = AutoPositionType.NONE;
+                        newPage = mousePage; // Leave the mouse where it is.
+                        res = new NullDecorationHandle(mprin2);
+                    }
                 }
         } catch (Exception e) {
             System.err.println(e);
             System.exit(1);
+        } finally {
+            while (decorations.size() > oldSize) {
+                removeDecoration(decorations.get(decorations.size()-1));
+            }
+        }
+
+        if (res != null) {
+            int layer = getLayer(res.getDecoration());
+            if (layer == -1) {
+                // Don't return handles to temporary decorations!
+                return new NullDecorationHandle(principalLocation(res));
+            }
         }
 
         return res;
@@ -5875,7 +5882,7 @@ public class BasicEditor extends Diagram
             setMouseStuck(false);
         }
 
-        DecorationHandle h = getAutoPositionHandle(null);
+        DecorationHandle h = getAutoPositionHandle(null, false);
         if (h != null) {
             moveMouse(principalLocation(h));
             showTangent(h);
@@ -5994,7 +6001,7 @@ public class BasicEditor extends Diagram
         } else {
             Point2D.Double p;
             if (e.isShiftDown()) {
-                DecorationHandle h = getAutoPositionHandle(null);
+                DecorationHandle h = getAutoPositionHandle(null, false);
                 if (h == null)
                     return;
                 p = principalLocation(h);
