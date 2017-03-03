@@ -287,7 +287,7 @@ curve are indicated by small open green circles.</p>
 
 <h3 id=NewCurve>Starting a new curve</h3>
 
-<p>If a curve is already selected, press <code>Escape</code> to
+<p>If an item is already selected, press <code>Escape</code> to
 deselect it.
 
 <p>Position the mouse where the first vertex of the new curve belongs
@@ -295,8 +295,8 @@ and press <code>x</code> or the left mouse button. To start a new
 curve at the auto-position location instead, hold down the shift key
 as you do this.
 
-<p>A curve consisting of a single point is represented as a dot twice
-as wide as the current line width. It may be tempting to mark data
+<p>A curve consisting of a single point is represented as a dot with a
+radius double the current line width. It may be tempting to mark data
 points this way, but for various reasons, it usually works better to
 mark data points using 1-character labels.
 
@@ -306,7 +306,7 @@ mark data points using 1-character labels.
 press <code>Shift+W</code> or <code>Shift+Q</code> to select a place
 on the curve to add a new vertex.
 
-<p>For curves, of at least two points, the program not only has a
+<p>For curves of at least two points, the program not only has a
 selected vertex but a selected side where new points will be added.
 The red line that follows the mouse should provide a hint which side
 of the vertex is selected; if the red line is twisted, then you
@@ -748,7 +748,7 @@ increments.
 
     <li><p><b>Center mouse</b> (<code>Control+L</code>) brings the
         part of the diagram under the mouse towards the center of the
-        edit window. This has no effectd unless the diagram is zoomed
+        edit window. This has no effect unless the diagram is zoomed
         in.
   </ul>
 
@@ -839,9 +839,10 @@ increments.
 
     </ul>
 
-    <p>The <a href="#Copy">copy command</a> is the best way to create
-      many duplicates of a label, such as when marking data
-      points.</p>
+    <p>If you have a very short label selected, then clicking the left
+      mouse button will add another label like it, in the same way
+      that clicking the left button will add another point if you have
+      a curve selected.
 
     <p><a href="#Top">Return to top</a>
 
@@ -886,7 +887,18 @@ increments.
     <p>For more information on rulers, press the <b>Help</b> button
       for the Create/Edit Ruler dialog.
 
-    <p><a href="#Top">Return to top</a>
+    <p><a href="#Top">Return to top</a></p>
+
+  <li>
+
+    <p>To create a <b id=Circle>circle, arc, or ellipse</b>, first
+      create and select a curve with between one and four control
+      points. Each of those points will end up as points on your
+      circle or ellipse. If you choose two points only, they become
+      the diameter of your circle. Three points also define a circle.
+      Four points define an ellipse. To create an arc, press the 'o'
+      key for a three-control-point circle or an ellipse. Two of your
+      control points will become endpoints of the arc.</p>
 
   <li><p><b id=TieLines>Tie Lines</b></p>
 
@@ -925,21 +937,22 @@ increments.
           labels that are filled in white may make items in
           lower <a href="#Layer">layers</a> seem to disappear.</p>
 
-      <li><p><b id=Copy>Copy</b> (<code>c</code>) creates a new
-          copy of the selection at the current mouse position.</p>
+      <li>
+        <p><b id=Copy>Copy</b> (<code>Control+C</code>) adds the
+        selection to the clipboard.</p>
 
-      <li><p><b id=CopyRegion>Copy everything in selected region</b>
-            (<code>Shift+C</code>) copies all decorations that are
-            entirely contained in that region.</p>
+      <li>
+        <p><b id=Copy>Cut</b> (<code>Control+X</code>) erases the
+        selection and stores it in the clipboard.</p>
+
+      <li>
+        <p><b id=CutRegion>Cut everything in selected region</b>
+            (<code>Control+Shift+X</code>) cuts all decorations that are
+            entirely contained in that region and adds them to the
+            clipboard.</p>
 
       <li><p><b id=Delete>Delete</b> (<code>Delete</code>)
           deletes a single vertex or decoration.</p>
-
-      <li><p><b id=DeleteAll>Delete all</b> deletes a curve, if a
-          curve is the selected or nearest item, or all labels that
-          share the same text, if a label is the selected or nearest
-          item. Otherwise, it deletes the selected or nearest
-          decoration.</p>
 
       <li><p><b>Move selection only</b> (<code>Shift+V</code>) moves
           the selected vertex or item to the current mouse position.</p>
@@ -956,10 +969,8 @@ increments.
           moves the selected vertex or item and all other items at the
           same location.</p>
 
-      <li><p><b>Move everything in selected region</b>
-          (<code>Shift+R</code>) moves the selected curve or ruler and
-          all selectable key points that lie on or in that curve or
-          ruler. This is most often used with closed curves.</p>
+      <li><p><b>Paste</b> (<code>Control+V</code>)
+          pastes into the diagram whatever you most recently cut or copied.</p>
 
       <li><p><b>Properties</b> (<code>e</code>) brings up a special
           menu to edit the selected item's properties. Labels, rulers,
@@ -1018,7 +1029,7 @@ increments.
 
 <h2>Drawing common shapes</h2>
 
-<h3 id=Rectangle>Rectangle</h3>
+<h3 id=Rectangle>Squares and rectangles</h3>
 
 <p>To draw a rectangle as a 4-point unsmoothed curve:
 
@@ -1029,22 +1040,30 @@ increments.
   selected, press <code>Escape</code> to unselect it.
 
 <li>Add the bottom left corner of the rectangle using any of the
-various mouse positioning methods described elsewhere.
+  various mouse positioning methods described elsewhere.
 
-<li>Move the mouse near the intended bottom right corner and
-press <code>Shift+left mouse button</code>.
+  <p>For all subsequent steps, you should keep the shift key depressed
+  to activate auto-positioning.
 
-<li>Move the mouse near the intended upper right corner and
-  press <code>Shift+left mouse button</code>.
+<li>Move the mouse near the intended bottom right corner.
+  Press <code>Shift+left mouse button</code>.
 
-<li><a href=#ToggleClosure>Press <code>o</code></a> to make a closed
-polygon.
+<li>Move the mouse near the intended upper right corner. If you are
+  making a square (and holding down the Shift key as recommended), you
+  should see the outline turn olive when you are near the right spot.
+  Press <code>Shift+left mouse button</code>.
+
+<li>Let go of the Shift key for a moment
+  and <a href=#ToggleClosure>press <code>o</code></a> to make a closed
+  polygon.
 
 <li>Move the mouse near the intended upper left corner and
-  press <code>Shift+left mouse button</code> when you see the
-  olive-colored crosshairs.
+  press <code>Shift+left mouse button</code> when the outline turns
+  olive colored.
 
 </ol>
+
+You can use a similar process to make isoceles or equilateral triangles.
 
 <h3 id=Parallel>Parallel lines</h3>
 
@@ -1065,16 +1084,6 @@ already described. Let the new vertex remain selected.
   press <code>Shift+left mouse button</code>.
 
 </ol>
-
-<h3 id=Circle>Circle</h3>
-
-<p>The program does not currently support perfect circles, but a close
-approximation can be obtained with the same procedure
-as <a href=#Rectangle>how to draw a rectangle</a> to draw a rough
-square, with one difference: make sure that <code>Curve/Smooth through
-new points</code> is checked before you start. A smoothed curve
-through the four corners of an almost square rectangle is almost
-circular.
 
 </body>
 </html>
