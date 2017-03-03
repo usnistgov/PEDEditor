@@ -12,6 +12,7 @@ import java.awt.Paint;
 public enum StandardFill {
      // ALPHAXX -> XX% transparent gray
     SOLID (fill(0, 1, 1, false)),
+    ALPHA75 (fill(0, 0.75, 0.75, false)),
     ALPHA50 (fill(0, 0.5, 0.5, false)),
     ALPHA35 (fill(0, 0.35, 0.35, false)),
     ALPHA25 (fill(0, 0.25, 0.25, false)),

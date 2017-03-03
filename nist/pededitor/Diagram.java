@@ -2352,14 +2352,15 @@ public class Diagram extends Observable implements Printable {
         Generally, only the closest DecorationHandle for each
         Decoration is included, though perhaps an exception should be
         made for VertexHandles. */
-    ArrayList<DecorationHandle> nearestHandles(Point2D.Double p) {
+    ArrayList<DecorationHandle> nearestHandles(Point2D.Double p,
+            DecorationHandle.Type type) {
         Point2D.Double pagePoint = principalToStandardPage.transform(p);
 
         ArrayList<HandleAndDistance> hads = new ArrayList<>();
         for (Decoration d: getDecorations()) {
             double minDistSq = 0;
             DecorationHandle nearestHandle = null;
-            for (DecorationHandle h: selectionHandles(d)) {
+            for (DecorationHandle h: getHandles(d, type)) {
                 Point2D.Double p2 = h.getLocation(principalToStandardPage);
                 double distSq = pagePoint.distanceSq(p2);
                 if (nearestHandle == null || distSq < minDistSq) {
@@ -2383,7 +2384,12 @@ public class Diagram extends Observable implements Printable {
     }
 
     List<DecorationHandle> selectionHandles(Decoration d) {
-        return Arrays.asList(d.getHandles(DecorationHandle.Type.SELECTION));
+        return getHandles(d, DecorationHandle.Type.SELECTION);
+    }
+
+    List<DecorationHandle> getHandles(Decoration d,
+            DecorationHandle.Type type) {
+        return Arrays.asList(d.getHandles(type));
     }
 
     /**
@@ -2399,7 +2405,7 @@ public class Diagram extends Observable implements Printable {
             res.add(new NullDecorationHandle(p));
         }
 
-        if (diagramType != diagramType.OTHER) {
+        if (diagramType != DiagramType.OTHER) {
             for (Point2D.Double p: principalToStandardPage.getInputVertices()) {
                 res.add(new NullDecorationHandle(p));
             }
@@ -2494,7 +2500,7 @@ public class Diagram extends Observable implements Printable {
         ArrayList<DecorationHandle> res = new ArrayList<>();
 
         for (Decoration d: getDecorations()) {
-            res.addAll(Arrays.asList(d.getHandles(type)));
+            res.addAll(getHandles(d, type));
         }
         return res;
     }
@@ -3398,7 +3404,7 @@ public class Diagram extends Observable implements Printable {
                                   double maxPageDist) {
         Point2D.Double page = principalToStandardPage
             .transform(prin);
-        
+
         double minDistSq = 0;
         AnchoredLabel nearest = null;
 
