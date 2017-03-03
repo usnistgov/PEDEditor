@@ -228,7 +228,7 @@ public class BasicEditor extends Diagram
     }
 
     public static boolean editable(Decoration d) {
-        return d instanceof AnchoredLabel
+        return d instanceof Label
             || d instanceof TieLine
             || d instanceof LinearRuler;
     }
@@ -266,8 +266,8 @@ public class BasicEditor extends Diagram
         }
 
         Decoration d = selection.getDecoration();
-        if (d instanceof AnchoredLabel) {
-            edit((AnchoredLabel) d);
+        if (d instanceof Label) {
+            edit((Label) d);
         } else if (d instanceof TieLine) {
             edit((TieLine) d);
         } else if (d instanceof LinearRuler) {
@@ -813,9 +813,9 @@ public class BasicEditor extends Diagram
             : null;
     }
 
-    @JsonIgnore AnchoredLabel getSelectedLabel() {
+    @JsonIgnore Label getSelectedLabel() {
         Decoration d = getSelectedDecoration();
-        return (d instanceof AnchoredLabel) ? ((AnchoredLabel) d) : null;
+        return (d instanceof Label) ? ((Label) d) : null;
     }
 
     @JsonIgnore LinearRuler getSelectedRuler() {
@@ -879,7 +879,7 @@ public class BasicEditor extends Diagram
         if (lw != 0) {
             lineWidth = lw;
         }
-        AnchoredLabel label = getSelectedLabel();
+        Label label = getSelectedLabel();
         if (label != null) {
             getLabelDialog().setFontSize(label.getScale());
         }
@@ -903,7 +903,7 @@ public class BasicEditor extends Diagram
         Decoration dec = selection.getDecoration();
         dec.setColor(color);
         dec.setLineWidth(lineWidth);
-        AnchoredLabel label = getSelectedLabel();
+        Label label = getSelectedLabel();
         if (label != null) {
             label.setScale(getLabelDialog().getFontSize());
         }
@@ -1613,7 +1613,7 @@ public class BasicEditor extends Diagram
         selected). */
     void paintSelectedLabel(Graphics2D g, double scale) {
         LabelHandle hand = getLabelHandle();
-        AnchoredLabel label = hand.getDecoration();
+        Label label = hand.getDecoration();
         draw(g, label, scale);
 
         if (label.getXWeight() != 0.5 || label.getYWeight() != 0.5) {
@@ -2091,8 +2091,8 @@ public class BasicEditor extends Diagram
 
         Decoration d = getSelectedDecoration();
 
-        if (d instanceof AnchoredLabel) {
-            AnchoredLabel label = (AnchoredLabel) d;
+        if (d instanceof Label) {
+            Label label = (Label) d;
             if (label.getText().length() <= 3) {
                 Point2D.Double selPos = principalLocation(selection);
                 DecorationHandle lhand = selection.copy(point.x - selPos.x, point.y - selPos.y);
@@ -2918,7 +2918,7 @@ public class BasicEditor extends Diagram
             return toString(Arrays.asList(curve.getPoints()), v1, f1, v2, f2, sigFigs);
         }
 
-        AnchoredLabel label = getSelectedLabel();
+        Label label = getSelectedLabel();
         if (label != null) {
             return toString(labelCoordinates(label.getText()),
                             v1, f1, v2, f2, sigFigs);
@@ -3286,7 +3286,7 @@ public class BasicEditor extends Diagram
     /** If a label is selected, then copy it to the clipboard. If
         nothing is selected, copy all text to the clipboard. */
     public void copyTextToClipboard() {
-        AnchoredLabel label = getSelectedLabel();
+        Label label = getSelectedLabel();
         StringBuilder res = new StringBuilder();
         if (label != null) {
             res.append(HtmlToText.htmlToText(label.getText()));
@@ -3705,7 +3705,7 @@ public class BasicEditor extends Diagram
 
         LabelDialog dog = getLabelDialog();
         dog.setTitle("Add Label");
-        AnchoredLabel label = dog.showModal();
+        Label label = dog.showModal();
         editFrame.toFront();
         if (label == null || !check(label)) {
             return;
@@ -3722,7 +3722,7 @@ public class BasicEditor extends Diagram
         propagateChange();
     }
 
-    public boolean check(AnchoredLabel label) {
+    public boolean check(Label label) {
         if (label.getScale() <= 0) {
             showError("Font size is not a positive number");
             return false;
@@ -3730,11 +3730,11 @@ public class BasicEditor extends Diagram
         return true;
     }
 
-    public void edit(AnchoredLabel label) {
-        AnchoredLabel newLabel = null;
+    public void edit(Label label) {
+        Label newLabel = null;
         LabelDialog dog = getLabelDialog();
         dog.setTitle("Edit Label");
-        AnchoredLabel tmp = (AnchoredLabel) label.clone();
+        Label tmp = (Label) label.clone();
         tmp.setAngle(principalToPageAngle(label.getAngle()));
         dog.set(tmp);
         newLabel = dog.showModal();

@@ -29,7 +29,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 @JsonInclude(JsonInclude.Include.NON_DEFAULT)
 @JsonIgnoreProperties
 ({"lineWidth", "lineStyle", "font"})
-public class AnchoredLabel extends AnchoredTransformedShape {
+public class Label extends AnchoredTransformedShape {
     // The View size is independent of the resolution of the physical
     // device. Because the physical device might be high resolution, I
     // want the View to be high resolution, too.
@@ -64,10 +64,10 @@ public class AnchoredLabel extends AnchoredTransformedShape {
     boolean cutout = false;
     boolean autoWidth = false;
 
-    public AnchoredLabel() {
+    public Label() {
     }
 
-    public AnchoredLabel
+    public Label
         (@JsonProperty("text") String text,
          @JsonProperty("xWeight") double xWeight,
          @JsonProperty("yWeight") double yWeight) {
@@ -77,7 +77,7 @@ public class AnchoredLabel extends AnchoredTransformedShape {
     }
 
     /** Make this like other. */
-    public void copyFrom(AnchoredLabel other) {
+    public void copyFrom(Label other) {
         setAngle(other.getAngle());
         setAutoWidth(other.isAutoWidth());
         setBoxed(other.isBoxed());
@@ -96,8 +96,8 @@ public class AnchoredLabel extends AnchoredTransformedShape {
         margins = other.margins;
     }
 
-    @Override public AnchoredLabel clone() {
-        AnchoredLabel res = new AnchoredLabel();
+    @Override public Label clone() {
+        Label res = new Label();
         res.copyFrom(this);
         return res;
     }
@@ -111,7 +111,7 @@ public class AnchoredLabel extends AnchoredTransformedShape {
 
     /* The actual font size is font's size times getScale() times
        Diagram.BASE_SCALE. Yeah, that dependency is a little ugly, and
-       maybe Diagram should depend on AnchoredLabel instead of vice
+       maybe Diagram should depend on Label instead of vice
        versa. */
     public void setFont(Font font) {
         if (font != this.font) {

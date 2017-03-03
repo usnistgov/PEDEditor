@@ -747,12 +747,12 @@ public class Diagram extends Observable implements Printable {
     /** Remove decorations that are 'like' the given decoration by
         some arbitrary standard ("do what the user wants"). */
     public void removeLikeThis(Decoration d) {
-        if (d instanceof AnchoredLabel) {
+        if (d instanceof Label) {
             /* Remove all labels that share the same text. */
-            AnchoredLabel label = (AnchoredLabel) d;
+            Label label = (Label) d;
             String s = label.getText();
-            for (Iterator<AnchoredLabel> it = labels().iterator(); it.hasNext();) {
-                AnchoredLabel l2 = it.next();
+            for (Iterator<Label> it = labels().iterator(); it.hasNext();) {
+                Label l2 = it.next();
                 if (l2.getText().equals(s)) {
                     it.remove();
                 }
@@ -1213,8 +1213,8 @@ public class Diagram extends Observable implements Printable {
                 ProjectionAndOffset pao = stopAtBorders
                     ? projectOntoDiagram(p)
                     : new ProjectionAndOffset(p);
-                if (!pao.interior && (d instanceof AnchoredLabel)) {
-                    AnchoredLabel label = (AnchoredLabel) d;
+                if (!pao.interior && (d instanceof Label)) {
+                    Label label = (Label) d;
                     String text = label.getText();
                     if (MoleWeightString.hasAtomic(text)
                         || MoleWeightString.hasMole(text)
@@ -1307,7 +1307,7 @@ public class Diagram extends Observable implements Printable {
             return false;
         }
         if (convertLabels) {
-            for (AnchoredLabel label: labels()) {
+            for (Label label: labels()) {
                 label.setText(MoleWeightString.moleToWeight(label.getText()));
             }
         }
@@ -1368,7 +1368,7 @@ public class Diagram extends Observable implements Printable {
         }
         if (convertLabels) {
             boolean isAtom = isAtomic();
-            for (AnchoredLabel label: labels()) {
+            for (Label label: labels()) {
                 String s = label.getText();
                 label.setText(isAtom ? MoleWeightString.weightToAtomic(s)
                               : MoleWeightString.weightToMole(s));
@@ -1608,8 +1608,8 @@ public class Diagram extends Observable implements Printable {
         }
     }
 
-    public Iterable<AnchoredLabel> labels() {
-        return () -> new DecorationIterator<AnchoredLabel>(new AnchoredLabel());
+    public Iterable<Label> labels() {
+        return () -> new DecorationIterator<Label>(new Label());
     }
 
     public Iterable<SourceImage> images() {
@@ -1737,7 +1737,7 @@ public class Diagram extends Observable implements Printable {
         diagram components. Duplicates are removed. */
     @JsonIgnore public String[] getAllText() {
         TreeSet<String> lines = new TreeSet<>();
-        for (AnchoredLabel label: labels()) {
+        for (Label label: labels()) {
             lines.add(HtmlToText.htmlToText(label.getText()));
         }
         for (String s: tags) {
@@ -1769,7 +1769,7 @@ public class Diagram extends Observable implements Printable {
     /** Return the coordinates for all labels that match text. */
     public ArrayList<Point2D.Double> labelCoordinates(String text) {
         ArrayList<Point2D.Double> res = new ArrayList<>();
-        for (AnchoredLabel label: labels()) {
+        for (Label label: labels()) {
             if (text.equals(label.getText())) {
                 res.add(new Point2D.Double(label.getX(), label.getY()));
             }
@@ -1796,7 +1796,7 @@ public class Diagram extends Observable implements Printable {
             = new ArrayList<>();
 
         TreeSet<String> labelTexts = new TreeSet<>();
-        for (AnchoredLabel label: labels()) {
+        for (Label label: labels()) {
             labelTexts.add(label.getText());
         }
 
@@ -2184,7 +2184,7 @@ public class Diagram extends Observable implements Printable {
             || (isLeftAxis(axis) && getDiagramComponent(Side.LEFT) != null);
     }
 
-    public void add(AnchoredLabel label) {
+    public void add(Label label) {
         addDecoration(label);
     }
 
@@ -3406,9 +3406,9 @@ public class Diagram extends Observable implements Printable {
             .transform(prin);
 
         double minDistSq = 0;
-        AnchoredLabel nearest = null;
+        Label nearest = null;
 
-        for (AnchoredLabel label: labels()) {
+        for (Label label: labels()) {
             for (LabelHandle hand : label.getHandles(DecorationHandle.Type.SELECTION)) {
                 if (!hand.isCentered()) {
                     continue;
@@ -4417,7 +4417,7 @@ public class Diagram extends Observable implements Printable {
             throw new IllegalArgumentException("Unrecognized font name '" + s + "'");
         }
         embeddedFont = loadFont(filename, (float) STANDARD_FONT_SIZE);
-        for (AnchoredLabel label: labels()) {
+        for (Label label: labels()) {
             label.setFont(embeddedFont);
         }
         propagateChange();
@@ -4698,7 +4698,7 @@ abstract class ColorAnnotations extends Color {
               property = "decoration")
 @JsonSubTypes({
         @Type(value=CuspDecoration.class, name = "curve"),
-        @Type(value=AnchoredLabel.class, name = "label"),
+        @Type(value=Label.class, name = "label"),
         @Type(value=LinearRuler.class, name = "ruler"),
         @Type(value=Arrow.class, name = "arrow"),
         @Type(value=TieLine.class, name = "tie line"),

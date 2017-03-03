@@ -49,9 +49,9 @@ import org.supercsv.prefs.CsvPreference;
 public class LabelDialog extends JDialog {
     private static final long serialVersionUID = 7836636038916887920L;
 
-    /** See AnchoredLabel.xWeight for the definition of this field. */
+    /** See Label.xWeight for the definition of this field. */
     double xWeight;
-    /** See AnchoredLabel.yWeight for the definition of this field. */
+    /** See Label.yWeight for the definition of this field. */
     double yWeight;
     JTextArea textField = new JTextArea(6,45);
 
@@ -458,7 +458,7 @@ public class LabelDialog extends JDialog {
         reset();
     }
 
-    LabelDialog(Frame owner, String title, AnchoredLabel label, Font font) {
+    LabelDialog(Frame owner, String title, Label label, Font font) {
         this(owner, title, font, true);
         set(label);
     }
@@ -476,7 +476,7 @@ public class LabelDialog extends JDialog {
     }
 
     /** Make the settings of this dialog reflect those of the given label. */
-    public void set(AnchoredLabel label) {
+    public void set(Label label) {
         setText(label.getText());
         setXWeight(label.getXWeight());
         setYWeight(label.getYWeight());
@@ -547,9 +547,9 @@ public class LabelDialog extends JDialog {
     }
 
     /** Show the dialog as document-modal, and return the
-        AnchoredLabel selected. Return null if the dialog was closed
+        Label selected. Return null if the dialog was closed
         abnormally. */
-    public AnchoredLabel showModal() {
+    public Label showModal() {
         if (!packed) {
             pack();
             setMinimumSize(getSize());
@@ -563,8 +563,8 @@ public class LabelDialog extends JDialog {
             return null;
         }
 
-        AnchoredLabel al =
-            new AnchoredLabel(textField.getText(), xWeight, yWeight);
+        Label al =
+            new Label(textField.getText(), xWeight, yWeight);
         al.setFontSize(getFontSize());
         al.setAngle(getAngle());
         al.setAutoWidth(mIsAutoWidth.isSelected());
@@ -615,7 +615,7 @@ public class LabelDialog extends JDialog {
         LabelDialog dialog = new LabelDialog(null, "Labels test", font);
         dialog.setFontSize(4.0/3);
         dialog.setAngle(Math.PI / 2);
-        AnchoredLabel t = dialog.showModal();
+        Label t = dialog.showModal();
         System.out.println("You selected " + t);
     }
    

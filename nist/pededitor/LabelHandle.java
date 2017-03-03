@@ -12,17 +12,17 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 public class LabelHandle implements DecorationHandle {
     static enum Type { CENTER, ANCHOR };
 
-    AnchoredLabel decoration;
+    Label decoration;
     /** Labels may be grabbed from the anchor or the center. */
     Type handle;
 
-    @Override public AnchoredLabel getDecoration() {
+    @Override public Label getDecoration() {
         return decoration;
     }
 
     LabelHandle() {}
 
-    LabelHandle(AnchoredLabel decoration, Type handle) {
+    LabelHandle(Label decoration, Type handle) {
         this.decoration = decoration;
         this.handle = handle;
     }
@@ -37,7 +37,7 @@ public class LabelHandle implements DecorationHandle {
     }
 
     @Override public LabelHandle copy(double dx, double dy) {
-        AnchoredLabel label = (AnchoredLabel) getDecoration().copy(dx, dy);
+        Label label = (Label) getDecoration().copy(dx, dy);
         return new LabelHandle(label, handle);
     }
 
@@ -92,7 +92,7 @@ public class LabelHandle implements DecorationHandle {
 
     @Override
     public DecorationHandle copyFor(Decoration other) {
-        return new LabelHandle((AnchoredLabel) other, handle);
+        return new LabelHandle((Label) other, handle);
     }
 
     @Override
