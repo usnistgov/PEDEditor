@@ -1,39 +1,5 @@
 {
   "tags" : [ ],
-  "originalToPrincipal" : {
-    "transform" : "QuadToRect",
-    "input" : [ {
-      "x" : 164.0,
-      "y" : 1222.0
-    }, {
-      "x" : 166.0,
-      "y" : 101.0
-    }, {
-      "x" : 1652.0,
-      "y" : 101.0
-    }, {
-      "x" : 1652.0,
-      "y" : 1220.0
-    } ],
-    "output" : {
-      "x" : 0.0,
-      "y" : 400.0,
-      "width" : 1.0,
-      "height" : 1200.0
-    },
-    "x" : 0.0,
-    "y" : 400.0,
-    "w" : 1.0,
-    "h" : 1200.0,
-    "llx" : 164.0,
-    "lly" : 1222.0,
-    "ulx" : 166.0,
-    "uly" : 101.0,
-    "urx" : 1652.0,
-    "ury" : 101.0,
-    "lrx" : 1652.0,
-    "lry" : 1220.0
-  },
   "principalToStandardPage" : {
     "transform" : "RectangleTransform",
     "input" : {
@@ -57,7 +23,1428 @@
   },
   "diagramType" : "BINARY",
   "diagramComponents" : [ null, null, "Fe", "Al" ],
-  "originalFilename" : "..\\test\\PED_LARGE.png",
+  "usingWeightFraction" : true,
+  "fontName" : "DejaVu LGC Serif PED",
+  "keys" : {
+    "title" : "AlFe"
+  },
+  "decorations" : [ {
+    "decoration" : "ruler",
+    "startPoint" : {
+      "x" : 1.0,
+      "y" : 400.0
+    },
+    "endPoint" : {
+      "x" : 1.0,
+      "y" : 1600.0
+    },
+    "lineWidth" : 0.0016,
+    "labelAnchor" : "NONE",
+    "textAngle" : 1.5707963267948966,
+    "tickRight" : true,
+    "tickPadding" : 3.0,
+    "axis" : "T",
+    "id" : 51,
+    "fontSize" : 0.02
+  }, {
+    "decoration" : "ruler",
+    "startPoint" : {
+      "x" : 0.0,
+      "y" : 400.0
+    },
+    "endPoint" : {
+      "x" : 0.0,
+      "y" : 1600.0
+    },
+    "lineWidth" : 0.0016,
+    "labelAnchor" : "LEFT",
+    "textAngle" : 1.5707963267948966,
+    "tickLeft" : true,
+    "tickPadding" : 3.0,
+    "axis" : "T",
+    "id" : 52,
+    "fontSize" : 0.02
+  }, {
+    "decoration" : "ruler",
+    "startPoint" : {
+      "x" : 0.0,
+      "y" : 1600.0
+    },
+    "endPoint" : {
+      "x" : 1.0,
+      "y" : 1600.0
+    },
+    "lineWidth" : 0.0016,
+    "labelAnchor" : "NONE",
+    "multiplier" : 100.0,
+    "tickRight" : true,
+    "tickPadding" : 3.0,
+    "axis" : "Al",
+    "id" : 53,
+    "fontSize" : 0.02
+  }, {
+    "decoration" : "ruler",
+    "startPoint" : {
+      "x" : 0.0,
+      "y" : 400.0
+    },
+    "endPoint" : {
+      "x" : 1.0,
+      "y" : 400.0
+    },
+    "lineWidth" : 0.0016,
+    "labelAnchor" : "RIGHT",
+    "multiplier" : 100.0,
+    "tickRight" : true,
+    "tickPadding" : 3.0,
+    "axis" : "Al",
+    "id" : 54,
+    "fontSize" : 0.02
+  }, {
+    "decoration" : "curve",
+    "lineWidth" : 0.0012,
+    "curve" : {
+      "points" : [ {
+	"x" : 0.34700000000000003,
+	"y" : 1310.0
+      }, {
+	"x" : 0.28300000000000014,
+	"y" : 1310.0
+      } ],
+      "smoothed" : [ false, false ],
+      "closed" : false
+    },
+    "lineStyle" : "DASH",
+    "id" : 1
+  }, {
+    "decoration" : "curve",
+    "lineWidth" : 0.0012,
+    "curve" : {
+      "points" : [ {
+	"x" : 0.28300000000000014,
+	"y" : 1310.0
+      }, {
+	"x" : 0.2562499999999999,
+	"y" : 1290.3571428571431
+      }, {
+	"x" : 0.2260974702380953,
+	"y" : 1238.28125
+      }, {
+	"x" : 0.20803571428571435,
+	"y" : 1191.7857142857144
+      }, {
+	"x" : 0.1669642857142857,
+	"y" : 1026.7857142857144
+      }, {
+	"x" : 0.1401785714285715,
+	"y" : 827.5000000000002
+      }, {
+	"x" : 0.1294642857142857,
+	"y" : 673.2142857142858
+      }, {
+	"x" : 0.12946428571428562,
+	"y" : 664.6428571428573
+      } ],
+      "smoothed" : [ true, true, true, true, true, true, true, true ],
+      "closed" : false
+    },
+    "lineStyle" : "DASH",
+    "id" : 2
+  }, {
+    "decoration" : "curve",
+    "lineWidth" : 0.0012,
+    "curve" : {
+      "points" : [ {
+	"x" : 0.1294642857142856,
+	"y" : 664.6428571428573
+      }, {
+	"x" : 0.1265873015873016,
+	"y" : 610.0000000000002
+      }, {
+	"x" : 0.1226190476190476,
+	"y" : 548.0952380952382
+      }, {
+	"x" : 0.1186507936507936,
+	"y" : 470.0000000000001
+      }, {
+	"x" : 0.11517857142857135,
+	"y" : 400.00000000000017
+      } ],
+      "smoothed" : [ true, true, true, true, true ],
+      "closed" : false
+    },
+    "lineStyle" : "SOLID",
+    "id" : 3
+  }, {
+    "decoration" : "curve",
+    "lineWidth" : 0.0012,
+    "curve" : {
+      "points" : [ {
+	"x" : 0.14468005952380944,
+	"y" : 611.0714285714287
+      }, {
+	"x" : 0.1264544105816649,
+	"y" : 608.8849203110608
+      } ],
+      "smoothed" : [ false, false ],
+      "closed" : false
+    },
+    "lineStyle" : "DASH",
+    "id" : 50
+  }, {
+    "decoration" : "curve",
+    "lineWidth" : 0.0012,
+    "curve" : {
+      "points" : [ {
+	"x" : 0.1264544105816649,
+	"y" : 608.8849203110608
+      }, {
+	"x" : 0.1161086309523809,
+	"y" : 645.3571428571431
+      }, {
+	"x" : 0.09561011904761905,
+	"y" : 692.5000000000005
+      }, {
+	"x" : 0.07232142857142854,
+	"y" : 733.2142857142858
+      }, {
+	"x" : 0.030394345238095224,
+	"y" : 764.3303571428576
+      }, {
+	"x" : 0.013392857142857121,
+	"y" : 769.6428571428573
+      }, {
+	"x" : 0.0,
+	"y" : 770.0
+      } ],
+      "smoothed" : [ true, true, true, true, true, true, true ],
+      "closed" : false
+    },
+    "lineStyle" : "DASH",
+    "id" : 5
+  }, {
+    "decoration" : "curve",
+    "lineWidth" : 0.0012,
+    "curve" : {
+      "points" : [ {
+	"x" : 0.12946428571428562,
+	"y" : 664.6428571428573
+      }, {
+	"x" : 0.1392485119047619,
+	"y" : 636.7857142857144
+      }, {
+	"x" : 0.1446800595238094,
+	"y" : 611.0714285714284
+      }, {
+	"x" : 0.14693515866661194,
+	"y" : 576.6666666666674
+      }, {
+	"x" : 0.14642857142857132,
+	"y" : 548.0952380952382
+      }, {
+	"x" : 0.14302380527092723,
+	"y" : 509.81161718167846
+      }, {
+	"x" : 0.13849206349206347,
+	"y" : 470.0000000000001
+      }, {
+	"x" : 0.13624751984126984,
+	"y" : 434.76190476190504
+      }, {
+	"x" : 0.13452380952380946,
+	"y" : 400.00000000000017
+      } ],
+      "smoothed" : [ true, true, true, true, true, true, true, true, true ],
+      "closed" : false
+    },
+    "lineStyle" : "SOLID",
+    "id" : 7
+  }, {
+    "decoration" : "curve",
+    "lineWidth" : 0.0012,
+    "curve" : {
+      "points" : [ {
+	"x" : 0.13849206349206347,
+	"y" : 470.0000000000001
+      }, {
+	"x" : 0.1186507936507936,
+	"y" : 470.0000000000001
+      } ],
+      "smoothed" : [ true, true ],
+      "closed" : false
+    },
+    "lineStyle" : "DASH",
+    "id" : 8
+  }, {
+    "decoration" : "curve",
+    "lineWidth" : 0.0012,
+    "curve" : {
+      "points" : [ {
+	"x" : 0.1226190476190476,
+	"y" : 548.0952380952382
+      }, {
+	"x" : 0.14642857142857132,
+	"y" : 548.0952380952382
+      } ],
+      "smoothed" : [ true, true ],
+      "closed" : false
+    },
+    "lineStyle" : "DASH",
+    "id" : 9
+  }, {
+    "decoration" : "curve",
+    "lineWidth" : 0.0012,
+    "curve" : {
+      "points" : [ {
+	"x" : 0.14642857142857132,
+	"y" : 548.0952380952382
+      }, {
+	"x" : 0.15674603174603177,
+	"y" : 541.4285714285717
+      }, {
+	"x" : 0.17023809523809524,
+	"y" : 512.8571428571429
+      }, {
+	"x" : 0.17896825396825405,
+	"y" : 484.28571428571456
+      }, {
+	"x" : 0.19246031746031744,
+	"y" : 426.1904761904764
+      }, {
+	"x" : 0.1980158730158729,
+	"y" : 400.00000000000017
+      } ],
+      "smoothed" : [ true, true, true, true, true, true ],
+      "closed" : false
+    },
+    "lineStyle" : "DASH",
+    "id" : 10
+  }, {
+    "decoration" : "curve",
+    "lineWidth" : 0.0012,
+    "curve" : {
+      "points" : [ {
+	"x" : 0.13849206349206347,
+	"y" : 470.0000000000001
+      }, {
+	"x" : 0.14960317460317454,
+	"y" : 400.00000000000017
+      } ],
+      "smoothed" : [ true, true ],
+      "closed" : false
+    },
+    "lineStyle" : "DOT_DASH",
+    "id" : 11
+  }, {
+    "decoration" : "curve",
+    "lineWidth" : 0.0012,
+    "curve" : {
+      "points" : [ {
+	"x" : 0.0,
+	"y" : 1538.0
+      }, {
+	"x" : 0.023412698412698423,
+	"y" : 1534.761904761905
+      }, {
+	"x" : 0.06468253968253969,
+	"y" : 1524.2857142857144
+      }, {
+	"x" : 0.1186507936507936,
+	"y" : 1502.3809523809525
+      }, {
+	"x" : 0.19563492063492063,
+	"y" : 1451.9047619047622
+      }, {
+	"x" : 0.27579365079365076,
+	"y" : 1384.2857142857147
+      }, {
+	"x" : 0.30595238095238103,
+	"y" : 1352.8571428571431
+      }, {
+	"x" : 0.3281746031746032,
+	"y" : 1330.0000000000002
+      }, {
+	"x" : 0.34700000000000003,
+	"y" : 1310.0
+      } ],
+      "smoothed" : [ true, true, true, true, true, true, true, true, true ],
+      "closed" : false
+    },
+    "lineStyle" : "SOLID",
+    "id" : 12
+  }, {
+    "decoration" : "curve",
+    "lineWidth" : 0.0012,
+    "curve" : {
+      "points" : [ {
+	"x" : 0.34700000000000003,
+	"y" : 1310.0
+      }, {
+	"x" : 0.3773809523809524,
+	"y" : 1277.6190476190477
+      }, {
+	"x" : 0.42700000000000005,
+	"y" : 1232.0
+      } ],
+      "smoothed" : [ true, true, true ],
+      "closed" : false
+    },
+    "lineStyle" : "SOLID",
+    "id" : 13
+  }, {
+    "decoration" : "curve",
+    "lineWidth" : 0.0012,
+    "curve" : {
+      "points" : [ {
+	"x" : 0.42700000000000005,
+	"y" : 1232.0
+      }, {
+	"x" : 0.46230158730158744,
+	"y" : 1203.3333333333335
+      }, {
+	"x" : 0.515,
+	"y" : 1165.0
+      } ],
+      "smoothed" : [ true, true, true ],
+      "closed" : false
+    },
+    "lineStyle" : "SOLID",
+    "id" : 14
+  }, {
+    "decoration" : "curve",
+    "lineWidth" : 0.0012,
+    "curve" : {
+      "points" : [ {
+	"x" : 0.42700000000000005,
+	"y" : 1232.0
+      }, {
+	"x" : 0.34600000000000003,
+	"y" : 1232.0
+      } ],
+      "smoothed" : [ true, true ],
+      "closed" : false
+    },
+    "lineStyle" : "SOLID",
+    "id" : 15
+  }, {
+    "decoration" : "curve",
+    "lineWidth" : 0.0012,
+    "curve" : {
+      "points" : [ {
+	"x" : 0.34600000000000003,
+	"y" : 1232.0
+      }, {
+	"x" : 0.31547619047619047,
+	"y" : 1269.0476190476193
+      }, {
+	"x" : 0.28300000000000014,
+	"y" : 1310.0
+      } ],
+      "smoothed" : [ true, true, true ],
+      "closed" : false
+    },
+    "lineStyle" : "SOLID",
+    "id" : 16
+  }, {
+    "decoration" : "curve",
+    "lineWidth" : 0.0012,
+    "curve" : {
+      "points" : [ {
+	"x" : 0.28300000000000014,
+	"y" : 1310.0
+      }, {
+	"x" : 0.2448412698412698,
+	"y" : 1355.714285714286
+      }, {
+	"x" : 0.20436507936507936,
+	"y" : 1403.3333333333335
+      }, {
+	"x" : 0.1527777777777777,
+	"y" : 1454.761904761905
+      }, {
+	"x" : 0.10357142857142856,
+	"y" : 1495.7142857142858
+      }, {
+	"x" : 0.06547619047619047,
+	"y" : 1520.4761904761906
+      }, {
+	"x" : 0.03214285714285711,
+	"y" : 1532.8571428571431
+      }, {
+	"x" : 0.012301587301587312,
+	"y" : 1533.809523809524
+      }, {
+	"x" : 0.0,
+	"y" : 1538.0
+      } ],
+      "smoothed" : [ true, true, true, true, true, true, true, true, true ],
+      "closed" : false
+    },
+    "lineStyle" : "SOLID",
+    "id" : 17
+  }, {
+    "decoration" : "curve",
+    "lineWidth" : 0.0012,
+    "curve" : {
+      "points" : [ {
+	"x" : 0.34600000000000003,
+	"y" : 1232.0
+      }, {
+	"x" : 0.37400000000000017,
+	"y" : 1102.0
+      } ],
+      "smoothed" : [ true, true ],
+      "closed" : false
+    },
+    "lineStyle" : "DASH",
+    "id" : 18
+  }, {
+    "decoration" : "curve",
+    "lineWidth" : 0.0012,
+    "curve" : {
+      "points" : [ {
+	"x" : 0.37400000000000017,
+	"y" : 1102.0
+      }, {
+	"x" : 0.36626984126984125,
+	"y" : 1052.857142857143
+      }, {
+	"x" : 0.35833333333333334,
+	"y" : 997.6190476190478
+      } ],
+      "smoothed" : [ true, true, true ],
+      "closed" : false
+    },
+    "lineStyle" : "DASH",
+    "id" : 19
+  }, {
+    "decoration" : "curve",
+    "lineWidth" : 0.0012,
+    "curve" : {
+      "points" : [ {
+	"x" : 0.35833333333333334,
+	"y" : 997.6190476190478
+      }, {
+	"x" : 0.3519841269841271,
+	"y" : 950.0000000000001
+      }, {
+	"x" : 0.3432539682539683,
+	"y" : 872.8571428571429
+      }, {
+	"x" : 0.32896825396825385,
+	"y" : 709.0476190476193
+      }, {
+	"x" : 0.32023809523809516,
+	"y" : 549.047619047619
+      }, {
+	"x" : 0.31706349206349216,
+	"y" : 479.5238095238095
+      }, {
+	"x" : 0.31547619047619047,
+	"y" : 431.90476190476215
+      }, {
+	"x" : 0.3146825396825396,
+	"y" : 400.00000000000017
+      } ],
+      "smoothed" : [ true, true, true, true, true, true, true, true ],
+      "closed" : false
+    },
+    "lineStyle" : "SOLID",
+    "id" : 20
+  }, {
+    "decoration" : "curve",
+    "lineWidth" : 0.0012,
+    "curve" : {
+      "points" : [ {
+	"x" : 0.402,
+	"y" : 1232.0
+      }, {
+	"x" : 0.434,
+	"y" : 1102.0
+      } ],
+      "smoothed" : [ true, true ],
+      "closed" : false
+    },
+    "lineStyle" : "SOLID",
+    "id" : 21
+  }, {
+    "decoration" : "curve",
+    "lineWidth" : 0.0012,
+    "curve" : {
+      "points" : [ {
+	"x" : 0.47700000000000004,
+	"y" : 1165.0
+      }, {
+	"x" : 0.402,
+	"y" : 1232.0
+      } ],
+      "smoothed" : [ true, true ],
+      "closed" : false
+    },
+    "lineStyle" : "SOLID",
+    "id" : 22
+  }, {
+    "decoration" : "curve",
+    "lineWidth" : 0.0032,
+    "curve" : {
+      "points" : [ {
+	"x" : 0.47700000000000004,
+	"y" : 1165.0
+      }, {
+	"x" : 0.533,
+	"y" : 1165.0
+      } ],
+      "smoothed" : [ true, true ],
+      "closed" : false
+    },
+    "lineStyle" : "SOLID",
+    "id" : 23
+  }, {
+    "decoration" : "curve",
+    "lineWidth" : 0.0012,
+    "curve" : {
+      "points" : [ {
+	"x" : 0.49,
+	"y" : 1165.0
+      }, {
+	"x" : 0.486111111111111,
+	"y" : 1129.0476190476193
+      }, {
+	"x" : 0.48500000000000015,
+	"y" : 1102.0
+      }, {
+	"x" : 0.48611111111111116,
+	"y" : 978.5714285714289
+      }, {
+	"x" : 0.48769841269841285,
+	"y" : 750.0
+      }, {
+	"x" : 0.48769841269841285,
+	"y" : 461.42857142857144
+      }, {
+	"x" : 0.4876984126984126,
+	"y" : 400.00000000000017
+      } ],
+      "smoothed" : [ false, false, false, false, false, false, false ],
+      "closed" : false
+    },
+    "lineStyle" : "DASH",
+    "id" : 24
+  }, {
+    "decoration" : "curve",
+    "lineWidth" : 0.0012,
+    "curve" : {
+      "points" : [ {
+	"x" : 0.49563492063492043,
+	"y" : 400.00000000000017
+      }, {
+	"x" : 0.49563492063492054,
+	"y" : 445.2380952380955
+      }, {
+	"x" : 0.49563492063492054,
+	"y" : 579.5238095238096
+      }, {
+	"x" : 0.4948412698412699,
+	"y" : 798.5714285714287
+      }, {
+	"x" : 0.4948412698412699,
+	"y" : 985.2380952380954
+      }, {
+	"x" : 0.49246031746031754,
+	"y" : 1106.1904761904764
+      }, {
+	"x" : 0.4916666666666664,
+	"y" : 1142.3809523809525
+      }, {
+	"x" : 0.49,
+	"y" : 1165.0
+      } ],
+      "smoothed" : [ false, false, false, false, false, false, false, false ],
+      "closed" : false
+    },
+    "lineStyle" : "DASH",
+    "id" : 25
+  }, {
+    "decoration" : "curve",
+    "lineWidth" : 0.0012,
+    "curve" : {
+      "points" : [ {
+	"x" : 0.48500000000000015,
+	"y" : 1102.0
+      }, {
+	"x" : 0.37400000000000017,
+	"y" : 1102.0
+      } ],
+      "smoothed" : [ false, false ],
+      "closed" : false
+    },
+    "lineStyle" : "SOLID",
+    "id" : 26
+  }, {
+    "decoration" : "curve",
+    "lineWidth" : 0.0012,
+    "curve" : {
+      "points" : [ {
+	"x" : 0.434,
+	"y" : 1102.0
+      }, {
+	"x" : 0.47700000000000004,
+	"y" : 1165.0
+      } ],
+      "smoothed" : [ false, false ],
+      "closed" : false
+    },
+    "lineStyle" : "SOLID",
+    "id" : 27
+  }, {
+    "decoration" : "curve",
+    "lineWidth" : 0.0012,
+    "curve" : {
+      "points" : [ {
+	"x" : 0.5337301587301586,
+	"y" : 400.00000000000017
+      }, {
+	"x" : 0.532936507936508,
+	"y" : 651.9047619047622
+      }, {
+	"x" : 0.5321428571428573,
+	"y" : 873.8095238095241
+      } ],
+      "smoothed" : [ false, false, false ],
+      "closed" : false
+    },
+    "lineStyle" : "DASH",
+    "id" : 28
+  }, {
+    "decoration" : "curve",
+    "lineWidth" : 0.0012,
+    "curve" : {
+      "points" : [ {
+	"x" : 0.533,
+	"y" : 1165.0
+      }, {
+	"x" : 0.532936507936508,
+	"y" : 1024.2857142857144
+      }, {
+	"x" : 0.5321428571428573,
+	"y" : 873.8095238095241
+      } ],
+      "smoothed" : [ false, false, false ],
+      "closed" : false
+    },
+    "lineStyle" : "SOLID",
+    "id" : 29
+  }, {
+    "decoration" : "curve",
+    "lineWidth" : 0.0012,
+    "curve" : {
+      "points" : [ {
+	"x" : 0.557,
+	"y" : 1160.0
+      }, {
+	"x" : 0.5567460317460317,
+	"y" : 1137.6190476190477
+      }, {
+	"x" : 0.559920634920635,
+	"y" : 1055.7142857142858
+      }, {
+	"x" : 0.5646825396825397,
+	"y" : 941.4285714285716
+      }, {
+	"x" : 0.5654761904761904,
+	"y" : 877.6190476190478
+      } ],
+      "smoothed" : [ true, true, true, true, true ],
+      "closed" : false
+    },
+    "lineStyle" : "SOLID",
+    "id" : 30
+  }, {
+    "decoration" : "curve",
+    "lineWidth" : 0.0012,
+    "curve" : {
+      "points" : [ {
+	"x" : 0.5654761904761904,
+	"y" : 877.6190476190478
+      }, {
+	"x" : 0.567063492063492,
+	"y" : 832.857142857143
+      }, {
+	"x" : 0.5678571428571431,
+	"y" : 743.3333333333335
+      }, {
+	"x" : 0.5678571428571431,
+	"y" : 596.6666666666667
+      }, {
+	"x" : 0.5654761904761904,
+	"y" : 494.7619047619049
+      }, {
+	"x" : 0.5630952380952381,
+	"y" : 433.80952380952397
+      }, {
+	"x" : 0.5615079365079366,
+	"y" : 400.00000000000017
+      } ],
+      "smoothed" : [ true, true, true, true, true, true, true ],
+      "closed" : false
+    },
+    "lineStyle" : "DASH",
+    "id" : 31
+  }, {
+    "decoration" : "curve",
+    "lineWidth" : 0.0012,
+    "curve" : {
+      "points" : [ {
+	"x" : 0.557,
+	"y" : 1160.0
+      }, {
+	"x" : 0.5440000000000002,
+	"y" : 1169.0
+      }, {
+	"x" : 0.5376984126984127,
+	"y" : 1166.1904761904764
+      }, {
+	"x" : 0.533,
+	"y" : 1165.0
+      } ],
+      "smoothed" : [ true, true, true, true ],
+      "closed" : false
+    },
+    "lineStyle" : "SOLID",
+    "id" : 32
+  }, {
+    "decoration" : "curve",
+    "lineWidth" : 0.0012,
+    "curve" : {
+      "points" : [ {
+	"x" : 0.594,
+	"y" : 1160.0
+      }, {
+	"x" : 0.6281746031746034,
+	"y" : 1155.7142857142858
+      }, {
+	"x" : 0.6654761904761909,
+	"y" : 1146.1904761904764
+      }, {
+	"x" : 0.7202380952380952,
+	"y" : 1119.5238095238096
+      }, {
+	"x" : 0.7900793650793649,
+	"y" : 1055.7142857142858
+      }, {
+	"x" : 0.859920634920635,
+	"y" : 957.6190476190479
+      }, {
+	"x" : 0.9289682539682538,
+	"y" : 813.8095238095241
+      }, {
+	"x" : 0.9670634920634922,
+	"y" : 698.5714285714289
+      }, {
+	"x" : 0.9790000000000001,
+	"y" : 655.0
+      } ],
+      "smoothed" : [ true, true, true, true, true, true, true, true, true ],
+      "closed" : false
+    },
+    "lineStyle" : "SOLID",
+    "id" : 33
+  }, {
+    "decoration" : "curve",
+    "lineWidth" : 0.0032,
+    "curve" : {
+      "points" : [ {
+	"x" : 1.0,
+	"y" : 655.0
+      }, {
+	"x" : 0.614,
+	"y" : 655.0
+      } ],
+      "smoothed" : [ true, true ],
+      "closed" : false
+    },
+    "lineStyle" : "SOLID",
+    "id" : 34
+  }, {
+    "decoration" : "curve",
+    "lineWidth" : 0.0012,
+    "curve" : {
+      "points" : [ {
+	"x" : 0.9790000000000001,
+	"y" : 655.0
+      }, {
+	"x" : 0.9923280423280425,
+	"y" : 658.7301587301588
+      }, {
+	"x" : 1.0,
+	"y" : 660.452
+      } ],
+      "smoothed" : [ true, true, true ],
+      "closed" : false
+    },
+    "lineStyle" : "SOLID",
+    "id" : 35
+  }, {
+    "decoration" : "curve",
+    "lineWidth" : 0.0012,
+    "curve" : {
+      "points" : [ {
+	"x" : 0.594,
+	"y" : 1160.0
+      }, {
+	"x" : 0.5928571428571427,
+	"y" : 1141.9047619047622
+      }, {
+	"x" : 0.5902116402116403,
+	"y" : 1079.0476190476193
+      }, {
+	"x" : 0.5859788359788362,
+	"y" : 952.6984126984128
+      }, {
+	"x" : 0.5854497354497354,
+	"y" : 879.047619047619
+      } ],
+      "smoothed" : [ true, true, true, true, true ],
+      "closed" : false
+    },
+    "lineStyle" : "SOLID",
+    "id" : 36
+  }, {
+    "decoration" : "curve",
+    "lineWidth" : 0.0012,
+    "curve" : {
+      "points" : [ {
+	"x" : 0.5854497354497354,
+	"y" : 879.047619047619
+      }, {
+	"x" : 0.5849206349206348,
+	"y" : 826.984126984127
+      }, {
+	"x" : 0.5843915343915345,
+	"y" : 722.2222222222224
+      }, {
+	"x" : 0.5854497354497354,
+	"y" : 566.6666666666667
+      }, {
+	"x" : 0.5859788359788362,
+	"y" : 449.84126984127
+      }, {
+	"x" : 0.5870370370370372,
+	"y" : 400.00000000000017
+      } ],
+      "smoothed" : [ true, true, true, true, true, true ],
+      "closed" : false
+    },
+    "lineStyle" : "DASH",
+    "id" : 37
+  }, {
+    "decoration" : "curve",
+    "lineWidth" : 0.0012,
+    "curve" : {
+      "points" : [ {
+	"x" : 0.594,
+	"y" : 1160.0
+      }, {
+	"x" : 0.5976190476190474,
+	"y" : 1138.7301587301588
+      }, {
+	"x" : 0.6023809523809522,
+	"y" : 1070.793650793651
+      }, {
+	"x" : 0.6060846560846562,
+	"y" : 1011.7460317460318
+      }, {
+	"x" : 0.6071428571428571,
+	"y" : 978.7301587301589
+      } ],
+      "smoothed" : [ true, true, true, true, true ],
+      "closed" : false
+    },
+    "lineStyle" : "SOLID",
+    "id" : 38
+  }, {
+    "decoration" : "curve",
+    "lineWidth" : 0.0012,
+    "curve" : {
+      "points" : [ {
+	"x" : 0.6082010582010581,
+	"y" : 400.00000000000017
+      }, {
+	"x" : 0.6092592592592593,
+	"y" : 437.1428571428572
+      }, {
+	"x" : 0.6108465608465609,
+	"y" : 507.6190476190477
+      }, {
+	"x" : 0.6121785020159001,
+	"y" : 572.1331784746321
+      }, {
+	"x" : 0.614,
+	"y" : 655.0
+      }, {
+	"x" : 0.6140395437143404,
+	"y" : 715.8730158730158
+      }, {
+	"x" : 0.6124522421270385,
+	"y" : 793.3333333333333
+      }, {
+	"x" : 0.6116763767213312,
+	"y" : 838.6407888919746
+      }, {
+	"x" : 0.61031746031746,
+	"y" : 886.0317460317463
+      }, {
+	"x" : 0.6092592592592593,
+	"y" : 952.6984126984128
+      }, {
+	"x" : 0.6071428571428571,
+	"y" : 978.7301587301589
+      } ],
+      "smoothed" : [ true, true, true, true, true, true, true, true, true, true, true ],
+      "closed" : false
+    },
+    "lineStyle" : "DASH",
+    "id" : 39
+  }, {
+    "decoration" : "curve",
+    "lineWidth" : 0.0032,
+    "curve" : {
+      "points" : [ {
+	"x" : 0.0,
+	"y" : 912.0
+      }, {
+	"x" : 0.007738095238095218,
+	"y" : 969.2857142857144
+      }, {
+	"x" : 0.0113095238095238,
+	"y" : 1022.1428571428573
+      }, {
+	"x" : 0.0125,
+	"y" : 1105.0000000000002
+      }, {
+	"x" : 0.0125,
+	"y" : 1147.8571428571431
+      }, {
+	"x" : 0.0113095238095238,
+	"y" : 1240.7142857142858
+      }, {
+	"x" : 0.005357142857142848,
+	"y" : 1352.1428571428573
+      }, {
+	"x" : 0.0,
+	"y" : 1394.0
+      } ],
+      "smoothed" : [ true, true, true, true, true, true, true, true ],
+      "closed" : false
+    },
+    "lineStyle" : "SOLID",
+    "id" : 40
+  }, {
+    "decoration" : "curve",
+    "lineWidth" : 0.0012,
+    "curve" : {
+      "points" : [ {
+	"x" : 0.9579999999999999,
+	"y" : 500.0
+      }, {
+	"x" : 1.0,
+	"y" : 500.0
+      } ],
+      "smoothed" : [ false, false ],
+      "closed" : false
+    },
+    "lineStyle" : "SOLID",
+    "id" : 41
+  }, {
+    "decoration" : "curve",
+    "lineWidth" : 0.0012,
+    "curve" : {
+      "points" : [ {
+	"x" : 0.6323238973008559,
+	"y" : 749.5720868992761
+      }, {
+	"x" : 0.6009413506135246,
+	"y" : 749.5720868992736
+      } ],
+      "smoothed" : [ false, false ],
+      "closed" : false
+    },
+    "lineStyle" : "SOLID",
+    "id" : 42
+  }, {
+    "decoration" : "curve",
+    "lineWidth" : 0.0012,
+    "curve" : {
+      "points" : [ {
+	"x" : 0.4909832940320735,
+	"y" : 749.5720868992722
+      }, {
+	"x" : 0.45911419070513737,
+	"y" : 749.5720868992742
+      } ],
+      "smoothed" : [ false, false ],
+      "closed" : false
+    },
+    "lineStyle" : "SOLID",
+    "id" : 43
+  }, {
+    "decoration" : "curve",
+    "lineWidth" : 0.0012,
+    "curve" : {
+      "points" : [ {
+	"x" : 0.19702380952380943,
+	"y" : 485.0000000000001
+      }, {
+	"x" : 0.1601190476190476,
+	"y" : 485.0000000000001
+      } ],
+      "smoothed" : [ false, false ],
+      "closed" : false
+    },
+    "lineStyle" : "SOLID",
+    "id" : 44
+  }, {
+    "decoration" : "curve",
+    "lineWidth" : 0.0012,
+    "curve" : {
+      "points" : [ {
+	"x" : 0.49629127350320723,
+	"y" : 1220.714285714286
+      }, {
+	"x" : 0.49629561954819335,
+	"y" : 1165.0
+      } ],
+      "smoothed" : [ false, false ],
+      "closed" : false
+    },
+    "lineStyle" : "SOLID",
+    "id" : 45
+  }, {
+    "decoration" : "curve",
+    "lineWidth" : 0.0012,
+    "curve" : {
+      "points" : [ {
+	"x" : 0.003807028817136922,
+	"y" : 1100.278884078547
+      }, {
+	"x" : 0.039851475418464295,
+	"y" : 1100.4761904761906
+      } ],
+      "smoothed" : [ false, false ],
+      "closed" : false
+    },
+    "lineStyle" : "SOLID",
+    "id" : 46
+  }, {
+    "decoration" : "curve",
+    "lineWidth" : 0.0032,
+    "curve" : {
+      "points" : [ {
+	"x" : 1.0,
+	"y" : 660.452
+      }, {
+	"x" : 1.0,
+	"y" : 400.0
+      } ],
+      "smoothed" : [ false, false ],
+      "closed" : false
+    },
+    "lineStyle" : "SOLID",
+    "id" : 47
+  }, {
+    "decoration" : "curve",
+    "lineWidth" : 0.0012,
+    "curve" : {
+      "points" : [ {
+	"x" : 0.515,
+	"y" : 1165.0
+      }, {
+	"x" : 0.5271005747040244,
+	"y" : 1166.8188096221793
+      }, {
+	"x" : 0.5440000000000002,
+	"y" : 1169.0
+      }, {
+	"x" : 0.5627610809530481,
+	"y" : 1166.9508560653767
+      }, {
+	"x" : 0.594,
+	"y" : 1160.0
+      } ],
+      "smoothed" : [ true, true, true, true, true ],
+      "closed" : false
+    },
+    "lineStyle" : "SOLID",
+    "id" : 48
+  }, {
+    "decoration" : "curve",
+    "lineWidth" : 0.0032,
+    "curve" : {
+      "points" : [ {
+	"x" : 0.557,
+	"y" : 1160.0
+      }, {
+	"x" : 0.594,
+	"y" : 1160.0
+      } ],
+      "smoothed" : [ false, false ],
+      "closed" : false
+    },
+    "lineStyle" : "SOLID",
+    "id" : 49
+  }, {
+    "decoration" : "arrow",
+    "x" : 0.49629561954819335,
+    "y" : 1165.0,
+    "angle" : -1.570796216609968,
+    "scale" : 0.0012
+  }, {
+    "decoration" : "arrow",
+    "x" : 0.4909832940320735,
+    "y" : 749.5720868992722,
+    "angle" : -0.0,
+    "scale" : 0.0012
+  }, {
+    "decoration" : "arrow",
+    "x" : 0.6009413506135246,
+    "y" : 749.5720868992736,
+    "angle" : 3.141592653589793,
+    "scale" : 0.0012
+  }, {
+    "decoration" : "arrow",
+    "x" : 0.003807028817136922,
+    "y" : 1100.278884078547,
+    "angle" : 3.1682961911453065,
+    "scale" : 0.0016
+  }, {
+    "decoration" : "arrow",
+    "x" : 1.0,
+    "y" : 500.0,
+    "angle" : 0.008726646259971648,
+    "scale" : 0.0016
+  }, {
+    "decoration" : "arrow",
+    "x" : 0.1601190476190476,
+    "y" : 485.0,
+    "angle" : 3.141592653589793,
+    "scale" : 0.0012
+  }, {
+    "decoration" : "label",
+    "text" : "1310°C",
+    "x" : 0.34700000000000003,
+    "y" : 1310.0,
+    "scale" : 1.25,
+    "yweight" : 1.0
+  }, {
+    "decoration" : "label",
+    "text" : "T<sub>e</sub>",
+    "x" : 0.06388888888888879,
+    "y" : 762.3809523809524,
+    "scale" : 1.25,
+    "xweight" : 0.5,
+    "yweight" : 0.5
+  }, {
+    "decoration" : "label",
+    "text" : "1538&deg;C ",
+    "y" : 1538.0,
+    "scale" : 1.25,
+    "xweight" : 1.0,
+    "yweight" : 0.5
+  }, {
+    "decoration" : "label",
+    "text" : "L",
+    "x" : 0.667857142857143,
+    "y" : 1416.6666666666665,
+    "scale" : 1.8,
+    "xweight" : 0.5,
+    "yweight" : 0.5
+  }, {
+    "decoration" : "label",
+    "text" : "1232",
+    "x" : 0.3644068442848932,
+    "y" : 1229.047619047619,
+    "scale" : 1.25,
+    "xweight" : 0.5,
+    "yweight" : 1.0
+  }, {
+    "decoration" : "label",
+    "text" : "FeAl",
+    "x" : 0.24563492063492093,
+    "y" : 888.0952380952384,
+    "scale" : 1.5,
+    "xweight" : 0.5,
+    "yweight" : 0.5
+  }, {
+    "decoration" : "label",
+    "text" : "ε",
+    "x" : 0.43928571428571406,
+    "y" : 1160.4761904761908,
+    "scale" : 1.5,
+    "xweight" : 0.5,
+    "yweight" : 0.5
+  }, {
+    "decoration" : "label",
+    "text" : "(γFe)",
+    "x" : 0.039851475418464295,
+    "y" : 1100.4761904761906,
+    "scale" : 1.5,
+    "yweight" : 0.5
+  }, {
+    "decoration" : "label",
+    "text" : "Weight Percent Aluminum",
+    "x" : 0.495634920634921,
+    "y" : 320.4761904761904,
+    "scale" : 1.8,
+    "xweight" : 0.5,
+    "yweight" : 0.5
+  }, {
+    "decoration" : "label",
+    "text" : "Fe",
+    "x" : -0.018725198412697718,
+    "y" : 358.36309523809814,
+    "scale" : 1.8
+  }, {
+    "decoration" : "label",
+    "text" : "1102&deg;C",
+    "x" : 0.42700000000000005,
+    "y" : 1102.0,
+    "scale" : 1.25,
+    "xweight" : 0.5
+  }, {
+    "decoration" : "label",
+    "text" : "655&deg;C",
+    "x" : 0.7892,
+    "y" : 655.0,
+    "scale" : 1.25,
+    "xweight" : 0.5,
+    "yweight" : 1.0
+  }, {
+    "decoration" : "label",
+    "text" : "660.452&deg;C",
+    "x" : 1.0,
+    "y" : 660.452,
+    "scale" : 1.25,
+    "yweight" : 0.5
+  }, {
+    "decoration" : "label",
+    "text" : "Atomic Percent Aluminum",
+    "x" : 0.49763083054989377,
+    "y" : 1657.7222748504848,
+    "scale" : 1.8,
+    "xweight" : 0.5,
+    "yweight" : 1.0
+  }, {
+    "decoration" : "label",
+    "text" : "~1160&deg;C",
+    "x" : 0.594,
+    "y" : 1160.0,
+    "scale" : 1.25,
+    "yweight" : 1.0
+  }, {
+    "decoration" : "label",
+    "text" : "1169&deg;C",
+    "x" : 0.545,
+    "y" : 1169.0,
+    "scale" : 1.25,
+    "xweight" : 0.5,
+    "yweight" : 1.0
+  }, {
+    "decoration" : "label",
+    "text" : "1394&deg;C",
+    "y" : 1394.0,
+    "scale" : 1.25,
+    "xweight" : 1.0
+  }, {
+    "decoration" : "label",
+    "text" : "(αFe)",
+    "x" : 0.10654761904761903,
+    "y" : 1272.8125000000007,
+    "scale" : 1.5,
+    "xweight" : 0.5,
+    "yweight" : 0.5
+  }, {
+    "decoration" : "label",
+    "text" : "912&deg;C",
+    "x" : -0.0012318305001231824,
+    "y" : 911.9999999999999,
+    "scale" : 1.25,
+    "opaque" : true,
+    "xweight" : 1.0,
+    "yweight" : 0.5
+  }, {
+    "decoration" : "label",
+    "text" : "(Al)",
+    "x" : 0.9579999999999999,
+    "y" : 500.0,
+    "scale" : 1.3333333333333333,
+    "xweight" : 1.0,
+    "yweight" : 0.5
+  }, {
+    "decoration" : "label",
+    "text" : "FeAl<sub>3</sub>",
+    "x" : 0.6323238973008559,
+    "y" : 749.5720868992756,
+    "angle" : 1.5707963267948966,
+    "scale" : 1.5,
+    "xweight" : 0.5
+  }, {
+    "decoration" : "label",
+    "text" : "Fe<sub>2</sub>Al<sub>5</sub>",
+    "x" : 0.5500579951043852,
+    "y" : 765.3719552337061,
+    "angle" : 1.5707963267948966,
+    "scale" : 1.5,
+    "xweight" : 0.5,
+    "yweight" : 0.5
+  }, {
+    "decoration" : "label",
+    "text" : "FeAl<sub>2</sub>",
+    "x" : 0.46734315831957973,
+    "y" : 749.572086899273,
+    "angle" : 1.5707963267948966,
+    "scale" : 1.5,
+    "xweight" : 0.5,
+    "yweight" : 1.0
+  }, {
+    "decoration" : "label",
+    "text" : "Fe<sub>3</sub>Al",
+    "x" : 0.197023809523809,
+    "y" : 485.0000000000001,
+    "scale" : 1.5,
+    "yweight" : 0.5
+  }, {
+    "decoration" : "label",
+    "text" : "770&deg;C",
+    "y" : 770.0,
+    "scale" : 1.25,
+    "xweight" : 1.0,
+    "yweight" : 0.5
+  }, {
+    "decoration" : "label",
+    "text" : "1165&deg;C",
+    "x" : 0.49629127350320723,
+    "y" : 1220.714285714286,
+    "scale" : 1.25,
+    "xweight" : 0.5,
+    "yweight" : 1.0
+  }, {
+    "decoration" : "label",
+    "text" : "Temperature °C",
+    "x" : -0.0798177339204041,
+    "y" : 999.5238095238092,
+    "angle" : 1.5707963267948966,
+    "scale" : 1.8,
+    "xweight" : 0.5,
+    "yweight" : 1.0
+  }, {
+    "decoration" : "label",
+    "text" : "Al",
+    "x" : 1.01339285714286,
+    "y" : 311.07142857142867,
+    "scale" : 1.8,
+    "xweight" : 0.5,
+    "yweight" : 0.5
+  } ],
   "axes" : [ {
     "format" : {
       "type" : "DecimalFormat",
@@ -103,1423 +1490,5 @@
     "b" : -5.833333333333333E-4,
     "c" : 1.0833333333333333,
     "name" : "page Y"
-  } ],
-  "usingWeightFraction" : true,
-  "fontName" : "DejaVu LGC Serif PED",
-  "keys" : {
-    "title" : "AlFe"
-  },
-  "decorations" : [ {
-    "decoration" : "ruler",
-    "startPoint" : {
-      "x" : 1.0,
-      "y" : 400.0
-    },
-    "endPoint" : {
-      "x" : 1.0,
-      "y" : 1600.0
-    },
-    "lineWidth" : 0.0016,
-    "labelAnchor" : "NONE",
-    "textAngle" : 1.5707963267948966,
-    "tickRight" : true,
-    "tickPadding" : 3.0,
-    "axis" : "T",
-    "fontSize" : 0.02
-  }, {
-    "decoration" : "ruler",
-    "startPoint" : {
-      "x" : 0.0,
-      "y" : 400.0
-    },
-    "endPoint" : {
-      "x" : 0.0,
-      "y" : 1600.0
-    },
-    "lineWidth" : 0.0016,
-    "labelAnchor" : "LEFT",
-    "textAngle" : 1.5707963267948966,
-    "tickLeft" : true,
-    "tickPadding" : 3.0,
-    "axis" : "T",
-    "fontSize" : 0.02
-  }, {
-    "decoration" : "ruler",
-    "startPoint" : {
-      "x" : 0.0,
-      "y" : 1600.0
-    },
-    "endPoint" : {
-      "x" : 1.0,
-      "y" : 1600.0
-    },
-    "lineWidth" : 0.0016,
-    "labelAnchor" : "NONE",
-    "multiplier" : 100.0,
-    "tickRight" : true,
-    "tickPadding" : 3.0,
-    "axis" : "Al",
-    "fontSize" : 0.02
-  }, {
-    "decoration" : "ruler",
-    "startPoint" : {
-      "x" : 0.0,
-      "y" : 400.0
-    },
-    "endPoint" : {
-      "x" : 1.0,
-      "y" : 400.0
-    },
-    "lineWidth" : 0.0016,
-    "labelAnchor" : "RIGHT",
-    "multiplier" : 100.0,
-    "tickRight" : true,
-    "tickPadding" : 3.0,
-    "axis" : "Al",
-    "fontSize" : 0.02
-  }, {
-    "decoration" : "curve",
-    "curve" : {
-      "points" : [ {
-	"x" : 0.34700000000000003,
-	"y" : 1310.0
-      }, {
-	"x" : 0.28300000000000014,
-	"y" : 1310.0
-      } ],
-      "smoothed" : [ false, false ],
-      "closed" : false
-    },
-    "lineWidth" : 0.0012,
-    "lineStyle" : "DASH",
-    "id" : 1
-  }, {
-    "decoration" : "curve",
-    "curve" : {
-      "points" : [ {
-	"x" : 0.28300000000000014,
-	"y" : 1310.0
-      }, {
-	"x" : 0.2562499999999999,
-	"y" : 1290.3571428571431
-      }, {
-	"x" : 0.2260974702380953,
-	"y" : 1238.28125
-      }, {
-	"x" : 0.20803571428571435,
-	"y" : 1191.7857142857144
-      }, {
-	"x" : 0.1669642857142857,
-	"y" : 1026.7857142857144
-      }, {
-	"x" : 0.1401785714285715,
-	"y" : 827.5000000000002
-      }, {
-	"x" : 0.1294642857142857,
-	"y" : 673.2142857142858
-      }, {
-	"x" : 0.12946428571428562,
-	"y" : 664.6428571428573
-      } ],
-      "smoothed" : [ true, true, true, true, true, true, true, true ],
-      "closed" : false
-    },
-    "lineWidth" : 0.0012,
-    "lineStyle" : "DASH",
-    "id" : 2
-  }, {
-    "decoration" : "curve",
-    "curve" : {
-      "points" : [ {
-	"x" : 0.1294642857142856,
-	"y" : 664.6428571428573
-      }, {
-	"x" : 0.1265873015873016,
-	"y" : 610.0000000000002
-      }, {
-	"x" : 0.1226190476190476,
-	"y" : 548.0952380952382
-      }, {
-	"x" : 0.1186507936507936,
-	"y" : 470.0000000000001
-      }, {
-	"x" : 0.11517857142857135,
-	"y" : 400.00000000000017
-      } ],
-      "smoothed" : [ true, true, true, true, true ],
-      "closed" : false
-    },
-    "lineWidth" : 0.0012,
-    "lineStyle" : "SOLID",
-    "id" : 3
-  }, {
-    "decoration" : "curve",
-    "curve" : {
-      "points" : [ {
-	"x" : 0.14468005952380944,
-	"y" : 611.0714285714287
-      }, {
-	"x" : 0.1264544105816649,
-	"y" : 608.8849203110608
-      } ],
-      "smoothed" : [ false, false ],
-      "closed" : false
-    },
-    "lineWidth" : 0.0012,
-    "lineStyle" : "DASH",
-    "id" : 50
-  }, {
-    "decoration" : "curve",
-    "curve" : {
-      "points" : [ {
-	"x" : 0.1264544105816649,
-	"y" : 608.8849203110608
-      }, {
-	"x" : 0.1161086309523809,
-	"y" : 645.3571428571431
-      }, {
-	"x" : 0.09561011904761905,
-	"y" : 692.5000000000005
-      }, {
-	"x" : 0.07232142857142854,
-	"y" : 733.2142857142858
-      }, {
-	"x" : 0.030394345238095224,
-	"y" : 764.3303571428576
-      }, {
-	"x" : 0.013392857142857121,
-	"y" : 769.6428571428573
-      }, {
-	"x" : 0.0,
-	"y" : 770.0
-      } ],
-      "smoothed" : [ true, true, true, true, true, true, true ],
-      "closed" : false
-    },
-    "lineWidth" : 0.0012,
-    "lineStyle" : "DASH",
-    "id" : 5
-  }, {
-    "decoration" : "curve",
-    "curve" : {
-      "points" : [ {
-	"x" : 0.12946428571428562,
-	"y" : 664.6428571428573
-      }, {
-	"x" : 0.1392485119047619,
-	"y" : 636.7857142857144
-      }, {
-	"x" : 0.1446800595238094,
-	"y" : 611.0714285714284
-      }, {
-	"x" : 0.14693515866661194,
-	"y" : 576.6666666666674
-      }, {
-	"x" : 0.14642857142857132,
-	"y" : 548.0952380952382
-      }, {
-	"x" : 0.14302380527092723,
-	"y" : 509.81161718167846
-      }, {
-	"x" : 0.13849206349206347,
-	"y" : 470.0000000000001
-      }, {
-	"x" : 0.13624751984126984,
-	"y" : 434.76190476190504
-      }, {
-	"x" : 0.13452380952380946,
-	"y" : 400.00000000000017
-      } ],
-      "smoothed" : [ true, true, true, true, true, true, true, true, true ],
-      "closed" : false
-    },
-    "lineWidth" : 0.0012,
-    "lineStyle" : "SOLID",
-    "id" : 7
-  }, {
-    "decoration" : "curve",
-    "curve" : {
-      "points" : [ {
-	"x" : 0.13849206349206347,
-	"y" : 470.0000000000001
-      }, {
-	"x" : 0.1186507936507936,
-	"y" : 470.0000000000001
-      } ],
-      "smoothed" : [ true, true ],
-      "closed" : false
-    },
-    "lineWidth" : 0.0012,
-    "lineStyle" : "DASH",
-    "id" : 8
-  }, {
-    "decoration" : "curve",
-    "curve" : {
-      "points" : [ {
-	"x" : 0.1226190476190476,
-	"y" : 548.0952380952382
-      }, {
-	"x" : 0.14642857142857132,
-	"y" : 548.0952380952382
-      } ],
-      "smoothed" : [ true, true ],
-      "closed" : false
-    },
-    "lineWidth" : 0.0012,
-    "lineStyle" : "DASH",
-    "id" : 9
-  }, {
-    "decoration" : "curve",
-    "curve" : {
-      "points" : [ {
-	"x" : 0.14642857142857132,
-	"y" : 548.0952380952382
-      }, {
-	"x" : 0.15674603174603177,
-	"y" : 541.4285714285717
-      }, {
-	"x" : 0.17023809523809524,
-	"y" : 512.8571428571429
-      }, {
-	"x" : 0.17896825396825405,
-	"y" : 484.28571428571456
-      }, {
-	"x" : 0.19246031746031744,
-	"y" : 426.1904761904764
-      }, {
-	"x" : 0.1980158730158729,
-	"y" : 400.00000000000017
-      } ],
-      "smoothed" : [ true, true, true, true, true, true ],
-      "closed" : false
-    },
-    "lineWidth" : 0.0012,
-    "lineStyle" : "DASH",
-    "id" : 10
-  }, {
-    "decoration" : "curve",
-    "curve" : {
-      "points" : [ {
-	"x" : 0.13849206349206347,
-	"y" : 470.0000000000001
-      }, {
-	"x" : 0.14960317460317454,
-	"y" : 400.00000000000017
-      } ],
-      "smoothed" : [ true, true ],
-      "closed" : false
-    },
-    "lineWidth" : 0.0012,
-    "lineStyle" : "DOT_DASH",
-    "id" : 11
-  }, {
-    "decoration" : "curve",
-    "curve" : {
-      "points" : [ {
-	"x" : 0.0,
-	"y" : 1538.0
-      }, {
-	"x" : 0.023412698412698423,
-	"y" : 1534.761904761905
-      }, {
-	"x" : 0.06468253968253969,
-	"y" : 1524.2857142857144
-      }, {
-	"x" : 0.1186507936507936,
-	"y" : 1502.3809523809525
-      }, {
-	"x" : 0.19563492063492063,
-	"y" : 1451.9047619047622
-      }, {
-	"x" : 0.27579365079365076,
-	"y" : 1384.2857142857147
-      }, {
-	"x" : 0.30595238095238103,
-	"y" : 1352.8571428571431
-      }, {
-	"x" : 0.3281746031746032,
-	"y" : 1330.0000000000002
-      }, {
-	"x" : 0.34700000000000003,
-	"y" : 1310.0
-      } ],
-      "smoothed" : [ true, true, true, true, true, true, true, true, true ],
-      "closed" : false
-    },
-    "lineWidth" : 0.0012,
-    "lineStyle" : "SOLID",
-    "id" : 12
-  }, {
-    "decoration" : "curve",
-    "curve" : {
-      "points" : [ {
-	"x" : 0.34700000000000003,
-	"y" : 1310.0
-      }, {
-	"x" : 0.3773809523809524,
-	"y" : 1277.6190476190477
-      }, {
-	"x" : 0.42700000000000005,
-	"y" : 1232.0
-      } ],
-      "smoothed" : [ true, true, true ],
-      "closed" : false
-    },
-    "lineWidth" : 0.0012,
-    "lineStyle" : "SOLID",
-    "id" : 13
-  }, {
-    "decoration" : "curve",
-    "curve" : {
-      "points" : [ {
-	"x" : 0.42700000000000005,
-	"y" : 1232.0
-      }, {
-	"x" : 0.46230158730158744,
-	"y" : 1203.3333333333335
-      }, {
-	"x" : 0.515,
-	"y" : 1165.0
-      } ],
-      "smoothed" : [ true, true, true ],
-      "closed" : false
-    },
-    "lineWidth" : 0.0012,
-    "lineStyle" : "SOLID",
-    "id" : 14
-  }, {
-    "decoration" : "curve",
-    "curve" : {
-      "points" : [ {
-	"x" : 0.42700000000000005,
-	"y" : 1232.0
-      }, {
-	"x" : 0.34600000000000003,
-	"y" : 1232.0
-      } ],
-      "smoothed" : [ true, true ],
-      "closed" : false
-    },
-    "lineWidth" : 0.0012,
-    "lineStyle" : "SOLID",
-    "id" : 15
-  }, {
-    "decoration" : "curve",
-    "curve" : {
-      "points" : [ {
-	"x" : 0.34600000000000003,
-	"y" : 1232.0
-      }, {
-	"x" : 0.31547619047619047,
-	"y" : 1269.0476190476193
-      }, {
-	"x" : 0.28300000000000014,
-	"y" : 1310.0
-      } ],
-      "smoothed" : [ true, true, true ],
-      "closed" : false
-    },
-    "lineWidth" : 0.0012,
-    "lineStyle" : "SOLID",
-    "id" : 16
-  }, {
-    "decoration" : "curve",
-    "curve" : {
-      "points" : [ {
-	"x" : 0.28300000000000014,
-	"y" : 1310.0
-      }, {
-	"x" : 0.2448412698412698,
-	"y" : 1355.714285714286
-      }, {
-	"x" : 0.20436507936507936,
-	"y" : 1403.3333333333335
-      }, {
-	"x" : 0.1527777777777777,
-	"y" : 1454.761904761905
-      }, {
-	"x" : 0.10357142857142856,
-	"y" : 1495.7142857142858
-      }, {
-	"x" : 0.06547619047619047,
-	"y" : 1520.4761904761906
-      }, {
-	"x" : 0.03214285714285711,
-	"y" : 1532.8571428571431
-      }, {
-	"x" : 0.012301587301587312,
-	"y" : 1533.809523809524
-      }, {
-	"x" : 0.0,
-	"y" : 1538.0
-      } ],
-      "smoothed" : [ true, true, true, true, true, true, true, true, true ],
-      "closed" : false
-    },
-    "lineWidth" : 0.0012,
-    "lineStyle" : "SOLID",
-    "id" : 17
-  }, {
-    "decoration" : "curve",
-    "curve" : {
-      "points" : [ {
-	"x" : 0.34600000000000003,
-	"y" : 1232.0
-      }, {
-	"x" : 0.37400000000000017,
-	"y" : 1102.0
-      } ],
-      "smoothed" : [ true, true ],
-      "closed" : false
-    },
-    "lineWidth" : 0.0012,
-    "lineStyle" : "DASH",
-    "id" : 18
-  }, {
-    "decoration" : "curve",
-    "curve" : {
-      "points" : [ {
-	"x" : 0.37400000000000017,
-	"y" : 1102.0
-      }, {
-	"x" : 0.36626984126984125,
-	"y" : 1052.857142857143
-      }, {
-	"x" : 0.35833333333333334,
-	"y" : 997.6190476190478
-      } ],
-      "smoothed" : [ true, true, true ],
-      "closed" : false
-    },
-    "lineWidth" : 0.0012,
-    "lineStyle" : "DASH",
-    "id" : 19
-  }, {
-    "decoration" : "curve",
-    "curve" : {
-      "points" : [ {
-	"x" : 0.35833333333333334,
-	"y" : 997.6190476190478
-      }, {
-	"x" : 0.3519841269841271,
-	"y" : 950.0000000000001
-      }, {
-	"x" : 0.3432539682539683,
-	"y" : 872.8571428571429
-      }, {
-	"x" : 0.32896825396825385,
-	"y" : 709.0476190476193
-      }, {
-	"x" : 0.32023809523809516,
-	"y" : 549.047619047619
-      }, {
-	"x" : 0.31706349206349216,
-	"y" : 479.5238095238095
-      }, {
-	"x" : 0.31547619047619047,
-	"y" : 431.90476190476215
-      }, {
-	"x" : 0.3146825396825396,
-	"y" : 400.00000000000017
-      } ],
-      "smoothed" : [ true, true, true, true, true, true, true, true ],
-      "closed" : false
-    },
-    "lineWidth" : 0.0012,
-    "lineStyle" : "SOLID",
-    "id" : 20
-  }, {
-    "decoration" : "curve",
-    "curve" : {
-      "points" : [ {
-	"x" : 0.402,
-	"y" : 1232.0
-      }, {
-	"x" : 0.434,
-	"y" : 1102.0
-      } ],
-      "smoothed" : [ true, true ],
-      "closed" : false
-    },
-    "lineWidth" : 0.0012,
-    "lineStyle" : "SOLID",
-    "id" : 21
-  }, {
-    "decoration" : "curve",
-    "curve" : {
-      "points" : [ {
-	"x" : 0.47700000000000004,
-	"y" : 1165.0
-      }, {
-	"x" : 0.402,
-	"y" : 1232.0
-      } ],
-      "smoothed" : [ true, true ],
-      "closed" : false
-    },
-    "lineWidth" : 0.0012,
-    "lineStyle" : "SOLID",
-    "id" : 22
-  }, {
-    "decoration" : "curve",
-    "curve" : {
-      "points" : [ {
-	"x" : 0.47700000000000004,
-	"y" : 1165.0
-      }, {
-	"x" : 0.533,
-	"y" : 1165.0
-      } ],
-      "smoothed" : [ true, true ],
-      "closed" : false
-    },
-    "lineWidth" : 0.0032,
-    "lineStyle" : "SOLID",
-    "id" : 23
-  }, {
-    "decoration" : "curve",
-    "curve" : {
-      "points" : [ {
-	"x" : 0.49,
-	"y" : 1165.0
-      }, {
-	"x" : 0.486111111111111,
-	"y" : 1129.0476190476193
-      }, {
-	"x" : 0.48500000000000015,
-	"y" : 1102.0
-      }, {
-	"x" : 0.48611111111111116,
-	"y" : 978.5714285714289
-      }, {
-	"x" : 0.48769841269841285,
-	"y" : 750.0
-      }, {
-	"x" : 0.48769841269841285,
-	"y" : 461.42857142857144
-      }, {
-	"x" : 0.4876984126984126,
-	"y" : 400.00000000000017
-      } ],
-      "smoothed" : [ false, false, false, false, false, false, false ],
-      "closed" : false
-    },
-    "lineWidth" : 0.0012,
-    "lineStyle" : "DASH",
-    "id" : 24
-  }, {
-    "decoration" : "curve",
-    "curve" : {
-      "points" : [ {
-	"x" : 0.49563492063492043,
-	"y" : 400.00000000000017
-      }, {
-	"x" : 0.49563492063492054,
-	"y" : 445.2380952380955
-      }, {
-	"x" : 0.49563492063492054,
-	"y" : 579.5238095238096
-      }, {
-	"x" : 0.4948412698412699,
-	"y" : 798.5714285714287
-      }, {
-	"x" : 0.4948412698412699,
-	"y" : 985.2380952380954
-      }, {
-	"x" : 0.49246031746031754,
-	"y" : 1106.1904761904764
-      }, {
-	"x" : 0.4916666666666664,
-	"y" : 1142.3809523809525
-      }, {
-	"x" : 0.49,
-	"y" : 1165.0
-      } ],
-      "smoothed" : [ false, false, false, false, false, false, false, false ],
-      "closed" : false
-    },
-    "lineWidth" : 0.0012,
-    "lineStyle" : "DASH",
-    "id" : 25
-  }, {
-    "decoration" : "curve",
-    "curve" : {
-      "points" : [ {
-	"x" : 0.48500000000000015,
-	"y" : 1102.0
-      }, {
-	"x" : 0.37400000000000017,
-	"y" : 1102.0
-      } ],
-      "smoothed" : [ false, false ],
-      "closed" : false
-    },
-    "lineWidth" : 0.0012,
-    "lineStyle" : "SOLID",
-    "id" : 26
-  }, {
-    "decoration" : "curve",
-    "curve" : {
-      "points" : [ {
-	"x" : 0.434,
-	"y" : 1102.0
-      }, {
-	"x" : 0.47700000000000004,
-	"y" : 1165.0
-      } ],
-      "smoothed" : [ false, false ],
-      "closed" : false
-    },
-    "lineWidth" : 0.0012,
-    "lineStyle" : "SOLID",
-    "id" : 27
-  }, {
-    "decoration" : "curve",
-    "curve" : {
-      "points" : [ {
-	"x" : 0.5337301587301586,
-	"y" : 400.00000000000017
-      }, {
-	"x" : 0.532936507936508,
-	"y" : 651.9047619047622
-      }, {
-	"x" : 0.5321428571428573,
-	"y" : 873.8095238095241
-      } ],
-      "smoothed" : [ false, false, false ],
-      "closed" : false
-    },
-    "lineWidth" : 0.0012,
-    "lineStyle" : "DASH",
-    "id" : 28
-  }, {
-    "decoration" : "curve",
-    "curve" : {
-      "points" : [ {
-	"x" : 0.533,
-	"y" : 1165.0
-      }, {
-	"x" : 0.532936507936508,
-	"y" : 1024.2857142857144
-      }, {
-	"x" : 0.5321428571428573,
-	"y" : 873.8095238095241
-      } ],
-      "smoothed" : [ false, false, false ],
-      "closed" : false
-    },
-    "lineWidth" : 0.0012,
-    "lineStyle" : "SOLID",
-    "id" : 29
-  }, {
-    "decoration" : "curve",
-    "curve" : {
-      "points" : [ {
-	"x" : 0.557,
-	"y" : 1160.0
-      }, {
-	"x" : 0.5567460317460317,
-	"y" : 1137.6190476190477
-      }, {
-	"x" : 0.559920634920635,
-	"y" : 1055.7142857142858
-      }, {
-	"x" : 0.5646825396825397,
-	"y" : 941.4285714285716
-      }, {
-	"x" : 0.5654761904761904,
-	"y" : 877.6190476190478
-      } ],
-      "smoothed" : [ true, true, true, true, true ],
-      "closed" : false
-    },
-    "lineWidth" : 0.0012,
-    "lineStyle" : "SOLID",
-    "id" : 30
-  }, {
-    "decoration" : "curve",
-    "curve" : {
-      "points" : [ {
-	"x" : 0.5654761904761904,
-	"y" : 877.6190476190478
-      }, {
-	"x" : 0.567063492063492,
-	"y" : 832.857142857143
-      }, {
-	"x" : 0.5678571428571431,
-	"y" : 743.3333333333335
-      }, {
-	"x" : 0.5678571428571431,
-	"y" : 596.6666666666667
-      }, {
-	"x" : 0.5654761904761904,
-	"y" : 494.7619047619049
-      }, {
-	"x" : 0.5630952380952381,
-	"y" : 433.80952380952397
-      }, {
-	"x" : 0.5615079365079366,
-	"y" : 400.00000000000017
-      } ],
-      "smoothed" : [ true, true, true, true, true, true, true ],
-      "closed" : false
-    },
-    "lineWidth" : 0.0012,
-    "lineStyle" : "DASH",
-    "id" : 31
-  }, {
-    "decoration" : "curve",
-    "curve" : {
-      "points" : [ {
-	"x" : 0.557,
-	"y" : 1160.0
-      }, {
-	"x" : 0.5440000000000002,
-	"y" : 1169.0
-      }, {
-	"x" : 0.5376984126984127,
-	"y" : 1166.1904761904764
-      }, {
-	"x" : 0.533,
-	"y" : 1165.0
-      } ],
-      "smoothed" : [ true, true, true, true ],
-      "closed" : false
-    },
-    "lineWidth" : 0.0012,
-    "lineStyle" : "SOLID",
-    "id" : 32
-  }, {
-    "decoration" : "curve",
-    "curve" : {
-      "points" : [ {
-	"x" : 0.594,
-	"y" : 1160.0
-      }, {
-	"x" : 0.6281746031746034,
-	"y" : 1155.7142857142858
-      }, {
-	"x" : 0.6654761904761909,
-	"y" : 1146.1904761904764
-      }, {
-	"x" : 0.7202380952380952,
-	"y" : 1119.5238095238096
-      }, {
-	"x" : 0.7900793650793649,
-	"y" : 1055.7142857142858
-      }, {
-	"x" : 0.859920634920635,
-	"y" : 957.6190476190479
-      }, {
-	"x" : 0.9289682539682538,
-	"y" : 813.8095238095241
-      }, {
-	"x" : 0.9670634920634922,
-	"y" : 698.5714285714289
-      }, {
-	"x" : 0.9790000000000001,
-	"y" : 655.0
-      } ],
-      "smoothed" : [ true, true, true, true, true, true, true, true, true ],
-      "closed" : false
-    },
-    "lineWidth" : 0.0012,
-    "lineStyle" : "SOLID",
-    "id" : 33
-  }, {
-    "decoration" : "curve",
-    "curve" : {
-      "points" : [ {
-	"x" : 1.0,
-	"y" : 655.0
-      }, {
-	"x" : 0.614,
-	"y" : 655.0
-      } ],
-      "smoothed" : [ true, true ],
-      "closed" : false
-    },
-    "lineWidth" : 0.0032,
-    "lineStyle" : "SOLID",
-    "id" : 34
-  }, {
-    "decoration" : "curve",
-    "curve" : {
-      "points" : [ {
-	"x" : 0.9790000000000001,
-	"y" : 655.0
-      }, {
-	"x" : 0.9923280423280425,
-	"y" : 658.7301587301588
-      }, {
-	"x" : 1.0,
-	"y" : 660.452
-      } ],
-      "smoothed" : [ true, true, true ],
-      "closed" : false
-    },
-    "lineWidth" : 0.0012,
-    "lineStyle" : "SOLID",
-    "id" : 35
-  }, {
-    "decoration" : "curve",
-    "curve" : {
-      "points" : [ {
-	"x" : 0.594,
-	"y" : 1160.0
-      }, {
-	"x" : 0.5928571428571427,
-	"y" : 1141.9047619047622
-      }, {
-	"x" : 0.5902116402116403,
-	"y" : 1079.0476190476193
-      }, {
-	"x" : 0.5859788359788362,
-	"y" : 952.6984126984128
-      }, {
-	"x" : 0.5854497354497354,
-	"y" : 879.047619047619
-      } ],
-      "smoothed" : [ true, true, true, true, true ],
-      "closed" : false
-    },
-    "lineWidth" : 0.0012,
-    "lineStyle" : "SOLID",
-    "id" : 36
-  }, {
-    "decoration" : "curve",
-    "curve" : {
-      "points" : [ {
-	"x" : 0.5854497354497354,
-	"y" : 879.047619047619
-      }, {
-	"x" : 0.5849206349206348,
-	"y" : 826.984126984127
-      }, {
-	"x" : 0.5843915343915345,
-	"y" : 722.2222222222224
-      }, {
-	"x" : 0.5854497354497354,
-	"y" : 566.6666666666667
-      }, {
-	"x" : 0.5859788359788362,
-	"y" : 449.84126984127
-      }, {
-	"x" : 0.5870370370370372,
-	"y" : 400.00000000000017
-      } ],
-      "smoothed" : [ true, true, true, true, true, true ],
-      "closed" : false
-    },
-    "lineWidth" : 0.0012,
-    "lineStyle" : "DASH",
-    "id" : 37
-  }, {
-    "decoration" : "curve",
-    "curve" : {
-      "points" : [ {
-	"x" : 0.594,
-	"y" : 1160.0
-      }, {
-	"x" : 0.5976190476190474,
-	"y" : 1138.7301587301588
-      }, {
-	"x" : 0.6023809523809522,
-	"y" : 1070.793650793651
-      }, {
-	"x" : 0.6060846560846562,
-	"y" : 1011.7460317460318
-      }, {
-	"x" : 0.6071428571428571,
-	"y" : 978.7301587301589
-      } ],
-      "smoothed" : [ true, true, true, true, true ],
-      "closed" : false
-    },
-    "lineWidth" : 0.0012,
-    "lineStyle" : "SOLID",
-    "id" : 38
-  }, {
-    "decoration" : "curve",
-    "curve" : {
-      "points" : [ {
-	"x" : 0.6082010582010581,
-	"y" : 400.00000000000017
-      }, {
-	"x" : 0.6092592592592593,
-	"y" : 437.1428571428572
-      }, {
-	"x" : 0.6108465608465609,
-	"y" : 507.6190476190477
-      }, {
-	"x" : 0.6121785020159001,
-	"y" : 572.1331784746321
-      }, {
-	"x" : 0.614,
-	"y" : 655.0
-      }, {
-	"x" : 0.6140395437143404,
-	"y" : 715.8730158730158
-      }, {
-	"x" : 0.6124522421270385,
-	"y" : 793.3333333333333
-      }, {
-	"x" : 0.6116763767213312,
-	"y" : 838.6407888919746
-      }, {
-	"x" : 0.61031746031746,
-	"y" : 886.0317460317463
-      }, {
-	"x" : 0.6092592592592593,
-	"y" : 952.6984126984128
-      }, {
-	"x" : 0.6071428571428571,
-	"y" : 978.7301587301589
-      } ],
-      "smoothed" : [ true, true, true, true, true, true, true, true, true, true, true ],
-      "closed" : false
-    },
-    "lineWidth" : 0.0012,
-    "lineStyle" : "DASH",
-    "id" : 39
-  }, {
-    "decoration" : "curve",
-    "curve" : {
-      "points" : [ {
-	"x" : 0.0,
-	"y" : 912.0
-      }, {
-	"x" : 0.007738095238095218,
-	"y" : 969.2857142857144
-      }, {
-	"x" : 0.0113095238095238,
-	"y" : 1022.1428571428573
-      }, {
-	"x" : 0.0125,
-	"y" : 1105.0000000000002
-      }, {
-	"x" : 0.0125,
-	"y" : 1147.8571428571431
-      }, {
-	"x" : 0.0113095238095238,
-	"y" : 1240.7142857142858
-      }, {
-	"x" : 0.005357142857142848,
-	"y" : 1352.1428571428573
-      }, {
-	"x" : 0.0,
-	"y" : 1394.0
-      } ],
-      "smoothed" : [ true, true, true, true, true, true, true, true ],
-      "closed" : false
-    },
-    "lineWidth" : 0.0032,
-    "lineStyle" : "SOLID",
-    "id" : 40
-  }, {
-    "decoration" : "curve",
-    "curve" : {
-      "points" : [ {
-	"x" : 0.9579999999999999,
-	"y" : 500.0
-      }, {
-	"x" : 1.0,
-	"y" : 500.0
-      } ],
-      "smoothed" : [ false, false ],
-      "closed" : false
-    },
-    "lineWidth" : 0.0012,
-    "lineStyle" : "SOLID",
-    "id" : 41
-  }, {
-    "decoration" : "curve",
-    "curve" : {
-      "points" : [ {
-	"x" : 0.6323238973008559,
-	"y" : 749.5720868992761
-      }, {
-	"x" : 0.6009413506135246,
-	"y" : 749.5720868992736
-      } ],
-      "smoothed" : [ false, false ],
-      "closed" : false
-    },
-    "lineWidth" : 0.0012,
-    "lineStyle" : "SOLID",
-    "id" : 42
-  }, {
-    "decoration" : "curve",
-    "curve" : {
-      "points" : [ {
-	"x" : 0.4909832940320735,
-	"y" : 749.5720868992722
-      }, {
-	"x" : 0.45911419070513737,
-	"y" : 749.5720868992742
-      } ],
-      "smoothed" : [ false, false ],
-      "closed" : false
-    },
-    "lineWidth" : 0.0012,
-    "lineStyle" : "SOLID",
-    "id" : 43
-  }, {
-    "decoration" : "curve",
-    "curve" : {
-      "points" : [ {
-	"x" : 0.19702380952380943,
-	"y" : 485.0000000000001
-      }, {
-	"x" : 0.1601190476190476,
-	"y" : 485.0000000000001
-      } ],
-      "smoothed" : [ false, false ],
-      "closed" : false
-    },
-    "lineWidth" : 0.0012,
-    "lineStyle" : "SOLID",
-    "id" : 44
-  }, {
-    "decoration" : "curve",
-    "curve" : {
-      "points" : [ {
-	"x" : 0.49629127350320723,
-	"y" : 1220.714285714286
-      }, {
-	"x" : 0.49629561954819335,
-	"y" : 1165.0
-      } ],
-      "smoothed" : [ false, false ],
-      "closed" : false
-    },
-    "lineWidth" : 0.0012,
-    "lineStyle" : "SOLID",
-    "id" : 45
-  }, {
-    "decoration" : "curve",
-    "curve" : {
-      "points" : [ {
-	"x" : 0.003807028817136922,
-	"y" : 1100.278884078547
-      }, {
-	"x" : 0.039851475418464295,
-	"y" : 1100.4761904761906
-      } ],
-      "smoothed" : [ false, false ],
-      "closed" : false
-    },
-    "lineWidth" : 0.0012,
-    "lineStyle" : "SOLID",
-    "id" : 46
-  }, {
-    "decoration" : "curve",
-    "curve" : {
-      "points" : [ {
-	"x" : 1.0,
-	"y" : 660.452
-      }, {
-	"x" : 1.0,
-	"y" : 400.0
-      } ],
-      "smoothed" : [ false, false ],
-      "closed" : false
-    },
-    "lineWidth" : 0.0032,
-    "lineStyle" : "SOLID",
-    "id" : 47
-  }, {
-    "decoration" : "curve",
-    "curve" : {
-      "points" : [ {
-	"x" : 0.515,
-	"y" : 1165.0
-      }, {
-	"x" : 0.5271005747040244,
-	"y" : 1166.8188096221793
-      }, {
-	"x" : 0.5440000000000002,
-	"y" : 1169.0
-      }, {
-	"x" : 0.5627610809530481,
-	"y" : 1166.9508560653767
-      }, {
-	"x" : 0.594,
-	"y" : 1160.0
-      } ],
-      "smoothed" : [ true, true, true, true, true ],
-      "closed" : false
-    },
-    "lineWidth" : 0.0012,
-    "lineStyle" : "SOLID",
-    "id" : 48
-  }, {
-    "decoration" : "curve",
-    "curve" : {
-      "points" : [ {
-	"x" : 0.557,
-	"y" : 1160.0
-      }, {
-	"x" : 0.594,
-	"y" : 1160.0
-      } ],
-      "smoothed" : [ false, false ],
-      "closed" : false
-    },
-    "lineWidth" : 0.0032,
-    "lineStyle" : "SOLID",
-    "id" : 49
-  }, {
-    "decoration" : "arrow",
-    "x" : 0.49629561954819335,
-    "y" : 1165.0,
-    "size" : 0.0012,
-    "angle" : -1.570796216609968
-  }, {
-    "decoration" : "arrow",
-    "x" : 0.4909832940320735,
-    "y" : 749.5720868992722,
-    "size" : 0.0012,
-    "angle" : -0.0
-  }, {
-    "decoration" : "arrow",
-    "x" : 0.6009413506135246,
-    "y" : 749.5720868992736,
-    "size" : 0.0012,
-    "angle" : 3.141592653589793
-  }, {
-    "decoration" : "arrow",
-    "x" : 0.003807028817136922,
-    "y" : 1100.278884078547,
-    "size" : 0.0016,
-    "angle" : 3.1682961911453065
-  }, {
-    "decoration" : "arrow",
-    "x" : 1.0,
-    "y" : 500.0,
-    "size" : 0.0016,
-    "angle" : 0.008726646259971648
-  }, {
-    "decoration" : "arrow",
-    "x" : 0.1601190476190476,
-    "y" : 485.0,
-    "size" : 0.0012,
-    "angle" : 3.141592653589793
-  }, {
-    "decoration" : "label",
-    "text" : "1310°C",
-    "yWeight" : 1.0,
-    "x" : 0.34700000000000003,
-    "y" : 1310.0,
-    "scale" : 1.25
-  }, {
-    "decoration" : "label",
-    "text" : "T<sub>e</sub>",
-    "xWeight" : 0.5,
-    "yWeight" : 0.5,
-    "x" : 0.06388888888888879,
-    "y" : 762.3809523809524,
-    "scale" : 1.25
-  }, {
-    "decoration" : "label",
-    "text" : "1538&deg;C ",
-    "xWeight" : 1.0,
-    "yWeight" : 0.5,
-    "y" : 1538.0,
-    "scale" : 1.25
-  }, {
-    "decoration" : "label",
-    "text" : "L",
-    "xWeight" : 0.5,
-    "yWeight" : 0.5,
-    "x" : 0.667857142857143,
-    "y" : 1416.6666666666665,
-    "scale" : 1.8
-  }, {
-    "decoration" : "label",
-    "text" : "1232",
-    "xWeight" : 0.5,
-    "yWeight" : 1.0,
-    "x" : 0.3644068442848932,
-    "y" : 1229.047619047619,
-    "scale" : 1.25
-  }, {
-    "decoration" : "label",
-    "text" : "FeAl",
-    "xWeight" : 0.5,
-    "yWeight" : 0.5,
-    "x" : 0.24563492063492093,
-    "y" : 888.0952380952384,
-    "scale" : 1.5
-  }, {
-    "decoration" : "label",
-    "text" : "ε",
-    "xWeight" : 0.5,
-    "yWeight" : 0.5,
-    "x" : 0.43928571428571406,
-    "y" : 1160.4761904761908,
-    "scale" : 1.5
-  }, {
-    "decoration" : "label",
-    "text" : "(γFe)",
-    "yWeight" : 0.5,
-    "x" : 0.039851475418464295,
-    "y" : 1100.4761904761906,
-    "scale" : 1.5
-  }, {
-    "decoration" : "label",
-    "text" : "Weight Percent Aluminum",
-    "xWeight" : 0.5,
-    "yWeight" : 0.5,
-    "x" : 0.495634920634921,
-    "y" : 320.4761904761904,
-    "scale" : 1.8
-  }, {
-    "decoration" : "label",
-    "text" : "Fe",
-    "x" : -0.018725198412697718,
-    "y" : 358.36309523809814,
-    "scale" : 1.8
-  }, {
-    "decoration" : "label",
-    "text" : "1102&deg;C",
-    "xWeight" : 0.5,
-    "x" : 0.42700000000000005,
-    "y" : 1102.0,
-    "scale" : 1.25
-  }, {
-    "decoration" : "label",
-    "text" : "655&deg;C",
-    "xWeight" : 0.5,
-    "yWeight" : 1.0,
-    "x" : 0.7892,
-    "y" : 655.0,
-    "scale" : 1.25
-  }, {
-    "decoration" : "label",
-    "text" : "660.452&deg;C",
-    "yWeight" : 0.5,
-    "x" : 1.0,
-    "y" : 660.452,
-    "scale" : 1.25
-  }, {
-    "decoration" : "label",
-    "text" : "Atomic Percent Aluminum",
-    "xWeight" : 0.5,
-    "yWeight" : 1.0,
-    "x" : 0.49763083054989377,
-    "y" : 1657.7222748504848,
-    "scale" : 1.8
-  }, {
-    "decoration" : "label",
-    "text" : "~1160&deg;C",
-    "yWeight" : 1.0,
-    "x" : 0.594,
-    "y" : 1160.0,
-    "scale" : 1.25
-  }, {
-    "decoration" : "label",
-    "text" : "1169&deg;C",
-    "xWeight" : 0.5,
-    "yWeight" : 1.0,
-    "x" : 0.545,
-    "y" : 1169.0,
-    "scale" : 1.25
-  }, {
-    "decoration" : "label",
-    "text" : "1394&deg;C",
-    "xWeight" : 1.0,
-    "y" : 1394.0,
-    "scale" : 1.25
-  }, {
-    "decoration" : "label",
-    "text" : "(αFe)",
-    "xWeight" : 0.5,
-    "yWeight" : 0.5,
-    "x" : 0.10654761904761903,
-    "y" : 1272.8125000000007,
-    "scale" : 1.5
-  }, {
-    "decoration" : "label",
-    "text" : "912&deg;C",
-    "xWeight" : 1.0,
-    "yWeight" : 0.5,
-    "x" : -0.0012318305001231824,
-    "y" : 911.9999999999999,
-    "scale" : 1.25,
-    "opaque" : true
-  }, {
-    "decoration" : "label",
-    "text" : "(Al)",
-    "xWeight" : 1.0,
-    "yWeight" : 0.5,
-    "x" : 0.9579999999999999,
-    "y" : 500.0,
-    "scale" : 1.3333333333333333
-  }, {
-    "decoration" : "label",
-    "text" : "FeAl<sub>3</sub>",
-    "xWeight" : 0.5,
-    "x" : 0.6323238973008559,
-    "y" : 749.5720868992756,
-    "angle" : 1.5707963267948966,
-    "scale" : 1.5
-  }, {
-    "decoration" : "label",
-    "text" : "Fe<sub>2</sub>Al<sub>5</sub>",
-    "xWeight" : 0.5,
-    "yWeight" : 0.5,
-    "x" : 0.5500579951043852,
-    "y" : 765.3719552337061,
-    "angle" : 1.5707963267948966,
-    "scale" : 1.5
-  }, {
-    "decoration" : "label",
-    "text" : "FeAl<sub>2</sub>",
-    "xWeight" : 0.5,
-    "yWeight" : 1.0,
-    "x" : 0.46734315831957973,
-    "y" : 749.572086899273,
-    "angle" : 1.5707963267948966,
-    "scale" : 1.5
-  }, {
-    "decoration" : "label",
-    "text" : "Fe<sub>3</sub>Al",
-    "yWeight" : 0.5,
-    "x" : 0.197023809523809,
-    "y" : 485.0000000000001,
-    "scale" : 1.5
-  }, {
-    "decoration" : "label",
-    "text" : "770&deg;C",
-    "xWeight" : 1.0,
-    "yWeight" : 0.5,
-    "y" : 770.0,
-    "scale" : 1.25
-  }, {
-    "decoration" : "label",
-    "text" : "1165&deg;C",
-    "xWeight" : 0.5,
-    "yWeight" : 1.0,
-    "x" : 0.49629127350320723,
-    "y" : 1220.714285714286,
-    "scale" : 1.25
-  }, {
-    "decoration" : "label",
-    "text" : "Temperature °C",
-    "xWeight" : 0.5,
-    "yWeight" : 1.0,
-    "x" : -0.0798177339204041,
-    "y" : 999.5238095238092,
-    "angle" : 1.5707963267948966,
-    "scale" : 1.8
-  }, {
-    "decoration" : "label",
-    "text" : "Al",
-    "xWeight" : 0.5,
-    "yWeight" : 0.5,
-    "x" : 1.01339285714286,
-    "y" : 311.07142857142867,
-    "scale" : 1.8
   } ]
 }
