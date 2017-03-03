@@ -48,7 +48,6 @@ public class MoleWeightString {
     static Pattern ha1 = Pattern.compile
         ("\\batomic\\b", Pattern.CASE_INSENSITIVE);
     static Pattern ha2 = Pattern.compile("\\bAt\\.?\\b");
-    static Pattern ia = Pattern.compile("[A-Z][a-z]*");
 
     /** Does str contains a common variation of the word "mole"? */
     public static boolean hasMole(String str) {

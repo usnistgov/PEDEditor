@@ -206,10 +206,6 @@ public class ContinuedFraction {
         return res;
     }
 
-    public boolean looksLikeDecimal() {
-        return looksLikeDecimal(false);
-    }
-
     /** Return true if this fraction equals and looks better as a
         terminating decimal. For example, 7/50 looks nicer as 0.14
         (true), but 1/8 looks nicer than 0.125 (false).

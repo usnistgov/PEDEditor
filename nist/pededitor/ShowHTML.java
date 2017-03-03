@@ -2,12 +2,10 @@ package gov.nist.pededitor;
 
 import java.awt.Desktop;
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.util.Scanner;
 
 import javax.swing.JFrame;
 import javax.swing.JOptionPane;
@@ -35,28 +33,5 @@ public class ShowHTML {
         } catch (IOException x) {
             System.err.println(x);
         }
-    }
-
-    /** From Pavel Repin's suggestion on StackOverflow. */
-    public static String streamToString(InputStream is) {
-        try (Scanner s = new java.util.Scanner(is)) {
-          s.useDelimiter("\\A");
-          return s.hasNext() ? s.next() : "";
-        }
-    }
-
-    /** Work-around for Java 7 Windows 64-bit bug that causes HTML
-        files embedded in JAR files to be presented as text in a
-        JEditorPane. */
-    public static String resourceFileString(String file, Object parent)
-        throws IOException {
-        InputStream in = parent.getClass()
-            .getResourceAsStream(file);
-
-        if (in == null) {
-            throw new FileNotFoundException(file);
-        }
-
-        return streamToString(in);
     }
 }

@@ -38,14 +38,6 @@ public class DelimiterPalette {
         return items[index];
     }
 
-    public String getStart(int index) {
-        return items[index].start;
-    }
-
-    public String getEnd(int index) {
-        return items[index].end;
-    }
-
     public String getLabel(int index) {
         return items[index].label;
     }

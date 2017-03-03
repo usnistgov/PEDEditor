@@ -25,14 +25,6 @@ public class DiagramDialog extends JDialog
     private static final long serialVersionUID = -1082463709970796523L;
     DiagramType selectedDiagram = null;
 
-    abstract class Action extends AbstractAction {
-        private static final long serialVersionUID = -7296210099594024294L;
-
-        Action(String name) {
-            super(name);
-        }
-    }
-
     DiagramType getSelectedDiagram() {
         return selectedDiagram;
     }

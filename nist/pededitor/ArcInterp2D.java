@@ -17,10 +17,6 @@ public class ArcInterp2D extends PointsInterp2D {
     protected boolean closed = true;
     transient protected boolean endsSwapped = false;
 
-    public ArcInterp2D(boolean closed) {
-        setClosed(closed);
-    }
-
     public boolean hasSwappedEnds() {
         getParameterization();
         return endsSwapped;
@@ -73,14 +69,6 @@ public class ArcInterp2D extends PointsInterp2D {
     @JsonIgnore public RectangularShape getShape2() throws UnsolvableException
     {
         return isClosed() ? ArcMath.ellipse(points) : arc(points);
-    }
-
-    public boolean hasSwappedEndpoints() {
-        try {
-            return !isClosed() && arcAndSwapping(points).hasSwappedEndpoints;
-        } catch (UnsolvableException e) {
-            return false;
-        }
     }
 
     @Override public boolean isClosed() {

@@ -19,18 +19,6 @@ public class SingleInstanceBasicEditor extends BasicEditor {
         }
     }
 
-    static class Runnable extends ArgsRunnable {
-        BasicEditorCreator ec;
-        Runnable(BasicEditorCreator ec, String[] args) {
-            super(args);
-            this.ec = ec;
-        }
-
-        @Override public void run() {
-            BasicEditor.main(ec, args);
-        }
-    }
-
     /** Launch the application. */
     public static void main(String[] args) {
         main(new BasicEditorCreator(), args);

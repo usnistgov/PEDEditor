@@ -59,11 +59,6 @@ public class Geom {
         }
     }
 
-    public static Point toPoint(Point2D point) {
-        return new Point((int) Math.round(point.getX()),
-                         (int) Math.round(point.getY()));
-    }
-
     /** Convert point into a Point by taking the floor of x and y. */
     public static Point floorPoint(Point2D point) {
         return new Point((int) Math.floor(point.getX()),
@@ -92,38 +87,10 @@ public class Geom {
         return new Point2D.Double(p.getX(), p.getY());
     }
 
-    public static Point2D.Double[] toPoint2DDoubles(int[] arr) {
-        if (arr.length % 2 != 0) {
-            throw new IllegalArgumentException("Odd array size");
-        }
-        Point2D.Double[] output = new Point2D.Double[arr.length/2];
-        int i = 0;
-        for (int j = 0; j < arr.length; i++, j+=2) {
-            output[i] = new Point2D.Double(arr[j], arr[j+1]);
-        }
-        return output;
-    }
-
     public static Point2D.Double[] toPoint2DDoubles(Point[] arr) {
         Point2D.Double[] output = new Point2D.Double[arr.length];
         for (int i = 0; i < arr.length; i++) {
             output[i] = new Point2D.Double(arr[i].x, arr[i].y);
-        }
-        return output;
-    }
-
-    public static Point[] toPoints(Point2D.Double[] arr) {
-        Point[] output = new Point[arr.length];
-        for (int i = 0; i < arr.length; i++) {
-            output[i] = toPoint(arr[i]);
-        }
-        return output;
-    }
-
-    public static Point2D.Double[] toPoint2DDoubles(int[][] arr) {
-        Point2D.Double[] output = new Point2D.Double[arr.length];
-        for (int i = 0; i < arr.length; i++) {
-            output[i] = new Point2D.Double(arr[i][0], arr[i][1]);
         }
         return output;
     }
@@ -231,10 +198,6 @@ public class Geom {
                                   a.getY() - b.getY());
     }
 
-    public static Point2D.Double sum(Point2D a, Point2D b) {
-        return new Point2D.Double(a.getX() + b .getX(), a.getY() + b.getY());
-    }
-
     public static Point2D.Double product(Point2D p, double m) {
         return new Point2D.Double(p.getX() * m, p.getY() * m);
     }
@@ -326,14 +289,6 @@ public class Geom {
               new Point2D.Double(rect.getX() + rect.getWidth(),
                                  rect.getY() + rect.getHeight()),
               new Point2D.Double(rect.getX() + rect.getWidth(), rect.getY()) };
-    }
-
-    public static Point[] toPoints(Rectangle rect) {
-        return new Point[]
-            { new Point(rect.x, rect.y),
-              new Point(rect.x, rect.y + rect.height),
-              new Point(rect.x + rect.width, rect.y + rect.height),
-              new Point(rect.x + rect.width, rect.y) };
     }
 
     /** @return the square of the distance between p and the nearest point on rect,
@@ -979,10 +934,6 @@ public class Geom {
         } else {
             return null;
         }
-    }
-
-    public static Point2D.Double transpose(Point p) {
-        return new Point2D.Double(p.getY(), p.getX());
     }
 
     /** Return Double.NaN if line a1a2 is parallel to line b1b2.

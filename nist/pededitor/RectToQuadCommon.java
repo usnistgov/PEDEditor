@@ -157,15 +157,6 @@ abstract public class RectToQuadCommon
     }
 
 
-    public String toString(boolean verbose) {
-        if (verbose) {
-            return toString() + " =\n" + xform.toString();
-        } else {
-            return toString();
-        }
-    }
-
-
     /** Update xform's parameters to reflect changes made here. */
     void update() {
 

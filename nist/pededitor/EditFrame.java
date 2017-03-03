@@ -545,7 +545,6 @@ public class EditFrame extends JFrame
                 }
             });
     protected JMenu mnSetComponents = new JMenu("Set components");
-    protected JMenu mnSwapComponents = new JMenu("Swap components");
 
     JMenuItem mnCopyFormulas = new JMenuItem
         (new Action
@@ -1060,13 +1059,6 @@ public class EditFrame extends JFrame
             this.dy = dy;
         }
 
-        JumpAction(String name, int mnemonic, KeyStroke stroke,
-                     int dx, int dy) {
-            super(name, mnemonic, stroke);
-            this.dx = dx;
-            this.dy = dy;
-        }
-
         @Override public void actionPerformed(ActionEvent e) {
             getEditor().jump(dx, dy);
             finishEvent();
@@ -1547,7 +1539,7 @@ public class EditFrame extends JFrame
             ("Dark", StandardAlpha.BLACK, KeyEvent.VK_D);
         mnBackgroundImage.add(blackBackgroundImage);
         noBackgroundImage = new BackgroundImageMenuItem
-            ("Hide", StandardAlpha.NONE, KeyEvent.VK_N);
+            ("Hide", StandardAlpha.NONE, KeyEvent.VK_H);
         noBackgroundImage.getAction().putValue
             (AbstractAction.ACCELERATOR_KEY,
              KeyStroke.getKeyStroke("control H"));
@@ -2098,18 +2090,6 @@ public class EditFrame extends JFrame
     }
 
     private static int actionId = 0;
-
-    void enable(JMenuItem it) {
-        AbstractAction act = (AbstractAction) it.getAction();
-        if (act != null) {
-            enable(act);
-        }
-    }
-
-    /** Insert act into menu so that menu remains alphabetized. */
-    public void addAlphabetized(JMenu menu, AbstractAction act) {
-        addAlphabetized(menu, act, 0);
-    }
 
     public void addAlphabetized(JMenu menu, AbstractAction act,
                                 int startFrom) {

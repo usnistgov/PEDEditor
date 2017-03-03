@@ -9,7 +9,6 @@ import javax.swing.JLabel;
 /** PED Viewer popup menu. */
 @SuppressWarnings("serial")
 public class ViewerRightClickMenu extends BasicRightClickMenu {
-    BasicEditor mEditor;
     JLabel coordinates;
 
     public ViewerRightClickMenu(BasicEditor editor) {

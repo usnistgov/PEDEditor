@@ -113,30 +113,6 @@ public interface Interp2D extends TransformableParameterizable2D, Cloneable {
         }
     }
 
-    /** @return an array of all intersections between segment and
-        this. */
-    default Point2D.Double[] segIntersections(Line2D segment) {
-        BoundedParam2D c = getParameterization();
-        double[] ts = c.segIntersections(segment);
-        Point2D.Double[] res = new Point2D.Double[ts.length];
-        for (int i = 0; i < ts.length; ++i) {
-            res[i] = c.getLocation(ts[i]);
-        }
-        return res;
-    }
-
-    /** @return an array of all intersections between segment and
-        this. */
-    default Point2D.Double[] lineIntersections(Line2D segment) {
-        BoundedParam2D c = getParameterization();
-        double[] ts = c.lineIntersections(segment);
-        Point2D.Double[] res = new Point2D.Double[ts.length];
-        for (int i = 0; i < ts.length; ++i) {
-            res[i] = c.getLocation(ts[i]);
-        }
-        return res;
-    }
-
     default Point2D.Double getLocation(double d) {
         return getParameterization().getLocation(d);
     }
@@ -156,10 +132,6 @@ public interface Interp2D extends TransformableParameterizable2D, Cloneable {
         int s = size();
         add(s, point);
         return s;
-    }
-    /** Remove the last point added. */
-    default void remove() {
-        remove(size() - 1);
     }
 
     /** @return the number of segments in this drawing. That equals
@@ -190,10 +162,6 @@ public interface Interp2D extends TransformableParameterizable2D, Cloneable {
         }
 
         return (Point2D.Double) get(s-1);
-    }
-
-    default Point2D.Double getLocation(int i) {
-        return get(i % size());
     }
 
     /* When something (such as a tie line) is anchored to
@@ -305,11 +273,6 @@ public interface Interp2D extends TransformableParameterizable2D, Cloneable {
 
     default double indexToT(int index) {
         return index;
-    }
-
-    /** Return true if this is the t value of a vertex. */
-    default boolean tIsVertex(double t) {
-        return indexToT(tToIndex(t)) == t;
     }
 
     default ParamPointInfo info(double t) {

@@ -68,23 +68,6 @@ public class LabelHandle implements DecorationHandle {
             && getDecoration().equals(cast.getDecoration());
     }
 
-    /** @return the anchor location for a label whose handle is at
-        dest. */
-    public Point2D.Double getAnchorLocation(Point2D dest) {
-        if (handle == Type.ANCHOR) {
-            return new Point2D.Double(dest.getX(), dest.getY());
-        }
-
-        // Compute the difference between the anchor
-        // location and the center, and apply the same
-        // difference to dest.
-        Point2D.Double anchor = getDecoration().getLocation();
-        Point2D.Double center = getDecoration().getCenter();
-        double dx = anchor.x - center.x;
-        double dy = anchor.y - center.y;
-        return new Point2D.Double(dest.getX() + dx, dest.getY() + dy);
-    }
-
     @Override public String toString() {
         return getClass().getSimpleName() + "[" + getDecoration() + ", "
             + handle + "]";

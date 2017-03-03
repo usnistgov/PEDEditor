@@ -82,10 +82,6 @@ public class Diagram extends Observable implements Printable {
     protected static final DecimalFormat STANDARD_PERCENT_FORMAT
         = new DecimalFormat("##0.00%");
 
-    public Interp2DHandle removeVertex(Interp2DDecoration d, int index) {
-        return removeVertex(d.createHandle(index));
-    }
-
     public Interp2DHandle removeVertex(Interp2DHandle hand) {
         Interp2DDecoration d = hand.getDecoration();
         Interp2D path = d.getCurve();
@@ -223,15 +219,10 @@ public class Diagram extends Observable implements Printable {
         componentElements = null;
 
     protected ArrayList<LinearAxis> axes = new ArrayList<>();
-    protected double labelXMargin = Double.NaN;
-    protected double labelYMargin = Double.NaN;
-    protected double boxedLabelXMargin = Double.NaN;
-    protected double boxedLabelYMargin = Double.NaN;
     protected boolean percentagePreferred = true;
 
     static final double STANDARD_LINE_WIDTH = 0.0024;
     static final double STANDARD_FONT_SIZE = 12.5;
-    static final double STANDARD_LABEL_BOX_WIDTH = 0.0010;
     static final int STANDARD_RULER_FONT_SIZE = 15;
     protected String filename;
     private boolean usingWeightFraction = false;
@@ -344,28 +335,6 @@ public class Diagram extends Observable implements Printable {
                   new Point2D.Double(bogoMax, r.y + r.height),
                   new Point2D.Double(bogoMax, r.y) };
         }
-    }
-
-    /** @return the shape of the core graph, which, except for
-        free-form diagrams, is usually smaller than the entire page,
-        but not always -- the page may have been resized, the diagram
-        may have been resized (after which, confusingly, the original
-        diagram size is still returned by this), and for trapezoidal
-        ternary diagrams, the core graph will be the entire triangle,
-        possibly extending beyond the top of the page. */
-    public Path2D diagramShape() {
-        Path2D.Double res = new Path2D.Double();
-        int pointCnt = 0;
-        for (Point2D.Double p: expansiveDiagramVertices()) {
-            ++pointCnt;
-            if (pointCnt > 1) {
-                res.lineTo(p.x, p.y);
-            } else {
-                res.moveTo(p.x, p.y);
-            }
-        }
-        res.closePath();
-        return res;
     }
 
     /** @return the diagram's shape, as in diagramShape(), transformed
@@ -778,10 +747,6 @@ public class Diagram extends Observable implements Printable {
         propagateChange();
     }
 
-    public void add(TieLine tie) {
-        addDecoration(tie);
-    }
-
     public void add(LinearRuler ruler) {
         addDecoration(ruler);
     }
@@ -1016,62 +981,6 @@ public class Diagram extends Observable implements Printable {
             sum += sd.d;
         }
         return Math.abs(1 - sum) < 1e-4;
-    }
-
-    /** Assuming that diagram's principal coordinates are mole
-        fractions, return the weight fractions of the various diagram
-        components at point prin, or null if the fractions could not
-        be determined. */
-    protected SideDouble[] componentWeightFractions(Point2D prin) {
-        SideDouble[] res = componentFractions(prin);
-        if (res == null || !componentsSumToOne(res)) {
-            return null;
-        }
-        double totWeight = 0;
-        for (SideDouble sd: res) {
-            double cw = componentWeight(sd.s);
-            if (cw == 0) {
-                return null;
-            }
-            // Multiply the mole fraction by the compound's weight.
-            // Later, dividing by the sum of all of these terms will
-            // yield the weight fraction.
-            cw *= sd.d;
-            sd.d = cw;
-            totWeight += cw;
-        }
-        for (SideDouble sd: res) {
-            sd.d /= totWeight;
-        }
-        return res;
-    }
-
-    /** Assuming that diagram's principal coordinates are weight
-        fractions, return the mole fractions of the various diagram
-        components at point prin, or null if the fractions could not
-        be determined. */
-    protected SideDouble[] componentMoleFractions(Point2D prin) {
-        SideDouble[] res = componentFractions(prin);
-        if (res == null || !componentsSumToOne(res)) {
-            return null;
-        }
-        double totMole = 0;
-        for (SideDouble sd: res) {
-            double cw = componentWeight(sd.s);
-            if (cw == 0) {
-                return null;
-            }
-            // Divide the weight fraction by the compound's weight.
-            // Later, dividing by the sum of all of these terms will
-            // yield the mole fraction.
-            double mf = sd.d / cw;
-            sd.d = mf;
-            totMole += mf;
-        }
-        for (SideDouble sd: res) {
-            sd.d /= totMole;
-        }
-        return res;
     }
 
     // Projection of a point onto the nearest point in a set, and offset from that projection.
@@ -1510,13 +1419,6 @@ public class Diagram extends Observable implements Printable {
         computeMargins();
     }
 
-    /* Return true if all sides that could have components do have
-       them, those components' compositions are known, and those
-       components sum to 100%. */
-    boolean haveComponentCompositions() {
-        return sidesWithComponents() != null;
-    }
-
     /* Return null unless all sides that could have components do have
        them, those components' compositions are known, and those
        components sum to 100%. Otherwise, return an array of those
@@ -1542,11 +1444,6 @@ public class Diagram extends Observable implements Printable {
 
         return (Math.abs(a) < 1e-4 && Math.abs(b) < 1e-4 && Math.abs(c-1) < 1e-4)
             ? res : null;
-    }
-
-    static class PointAndError {
-        Point2D.Double point;
-        double error;
     }
 
     static class OrderByXY implements Comparator<Point2D.Double> {
@@ -1752,18 +1649,6 @@ public class Diagram extends Observable implements Printable {
             }
         }
         return lines.toArray(new String[0]);
-    }
-
-    /** Return a multi-line comma-separated-values string of the
-        coordinates for all control points of the given curve,
-        expressed in terms of variables v1 and v2 */
-    public String coordinates(Interp2DDecoration path, LinearAxis v1, LinearAxis v2) {
-        StringBuilder sb = new StringBuilder();
-        for (Point2D.Double point: path.getCurve().getPoints()) {
-            sb.append(v1.applyAsDouble(point) + ", " + v2.applyAsDouble(point));
-            sb.append('\n');
-        }
-        return sb.toString();
     }
 
     /** Return the coordinates for all labels that match text. */
@@ -2184,55 +2069,6 @@ public class Diagram extends Observable implements Printable {
             || (isLeftAxis(axis) && getDiagramComponent(Side.LEFT) != null);
     }
 
-    public void add(Label label) {
-        addDecoration(label);
-    }
-
-    /** @param xWeight Used to determine how to justify rows of text. */
-    View toView(String str, double xWeight, Color textColor) {
-        return toView(str, xWeight, textColor, 0);
-    }
-
-    /** @param width If not zero, the value (in pixels) to specify for
-        the width CSS attribute. */
-    View toView(String str, double xWeight, Color textColor, double width) {
-        String style
-            = "<style type=\"text/css\"><!--"
-            + " body { font-size: 100 pt; } "
-            + " sub { font-size: 75%; } "
-            + " sup { font-size: 75%; } "
-            + " --></style>";
-
-        str = NestedSubscripts.unicodify(str);
-
-        StringBuilder sb = new StringBuilder("<html><head>");
-        sb.append(style);
-        sb.append("</head><body");
-        if (width > 0) {
-            sb.append(" style=\"width:" + width + "px\"");
-        }
-        sb.append(">");
-
-        if (xWeight >= 0.67) {
-            sb.append("<div align=\"right\">");
-            sb.append(str);
-            sb.append("</div>");
-        } else if (xWeight >= 0.33) {
-            sb.append("<div align=\"center\">");
-            sb.append(str);
-            sb.append("</div>");
-        } else {
-            sb.append(str);
-        }
-        str = sb.toString();
-
-        JLabel bogus = new JLabel(str);
-        Font f = getFont();
-        bogus.setFont(f);
-        bogus.setForeground(thisOrBlack(textColor));
-        return (View) bogus.getClientProperty("html");
-    }
-
     public DiagramType getDiagramType() {
         return diagramType;
     }
@@ -2381,10 +2217,6 @@ public class Diagram extends Observable implements Printable {
         }
 
         return res;
-    }
-
-    List<DecorationHandle> selectionHandles(Decoration d) {
-        return getHandles(d, DecorationHandle.Type.SELECTION);
     }
 
     List<DecorationHandle> getHandles(Decoration d,
@@ -2850,10 +2682,6 @@ public class Diagram extends Observable implements Printable {
         propagateChange();
     }
 
-    protected static double normalFontSize() {
-        return STANDARD_FONT_SIZE / BASE_SCALE;
-    }
-
     protected static double normalRulerFontSize() {
         return STANDARD_RULER_FONT_SIZE / BASE_SCALE;
     }
@@ -2958,29 +2786,6 @@ public class Diagram extends Observable implements Printable {
         return 0;
     }
 
-
-    /** Invoked from the EditFrame menu */
-    public void setMargin(Side side, double margin) {
-        double delta = margin - getMargin(side);
-
-        switch (side) {
-        case LEFT:
-            pageBounds.x = -margin;
-            // Fall through
-        case RIGHT:
-            pageBounds.width += delta;
-            break;
-        case TOP:
-            pageBounds.y = -margin;
-            // Fall through
-        case BOTTOM:
-            pageBounds.height += delta;
-            break;
-        }
-
-        setPageBounds(pageBounds);
-    }
-
     static Diagram loadFrom(File file) throws IOException {
         Diagram res;
 
@@ -3076,10 +2881,6 @@ public class Diagram extends Observable implements Printable {
 
     public void openDiagram(String jsonString) throws IOException {
         copyFrom(loadFrom(jsonString));
-    }
-
-    public void openDiagram(InputStream is) throws IOException {
-        copyFrom(loadFrom(is));
     }
 
     void copyFrom(Diagram d) throws IOException {
@@ -3232,12 +3033,6 @@ public class Diagram extends Observable implements Printable {
             (pageBounds.width, 0, width,
              pageBounds.height, 0, height);
         return new Dimension((int) (r.width + 0.5), (int) (r.height + 0.5));
-    }
-
-    /** Return a BufferedImage of the diagram which is no larger than
-        width x height. */
-    public BufferedImage createImage(int width, int height) {
-        return createImage(width, height, false, false);
     }
 
     /** Return a BufferedImage of the diagram which is no larger than
@@ -4325,10 +4120,6 @@ public class Diagram extends Observable implements Printable {
         return r;
     }
 
-    LinearRuler binaryRightRuler() {
-        return binaryRightRuler(0, 1, 1);
-    }
-
     LinearRuler binaryRightRuler(double bottom, double top, double x) {
         LinearRuler r = defaultBinaryRuler();
         r.textAngle = Math.PI / 2;
@@ -4559,43 +4350,6 @@ public class Diagram extends Observable implements Printable {
         DecorationsWrapper tmp = new DecorationsWrapper();
         tmp.decorations = copies;
         return Tabify.tabify(getObjectMapper().writeValueAsString(tmp));
-    }
-
-    /** Compress the brightness into the upper "frac" portion of the range
-        0..255. */
-    static int fade(int i, double frac) {
-        int res = (int) (255 - (255 - i)*frac);
-        return (res < 0) ? 0 : res;
-    }
-
-    static void fade(BufferedImage src, BufferedImage dest, double frac) {
-        if (src == dest && frac == 1.0) {
-            // Nothing to do.
-            return;
-        }
-
-        int width = src.getWidth();
-        int height = src.getHeight();
-        if (dest.getType() == BufferedImage.TYPE_INT_ARGB) {
-            for (int x = 0; x < width; ++x) {
-                for (int y = 0; y < height; ++y) {
-                    Color c = new Color(src.getRGB(x,y));
-                    c = new Color(c.getRed(), c.getGreen(), c.getBlue(),
-                            (int) (c.getAlpha() * frac + 0.5));
-                    dest.setRGB(x,y,c.getRGB());
-                }
-            }
-        } else {
-            for (int x = 0; x < width; ++x) {
-                for (int y = 0; y < height; ++y) {
-                    Color c = new Color(src.getRGB(x,y));
-                    c = new Color(fade(c.getRed(), frac),
-                            fade(c.getGreen(), frac),
-                            fade(c.getBlue(), frac));
-                    dest.setRGB(x,y,c.getRGB());
-                }
-            }
-        }
     }
 }
 

@@ -95,10 +95,6 @@ public class BasicStrokes {
              0.0f);
     }
 
-    public static BasicStroke getDashedLine() {
-        return getDashedLine(9);
-    }
-
     /** Return a dashed line that is about 64% filled, accounting for
         the leading and trailing diameter-1 semicircles */
     public static BasicStroke getDashedLine(double dashPeriod) {

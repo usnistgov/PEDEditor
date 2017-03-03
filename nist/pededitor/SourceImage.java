@@ -63,10 +63,6 @@ public class SourceImage implements Decoration {
         return res;
     }
 
-    public SourceImage(BufferedImage image) {
-        this.image = image; // TODO bytes...
-    }
-
     /** Because rescaling an image is slow, keep a cache of locations
         and sizes that have been rescaled. All of these images have
         had oldTransform applied to them; if a new transform is attempted,

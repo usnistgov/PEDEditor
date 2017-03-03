@@ -330,7 +330,7 @@ final public class CubicSpline1D {
         return output;
     }
 
-    /** Convert the position of the parameterized cubic Bezier curve
+    /** Compute the position of the parameterized cubic Bezier curve
         at the given t value. */
     public static double bezier(double t, double[] controlPoints) {
         double u = 1 - t;

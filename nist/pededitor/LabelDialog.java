@@ -458,11 +458,6 @@ public class LabelDialog extends JDialog {
         reset();
     }
 
-    LabelDialog(Frame owner, String title, Label label, Font font) {
-        this(owner, title, font, true);
-        set(label);
-    }
-
     /** Make this dialog look newly constructed, except that the font won't change. */
     public void reset() {
         setText("");
@@ -563,8 +558,7 @@ public class LabelDialog extends JDialog {
             return null;
         }
 
-        Label al =
-            new Label(textField.getText(), xWeight, yWeight);
+        Label al = new Label(textField.getText(), getXWeight(), getYWeight());
         al.setFontSize(getFontSize());
         al.setAngle(getAngle());
         al.setAutoWidth(mIsAutoWidth.isSelected());
@@ -584,11 +578,11 @@ public class LabelDialog extends JDialog {
     }
 
     public double getAngle() {
-        return Compass.degreesToTheta(getAngleDegrees());
+        return degreesToTheta(getAngleDegrees());
     }
 
     public void setAngle(double theta) {
-        double deg = Compass.thetaToDegrees(theta);
+        double deg = thetaToDegrees(theta);
         // Avoid the stupid behavior where negative zero is displayed
         // as -0.0
         angleField.setText(String.format("%.1f", (deg == 0 ? 0 : deg)));
@@ -618,17 +612,13 @@ public class LabelDialog extends JDialog {
         Label t = dialog.showModal();
         System.out.println("You selected " + t);
     }
-   
-}
 
-class LabelAnchorButton extends JButton {
-    private static final long serialVersionUID = 7002196720099380748L;
-
-    double xWeight;
-    double yWeight;
-
-    LabelAnchorButton(double xWeight, double yWeight) {
-        this.xWeight = xWeight;
-        this.yWeight = yWeight;
+    static public double degreesToTheta(double deg) {
+        return -deg * Math.PI / 180;
     }
+
+    static double thetaToDegrees(double theta) {
+        return - (theta / Math.PI) * 180;
+    }
+   
 }

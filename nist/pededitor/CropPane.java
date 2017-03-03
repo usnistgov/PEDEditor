@@ -101,10 +101,6 @@ public class CropPane extends ImagePane {
         return output;
     }
 
-    public DiagramType apparentDiagramType() {
-        return apparentDiagramType(vertices);
-    }
-
     public static DiagramType apparentDiagramType(ArrayList<Point> points) {
         int cnt = points.size();
 

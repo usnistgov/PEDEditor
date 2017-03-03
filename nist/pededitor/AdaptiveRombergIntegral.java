@@ -410,40 +410,6 @@ public class AdaptiveRombergIntegral {
         return it;
     }
 
-    public static class LeafAndEstimate {
-        public AdaptiveRombergIntegral leaf;
-        public NumericEstimate est;
-        public LeafAndEstimate(AdaptiveRombergIntegral leaf,
-                               NumericEstimate est) {
-            this.leaf = leaf;
-            this.est = est;
-        }
-    }
-
-
-    /** Return the leftmost leaf for which the integral of f over
-        [this.lo, leaf.hi] appears to equal or exceed y along with an
-        estimate of the integral over [this.lo, leaf.lo]. */
-    public LeafAndEstimate leafIntegratingTo(double y) {
-        if (y < 0 || y > estimate.upperBound) {
-            return new LeafAndEstimate(null, NumericEstimate.bad(0));
-        }
-
-        NumericEstimate est = new NumericEstimate(0);
-        AdaptiveRombergIntegral it = this;
-        while (!it.isLeaf()) {
-            double midY = it.left.estimate.value;
-            if (y > midY) {
-                y -= midY;
-                est.add(it.left.estimate);
-                it = it.right;
-            } else {
-                it = it.left;
-            }
-        }
-        return new LeafAndEstimate(it, est);
-    }
-
     /** Return the integral of f over [getRoot().lo, this.lo]. */
     NumericEstimate leftSideIntegral() {
         NumericEstimate res = new NumericEstimate(0);

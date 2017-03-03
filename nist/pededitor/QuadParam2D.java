@@ -11,9 +11,6 @@ import java.util.Arrays;
 
 /** Parameterize a quadratic Bezier curve in two dimensions. */
 public class QuadParam2D extends BezierParam2D {
-    /** Middle Bezier control point */
-    Point2D.Double p1;
-
     /** @param p0 The position at time t=0, even if t0 != 0.
 
         @param p1 Middle Bezier control point.
@@ -50,7 +47,6 @@ public class QuadParam2D extends BezierParam2D {
     */
     public QuadParam2D(Point2D[] points) {
         super(points);
-        p1 = new Point2D.Double(points[1].getX(), points[1].getY());
     }
 
     /** @return the distance between p and the quadratic Bezier curve

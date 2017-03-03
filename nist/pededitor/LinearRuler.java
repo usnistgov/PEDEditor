@@ -227,12 +227,6 @@ class LinearRuler implements Interp2DDecoration, SegmentInterp2D {
         return mungeValue(axis.applyAsDouble(endPoint));
     }
 
-    CuspDecoration spinePolyline() {
-        return new CuspDecoration
-            (new CuspInterp2D(startPoint, endPoint),
-             StandardStroke.SOLID, lineWidth);
-    }
-
     /** Return { xWeight, yWeight }, which depend upon the value of
      * labelAnchor and textAngle. */
     double[] weights() {

@@ -34,17 +34,6 @@ public class PEDToPDF {
     public final static String PED_DIR = "/ebdata/ped";
     public final static String PED_DIR2 = "/ebdata/pedw";
 
-    /** If the base filename contains a dot, then remove the last dot
-        and everything after it. Otherwise, return the entire string.
-        Modified from coobird's suggestion on Stack Overflow. */
-    public static String removeExtension(String s) {
-        String separator = System.getProperty("file.separator");
-        int lastSeparatorIndex = s.lastIndexOf(separator);
-        int extensionIndex = s.lastIndexOf(".");
-        return (extensionIndex <= lastSeparatorIndex) ? s
-            : s.substring(0, extensionIndex);
-    }
-
     /** Load the PED file with the given filename, crop it, guess
         diagram components, remove the x3 and y3 keys (which are used
         to guess diagram components). */

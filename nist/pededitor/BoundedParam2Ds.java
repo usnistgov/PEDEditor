@@ -735,13 +735,6 @@ public class BoundedParam2Ds {
         return distance(cps, p, maxError, maxSteps);
     }
 
-    public static BoundedParam2D[] subdivide(BoundedParam2D c) {
-        double middle = (c.getMinT() + c.getMaxT()) / 2;
-        return new BoundedParam2D[]
-            { c.createSubset(c.getMinT(), middle),
-              c.createSubset(middle, c.getMaxT()) };
-    }
-
     @SuppressWarnings("unused")
     public static void main(String[] args) {
         BoundedParam2D s1 = BezierParam2D.create

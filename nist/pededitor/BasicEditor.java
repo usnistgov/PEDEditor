@@ -1312,15 +1312,6 @@ public class BasicEditor extends Diagram
         }
     }
 
-    public void removeLikeSelection() {
-        boolean hadSelection = (selection != null);
-        if (!hadSelection && !selectSomething()) {
-            return;
-        }
-        removeLikeThis(selection.getDecoration());
-        clearSelection();
-    }
-
     /** Select the vertex that comes after or before the currently
         selected vertex.
 
@@ -1891,13 +1882,6 @@ public class BasicEditor extends Diagram
         }
     }
 
-
-    /** Return the slope at the given handle in terms of
-        dStandardPageY/dStandardPageX. */
-    public Point2D.Double derivative(BoundedParam2DHandle hand) {
-        return derivative(hand.getDecoration(), hand.getT());
-    }
-
     /** Return the slope at the given t value in terms of
         dStandardPageY/dStandardPageX, or null if the value cannot be
         computed. */
@@ -2010,17 +1994,12 @@ public class BasicEditor extends Diagram
         }
     }
 
-    /** Return true if, were point p inserted into the currently
-        selected curve at the current position, it would be the same
-        as the point preceding or following it. CubicSpline2D barfs
-        on smoothing between a series of points where the same point
-        appears twice in a row, so inserting duplicate points is
-        bad. */
-    boolean isDuplicate(Point2D prin) {
-        Interp2D path = getSelectedInterp2D();
-        return path != null && isDuplicate(prin, path, vertexInsertionIndex());
-    }
-
+    /**
+     * Return true if, were point p inserted into path at index, it would be the
+     * same as the point preceding or following it. CubicSpline2D barfs on
+     * smoothing between a series of points where the same point appears twice
+     * in a row, so inserting duplicate points is bad.
+     */
     boolean isDuplicate(Point2D prin, Interp2D path, int index) {
         int s = path.size();
         double pmd = pageMatchDistance();
@@ -2425,42 +2404,6 @@ public class BasicEditor extends Diagram
         }
 
         throw new IllegalStateException("No such variable '" + name + "'");
-    }
-
-    /** Like renameVariable, but show errors to the user instead of
-        throwing exceptions. */
-    public void renameVariableGUI(String oldName, String newName) {
-        // If the user wants to rename or add a component, they should
-        // use Chemistry/Components instead. The only time it makes
-        // sense to redirect to that is if the old value is a component.
-
-        for (Side side: Side.values()) {
-            Axis axis = getAxis(side);
-            if (axis != null && axis.name.equals(oldName)
-                && (isTernary() || diagramComponents[side.ordinal()] != null)) {
-                setDiagramComponentGUI(side, newName);
-                return;
-            }
-        }
-
-        if (newName == null || "".equals(newName)) {
-            return;
-        }
-        for (Axis axis: axes) {
-            if (axis.name.equals(newName)) {
-                showError("A variable with that name already exists.");
-                return;
-            }
-        }
-
-        for (LinearAxis axis: axes) {
-            if (axis.name.equals(oldName)) {
-                rename(axis, newName);
-                return;
-            }
-        }
-
-        throw new IllegalStateException("No such variable '" + oldName + "'");
     }
 
     @Override public void rename(LinearAxis axis, String name) {
@@ -3322,29 +3265,6 @@ public class BasicEditor extends Diagram
             (selection != null && d == selection.getDecoration())
             ? DecorationHandle.Type.CONTROL_POINT : type;
         return Arrays.asList(d.getHandles(type2));
-    }
-
-    /**
-     * @return the location on the page of the selection handle
-     * closest to pagePoint. */
-    Point2D.Double nearestPagePoint(Point2D.Double pagePoint,
-            DecorationHandle.Type type) {
-        double minDistSq = 0;
-        Point2D.Double res = null;
-        for (Decoration d: getDecorations()) {
-            DecorationHandle.Type type2 = (selection != null && d == selection.getDecoration())
-                    ? DecorationHandle.Type.CONTROL_POINT : type;
-            for (DecorationHandle h: d.getHandles(type2)) {
-                Point2D.Double p2 = pageLocation(h);
-                double distSq = pagePoint.distanceSq(p2);
-                if (res == null || distSq < minDistSq) {
-                    res = p2;
-                    minDistSq = distSq;
-                }
-            }
-        }
-
-        return res;
     }
 
     final private Point2D.Double mousePage() {
@@ -4751,10 +4671,6 @@ public class BasicEditor extends Diagram
         return normalRulerFontSize() * lineWidth / STANDARD_LINE_WIDTH;
     }
 
-    public double currentFontSize() {
-        return getLabelDialog().getFontSize();
-    }
-
     /** Return true unless something about the setup of this diagram
         makes it unsuitable for use with pixel mode. */
     boolean maybePixelMode() {
@@ -4947,7 +4863,6 @@ public class BasicEditor extends Diagram
             marginsDialog = new MarginsDialog(editFrame, 20);
         }
         MarginsDialog dog = marginsDialog;
-        dog.toPage = principalToStandardPage;
         dog.fromPage = standardPageToPrincipal;
         dog.axes = axes;
 
@@ -5220,14 +5135,6 @@ public class BasicEditor extends Diagram
              ImageIO.getReaderFileSuffixes());
     }
 
-    public static File openImageFileDialog(Component parent) {
-        File[] res = openImageFilesDialog(parent);
-        if (res != null && res.length == 1) {
-            return res[0];
-        }
-        return null;
-    }
-
     public void open() {
         showOpenDialog(editFrame);
     }
@@ -5434,33 +5341,6 @@ public class BasicEditor extends Diagram
         chooser.setFileFilter
             (new FileNameExtensionFilter(ext.toUpperCase(), ext));
         if (chooser.showSaveDialog(editFrame) != JFileChooser.APPROVE_OPTION) {
-            return null;
-        }
-
-        File file = chooser.getSelectedFile();
-        if (getExtension(file.getName()) == null) {
-            // Add the default extension
-            file = new File(file.getAbsolutePath() + "." + ext);
-        }
-
-        setCurrentDirectory(file.getParent());
-        return file;
-    }
-
-    /** @return a File if the user selected one, or null otherwise.
-
-        @param ext the extension to use with this file ("pdf" for
-        example). */
-    public File showOpenDialog(String ext) {
-        String dir = getCurrentDirectory();
-        JFileChooser chooser = new JFileChooser();
-        chooser.setDialogTitle("Open " + ext.toUpperCase() + " file");
-        if (dir != null) {
-            chooser.setCurrentDirectory(new File(dir));
-        }
-        chooser.setFileFilter
-            (new FileNameExtensionFilter(ext.toUpperCase(), ext));
-        if (chooser.showOpenDialog(editFrame) != JFileChooser.APPROVE_OPTION) {
             return null;
         }
 
@@ -6237,10 +6117,6 @@ public class BasicEditor extends Diagram
         zoom(Geom.bounds(new Point2D.Double[] { page1, page2 }));
     }
 
-    void zoomToSelection() {
-        zoom(getSelectionBounds());
-    }
-
     void zoom(Rectangle2D pageBounds) {
         if (pageBounds == null) {
             return;
@@ -6386,14 +6262,6 @@ public class BasicEditor extends Diagram
     }
 
     EditPane getEditPane() { return editFrame.getEditPane(); }
-
-    public void run(String filename) {
-        if (filename == null) {
-            run(new String[] {});
-        } else {
-            run(new String[] { filename });
-        }
-    }
 
     public void nextFile() {
         if (!verifyCloseDiagram()) {

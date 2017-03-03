@@ -9,7 +9,6 @@ import java.awt.geom.Line2D;
 import java.awt.geom.Point2D;
 import java.util.List;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
 /** Class describing a ruler whose tick marks describe values from a
@@ -59,10 +58,6 @@ interface SegmentInterp2D extends Interp2D {
         default:
         	throw new IllegalArgumentException("index = " + index);
         }
-    }
-
-    @JsonIgnore default SegmentInterp2D getCurve() {
-        return this;
     }
     
     @Override SegmentInterp2D clone();

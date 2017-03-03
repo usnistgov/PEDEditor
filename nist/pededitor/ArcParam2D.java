@@ -37,13 +37,6 @@ public class ArcParam2D extends BoundedParam2DAdapter
         }
     }
 
-    /** Convert p to an angle relative to the arc center. As with
-        Arc2D, angles for non-circular arcs use non-square framing
-        rectangles. */
-    double toAngle(Point2D p) {
-        return ArcMath.toAngle(arc, p);
-    }
-
     @Override public CurveDistanceRange distance
         (Point2D p, double maxError, int maxSteps, double t0, double t1) {
         return BoundedParam2Ds.distance
@@ -52,13 +45,6 @@ public class ArcParam2D extends BoundedParam2DAdapter
     @Override public CurveDistance distance(Point2D p, double t) {
         Point2D.Double pt = getLocation(t);
         return new CurveDistance(t, pt, pt.distance(p));
-    }
-
-    /** @return a bounded parameterization of the arc.
-     * @throws UnsolvableException */
-    public static BoundedParam2D create(ArcInterp2D ai) throws UnsolvableException {
-        ArcParam2D ep = new ArcParam2D(ai);
-        return ep.createSubset(ep.arc.start, ep.arc.start + ep.arc.extent);
     }
 
     @Override public ArcParam2D createTransformed(AffineTransform xform) {

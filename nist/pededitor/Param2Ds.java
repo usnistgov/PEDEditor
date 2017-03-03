@@ -27,20 +27,6 @@ public class Param2Ds {
         }
     }
 
-    public static class DAreaDT implements DoubleUnaryOperator {
-        Param2D p;
-        Param2D d;
-
-        public DAreaDT(Param2D p) {
-            this.p = p;
-            this.d = p.derivative();
-        }
-
-        @Override public double applyAsDouble(double t) {
-            return p.getLocation(t).y * d.getLocation(t).x;
-        }
-    }
-
     static public AdaptiveRombergIntegral lengthIntegral
         (Param2D c, double lo, double hi) {
         DoubleUnaryOperator dsdt = new Param2Ds.DLengthDT(c);

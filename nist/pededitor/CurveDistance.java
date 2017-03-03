@@ -46,13 +46,6 @@ public class CurveDistance implements Comparable<CurveDistance> {
             : (c1.distance <= c2.distance) ? c1 : c2;
     }
 
-    /** @return other if other is not null and its distance is greater
-        than this, or this otherwise. */
-    public CurveDistance maxWith(CurveDistance other) {
-        return (other == null) ? this
-            : (distance >= other.distance) ? this : other;
-    }
-
     public static CurveDistance pointSegmentDistance 
         (Point2D p, Point2D l1, Point2D l2) {
         
@@ -78,9 +71,5 @@ public class CurveDistance implements Comparable<CurveDistance> {
 
         output.distance = p.distance(output.point);
         return output;
-    }
-
-    public static CurveDistance distance(Point2D p1, Point2D p2) {
-        return new CurveDistance(0.0, p2, p1.distance(p2));
     }
 }

@@ -23,7 +23,6 @@ public class MarginsDialog extends JDialog {
 
     private static final long serialVersionUID = -9088557283490153600L;
     
-    public AffineTransform toPage;
     public AffineTransform fromPage;
     List<LinearAxis> axes;
 

@@ -235,10 +235,6 @@ public class Label extends AnchoredTransformedShape {
             return wideView;
         }
     }
-    
-    @JsonIgnore void setView(View view) {
-        this.view = view;
-    }
 
     /** @param xWeight Used to determine how to justify rows of text. */
     static View toView(String str, double xWeight, Color textColor, Font f) {

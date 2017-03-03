@@ -87,12 +87,6 @@ public class Fill {
             this.line = (Line2D.Double) line.clone();
             this.yOffset= yOffset;
         }
-
-        /* Mirror the y dimension about the box's midpoint. */
-        void mirrorY() {
-            line.y1 = box.height - line.y1;
-            line.y2 = box.height - line.y2;
-        }
     }
 
     /* Force theta into [-PI/2, PI/2) by adding an integer muliple of

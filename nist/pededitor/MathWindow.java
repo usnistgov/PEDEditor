@@ -287,7 +287,7 @@ public class MathWindow extends JDialog {
     /** Return the angle in radians, where 0 is straight right and
         values increase clockwise. */
     public double getAngle() {
-        return Compass.degreesToTheta(angled);
+        return LabelDialog.degreesToTheta(angled);
     }
 
     public void setSlope(double m) {

@@ -110,7 +110,6 @@ public class ChemicalString {
     // The following patterns need work.
     final static String elementWithCount = "(" + element + ")" + ion + "*"
         + "(<sub>" + subscript + "</sub>)?" + ion + "*";
-    final static String simpleCompound = "(?<![A-Za-z]>("+ elementWithCount + ")+";
 
     /** Return the element number corresponding to the given element
         symbol, or 0 if the symbol is not defined. */

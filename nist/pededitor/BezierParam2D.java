@@ -64,9 +64,6 @@ abstract public class BezierParam2D extends BoundedParam2DAdapter
         return create(xpoints);
     }
 
-    protected void init(Point2D[] points) {
-    }
-
     public int getDegree() {
         return Math.max(xCoefficients.length - 1, 0);
     }

@@ -20,10 +20,6 @@ public enum Side {
         return mIsX;
     }
 
-    public String dimensionName() {
-        return isX() ? "width" : "height";
-    }
-
     @Override public String toString() {
         return name;
     }

@@ -66,32 +66,6 @@ public class Shapes {
         return parts;
     }
 
-    public static Shape fillHoles(PathIterator pit) {
-        ArrayList<PathAndPoint> parts = getParts(pit);
-
-        // I see no easy way to improve over O(n^2)
-        // performance. You can usually do
-        // better with getBounds(), but I would rather not go through
-        // the trouble.
-        Path2D.Double res = new Path2D.Double();
-        for (PathAndPoint part: parts) {
-            Path2D.Double p = part.path;
-            Point2D.Double point = part.point;
-            boolean ok = true;
-            for (PathAndPoint otherPart: parts) {
-                Path2D.Double op = otherPart.path;
-                if (p != op && op.contains(point)) {
-                    ok = false;
-                    break;
-                }
-            }
-            if (ok) {
-                res.append(p, false);
-            }
-        }
-        return res;
-    }
-
     /** Return the outermost holes in the given path iterator. A
         circular boundary has no holes, but a white circle has a hole
         in the middle, while the rendering of the string '88' has 4

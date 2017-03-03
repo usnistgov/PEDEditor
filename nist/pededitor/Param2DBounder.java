@@ -97,8 +97,6 @@ public class Param2DBounder implements BoundedParam2D {
         return getLocation(getMaxT());
     }
 
-    public boolean inDomain(double t) { return t >= t0 && t <= t1; }
-
     @Override public Estimate length() {
         return c.length(t0, t1);
     }

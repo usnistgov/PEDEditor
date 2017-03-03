@@ -24,12 +24,6 @@ public class Interp2DHandle implements BoundedParam2DHandle {
     @Override public Interp2DHandle moveHandle(double dx, double dy) {
         return getDecoration().move(this, dx, dy);
     }
-    
-    public void moveAll(Point2D dest) {
-        Point2D.Double loc = getLocation();
-        decoration.transform(AffineTransform.getTranslateInstance
-          (dest.getX() - loc.x, dest.getY() - loc.y));
-    }
 
     /** Copy this selection, placing the copy at dest. Return the
         SelectionHandle object that represents the copy. */
