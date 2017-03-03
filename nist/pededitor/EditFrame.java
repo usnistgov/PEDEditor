@@ -207,7 +207,7 @@ public class EditFrame extends JFrame
         }
     };
 
-    Action actCopy = new Action("Copy selection", KeyEvent.VK_C, KeyStroke.getKeyStroke("control C")) {
+    Action actCopy = new Action("Copy", KeyEvent.VK_C, KeyStroke.getKeyStroke("control C")) {
         @Override
         public void actionPerformed(ActionEvent e) {
             getEditor().copySelection();
@@ -215,7 +215,7 @@ public class EditFrame extends JFrame
         }
     };
 
-    Action actCutRegion = new Action("Cut everything in selected region", KeyEvent.VK_O,
+    Action actCutRegion = new Action("Cut everything in selected region", KeyEvent.VK_E,
             KeyStroke.getKeyStroke("control shift X")) {
         @Override
         public void actionPerformed(ActionEvent e) {
@@ -485,7 +485,7 @@ public class EditFrame extends JFrame
             }
         };
     Action actCircle = new Action
-        ("Circle", KeyEvent.VK_C) {
+        ("Circle/Arc/Ellipse", KeyEvent.VK_C) {
             @Override public void actionPerformed(ActionEvent e) {
                 getEditor().addCircle();
                 finishEvent();
