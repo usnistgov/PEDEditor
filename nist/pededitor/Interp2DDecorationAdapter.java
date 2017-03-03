@@ -67,9 +67,6 @@ abstract public class Interp2DDecorationAdapter implements Interp2DDecoration {
         throws UnsupportedOperationException {
         this.fill = fill;
         if (fill != null) {
-            if (!getCurve().isClosed()) {
-                throw new UnsupportedOperationException();
-            }
             stroke = null;
         }
     }
