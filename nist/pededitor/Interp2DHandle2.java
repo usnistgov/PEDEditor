@@ -52,6 +52,15 @@ public class Interp2DHandle2 extends Interp2DHandle {
         return exactT;
     }
 
+    /** Return a handle for the index instead of this particular point. */
+    public Interp2DHandle indexHandle() {
+        return getDecoration().createHandle(index);
+    }
+
+    @Override public Interp2DHandle moveHandle(double dx, double dy) {
+        return indexHandle().moveHandle(dx, dy);
+    }
+
     @Override public Point2D.Double getLocation() {
         return (p == null) ? null :
             new Point2D.Double(p.x, p.y);
