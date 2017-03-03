@@ -129,13 +129,6 @@ public class CuspDecoration extends DecorationHasInterp2D
         }
     }
 
-    @Override public void setClosed(boolean b) {
-        if (!b && isFilled()) {
-            throw new IllegalArgumentException("Cannot turn off closure of a filled curve");
-        }
-        getCurve().setClosed(b);
-    }
-
     @Override public void draw(Graphics2D g) {
         double oldWidth = getLineWidth();
         try {
