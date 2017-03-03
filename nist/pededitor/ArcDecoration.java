@@ -49,21 +49,20 @@ public class ArcDecoration extends DecorationHasInterp2D
     }
 
     @Override public DecorationHandle[] getHandles(DecorationHandle.Type type) {
+        ArrayList<DecorationHandle> res = new ArrayList<>();
+        res.add(new ArcCenterHandle(this));
         if (type == DecorationHandle.Type.SELECTION) {
-            ArrayList<DecorationHandle> res = new ArrayList<>();
-            res.add(new ArcCenterHandle(this));
             if (!isClosed()) {
                 res.add(createHandle(0));
                 res.add(createHandle(getCurve().size() - 1));
             }
-            return res.toArray(new DecorationHandle[0]);
+        } else {
+            int size = getCurve().size();
+            for (int j = 0; j < size; ++j) {
+                res.add(createHandle(j));
+            }
         }
-        int size = getCurve().size();
-        Interp2DHandle[] res = new Interp2DHandle[size];
-        for (int j = 0; j < size; ++j) {
-            res[j] = createHandle(j);
-        }
-        return res;
+        return res.toArray(new DecorationHandle[0]);
     }
 
     /** For testing purposes only; could be safely deleted. */
