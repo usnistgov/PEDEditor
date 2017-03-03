@@ -544,13 +544,13 @@ public class AnchoredLabel extends AnchoredTransformedShape {
     }
 
     @JsonIgnore @Override
-    public DecorationHandle[] getHandles(DecorationHandle.Type type) {
+    public LabelHandle[] getHandles(DecorationHandle.Type type) {
         if (getXWeight() != 0.5 || getYWeight() != 0.5) {
-            return new DecorationHandle[]
+            return new LabelHandle[]
                 { new LabelHandle(this, LabelHandle.Type.ANCHOR),
                   new LabelHandle(this, LabelHandle.Type.CENTER) };
         } else {
-            return new DecorationHandle[]
+            return new LabelHandle[]
                 { new LabelHandle(this, LabelHandle.Type.ANCHOR) };
         }
     }
