@@ -4,7 +4,10 @@
 package gov.nist.pededitor;
 
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
@@ -13,11 +16,51 @@ import com.fasterxml.jackson.databind.SerializationFeature;
 class EditorState {
     @JsonProperty Diagram diagram;
 
-    // TODO be more efficient about the image decorations.
-    // WeakReference<SourceImage> ...?
+    /**
+     * After verifying that the hash codes match, copy the image bytes
+     * from src to dest. This is a space saving measure, since storing
+     * a multi-megabyte file with every copy would be expensive. */
+    static void copyImagesBetween(Diagram src, Diagram dest) throws IOException {
+        List<Decoration> srcds = src.decorations;
+        List<Decoration> destds = dest.decorations;
+        int srcIndex = 0;
+        for (int destIndex = 0; destIndex < destds.size(); ++destIndex) {
+            if (destds.get(destIndex) instanceof SourceImage) {
+                SourceImage destImage = (SourceImage) destds.get(destIndex);
+                for (;; ++srcIndex) {
+                    if (srcIndex >= srcds.size()) {
+                        throw new ImageMismatchException();
+                    }
+                    if (srcds.get(srcIndex) instanceof SourceImage) {
+                        SourceImage srcImage = (SourceImage) srcds.get(srcIndex);
+                        if (destImage.bytesHashCode != srcImage.bytesHashCode()) {
+                            throw new IOException("Src/dest Images bytes hash code mismatch");
+                        }
+                        destImage.bytes = srcImage.bytes;
+                        ++srcIndex;
+                        break;
+                    }
+                }
+            }
+        }
+        for (; srcIndex < srcds.size(); ++srcIndex) {
+            if (srcds.get(srcIndex) instanceof SourceImage) {
+                throw new ImageMismatchException();
+            }
+        }
+    }
 
     void copyTo(BasicEditor target) throws IOException {
-        target.copyFrom(this.diagram);
+        copyImagesBetween(target, this.diagram);
+        int undoStackOffset = target.undoStackOffset;
+        ArrayList<String> undoStack = target.undoStack;
+        try {
+            target.undoStack = new ArrayList<>();
+            target.copyFrom(this.diagram);
+        } finally {
+            target.undoStack = undoStack;
+            target.undoStackOffset = undoStackOffset;
+        }
     }
         
     /** @return this diagram as a JSON string. */
@@ -50,13 +93,7 @@ class EditorState {
     
     static void copyJsonStringToEditor(BasicEditor editor, String jsonString) throws IOException {
         String filename = editor.getFilename();
-        SourceImage img = editor.firstImage();
-        // Retain the current firstImage() if there is one.
-        int layer = (img == null) ? -1 : editor.getLayer(img);
         loadFrom(jsonString).copyTo(editor);
-        if (img != null) {
-            editor.addDecoration(layer, img);
-        }
         editor.setFilename(filename);
     }
 
@@ -65,8 +102,22 @@ class EditorState {
         if (objectMapper == null) {
             objectMapper = Diagram.computeObjectMapper();
             objectMapper.configure(SerializationFeature.INDENT_OUTPUT, false);
+            objectMapper.addMixIn(SourceImage.class, SourceImageHashAnnotations.class);
         }
         return objectMapper;
     }
+
+    @SuppressWarnings("serial")
+    static class ImageMismatchException extends IOException {
+        ImageMismatchException() {
+            super("Src/dest image count mismatch");
+        }
+    }
 }
 
+/** Tweak the serialization of SourceImage to substitute a hash code for the actual bytes. */
+abstract class SourceImageHashAnnotations extends SourceImage {
+    @Override @JsonProperty("bytesHashCode") int bytesHashCode() { return 0; }
+    @Override @JsonIgnore protected byte[] getBytesUnsafe() { return null; }
+    @Override @JsonIgnore protected void setBytesUnsafe(byte[] bytes) { }
+}
