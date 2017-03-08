@@ -61,7 +61,9 @@ described below.
         <li><a href="#TieLines">Tie Lines</a>
       </ul>
 
-    <li><a href="#Edit">Edit selection / Edit nearest item</a>
+    <li><a href="#Edit">Edit</a>
+
+    <li><a href="#EditSel">Edit selection / Edit nearest item</a>
 
     <li><a href="#Layer">Layer</a>
 
@@ -917,7 +919,25 @@ increments.
 
 </ul>
 
-<li><h3 id=Edit>Edit selection / Edit nearest item popup menus</h3>
+<li><h3 id=Edit>Edit popup menu</h3>
+
+    <ul>
+
+      <li><p><b>Undo</b> (<code>Control+Z</code>) undoes most operations.
+
+      <li><p><b>Redo</b> (<code>Control+Y</code>) redoes whatever you
+      just undid. But if you did something else since then, you can't
+      redo what you did the first time.
+
+      <li><p><b>Paste</b> (<code>Control+V</code>) pastes into the
+          diagram whatever you most recently <a href="#Cut">cut</a>
+          or <a href="#Copy">copied</a>.</p>
+
+      <li><p><b>Cut All</b> (<code>Control+A</code>) cuts everything and pastes in in the clipboard.
+
+    </ul>
+
+<li><h3 id=EditSel>Edit selection / Edit nearest item popup menus</h3>
 
   <p>The commands in the <b>Edit selection</b> menu apply to the
     currently selected item, usually highlighted
@@ -942,7 +962,7 @@ increments.
         selection to the clipboard.</p>
 
       <li>
-        <p><b id=Copy>Cut</b> (<code>Control+X</code>) erases the
+        <p><b id=Cut>Cut</b> (<code>Control+X</code>) erases the
         selection and stores it in the clipboard.</p>
 
       <li>
@@ -968,9 +988,6 @@ increments.
       <li><p><b>Move everything at selected point</b> (<code>v</code>)
           moves the selected vertex or item and all other items at the
           same location.</p>
-
-      <li><p><b>Paste</b> (<code>Control+V</code>)
-          pastes into the diagram whatever you most recently cut or copied.</p>
 
       <li><p><b>Properties</b> (<code>e</code>) brings up a special
           menu to edit the selected item's properties. Labels, rulers,
