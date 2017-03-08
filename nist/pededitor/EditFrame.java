@@ -240,6 +240,15 @@ public class EditFrame extends JFrame
         }
     };
 
+    Action actCutAll = new Action("Cut All", KeyEvent.VK_A,
+            KeyStroke.getKeyStroke("control A")) {
+        @Override
+        public void actionPerformed(ActionEvent e) {
+            getEditor().cutAll();
+            finishEvent();
+        }
+    };
+
     Action actRemoveSelection = new Action("Delete", KeyEvent.VK_D, Stuff.isOSX() ? "BACK_SPACE" : "DELETE") {
         @Override
         public void actionPerformed(ActionEvent e) {
@@ -252,6 +261,22 @@ public class EditFrame extends JFrame
         @Override
         public void actionPerformed(ActionEvent e) {
             getEditor().cutSelection();
+            finishEvent();
+        }
+    };
+
+    Action actRedo = new Action("Redo", KeyEvent.VK_R, KeyStroke.getKeyStroke("control Y")) {
+        @Override
+        public void actionPerformed(ActionEvent e) {
+            getEditor().redo();
+            finishEvent();
+        }
+    };
+
+    Action actUndo = new Action("Undo", KeyEvent.VK_U, KeyStroke.getKeyStroke("control Z")) {
+        @Override
+        public void actionPerformed(ActionEvent e) {
+            getEditor().undo();
             finishEvent();
         }
     };
@@ -1619,9 +1644,10 @@ public class EditFrame extends JFrame
               actCircle,
               actColor,
               actCopy,
-              actCutRegion,
               actCopyStatusBar,
               actCut,
+              actCutAll,
+              actCutRegion,
               actDeselect,
               actEditSelection,
               actIsotherm,
@@ -1635,6 +1661,7 @@ public class EditFrame extends JFrame
               actNearestPoint,
               actPaste,
               actRemoveSelection,
+              actRedo,
               actResetToDefault,
               actRightArrow,
               actRuler,
@@ -1644,6 +1671,7 @@ public class EditFrame extends JFrame
               actShiftReleased,
               actText,
               actTieLine,
+              actUndo,
             }) {
             enable(act);
         }
