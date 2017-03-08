@@ -366,6 +366,13 @@ class LinearRuler implements Interp2DDecoration, SegmentInterp2D {
 
         double astart = Math.min(start, end);
         double aend = Math.max(start, end);
+        double minRelativeDifference = 2e-6;
+        double rdNum = aend - astart;
+        double rdDen = Math.abs(aend) + Math.abs(astart);
+        if (rdNum <= minRelativeDifference * rdDen) {
+            // These values are too close together to be rendered accurately
+            return;
+        }
 
         double ws[] = weights();
         double xWeight = ws[0];
@@ -505,9 +512,11 @@ class LinearRuler implements Interp2DDecoration, SegmentInterp2D {
 
             double smallTickEnd = tickEnd + 1e-6 * (tickEnd - tickStart);
 
+            double oldLogical = Double.NaN;
             for (double logical = actualTickStart;
-                 (logical < smallTickEnd) == (tickD > 0);
-                 logical += tickD) {
+                 logical != oldLogical
+                     && (logical < smallTickEnd) == (tickD > 0);
+                 oldLogical = logical, logical += tickD) {
                 if ((sst && Math.abs(logical - astart) < clearDistance)
                     || (set && Math.abs(logical -aend) < clearDistance)) {
                     continue;
@@ -563,9 +572,11 @@ class LinearRuler implements Interp2DDecoration, SegmentInterp2D {
 
             double bigTickEnd = tickEnd
                 + 1e-6 * (tickEnd - tickStart);
+            double oldLogical = Double.NaN;
             for (double logical = actualTickStart;
-                 (logical < bigTickEnd) == (bigTickD > 0);
-                 logical += bigTickD) {
+                 logical != oldLogical
+                     && (logical < bigTickEnd) == (bigTickD > 0);
+                 oldLogical = logical, logical += bigTickD) {
                 Point2D.Double location
                     = toPhysical(logical, startPoint, endPoint);
 
