@@ -37,6 +37,21 @@ public class SourceImage implements Decoration {
     protected Rectangle2D pageBounds;
 
     /**
+     * For use by EditorState to check whether bytes[] has changed
+     * without actually storing the whole thing. Yeah, it's not 100%
+     * reliable, but 99.99% is good enough. */
+    transient int bytesHashCode = 0;
+
+    @JsonProperty void setBytesHashCode(int code) {
+        bytesHashCode = code;
+    }
+
+    int bytesHashCode() {
+        return (bytes == null) ? -491983163 : Arrays.hashCode(bytes);
+    }
+
+
+    /**
      * Transform from original coordinates to principal coordinates. Original
      * coordinates are (x,y) positions within a scanned image. Principal
      * coordinates are either the natural (x,y) coordinates of a Cartesian graph
@@ -53,8 +68,21 @@ public class SourceImage implements Decoration {
     public SourceImage() {
     }
 
-    @Override
-    public boolean equals(Object other0) {
+    @Override public boolean equals(Object other) {
+        return equalsExceptBytes(other)
+                && bytesHashCode() == ((SourceImage) other).bytesHashCode();
+    }
+
+    /**
+     * Compare this to other, but compare bytes hash codes instead of
+     * the actual bytes arrays.
+     */
+    boolean equalsByBytesHashCode(Object other) {
+        return equalsExceptBytes(other)
+                && bytesHashCode == ((SourceImage) other).bytesHashCode;
+    }
+
+    boolean equalsExceptBytes(Object other0) {
         if (this == other0)
             return true;
         if (other0 == null || getClass() != other0.getClass())
@@ -62,12 +90,10 @@ public class SourceImage implements Decoration {
         SourceImage other = (SourceImage) other0;
 
         return (alpha == other.alpha)
-                && (filename == other.filename || (filename != null && filename.equals(other.filename)))
-                && (transform == other.transform || (transform != null && transform.equals(other.transform)))
-                && (pageBounds == other.pageBounds
-                        || (pageBounds != null && pageBounds.equals(other.pageBounds)))
-                && (bytes == other.bytes
-                        || (bytes != null && other.bytes != null && Arrays.equals(bytes, other.bytes)));
+            && (filename == other.filename || (filename != null && filename.equals(other.filename)))
+            && (transform == other.transform || (transform != null && transform.equals(other.transform)))
+            && (pageBounds == other.pageBounds
+                    || (pageBounds != null && pageBounds.equals(other.pageBounds)));
     }
 
     @Override
