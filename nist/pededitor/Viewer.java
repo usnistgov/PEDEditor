@@ -49,8 +49,9 @@ public class Viewer extends Editor {
               ef.actAddVertex,
               ef.actColor,
               ef.actCopy,
-              ef.actCutRegion,
               ef.actCut,
+              ef.actCutAll,
+              ef.actCutRegion,
               ef.actEditSelection,
               ef.actIsotherm,
               ef.actLeftArrow,
@@ -59,12 +60,14 @@ public class Viewer extends Editor {
               ef.actMoveSelection,
               ef.actMoveSelection,
               ef.actPaste,
+              ef.actRedo,
               ef.actRemoveSelection,
               ef.actResetToDefault,
               ef.actRightArrow,
               ef.actRuler,
               ef.actText,
-              ef.actTieLine
+              ef.actTieLine,
+              ef.actUndo
             }) {
             // Make these actions vanish from the interface.
             act.setEnabled(false);
