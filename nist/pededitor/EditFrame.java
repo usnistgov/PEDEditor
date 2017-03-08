@@ -257,10 +257,18 @@ public class EditFrame extends JFrame
         }
     };
 
-    Action actCut = new Action("Cut", KeyEvent.VK_C, KeyStroke.getKeyStroke("control X")) {
+    Action actCut = new Action("Cut", KeyEvent.VK_U, KeyStroke.getKeyStroke("control X")) {
         @Override
         public void actionPerformed(ActionEvent e) {
             getEditor().cutSelection();
+            finishEvent();
+        }
+    };
+
+    Action actCopyAndPaste = new Action("Copy and paste", KeyEvent.VK_C, KeyStroke.getKeyStroke("typed c")) {
+        @Override
+        public void actionPerformed(ActionEvent e) {
+            getEditor().copyAndPaste();
             finishEvent();
         }
     };
@@ -310,7 +318,7 @@ public class EditFrame extends JFrame
     };
 
     Action actMakeDefault = new Action("Make selection's properties the new default", KeyEvent.VK_F,
-            KeyStroke.getKeyStroke("shift D")) {
+            KeyStroke.getKeyStroke("typed D")) {
         @Override
         public void actionPerformed(ActionEvent e) {
             getEditor().setDefaultSettingsFromSelection();
@@ -318,7 +326,7 @@ public class EditFrame extends JFrame
         }
     };
 
-    Action actMoveSelection = new Action("Move selection only", KeyEvent.VK_V, KeyStroke.getKeyStroke("shift V")) {
+    Action actMoveSelection = new Action("Move selection only", KeyEvent.VK_V, KeyStroke.getKeyStroke("typed V")) {
         @Override
         public void actionPerformed(ActionEvent e) {
             getEditor().moveSelection(false);
@@ -334,7 +342,7 @@ public class EditFrame extends JFrame
         }
     };
 
-    Action actAutoPosition = new Action("Auto-position", KeyEvent.VK_A, KeyStroke.getKeyStroke("shift A")) {
+    Action actAutoPosition = new Action("Auto-position", KeyEvent.VK_A, KeyStroke.getKeyStroke("typed A")) {
         {
             putValue(SHORT_DESCRIPTION, "Move the mouse to the closest key point or curve");
         }
@@ -411,7 +419,7 @@ public class EditFrame extends JFrame
         };
     Action actSelectNearestPoint = new Action
         ("Select nearest key point",
-         KeyEvent.VK_S, KeyStroke.getKeyStroke("shift Q")) {
+         KeyEvent.VK_S, KeyStroke.getKeyStroke("typed Q")) {
             @Override public void actionPerformed(ActionEvent e) {
                 getEditor().seekNearestPoint(true, "Shift+Q");
                 finishEvent();
@@ -419,7 +427,7 @@ public class EditFrame extends JFrame
         };
     Action actSelectNearestCurve = new Action
         ("Select nearest line/curve",
-         KeyEvent.VK_I, KeyStroke.getKeyStroke("shift W")) {
+         KeyEvent.VK_I, KeyStroke.getKeyStroke("typed W")) {
             @Override
             public void actionPerformed(ActionEvent e) {
                 getEditor().seekNearestCurve(true, "Shift+W");
@@ -455,7 +463,7 @@ public class EditFrame extends JFrame
         };
     Action actAddAutoPositionedVertex = new Action
         ("Add auto-positioned vertex", KeyEvent.VK_A,
-         KeyStroke.getKeyStroke("shift X")) {
+         KeyStroke.getKeyStroke("typed X")) {
             @Override public void actionPerformed(ActionEvent e) {
                 getEditor().autoPosition();
                 getEditor().addVertex();
@@ -503,7 +511,7 @@ public class EditFrame extends JFrame
             }
         };
     Action actTieLine = new Action
-        ("Tie lines", KeyEvent.VK_I, KeyStroke.getKeyStroke("shift T")) {
+        ("Tie lines", KeyEvent.VK_I, KeyStroke.getKeyStroke("typed T")) {
             @Override public void actionPerformed(ActionEvent e) {
                 getEditor().addTieLine();
                 finishEvent();
@@ -1474,8 +1482,8 @@ public class EditFrame extends JFrame
         mnDigit.add(mnExportText);
 
         mnDigit.add(new Action("Export selected curve or label's coordinates",
-                        KeyEvent.VK_P,
-                        KeyStroke.getKeyStroke('c')) {
+                        KeyEvent.VK_C,
+                        KeyStroke.getKeyStroke("typed C")) {
                 @Override public void actionPerformed(ActionEvent e) {
                     getEditor().exportSelectedCoordinates();
                     finishEvent();
@@ -1644,6 +1652,7 @@ public class EditFrame extends JFrame
               actCircle,
               actColor,
               actCopy,
+              actCopyAndPaste,
               actCopyStatusBar,
               actCut,
               actCutAll,
