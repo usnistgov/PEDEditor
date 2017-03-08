@@ -398,11 +398,6 @@ public class BasicEditor extends Diagram
     // one can Redo.
     protected transient int undoStackOffset = 0;
 
-    /**
-     * The source image is typically too big to store in a compact
-     * undo stack, so just keep a hash code for it. If the code
-     * changes, wipe the undo stack. */
-    protected transient int sourceImageHashCode = 0;
     protected transient boolean preserveMprin = false;
     protected transient boolean isShiftDown = false;
     protected transient Point2D.Double statusPt = null;
@@ -604,6 +599,8 @@ public class BasicEditor extends Diagram
             zoomFrame.setVisible(false);
             zoomFrame.clear();
         }
+        undoStack.clear();
+        undoStackOffset = 0;
         init();
     }
 
@@ -1051,6 +1048,38 @@ public class BasicEditor extends Diagram
         }
     }
 
+    public void copyAndPaste() {
+        String errorTitle = "Cannot copy selection";
+
+        if (selection == null) {
+            showError
+                ("You must select an item before you can copy it.",
+                 errorTitle);
+            return;
+        }
+
+        if (mprin == null) {
+            showError
+                ("You must move the mouse to the target destination " +
+                 "before you can copy.",
+                 errorTitle);
+            return;
+        }
+
+        if (selection instanceof Interp2DHandle2) {
+            // Move the selection to the nearest vertex.
+            selection = ((Interp2DHandle2) selection).indexHandle();
+        }
+
+        if (mouseIsStuckAtSelection()) {
+            setMouseStuck(false);
+        }
+
+        Point2D.Double p = principalLocation(selection);
+        setSelection(selection.copy(mprin.x - p.x, mprin.y - p.y));
+        addDecoration(selection.getDecoration());
+    }
+
     /**
      * Assuming the clipboard contains the JSON for an array of
      * Decorations, paste those decorations to the diagram. */
@@ -1095,8 +1124,10 @@ public class BasicEditor extends Diagram
                 addDecoration(d);
             }
         } catch (IOException e) {
-            // Maybe this is ordinary text, and the user wanted to create a label?
-            addLabel(json);
+            if (json.length() < 5000) {
+                // Maybe this is ordinary text, and the user wanted to create a label.
+                addLabel(json);
+            }
         }
     }
 
@@ -1137,7 +1168,7 @@ public class BasicEditor extends Diagram
         setMouseStuck(true);
     }
 
-    /** Copy the selection to the clilpboard. */
+    /** Copy the selection to the clipboard. */
     public void copySelection() {
         String errorTitle = "Cannot copy selection";
 
@@ -1164,13 +1195,13 @@ public class BasicEditor extends Diagram
         }
     }
 
-    /** Cut the selection and copy it to the clilpboard. */
+    /** Cut the selection and copy it to the clipboard. */
     public void cutSelection() {
         String errorTitle = "Cannot cut selection";
 
         if (selection == null) {
             showError
-                ("You must select an item before you can copy it.",
+                ("You must select an item before you can cut it.",
                  errorTitle);
             return;
         }
@@ -1318,6 +1349,7 @@ public class BasicEditor extends Diagram
     }
 
     @Override public void swapDiagramComponents(Side side1, Side side2) {
+        saveState();
         try {
             super.swapDiagramComponents(side1, side2);
         } catch (IllegalArgumentException x) {
@@ -1326,6 +1358,7 @@ public class BasicEditor extends Diagram
     }
 
     @Override public void swapXY() {
+        saveState();
         try {
             super.swapXY();
             bestFit();
@@ -1339,6 +1372,7 @@ public class BasicEditor extends Diagram
         if (!hadSelection && !selectSomething()) {
             return;
         }
+        saveState();
         setSelection(removeHandle(selection));
         if (!hadSelection) {
             clearSelection();
@@ -1540,6 +1574,20 @@ public class BasicEditor extends Diagram
             && mouseTravel.getTravel() >= mouseDragDistance;
     }
 
+    Point2D.Double clickPosition(boolean unstick, AutoPositionHolder ap) {
+        if (isZoomMode() || !isEditable()) {
+            return null;
+        } else if (isShiftDown) {
+            return statusPt = getAutoPosition(ap);
+        } else if (unstick && mouseIsStuckAtSelection()) {
+            // Show the point that would be added if the mouse became
+            // unstuck.
+            return getMousePrincipal();
+        } else {
+            return mprin;
+        }
+    }
+
     void highlightNoncurve(Graphics2D g, double scale, Decoration sel) {
         try (UpdateSuppressor us = new UpdateSuppressor()) {
             Color oldColor = sel.getColor();
@@ -1556,11 +1604,9 @@ public class BasicEditor extends Diagram
         }
     }
 
-    /** Show the outline of hand in green, and show the result if the
-        mouse point were added to csel in red. If the item is already
-        at maxSize(), show the result if the last point were replaced
-        with the mouse button in red, instead. TODO Actually, if the
-        item is at maxsize, nothing is shown in red at all. */
+    /**
+     * Show the outline of hand in green, and show in red the result
+     * of clicking at the mouse point if hand is selected. */
     void highlightCurve(Graphics2D g, double scale,
                             Interp2DHandle hand) {
 
@@ -1590,34 +1636,7 @@ public class BasicEditor extends Diagram
             g.setRenderingHint(RenderingHints.KEY_ANTIALIASING,
                                RenderingHints.VALUE_ANTIALIAS_OFF);
 
-            AutoPositionHolder ap = new AutoPositionHolder();
-            Point2D.Double extraVertex = mprin;
-            if (isZoomMode() || !isEditable()) {
-                extraVertex = null;
-            } else if (isShiftDown) {
-                extraVertex = statusPt = getAutoPosition(ap);
-            } else if (mouseIsStuckAtSelection()) {
-                // Show the point that would be added if the mouse became
-                // unstuck.
-                extraVertex = getMousePrincipal();
-            }
-
-            if (extraVertex != null) {
-                boolean oldR = removeDegenerateDecorations;
-                boolean oldU = updateMathWindow;
-                try {
-                    removeDegenerateDecorations = false;
-                    updateMathWindow = false;
-                    try (DoThenUndo thing = new DoThenUndo(
-                                clickCommand(hand, extraVertex))) {
-                    curve.setColor(toColor(ap.position));
-                    draw(g, curve, scale);
-                    }
-                } finally {
-                    removeDegenerateDecorations = oldR;
-                    updateMathWindow = oldU;
-                }
-            }
+            highlightChange(g, scale, hand);
 
             curve.setColor(highlightColor);
             draw(g, curve, scale);
@@ -1771,9 +1790,6 @@ public class BasicEditor extends Diagram
 
         statusPt = mprin;
 
-        // As long as curve highlighting only works for CuspDecoration's,
-        // ignore all other kinds here.
-
         Interp2DHandle curveHandle = (selection instanceof Interp2DHandle) ? getInterp2DHandle()
             : null;
         for (int dn = 0; dn < decorations.size(); ++dn) {
@@ -1785,25 +1801,10 @@ public class BasicEditor extends Diagram
         if (curveHandle != null) {
             highlightCurve(g, scale, curveHandle);
         } else {
+            highlightChange(g, scale, selection);
             if (selection != null) {
                 highlightNoncurve(g, scale, selection.getDecoration());
             }
-            Point2D.Double gmp = getMousePrincipal();
-            if (isShiftDown) {
-                AutoPositionHolder ap = new AutoPositionHolder();
-                Point2D.Double autop = getAutoPosition(ap);
-                if (autop != null) {
-                    statusPt = autop;
-                    if (gmp != null && !principalCoordinatesMatch(autop, gmp)) {
-                        g.setColor(toColor(ap.position));
-                        paintCross(g, autop, scale);
-                    }
-                }
-            } else if (mouseIsStuck && mprin != null) {
-                g.setColor(new Color(0xb0c000));
-                paintCross(g, mprin, scale);
-            }
-
         }
 
         if (isZoomMode()) {
@@ -2098,25 +2099,23 @@ public class BasicEditor extends Diagram
 
         Decoration d = getSelectedDecoration();
 
-        if (d instanceof Label) {
-            Label label = (Label) d;
-            if (label.getText().length() <= 3) {
-                Point2D.Double selPos = principalLocation(selection);
-                DecorationHandle lhand = selection.copy(point.x - selPos.x, point.y - selPos.y);
-                return new UndoableList(
-                        new AddDecoration(lhand.getDecoration()),
-                        new SetSelection(lhand));
-            }
-        }
-        if (selection == null ||
-                !(selection.getDecoration() instanceof Interp2DDecoration)) {
-            return newCurveCommand(point);
+        if (d != null && (d instanceof Label || d instanceof Interp2DDecoration)) {
+            return clickCommand(selection, point);
         } else {
-            return clickCommand((Interp2DHandle) selection, point);
+            return newCurveCommand(point);
         }
     }
 
-    Undoable clickCommand(Interp2DHandle hand, Point2D.Double point) {
+    Undoable clickCommand(DecorationHandle hand0, Point2D.Double point) {
+        Decoration d0 = hand0.getDecoration();
+        if (d0 instanceof Label) {
+            Point2D.Double selPos = principalLocation(hand0);
+            DecorationHandle lhand = hand0.copy(point.x - selPos.x, point.y - selPos.y);
+            return new UndoableList(
+                    new AddDecoration(lhand.getDecoration()),
+                    new SetSelection(lhand));
+        }
+        Interp2DHandle hand = (Interp2DHandle) hand0;
         Interp2D curve = hand.getDecoration().getCurve();
         if (isDuplicate(point, curve, hand.index)) {
             return new NoOp(); // Adding the same point twice causes problems.
@@ -2130,6 +2129,53 @@ public class BasicEditor extends Diagram
                     hand.getDecoration().createHandle(
                             vertexInsertionIndex()),
                     point);
+        }
+    }
+
+    /**
+     * Show what would happen if the user clicked. */
+    void highlightChange(Graphics2D g, double scale,
+            DecorationHandle hand) {
+        Decoration d = (hand != null) ? hand.getDecoration() : null;
+        boolean unstick = (d instanceof Interp2DDecoration);
+        AutoPositionHolder ap = new AutoPositionHolder();
+        if (mouseIsStuck && !unstick) {
+            ap.position = AutoPositionType.POINT;
+        }
+        Point2D.Double extraVertex = clickPosition(unstick, ap);
+        if (extraVertex == null) {
+            return;
+        }
+        Color color = toColor(ap.position);
+
+        if (d instanceof Interp2DDecoration || d instanceof Label) {
+            boolean oldR = removeDegenerateDecorations;
+            boolean oldU = updateMathWindow;
+            try {
+                removeDegenerateDecorations = false;
+                updateMathWindow = false;
+                Color oldColor = null;
+                Decoration d2 = null;
+                try (DoThenUndo thing = new DoThenUndo(
+                                clickCommand(hand, extraVertex))) {
+                    d2 = (d instanceof Interp2DDecoration) ? d : selection.getDecoration();
+                    oldColor = d2.getColor();
+                    d2.setColor(color);
+                    draw(g, d2, scale);
+                } finally {
+                    if (oldColor != null) {
+                        d2.setColor(oldColor);
+                    }
+                }
+            } finally {
+                removeDegenerateDecorations = oldR;
+                updateMathWindow = oldU;
+            }
+        }
+
+        if ((mouseIsStuck || ap.position != AutoPositionType.NONE) && extraVertex != null) {
+            g.setColor(color);
+            paintCross(g, extraVertex, scale);
         }
     }
 
@@ -6616,30 +6662,7 @@ public class BasicEditor extends Diagram
             return;
         }
         try {
-            String state;
-
-            // The source image can be so huge that I don't want to
-            // save it. Strip it out before serialization and then put
-            // it back.
-            int oldCode = sourceImageHashCode;
-            SourceImage img = firstImage();
-            sourceImageHashCode = (img == null) ? 72987342 : img.hashCode();
-            if (sourceImageHashCode != oldCode) {
-                undoStack.clear();
-                undoStackOffset = 0;
-            }
-
-            int imgLayer = (img == null) ? -1 : getLayer(img);
-            try (UpdateSuppressor us = new UpdateSuppressor()) {
-                if (img != null) {
-                    decorations.remove(imgLayer);
-                }
-                state = EditorState.toJsonString(this);
-            } finally {
-                if (img != null) {
-                    addDecoration(imgLayer, img);
-                }
-            }
+            String state = EditorState.toJsonString(this);
 
             if (undoStackOffset > 0 &&
                     state.equals(undoStack.get(undoStackOffset - 1))) {
@@ -6668,7 +6691,6 @@ public class BasicEditor extends Diagram
             undoStack.add(state);
             ++ undoStackOffset;
         } catch (IOException e) {
-            // TODO Auto-generated catch block
             e.printStackTrace();
         }
     }
@@ -6687,7 +6709,11 @@ public class BasicEditor extends Diagram
             EditorState.copyJsonStringToEditor(this, undoStack.get(undoStackOffset - 2));
             --undoStackOffset;
         } catch (IOException e) {
-            e.printStackTrace();
+            showError("This operation cannot be undone.");
+            while (undoStackOffset > 0) {
+                --undoStackOffset;
+                undoStack.remove(0);
+            }
         }
     }
 
