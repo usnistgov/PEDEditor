@@ -14,6 +14,7 @@ import javax.swing.JMenu;
 /** PED BasicEditor popup menu. */
 @SuppressWarnings("serial")
 public class RightClickMenu extends BasicRightClickMenu {
+    JMenu mnEdit = new JMenu("Edit");
     JMenu mnEditSel = new JMenu("Edit selection");
     { mnEditSel.setMnemonic(KeyEvent.VK_E); }
     JMenu mnEditNear = new JMenu("Edit nearest item");
@@ -28,6 +29,19 @@ public class RightClickMenu extends BasicRightClickMenu {
         add(ef.actDeselect);
 
         for (Object obj: new Object[]
+            { ef.actUndo,
+              ef.actRedo,
+              ef.actPaste,
+              ef.actCutAll,
+            }) {
+            if (obj instanceof Action) {
+                mnEdit.add((Action) obj);
+            } else {
+                mnEdit.add((Component) obj);
+            }
+        }
+
+        for (Object obj: new Object[]
             { ef.actColor,
               ef.actCopy,
               ef.actCut,
@@ -35,7 +49,6 @@ public class RightClickMenu extends BasicRightClickMenu {
               ef.actRemoveSelection,
               ef.actMoveSelection,
               ef.actMovePoint,
-              ef.actPaste,
               ef.actEditSelection,
               ef.actResetToDefault,
               ef.actMakeDefault }) {
@@ -46,7 +59,7 @@ public class RightClickMenu extends BasicRightClickMenu {
             }
         }
 
-        for (Object obj : new Object[] { ef.actColor, ef.actCut, ef.actRemoveSelection, ef.actEditSelection,
+        for (Object obj : new Object[] { ef.actColor, ef.actCopy, ef.actCut, ef.actRemoveSelection, ef.actEditSelection,
                 ef.actResetToDefault, ef.actMakeDefault }) {
             if (obj instanceof Action) {
                 mnEditNear.add((Action) obj);
@@ -73,6 +86,7 @@ public class RightClickMenu extends BasicRightClickMenu {
         add(ef.actAddVertex);
         add(ef.actAddAutoPositionedVertex);
         add(mnDecorations = ef.createDecorationsMenu());
+        add(mnEdit);
         add(mnEditSel);
         add(mnEditNear);
         mnLayer = ef.createLayerMenu();
