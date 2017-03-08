@@ -43,7 +43,7 @@ public class Label extends AnchoredTransformedShape {
         double boxedX, boxedY; // x margin if boxed, y margin if boxed
 
         Margins(Font font) {
-            View en = toView("n", 0, null, font);
+            View en = toView(toLabel("n", 0, font));
             x = boxedX = en.getPreferredSpan(View.X_AXIS) 
                 / 3.0 / VIEW_MAGNIFICATION;
             y = 0;
@@ -54,7 +54,7 @@ public class Label extends AnchoredTransformedShape {
 
 
     private Font font;
-    transient private View view = null;
+    transient private JLabel label = null;
     transient private Margins margins = null;
     /** The actual string to display. (This may be HTML or something
         else as opposed to plain text.) */
@@ -81,8 +81,6 @@ public class Label extends AnchoredTransformedShape {
         setAngle(other.getAngle());
         setAutoWidth(other.isAutoWidth());
         setBoxed(other.isBoxed());
-        setColor(other.getColor());
-        setColor(other.getColor());
         setCutout(other.isCutout());
         setFont(other.getFont());
         setOpaque(other.isOpaque());
@@ -92,7 +90,8 @@ public class Label extends AnchoredTransformedShape {
         setXWeight(other.getXWeight());
         setY(other.getY());
         setYWeight(other.getYWeight());
-        view = other.view;
+        label = other.label;
+        setColor(other.getColor());
         margins = other.margins;
     }
 
@@ -115,7 +114,7 @@ public class Label extends AnchoredTransformedShape {
        versa. */
     public void setFont(Font font) {
         if (font != this.font) {
-            view = null;
+            label = null;
             margins = null;
             this.font = font;
         }
@@ -126,8 +125,10 @@ public class Label extends AnchoredTransformedShape {
     }
 
     public void setText(String text) {
-        this.text = text;
-        view = null;
+        if (text != this.text) {
+            this.text = text;
+            label = null;
+        }
     }
     public void setAutoWidth(boolean v) { autoWidth = v; }
     /** If true, draw a box around the label. */
@@ -148,7 +149,6 @@ public class Label extends AnchoredTransformedShape {
     @Override public void reflect() {
         setYWeight(1.0 - getYWeight());
         setText(SwapWhitespace.swap(getText()));
-        view = null;
     }
 
     @Override public void neaten(AffineTransform toPage) {
@@ -162,7 +162,7 @@ public class Label extends AnchoredTransformedShape {
             setText(SwapWhitespace.swap(getText()));
             // Ideally I would also swap left and right padding (and
             // not just top and bottom padding), but that's more work.
-            view = null;
+            label = null;
         }
     }
 
@@ -179,73 +179,75 @@ public class Label extends AnchoredTransformedShape {
 
     @Override public void setXWeight(double x) {
         super.setXWeight(x);
-        view = null;
-    }
-    @Override public void setColor(Color color) {
-        super.setColor(color);
-        view = null;
+        label = null;
     }
 
-    @JsonIgnore public View getView() {
-        if (view == null) {
-            view = toView();
+    @JsonIgnore View getView() {
+        return toView(getLabel());
+    }
+
+    static View toView(JLabel label) {
+        return (View) label.getClientProperty("html");
+    }
+
+    private JLabel getLabel() {
+        if (label == null) {
+            label = computeLabel();
         }
-        return view;
+        return label;
     }
 
     /** A metric for the size of d that compromises between minimum
         perimeter and minimum area, such that 3x0 and 1x1 are considered equally bad. */
-    private static double size(View v) {
-        Dimension2D d = dimension(v);
+    private static double size(JLabel label) {
+        Dimension2D d = dimension(label);
         double w = d.getWidth();
         double h = d.getHeight();
         return 9.0 * (w+h) * (w+h) - 5.0 * (w-h) * (w-h);
     }
 
-    View toView() {
+    JLabel computeLabel() {
         String text = getText();
         double xw = getXWeight();
-        Color c = getColor();
-        View wideView = toView(text, xw, c, font);
+        JLabel wideLabel = toLabel(text, xw, font);
         if (isAutoWidth()) {
             // Find the CSS width specifier that minimizes size(View)
 
-            View thinView = toView(text, xw, c, font, 1);
-            double thinWidth = dimension(thinView).getWidth();
-            double wideWidth = dimension(wideView).getWidth();
+            JLabel thinLabel = toLabel(text, xw, font, 1);
+            double thinWidth = dimension(thinLabel).getWidth();
+            double wideWidth = dimension(wideLabel).getWidth();
             if (thinWidth == wideWidth) {
-                return wideView;
+                return wideLabel;
             }
-            View bestView = null;
+            JLabel bestLabel = null;
             double leastSize = 0;
             for (double width = thinWidth; ; width *= 1.1) {
-                View thisView = toView(text, xw, c, font, width);
-                double size = size(thisView);
-                Dimension2D dim = dimension(thisView);
-                if (bestView == null || size < leastSize) {
+                JLabel thisLabel = toLabel(text, xw, font, width);
+                double size = size(thisLabel);
+                Dimension2D dim = dimension(thisLabel);
+                if (bestLabel == null || size < leastSize) {
                     leastSize = size;
-                    bestView = thisView;
+                    bestLabel = thisLabel;
                 }
                 if (dim.getWidth() >= wideWidth) {
                     break;
                 }
             }
-            return bestView;
+            return bestLabel;
         } else {
-            return wideView;
+            return wideLabel;
         }
     }
 
     /** @param xWeight Used to determine how to justify rows of text. */
-    static View toView(String str, double xWeight, Color textColor, Font f) {
-        return toView(str, xWeight, textColor, f, 0);
+    static JLabel toLabel(String str, double xWeight, Font f) {
+        return toLabel(str, xWeight, f, 0);
     }
 
     /** Convert htmlStr to a View.
         @param xWeight Determines how to justify rows of text.
     */
-    static View toView(String htmlStr, double xWeight, Color textColor, Font f,
-            double width) {
+    static JLabel toLabel(String htmlStr, double xWeight, Font f, double width) {
         String style
             = "<style type=\"text/css\"><!--"
             + " body { font-size: 100 pt; } "
@@ -278,11 +280,7 @@ public class Label extends AnchoredTransformedShape {
 
         JLabel bogus = new JLabel(htmlStr);
         bogus.setFont(f);
-        if (textColor == null) {
-            textColor = Color.BLACK;
-        }
-        bogus.setForeground(textColor);
-        return (View) bogus.getClientProperty("html");
+        return bogus;
     }
     
     @JsonIgnore public Point2D.Double getCenter() {
@@ -298,11 +296,12 @@ public class Label extends AnchoredTransformedShape {
                 (getText(), new FontRenderContext(null, true, false));
             return new Dimension2DDouble(bounds);
         } else {
-            return dimension(getView());
+            return dimension(getLabel());
         }
     }
 
-    static Dimension2D dimension(View view) {
+    static Dimension2D dimension(JLabel label) {
+        View view = toView(label);
         return new Dimension2DDouble(
                 view.getPreferredSpan(View.X_AXIS) / VIEW_MAGNIFICATION,
                 view.getPreferredSpan(View.Y_AXIS) / VIEW_MAGNIFICATION);
@@ -371,7 +370,6 @@ public class Label extends AnchoredTransformedShape {
         }
 
         // TODO: Exploit the labelToScaledPage transformation in htmlDraw.
-        View view = getView();
         Point2D.Double point = new Point2D.Double(getX(), getY());
         double angle = getAngle();
         if (toPage != null) {
@@ -401,16 +399,16 @@ public class Label extends AnchoredTransformedShape {
                     getXWeight(), getYWeight(), lx, ly, angle);
             g.setFont(oldFont);
         } else {
-            htmlDraw(g, view, labelScale, angle,
+            htmlDraw(g, getLabel(), Diagram.thisOrBlack(getColor()), labelScale, angle,
                     point.x * scale, point.y * scale,
                     getXWeight(), getYWeight(), getMargins());
         }
     }
 
     /**
-       @param view The view.paint() method is used to perform the
-       drawing (the decorated text to be encoded is implicitly
-       included in this parameter)
+       @param label The toView(label).paint() method is used to
+       perform the drawing (the decorated text to be encoded is
+       implicitly included in this parameter)
 
        @param scale The text is magnified by this factor before being
        painted.
@@ -447,9 +445,13 @@ public class Label extends AnchoredTransformedShape {
        calls getFont(), which it probably shouldn't do anyway because
        it should use g.getFont() instead.
     */
-    void htmlDraw(Graphics g, View view, double scale, double angle,
+    void htmlDraw(Graphics g, JLabel label, Color color, double scale, double angle,
                   double ax, double ay,
                   double xWeight, double yWeight, Margins margins) {
+        if (color != null) {
+            label.setForeground(color);
+        }
+        View view = toView(label);
         scale /= VIEW_MAGNIFICATION;
         double baseWidth = view.getPreferredSpan(View.X_AXIS);
         double baseHeight = view.getPreferredSpan(View.Y_AXIS);
