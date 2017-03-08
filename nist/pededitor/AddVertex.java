@@ -31,20 +31,3 @@ public class AddVertex implements Undoable {
             ((Smoothable) curve).setSmoothed(index, smoothed);
     }
 }
-
-/** Return an Undoable that "does what you want" when you try to
-     * add a point to dec. See addCommand(Point2D).
-    Undoable addCommand(Interp2DDecoration dec, Point2D prin) {
-        if (isDuplicate(prin) || principalToStandardPage == null) {
-            return new NoOp(); // Adding the same point twice causes problems.
-        }
-        Interp2DHandle vhand = getInterp2DHandle();
-        Interp2D curve = dec.getCurve();
-        if (curve.size() == curve.maxSize()) {
-            return new MoveVertex(vhand, prin);
-        } else {
-            // Add a new point to the currently selected curve.
-            return new AddVertex(curve, vertexInsertionIndex(), prin);
-        }
-    }
- */
