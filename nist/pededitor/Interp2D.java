@@ -8,7 +8,6 @@ import java.awt.Graphics2D;
 import java.awt.Paint;
 import java.awt.Shape;
 import java.awt.geom.AffineTransform;
-import java.awt.geom.Line2D;
 import java.awt.geom.Point2D;
 import java.util.List;
 
@@ -173,6 +172,16 @@ public interface Interp2D extends TransformableParameterizable2D, Cloneable {
 
         if (oldVertexCnt <= 2)
             return 0;
+
+        if (vertexNo == oldVertexCnt - 1 && !isClosed())
+            // Reset t values greater than vertexNo-1 to vertexNo-1.
+            return (oldT > vertexNo-1) ? (vertexNo - 1) : oldT;
+
+        if (isClosed() && (oldVertexCnt == 3 || (oldVertexCnt == minSize()))) {
+            // Removing this vertex may make the curve go
+            // degenerate.
+            return 0;
+        }
 
         if (vertexNo == oldVertexCnt - 1 && !isClosed())
             // Reset t values greater than vertexNo-1 to vertexNo-1.
