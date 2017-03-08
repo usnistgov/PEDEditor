@@ -59,8 +59,6 @@ import java.util.stream.IntStream;
 
 import javax.imageio.ImageIO;
 import javax.print.attribute.PrintRequestAttributeSet;
-import javax.swing.JLabel;
-import javax.swing.text.View;
 
 import com.fasterxml.jackson.annotation.JsonAutoDetect;
 import com.fasterxml.jackson.annotation.JsonCreator;
@@ -623,51 +621,24 @@ public class Diagram extends Observable implements Printable {
 
     /** Add a new vertex to path, located at point, and inserted as
         vertex vertexNo. Return true if successful. */
-    public boolean add(Interp2DDecoration path, int vertexNo,
-                    Point2D.Double point, boolean smoothed) {
-        Interp2D interp = path.getCurve();
-        if (interp.size() == interp.maxSize()) {
-            return false;
-        }
+    public boolean addVertex(AddVertex command) {
+        Interp2DDecoration d = command.d;
+        Interp2D curve = d.getCurve();
 
-        ArrayList<Double> segments = getPathSegments(path);
+        ArrayList<Double> segments = getPathSegments(d);
 
-        if (path.getCurve().size() > 0) {
-            int segCnt = interp.getSegmentCnt();
-
-            double dist1 = (vertexNo == 0) ? 0
-                : point.distance(path.getCurve().get(vertexNo-1));
-            double dist2 = (vertexNo == segCnt) ? 0
-                : point.distance(path.getCurve().get(vertexNo));
-
-            // For old segment vertexNo-1, map the t range [0, splitT] to
-            // new segment vertexNo-1 range [0,1], and map the t range
-            // (splitT, 1] to new segment vertexNo range [0,1]. If
-            // vertexNo == segCnt-1 then segment vertexNo-1 never existed
-            // before, so it doesn't matter what splitT value we use.
-            double splitT = dist1 / (dist1 + dist2);
+        if (curve.size() > 0) {
+            // Before adding this vertex, adjust t values that
+            // reference this segment.
 
             for (int i = 0; i < segments.size(); ++i) {
-                double t = segments.get(i);
-                int segment = (int) Math.floor(t);
-                double frac = t - segment;
-                if (segment >= vertexNo) {
-                    ++t;
-                } else if (segment == vertexNo-1) {
-                    if (frac <= splitT) {
-                        t = segment + frac / splitT;
-                    } else {
-                        t = (segment + 1) + (frac - splitT) / (1.0 - splitT);
-                    }
-                }
-                segments.set(i, t);
+                double newT = curve.newTIfVertexRemoved(segments.get(i), command.index);
+                segments.set(i, newT);
             }
         }
 
-        interp.add(vertexNo, point);
-        if (interp instanceof Smoothable)
-            ((Smoothable) interp).setSmoothed(vertexNo, smoothed);
-        setPathSegments(path, segments);
+        command.execute();
+        setPathSegments(d, segments);
         propagateChange();
         return true;
     }
@@ -738,11 +709,10 @@ public class Diagram extends Observable implements Printable {
     }
 
     public void addDecoration(Decoration d) {
-        decorations.add(d);
-        propagateChange();
+        addDecoration(decorations.size(), d);
     }
 
-    public void addDecoration(Decoration d, int index) {
+    public void addDecoration(int index, Decoration d) {
         decorations.add(index, d);
         propagateChange();
     }
@@ -1529,7 +1499,7 @@ public class Diagram extends Observable implements Printable {
         }
         SourceImage image = new SourceImage();
         image.setAlpha(StandardAlpha.LIGHT_GRAY.getAlpha());
-        addDecoration(image, 0);
+        addDecoration(0, image);
         return image;
     }
 
@@ -2157,7 +2127,7 @@ public class Diagram extends Observable implements Printable {
             removeDecoration(layer);
     }
 
-    public void removeDecoration(int layer) {
+    public Decoration removeDecoration(int layer) {
         Decoration d = decorations.remove(layer);
 
         // Also remove decorations that require this decoration, and
@@ -2177,6 +2147,7 @@ public class Diagram extends Observable implements Printable {
             removeDecorationIfFound(d2);
         }
         propagateChange();
+        return d;
     }
 
     public double pagePerimeter() {
@@ -2473,8 +2444,7 @@ public class Diagram extends Observable implements Printable {
             boolean inside = true;
             for (DecorationHandle hand: d.getHandles(
                             DecorationHandle.Type.CONTROL_POINT)) {
-                Point2D page = principalToStandardPage.transform(
-                        pageLocation(hand));
+                Point2D page = pageLocation(hand);
                 inside = isClosed && region.contains(page);
                 if (!inside) {
                     // Check if the point is very close to the path
@@ -3152,7 +3122,18 @@ public class Diagram extends Observable implements Printable {
 
     /** @return this diagram as a JSON string. */
     public String toJsonString() throws IOException {
+        resetIds();
         return Tabify.tabify(getObjectMapper().writeValueAsString(this));
+    }
+
+    /** Reset IDs to be 1, 2, 3, etc. This allows a canonical representation of this diagram. */
+    void resetIds() {
+        IdGenerator gen = new IdGenerator();
+        for (Decoration d: decorations) {
+            if (d instanceof HasJSONId) {
+                ((HasJSONId) d).setJsonId(gen.id());
+            }
+        }
     }
 
     static ArrayList<Decoration> jsonStringToDecorations(String str) throws IOException {
@@ -3952,26 +3933,30 @@ public class Diagram extends Observable implements Printable {
                 return i;
             }
         }
-        return i;
+        return -1;
+    }
+
+    static ObjectMapper computeObjectMapper() {
+        ObjectMapper map = new ObjectMapper();
+        map.configure(SerializationFeature.INDENT_OUTPUT, true);
+        map.setSerializationInclusion(JsonInclude.Include.NON_NULL);
+
+        map.addMixIn(Point2D.class, Point2DAnnotations.class);
+        map.addMixIn(Point2D.class, Point2DAnnotations.class);
+        map.addMixIn(Rectangle2D.class, Rectangle2DAnnotations.class);
+        map.addMixIn(Rectangle2D.Double.class, Rectangle2DDoubleAnnotations.class);
+        map.addMixIn(Point.class, PointAnnotations.class);
+        map.addMixIn(Dimension.class, DimensionAnnotations.class);
+        map.addMixIn(DecimalFormat.class, DecimalFormatAnnotations.class);
+        map.addMixIn(NumberFormat.class, NumberFormatAnnotations.class);
+        map.addMixIn(Color.class, ColorAnnotations.class);
+        map.addMixIn(Decoration.class, DecorationAnnotations.class);
+        return map;
     }
 
     static ObjectMapper getObjectMapper() {
         if (objectMapper == null) {
-            objectMapper = new ObjectMapper();
-            objectMapper.configure(SerializationFeature.INDENT_OUTPUT, true);
-            objectMapper.setSerializationInclusion(JsonInclude.Include.NON_NULL);
-            ObjectMapper map = objectMapper;
-
-            map.addMixIn(Point2D.class, Point2DAnnotations.class);
-            map.addMixIn(Point2D.class, Point2DAnnotations.class);
-            map.addMixIn(Rectangle2D.class, Rectangle2DAnnotations.class);
-            map.addMixIn(Rectangle2D.Double.class, Rectangle2DDoubleAnnotations.class);
-            map.addMixIn(Point.class, PointAnnotations.class);
-            map.addMixIn(Dimension.class, DimensionAnnotations.class);
-            map.addMixIn(DecimalFormat.class, DecimalFormatAnnotations.class);
-            map.addMixIn(NumberFormat.class, NumberFormatAnnotations.class);
-            map.addMixIn(Color.class, ColorAnnotations.class);
-            map.addMixIn(Decoration.class, DecorationAnnotations.class);
+            objectMapper = computeObjectMapper();
         }
 
         return objectMapper;
