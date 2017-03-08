@@ -49,6 +49,7 @@ public class Viewer extends Editor {
               ef.actAddVertex,
               ef.actColor,
               ef.actCopy,
+              ef.actCopyAndPaste,
               ef.actCut,
               ef.actCutAll,
               ef.actCutRegion,
