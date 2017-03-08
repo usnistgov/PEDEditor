@@ -116,7 +116,7 @@ public class BasicEditor extends Diagram
         }
 
         @Override public void execute() {
-            addDecoration(d, layer);
+            addDecoration(layer, d);
         }
 
         @Override public void undo() {
@@ -393,6 +393,16 @@ public class BasicEditor extends Diagram
     protected transient DecorationHandle selection;
     transient Timer fileSaver = null;
 
+    protected transient ArrayList<String> undoStack = new ArrayList<>();
+    // If undoStackOffset < undoStack.size() then the extras are operations that
+    // one can Redo.
+    protected transient int undoStackOffset = 0;
+
+    /**
+     * The source image is typically too big to store in a compact
+     * undo stack, so just keep a hash code for it. If the code
+     * changes, wipe the undo stack. */
+    protected transient int sourceImageHashCode = 0;
     protected transient boolean preserveMprin = false;
     protected transient boolean isShiftDown = false;
     protected transient Point2D.Double statusPt = null;
@@ -1018,29 +1028,6 @@ public class BasicEditor extends Diagram
         }
     }
 
-    /**
-     * Cut everything in the selected region. All control points of a
-     * decoration must be inside the region for it to be cut. */
-    public void cutRegion() {
-        String errorTitle = "Cannot copy region";
-
-        if (getSelectedInterp2D() == null) {
-            showError("Draw a curve to identify the boundary of the region.",
-                    errorTitle);
-            return;
-        }
-        List<Decoration> decorations = decorationsInsideSelection();
-        setClipboard(decorations);
-        for (Decoration d: decorations) {
-            int layer = getLayer(d);
-            if (layer == -1) {
-                continue; // OK, removing a different decoration may have deleted this one too.
-            } else {
-                removeDecoration(d);
-            }
-        }
-    }
-
     void setClipboard(List<Decoration> ds) {
         ArrayList<Decoration> copies = new ArrayList<>();
         Point2D.Double delta = (mprin != null) ? mprin : principalLocation(selection);
@@ -1074,6 +1061,7 @@ public class BasicEditor extends Diagram
                     "Cannot paste");
             return;
         }
+        saveState();
 
         // Clear the IDs of existing decorations to prevent overlap with IDs of the decorations being added.
         for (Decoration d: decorations) {
@@ -1082,9 +1070,17 @@ public class BasicEditor extends Diagram
             }
         }
 
+        String json = Stuff.getClipboardString();
+        if (json == null || json.equals("")) {
+            showError("The clipboard is currently empty.");
+            return;
+        }
         AffineTransform toPrin = AffineTransform.getTranslateInstance(mprin.x, mprin.y);
         try {
-            ArrayList<Decoration> ds = jsonStringToDecorations(Stuff.getClipboardString());
+            List<Decoration> ds = jsonStringToDecorations(Stuff.getClipboardString());
+            // TODO Pasting source images isn't reliable right now, so get rid of them.
+            // ds = ds.stream().filter(p -> !(p instanceof SourceImage)).collect(Collectors.toList());
+
             finishDeserialization(ds);
             for (Decoration d : ds) {
                 if (!(d instanceof TieLine)) {
@@ -1099,7 +1095,8 @@ public class BasicEditor extends Diagram
                 addDecoration(d);
             }
         } catch (IOException e) {
-            showError("Paste failed: " + e);
+            // Maybe this is ordinary text, and the user wanted to create a label?
+            addLabel(json);
         }
     }
 
@@ -1111,6 +1108,7 @@ public class BasicEditor extends Diagram
         will be moved.
     */
     public void moveSelection(boolean moveAll) {
+        saveState();
         String errorTitle = "Cannot move selection";
         if (selection == null) {
             showError("You must select an item before you can move it.",
@@ -1135,10 +1133,11 @@ public class BasicEditor extends Diagram
         }
 
         setSelection(moveSelection(mprin, moveAll));
+
         setMouseStuck(true);
     }
 
-    /** Copy the selection, moving it to mprin. */
+    /** Copy the selection to the clilpboard. */
     public void copySelection() {
         String errorTitle = "Cannot copy selection";
 
@@ -1152,7 +1151,20 @@ public class BasicEditor extends Diagram
         setClipboard(Collections.singletonList(selection.getDecoration()));
     }
 
-    /** Copy the selection, moving it to mprin. */
+    public void cut(List<Decoration> decorations) {
+        setClipboard(decorations);
+        saveState();
+        for (Decoration d: decorations) {
+            int layer = getLayer(d);
+            if (layer == -1) {
+                continue; // OK, removing a different decoration may have deleted this one too.
+            } else {
+                removeDecoration(layer);
+            }
+        }
+    }
+
+    /** Cut the selection and copy it to the clilpboard. */
     public void cutSelection() {
         String errorTitle = "Cannot cut selection";
 
@@ -1163,8 +1175,27 @@ public class BasicEditor extends Diagram
             return;
         }
 
-        copySelection();
-        removeDecoration(selection.getDecoration());
+        cut(Collections.singletonList(selection.getDecoration()));
+    }
+
+    /**
+     * Cut everything in the selected region. All control points of a
+     * decoration must be inside the region for it to be cut. */
+    public void cutRegion() {
+        String errorTitle = "Cannot cut region";
+
+        if (getSelectedInterp2D() == null) {
+            showError("Draw a curve to identify the boundary of the region.",
+                    errorTitle);
+            return;
+        }
+        cut(decorationsInsideSelection());
+    }
+
+    /**
+     * Cut everything and copy it to the clipboard. */
+    public void cutAll() {
+        cut(new ArrayList<Decoration>(decorations));
     }
 
     public void changeLayer(int delta) {
@@ -1172,6 +1203,7 @@ public class BasicEditor extends Diagram
         if (!hadSelection && !selectSomething()) {
             return;
         }
+        saveState();
         changeLayer0(delta);
         if (!hadSelection) {
             clearSelection();
@@ -1202,7 +1234,8 @@ public class BasicEditor extends Diagram
                  layer > 0 && layer < decorations.size() - 1;
                  layer += ((delta > 0) ? 1 : -1)) {
                 Decoration jumpedPast = decorations.get(layer);
-                if (Geom.distanceSq(selectionBounds, bounds(jumpedPast))
+                Rectangle2D.Double bounds2 = bounds(jumpedPast);
+                if (bounds2 == null || Geom.distanceSq(selectionBounds, bounds2)
                     < 1e-12) {
                     break;
                 }
@@ -2046,21 +2079,16 @@ public class BasicEditor extends Diagram
         }
         curve.setLineWidth(lineWidth);
         curve.setColor(color);
-        add(curve, 0, point, smoothed);
-
+        Interp2DHandle h = new Interp2DHandle(curve, 0);
+        addVertexCommand(h, point).execute();
         return new UndoableList(
                 new AddDecoration(curve),
-                new SetSelection(new Interp2DHandle(curve, 0)),
+                new SetSelection(h),
                 new SetInsertBeforeSelection(false));
     }
 
     Undoable addVertexCommand(Interp2DHandle handle, Point2D point) {
-        UndoableList res = new UndoableList();
-        Undoable add = new AddVertex(handle.getDecoration(),
-                handle.getIndex(), point, smoothed);
-        res.add(add);
-        res.add(new SetSelection(handle));
-        return res;
+        return new AddVertex(handle.getDecoration(), handle.getIndex(), point, smoothed);
     }
 
     Undoable clickCommand(Point2D.Double point) {
@@ -2109,27 +2137,28 @@ public class BasicEditor extends Diagram
         is at maxSize already, or create and select a new curve if no
         curve is currently selected. */
     public void click(Point2D.Double point) {
-        clickCommand(point).execute();
-        propagateChange();
+        Undoable command = clickCommand(point);
+        if (command instanceof AddVertex) {
+            AddVertex add = (AddVertex) command;
+            addVertex(add);
+            setSelection(add.d.createHandle(add.index));
+        } else {
+            command.execute();
+            propagateChange();
+        }
         showTangent(selection);
     }
 
-    @Override public void removeDecoration(Decoration d) {
-        // If an incomplete tie line selection refers to this curve,
-        // then stop selecting a tie line.
+    @Override public Decoration removeDecoration(int layer) {
+        Decoration res = super.removeDecoration(layer);
 
-        for (DecorationAndT pat: tieLineCorners) {
-            if (pat.d == d) {
-                tieLineDialog.setVisible(false);
-                tieLineCorners = new ArrayList<>();
-                break;
-            }
-        }
-        super.removeDecoration(d);
-
-        if (selection != null && selection.getDecoration() == d) {
+        if (selection != null && getLayer(selection.getDecoration()) == -1) {
             clearSelection();
         }
+        if (res instanceof SourceImage) {
+            revalidateZoomFrame();
+        }
+        return res;
     }
 
     /** Print an arrow at the currently selected location at the angle
@@ -2433,9 +2462,11 @@ public class BasicEditor extends Diagram
     public void addVariable() {
         String errorTitle = "Cannot add variable";
         CuspDecoration cdec = getSelectedCuspDecoration();
-        if (cdec == null || cdec.getCurve().size() != 3) {
+        int index = -1;
+        if (cdec == null || cdec.getCurve().size() != 3
+                || (index = ((Interp2DHandle) selection).index) == 1) {
             showError(
-"To add a user variable, first select a curve consisting of three points "
+"To add a user variable, first select an endpoint of a curve consisting of three points "
 + "where the variable's value is known. The points must not all lie on the same "
 + "line."
 + "<p>For example, for a variable whose values range from 0 to 1, "
@@ -2505,6 +2536,11 @@ public class BasicEditor extends Diagram
             Point2D.Double p0 = path.get(0);
             Point2D.Double p1 = path.get(1);
             Point2D.Double p2 = path.get(2);
+            if (index == 0) { // Swap the first and last points.
+                Point2D.Double tmp = p0;
+                p0 = p2;
+                p2 = tmp;
+            }
 
             Matrix xform = new Matrix
                 (new double[][] {{p0.x, p0.y, 1},
@@ -2609,6 +2645,7 @@ public class BasicEditor extends Diagram
     }
 
     @Override public boolean moleToWeightFraction(boolean convertLabels) {
+        saveState();
         boolean res = super.moleToWeightFraction(convertLabels);
         if (res && mprin != null) {
             moveMouse(moleToWeightFraction(mprin));
@@ -2633,6 +2670,7 @@ public class BasicEditor extends Diagram
     }
 
     @Override public boolean weightToMoleFraction(boolean convertLabels) {
+        saveState();
         boolean res = super.weightToMoleFraction(convertLabels);
         if (res && mprin != null) {
             moveMouse(weightToMoleFraction(mprin));
@@ -3206,11 +3244,13 @@ public class BasicEditor extends Diagram
     }
 
     @Override public void expandMargins(double factor) {
+        saveState();
         super.expandMargins(factor);
         bestFit();
     }
 
     @Override public void computeMargins(boolean onlyExpand) {
+        saveState();
         super.computeMargins(onlyExpand);
         bestFit();
     }
@@ -3468,6 +3508,7 @@ public class BasicEditor extends Diagram
             ? new AffineTransform(m, 0.0, 0.0, 1.0, b, 0.0)
             : new AffineTransform(1.0, 0.0, 0.0, m, 0.0, b);
 
+        saveState();
         invisiblyTransformPrincipalCoordinates(xform);
         resetPixelModeVisible();
         propagateChange();
@@ -3508,6 +3549,7 @@ public class BasicEditor extends Diagram
 
         double m = newV / oldV;
 
+        saveState();
         AffineTransform xform = AffineTransform.getScaleInstance(m, m);
         invisiblyTransformPrincipalCoordinates(xform);
         propagateChange();
@@ -3567,9 +3609,12 @@ public class BasicEditor extends Diagram
         }
     }
 
-
     /** Invoked from the EditFrame menu */
     public void addLabel() {
+        addLabel(null);
+    }
+
+    public void addLabel(String str) {
         if (principalToStandardPage == null) {
             return;
         }
@@ -3589,6 +3634,9 @@ public class BasicEditor extends Diagram
         double fontSize = dog.getFontSize();
         dog.reset();
         dog.setFontSize(fontSize);
+        if (str != null) {
+            dog.setText(str);
+        }
         finishAddLabel();
     }
 
@@ -4071,6 +4119,7 @@ public class BasicEditor extends Diagram
                 newDiagram(e.filename,
                         Geom.toPoint2DDoubles(e.getVertices()));
                 initializeGUI();
+                saveState();
             }
         propagateChange();
     }
@@ -4123,6 +4172,7 @@ public class BasicEditor extends Diagram
             }
 
         closeIfNotUsed();
+        saveState();
         propagateChange1();
     }
 
@@ -4738,6 +4788,10 @@ public class BasicEditor extends Diagram
         editFrame.setMathWindowVisible(false);
         editFrame.setStatus("");
         editFrame.setVisible(true);
+        SourceImage image = firstImage();
+        if (image != null) {
+            editFrame.setAlpha(image.getAlpha());
+        }
         setColor(color);
         bestFit();
     }
@@ -5288,6 +5342,7 @@ public class BasicEditor extends Diagram
                       "File load error");
             closeIfNotUsed();
         }
+        saveState();
     }
 
     void showError(String mess, String title) {
@@ -6540,5 +6595,106 @@ public class BasicEditor extends Diagram
             mnRightClick.setCoordinates(formatCoordinates(mp.prin));
         }
         mnRightClick.show(mp.e.getComponent(), mp.e.getX(), mp.e.getY());
+    }
+
+    public void redo() {
+        if (undoStackOffset == undoStack.size()) {
+            showError("No more operations to redo.");
+            return;
+        }
+        try {
+            EditorState.copyJsonStringToEditor(this, undoStack.get(undoStackOffset));
+        } catch (IOException e) {
+            e.printStackTrace();
+        } finally {
+            undoStackOffset++;
+        }
+    }
+
+    void saveState() {
+        if (maxUndoStackSize() < 3) {
+            return;
+        }
+        try {
+            String state;
+
+            // The source image can be so huge that I don't want to
+            // save it. Strip it out before serialization and then put
+            // it back.
+            int oldCode = sourceImageHashCode;
+            SourceImage img = firstImage();
+            sourceImageHashCode = (img == null) ? 72987342 : img.hashCode();
+            if (sourceImageHashCode != oldCode) {
+                undoStack.clear();
+                undoStackOffset = 0;
+            }
+
+            int imgLayer = (img == null) ? -1 : getLayer(img);
+            try (UpdateSuppressor us = new UpdateSuppressor()) {
+                if (img != null) {
+                    decorations.remove(imgLayer);
+                }
+                state = EditorState.toJsonString(this);
+            } finally {
+                if (img != null) {
+                    addDecoration(imgLayer, img);
+                }
+            }
+
+            if (undoStackOffset > 0 &&
+                    state.equals(undoStack.get(undoStackOffset - 1))) {
+                // The state is already saved.
+                return;
+            }
+            if (undoStackOffset < undoStack.size() &&
+                    state.equals(undoStack.get(undoStackOffset))) {
+                // Move the stack offset past the current state, which
+                // is already saved.
+                undoStackOffset++;
+                return;
+            }
+
+            // Clear any items left to redo.
+            while (undoStackOffset < undoStack.size()) {
+                undoStack.remove(undoStack.size() - 1);
+            }
+            if (undoStack.size() == maxUndoStackSize()) {
+                // Remove element #1, not element #0. Keeping element
+                // #0 lets us tell whether a save is necessary.
+                undoStack.remove(1);
+                --undoStackOffset;
+            }
+
+            undoStack.add(state);
+            ++ undoStackOffset;
+        } catch (IOException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        }
+    }
+
+    private int maxUndoStackSize() {
+        return 10;
+    }
+
+    public void undo() {
+        try {
+            saveState();
+            if (undoStackOffset < 2) {
+                showError("Cannot undo any more operations.");
+                return;
+            }
+            EditorState.copyJsonStringToEditor(this, undoStack.get(undoStackOffset - 2));
+            --undoStackOffset;
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    @Override public void addDecoration(int index, Decoration d) {
+        super.addDecoration(index, d);
+        if (d instanceof SourceImage) {
+            revalidateZoomFrame();
+        }
     }
 }
