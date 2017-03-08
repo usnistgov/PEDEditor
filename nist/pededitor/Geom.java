@@ -513,6 +513,13 @@ public class Geom {
         return (l1l2Sq == 0) ? 0 :  (dp * dp / l1l2Sq);
     }
 
+    /** @return the square of the cosine of the angle between the two vectors. */
+    public static double cos(Point2D.Double v1, Point2D.Double v2) {
+        double l1l2 = length(v1) * length(v2);
+        double dp = v1.x * v2.x + v1.y * v2.y;
+        return (l1l2 == 0) ? 0 :  (dp / l1l2);
+    }
+
     /** @return the convex hull of inputs[], starting with the point
         with lowest y value and proceeding clockwise or
         counterclockwise depending on whether the Y axis points down
