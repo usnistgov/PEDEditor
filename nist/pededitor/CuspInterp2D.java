@@ -86,6 +86,16 @@ public class CuspInterp2D extends PointsInterp2D
         }
     }
 
+    int smoothedPointCnt() {
+        int tot = 0;
+        for (int i = 0; i < size(); ++i) {
+            if (isSmoothed(i)) {
+                ++tot;
+            }
+        }
+        return tot;
+    }
+
     int nextUnsmoothed(int n) {
         int s = smoothed.size();
         for (int i = n; i < s; ++i) {
