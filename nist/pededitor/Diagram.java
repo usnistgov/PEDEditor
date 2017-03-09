@@ -2442,8 +2442,10 @@ public class Diagram extends Observable implements Printable {
 
         for (Decoration d: getDecorations()) {
             boolean inside = true;
+            boolean haveHandles = false;
             for (DecorationHandle hand: d.getHandles(
                             DecorationHandle.Type.CONTROL_POINT)) {
+                haveHandles = true;
                 Point2D page = pageLocation(hand);
                 inside = isClosed && region.contains(page);
                 if (!inside) {
@@ -2458,7 +2460,7 @@ public class Diagram extends Observable implements Printable {
                 }
             }
 
-            if (inside)
+            if (haveHandles && inside)
                 res.add(d);
         }
 
@@ -3136,10 +3138,10 @@ public class Diagram extends Observable implements Printable {
         }
     }
 
-    static ArrayList<Decoration> jsonStringToDecorations(String str) throws IOException {
+    static DecorationsWrapper jsonStringToDecorations(String str) throws IOException {
         try {
             ObjectMapper mapper = getObjectMapper();
-            return mapper.readValue(str, DecorationsWrapper.class).decorations;
+            return mapper.readValue(str, DecorationsWrapper.class);
         } catch (Exception e) {
             throw new IOException("Parse error: " + e);
         }
@@ -4329,12 +4331,14 @@ public class Diagram extends Observable implements Printable {
     // ArrayList loses JsonTypeInfo. This fixes the problem.
     static class DecorationsWrapper {
         @JsonProperty ArrayList<Decoration> decorations;
+        /** Index of the decoration that is selected, or -1 if none. */
+        @JsonProperty int decorationNum = -1;
+        /** Index of the getHandles(CONTROL_POINT) that is equal to this handle. */
+        @JsonProperty int handleNum = -1;
     }
 
-    protected String toJsonString(ArrayList<Decoration> copies) throws IOException {
-        DecorationsWrapper tmp = new DecorationsWrapper();
-        tmp.decorations = copies;
-        return Tabify.tabify(getObjectMapper().writeValueAsString(tmp));
+    protected String toJsonString(DecorationsWrapper wrap) throws IOException {
+        return Tabify.tabify(getObjectMapper().writeValueAsString(wrap));
     }
 }
 
