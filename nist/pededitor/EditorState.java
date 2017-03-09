@@ -57,6 +57,7 @@ class EditorState {
         try {
             target.undoStack = new ArrayList<>();
             target.copyFrom(this.diagram);
+            target.revalidateZoomFrame();
         } finally {
             target.undoStack = undoStack;
             target.undoStackOffset = undoStackOffset;

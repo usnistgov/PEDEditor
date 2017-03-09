@@ -1416,7 +1416,7 @@ public class BasicEditor extends Diagram
         int vertexNo = sel.getIndex();
 
         if (path.isClosed()) {
-            sel.setIndex((vertexNo + size + delta) % size);
+            vertexNo = (vertexNo + size + delta) % size;
         } else {
             vertexNo += delta;
             if (vertexNo > size - 1) {
@@ -1426,10 +1426,10 @@ public class BasicEditor extends Diagram
                 vertexNo = 0;
                 insertBeforeSelection = true;
             }
-            sel.setIndex(vertexNo);
         }
 
-        setSelection(sel);
+        setSelection(sel.getDecoration().createHandle(vertexNo));
+        moveMouse(principalLocation(selection));
         redraw();
     }
 
@@ -1687,8 +1687,8 @@ public class BasicEditor extends Diagram
         double brightness = (4 * c.getGreen() + 2 * c.getRed() + c.getBlue())
             / 7.0 / 256;
         double greenness = ((double) c.getGreen()) /
-            (c.getGreen() + 2.0 * c.getRed() + c.getBlue());
-        return (brightness > 0.6 && greenness > 0.5) ? Color.MAGENTA
+            (c.getGreen() + 2.0 * c.getRed() + c.getBlue() + 1);
+        return (brightness > 0.2 && greenness > 0.5) ? Color.MAGENTA
             : Color.GREEN;
     }
 

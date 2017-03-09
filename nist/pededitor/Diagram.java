@@ -4281,7 +4281,7 @@ public class Diagram extends Observable implements Printable {
         tmp.y = 1.0;
         double lenY = Geom.length
             (principalToStandardPage.deltaTransform(tmp, tmp));
-        return Math.abs((lenX - lenY) / lenY) < 1e-12;
+        return Math.abs(lenX - lenY) < lenY * 1e-6;
     }
 
     /** Return the area in page space corresponding to 1 unit of area
@@ -4422,6 +4422,7 @@ abstract class ColorAnnotations extends Color {
     @JsonCreator public ColorAnnotations(@JsonProperty("rgb") int rgb) {
         super(rgb);
     }
+
     @Override
     @JsonProperty abstract public int getRGB();
     @JsonIgnore public ColorAnnotations(int r, int g, int b, int a) {
