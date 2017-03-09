@@ -512,6 +512,11 @@ public class BasicEditor extends Diagram
         }
 
         public int getTravel() { return travel; }
+
+        public void jumpTo(int x, int y) {
+            lastX = x;
+            lastY = y;
+        }
     }
 
     /** Until the mouse is released, we can't tell whether the user is
@@ -521,6 +526,7 @@ public class BasicEditor extends Diagram
         doing. */
     protected transient MousePress mousePress = null;
     protected transient MousePress rightClick = null;
+    protected transient Rectangle2D dragRectangle = null;
 
     /** mouseTravel logs the distance in pixels that the mouse has
         moved either since the button was depressed (to discriminate
@@ -908,11 +914,22 @@ public class BasicEditor extends Diagram
         }
 
         Decoration dec = selection.getDecoration();
+        resetToDefaultSettings(dec);
+
+        if (!hadSelection) {
+            clearSelection();
+        }
+        propagateChange();
+    }
+
+    void resetToDefaultSettings(Decoration dec) {
         dec.setColor(color);
         dec.setLineWidth(lineWidth);
-        Label label = getSelectedLabel();
-        if (label != null) {
-            label.setScale(getLabelDialog().getFontSize());
+        if (dec instanceof Label) {
+            Label label = (Label) dec;
+            if (label != null) {
+                label.setScale(getLabelDialog().getFontSize());
+            }
         }
 
         if (fill != null && dec instanceof Fillable) {
@@ -925,11 +942,6 @@ public class BasicEditor extends Diagram
         if (lineStyle != null && dec.getLineStyle() != null) {
             dec.setLineStyle(lineStyle);
         }
-
-        if (!hadSelection) {
-            clearSelection();
-        }
-        propagateChange();
     }
 
     public void put() {
@@ -1029,7 +1041,26 @@ public class BasicEditor extends Diagram
         ArrayList<Decoration> copies = new ArrayList<>();
         Point2D.Double delta = (mprin != null) ? mprin : principalLocation(selection);
         AffineTransform toOrigin = AffineTransform.getTranslateInstance(-delta.x, -delta.y);
+        DecorationsWrapper wrap = new DecorationsWrapper();
+        int dnum = -1;
         for (Decoration d: ds) {
+            ++dnum;
+            if (selection != null) {
+                // Store handle info.
+                wrap.decorationNum = dnum;
+                wrap.handleNum = 0;
+                DecorationHandle hand = (selection instanceof Interp2DHandle2)
+                    ? ((Interp2DHandle2) selection).indexHandle()
+                    : selection;
+                DecorationHandle[] hands = d.getHandles(
+                        DecorationHandle.Type.CONTROL_POINT);
+                for (int j = 0; j < hands.length; ++j) {
+                    if (hands[j].equals(hand)) {
+                        wrap.handleNum = j;
+                        break;
+                    }
+                }
+            }
             // Don't transform tie lines -- let the transformation of
             // the underlying curve do the work.
             if (!(d instanceof TieLine)) {
@@ -1041,8 +1072,10 @@ public class BasicEditor extends Diagram
             }
             copies.add(d);
         }
+        wrap.decorations = copies;
+
         try {
-            Stuff.setClipboardString(toJsonString(copies), true);
+            Stuff.setClipboardString(toJsonString(wrap), true);
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -1106,9 +1139,20 @@ public class BasicEditor extends Diagram
         }
         AffineTransform toPrin = AffineTransform.getTranslateInstance(mprin.x, mprin.y);
         try {
-            List<Decoration> ds = jsonStringToDecorations(Stuff.getClipboardString());
+            DecorationsWrapper wrap = jsonStringToDecorations(Stuff.getClipboardString());
+            List<Decoration> ds = wrap.decorations;
             // TODO Pasting source images isn't reliable right now, so get rid of them.
             // ds = ds.stream().filter(p -> !(p instanceof SourceImage)).collect(Collectors.toList());
+            DecorationHandle selNew = null;
+            int dnum = wrap.decorationNum;
+            int hnum = wrap.handleNum;
+            if (dnum >= 0 && dnum < ds.size()) {
+                Decoration d = ds.get(dnum);
+                DecorationHandle[] hands = d.getHandles(DecorationHandle.Type.CONTROL_POINT);
+                if (hnum >= 0 && hnum < hands.length) {
+                    selNew = hands[hnum];
+                }
+            }
 
             finishDeserialization(ds);
             for (Decoration d : ds) {
@@ -1122,6 +1166,9 @@ public class BasicEditor extends Diagram
                     linkRulerWithAxis((LinearRuler) d, axes);
                 }
                 addDecoration(d);
+            }
+            if (selNew != null) {
+                setSelection(selNew);
             }
         } catch (IOException e) {
             if (json.length() < 5000) {
@@ -1567,15 +1614,14 @@ public class BasicEditor extends Diagram
             : new Color(0xb0c000); // Yellow
     }
 
-    /** Return true if the user is currently selecting a region to
-        zoom to. */
-    boolean isZoomMode() {
+    /** Return true if the user is currently dragging the mouse to select a region. */
+    boolean isDragging() {
         return mousePress != null && mouseTravel != null
             && mouseTravel.getTravel() >= mouseDragDistance;
     }
 
     Point2D.Double clickPosition(boolean unstick, AutoPositionHolder ap) {
-        if (isZoomMode() || !isEditable()) {
+        if (isDragging() || !isEditable()) {
             return null;
         } else if (isShiftDown) {
             return statusPt = getAutoPosition(ap);
@@ -1807,7 +1853,7 @@ public class BasicEditor extends Diagram
             }
         }
 
-        if (isZoomMode()) {
+        if (isDragging()) {
             Point mpos = getEditPane().getMousePosition();
             if (mpos != null) {
                 g.setColor(Color.RED);
@@ -2048,6 +2094,16 @@ public class BasicEditor extends Diagram
         return getInterp2DHandle().getIndex() + (insertBeforeSelection ? 0 : 1);
     }
 
+    private CuspDecoration emptyCuspDecoration() {
+        StandardStroke ls = (lineStyle == null) ? DEFAULT_LINE_STYLE
+            : lineStyle;
+        CuspDecoration d = (fill != null)
+            ? new CuspDecoration(new CuspInterp2D(true), fill)
+            : new CuspDecoration(new CuspInterp2D(false), ls);
+        resetToDefaultSettings(d);
+        return d;
+    }
+
     /** Start a new CuspDecoration consisting of a single point, and
         make it the new selection. */
     Undoable newCurveCommand(Point2D.Double point) {
@@ -2075,8 +2131,7 @@ public class BasicEditor extends Diagram
         }
 
         if (curve == null) {
-            curve = (fill != null) ? new CuspDecoration(new CuspInterp2D(true), fill)
-                : new CuspDecoration(new CuspInterp2D(false), ls);
+            curve = emptyCuspDecoration();
         }
         curve.setLineWidth(lineWidth);
         curve.setColor(color);
@@ -2330,18 +2385,19 @@ public class BasicEditor extends Diagram
         Interp2DHandle handle;
     }
 
-    DecorationAndPoints convertSelection(Interp2DDecoration d) {
+    DecorationAndPoints convertSelection(Interp2DDecoration d,
+            boolean useRectangleMidpoints) {
         String type = d.typeName();
         String errorTitle = "Cannot create " + type;
         CuspDecoration cdec = getSelectedCuspDecoration();
         // One less than the min is OK, because then you can see what
         // the decoration will look like if you add one more vertex.
+        int size = cdec.getCurve().size();
         int minSize = Math.max(0, d.getCurve().minSize());
         int maxSize = d.getCurve().maxSize();
         if (maxSize < 0)
             maxSize = 100;
-        if (cdec == null || cdec.getCurve().size() < minSize
-                || cdec.getCurve().size() > maxSize) {
+        if (cdec == null || size < minSize || size > maxSize) {
             String tween = (minSize == maxSize) ?
                 ("" + minSize) :
                 ("between " + minSize + " and " + maxSize);
@@ -2359,6 +2415,13 @@ public class BasicEditor extends Diagram
         d.setLineWidth(cdec.getLineWidth());
         d.setColor(cdec.getColor());
         d.setLineStyle(cdec.getLineStyle());
+        if (useRectangleMidpoints && cdec.isClosed() && size == 4) {
+            ArrayList<Point2D.Double> ms = new ArrayList<>();
+            for (int i = 0; i < 4; ++i) {
+                ms.add(Geom.midpoint(res.points.get(i), res.points.get((i + 1) % 4)));
+            }
+            res.points = ms;
+        }
         if (d instanceof Fillable)
             d.setFill(cdec.getFill());
         return res;
@@ -2366,7 +2429,7 @@ public class BasicEditor extends Diagram
 
     public void addRuler() {
         LinearRuler r = new LinearRuler();
-        DecorationAndPoints dap = convertSelection(r);
+        DecorationAndPoints dap = convertSelection(r, false);
         if (dap == null)
             return;
 
@@ -2434,7 +2497,7 @@ public class BasicEditor extends Diagram
 
     public void addCircle() {
         ArcDecoration r = new ArcDecoration(new ArcInterp2D());
-        DecorationAndPoints dap = convertSelection(r);
+        DecorationAndPoints dap = convertSelection(r, true);
         if (dap == null)
             return;
 
@@ -3450,6 +3513,7 @@ public class BasicEditor extends Diagram
         }
 
         moveMouse(standardPageToPrincipal.transform(pagePoint));
+        mouseTravel = null;
         setMouseStuck(true);
     }
 
@@ -3853,12 +3917,14 @@ public class BasicEditor extends Diagram
             return false;
         }
         mprin = new Point2D.Double(prin.getX(), prin.getY());
-        mouseTravel = null;
         if (principalToStandardPage == null) {
             return false;
         }
 
         Point spoint = viewPosition(prin);
+        if (mouseTravel != null && spoint != null) {
+            mouseTravel.jumpTo(spoint.x, spoint.y);
+        }
 
         if (spoint != null) {
             JScrollPane spane = editFrame.getScrollPane();
@@ -4957,6 +5023,24 @@ public class BasicEditor extends Diagram
         setPageBounds(addMargins(sbounds, defaultRelativeMargin()));
     }
 
+    private Rectangle2D selectedPageRectangle() {
+        CuspDecoration d = getSelectedCuspDecoration();
+        if (d == null) {
+            return null;
+        }
+        CuspInterp2D curve = d.getCurve();
+        if (curve.size() != 4 || curve.smoothedPointCnt() > 0) {
+            return null;
+        }
+        Point2D.Double[] points = curve.getPoints();
+        principalToStandardPage.transform(points, 0, points, 0, points.length);
+        return Geom.bounds(points);
+    }
+
+    Rectangle2D pageOrRectangleBounds() {
+        Rectangle2D r = selectedPageRectangle();
+        return (r == null) ? pageBounds : r;
+    }
 
     public void setMargins() {
         if (marginsDialog == null) {
@@ -4965,6 +5049,7 @@ public class BasicEditor extends Diagram
         MarginsDialog dog = marginsDialog;
         dog.fromPage = standardPageToPrincipal;
         dog.axes = axes;
+        Rectangle2D bounds = pageOrRectangleBounds();
 
         Point2D.Double[] directions =
             { new Point2D.Double(1, 0),
@@ -4982,7 +5067,7 @@ public class BasicEditor extends Diagram
             VariableSelector vs = dog.getVariableSelector(varNo);
             vs.setAxes(Arrays.asList(axes));
             LinearAxis ax = vs.getSelected(Arrays.asList(axes));
-            double[] range = getRange(ax);
+            double[] range = getRange(ax, bounds);
             dog.getNumberField(varNo, 0).setValue(range[0]);
             dog.getNumberField(varNo, 1).setValue(range[1]);
         }
@@ -4994,9 +5079,9 @@ public class BasicEditor extends Diagram
         try {
             double[] rangeX = dog.pageXRange();
             double[] rangeY = dog.pageYRange();
-            setPageBounds
-                (new Rectangle2D.Double(rangeX[0], rangeY[0],
-                                        rangeX[1] - rangeX[0], rangeY[1] - rangeY[0]));
+            setPageBounds(new Rectangle2D.Double(rangeX[0], rangeY[0],
+                            rangeX[1] - rangeX[0], rangeY[1] - rangeY[0]));
+            bestFit();
         } catch (NumberFormatException x) {
             showError(x.toString());
             return;
@@ -5958,7 +6043,6 @@ public class BasicEditor extends Diagram
     public void setMouseStuck(boolean b) {
         mouseIsStuck = b;
         if (b) {
-            mouseTravel = null;
         } else {
             principalFocus = null;
             updateMousePosition();
@@ -6113,7 +6197,7 @@ public class BasicEditor extends Diagram
     }
 
     Point2D.Double getMousePrincipal() {
-        if (mousePress != null) {
+        if (mousePress != null && !isDragging()) {
             return mousePress.prin;
         } else if (rightClick != null) {
             return rightClick.prin;
@@ -6211,11 +6295,10 @@ public class BasicEditor extends Diagram
         return new Rectangle2D.Double(p.x, p.y, p2.x - p.x, p2.y - p.y);
     }
 
-    void zoom(Point pane1, Point pane2) {
+    Rectangle2D toPageRectangle(Point pane1, Point pane2) {
         Point2D.Double page1 = paneToStandardPage(pane1);
         Point2D.Double page2 = paneToStandardPage(pane2);
-        mprin = null;
-        zoom(Geom.bounds(new Point2D.Double[] { page1, page2 }));
+        return Geom.bounds(new Point2D.Double[] { page1, page2 });
     }
 
     void zoom(Rectangle2D pageBounds) {
@@ -6572,12 +6655,18 @@ public class BasicEditor extends Diagram
 
     @Override public void mouseReleased(MouseEvent e) {
         if (e.getButton() == MouseEvent.BUTTON1) {
-            if (isZoomMode()) {
+            if (isDragging()) {
                 Point p1 = mousePress.e.getPoint();
                 Point p2 = e.getPoint();
                 if (!p1.equals(p2)) {
-                    zoom(mousePress.e.getPoint(), e.getPoint());
-                    setMouseStuck(false);
+                    Rectangle2D pageRegion = toPageRectangle(p1, p2);
+                    if (isShiftDown && isEditable()) {
+                        selectPageRegion(pageRegion);
+                    } else {
+                        mprin = null; // Force the mouse to center itself.
+                        zoom(pageRegion);
+                        setMouseStuck(false);
+                    }
                     mouseTravel = null;
                 }
             } else if (isEditable() && principalToStandardPage != null
@@ -6589,6 +6678,17 @@ public class BasicEditor extends Diagram
             mousePress = null;
         }
     }
+
+    void selectPageRegion(Rectangle2D r) {
+        Point2D.Double[] points = Geom.toPoint2DDoubles(r);
+        standardPageToPrincipal.transform(points, 0, points, 0, points.length);
+        CuspInterp2D curve = new CuspInterp2D(Arrays.asList(points), false, true);
+        CuspDecoration d = emptyCuspDecoration();
+        d.setCurve(curve);
+        addDecoration(d);
+        setSelection(d.createHandle(0));
+    }
+
     @Override public void mouseEntered(MouseEvent e) {
     }
 
