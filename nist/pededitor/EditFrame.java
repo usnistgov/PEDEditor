@@ -240,7 +240,7 @@ public class EditFrame extends JFrame
         }
     };
 
-    Action actCutAll = new Action("Cut All", KeyEvent.VK_A,
+    Action actCutAll = new Action("Cut all", KeyEvent.VK_A,
             KeyStroke.getKeyStroke("control A")) {
         @Override
         public void actionPerformed(ActionEvent e) {

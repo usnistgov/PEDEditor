@@ -345,7 +345,9 @@ data are not displayed or otherwise used by the program.
 <li><a id="Margins"><b>Margins</b></a>: <code>Expand all</code> adds
 extra space on all sides. Afterward you can use <code>Auto-fit</code>
 to eliminate all excess white space. Use <code>Set</code> to manually
-assign values to the page X and Y boundaries.
+assign values to the page X and Y boundaries. If
+you <a href="#Rectangle">select a rectangle</a> before
+choosing <code>Set</code>, that rectangle will define the new margins.
 
 <li><h3 id=PixelMode>Pixel mode</h3>
 
@@ -895,25 +897,21 @@ increments.
 
     <p>To create a <b id=Circle>circle, arc, or ellipse</b>, first
       create and select a curve with between one and four control
-      points. Each of those points will end up as points on your
-      circle or ellipse. If you choose two points only, they become
-      the diameter of your circle. Three points also define a circle.
-      Four points define an ellipse. To create an arc, press the 'o'
-      key for a three-control-point circle or an ellipse. Two of your
-      control points will become endpoints of the arc.</p>
+      points. Alternatively, draw a <a href="#Rectangle">rectangle or
+      square</a>. If you draw a rectangle or square, the figure will
+      touch the four midpoints of your rectangle or square. Otherwise
+      the figure will touch each of your control points. If you choose
+      two points only, they become the diameter of your circle. Three
+      points also define a circle. Four points define an ellipse. To
+      create an arc, press the 'o' key for a figure with three or more
+      control points. Two of those points will become endpoints of the
+      arc.</p>
 
   <li><p><b id=TieLines>Tie Lines</b></p>
 
     <p>To create a set of tie lines, select the<b>Tie Lines</b>
       option of the <code>Add decoration</code> popup menu and
       follow the instructions in the window that opens. </p>
-
-    <p>If tie lines connect two segments or curves, instead of
-      connecting a curve to a point, then the tie lines should
-      tend to converge to a point someplace outside of the region
-      defined by the tie lines. If that is not the case, then the
-      Tie Line decoration may not be suited to your need, and you
-      may need to draw the individal tie lines manually.
 
     <p><a href="#Top">Return to top</a>
 
@@ -925,9 +923,9 @@ increments.
 
       <li><p><b>Undo</b> (<code>Control+Z</code>) undoes most operations.
 
-      <li><p><b>Redo</b> (<code>Control+Y</code>) redoes whatever you
-      just undid. But if you did something else since then, you can't
-      redo what you did the first time.
+      <li><p><b>Redo</b> (<code>Control+Y</code>) redoes the last
+          operation that you chose to undo. This is not possible if
+          you made other changes since then.
 
       <li><p><b>Paste</b> (<code>Control+V</code>) pastes into the
           diagram whatever you most recently <a href="#Cut">cut</a>
@@ -967,9 +965,10 @@ increments.
 
       <li>
         <p><b id=CutRegion>Cut everything in selected region</b>
-            (<code>Control+Shift+X</code>) cuts all decorations that are
-            entirely contained in that region and adds them to the
-            clipboard.</p>
+            (<code>Control+Shift+X</code>) cuts all decorations that
+            are entirely contained in that region and adds them to the
+            clipboard. You can quickly define a rectangular selection
+            by pressing Shift and dragging the mouse.</p>
 
       <li><p><b id=Delete>Delete</b> (<code>Delete</code>)
           deletes a single vertex or decoration.</p>
@@ -1048,7 +1047,9 @@ increments.
 
 <h3 id=Rectangle>Squares and rectangles</h3>
 
-<p>To draw a rectangle as a 4-point unsmoothed curve:
+<p>The simplest way to draw a rectangle is to drag the mouse while
+holding down the shift key. But if you wish to be a bit more precise,
+you can draw a rectangle as a 4-point unsmoothed curve:
 
 <ol> 
 
