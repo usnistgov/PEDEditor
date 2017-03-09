@@ -1871,12 +1871,13 @@ public class BasicEditor extends Diagram
     }
 
     /** Paint a crosshairs at principal coordinate p. */
-    void paintCross(Graphics g, Point2D.Double p, double scale) {
+    void paintCross(Graphics2D g, Point2D.Double p, double scale) {
         Point2D.Double vPage = principalToScaledPage(scale).transform(p);
         int r = 11;
         int ix = (int) vPage.x;
         int iy = (int) vPage.y;
         int r2 = 1;
+        g.setStroke(new BasicStroke(2));
         for (int offs = -r2; offs <= r2; ++offs) {
             g.drawLine(ix + offs, iy - r, ix + offs, iy - r2 - 1);
             g.drawLine(ix - r, iy + offs, ix - r2 - 1, iy + offs);
@@ -3992,6 +3993,9 @@ public class BasicEditor extends Diagram
     public void centerSelection() {
         if (selection == null) {
             return;
+        }
+        if (selection instanceof Interp2DHandle2) {
+            setSelection(((Interp2DHandle2) selection).indexHandle());
         }
         mprin = principalLocation(selection);
         centerMouse();
