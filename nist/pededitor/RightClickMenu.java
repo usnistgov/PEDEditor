@@ -23,26 +23,25 @@ public class RightClickMenu extends BasicRightClickMenu {
     JMenu mnDecorations;
     JLabel coordinates = new JLabel();
 
+    static private void addit(JMenu m, Object... os) {
+        for (Object obj: os) {
+            if (obj instanceof Action) {
+                m.add((Action) obj);
+            } else {
+                m.add((Component) obj);
+            }
+        }
+    }
+
     public RightClickMenu(BasicEditor editor) {
         super(editor);
         EditFrame ef = getEditFrame();
         add(ef.actDeselect);
 
-        for (Object obj: new Object[]
-            { ef.actUndo,
-              ef.actRedo,
-              ef.actPaste,
-              ef.actCutAll,
-            }) {
-            if (obj instanceof Action) {
-                mnEdit.add((Action) obj);
-            } else {
-                mnEdit.add((Component) obj);
-            }
-        }
+        addit(mnEdit, ef.actUndo, ef.actRedo, ef.actPaste, ef.actCutAll);
 
-        for (Object obj: new Object[]
-            { ef.actColor,
+        addit(mnEditSel,
+            ef.actColor,
               ef.actCopy,
               ef.actCut,
               ef.actCutRegion,
@@ -51,22 +50,11 @@ public class RightClickMenu extends BasicRightClickMenu {
               ef.actMovePoint,
               ef.actEditSelection,
               ef.actResetToDefault,
-              ef.actMakeDefault }) {
-            if (obj instanceof Action) {
-                mnEditSel.add((Action) obj);
-            } else {
-                mnEditSel.add((Component) obj);
-            }
-        }
+                ef.actMakeDefault);
 
-        for (Object obj : new Object[] { ef.actColor, ef.actCopy, ef.actCut, ef.actRemoveSelection, ef.actEditSelection,
-                ef.actResetToDefault, ef.actMakeDefault }) {
-            if (obj instanceof Action) {
-                mnEditNear.add((Action) obj);
-            } else {
-                mnEditNear.add((Component) obj);
-            }
-        }
+        addit(mnEditNear, ef.actColor, ef.actCopy, ef.actCut, ef.actCutRegion,
+                ef.actRemoveSelection, ef.actEditSelection,
+                ef.actResetToDefault, ef.actMakeDefault);
 
         addSeparator();
         add(new PositionMenu(getEditor()));
