@@ -102,6 +102,35 @@ public class BasicEditor extends Diagram
         }
     }
 
+    /**
+     * AutoCloseable that, if nothing is selected, hunts for a nearby
+     * target for an operation that applies to a Decoration or
+     * DecorationHandle and selects that, then finally unselects
+     * it. */
+    class SelectSomething implements AutoCloseable {
+        boolean hadSelection;
+
+        public SelectSomething() {
+            hadSelection = (selection != null);
+            selectSomething();
+        }
+
+        public SelectSomething(String errorTitle) {
+            hadSelection = (selection != null);
+            selectSomething();
+            if (selection == null) {
+                showError("Could not guess target. Please select something and try again.",
+                        errorTitle);
+            }
+        }
+
+        @Override public void close() {
+            if (!hadSelection) {
+                clearSelection();
+            }
+        }
+    }
+
     class AddDecoration implements Undoable {
         Decoration d;
         int layer;
@@ -233,15 +262,15 @@ public class BasicEditor extends Diagram
             || d instanceof LinearRuler;
     }
 
-    /** Set selection to the nearest DecorationHandle. Return true for
+    /** Set selection to whatever is close, if that's unambiguous. Return true for
         success, false if that was not possible. */
     boolean selectSomething() {
-        for (DecorationHandle handle: nearestHandles(DecorationHandle.Type.SELECTION)) {
-            setSelection(handle);
+        DecorationHandle h = getAutoPositionHandle(null, false, mprin);
+        if (h != null && h.getDecoration() != null) {
+            setSelection(h);
             return true;
         }
 
-        showError("There is nothing to select.");
         return false;
     }
 
@@ -480,8 +509,7 @@ public class BasicEditor extends Diagram
     final static class MousePress {
         /** The mousePressed event that created this. */
         MouseEvent e;
-        /** Principal coordinates of the point that will be added
-            unless this ends up being a drag operation. */
+        /** Principal coordinates of the point. */
         Point2D.Double prin;
 
         public MousePress(MouseEvent e, Point2D.Double prin) {
@@ -513,6 +541,7 @@ public class BasicEditor extends Diagram
 
         public int getTravel() { return travel; }
 
+        /** The mouse is going to (x,y), but don't count that as travel. */
         public void jumpTo(int x, int y) {
             lastX = x;
             lastY = y;
@@ -528,12 +557,15 @@ public class BasicEditor extends Diagram
     protected transient MousePress rightClick = null;
     protected transient Rectangle2D dragRectangle = null;
 
-    /** mouseTravel logs the distance in pixels that the mouse has
-        moved either since the button was depressed (to discriminate
-        between clicks and drags) or since the mouse was explicitly
-        positioned (to determine whether to unstick the mouse from
-        that position). */
-    protected transient MouseTravel mouseTravel = null;
+    /**
+     * mouseStickTravel logs the distance in pixels that the mouse has
+     * moved since the mouse was explicitly positioned, to determine
+     * whether to unstick the mouse from that position. */
+    protected transient MouseTravel mouseStickTravel = null;
+    /** mouseDragTravel logs the distance in pixels that the mouse has
+     * moved since the button was depressed, to discriminate between
+     * clicks and drags. */
+    protected transient MouseTravel mouseDragTravel = null;
 
     /** Array of filename to open, if any. */
     File[] filesList = null;
@@ -577,7 +609,7 @@ public class BasicEditor extends Diagram
         mathWindow.refresh();
         mathWindow.setLineWidth(lineWidth);
         mouseIsStuck = false;
-        mouseTravel = null;
+        mouseStickTravel = mouseDragTravel = null;
         mousePress = null;
         rightClick = null;
         principalFocus = null;
@@ -872,32 +904,28 @@ public class BasicEditor extends Diagram
     }
 
     public void setDefaultSettingsFromSelection() {
-       boolean hadSelection = (selection != null);
-        if (!hadSelection && !selectSomething()) {
-            return;
-        }
+        try (SelectSomething ss = new SelectSomething()) {
+            if (selection == null) return;
 
-        Decoration dec = selection.getDecoration();
-        StandardStroke ls = dec.getLineStyle();
-        if (ls != null) {
-            setLineStyle(ls);
-        }
+            Decoration dec = selection.getDecoration();
+            StandardStroke ls = dec.getLineStyle();
+            if (ls != null) {
+                setLineStyle(ls);
+            }
 
-        if (dec instanceof Fillable) {
-            setFill(((Fillable) dec).getFill());
-        }
+            if (dec instanceof Fillable) {
+                setFill(((Fillable) dec).getFill());
+            }
 
-        setColor(thisOrBlack(dec.getColor()));
-        double lw = dec.getLineWidth();
-        if (lw != 0) {
-            lineWidth = lw;
-        }
-        Label label = getSelectedLabel();
-        if (label != null) {
-            getLabelDialog().setFontSize(label.getScale());
-        }
-        if (!hadSelection) {
-            clearSelection();
+            setColor(thisOrBlack(dec.getColor()));
+            double lw = dec.getLineWidth();
+            if (lw != 0) {
+                lineWidth = lw;
+            }
+            Label label = getSelectedLabel();
+            if (label != null) {
+                getLabelDialog().setFontSize(label.getScale());
+            }
         }
     }
 
@@ -908,18 +936,13 @@ public class BasicEditor extends Diagram
     }
 
     public void resetSelectionToDefaultSettings() {
-       boolean hadSelection = (selection != null);
-        if (!hadSelection && !selectSomething()) {
-            return;
-        }
+      try (SelectSomething ss = new SelectSomething()) {
+          if (selection == null) return;
 
-        Decoration dec = selection.getDecoration();
-        resetToDefaultSettings(dec);
-
-        if (!hadSelection) {
-            clearSelection();
-        }
-        propagateChange();
+          Decoration dec = selection.getDecoration();
+          resetToDefaultSettings(dec);
+          propagateChange();
+      }
     }
 
     void resetToDefaultSettings(Decoration dec) {
@@ -1041,26 +1064,11 @@ public class BasicEditor extends Diagram
         ArrayList<Decoration> copies = new ArrayList<>();
         Point2D.Double delta = (mprin != null) ? mprin : principalLocation(selection);
         AffineTransform toOrigin = AffineTransform.getTranslateInstance(-delta.x, -delta.y);
-        DecorationsWrapper wrap = new DecorationsWrapper();
-        int dnum = -1;
+        DecorationsAndHandle wrap = new DecorationsAndHandle();
+        wrap.decorations = new ArrayList<>(ds);
+        wrap.saveHandle(selection);
+
         for (Decoration d: ds) {
-            ++dnum;
-            if (selection != null) {
-                // Store handle info.
-                wrap.decorationNum = dnum;
-                wrap.handleNum = 0;
-                DecorationHandle hand = (selection instanceof Interp2DHandle2)
-                    ? ((Interp2DHandle2) selection).indexHandle()
-                    : selection;
-                DecorationHandle[] hands = d.getHandles(
-                        DecorationHandle.Type.CONTROL_POINT);
-                for (int j = 0; j < hands.length; ++j) {
-                    if (hands[j].equals(hand)) {
-                        wrap.handleNum = j;
-                        break;
-                    }
-                }
-            }
             // Don't transform tie lines -- let the transformation of
             // the underlying curve do the work.
             if (!(d instanceof TieLine)) {
@@ -1139,20 +1147,11 @@ public class BasicEditor extends Diagram
         }
         AffineTransform toPrin = AffineTransform.getTranslateInstance(mprin.x, mprin.y);
         try {
-            DecorationsWrapper wrap = jsonStringToDecorations(Stuff.getClipboardString());
+            DecorationsAndHandle wrap = jsonStringToDecorations(Stuff.getClipboardString());
             List<Decoration> ds = wrap.decorations;
+            DecorationHandle selNew = wrap.createHandle();
             // TODO Pasting source images isn't reliable right now, so get rid of them.
             // ds = ds.stream().filter(p -> !(p instanceof SourceImage)).collect(Collectors.toList());
-            DecorationHandle selNew = null;
-            int dnum = wrap.decorationNum;
-            int hnum = wrap.handleNum;
-            if (dnum >= 0 && dnum < ds.size()) {
-                Decoration d = ds.get(dnum);
-                DecorationHandle[] hands = d.getHandles(DecorationHandle.Type.CONTROL_POINT);
-                if (hnum >= 0 && hnum < hands.length) {
-                    selNew = hands[hnum];
-                }
-            }
 
             finishDeserialization(ds);
             for (Decoration d : ds) {
@@ -1160,9 +1159,9 @@ public class BasicEditor extends Diagram
                     d.transform(toPrin);
                 }
                 if (d instanceof LinearRuler) {
-                    // We don't want to transform the axis, we just want to move
-                    // the endpoints. Reassociate the translated ruler with the
-                    // existing axis.
+                    // We don't want to transform the axis, we just
+                    // want to move the ruler endpoints. Reassociate
+                    // the translated ruler with the existing axis.
                     linkRulerWithAxis((LinearRuler) d, axes);
                 }
                 addDecoration(d);
@@ -1219,14 +1218,11 @@ public class BasicEditor extends Diagram
     public void copySelection() {
         String errorTitle = "Cannot copy selection";
 
-        if (selection == null) {
-            showError
-                ("You must select an item before you can copy it.",
-                 errorTitle);
-            return;
-        }
+        try (SelectSomething ss = new SelectSomething(errorTitle)) {
+            if (selection == null) return;
 
-        setClipboard(Collections.singletonList(selection.getDecoration()));
+            setClipboard(Collections.singletonList(selection.getDecoration()));
+        }
     }
 
     public void cut(List<Decoration> decorations) {
@@ -1245,15 +1241,10 @@ public class BasicEditor extends Diagram
     /** Cut the selection and copy it to the clipboard. */
     public void cutSelection() {
         String errorTitle = "Cannot cut selection";
-
-        if (selection == null) {
-            showError
-                ("You must select an item before you can cut it.",
-                 errorTitle);
-            return;
+        try (SelectSomething ss = new SelectSomething(errorTitle)) {
+            if (selection == null) return;
+            cut(Collections.singletonList(selection.getDecoration()));
         }
-
-        cut(Collections.singletonList(selection.getDecoration()));
     }
 
     /**
@@ -1261,13 +1252,18 @@ public class BasicEditor extends Diagram
      * decoration must be inside the region for it to be cut. */
     public void cutRegion() {
         String errorTitle = "Cannot cut region";
+        try (SelectSomething ss = new SelectSomething(errorTitle)) {
+            if (selection == null) return;
 
-        if (getSelectedInterp2D() == null) {
-            showError("Draw a curve to identify the boundary of the region.",
-                    errorTitle);
-            return;
+            if (!(selection.getDecoration() instanceof Interp2DDecoration)) {
+                showError("Select a curve that will become the boundary of the cut region. "
+                        + "Hint: you may press Shift and hold down the left mouse button "
+                        + "while dragging the mouse to select a new rectangle.",
+                        errorTitle);
+                return;
+            }
+            cut(decorationsInsideSelection());
         }
-        cut(decorationsInsideSelection());
     }
 
     /**
@@ -1277,14 +1273,11 @@ public class BasicEditor extends Diagram
     }
 
     public void changeLayer(int delta) {
-        boolean hadSelection = (selection != null);
-        if (!hadSelection && !selectSomething()) {
-            return;
-        }
-        saveState();
-        changeLayer0(delta);
-        if (!hadSelection) {
-            clearSelection();
+        try (SelectSomething ss = new SelectSomething("Cannot change layer")) {
+            if (selection == null) return;
+
+            saveState();
+            changeLayer0(delta);
         }
     }
 
@@ -1324,35 +1317,31 @@ public class BasicEditor extends Diagram
 
     /** Change the selection's color. */
     public void colorSelection() {
-        boolean hadSelection = (selection != null);
-        if (!hadSelection && !selectSomething()) {
-            return;
-        }
+        try (SelectSomething ss = new SelectSomething("Cannot change color")) {
+            if (selection == null) return;
 
-        if (colorChooser == null) {
-            colorChooser = new JColorChooser();
-            colorDialog = JColorChooser.createDialog
-            (editFrame, "Choose color", true, colorChooser,
-             new ActionListener() {
-                 @Override public void actionPerformed(ActionEvent e) {
-                     setColor(colorChooser.getColor());
-                     BasicEditor.this.selection.getDecoration().setColor(color);
-                     propagateChange();
-                 }
-             },
-             null);
-            colorDialog.pack();
-        }
+            if (colorChooser == null) {
+                colorChooser = new JColorChooser();
+                colorDialog = JColorChooser.createDialog
+                    (editFrame, "Choose color", true, colorChooser,
+                            new ActionListener() {
+                                @Override public void actionPerformed(ActionEvent e) {
+                                    setColor(colorChooser.getColor());
+                                    BasicEditor.this.selection.getDecoration().setColor(color);
+                                    propagateChange();
+                                }
+                            },
+                            null);
+                colorDialog.pack();
+            }
 
-        Color c = selection.getDecoration().getColor();
-        if (c != null) {
-            setColor(c);
-        }
-        colorChooser.setColor(color);
-        colorDialog.setVisible(true);
-
-        if (!hadSelection) {
-            clearSelection();
+            Color c = selection.getDecoration().getColor();
+            if (c != null) {
+                saveState();
+                setColor(c);
+            }
+            colorChooser.setColor(color);
+            colorDialog.setVisible(true);
         }
     }
 
@@ -1415,14 +1404,10 @@ public class BasicEditor extends Diagram
     }
 
     public void removeSelection() {
-        boolean hadSelection = (selection != null);
-        if (!hadSelection && !selectSomething()) {
-            return;
-        }
-        saveState();
-        setSelection(removeHandle(selection));
-        if (!hadSelection) {
-            clearSelection();
+        try (SelectSomething ss = new SelectSomething()) {
+            if (selection == null) return;
+            saveState();
+            setSelection(removeHandle(selection));
         }
     }
 
@@ -1616,8 +1601,8 @@ public class BasicEditor extends Diagram
 
     /** Return true if the user is currently dragging the mouse to select a region. */
     boolean isDragging() {
-        return mousePress != null && mouseTravel != null
-            && mouseTravel.getTravel() >= mouseDragDistance;
+        return mousePress != null && mouseDragTravel != null
+            && mouseDragTravel.getTravel() >= mouseDragDistance;
     }
 
     Point2D.Double clickPosition(boolean unstick, AutoPositionHolder ap) {
@@ -1634,19 +1619,21 @@ public class BasicEditor extends Diagram
         }
     }
 
-    void highlightNoncurve(Graphics2D g, double scale, Decoration sel) {
+    void highlightNoncurve(Graphics2D g, double scale, DecorationHandle sel) {
+        Decoration d = sel.getDecoration();
         try (UpdateSuppressor us = new UpdateSuppressor()) {
-            Color oldColor = sel.getColor();
+            Color oldColor = d.getColor();
             Color highlight = getHighlightColor(oldColor);
 
             g.setColor(highlight);
-            sel.setColor(highlight);
+            d.setColor(highlight);
             if (selection instanceof LabelHandle) {
                 paintSelectedLabel(g, scale);
             } else {
-                draw(g, sel, scale);
+                draw(g, sel.getDecoration(), scale);
+                circleVertices(g, sel, scale);
             }
-            sel.setColor(oldColor);
+            d.setColor(oldColor);
         }
     }
 
@@ -1686,10 +1673,8 @@ public class BasicEditor extends Diagram
 
             curve.setColor(highlightColor);
             draw(g, curve, scale);
-            double r = Math.max(curve.getLineWidth() * scale * 1.7, 4.0);
             g.setColor(highlightColor);
-            circleVertices(g, curve, scale, false, r);
-            circleVertex(g, principalLocation(hand), scale, true, r);
+            circleVertices(g, hand, scale);
 
             g.setRenderingHint(RenderingHints.KEY_ANTIALIASING,
                                RenderingHints.VALUE_ANTIALIAS_ON);
@@ -1849,20 +1834,18 @@ public class BasicEditor extends Diagram
         } else {
             highlightChange(g, scale, selection);
             if (selection != null) {
-                highlightNoncurve(g, scale, selection.getDecoration());
+                highlightNoncurve(g, scale, selection);
             }
         }
 
-        if (isDragging()) {
-            Point mpos = getEditPane().getMousePosition();
-            if (mpos != null) {
-                g.setColor(Color.RED);
-                Stroke oldStroke = g.getStroke();
-                g.setStroke(new BasicStroke(2.0f));
-                g.draw(Geom.bounds
-                       (new Point[] { mpos, mousePress.e.getPoint() }));
-                g.setStroke(oldStroke);
-            }
+        if (isDragging() && mprin != null) {
+            g.setColor(Color.RED);
+            Stroke oldStroke = g.getStroke();
+            g.setStroke(new BasicStroke(2.0f));
+            Affine xform = principalToScaledPage(scale);
+            Point2D[] points = { xform.transform(mousePress.prin), xform.transform(mprin) };
+            g.draw(Geom.bounds(points));
+            g.setStroke(oldStroke);
         }
 
         if (statusPt != null) {
@@ -1942,14 +1925,20 @@ public class BasicEditor extends Diagram
         un-smoothed states. Return false if it was not possible to do
         this, true otherwise. */
     public boolean toggleCusp() {
-        Interp2DHandle hand = getInterp2DHandle();
-        Interp2D curve = hand.getDecoration().getCurve();
-        if (!(curve instanceof Smoothable))
-            return false;
+        try (SelectSomething ss = new SelectSomething()) {
+            if (!(selection instanceof Interp2DHandle)) {
+                return false;
+            }
 
-        ((Smoothable) curve).toggleSmoothed(hand.getIndex());
-        propagateChange();
-        return true;
+            Interp2DHandle hand = (Interp2DHandle) selection;
+            Interp2D curve = hand.getDecoration().getCurve();
+            if (!(curve instanceof Smoothable))
+                return false;
+
+            ((Smoothable) curve).toggleSmoothed(hand.getIndex());
+            propagateChange();
+            return true;
+        }
     }
 
     /** Update the math window to show whatever information is
@@ -2164,15 +2153,15 @@ public class BasicEditor extends Diagram
 
     Undoable clickCommand(DecorationHandle hand0, Point2D.Double point) {
         Decoration d0 = hand0.getDecoration();
-        if (d0 instanceof Label) {
+        if (d0 instanceof Label || hand0 instanceof ArcCenterHandle) {
             Point2D.Double selPos = principalLocation(hand0);
             DecorationHandle lhand = hand0.copy(point.x - selPos.x, point.y - selPos.y);
             return new UndoableList(
                     new AddDecoration(lhand.getDecoration()),
                     new SetSelection(lhand));
         }
+        Interp2D curve = ((Interp2DDecoration) hand0.getDecoration()).getCurve();
         Interp2DHandle hand = (Interp2DHandle) hand0;
-        Interp2D curve = hand.getDecoration().getCurve();
         if (isDuplicate(point, curve, hand.index)) {
             return new NoOp(); // Adding the same point twice causes problems.
         }
@@ -2181,10 +2170,7 @@ public class BasicEditor extends Diagram
         if (curve.size() == curve.maxSize()) {
             return new MoveVertex(hand, point.x - oldPoint.x, point.y - oldPoint.y);
         } else {
-            return addVertexCommand(
-                    hand.getDecoration().createHandle(
-                            vertexInsertionIndex()),
-                    point);
+            return addVertexCommand(hand.getDecoration().createHandle(vertexInsertionIndex()), point);
         }
     }
 
@@ -2214,7 +2200,7 @@ public class BasicEditor extends Diagram
                 Decoration d2 = null;
                 try (DoThenUndo thing = new DoThenUndo(
                                 clickCommand(hand, extraVertex))) {
-                    d2 = (d instanceof Interp2DDecoration) ? d : selection.getDecoration();
+                    d2 = (hand instanceof Interp2DHandle) ? d : selection.getDecoration();
                     oldColor = d2.getColor();
                     d2.setColor(color);
                     draw(g, d2, scale);
@@ -3514,7 +3500,7 @@ public class BasicEditor extends Diagram
         }
 
         moveMouse(standardPageToPrincipal.transform(pagePoint));
-        mouseTravel = null;
+        mouseStickTravel = null;
         setMouseStuck(true);
     }
 
@@ -3790,6 +3776,7 @@ public class BasicEditor extends Diagram
             return;
         }
 
+        saveState();
         label.setAngle(pageToPrincipalAngle(label.getAngle()));
         label.setX(x);
         label.setY(y);
@@ -3923,11 +3910,11 @@ public class BasicEditor extends Diagram
         }
 
         Point spoint = viewPosition(prin);
-        if (mouseTravel != null && spoint != null) {
-            mouseTravel.jumpTo(spoint.x, spoint.y);
-        }
 
         if (spoint != null) {
+            if (mouseDragTravel != null) {
+                mouseDragTravel.jumpTo(spoint.x, spoint.y);
+            }
             JScrollPane spane = editFrame.getScrollPane();
             Rectangle view = spane.getViewport().getViewRect();
             Point topCorner = spane.getLocationOnScreen();
@@ -4125,34 +4112,27 @@ public class BasicEditor extends Diagram
 
     Interp2DHandle2 toHandle(DecorationDistance dist) {
         double t = dist.distance.t;
-        ParamPointInfo info = dist.pageCurve.info(t);
-        Interp2DHandle2 res = new Interp2DHandle2(
+        return new Interp2DHandle2(
                 (Interp2DDecoration) dist.decoration,
-                info.index, t, info.beforeIndex);
-        res.p = standardPageToPrincipal.transform(
-                dist.pageCurve.getLocation(t));
-        return res;
+                dist.pageCurve.info(t),
+                standardPageToPrincipal.transform(
+                        dist.pageCurve.getLocation(t)));
 }
 
     /** Toggle the closed/open status of the currently selected
         curve. */
     public void toggleCurveClosure() {
-       boolean hadSelection = (selection != null);
-        if (!hadSelection && !selectSomething()) {
-            return;
-        }
+        try (SelectSomething ss = new SelectSomething()) {
+            if (selection == null) return;
 
-        Decoration d = getSelectedDecoration();
-        if (d != null && (d instanceof CurveCloseable)) {
-            try {
-                toggleCurveClosure((CurveCloseable) d);;
-            } catch (IllegalArgumentException x) {
-                showError(x.toString());
+            Decoration d = selection.getDecoration();
+            if (d instanceof CurveCloseable) {
+                try {
+                    toggleCurveClosure((CurveCloseable) d);
+                } catch (IllegalArgumentException x) {
+                    showError(x.toString());
+                }
             }
-        }
-
-        if (!hadSelection) {
-            clearSelection();
         }
     }
 
@@ -5759,11 +5739,10 @@ public class BasicEditor extends Diagram
         the mouse is outside the panel containing the diagram. The
         DecorationHandle will be a normal DecorationHandle if it is a
         key point with exactly one decoration handle at that location;
-        it will be a NullParameterizableHandle if it is a random
-        location on a nearby curve; and it will be a
-        NullDecorationHandle if it is a key point associated with zero
-        or two or more decoration handles, or if nothing special was
-        found nearby.
+        it will be an Interp2DHandle2 if it is a random location on a
+        nearby curve; and it will be a NullDecorationHandle if it is a
+        key point associated with zero or two or more decoration
+        handles, or if nothing special was found nearby.
 
         @param ap If not null, ap.position will be set to
         AutoPositionType.NONE, AutoPositionType.CURVE, or
@@ -5776,13 +5755,17 @@ public class BasicEditor extends Diagram
     */
     DecorationHandle getAutoPositionHandle(AutoPositionHolder ap,
             boolean keypointsOnly) {
+        return getAutoPositionHandle(ap, keypointsOnly, getMousePrincipal());
+    }
+
+    DecorationHandle getAutoPositionHandle(AutoPositionHolder ap,
+            boolean keypointsOnly, Point2D mprin2) {
         double maxMovePixels = 50; // Maximum number of pixels to
         if (ap == null) {
             ap = new AutoPositionHolder();
         }
         ap.position = AutoPositionType.NONE;
 
-        Point2D.Double mprin2 = getMousePrincipal();
         if (mprin2 == null) {
             return (mprin == null) ? null : new NullDecorationHandle(mprin);
         }
@@ -6047,6 +6030,7 @@ public class BasicEditor extends Diagram
     public void setMouseStuck(boolean b) {
         mouseIsStuck = b;
         if (b) {
+            mouseStickTravel = null;
         } else {
             principalFocus = null;
             updateMousePosition();
@@ -6083,7 +6067,7 @@ public class BasicEditor extends Diagram
             if (p == null)
                 return;
             mousePress = new MousePress(e,p);
-            mouseTravel = null;
+            mouseDragTravel = mouseStickTravel = null;
         }
     }
 
@@ -6141,10 +6125,15 @@ public class BasicEditor extends Diagram
             return;
         }
         isShiftDown = e.isShiftDown();
-        if (mouseTravel == null) {
-            mouseTravel = new MouseTravel(e.getX(), e.getY());
+        if (mouseDragTravel == null) {
+            mouseDragTravel = new MouseTravel(e.getX(), e.getY());
         } else {
-            mouseTravel.travel(e);
+            mouseDragTravel.travel(e);
+        }
+        if (mouseStickTravel == null) {
+            mouseStickTravel = new MouseTravel(e.getX(), e.getY());
+        } else {
+            mouseStickTravel.travel(e);
         }
         redraw();
     }
@@ -6156,7 +6145,7 @@ public class BasicEditor extends Diagram
         the user to lose their place after an operation such as
         seekNearestPoint(). */
     public void updateMousePosition() {
-        if (rightClick != null || mousePress != null) {
+        if (rightClick != null || (mousePress != null && !isDragging())) {
             return; // Don't update the mouse position while the
                    // right-click menu is active.
         }
@@ -6176,8 +6165,8 @@ public class BasicEditor extends Diagram
 
         if (mpos != null && !preserveMprin) {
             if (!mouseIsStuck || mprin == null
-                || (mouseTravel != null
-                    && mouseTravel.getTravel() >= MOUSE_UNSTICK_DISTANCE)) {
+                || (mouseStickTravel != null
+                    && mouseStickTravel.getTravel() >= MOUSE_UNSTICK_DISTANCE)) {
                 mouseIsStuck = false;
                 principalFocus = null;
                 mprin = paneToPrincipal(mpos);
@@ -6200,6 +6189,12 @@ public class BasicEditor extends Diagram
         }
     }
 
+    /**
+     * Return the current mouse position, or the position of the mouse
+     * at the moment the button was pressed if the left or right mouse
+     * buttons is still depressed or was just released and we're not
+     * in the middle of a drag operation.
+     */
     Point2D.Double getMousePrincipal() {
         if (mousePress != null && !isDragging()) {
             return mousePress.prin;
@@ -6299,9 +6294,9 @@ public class BasicEditor extends Diagram
         return new Rectangle2D.Double(p.x, p.y, p2.x - p.x, p2.y - p.y);
     }
 
-    Rectangle2D toPageRectangle(Point pane1, Point pane2) {
-        Point2D.Double page1 = paneToStandardPage(pane1);
-        Point2D.Double page2 = paneToStandardPage(pane2);
+    Rectangle2D toPageRectangle(Point2D prin1, Point2D prin2) {
+        Point2D.Double page1 = principalToStandardPage.transform(prin1);
+        Point2D.Double page2 = principalToStandardPage.transform(prin2);
         return Geom.bounds(new Point2D.Double[] { page1, page2 });
     }
 
@@ -6660,18 +6655,18 @@ public class BasicEditor extends Diagram
     @Override public void mouseReleased(MouseEvent e) {
         if (e.getButton() == MouseEvent.BUTTON1) {
             if (isDragging()) {
-                Point p1 = mousePress.e.getPoint();
-                Point p2 = e.getPoint();
+                Point2D p1 = mousePress.prin;
+                Point2D p2 = mprin;
                 if (!p1.equals(p2)) {
                     Rectangle2D pageRegion = toPageRectangle(p1, p2);
-                    if (isShiftDown && isEditable()) {
+                    if (mousePress.e.isShiftDown() && isEditable()) {
                         selectPageRegion(pageRegion);
                     } else {
                         mprin = null; // Force the mouse to center itself.
                         zoom(pageRegion);
                         setMouseStuck(false);
                     }
-                    mouseTravel = null;
+                    mouseDragTravel = null;
                 }
             } else if (isEditable() && principalToStandardPage != null
                        && mprin != null
