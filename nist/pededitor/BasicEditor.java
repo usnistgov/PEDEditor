@@ -59,8 +59,6 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Observable;
-import java.util.Observer;
 import java.util.Set;
 import java.util.Timer;
 import java.util.TimerTask;
@@ -90,8 +88,7 @@ import Jama.Matrix;
 
 /** Main driver class for Phase Equilibria Diagram digitization and creation. */
 public class BasicEditor extends Diagram
-    implements CropEventListener, MouseListener, MouseMotionListener,
-               Observer {
+    implements CropEventListener, MouseListener, MouseMotionListener {
     static ArrayList<BasicEditor> openEditors = new ArrayList<>();
 
     abstract class Action extends AbstractAction {
@@ -112,12 +109,13 @@ public class BasicEditor extends Diagram
 
         public SelectSomething() {
             hadSelection = (selection != null);
-            selectSomething();
+            if (!hadSelection) {
+                selectSomething();
+            }
         }
 
         public SelectSomething(String errorTitle) {
-            hadSelection = (selection != null);
-            selectSomething();
+            this();
             if (selection == null) {
                 showError("Could not guess target. Please select something and try again.",
                         errorTitle);
@@ -220,19 +218,27 @@ public class BasicEditor extends Diagram
 
     class FileSaver extends TimerTask {
         @Override public void run() {
-            if (saveNeeded) {
+            int hash = diagramHashCode();
+            if (hash != lastSaveHashCode && hash != autoSaveHashCode) {
                 Path file = getAutosave();
                 try {
                     saveAsPED(file, false);
                     System.out.println("Saved '" + file + "'");
                     autosaveFile = file;
-                    majorSaveNeeded = true;
+                    autoSaveHashCode = hash;
                 } catch (IOException x) {
                     System.err.println("Could not save '" + file + "': " + x);
                 }
             }
-            fileSaver = null;
         }
+    }
+
+    void markAsSaved(int hash) {
+        lastSaveHashCode = hash;
+    }
+
+    void markAsSaved() {
+        markAsSaved(diagramHashCode());
     }
 
     class CloseListener extends WindowAdapter
@@ -404,7 +410,8 @@ public class BasicEditor extends Diagram
     protected transient boolean editorIsPacked = false;
     protected transient boolean smoothed = false;
     protected transient boolean showGrid = false;
-    protected transient boolean majorSaveNeeded = false;
+    protected transient int lastSaveHashCode = 0;
+    protected transient int autoSaveHashCode = 0;
     protected transient Dimension oldFrameSize = null;
     protected transient boolean autoRescale = false;
     protected transient boolean allowRobotToMoveMouse = true;
@@ -422,10 +429,12 @@ public class BasicEditor extends Diagram
     protected transient DecorationHandle selection;
     transient Timer fileSaver = null;
 
-    protected transient ArrayList<String> undoStack = new ArrayList<>();
+    protected transient ArrayList<EditorState.StringAndTransientState>
+        undoStack = new ArrayList<>();
     // If undoStackOffset < undoStack.size() then the extras are operations that
     // one can Redo.
     protected transient int undoStackOffset = 0;
+    private transient int changesSinceStateSaved = 0;
 
     protected transient boolean preserveMprin = false;
     protected transient boolean isShiftDown = false;
@@ -587,7 +596,6 @@ public class BasicEditor extends Diagram
         cropFrame.setDefaultCloseOperation
             (WindowConstants.HIDE_ON_CLOSE);
         cropFrame.addCropEventListener(this);
-        addObserver(this);
     }
 
     public void initializeZoomFrame() {
@@ -616,7 +624,7 @@ public class BasicEditor extends Diagram
         paintSuppressionRequestCnt = 0;
         tieLineDialog.setVisible(false);
         tieLineCorners = new ArrayList<>();
-        majorSaveNeeded = false;
+        lastSaveHashCode = autoSaveHashCode = 0;
 
         if (Stuff.isFileAssociationBroken()) {
             // Enable directory monitoring.
@@ -1254,6 +1262,18 @@ public class BasicEditor extends Diagram
         String errorTitle = "Cannot cut region";
         try (SelectSomething ss = new SelectSomething(errorTitle)) {
             if (selection == null) return;
+
+            if (selection.getDecoration() instanceof Label) {
+                Label label = (Label) selection.getDecoration();
+                ArrayList<Decoration> likeThis = new ArrayList<>();
+                for (Label l2: labels()) {
+                    if (l2.getText().equals(label.getText())) {
+                        likeThis.add(l2);
+                    }
+                }
+                cut(likeThis);
+                return;
+            }
 
             if (!(selection.getDecoration() instanceof Interp2DDecoration)) {
                 showError("Select a curve that will become the boundary of the cut region. "
@@ -2226,6 +2246,9 @@ public class BasicEditor extends Diagram
         curve is currently selected. */
     public void click(Point2D.Double point) {
         Undoable command = clickCommand(point);
+        if (++changesSinceStateSaved >= 3) {
+            saveState();
+        }
         if (command instanceof AddVertex) {
             AddVertex add = (AddVertex) command;
             addVertex(add);
@@ -4252,8 +4275,7 @@ public class BasicEditor extends Diagram
                 return;
             }
             clearFileList();
-            majorSaveNeeded = false;
-            setSaveNeeded(false);
+            lastSaveHashCode = autoSaveHashCode = diagramHashCode();
         }
 
         try (UpdateSuppressor us = new UpdateSuppressor()) {
@@ -4271,26 +4293,11 @@ public class BasicEditor extends Diagram
         saveState();
         propagateChange1();
     }
-
-    @Override public void setSaveNeeded(boolean b) {
-        if (b != saveNeeded) {
-            super.setSaveNeeded(b);
-            if (!b) {
-                if (fileSaver != null) {
-                    fileSaver.cancel();
-                    fileSaver = null;
-                }
-            }
-        }
-    }
-
-    @Override public void update(Observable o, Object arg) {
-        if (!isEditable() || !saveNeeded) {
-            return;
-        }
-        if (fileSaver == null) {
+    
+    void startFileSaver() {
+        if (isEditable() && fileSaver == null) {
             fileSaver = new Timer("FileSaver", true);
-            fileSaver.schedule(new FileSaver(), AUTO_SAVE_DELAY);
+            fileSaver.schedule(new FileSaver(), AUTO_SAVE_DELAY, AUTO_SAVE_DELAY);
         }
     }
 
@@ -4893,7 +4900,11 @@ public class BasicEditor extends Diagram
     }
 
     @JsonIgnore public boolean isSaveNeeded() {
-        return saveNeeded || majorSaveNeeded;
+        if (!isEditable()) {
+            return false;
+        }
+        int stateHash = diagramHashCode();
+        return stateHash != lastSaveHashCode;
     }
 
     /** Give the user an opportunity to save the old diagram or to
@@ -5074,6 +5085,8 @@ public class BasicEditor extends Diagram
 
     @Override public void openDiagram(File file) throws IOException {
         super.openDiagram(file);
+        markAsSaved();
+        startFileSaver();
         initializeGUI();
     }
 
@@ -5627,10 +5640,24 @@ public class BasicEditor extends Diagram
                     autosaveFile = null;
                 }
             }
-            majorSaveNeeded = false;
+            markAsSaved();
             return true;
         } else {
             return false;
+        }
+    }
+
+    private int diagramHashCode() {
+        if (!isEditable()) {
+            return 0;
+        }
+        try {
+            int res = EditorState.toStringAndTransientState(this).str.hashCode();
+            return res;
+        } catch (IOException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+            return 0;
         }
     }
 
@@ -6748,7 +6775,7 @@ public class BasicEditor extends Diagram
             return;
         }
         try {
-            EditorState.copyJsonStringToEditor(this, undoStack.get(undoStackOffset));
+            EditorState.copyToEditor(this, undoStack.get(undoStackOffset));
         } catch (IOException e) {
             e.printStackTrace();
         } finally {
@@ -6757,19 +6784,20 @@ public class BasicEditor extends Diagram
     }
 
     void saveState() {
-        if (maxUndoStackSize() < 3) {
+        if (!isEditable()) {
             return;
         }
+
         try {
-            String state = EditorState.toJsonString(this);
+            EditorState.StringAndTransientState state = EditorState.toStringAndTransientState(this);
 
             if (undoStackOffset > 0 &&
-                    state.equals(undoStack.get(undoStackOffset - 1))) {
+                    state.str.equals(undoStack.get(undoStackOffset - 1).str)) {
                 // The state is already saved.
                 return;
             }
             if (undoStackOffset < undoStack.size() &&
-                    state.equals(undoStack.get(undoStackOffset))) {
+                    state.str.equals(undoStack.get(undoStackOffset).str)) {
                 // Move the stack offset past the current state, which
                 // is already saved.
                 undoStackOffset++;
@@ -6780,13 +6808,9 @@ public class BasicEditor extends Diagram
             while (undoStackOffset < undoStack.size()) {
                 undoStack.remove(undoStack.size() - 1);
             }
-            if (undoStack.size() == maxUndoStackSize()) {
-                // Remove element #1, not element #0. Keeping element
-                // #0 lets us tell whether a save is necessary.
-                undoStack.remove(1);
-                --undoStackOffset;
-            }
 
+            trimUndoStack();
+            changesSinceStateSaved = 0;
             undoStack.add(state);
             ++ undoStackOffset;
         } catch (IOException e) {
@@ -6794,8 +6818,26 @@ public class BasicEditor extends Diagram
         }
     }
 
-    private int maxUndoStackSize() {
-        return 10;
+    /**
+     * Ensure the undo stack doesn't get too big or too long.
+     */
+    private void trimUndoStack() {
+        if (undoStack.size() >= 25) {
+            undoStack.remove(1);
+            if (undoStackOffset >= 1) {
+                --undoStackOffset;
+            }
+        }
+        int totalBytes = 0;
+        for (int i = undoStack.size() - 1; i >= 1; --i) {
+            if (totalBytes > 20_000_000) {
+                undoStack.remove(i);
+                if (undoStackOffset >= i) {
+                    -- undoStackOffset;
+                }
+            }
+            totalBytes += undoStack.get(i).str.length();
+        }
     }
 
     public void undo() {
@@ -6805,7 +6847,7 @@ public class BasicEditor extends Diagram
                 showError("Cannot undo any more operations.");
                 return;
             }
-            EditorState.copyJsonStringToEditor(this, undoStack.get(undoStackOffset - 2));
+            EditorState.copyToEditor(this, undoStack.get(undoStackOffset - 2));
             --undoStackOffset;
         } catch (IOException e) {
             showError("This operation cannot be undone.");
