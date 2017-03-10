@@ -521,9 +521,14 @@ public class BasicEditor extends Diagram
         /** Principal coordinates of the point. */
         Point2D.Double prin;
 
+        /** Don't do autopositioning if the Shift key is depressed
+         * when you start dragging. */
+        Point2D.Double prinIfDragging;
+
         public MousePress(MouseEvent e, Point2D.Double prin) {
             this.e = e;
             this.prin = new Point2D.Double(prin.getX(), prin.getY());
+            this.prinIfDragging = prin;
         }
 
         @Override public String toString() {
@@ -1626,7 +1631,7 @@ public class BasicEditor extends Diagram
     }
 
     Point2D.Double clickPosition(boolean unstick, AutoPositionHolder ap) {
-        if (isDragging() || !isEditable()) {
+        if (isDragging()) {
             return null;
         } else if (isShiftDown) {
             return statusPt = getAutoPosition(ap);
@@ -1859,11 +1864,11 @@ public class BasicEditor extends Diagram
         }
 
         if (isDragging() && mprin != null) {
-            g.setColor(Color.RED);
+            g.setColor(mousePress.e.isShiftDown() ? Color.GREEN : Color.RED);
             Stroke oldStroke = g.getStroke();
             g.setStroke(new BasicStroke(2.0f));
             Affine xform = principalToScaledPage(scale);
-            Point2D[] points = { xform.transform(mousePress.prin), xform.transform(mprin) };
+            Point2D[] points = { xform.transform(mousePress.prinIfDragging), xform.transform(mprin) };
             g.draw(Geom.bounds(points));
             g.setStroke(oldStroke);
         }
@@ -2210,32 +2215,34 @@ public class BasicEditor extends Diagram
         }
         Color color = toColor(ap.position);
 
-        if (d instanceof Interp2DDecoration || d instanceof Label) {
-            boolean oldR = removeDegenerateDecorations;
-            boolean oldU = updateMathWindow;
-            try {
-                removeDegenerateDecorations = false;
-                updateMathWindow = false;
-                Color oldColor = null;
-                Decoration d2 = null;
-                try (DoThenUndo thing = new DoThenUndo(
-                                clickCommand(hand, extraVertex))) {
-                    d2 = (hand instanceof Interp2DHandle) ? d : selection.getDecoration();
-                    oldColor = d2.getColor();
-                    d2.setColor(color);
-                    draw(g, d2, scale);
-                } finally {
-                    if (oldColor != null) {
-                        d2.setColor(oldColor);
+        if (isEditable()) {
+            if (d instanceof Interp2DDecoration || d instanceof Label) {
+                boolean oldR = removeDegenerateDecorations;
+                boolean oldU = updateMathWindow;
+                try {
+                    removeDegenerateDecorations = false;
+                    updateMathWindow = false;
+                    Color oldColor = null;
+                    Decoration d2 = null;
+                    try (DoThenUndo thing = new DoThenUndo(
+                                    clickCommand(hand, extraVertex))) {
+                        d2 = (hand instanceof Interp2DHandle) ? d : selection.getDecoration();
+                        oldColor = d2.getColor();
+                        d2.setColor(color);
+                        draw(g, d2, scale);
+                    } finally {
+                        if (oldColor != null) {
+                            d2.setColor(oldColor);
+                        }
                     }
+                } finally {
+                    removeDegenerateDecorations = oldR;
+                    updateMathWindow = oldU;
                 }
-            } finally {
-                removeDegenerateDecorations = oldR;
-                updateMathWindow = oldU;
             }
         }
 
-        if ((mouseIsStuck || ap.position != AutoPositionType.NONE) && extraVertex != null) {
+        if (mouseIsStuck || ap.position != AutoPositionType.NONE) {
             g.setColor(color);
             paintCross(g, extraVertex, scale);
         }
@@ -6079,14 +6086,14 @@ public class BasicEditor extends Diagram
            }
            showPopupMenu(new MousePress(e,mprin));
         } else {
-            Point2D.Double p;
+            Point2D.Double p = getVertexAddMousePosition(e.getPoint());
+            Point2D.Double pIfDragging = p;
             if (e.isShiftDown()) {
                 DecorationHandle h = getAutoPositionHandle(null, false);
                 if (h == null)
                     return;
                 p = principalLocation(h);
             } else {
-                p = getVertexAddMousePosition(e.getPoint());
                 if (isPixelMode()) {
                     p = nearestGridPoint(p);
                 }
@@ -6094,6 +6101,7 @@ public class BasicEditor extends Diagram
             if (p == null)
                 return;
             mousePress = new MousePress(e,p);
+            mousePress.prinIfDragging = pIfDragging;
             mouseDragTravel = mouseStickTravel = null;
         }
     }
@@ -6682,12 +6690,17 @@ public class BasicEditor extends Diagram
     @Override public void mouseReleased(MouseEvent e) {
         if (e.getButton() == MouseEvent.BUTTON1) {
             if (isDragging()) {
-                Point2D p1 = mousePress.prin;
+                Point2D p1 = mousePress.prinIfDragging;
                 Point2D p2 = mprin;
                 if (!p1.equals(p2)) {
                     Rectangle2D pageRegion = toPageRectangle(p1, p2);
-                    if (mousePress.e.isShiftDown() && isEditable()) {
-                        selectPageRegion(pageRegion);
+                    if (mousePress.e.isShiftDown()) {
+                        if (isEditable()) {
+                            selectPageRegion(pageRegion);
+                        } else {
+                            setPageBounds(pageRegion);
+                            bestFit();
+                        }
                     } else {
                         mprin = null; // Force the mouse to center itself.
                         zoom(pageRegion);
@@ -6704,7 +6717,7 @@ public class BasicEditor extends Diagram
             mousePress = null;
         }
     }
-
+    
     void selectPageRegion(Rectangle2D r) {
         Point2D.Double[] points = Geom.toPoint2DDoubles(r);
         standardPageToPrincipal.transform(points, 0, points, 0, points.length);
