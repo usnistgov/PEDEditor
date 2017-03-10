@@ -98,8 +98,6 @@ public class Viewer extends Editor {
                 // OK, let it be
             }
         }
-        
-        setSaveNeeded(false);
     }
 
     @Override protected void resizeEditFrame(int otherEditorCnt) {
