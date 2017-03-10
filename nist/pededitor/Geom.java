@@ -103,10 +103,10 @@ public class Geom {
         return output;
     }
 
-    public static double minX (Point2D.Double[] points) {
-        double rv = points[0].x;
+    public static <T extends Point2D> double minX(T[] points) {
+        double rv = points[0].getX();
         for (int i = 1; i < points.length; ++i) {
-            double x = points[i].x;
+            double x = points[i].getX();
             if (x < rv) {
                 rv = x;
             }
@@ -114,21 +114,21 @@ public class Geom {
         return rv;
     }
 
-    public static double minY (Point2D.Double[] points) {
-        double rv = points[0].y;
+    public static <T extends Point2D> double minY(T[] points) {
+        double rv = points[0].getY();
         for (int i = 1; i < points.length; ++i) {
-            double x = points[i].y;
-            if (x < rv) {
-                rv = x;
+            double y = points[i].getY();
+            if (y < rv) {
+                rv = y;
             }
         }
         return rv;
     }
 
-    public static double maxX (Point2D.Double[] points) {
-        double rv = points[0].x;
+    public static <T extends Point2D> double maxX(T[] points) {
+        double rv = points[0].getX();
         for (int i = 1; i < points.length; ++i) {
-            double x = points[i].x;
+            double x = points[i].getX();
             if (x > rv) {
                 rv = x;
             }
@@ -136,12 +136,12 @@ public class Geom {
         return rv;
     }
 
-    public static double maxY (Point2D.Double[] points) {
-        double rv = points[0].y;
+    public static <T extends Point2D> double maxY(T[] points) {
+        double rv = points[0].getY();
         for (int i = 1; i < points.length; ++i) {
-            double x = points[i].y;
-            if (x > rv) {
-                rv = x;
+            double y = points[i].getY();
+            if (y > rv) {
+                rv = y;
             }
         }
         return rv;
@@ -255,7 +255,7 @@ public class Geom {
             (r.getX(), r.getY(), r.getWidth(), r.getHeight());
     }
 
-    public static Rectangle2D.Double bounds(Point2D.Double[] points) {
+    public static <T extends Point2D> Rectangle2D.Double bounds(T[] points) {
         double mx = minX(points);
         double my = minY(points);
         return new Rectangle2D.Double(mx, my,
