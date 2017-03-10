@@ -342,7 +342,7 @@ public class EditFrame extends JFrame
         }
     };
 
-    Action actAutoPosition = new Action("Auto-position", KeyEvent.VK_A, KeyStroke.getKeyStroke("typed A")) {
+    Action actAutoPosition = new Action("Auto-position", KeyEvent.VK_A, KeyStroke.getKeyStroke("shift A")) {
         {
             putValue(SHORT_DESCRIPTION, "Move the mouse to the closest key point or curve");
         }
