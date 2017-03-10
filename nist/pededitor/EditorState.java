@@ -15,6 +15,8 @@ import com.fasterxml.jackson.databind.SerializationFeature;
 /** Stuff to help temporary storage of diagram state for do/undo. */
 class EditorState {
     @JsonProperty Diagram diagram;
+    @JsonProperty int selectionDecorationNum = -1;
+    @JsonProperty int selectionHandleNum = -1;
 
     /**
      * After verifying that the hash codes match, copy the image bytes
@@ -52,28 +54,40 @@ class EditorState {
 
     void copyTo(BasicEditor target) throws IOException {
         copyImagesBetween(target, this.diagram);
+        DecorationsAndHandle wrap = new DecorationsAndHandle();
+        wrap.decorations = diagram.decorations;
+        wrap.decorationNum = selectionDecorationNum;
+        wrap.handleNum = selectionHandleNum;
+        DecorationHandle sel = wrap.createHandle();
+
         int undoStackOffset = target.undoStackOffset;
         ArrayList<String> undoStack = target.undoStack;
         try {
             target.undoStack = new ArrayList<>();
             target.copyFrom(this.diagram);
+            target.setSelection(sel);
             target.revalidateZoomFrame();
         } finally {
             target.undoStack = undoStack;
             target.undoStackOffset = undoStackOffset;
         }
     }
-        
+
     /** @return this diagram as a JSON string. */
     public String toJsonString() throws IOException {
         return getObjectMapper().writeValueAsString(this);
     }
-        
+
     /** @return this diagram as a JSON string. */
     public static String toJsonString(BasicEditor editor) throws IOException {
         editor.resetIds();
         EditorState res = new EditorState();
+        DecorationsAndHandle wrap = new DecorationsAndHandle();
+        wrap.decorations = editor.decorations;
+        wrap.saveHandle(editor.selection);
         res.diagram = editor;
+        res.selectionDecorationNum = wrap.decorationNum;
+        res.selectionHandleNum = wrap.handleNum;
         return res.toJsonString();
     }
 
@@ -91,7 +105,7 @@ class EditorState {
         res.diagram.finishDeserialization();
         return res;
     }
-    
+
     static void copyJsonStringToEditor(BasicEditor editor, String jsonString) throws IOException {
         String filename = editor.getFilename();
         loadFrom(jsonString).copyTo(editor);
