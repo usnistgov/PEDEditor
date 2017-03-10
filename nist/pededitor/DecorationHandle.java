@@ -71,6 +71,9 @@ interface DecorationHandle {
     static Point2D.Double simpleLocation(DecorationHandle hand,
             AffineTransform xform) {
         Point2D.Double res = hand.getLocation();
+        if (res == null) {
+            return null;
+        }
         xform.transform(res, res);
         return res;
     }
