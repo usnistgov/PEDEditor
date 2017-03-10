@@ -24,6 +24,12 @@ public class Interp2DHandle2 extends Interp2DHandle {
         super(h.getDecoration(), h.index);
     }
 
+    public Interp2DHandle2(Interp2DDecoration d, ParamPointInfo info,
+            Point2D p) {
+        this(d, info.index, info.t, info.beforeIndex);
+        this.p = new Point2D.Double(p.getX(), p.getY());
+    }
+
     public Interp2DHandle2(Interp2DDecoration d, int index, double exactT,
             boolean beforeThis) {
         super(d, index);
