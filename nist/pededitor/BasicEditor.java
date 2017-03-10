@@ -4900,7 +4900,7 @@ public class BasicEditor extends Diagram
     }
 
     @JsonIgnore public boolean isSaveNeeded() {
-        if (!isEditable()) {
+        if (!isEditable() || principalToStandardPage == null) {
             return false;
         }
         int stateHash = diagramHashCode();
