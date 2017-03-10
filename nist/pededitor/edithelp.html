@@ -965,10 +965,14 @@ increments.
 
       <li>
         <p><b id=CutRegion>Cut everything in selected region</b>
-            (<code>Control+Shift+X</code>) cuts all decorations that
-            are entirely contained in that region and adds them to the
-            clipboard. You can quickly define a rectangular selection
-            by pressing Shift and dragging the mouse.</p>
+          (<code>Control+Shift+X</code>) cuts all decorations that are
+          entirely contained in that region and adds them to the
+          clipboard. You can quickly define a rectangular selection by
+          pressing Shift as you begin to drag the mouse.</p>
+
+        <p>This operation has a second purpose when applied to a
+          label. It will cut every label that has the same text as
+          that label.</p>
 
       <li><p><b id=Delete>Delete</b> (<code>Delete</code>)
           deletes a single vertex or decoration.</p>
@@ -1047,9 +1051,13 @@ increments.
 
 <h3 id=Rectangle>Squares and rectangles</h3>
 
-<p>The simplest way to draw a rectangle is to drag the mouse while
-holding down the shift key. But if you wish to be a bit more precise,
-you can draw a rectangle as a 4-point unsmoothed curve:
+<p>The fastest way to draw a rectangle is to press and hold the shift
+key as you begin to drag the mouse, then release the mouse button when
+the rectangle has roughly the correct shape. This is the same
+procedure as <a href="#DragToZoom">dragging to zoom<'a>, except the
+shift key should be down when you begin to hold down the mouse button.
+To be more precise, you can draw a rectangle as a 4-point closed
+unsmoothed curve:
 
 <ol> 
 
