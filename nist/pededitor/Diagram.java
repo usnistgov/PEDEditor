@@ -2106,7 +2106,7 @@ public class Diagram extends Observable implements Printable {
      * entire decoration) */
     public DecorationHandle removeHandle(DecorationHandle h) {
         Decoration d = h.getDecoration();
-        if (!(d instanceof Interp2DDecoration)) {
+        if (!(h instanceof Interp2DHandle)) {
             removeDecoration(d);
             return null;
         } else {
@@ -2216,10 +2216,18 @@ public class Diagram extends Observable implements Printable {
 
         res.addAll(getDecorationHandles(type));
         // Add all segment midpoints.
-        for (Line2D.Double s: getLineSegments()) {
-            Point2D p = standardPageToPrincipal.transform(
-                    Geom.midpoint(s));
-            res.add(new NullDecorationHandle(p.getX(), p.getY()));
+        for (Decoration d0: getDecorations()) {
+            if (!(d0 instanceof Interp2DDecoration)) {
+                continue;
+            }
+            Interp2DDecoration d = (Interp2DDecoration) d0;
+            Interp2D curve = d.getCurve();
+            BoundedParam2D param = curve.getParameterization();
+            for (BoundedParam2D seg: param.straightSegments()) {
+                double t = (seg.getMinT() + seg.getMaxT()) / 2;
+                res.add(new Interp2DHandle2(d, curve.info(t),
+                                param.getLocation(t)));
+            }
         }
 
         return res;
@@ -3138,10 +3146,10 @@ public class Diagram extends Observable implements Printable {
         }
     }
 
-    static DecorationsWrapper jsonStringToDecorations(String str) throws IOException {
+    static DecorationsAndHandle jsonStringToDecorations(String str) throws IOException {
         try {
             ObjectMapper mapper = getObjectMapper();
-            return mapper.readValue(str, DecorationsWrapper.class);
+            return mapper.readValue(str, DecorationsAndHandle.class);
         } catch (Exception e) {
             throw new IOException("Parse error: " + e);
         }
@@ -3880,11 +3888,16 @@ public class Diagram extends Observable implements Printable {
         return res.toString();
     }
 
-    /** Draw a circle around each point in path. */
-    void circleVertices(Graphics2D g, Interp2DDecoration cdec,
-            double scale, boolean fill, double r) {
-        for (Point2D.Double point: cdec.getCurve().getPoints()) {
-            circleVertex(g, point, scale, fill, r);
+    void circleVertices(Graphics2D g, DecorationHandle h, double scale) {
+        if (h == null) {
+            return;
+        }
+        Decoration d = h.getDecoration();
+        double r = 4;
+
+        for (DecorationHandle h2: d.getHandles(DecorationHandle.Type.CONTROL_POINT)) {
+            boolean fill = h2.equals(h);
+            circleVertex(g, principalLocation(h2), scale, fill, r);
         }
     }
 
@@ -4327,17 +4340,7 @@ public class Diagram extends Observable implements Printable {
         }
     }
 
-    // For boring reasons relating to type erasure, serializing a bare
-    // ArrayList loses JsonTypeInfo. This fixes the problem.
-    static class DecorationsWrapper {
-        @JsonProperty ArrayList<Decoration> decorations;
-        /** Index of the decoration that is selected, or -1 if none. */
-        @JsonProperty int decorationNum = -1;
-        /** Index of the getHandles(CONTROL_POINT) that is equal to this handle. */
-        @JsonProperty int handleNum = -1;
-    }
-
-    protected String toJsonString(DecorationsWrapper wrap) throws IOException {
+    protected String toJsonString(DecorationsAndHandle wrap) throws IOException {
         return Tabify.tabify(getObjectMapper().writeValueAsString(wrap));
     }
 }
