@@ -233,7 +233,6 @@ public class Diagram extends Observable implements Printable {
         turn notifications off and then notify at the end; 2) you are
         making transient changes that will be undone later. */
     transient int suppressUpdateCnt = 0;
-    transient boolean saveNeeded = false;
 
     /** If an UpdateSuppressor object is created, then all changes are
         treated like no change at all, until the object is closed
@@ -267,7 +266,6 @@ public class Diagram extends Observable implements Printable {
         diagramComponents = new String[Side.values().length];
         componentElements = null;
         filename = null;
-        saveNeeded = false;
         embeddedFont = null;
         keyValues = new TreeMap<>();
     }
@@ -403,18 +401,6 @@ public class Diagram extends Observable implements Printable {
         throw new NoSuchVariableException(name);
     }
 
-    @JsonIgnore public void setSaveNeeded(boolean b) {
-        if (b) {
-            propagateChange();
-        } else {
-            saveNeeded = false;
-        }
-    }
-
-    @JsonIgnore public boolean getSaveNeeded() {
-        return saveNeeded;
-    }
-
     /** The returned value can be used to modify the
         internal key/value mapping. */
     @JsonProperty("keys") Map<String,String> getKeyValues() {
@@ -515,12 +501,10 @@ public class Diagram extends Observable implements Printable {
         notifyObservers(null);
     }
 
-    /** Like propagateChange1(), but also set saveNeeded = true. */
     public void propagateChange() {
         if (suppressUpdateCnt > 0) {
             return;
         }
-        saveNeeded = true;
         propagateChange1();
     }
 
@@ -682,24 +666,6 @@ public class Diagram extends Observable implements Printable {
                 it.remove();
             }
         }
-    }
-
-    /** Remove decorations that are 'like' the given decoration by
-        some arbitrary standard ("do what the user wants"). */
-    public void removeLikeThis(Decoration d) {
-        if (d instanceof Label) {
-            /* Remove all labels that share the same text. */
-            Label label = (Label) d;
-            String s = label.getText();
-            for (Iterator<Label> it = labels().iterator(); it.hasNext();) {
-                Label l2 = it.next();
-                if (l2.getText().equals(s)) {
-                    it.remove();
-                }
-            }
-            return;
-        }
-        removeDecoration(d);
     }
 
     /** Add an arrow with the given location, line width, and angle
@@ -2843,7 +2809,6 @@ public class Diagram extends Observable implements Printable {
         if (pageBounds == null) {
             computeMargins();
         }
-        setSaveNeeded(false);
         while (true) {
             SourceImage image = firstImage();
             if (image != null && image.getImage() == null) {
@@ -2864,7 +2829,6 @@ public class Diagram extends Observable implements Printable {
     }
 
     void copyFrom(Diagram d) throws IOException {
-        setSaveNeeded(false);
         try (UpdateSuppressor us = new UpdateSuppressor()) {
                 clear();
                 cannibalize(d);
@@ -3109,7 +3073,6 @@ public class Diagram extends Observable implements Printable {
                 setFilename(path.toString());
             }
             writer.print(toJsonString());
-            setSaveNeeded(false);
             return true;
         } catch (IOException x) {
             if (updateFilename) {
