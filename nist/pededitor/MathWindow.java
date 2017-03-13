@@ -311,7 +311,7 @@ public class MathWindow extends JDialog {
             if (Double.isNaN(m)) {
                 slope.setText("");
             } else {
-                slope.setText(ContinuedFraction.toDecimalString(sloped, 4));
+                slope.setText(format(sloped));
             }
         }
     }
@@ -360,29 +360,33 @@ public class MathWindow extends JDialog {
     public void refresh() {
         setSlopeLabel();
         setAngle(0);
-        setLength(0);
-        setArea(0);
-        setTotLength(0);
-        setTotArea(0);
+        setLengths(0, 0);
+        setAreas(0, 0);
         boolean b = !getParentEditor().isTernary();
         setLengthVisible(b);
         setAreaVisible(b);
     }
 
-    public void setLength(double v) {
-        length.setText(ContinuedFraction.toDecimalString(v, 4));
+    private String format(double v) {
+        return ContinuedFraction.toDecimalString(v, 4);
     }
 
-    public void setTotLength(double v) {
-        totLength.setText(ContinuedFraction.toDecimalString(v, 4));
+    /**
+     * @param len The length of the curve left of the selected point.
+     * @param totLen The total curve length.
+     */
+    public void setLengths(double len, double totLen) {
+        length.setText(format(len) + " : " + format(totLen - len));
+        totLength.setText(format(totLen));
     }
 
-    public void setArea(double v) {
-        area.setText(ContinuedFraction.toDecimalString(v, 4));
-    }
-
-    public void setTotArea(double v) {
-        totArea.setText(ContinuedFraction.toDecimalString(v, 4));
+    /**
+     * @param a The area to the left of the selected point
+     * @param totA Total area
+     */
+    public void setAreas(double a, double totA) {
+        area.setText(format(a) + " : " + format(totA - a));
+        totArea.setText(format(totA));
     }
 
     public double getSlope() {

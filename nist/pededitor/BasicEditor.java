@@ -2044,11 +2044,9 @@ public class BasicEditor extends Diagram
                 mathWindow.setTotAreaLabel("Total \u222B");
             }
 
-            mathWindow.setArea(area);
-            mathWindow.setTotArea(totArea);
+            mathWindow.setAreas(area, totArea);
             if (showLength()) {
-                mathWindow.setLength(length);
-                mathWindow.setTotLength(totLength);
+                mathWindow.setLengths(length, totLength);
             }
         }
 
@@ -2187,15 +2185,19 @@ public class BasicEditor extends Diagram
         }
         Interp2D curve = ((Interp2DDecoration) hand0.getDecoration()).getCurve();
         Interp2DHandle hand = (Interp2DHandle) hand0;
-        if (isDuplicate(point, curve, hand.index)) {
-            return new NoOp(); // Adding the same point twice causes problems.
-        }
         Point2D.Double oldPoint = principalLocation(hand);
 
         if (curve.size() == curve.maxSize()) {
+            if (isDuplicate(point, curve, hand.index)) {
+                return new NoOp(); // Adding the same point twice causes problems.
+            }
             return new MoveVertex(hand, point.x - oldPoint.x, point.y - oldPoint.y);
         } else {
-            return addVertexCommand(hand.getDecoration().createHandle(vertexInsertionIndex()), point);
+            int i2 = vertexInsertionIndex();
+            if (isDuplicate(point, curve, i2)) {
+                return new NoOp();
+            }
+            return addVertexCommand(hand.getDecoration().createHandle(i2), point);
         }
     }
 
