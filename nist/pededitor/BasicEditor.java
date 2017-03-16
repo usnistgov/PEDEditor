@@ -1161,12 +1161,12 @@ public class BasicEditor extends Diagram
         AffineTransform toPrin = AffineTransform.getTranslateInstance(mprin.x, mprin.y);
         try {
             DecorationsAndHandle wrap = jsonStringToDecorations(Stuff.getClipboardString());
+            finishDeserialization(wrap.decorations);
             List<Decoration> ds = wrap.decorations;
             DecorationHandle selNew = wrap.createHandle();
             // TODO Pasting source images isn't reliable right now, so get rid of them.
             // ds = ds.stream().filter(p -> !(p instanceof SourceImage)).collect(Collectors.toList());
 
-            finishDeserialization(ds);
             for (Decoration d : ds) {
                 if (!(d instanceof TieLine)) {
                     d.transform(toPrin);
@@ -1873,6 +1873,15 @@ public class BasicEditor extends Diagram
             g.setStroke(oldStroke);
         }
 
+        if (selection instanceof Interp2DHandle2) {
+            Point2D.Double p1 = principalLocation(selection);
+            Point2D.Double p2 = principalLocation(((Interp2DHandle2) selection).indexHandle());
+            if (!principalCoordinatesMatch(p1, p2)) {
+                g.setColor(toColor(AutoPositionType.CURVE));
+                circleVertex(g, p1, scale, true, 4);
+            }
+        }
+
         if (statusPt != null) {
             editFrame.setStatus(principalToPrettyString(statusPt));
         }
@@ -2315,6 +2324,12 @@ public class BasicEditor extends Diagram
         decorations.get(decorations.size()-1).setColor(color);
     }
 
+    private void tieLineStep() {
+        int stepNo = tieLineCorners.size();
+        tieLineDialog.getButton().setText("Select corner " + (stepNo+1) + " / 4"
+                    + " (Shift+T)");
+    }
+
     void tieLineCornerSelected() {
         String errorTitle = "Invalid tie line selection";
         Interp2DHandle vhand = getInterp2DHandle();
@@ -2323,7 +2338,8 @@ public class BasicEditor extends Diagram
             return;
         }
 
-        DecorationAndT pat = new DecorationAndT(vhand);
+        DecorationAndT pat = new DecorationAndT(vhand.getDecoration(),
+                pageT(vhand));
 
         int oldCnt = tieLineCorners.size();
 
@@ -2347,6 +2363,7 @@ public class BasicEditor extends Diagram
 
         if (oldCnt < 3) {
             tieLineDialog.getLabel().setText(tieLineStepStrings[oldCnt + 1]);
+            tieLineStep();
             return;
         }
 
@@ -3420,11 +3437,16 @@ public class BasicEditor extends Diagram
     }
 
     public void addTieLine() {
-        tieLineCorners = new ArrayList<>();
-        tieLineDialog.getLabel().setText(tieLineStepStrings[0]);
-        tieLineDialog.pack();
-        tieLineDialog.setVisible(true);
-        tieLineDialog.toFront();
+        if (tieLineDialog.isVisible()) {
+            tieLineCornerSelected();
+        } else {
+            tieLineCorners.clear();
+            tieLineDialog.getLabel().setText(tieLineStepStrings[0]);
+            tieLineStep();
+            tieLineDialog.pack();
+            tieLineDialog.setVisible(true);
+            tieLineDialog.toFront();
+        }
     }
 
     @Override List<DecorationHandle> getHandles(Decoration d,
@@ -3532,7 +3554,6 @@ public class BasicEditor extends Diagram
         }
 
         moveMouse(standardPageToPrincipal.transform(pagePoint));
-        mouseStickTravel = null;
         setMouseStuck(true);
     }
 
@@ -4140,6 +4161,7 @@ public class BasicEditor extends Diagram
         moveMouse(standardPageToPrincipal.transform(minDist.point));
         setMouseStuck(true);
         showTangent(dec, t);
+        redraw();
     }
 
     Interp2DHandle2 toHandle(DecorationDistance dist) {
@@ -6079,6 +6101,7 @@ public class BasicEditor extends Diagram
 
     public void setShiftDown(boolean b) {
         isShiftDown = b;
+        redraw();
     }
 
     @Override public void mousePressed(MouseEvent e) {
