@@ -1432,7 +1432,7 @@ public class BasicEditor extends Diagram
         try (SelectSomething ss = new SelectSomething()) {
             if (selection == null) return;
             saveState();
-            setSelection(removeHandle(selection));
+            setSelection(removeHandle(selection, insertBeforeSelection));
         }
     }
 
