@@ -80,7 +80,8 @@ public class Diagram extends Observable implements Printable {
     protected static final DecimalFormat STANDARD_PERCENT_FORMAT
         = new DecimalFormat("##0.00%");
 
-    public Interp2DHandle removeVertex(Interp2DHandle hand) {
+    public Interp2DHandle removeVertex(Interp2DHandle hand,
+                                       boolean selectHandleAfter) {
         Interp2DDecoration d = hand.getDecoration();
         Interp2D path = d.getCurve();
         if (path.size() == path.minSize()) {
@@ -98,8 +99,8 @@ public class Diagram extends Observable implements Printable {
             // reference this segment.
 
             for (int i = 0; i < segments.size(); ++i) {
-                double newT = path.newTIfVertexRemoved
-                    (segments.get(i), index);
+                double newT = path.newTIfVertexRemoved(
+                        segments.get(i), index);
                 segments.set(i, newT);
             }
 
@@ -109,11 +110,14 @@ public class Diagram extends Observable implements Printable {
                 Point2D.Double previous = path.get(index - 1);
                 Point2D.Double next = path.get(index);
                 if (previous.equals(next)) {
-                    return removeVertex(d.createHandle(index));
+                    return removeVertex(d.createHandle(index), selectHandleAfter);
                 }
             }
             propagateChange();
-            return d.createHandle((index > 0) ? (index - 1) : 0);
+            if (index > 0 && (!selectHandleAfter || index >= path.size())) {
+                --index;
+            }
+            return d.createHandle(index);
         } else {
             removeDecoration(d);
             return null;
@@ -610,13 +614,15 @@ public class Diagram extends Observable implements Printable {
         Interp2D curve = d.getCurve();
 
         ArrayList<Double> segments = getPathSegments(d);
+        Point2D.Double ppage = principalToStandardPage.transform(command.p);
 
         if (curve.size() > 0) {
             // Before adding this vertex, adjust t values that
             // reference this segment.
 
             for (int i = 0; i < segments.size(); ++i) {
-                double newT = curve.newTIfVertexRemoved(segments.get(i), command.index);
+                double newT = curve.newTIfVertexAdded(segments.get(i),
+                        command.index, ppage);
                 segments.set(i, newT);
             }
         }
@@ -2070,13 +2076,14 @@ public class Diagram extends Observable implements Printable {
      * selection if the old selection is the handle that was removed
      * (this will be null if removing the handle means removing the
      * entire decoration) */
-    public DecorationHandle removeHandle(DecorationHandle h) {
+    public DecorationHandle removeHandle(DecorationHandle h,
+            boolean selectHandleAfter) {
         Decoration d = h.getDecoration();
         if (!(h instanceof Interp2DHandle)) {
             removeDecoration(d);
             return null;
         } else {
-            return removeVertex((Interp2DHandle) h);
+            return removeVertex((Interp2DHandle) h, selectHandleAfter);
         }
     }
 
@@ -2374,10 +2381,11 @@ public class Diagram extends Observable implements Printable {
         return res;
     }
 
-    /* Return the DecorationDistance for the curve or ruler whose
-       outline comes closest to pagePoint. This routine operates
-       entirely in standard page space, both internally and in terms
-       of the input and output values. */
+    /**
+     * Return the DecorationDistance for the curve or ruler whose
+     * outline comes closest to pagePoint. This routine operates
+     * entirely in standard page space, both internally and in terms
+     * of the input and output values. */
     DecorationDistance nearestCurve(Point2D pagePoint) {
         ArrayList<Decoration> decs = new ArrayList<>();
         ArrayList<Interp2D> curves = new ArrayList<>();
@@ -4305,6 +4313,15 @@ public class Diagram extends Observable implements Printable {
 
     protected String toJsonString(DecorationsAndHandle wrap) throws IOException {
         return Tabify.tabify(getObjectMapper().writeValueAsString(wrap));
+    }
+
+    double pageT(Interp2DHandle h) {
+        if (h instanceof Interp2DHandle2) {
+            return h.getT();
+        }
+        Decoration paged = h.getDecoration().createTransformed(
+                principalToStandardPage);
+        return h.copyFor(paged).getT();
     }
 }
 
