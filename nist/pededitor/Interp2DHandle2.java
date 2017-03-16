@@ -71,4 +71,8 @@ public class Interp2DHandle2 extends Interp2DHandle {
         return (p == null) ? null :
             new Point2D.Double(p.x, p.y);
     }
+
+    @Override public Interp2DHandle2 copyFor(Decoration d) {
+        throw new UnsupportedOperationException();
+    }
 }

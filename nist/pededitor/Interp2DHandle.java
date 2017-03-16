@@ -55,7 +55,7 @@ public class Interp2DHandle implements BoundedParam2DHandle {
     }
 
     @Override @JsonIgnore public double getT() {
-        return index;
+        return getCurve().indexToT(index);
     }
 
     @Override @JsonIgnore public BoundedParam2D getParameterization() {
@@ -75,7 +75,7 @@ public class Interp2DHandle implements BoundedParam2DHandle {
     }
 
     @Override
-    public DecorationHandle copyFor(Decoration other) {
+    public Interp2DHandle copyFor(Decoration other) {
         return ((Interp2DDecoration) other).createHandle(index);
     }
 
