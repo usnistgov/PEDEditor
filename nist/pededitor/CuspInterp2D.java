@@ -96,6 +96,9 @@ public class CuspInterp2D extends PointsInterp2D
         return tot;
     }
 
+    /**
+     * Return the least unsmoothed index &gt;= n, or size() if
+     * vertices [n ... size()-1] are all smoothed. */
     int nextUnsmoothed(int n) {
         int s = smoothed.size();
         for (int i = n; i < s; ++i) {
@@ -106,6 +109,9 @@ public class CuspInterp2D extends PointsInterp2D
         return s;
     }
 
+    /**
+     * Return the greatest unsmoothed index &lt;= n, or -1 if vertices [0
+     * ... n] are all smoothed. */
     int previousUnsmoothed(int n) {
         for (int i = n; i >= 0; --i) {
             if (!smoothed.get(i)) {
@@ -115,10 +121,11 @@ public class CuspInterp2D extends PointsInterp2D
         return -1;
     }
 
-    /* @return the indices of all vertices that are cusps, that is,
-       where the curve is not smooth in an interval around that
-       vertex. Endpoints and unsmoothed vertices are generally
-       cusps. */
+    /**
+     * @return the indices of all vertices that are cusps, that is,
+     * where the curve is not smooth in an interval around that
+     * vertex. Endpoints and unsmoothed vertices are generally
+     * cusps. */
     @JsonIgnore ArrayList<Integer> getCusps() {
             ArrayList<Integer> res = new ArrayList<>();
             int size = this.size();
@@ -148,64 +155,78 @@ public class CuspInterp2D extends PointsInterp2D
             return res;
         }
 
-        int nextClear = nextUnsmoothed(0);
-        if (nextClear >= s) {
-            return new CubicSpline2D
-                (points.toArray(new Point2D.Double[0]), isClosed()).path();
+        // In some ways it would be simpler to start drawing from the
+        // first unsmoothed point, but that would spoil the
+        // correspondence between the location of control point #i and
+        // getParameterization().value(i).
+        int nextUnsmoothed = nextUnsmoothed(0);
+        if (nextUnsmoothed == s) { // Smooth entire curve.
+            return new CubicSpline2D(points.toArray(new Point2D.Double[0]),
+                    isClosed()).path();
         }
 
         temp = points.get(0);
         res.moveTo(temp.x, temp.y);
         int ss = 0; // Spline start no.
-        int lastClear;
+        int lastUnsmoothed;
         CubicSpline2D straddleSpline = null;
+
+        // The last point and the first point may coincide, which
+        // would require special handling for closed curves.
+        boolean duplicateEnds = points.get(0).equals(points.get(s-1));
+        int effectiveEnd = duplicateEnds ? s - 1 : s;
+        int straddleOffset = -1;
+        
         boolean oldLast = false;
         if (isClosed()) {
-            if (nextClear > 0) {
+            if (nextUnsmoothed > 0) {
                 // Smooth through point #0, which requires a spline that
                 // straddles the loop back to #0.
-                lastClear = previousUnsmoothed(s-1);
-                if (lastClear == -1) {
-                    lastClear = s;
-                }
+                
+                lastUnsmoothed = previousUnsmoothed(s-1);
                 ArrayList<Point2D.Double> straddlePoints = new ArrayList<>();
-                for (int i = lastClear; i < s; ++i) {
+                for (int i = lastUnsmoothed; i < effectiveEnd; ++i) {
                     straddlePoints.add(points.get(i));
                 }
-                int offset = s - lastClear;
-                for (int i = 0; i <= nextClear; ++i) {
-                    straddlePoints.add(points.get(i % s));
+                straddleOffset = straddlePoints.size();
+                for (int i = 0; i <= nextUnsmoothed; ++i) {
+                    straddlePoints.add(points.get(i));
                 }
-                straddleSpline = new CubicSpline2D
-                    (straddlePoints.toArray(new Point2D.Double[0]));
-                straddleSpline.appendSplinesTo(res, offset, offset + nextClear);
-                ss = nextClear;
+                straddleSpline = new CubicSpline2D(
+                        straddlePoints.toArray(new Point2D.Double[0]));
+                straddleSpline.appendSplinesTo(res, straddleOffset,
+                        straddlePoints.size() - 1);
+                ss = nextUnsmoothed;
             } else {
                 // Temporarily add the starting point as the endpoint
                 // of the last spline.
                 points.add(points.get(0));
-                lastClear = s;
+                lastUnsmoothed = s;
             }
         } else {
             // Temporarily set smoothing for the last vertex to false.
-            lastClear = s-1;
-            oldLast = smoothed.get(lastClear);
-            setSmoothed(lastClear, false);
+            lastUnsmoothed = s-1;
+            oldLast = smoothed.get(lastUnsmoothed);
+            setSmoothed(lastUnsmoothed, false);
         }
-        while (ss < lastClear) {
+        while (ss < lastUnsmoothed) {
             int se = nextUnsmoothed(ss+1);
             if (se == ss+1) {
                 Point2D.Double p = points.get(se);
                 res.lineTo(p.x, p.y);
             } else {
-                CubicSpline2D spline = new CubicSpline2D
-                    (points.subList(ss, se+1).toArray(new Point2D.Double[0]));
+                CubicSpline2D spline = new CubicSpline2D(
+                        points.subList(ss, se+1).toArray(new Point2D.Double[0]));
                 spline.appendSplinesTo(res, 0, se - ss);
             }
             ss = se;
         }
         if (straddleSpline != null) {
-            straddleSpline.appendSplinesTo(res, 0, s - ss);
+            straddleSpline.appendSplinesTo(res, 0, straddleOffset);
+            if (duplicateEnds) {
+                Point2D.Double p = points.get(0);
+                res.lineTo(p.x, p.y);
+            }
         }
         if (points.size() > s) {
             // Remove the temporary duplicate of the starting point.
@@ -216,7 +237,7 @@ public class CuspInterp2D extends PointsInterp2D
         } else {
             // Reset the last vertex to its
             // original smoothing value.
-            setSmoothed(lastClear, oldLast);
+            setSmoothed(lastUnsmoothed, oldLast);
         }
         return res;
     }
