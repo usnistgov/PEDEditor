@@ -560,21 +560,25 @@ public class Diagram extends Observable implements Printable {
                     RenderingHints.VALUE_RENDER_QUALITY);
     }
 
-    /** Paint the diagram.
-
-        @param backColor If not null, paint pageBounds this color
-        before all other painting is done.
-
-        @param clip If true, clip everything outside pageBounds. If
-        false, even items outside the page bounds may still be seen
-        (which may be useful during editing). */
-    public void paintDiagram(Graphics2D g, double scale, Color backColor,
-            boolean clip) {
-        paintDiagram(g, scale, backColor, clip, true);
-    }
-
-    void paintDiagram(Graphics2D g, double scale, Color backColor,
-            boolean clip, boolean showImages) {
+    static final int FLAG_UNCLIPPED = 1;
+    static final int FLAG_HIDE_IMAGES = 2;
+    static final int FLAG_TRANSPARENT = 4;
+    
+    /**
+     * Paint the diagram.
+     *
+     * @param backColor If not null, paint pageBounds this color
+     * before all other painting is done.
+     *
+     * @param flags Use Diagram.FLAG_UNCLIPPED to display even items
+     * outside pageBounds (which may be useful during editing). clip
+     * everything outside pageBounds. Use Diagram.FLAG_HIDE_IMAGES to
+     * suppress display of SourceImage decorations, which can help if
+     * you are copying an image and do not wish to show the
+     * original. */
+    void paintDiagram(Graphics2D g, double scale, Color backColor, int flags) {
+        boolean clip = (flags & FLAG_UNCLIPPED) == 0;
+        boolean showImages = (flags & FLAG_HIDE_IMAGES) == 0;
         Shape oldClip = null;
         try {
             oldClip = g.getClip();
@@ -2873,7 +2877,7 @@ public class Diagram extends Observable implements Printable {
         }
         MeteredGraphics mg = new MeteredGraphics();
         double mscale = 10000;
-        paintDiagram(mg, mscale, null, false);
+        paintDiagram(mg, mscale, null, Diagram.FLAG_UNCLIPPED | Diagram.FLAG_HIDE_IMAGES);
         Rectangle2D.Double bounds = mg.getBounds();
         if (bounds == null) {
             return;
@@ -2989,8 +2993,7 @@ public class Diagram extends Observable implements Printable {
 
     /** Return a BufferedImage of the diagram which is no larger than
         width x height. */
-    public BufferedImage createImage(int width, int height,
-            boolean showImages, boolean transparent) {
+    public BufferedImage createImage(int width, int height, int flags) {
         if (width == 0 || height == 0) {
             throw new IllegalArgumentException(
                     "Cannot make image with width " + width
@@ -3006,17 +3009,24 @@ public class Diagram extends Observable implements Printable {
         // in labels, which can be confusing. Writing the image at a
         // larger scale and downscaling the result reduces the
         // problem.
-        int scale = Math.max(1, 400 / (width + height));
+
+        int scale = Math.max(1, 600 / (width + height));
+        // Forcing odd scale is a hack to mitigate the mysterious
+        // aliasing bug, possibly in Java itself, that leads to fuzzy
+        // images (EB 2017-04-17).
+        if ((scale & 1) == 0) {
+            --scale;
+        }
         BufferedImage res = createImageSub(width * scale, height * scale,
-                    showImages, transparent);
+                    flags);
         if (scale > 1) {
             res = ScaleImage.downscale(res, scale);
         }
         return res;
     }
 
-    BufferedImage createImageSub(int width, int height,
-            boolean showImages, boolean transparent) {
+    BufferedImage createImageSub(int width, int height, int flags) {
+        boolean transparent = (flags | FLAG_TRANSPARENT) != 0;
 
         int imageType = transparent ? BufferedImage.TYPE_INT_ARGB
             : BufferedImage.TYPE_INT_RGB;
@@ -3025,7 +3035,7 @@ public class Diagram extends Observable implements Printable {
         Color backColor = transparent ? new Color(0, 0, 0, 0) :
             Color.WHITE;
         paintDiagram(res.createGraphics(), bestFitScale(new Dimension(width, height)),
-                backColor, true);
+                backColor, flags);
         return res;
     }
 
@@ -3043,7 +3053,7 @@ public class Diagram extends Observable implements Printable {
 
     public void saveAsImage(File file, String format, int width, int height)
         throws IOException {
-        saveAsImage(file, format, width, height, true, false);
+        saveAsImage(file, format, width, height, drawFlags());
     }
 
     /** Save the diagram as an image.
@@ -3052,8 +3062,8 @@ public class Diagram extends Observable implements Printable {
 
        @param showImages If false, any SourceImages will be ignored. */
     public void saveAsImage(File file, String format, int width, int height,
-                            boolean showImages, boolean transparent) throws IOException {
-        BufferedImage save = createImage(width, height, showImages, transparent);
+                            int flags) throws IOException {
+        BufferedImage save = createImage(width, height, flags);
         ImageIO.write(save, format, file);
     }
 
@@ -3453,6 +3463,18 @@ public class Diagram extends Observable implements Printable {
         return res;
     }
 
+    boolean isPrintImages() {
+        return true;
+    }
+
+    int drawFlags() {
+        int flags = 0;
+        if (!isPrintImages()) {
+            flags |= FLAG_HIDE_IMAGES;
+        }
+        return flags;
+    }
+
     /** Invoked from the EditFrame menu */
     public void print(PrinterJob job, PrintRequestAttributeSet aset)
         throws PrinterException {
@@ -3492,7 +3514,11 @@ public class Diagram extends Observable implements Printable {
         g.setFont(getFont());
         double scale = Math.min((bounds.height - deltaY) / pageBounds.height,
                                 bounds.width / pageBounds.width);
-        paintDiagram(g, scale, null, true);
+        int flags = 0;
+        if (!isPrintImages()) {
+            flags |= FLAG_HIDE_IMAGES;
+        }
+        paintDiagram(g, scale, null, flags);
         g.setTransform(oldTransform);
 
         return Printable.PAGE_EXISTS;
