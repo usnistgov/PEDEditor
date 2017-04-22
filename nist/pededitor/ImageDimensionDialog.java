@@ -13,8 +13,6 @@ import javax.swing.JCheckBox;
     checkbox to ask whether to show the original image. */
 public class ImageDimensionDialog extends StringArrayDialog {
     private static final long serialVersionUID = -8426815422655006923L;
-    JCheckBox showOriginalImage = new
-        JCheckBox("Show original image");
     JCheckBox transparent = new JCheckBox("Transparent");
 
     ImageDimensionDialog(Frame owner) {
@@ -26,22 +24,7 @@ public class ImageDimensionDialog extends StringArrayDialog {
         setTitle("Image size");
         GridBagUtil gb = new GridBagUtil(panelBeforeOK);
         gb.endRowWith(Box.createVerticalStrut(6 /* pixels */));
-        gb.addEast(transparent);
-        gb.endRowWith(showOriginalImage);
-    }
-
-    /** Select whether to display the "Show original image"
-        checkbox. */
-    public void setShowOriginalImageVisible(boolean b) {
-        showOriginalImage.setVisible(b);
-    }
-
-    public void setShowOriginalImage(boolean b) {
-        showOriginalImage.setSelected(b);
-    }
-
-    public boolean isShowOriginalImage() {
-        return showOriginalImage.isSelected();
+        gb.endRowWith(transparent);
     }
 
     /** Select whether to display the "Show original image"
