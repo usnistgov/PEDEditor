@@ -34,6 +34,7 @@ public class Viewer extends Editor {
         ef.setReloadVisible(false);
         ef.setEditable(false);
         ef.editingEnabled.setVisible(false);
+        ef.hideImages.setVisible(false);
         ef.mnTags.setVisible(false);
         ef.mnKeys.setVisible(false);
         ef.mnExportText.setVisible(false);
