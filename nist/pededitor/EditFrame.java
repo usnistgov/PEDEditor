@@ -741,6 +741,19 @@ public class EditFrame extends JFrame
     }
 
     /** Internal use; called from BasicEditor.java. */
+    void setHideImages(boolean b) {
+        hideImages.setSelected(b);
+    }
+
+    public boolean isHideImages() {
+        return hideImages.isSelected();
+    }
+
+    public void setHideImagesVisible(boolean b) {
+        hideImages.setVisible(b);
+    }
+
+    /** Internal use; called from BasicEditor.java. */
     void setShowGrid(boolean b) {
         showGrid.setSelected(b);
     }
@@ -808,6 +821,15 @@ public class EditFrame extends JFrame
         (new Action("Show editing options", KeyEvent.VK_W) {
                 @Override public void actionPerformed(ActionEvent e) {
                     getEditor().setEditable(editingEnabled.isSelected());
+                    finishEvent();
+                }
+            });
+
+    protected JCheckBoxMenuItem hideImages
+        = new JCheckBoxMenuItem
+        (new Action("Hide original image when saving or printing", KeyEvent.VK_W) {
+                @Override public void actionPerformed(ActionEvent e) {
+                    getEditor().setPrintImages(!hideImages.isSelected());
                     finishEvent();
                 }
             });
@@ -1473,6 +1495,7 @@ public class EditFrame extends JFrame
 
         mnProperties.add(pixelMode);
         mnProperties.add(editingEnabled);
+        mnProperties.add(hideImages);
         menuBar.add(mnProperties);
 
         // "Digitize" top-level menu
