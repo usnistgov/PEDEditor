@@ -332,6 +332,7 @@ public class BasicEditor extends Diagram
 
     private static final String PREF_DIR = "dir";
     private static final String PREF_FILE = "file";
+    private static final String SHOW_IMAGES = "show_images";
     private static final long AUTO_SAVE_DELAY = 5 * 60 * 1000; // 5 minutes
 
     static final StandardStroke DEFAULT_LINE_STYLE = StandardStroke.SOLID;
@@ -2332,10 +2333,17 @@ public class BasicEditor extends Diagram
 
     void tieLineCornerSelected() {
         String errorTitle = "Invalid tie line selection";
+
         Interp2DHandle vhand = getInterp2DHandle();
         if (vhand == null) {
             showError("You must select a vertex.", errorTitle);
             return;
+        }
+        if (vhand instanceof Interp2DHandle2) {
+            // Move the selection to the nearest vertex, because we
+            // decided tie lines ending on non-control-points was more
+            // of a nuisance than a help.
+            vhand = ((Interp2DHandle2) selection).indexHandle();
         }
 
         DecorationAndT pat = new DecorationAndT(vhand.getDecoration(),
@@ -4922,10 +4930,12 @@ public class BasicEditor extends Diagram
         editFrame.setMathWindowVisible(false);
         editFrame.setStatus("");
         editFrame.setVisible(true);
+        editFrame.setHideImages(!printImagesPreference());
         SourceImage image = firstImage();
         if (image != null) {
             editFrame.setAlpha(image.getAlpha());
         }
+        editFrame.setHideImagesVisible(image != null);
         setColor(color);
         bestFit();
     }
@@ -5252,8 +5262,9 @@ public class BasicEditor extends Diagram
 
     public File[] openPEDFilesDialog(Component parent) {
         String what = String.join("/", Arrays.asList(pedFileExtensions())).toUpperCase();
-        return openFilesDialog
-            (parent, "Open " + what + "  File", what + " files", pedFileExtensions());
+        return openFilesDialog(parent,
+                "Open " + what + "  File", what + " files",
+                pedFileExtensions());
     }
 
     static Preferences getPreferences() {
@@ -5313,8 +5324,8 @@ public class BasicEditor extends Diagram
        }
     }
 
-    public static File[] openFilesDialog(Component parent, String title,
-                                      String filterName, String[] suffixes) {
+    public File[] openFilesDialog(Component parent, String title,
+            String filterName, String[] suffixes) {
         Preferences prefs = Preferences.userNodeForPackage(CropFrame.class);
         JFileChooser chooser = new JFileChooser();
         chooser.setDialogTitle(title);
@@ -5329,27 +5340,49 @@ public class BasicEditor extends Diagram
         }
         chooser.setFileFilter
             (new FileNameExtensionFilter(filterName, suffixes));
-        if (chooser.showOpenDialog(parent) == JFileChooser.APPROVE_OPTION) {
-           File[] files = chooser.getSelectedFiles();
-           if (files != null) {
-               setCurrentDirectory(files[0].getParent());
-               setCurrentFile(files[0].toString());
-           }
-           return files;
-        } else {
-            return null;
+        while (true) {
+            if (chooser.showOpenDialog(parent) == JFileChooser.APPROVE_OPTION) {
+                File[] files = chooser.getSelectedFiles();
+                if (files != null) {
+                    setCurrentDirectory(files[0].getParent());
+                    setCurrentFile(files[0].toString());
+                }
+                for (int i = 0; i < files.length; ++i) {
+                    files[i] = addExtensionIfMissing(files[i]);
+                }
+                if (fileNotFound(files, parent)) {
+                    continue;
+                }
+                return files;
+            } else {
+                return null;
+            }
         }
     }
 
 
-    public static File[] openImageFilesDialog(Component parent) {
-        return openFilesDialog
-            (parent, "Open Image File", "Image files",
-             ImageIO.getReaderFileSuffixes());
+    public File[] openImageFilesDialog(Component parent) {
+        return openFilesDialog(parent, "Open Image File", "Image files",
+                ImageIO.getReaderFileSuffixes());
     }
 
     public void open() {
         showOpenDialog(editFrame);
+    }
+
+    /**
+     * If set to false, SourceImage decorations are not displayed when
+     * printing, nor are they included in image files. */
+    @JsonIgnore public void setPrintImages(boolean v) {
+        getPreferences().putBoolean(SHOW_IMAGES, v);
+    }
+
+    @JsonIgnore @Override public boolean isPrintImages() {
+        return !editFrame.isHideImages();
+    }
+
+    private boolean printImagesPreference() {
+        return getPreferences().getBoolean(SHOW_IMAGES, true);
     }
 
     public void monitor() {
@@ -5401,10 +5434,42 @@ public class BasicEditor extends Diagram
         }
     }
 
+    private static boolean fileNotFound(File[] files, Component parent) {
+        if (files != null && files.length == 1 && Files.notExists(files[0].toPath())) {
+            Stuff.showError(parent,
+                    "File not found: " + files[0],
+                    "File not found");
+            return true;
+        }
+        return false;
+    }
+
     public void showOpenDialog(Component parent) {
-        File[] filesList = isEditable() ? openPEDOrImageFilesDialog(parent)
-            : openPEDFilesDialog(parent);
-        showOpenDialog(parent, filesList);
+        while (true) {
+            File[] filesList = isEditable() ? openPEDOrImageFilesDialog(parent)
+                : openPEDFilesDialog(parent);
+            for (int i = 0; i < filesList.length; ++i) {
+                filesList[i] = addExtensionIfMissing(filesList[i]);
+            }
+            if (fileNotFound(filesList, parent)) {
+                continue;
+            }
+            showOpenDialog(parent, filesList);
+            break;
+        }
+    }
+
+    File addExtensionIfMissing(File file) {
+        String ext = getExtension(file.getName());
+        if (ext != null) {
+            return file;
+        }
+        if (Files.notExists(file.toPath())) {
+            String[] exts = pedFileExtensions();
+            String ext2 = exts[0];
+            return new File(file.getAbsolutePath() + "." + ext2);
+        }
+        return file;
     }
 
     public void showOpenDialog(Component parent, File[] files) {
@@ -5454,14 +5519,9 @@ public class BasicEditor extends Diagram
             e.showOpenDialog(e.editFrame, file);
             return;
         }
-        boolean ped = isPED(file);
-        String ext = getExtension(file.getName());
         String[] exts = pedFileExtensions();
-        String mainPEDExt = exts[0];
-        if (ext == null && Files.notExists(file.toPath())) {
-            ped = true;
-            file = new File(file.getAbsolutePath() + "." + mainPEDExt);
-        }
+        file = addExtensionIfMissing(file);
+        boolean ped = isPED(file);
 
         try {
             if (isEditable() && !ped) {
@@ -5589,7 +5649,6 @@ public class BasicEditor extends Diagram
             }
         }
         ImageDimensionDialog dog = imageDimensionDialog;
-        dog.setShowOriginalImageVisible(tracingImage());
         boolean maybeTransparent = ext.equalsIgnoreCase("GIF")
             || ext.equalsIgnoreCase("PNG");
         dog.setTransparentVisible(maybeTransparent);
@@ -5609,11 +5668,13 @@ public class BasicEditor extends Diagram
         if (file == null || !verifyOverwriteFile(file)) {
             return;
         }
+        int flags = drawFlags();
+        if (maybeTransparent && dog.isTransparent()) {
+            flags |= FLAG_TRANSPARENT;
+        }
 
         try {
-            saveAsImage(file, ext, size.width, size.height,
-                    dog.isShowOriginalImage(),
-                    maybeTransparent && dog.isTransparent());
+            saveAsImage(file, ext, size.width, size.height, flags);
         } catch (IOException x) {
             showError("File error: " + x);
         } catch (OutOfMemoryError x) {
