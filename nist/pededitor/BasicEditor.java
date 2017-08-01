@@ -2361,9 +2361,8 @@ public class BasicEditor extends Diagram
         }
 
         if ((oldCnt == 1) && pat.t == tieLineCorners.get(0).t) {
-            showError
-                ("The second point cannot be the same as the first.",
-                 errorTitle);
+            showError("The second point cannot be the same as the first.",
+                    errorTitle);
             return;
         }
 
@@ -2378,7 +2377,7 @@ public class BasicEditor extends Diagram
         tieLineDialog.setVisible(false);
         int lineCnt = askNumberOfTieLines(10);
 
-        if (lineCnt <= 0) {
+        if (lineCnt <= 0 || lineCnt > 100) {
             tieLineDialog.setVisible(false);
             tieLineCorners = new ArrayList<>();
             return;
@@ -2412,11 +2411,11 @@ public class BasicEditor extends Diagram
                     return -1;
                 }
                 int lineCnt = Integer.parseInt(lineCntStr);
-                if (lineCnt > 0) {
+                if (lineCnt > 0 && lineCnt <= 100) {
                     return lineCnt;
                 }
 
-                showError("Enter a positive integer.", errorTitle);
+                showError("Enter an integer from 1 to 100.", errorTitle);
             } catch (NumberFormatException e) {
                 showError("Invalid number format.", errorTitle);
             }
@@ -5448,6 +5447,9 @@ public class BasicEditor extends Diagram
         while (true) {
             File[] filesList = isEditable() ? openPEDOrImageFilesDialog(parent)
                 : openPEDFilesDialog(parent);
+            if (filesList == null) {
+                break;
+            }
             for (int i = 0; i < filesList.length; ++i) {
                 filesList[i] = addExtensionIfMissing(filesList[i]);
             }
