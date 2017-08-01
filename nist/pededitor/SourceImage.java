@@ -16,6 +16,7 @@ import java.awt.geom.Rectangle2D;
 import java.awt.image.BufferedImage;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
+import java.lang.ref.SoftReference;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.ArrayList;
@@ -122,7 +123,7 @@ public class SourceImage implements Decoration {
      * that have been rescaled. All of these images have had oldTransform
      * applied to them; if a new transform is attempted, the cache gets emptied.
      */
-    protected transient ArrayList<CroppedTransformedImage> transformedImages = new ArrayList<>();
+    protected transient ArrayList<SoftReference<CroppedTransformedImage>> transformedImages = new ArrayList<>();
 
     @JsonIgnore
     public BufferedImage getImage() {
@@ -283,7 +284,7 @@ public class SourceImage implements Decoration {
         can be faster than recomputing from scratch each time. */
     static CroppedTransformedImage getCroppedTransformedImage(
             BufferedImage input,
-            ArrayList<CroppedTransformedImage> transformedImages,
+            ArrayList<SoftReference<CroppedTransformedImage>> transformedImages2,
             PolygonTransform xform,
             Rectangle viewBounds, Rectangle imageBounds) {
         if (viewBounds == null) {
@@ -306,18 +307,22 @@ public class SourceImage implements Decoration {
         int maxScoreIndex = -1;
         int maxScore = 0;
 
-        int cnt = transformedImages.size();
+        int cnt = transformedImages2.size();
 
         for (int i = cnt - 1; i>=0; --i) {
-            CroppedTransformedImage im = transformedImages.get(i);
+            CroppedTransformedImage im = transformedImages2.get(i).get();
+            if (im == null) {
+                transformedImages2.remove(i);
+                continue;
+            }
             if (xform.nearlyEquals(im.transform, 1e-6)
                     && im.cropBounds.contains(imageViewBounds)) {
                 // Found a match.
 
                 // Promote this image to the front of the LRU queue (last
                 // position in the ArrayList).
-                transformedImages.remove(i);
-                transformedImages.add(im);
+                transformedImages2.remove(i);
+                transformedImages2.add(new SoftReference<>(im));
                 return im;
             }
 
@@ -325,7 +330,8 @@ public class SourceImage implements Decoration {
             // usage and distance back in the queue (implying the
             // image has not been used recently).
 
-            int mu = im.getMemoryUsage();
+            // Memory usage is 4 bytes per pixel (ARGB).
+            int mu = im.getMemoryUsage() * 4;
             totalMemoryUsage += mu;
 
             int thisScore = mu * (cnt - i);
@@ -337,13 +343,13 @@ public class SourceImage implements Decoration {
 
         // Save memory if we're at the limit.
 
-        int totalMemoryLimit = 20000000; // Limit is 20 megapixels total.
+        int totalMemoryLimit = 100_000_000;
         int totalImageCntLimit = 50;
         if (totalMemoryUsage > totalMemoryLimit) {
-            transformedImages.remove(maxScoreIndex);
+            transformedImages2.remove(maxScoreIndex);
         } else if (cnt >= totalImageCntLimit) {
             // Remove the oldest image.
-            transformedImages.remove(0);
+            transformedImages2.remove(0);
         }
 
         // Create a new CroppedTransformedImage that is big enough to hold
@@ -439,7 +445,7 @@ public class SourceImage implements Decoration {
             : ImageTransform.DithererType.GOOD;
 
         im.croppedImage = transform(input, cropBounds, xform, dither, 1.0);
-        transformedImages.add(im);
+        transformedImages2.add(new SoftReference<>(im));
         return im;
     }
 
