@@ -329,6 +329,7 @@ public class EditFrame extends JFrame
     Action actMoveSelection = new Action("Move selection only", KeyEvent.VK_V, KeyStroke.getKeyStroke("typed V")) {
         @Override
         public void actionPerformed(ActionEvent e) {
+            getEditor().autoPosition();
             getEditor().moveSelection(false);
             finishEvent();
         }
