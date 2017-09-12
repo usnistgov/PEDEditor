@@ -3026,12 +3026,10 @@ public class Diagram extends Observable implements Printable {
     }
 
     BufferedImage createImageSub(int width, int height, int flags) {
-        boolean transparent = (flags | FLAG_TRANSPARENT) != 0;
-
+        boolean transparent = (flags & FLAG_TRANSPARENT) != 0;
         int imageType = transparent ? BufferedImage.TYPE_INT_ARGB
             : BufferedImage.TYPE_INT_RGB;
         BufferedImage res = new BufferedImage(width, height, imageType);
-
         Color backColor = transparent ? new Color(0, 0, 0, 0) :
             Color.WHITE;
         paintDiagram(res.createGraphics(), bestFitScale(new Dimension(width, height)),
