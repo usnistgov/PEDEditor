@@ -759,6 +759,7 @@ public class BasicEditor extends Diagram
                 editFrame.parentEditor = null;
                 editFrame = null;
             }
+            decorations = null;
         }
         openEditors.remove(this);
         if (getOpenEditorCnt() == 0) {
