@@ -17,7 +17,7 @@
 
     <resources>
         <j2se version="1.8+" href="http://java.sun.com/products/autodl/j2se"/>
-        <jar href="PEDEditor.jar" main="true" version="4.1.10"/>
+        <jar href="PEDEditor.jar" main="true" version="4.2.0"/>
         <property name="jnlp.versionEnabled" value="true"/>
     </resources>
     <security>
