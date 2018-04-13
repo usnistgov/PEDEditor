@@ -4203,8 +4203,8 @@ public class BasicEditor extends Diagram
     }
 
     boolean setFileAssociations() throws UnavailableServiceException {
-        return setFileAssociations
-            (mimeType(), launchPEDFileExtensions());
+        return setFileAssociations(mimeType(),
+                launchPEDFileExtensions());
     }
 
     /** @return true if the file associations were set (apparently)
@@ -4221,12 +4221,19 @@ public class BasicEditor extends Diagram
                 && is.hasAssociation(mime, exts);
         } catch (NullPointerException x) {
             Stuff.showError(null,
-                            "JNLP startup failure: null pointer exception in requestAssociation(). "
-                            + "This may be caused by an existing " + fallbackTitle()
-                            + "process that is no longer current or erased from the cache. "
-                            + "Restart your computer and try again.",
-                            "JNLP Startup failure");
-            System.exit(2);
+                    "File association failure. "
+                    + "This may be caused by an existing " + fallbackTitle()
+                    + " process that is no longer current or erased from the cache. "
+                    + "Restart your computer and try again.\n"
+                    + "<p>Press Continue <i>only</i> if you have encountered this error before and "
+                    + "restarting did not help. Then you may still view downloaded "
+                    + "diagrams manually using the "
+                    + "<code>File/Open</code> menu option, or you may have this program "
+                    + "automatically scan for newly downloaded diagrams "
+                    + "for as long as it remains open using the "
+                    + "<code>File/Monitor Directory</code> option."
+                    + "<p>For more information, please contact phase3@ceramics.org.",
+                    "File association failure");
             return false;
         }
     }
