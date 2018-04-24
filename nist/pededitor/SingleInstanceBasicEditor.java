@@ -30,6 +30,8 @@ public class SingleInstanceBasicEditor extends BasicEditor {
                 ServiceManager.lookup("javax.jnlp.SingleInstanceService");
             BasicEditorSingleInstanceListener listen
                 = new BasicEditorSingleInstanceListener(ec);
+            // UNDO Temporarily disable shutdown because of bug 8189783
+            listen.delay = 1000 * 1000 * 3600;
             sis.addSingleInstanceListener(listen);
             listen.newActivation(args);
         } catch(UnavailableServiceException x) {

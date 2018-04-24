@@ -4224,16 +4224,9 @@ public class BasicEditor extends Diagram
                     "File association failure. "
                     + "This may be caused by an existing " + fallbackTitle()
                     + " process that is no longer current or erased from the cache. "
-                    + "Restart your computer and try again.\n"
-                    + "<p>Press Continue <i>only</i> if you have encountered this error before and "
-                    + "restarting did not help. Then you may still view downloaded "
-                    + "diagrams manually using the "
-                    + "<code>File/Open</code> menu option, or you may have this program "
-                    + "automatically scan for newly downloaded diagrams "
-                    + "for as long as it remains open using the "
-                    + "<code>File/Monitor Directory</code> option."
-                    + "<p>For more information, please contact phase3@ceramics.org.",
+                    + "Restart your computer and try again.\n",
                     "File association failure");
+            System.exit(2);
             return false;
         }
     }
@@ -6646,6 +6639,10 @@ public class BasicEditor extends Diagram
                     if (launch != LaunchType.YES) {
                         launch = doFileAssociationsMessage(ok, launch == LaunchType.ASK)
                             ? LaunchType.YES : LaunchType.NO;
+                        // UNDO -- temporary for bug #8189783 to
+                        // prevent exit
+                        if (launch == LaunchType.NO)
+                            return;
                     }
                 } catch (UnavailableServiceException x) {
                     launch = LaunchType.YES;
