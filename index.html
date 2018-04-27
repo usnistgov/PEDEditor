@@ -1,35 +1,125 @@
 ---
 layout: default
-title: Home
+title: PED Editor
 ---
 <section class="home home-title">
-  <h1>NIST Pages Template</h1>
+  <h1>PED Editor</h1>
+  <link rel=icon type=image/png href=favicon.ico>
 </section>
 <section class="home-about">
-	<p>This template incorporates many of elements needed to comply with NIST guidelines, the Header provides a common look and feel for pages.nist.gov. The Footer links point to pages on www.nist.gov.</p>
-	<p>The source code for this page is available on <a target="_blank" href="https://github.com/usnistgov/Pages-Template">Original GitHub Repository</a>
-	<h2> To use this page template, follow these instructions</h2>
-	<ol>
-		<li>Read this template and the included README.md file for instructions on how to modify the template to suit your needs.</li>
-		<li>If you would like to incorporate any more advanced features, please refer to the <a target="_blank" href="http://jekyllrb.com/docs/home/">Jekyll Documentation</a> for more information or to begin.</li>
-		<li>When you are ready, you can choose a method of continuing:
-			<ol>
-				<li>Create a new orphan branch in your repository called "nist-pages" and extract the downloaded zip file from this repo into it.</li>
-				<li>Clone this repository into a new branch of your repository named "nist-pages".</li>
-			</ol>
-			</li>
-		<li>When you are ready, you will replace this index.html with your preferred webpage.</li>
-		<li>Incorporate the following elements in your new page:
-			<ul>
-				<li>Link to primary descriptive text about this page on nist.gov.  For example this could be https://example.nist.gov or https://nist.gov/example/path.</li>
-				<li>Citation (to cite a database, we suggest use of a citation format appropriate to that of an edited book:
-				<blockquote>(Principal Investigator), (Site Name), National Institute of Standards and Technology, Gaithersburg MD, 20899, (http://pages.nist.gov/xxxxx), (retrieved [date of access])).</blockquote></li>
-				<li>Contact information (Added into the page, or you can modify the mailto in the footer file <code>_includes/NISTPagesFooter.html</code></li>
-				<li>Last upated date</li>
-			</ul>
-		</li>
-		<li>Once you are satisfied with your index.html file, you can remove this example file entirely.</li>
-	</ol>
-	<p>In addition, if you would like to collaborate to make this template better, easier-to-use, or more flexible, please <a mailto:"data@nist.gov" subject="Feedback%20On%20Webs%20Site%20Template">contact us</a> (or use the "Send Feedback" link below) or simply fork this repository and send pull requests for review.</p>
+
+<ul>
+  <li><a  href="pededitor.jnlp">Launch PED Editor (Java Web Start)</a>
+  <li><a href="PEDEditor.jar">Download PED Editor (Java JAR file)</a>
+  <li><a href="https://github.com/usnistgov/PEDEditor">Source Code on GitHub</a>
+</a>
+</ul>
+
+<div>
+<div style="float: left; margin: 4px;">
+  <img src="PEDEditor.png" alt="screenshot">
+  <br>
+  <a href="cam.pdf">[Sample PDF]</a>
+  <a href="newtons.png">[Sample PNG]</a>
+  <a href="cam.ped">[Sample PED file (install PED Editor first to use)]</a>
+</div>
+    
+<p>The PED (Phase Equilibria Diagrams) Editor was created by Eric
+Boesch for use by the PED Data Center (<a href="https://www.nist.gov/srd/nist-standard-reference-database-31v40">NIST Standard Reference
+Database 31</a>) to digitize various types of phase equilibria diagrams
+for addition to this series as graphics files. Binary, ternary, and
+schematic diagrams can be digitized, and data can be extracted. The
+PED Editor can also be used for general graph digitization and
+two-dimensional scientific drawing.
+
+<p>A Getting Started User Manual can be downloaded <a href="PED%20Editor%20User%20Guide.pdf">here</a>.
+  
+<p>For technical support: send email to <a href="mailto:phase2@nist.gov">phase2@nist.gov</a> with "PED Editor" in the subject line.
+
+<h2>System requirements</h2>
+
+<ul>
+  <li><a href="http://www.java.com/">Java</a>™ programming language, Java 8 or better (<a href="http://www.java.com/">free download</a> from java.com).
+
+  <li>2- or 3-button mouse (systems with no second button, or no mouse at all, are not supported)
+
+  <li>Screen resolution 1024x768 or better (dual monitors may be useful)
+
+  <li>Any operating system for which Java is available may work. Platforms that have been tested with the PED Editor include Windows™ 7, 8, and 10, and Mac OS X 10.11 and 10.12.
+    
+  <li>At least 512MB of memory and at least 1 GHz processor speed</li>
+</ul>
+
+<p>Java must be installed in order to run this program.
+
+<p> The Java Web Start version includes automatic updates when new
+  versions are available. On Windows, the Java Web Start version also
+  supports opening the program automatically when you click on PED
+  Editor diagram files in the Windows Explorer. The Java Web Start
+  version of the PED Editor does not run directly out of the browser,
+  and your browser does not need to support the Java plugin.</p>
+  
+<p>If you do not wish to enable Java Web Start, you can still download
+  the JAR file, locate it using the file explorer program for your
+  operating system, and double-click to open the file.
+
+<div style="clear:both"></div>
+
+<h2>Features</h2>
+
+<ul>
+  <li>Diagrams can be saved as high-quality scalable <code>PDF</code>
+  or in <code>GIF</code>, <code>PNG</code>, or <code>JPG</code>
+  format.
+
+  <li>Diagrams use logical coordinates which can be translated by
+  constant or linear factors, such as between Celsuis, Fahrenheit, and
+  Kelvin. Stretching the diagram does not affect logical coordinate
+  values. Store coordinates with up to 15 digit precision.
+
+  <li>General scientific diagram support includes many axis labelling
+  options, isotherms (labels superimposed on and tangent to a curve),
+  a variety of line and fill styles, and color. The Unicode fonts
+  include a variety of math and scientific symbols and data markers,
+  and labels can be marked up with basic HTML.
+    
+  <li>Chemical phase diagram support includes tie lines, ternary
+  diagrams, conversion between chemical formulas and diagram
+  locations, conversion between weight and mole fraction, and
+  automatic subscripting of chemical formulas.
+
+  <li>Math support includes locating curve intersections and nearest
+  curves. Display curve slope, arc length, area enclosed by a
+  curve, and integral under a curve.
+
+  <li>Digitization and diagram cleanup support includes automatic
+  correction of distorted or misaligned scanned diagrams and a second
+  window to show the corresponding position in the original image.
+  Identify the boundaries and logical coordinates of a graph, then
+  trace data points and curves.
+
+    <p>Currently only manual digitization is supported, without
+      automatic edge and vertex detection. However, most widely
+      available automatic digitization programs are not as precise as
+      manual visual digitization.
+
+</ul>
+
+<h2>Licensing</h2>
+
+<p>The PED Editor is free. If you just want to run the program, either
+  to digitize existing diagrams or create new ones in any format, you
+  may do so without restriction.
+  
+<p>If you wish to sell, redistribute, or modifying the PED Editor, or
+  to embed it in a larger work, you must consult the "About" section
+  of the program's Help menu for license restrictions. NIST does not
+  impose any restrictions on the use of the PED Editor or its source
+  code beyond those that are necessary to comply with the terms of the
+  included third-party libraries.
+  
+<p><i><a href="mailto:phase2@nist.gov">phase2@nist.gov</a></i>
+  
+</div>
 </section>
  

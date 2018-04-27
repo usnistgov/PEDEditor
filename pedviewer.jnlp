@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<jnlp spec="6.0+" codebase="https://pages.nist.gov/PEDEditor/">
+    <information>
+        <title>PED Viewer</title>
+        <vendor>NIST</vendor>
+        <homepage href="https://pages.nist.gov/PEDEditor/"/>
+        <description kind="one-line">
+          Viewer for phase equilibria diagrams
+        </description>
+        <icon href="PEDicon.gif" kind="shortcut"/>
+        <offline-allowed/>
+        <shortcut install="true">
+          <desktop/>
+        </shortcut>
+    </information>
+
+    <resources>
+        <j2se version="1.8+" href="http://java.sun.com/products/autodl/j2se"/>
+        <jar href="PEDViewer.jar" main="true"/>
+    </resources>
+    <security>
+      <all-permissions/>
+    </security>
+    <application-desc main-class="gov.nist.pededitor.Viewer">
+      <argument>-launch</argument>
+    </application-desc>
+</jnlp>
