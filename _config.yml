@@ -1,6 +1,6 @@
 # Site settings
-title: "NIST Pages Template"
-description: "Providing a page template for pages.nist.gov hosting groups."
+title: "PED Editor"
+description: "Digitizer and editor for phase equilibria diagrams"
 
-baseurl: "/Pages-Template"
+baseurl: "/PEDEditor"
 rooturl: ""
