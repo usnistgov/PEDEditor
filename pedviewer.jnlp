@@ -16,8 +16,7 @@
 
     <resources>
         <j2se version="1.8+" href="http://java.sun.com/products/autodl/j2se"/>
-        <jar href="PEDViewer.jar" main="true" version="4.2.2"/>
-        <property name="jnlp.versionEnabled" value="true"/>
+        <jar href="PEDViewer.jar" main="true"/>
     </resources>
     <security>
       <all-permissions/>
